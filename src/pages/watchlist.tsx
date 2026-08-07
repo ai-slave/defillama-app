@@ -33,8 +33,11 @@ export const getStaticProps = withPerformanceLogging('watchlist', async () => {
 
 	return {
 		props: {
-			chains,
-			protocols: protocolSnapshot.protocols,
+			chainOptions: chains.map((chain) => chain.name),
+			// Names only: the saved set lives client-side, and the rows for it are
+			// fetched from /api/dynamic/protocol-rankings/rows on demand. Shipping
+			// all ~6k full rows here made this page's payload multi-MB.
+			protocolOptions: protocolSnapshot.protocols.map((protocol) => protocol.name),
 			tokenUniverse
 		},
 		revalidate: maxAgeForNext([22])
@@ -42,8 +45,8 @@ export const getStaticProps = withPerformanceLogging('watchlist', async () => {
 })
 
 export default function Portfolio({
-	protocols,
-	chains,
+	protocolOptions,
+	chainOptions,
 	tokenUniverse
 }: InferGetStaticPropsType<typeof getStaticProps>) {
 	const router = useRouter()
@@ -59,7 +62,7 @@ export default function Portfolio({
 			{isTokensTab ? (
 				<TokensWatchlistContainer tokenUniverse={tokenUniverse} />
 			) : (
-				<DefiWatchlistContainer protocols={protocols} chains={chains} />
+				<DefiWatchlistContainer protocolOptions={protocolOptions} chainOptions={chainOptions} />
 			)}
 		</Layout>
 	)

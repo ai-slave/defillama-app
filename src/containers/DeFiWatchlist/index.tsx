@@ -1,4 +1,5 @@
 import * as Ariakit from '@ariakit/react'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { lazy, startTransition, Suspense, useMemo, useState } from 'react'
 import { toast } from 'react-hot-toast'
@@ -9,11 +10,11 @@ import { BasicLink } from '~/components/Link'
 import { Menu } from '~/components/Menu'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
-import type { IChainOverviewData } from '~/containers/ChainOverview/types'
 import { useGroupAndFormatChains } from '~/containers/ChainsByCategory'
 import { ChainsByCategoryTable } from '~/containers/ChainsByCategory/Table'
 import { applyProtocolTvlSettings } from '~/containers/ProtocolLists/utils'
 import { ChainProtocolsTable } from '~/containers/ProtocolRankings/Table'
+import type { IProtocol } from '~/containers/ProtocolRankings/types'
 import { WatchListTabs } from '~/containers/Yields/views/WatchlistView'
 import { DEFAULT_PORTFOLIO_NAME, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useBookmarks } from '~/hooks/useBookmarks'
@@ -36,12 +37,25 @@ const SubscribeProModal = lazy(() =>
 	}))
 )
 
+async function fetchWatchedRows<Row>(url: string, names: string[]): Promise<Row[]> {
+	const response = await fetch(url, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ names })
+	})
+	if (!response.ok) throw new Error(`Failed to load watchlist rows (${response.status})`)
+	const payload = (await response.json()) as { rows: Row[] }
+	return payload.rows
+}
+
 export function DefiWatchlistContainer({
-	protocols,
-	chains
+	protocolOptions: protocolNames,
+	chainOptions: chainNames
 }: {
-	protocols: IChainOverviewData['protocols']
-	chains: IChainsByCategoryData['chains']
+	/** Parent protocol names for the add-protocol picker; rows are fetched per saved name. */
+	protocolOptions: string[]
+	/** Chain names for the add-chain picker; rows are fetched per saved name. */
+	chainOptions: string[]
 }) {
 	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 
@@ -49,16 +63,23 @@ export function DefiWatchlistContainer({
 
 	const { savedProtocols: savedChains, addProtocol: addChain, removeProtocol: removeChain } = useBookmarks('chains')
 
-	const { protocolOptions, savedProtocolsList, selectedProtocolNames } = useMemo(() => {
+	const { protocolOptions, selectedProtocolNames, watchedNames } = useMemo(() => {
+		const selected = Array.from(savedProtocols)
 		return {
-			protocolOptions: protocols?.map((c) => ({ key: c.name, name: c.name })) ?? [],
-			savedProtocolsList:
-				protocols?.filter(
-					(c) => savedProtocols.has(c.name) || c.childProtocols?.some((cp) => savedProtocols.has(cp.name))
-				) ?? [],
-			selectedProtocolNames: Array.from(savedProtocols)
+			protocolOptions: protocolNames.map((name) => ({ key: name, name })),
+			selectedProtocolNames: selected,
+			// Stable query key: the same saved set always resolves to the same request.
+			watchedNames: [...selected].sort()
 		}
-	}, [protocols, savedProtocols])
+	}, [protocolNames, savedProtocols])
+
+	const { data: savedProtocolsList = [], isLoading: isLoadingProtocolRows } = useQuery({
+		queryKey: ['watchlist-protocol-rows', watchedNames],
+		queryFn: () => fetchWatchedRows<IProtocol>('/api/dynamic/protocol-rankings/rows', watchedNames),
+		enabled: !isLoadingWatchlist && watchedNames.length > 0,
+		staleTime: 5 * 60 * 1000,
+		placeholderData: keepPreviousData
+	})
 
 	const router = useRouter()
 
@@ -80,13 +101,26 @@ export function DefiWatchlistContainer({
 		for (const name of toRemove) removeProtocol(name)
 	}
 
-	const { chainOptions, savedChainsList, selectedChainNames } = useMemo(() => {
+	const { chainOptions, selectedChainNames, watchedChainNames } = useMemo(() => {
+		const selected = Array.from(savedChains)
 		return {
-			chainOptions: chains?.map((c) => ({ key: c.name, name: c.name })) ?? [],
-			savedChainsList: chains?.filter((c) => savedChains.has(c.name)) ?? [],
-			selectedChainNames: Array.from(savedChains)
+			chainOptions: chainNames.map((name) => ({ key: name, name })),
+			selectedChainNames: selected,
+			watchedChainNames: [...selected].sort()
 		}
-	}, [chains, savedChains])
+	}, [chainNames, savedChains])
+
+	const { data: savedChainsList = [], isLoading: isLoadingChainRows } = useQuery({
+		queryKey: ['watchlist-chain-rows', watchedChainNames],
+		queryFn: () =>
+			fetchWatchedRows<IChainsByCategoryData['chains'][number]>(
+				'/api/dynamic/chains-by-category/rows',
+				watchedChainNames
+			),
+		enabled: !isLoadingWatchlist && watchedChainNames.length > 0,
+		staleTime: 5 * 60 * 1000,
+		placeholderData: keepPreviousData
+	})
 
 	const { chainsTableData } = useGroupAndFormatChains({ chains: savedChainsList, category: 'All', hideGroupBy: true })
 
@@ -139,6 +173,8 @@ export function DefiWatchlistContainer({
 					</div>
 					{protocolsTableData.length ? (
 						<ChainProtocolsTable protocols={protocolsTableData} useStickyHeader={false} borderless />
+					) : isLoadingProtocolRows && watchedNames.length > 0 ? (
+						<PanelLoadingStatus />
 					) : (
 						<SurfaceBodyStatus variant="empty" className="p-2" contentClassName="flex flex-col items-center">
 							<Icon name="bookmark" height={32} width={32} className="mb-3" />
@@ -168,6 +204,8 @@ export function DefiWatchlistContainer({
 					</div>
 					{chainsTableData.length ? (
 						<ChainsByCategoryTable data={chainsTableData} useStickyHeader={false} borderless showByGroup={false} />
+					) : isLoadingChainRows && watchedChainNames.length > 0 ? (
+						<PanelLoadingStatus />
 					) : (
 						<SurfaceBodyStatus variant="empty" className="p-2" contentClassName="flex flex-col items-center">
 							<Icon name="map" height={32} width={32} className="mb-3" />
@@ -689,7 +727,7 @@ function PortfolioSelection() {
 }
 
 type TopMoversProps = {
-	protocols: IChainOverviewData['protocols']
+	protocols: IProtocol[]
 }
 
 function TopMovers({ protocols }: TopMoversProps) {

@@ -51,11 +51,13 @@ export const dynamicApiRoutePaths = [
 	'cexs',
 	'cexs/analytics',
 	'chains',
+	'chains-by-category/rows',
 	'emission/[protocol]',
 	'maple/graphql',
 	'pro-dashboard/[dashboardId]/stream',
 	'pro-dashboard/protocol-catalog-source',
 	'protocol-rankings/export',
+	'protocol-rankings/rows',
 	'pro-dashboard/token-usage',
 	'pro-dashboard/tokens/search',
 	'roundupMarkdown',
@@ -84,6 +86,7 @@ export const allApiRoutePaths = [
 	'cexs/analytics',
 	'chain-icon',
 	'chains',
+	'chains-by-category/rows',
 	'chains/charts',
 	'downloads/[dataset]',
 	'downloads/chart/[dataset]',
@@ -161,6 +164,7 @@ export const allApiRoutePaths = [
 	'protocol-icon',
 	'protocol-rankings',
 	'protocol-rankings/export',
+	'protocol-rankings/rows',
 	'protocols/charts',
 	'research/articles/[id]/publish',
 	'research/articles/[id]/unpublish',
@@ -222,6 +226,8 @@ const routeMethodOverrides: Partial<Record<ApiRoutePath, readonly ApiRouteMethod
 	'maple/graphql': ['POST'],
 	'protocols/charts': ['GET', 'POST'],
 	'protocol-rankings/export': ['POST'],
+	'protocol-rankings/rows': ['POST'],
+	'chains-by-category/rows': ['POST'],
 	'revalidate-instances': ['POST']
 }
 
