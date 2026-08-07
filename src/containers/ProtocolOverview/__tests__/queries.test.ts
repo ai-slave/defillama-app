@@ -45,7 +45,11 @@ const optionalPageData = vi.hoisted(() =>
 		}
 	})
 )
-const yieldsSnapshot = { readJson: vi.fn().mockRejectedValue(new Error('yields unavailable')) }
+const yieldsSnapshot = {
+	generationId: 'test-gen',
+	generatedAt: 0,
+	readJson: vi.fn().mockRejectedValue(new Error('yields unavailable'))
+}
 
 vi.mock('~/api', () => ({
 	fetchBlockExplorers: vi.fn().mockResolvedValue([]),

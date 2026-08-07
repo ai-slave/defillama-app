@@ -46,7 +46,7 @@ const earnRow = (chain: string): EntityEarnRow => ({
 	attributes: { stablecoin_only: true, single_asset_exposure: true, impermanent_loss_risk: false }
 })
 
-const snapshot: YieldsSnapshot = { readJson: vi.fn() }
+const snapshot: YieldsSnapshot = { generationId: 'test-gen', generatedAt: 0, readJson: vi.fn() }
 
 describe('fetchProYieldsDataset', () => {
 	beforeEach(() => {

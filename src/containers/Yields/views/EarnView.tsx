@@ -21,6 +21,7 @@ import { PaginatedYieldsPoolTable } from '../Tables/Pools'
 import type { IYieldTableRow } from '../Tables/types'
 import { useLegacyYieldsUrlNormalizer } from '../useLegacyYieldsUrlNormalizer'
 import { useYieldsServerTable } from '../useYieldsServerTable'
+import type { YieldsPaginatedTableResponse } from '../yieldsTableQuery'
 import { YieldsTabs } from '../YieldsTabs'
 
 const EMPTY_POOL_ROWS: IYieldTableRow[] = []
@@ -35,7 +36,9 @@ const EarnView = ({
 	evmChains = EMPTY_STRINGS,
 	tokens = EMPTY_TOKENS,
 	attributeIds = EARN_ATTRIBUTE_IDS,
-	entityQuestions: baseQuestions
+	entityQuestions: baseQuestions,
+	initialEarnPage,
+	initialEarnPageGeneratedAt
 }: {
 	projectList?: string[]
 	chainList?: string[]
@@ -44,6 +47,8 @@ const EarnView = ({
 	tokens?: TokenOption[]
 	attributeIds?: AttributeId[]
 	entityQuestions?: string[]
+	initialEarnPage?: YieldsPaginatedTableResponse<IYieldTableRow>
+	initialEarnPageGeneratedAt?: number
 }) => {
 	const router = useRouter()
 
@@ -92,7 +97,9 @@ const EarnView = ({
 	} = useYieldsServerTable<IYieldTableRow>({
 		endpoint: YIELD_EARN_DATASET_API,
 		enabled: normalized,
-		extraQuery
+		extraQuery,
+		initialData: initialEarnPage,
+		initialDataUpdatedAt: initialEarnPageGeneratedAt
 	})
 	const poolsData = serverRows.length > 0 ? serverRows : EMPTY_POOL_ROWS
 

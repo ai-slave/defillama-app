@@ -21,7 +21,7 @@ import {
  * `maxTvl`, `tvlKeys`, `customFormula`, `customFormat`) are contracts.
  */
 
-/** Rows in ISR props / rows per client fetch / API clamp ceiling (plan D6). */
+/** Rows in ISR props / rows per client fetch / API clamp ceiling. */
 export const PROTOCOL_RANKINGS_LIMITS = { initial: 50, page: 75, max: 100 } as const
 
 export type ProtocolRankingOrder = 'asc' | 'desc'

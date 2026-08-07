@@ -16,7 +16,7 @@ import type { CursorTablePage } from '~/server/tablePages/types'
  * - the returned `sentinelRef` drives loadMore via an IntersectionObserver —
  *   attach it to the status footer below the table (TablePagesStatus).
  *
- * `mode` widens as later plan phases land ('offset', 'local'); only 'cursor'
+ * `mode` widens as more modes land ('offset', 'local'); only 'cursor'
  * exists today, so passing the option is a type-checked statement of intent.
  */
 

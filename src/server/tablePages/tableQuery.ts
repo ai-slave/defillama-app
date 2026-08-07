@@ -134,3 +134,30 @@ export function shapeOrNullField<Shape extends Record<string, unknown>>(fields: 
 		}
 	}
 }
+
+/**
+ * Canonical signature over raw wire params, for surfaces whose filter space is
+ * too large to enumerate as a field schema (dozens of established params with
+ * battle-tested parsers). Keys are sorted, values normalized to sorted string
+ * arrays, absent values dropped, and paging params excluded — so every
+ * spelling of the same filter set signs identically and every page of it
+ * shares one prepared-rows entry. Empty-string values are kept: if a parser
+ * ever distinguishes `?x=` from an absent `x`, aliasing them would poison the
+ * cache, while keeping them distinct merely spends a slot. Prefer defineTableQuery for bounded query
+ * shapes; this is the escape hatch that keeps existing parsers untouched.
+ */
+export function canonicalQuerySignature(
+	query: Record<string, string | string[] | undefined>,
+	options: { exclude: readonly string[] }
+): string {
+	const excluded = new Set(options.exclude)
+	const entries: Array<[string, string[]]> = []
+	for (const key of Object.keys(query).sort()) {
+		if (excluded.has(key)) continue
+		const raw = query[key]
+		if (raw === undefined) continue
+		const values = Array.isArray(raw) ? [...raw].sort() : [raw]
+		entries.push([key, values])
+	}
+	return JSON.stringify(entries)
+}

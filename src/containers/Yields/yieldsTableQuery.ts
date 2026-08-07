@@ -2,6 +2,9 @@ import type { ParsedUrlQuery } from 'querystring'
 import type { PaginationState, SortingState } from '@tanstack/react-table'
 import { parseNumberQueryParam, readSingleQueryValue, toQueryString } from '~/utils/routerQuery'
 
+/** Query params that pick a window of a prepared row set instead of changing it. */
+export const YIELDS_PAGING_PARAMS = ['page', 'pageSize'] as const
+
 export const DEFAULT_YIELDS_TABLE_PAGE_SIZE = 50
 // Regular table pages are capped; CSV exports bypass this with pageSize=all.
 export const MAX_YIELDS_TABLE_PAGE_SIZE = 500

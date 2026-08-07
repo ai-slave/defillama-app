@@ -1,4 +1,4 @@
-import { paginateAndSortRows } from '~/containers/Yields/yieldsTablePagination.server'
+import { prepareYieldsTable, sliceYieldsPage, sortYieldsRows } from '~/containers/Yields/yieldsTablePagination.server'
 import type { YieldsPaginatedTableResponse } from '~/containers/Yields/yieldsTableQuery'
 import { queryBoolean } from '~/server/api/params'
 import type { ApiQuery } from '~/server/api/types'
@@ -60,10 +60,33 @@ function tokenFilterInput(row: EnrichedEarnRow): TokenFilterInput {
 	}
 }
 
+type PreparedEarn = { rows: EarnPageRow[]; medianApy: number | null }
+
 export async function getEarnPage(
 	snapshot: YieldsSnapshot,
 	query: ApiQuery
 ): Promise<YieldsPaginatedTableResponse<EarnPageRow>> {
+	// Filter + map + median + sort run once per (generation, filters+sort) and
+	// every page of that combination is a slice. Everything except page/pageSize
+	// can change rows or their order, so it all signs.
+	const prepared = await prepareYieldsTable({
+		surface: 'earn',
+		snapshot,
+		query,
+		prepare: () => buildPreparedEarn(snapshot, query),
+		// Estimated: serializing ~14k rows just to size them costs more than a
+		// mis-sized entry. Earn rows carry sparklines, hence the heavy per-row figure.
+		measureBytes: (value) => value.rows.length * 2048 + 256,
+		maxBytes: 192 * 1024 * 1024
+	})
+
+	return {
+		...sliceYieldsPage(prepared.rows, query),
+		medianApy: prepared.medianApy
+	}
+}
+
+async function buildPreparedEarn(snapshot: YieldsSnapshot, query: ApiQuery): Promise<PreparedEarn> {
 	const window = parseApyWindow(query)
 	const components = parseApyComponents(query)
 	const common = parseCommonFilters(query)
@@ -142,20 +165,18 @@ export async function getEarnPage(
 		pageRows.push(pageRow)
 	}
 
-	const medianApy = medianApyOf(pageRows)
-
 	// The client (shared pools table) emits the column id as `sortBy`, and the row
 	// is shaped as `IYieldTableRow`, so sorting resolves against the alias field of
 	// the same name via a `row[sortBy]` accessor (covers the optional 1d Volume / Top 10 % /
 	// Avg Position columns, whose fields are stamped onto every row).
 	return {
-		...paginateAndSortRows<EarnPageRow, string>({
+		rows: sortYieldsRows<EarnPageRow, string>({
 			rows: pageRows,
 			query: { ...query, sortBy: legacySortBy(typeof query.sortBy === 'string' ? query.sortBy : undefined) },
 			fallbackSortAccessor: (row, sortBy) => row[sortBy as keyof EarnPageRow],
 			defaultSort: { sortBy: 'tvl', sortDesc: true }
 		}),
-		medianApy
+		medianApy: medianApyOf(pageRows)
 	}
 }
 

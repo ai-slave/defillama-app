@@ -1,9 +1,47 @@
 import type { ParsedUrlQuery } from 'querystring'
+import { offsetTablePage } from '~/server/tablePages/offsetPage.server'
+import { prepareTableRows } from '~/server/tablePages/preparedRows.server'
+import { canonicalQuerySignature } from '~/server/tablePages/tableQuery'
+import type { YieldsSnapshot } from './data/snapshot'
 import {
 	DEFAULT_YIELDS_TABLE_PAGE_SIZE,
 	MAX_YIELDS_TABLE_PAGE_SIZE,
+	YIELDS_PAGING_PARAMS,
 	type YieldsPaginatedTableResponse
 } from './yieldsTableQuery'
+
+/**
+ * Memoize a yields table preparation per (generation, filters+sort): the
+ * signature covers every wire param except paging, so each page of one
+ * combination reuses one prepared payload.
+ */
+export function prepareYieldsTable<Prepared>({
+	surface,
+	snapshot,
+	query,
+	prepare,
+	measureBytes,
+	maxBytes = 64 * 1024 * 1024
+}: {
+	surface: string
+	snapshot: YieldsSnapshot
+	query: ParsedUrlQuery
+	prepare: () => Prepared | Promise<Prepared>
+	measureBytes: (prepared: Prepared) => number
+	maxBytes?: number
+}): Promise<Prepared> {
+	return prepareTableRows({
+		namespace: `table-pages:yields-${surface}:prepared-rows`,
+		domain: surface,
+		version: snapshot.generationId,
+		signature: canonicalQuerySignature(query as Record<string, string | string[] | undefined>, {
+			exclude: YIELDS_PAGING_PARAMS
+		}),
+		memory: { ttlMs: 10 * 60 * 1000, maxEntries: 8, maxBytes },
+		prepare,
+		measureBytes
+	})
+}
 
 const ALL_PAGE_SIZE = 'all'
 
@@ -35,7 +73,7 @@ function parsePageSize(query: ParsedUrlQuery, total: number): number {
 		: DEFAULT_YIELDS_TABLE_PAGE_SIZE
 }
 
-function parseSort<SortKey extends string>(
+export function parseYieldsSort<SortKey extends string>(
 	query: ParsedUrlQuery,
 	defaultSort?: YieldsTableSort<SortKey>
 ): YieldsTableSort<SortKey> | null {
@@ -76,7 +114,8 @@ export function compareYieldsTableValues(left: unknown, right: unknown): number 
 	return String(leftValue).localeCompare(String(rightValue))
 }
 
-export function paginateAndSortRows<TRow, SortKey extends string>({
+/** Sort rows for a parsed yields sort: missing values last, stable within ties. */
+export function sortYieldsRows<TRow, SortKey extends string>({
 	rows,
 	query,
 	sortAccessors,
@@ -88,8 +127,8 @@ export function paginateAndSortRows<TRow, SortKey extends string>({
 	sortAccessors?: YieldsTableSortAccessors<TRow, SortKey>
 	defaultSort?: YieldsTableSort<SortKey>
 	fallbackSortAccessor?: (row: TRow, sortBy: string) => unknown
-}): YieldsPaginatedTableResponse<TRow> {
-	const parsedSort = parseSort(query, defaultSort)
+}): TRow[] {
+	const parsedSort = parseYieldsSort(query, defaultSort)
 	const hasParsedSortAccessor =
 		parsedSort != null && (sortAccessors?.[parsedSort.sortBy] != null || fallbackSortAccessor != null)
 	const sort = hasParsedSortAccessor ? parsedSort : defaultSort
@@ -97,35 +136,60 @@ export function paginateAndSortRows<TRow, SortKey extends string>({
 		sort &&
 		(sortAccessors?.[sort.sortBy] ??
 			(fallbackSortAccessor ? (row: TRow) => fallbackSortAccessor(row, sort.sortBy) : null))
-	let sortedRows = rows
-	if (accessor) {
-		sortedRows = rows.slice().sort((left, right) => {
-			const leftValue = accessor(left)
-			const rightValue = accessor(right)
-			const leftMissing = leftValue == null
-			const rightMissing = rightValue == null
-			if (leftMissing && rightMissing) return 0
-			if (leftMissing) return 1
-			if (rightMissing) return -1
+	if (!accessor) return rows
 
-			const result = compareYieldsTableValues(leftValue, rightValue)
-			if (result === 0) return 0
-			return sort.sortDesc ? -result : result
-		})
-	}
+	return rows.slice().sort((left, right) => {
+		const leftValue = accessor(left)
+		const rightValue = accessor(right)
+		const leftMissing = leftValue == null
+		const rightMissing = rightValue == null
+		if (leftMissing && rightMissing) return 0
+		if (leftMissing) return 1
+		if (rightMissing) return -1
+
+		const result = compareYieldsTableValues(leftValue, rightValue)
+		if (result === 0) return 0
+		return sort.sortDesc ? -result : result
+	})
+}
+
+/**
+ * Slice one page from an already-sorted row set. Page requests past the end
+ * clamp to the last page (public contract), and `pageSize=all` returns the
+ * complete set.
+ */
+export function sliceYieldsPage<TRow>(
+	sortedRows: TRow[],
+	query: ParsedUrlQuery
+): Omit<YieldsPaginatedTableResponse<TRow>, 'medianApy'> {
 	const total = sortedRows.length
+	const rawPageSize = getFirstQueryValue(query.pageSize)
 	const pageSize = parsePageSize(query, total)
-	const requestedPage = parsePage(query)
 	const maxPage = total > 0 && pageSize > 0 ? Math.ceil(total / pageSize) : 1
-	const page = total > 0 ? Math.min(requestedPage, maxPage) : 1
-	const start = pageSize > 0 ? (page - 1) * pageSize : 0
-	const end = pageSize > 0 ? start + pageSize : 0
+	const page = total > 0 ? Math.min(parsePage(query), maxPage) : 1
+	const result = offsetTablePage({
+		rows: sortedRows,
+		page,
+		pageSize: rawPageSize === ALL_PAGE_SIZE ? ALL_PAGE_SIZE : pageSize,
+		maxPageSize: MAX_YIELDS_TABLE_PAGE_SIZE
+	})
 
 	return {
-		rows: sortedRows.slice(start, end),
+		rows: result.rows,
 		total,
-		page,
+		// pageSize=all reports total (not the kernel's page:1/size:total split) — wire contract.
+		page: rawPageSize === ALL_PAGE_SIZE ? 1 : result.page,
 		pageSize,
-		hasMore: end < total
+		hasMore: result.hasMore
 	}
+}
+
+export function paginateAndSortRows<TRow, SortKey extends string>(args: {
+	rows: TRow[]
+	query: ParsedUrlQuery
+	sortAccessors?: YieldsTableSortAccessors<TRow, SortKey>
+	defaultSort?: YieldsTableSort<SortKey>
+	fallbackSortAccessor?: (row: TRow, sortBy: string) => unknown
+}): YieldsPaginatedTableResponse<TRow> {
+	return sliceYieldsPage(sortYieldsRows(args), args.query)
 }

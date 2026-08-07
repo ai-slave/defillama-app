@@ -12,10 +12,17 @@ describe('Yields snapshot acquisition', () => {
 	})
 
 	it('keeps strict acquisition for core Yields consumers', async () => {
-		const handle = { readJson: vi.fn() }
+		const handle = {
+			ref: { snapshotId: 'gen-1', createdAt: 1_700_000_000_000 },
+			readJson: vi.fn().mockResolvedValue('artifact')
+		}
 		acquireDatasetSnapshot.mockResolvedValueOnce({ handle })
 
-		await expect(acquireYieldsSnapshot('background')).resolves.toBe(handle)
+		const snapshot = await acquireYieldsSnapshot('background')
+		expect(snapshot.generationId).toBe('gen-1')
+		expect(snapshot.generatedAt).toBe(1_700_000_000_000)
+		await expect(snapshot.readJson('earn.json')).resolves.toBe('artifact')
+		expect(handle.readJson).toHaveBeenCalledWith('earn.json')
 		expect(acquireDatasetSnapshot).toHaveBeenCalledWith('yields', 'background')
 	})
 

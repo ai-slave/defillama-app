@@ -15,7 +15,12 @@ export {
 
 /** Acquire freshness once at a server entry point, then pass this handle through every transform. */
 export async function acquireYieldsSnapshot(refreshMode: DatasetSnapshotRefreshMode): Promise<YieldsSnapshot> {
-	return (await acquireDatasetSnapshot('yields', refreshMode)).handle
+	const { handle } = await acquireDatasetSnapshot('yields', refreshMode)
+	return {
+		generationId: handle.ref.snapshotId,
+		generatedAt: handle.ref.createdAt,
+		readJson: (relativePath) => handle.readJson(relativePath)
+	}
 }
 
 /** Optional consumers lose only their Yields enrichment when no usable snapshot can be acquired. */

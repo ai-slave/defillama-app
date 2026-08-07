@@ -21,8 +21,11 @@ vi.mock('~/containers/Yields/VaultRisk/coveredPools', () => ({
 
 import { getEarnPage as getEarnPageFromSnapshot } from '../earn.server'
 
-const snapshot = {} as never
-const getEarnPage = (query: Parameters<typeof getEarnPageFromSnapshot>[1]) => getEarnPageFromSnapshot(snapshot, query)
+// Unique generation per call: the prepared-rows cache keys on generationId,
+// and each test case mocks different upstream data under the same filters.
+let generationCounter = 0
+const getEarnPage = (query: Parameters<typeof getEarnPageFromSnapshot>[1]) =>
+	getEarnPageFromSnapshot({ generationId: `test-${++generationCounter}` } as never, query)
 // `uniswap-v2` and `lido` are on the whitelist served by /v2/meta (mocked above); `aave-v3` is not.
 
 const ZERO_TRIPLE: ApyTriple = { base: null, reward: null, total: null }

@@ -7,19 +7,24 @@ import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging('yields', async () => {
-	const [{ getEarnPageMeta }, { acquireYieldsSnapshot }] = await Promise.all([
+	const [{ getEarnPageMeta }, { getEarnPage }, { acquireYieldsSnapshot }] = await Promise.all([
 		import('~/containers/Yields/data/earnMeta.server'),
+		import('~/containers/Yields/data/earn.server'),
 		import('~/containers/Yields/server/dataset.server')
 	])
-	const [metadata, { questions: entityQuestions }] = await Promise.all([
-		getEarnPageMeta(await acquireYieldsSnapshot('blocking')),
+	const snapshot = await acquireYieldsSnapshot('blocking')
+	const [metadata, initialEarnPage, { questions: entityQuestions }] = await Promise.all([
+		getEarnPageMeta(snapshot),
+		// Default-view first page: rows in the initial HTML, and the same call
+		// warms the prepared-rows cache for the API's first readers.
+		getEarnPage(snapshot, {}),
 		fetchEntityQuestions('yields', 'page').catch(() => ({
 			questions: [] as string[]
 		}))
 	])
 
 	return {
-		props: { ...metadata, entityQuestions },
+		props: { ...metadata, entityQuestions, initialEarnPage, initialEarnPageGeneratedAt: snapshot.generatedAt },
 		revalidate: maxAgeForNext([23])
 	}
 })

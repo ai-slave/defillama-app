@@ -1,7 +1,7 @@
 import type { ProtocolRankingsCanonicalSnapshot } from './server/tableData.server'
 
 /**
- * Publication gate for protocol ranking snapshots (hardening plan P1).
+ * Publication gate for protocol ranking snapshots.
  *
  * Every adapter fetch inside getProtocolsByChain swallows its own failure, so
  * a fees or DEX outage produces a complete-looking result with the affected

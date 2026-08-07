@@ -1,4 +1,4 @@
-import { paginateAndSortRows } from '~/containers/Yields/yieldsTablePagination.server'
+import { prepareYieldsTable, sliceYieldsPage, sortYieldsRows } from '~/containers/Yields/yieldsTablePagination.server'
 import type { YieldsPaginatedTableResponse } from '~/containers/Yields/yieldsTableQuery'
 import { queryBoolean, queryIntClamped } from '~/server/api/params'
 import type { ApiQuery } from '~/server/api/types'
@@ -78,6 +78,17 @@ export async function getLoopsPage(
 	snapshot: YieldsSnapshot,
 	query: ApiQuery
 ): Promise<YieldsPaginatedTableResponse<LoopTableRow>> {
+	const prepared = await prepareYieldsTable({
+		surface: 'loops',
+		snapshot,
+		query,
+		prepare: () => buildPreparedLoops(snapshot, query),
+		measureBytes: (rows) => rows.length * 1024 + 256
+	})
+	return sliceYieldsPage(prepared, query)
+}
+
+async function buildPreparedLoops(snapshot: YieldsSnapshot, query: ApiQuery): Promise<LoopTableRow[]> {
 	const window = parseApyWindow(query)
 	const components = parseApyComponents(query)
 	const common = parseCommonFilters(query)
@@ -127,7 +138,7 @@ export async function getLoopsPage(
 		pageRows.push(loopRow)
 	}
 
-	return paginateAndSortRows<LoopTableRow, LoopSortKey>({
+	return sortYieldsRows<LoopTableRow, LoopSortKey>({
 		rows: pageRows,
 		query,
 		sortAccessors: {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+	canonicalQuerySignature,
 	defineTableQuery,
 	enumField,
 	nullableNumberField,
@@ -7,6 +8,29 @@ import {
 	stringSetField,
 	textField
 } from '../tableQuery'
+
+describe('canonicalQuerySignature', () => {
+	it('signs identically across key order, value order, and excluded paging params', () => {
+		const a = canonicalQuerySignature(
+			{ chain: ['Base', 'Ethereum'], minApy: '5', page: '3', pageSize: '50' },
+			{ exclude: ['page', 'pageSize'] }
+		)
+		const b = canonicalQuerySignature(
+			{ pageSize: '100', minApy: '5', page: '1', chain: ['Ethereum', 'Base'] },
+			{ exclude: ['page', 'pageSize'] }
+		)
+		expect(a).toBe(b)
+	})
+
+	it('distinguishes real filter differences; absent params drop but empty strings sign', () => {
+		const base = canonicalQuerySignature({ minApy: '5' }, { exclude: [] })
+		expect(canonicalQuerySignature({ minApy: '7' }, { exclude: [] })).not.toBe(base)
+		expect(canonicalQuerySignature({ minApy: '5', chain: undefined }, { exclude: [] })).toBe(base)
+		// An empty string may parse differently from an absent param, so it must
+		// not alias to the same prepared-rows entry.
+		expect(canonicalQuerySignature({ minApy: '5', chain: '' }, { exclude: [] })).not.toBe(base)
+	})
+})
 
 // Modeled on the ProtocolRankings query so K2's field list is provably
 // expressible with zero custom parsing code.

@@ -3,6 +3,10 @@ import type { BorrowMarketRow, DepegRow, EarnRow, LoopRow, RouteRow, TokenKeys, 
 
 /** Storage-neutral view of one pinned Yields generation, passed through server transforms. */
 export interface YieldsSnapshot {
+	/** Immutable generation identity — keys per-generation caches (e.g. prepared table rows). */
+	readonly generationId: string
+	/** When the generation was built — dates ISR-seeded data so client staleness is honest. */
+	readonly generatedAt: number
 	readJson<T>(relativePath: string): Promise<T>
 }
 

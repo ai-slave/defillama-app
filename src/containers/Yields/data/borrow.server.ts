@@ -1,4 +1,4 @@
-import { paginateAndSortRows } from '~/containers/Yields/yieldsTablePagination.server'
+import { prepareYieldsTable, sliceYieldsPage, sortYieldsRows } from '~/containers/Yields/yieldsTablePagination.server'
 import type { YieldsPaginatedTableResponse } from '~/containers/Yields/yieldsTableQuery'
 import { queryBoolean } from '~/server/api/params'
 import type { ApiQuery } from '~/server/api/types'
@@ -182,6 +182,17 @@ export async function getBorrowMarketsPage(
 	snapshot: YieldsSnapshot,
 	query: ApiQuery
 ): Promise<YieldsPaginatedTableResponse<MarketTableRow>> {
+	const prepared = await prepareYieldsTable({
+		surface: 'borrow-markets',
+		snapshot,
+		query,
+		prepare: () => buildPreparedBorrowMarkets(snapshot, query),
+		measureBytes: (rows) => rows.length * 1024 + 256
+	})
+	return sliceYieldsPage(prepared, query)
+}
+
+async function buildPreparedBorrowMarkets(snapshot: YieldsSnapshot, query: ApiQuery): Promise<MarketTableRow[]> {
 	const window = parseApyWindow(query)
 	const components = parseApyComponents(query)
 	const common = parseCommonFilters(query)
@@ -236,7 +247,7 @@ export async function getBorrowMarketsPage(
 		pageRows.push(marketRow)
 	}
 
-	return paginateAndSortRows<MarketTableRow, MarketSortKey>({
+	return sortYieldsRows<MarketTableRow, MarketSortKey>({
 		rows: pageRows,
 		query,
 		sortAccessors: {
@@ -254,6 +265,17 @@ export async function getBorrowRoutesPage(
 	snapshot: YieldsSnapshot,
 	query: ApiQuery
 ): Promise<YieldsPaginatedTableResponse<RouteTableRow>> {
+	const prepared = await prepareYieldsTable({
+		surface: 'borrow-routes',
+		snapshot,
+		query,
+		prepare: () => buildPreparedBorrowRoutes(snapshot, query),
+		measureBytes: (rows) => rows.length * 1024 + 256
+	})
+	return sliceYieldsPage(prepared, query)
+}
+
+async function buildPreparedBorrowRoutes(snapshot: YieldsSnapshot, query: ApiQuery): Promise<RouteTableRow[]> {
 	const window = parseApyWindow(query)
 	const components = parseApyComponents(query)
 	const common = parseCommonFilters(query)
@@ -294,7 +316,7 @@ export async function getBorrowRoutesPage(
 		)
 	}
 
-	return paginateAndSortRows<RouteTableRow, RouteSortKey>({
+	return sortYieldsRows<RouteTableRow, RouteSortKey>({
 		rows: pageRows,
 		query,
 		sortAccessors: ROUTE_SORT_ACCESSORS,
@@ -335,19 +357,19 @@ export async function getBorrowRoutesForTokenKeys(snapshot: YieldsSnapshot, toke
 		if (borrowMatch) borrowThis.push(route)
 	}
 
-	const query = { pageSize: 'all', sortBy: 'net_apy', sortDesc: 'true' }
+	const query = { sortBy: 'net_apy', sortDesc: 'true' }
 	return {
-		useAsCollateral: paginateAndSortRows<RouteTableRow, RouteSortKey>({
+		useAsCollateral: sortYieldsRows<RouteTableRow, RouteSortKey>({
 			rows: useAsCollateral,
 			query,
 			sortAccessors: ROUTE_SORT_ACCESSORS,
 			defaultSort: DEFAULT_ROUTE_SORT
-		}).rows,
-		borrowThis: paginateAndSortRows<RouteTableRow, RouteSortKey>({
+		}),
+		borrowThis: sortYieldsRows<RouteTableRow, RouteSortKey>({
 			rows: borrowThis,
 			query,
 			sortAccessors: ROUTE_SORT_ACCESSORS,
 			defaultSort: DEFAULT_ROUTE_SORT
-		}).rows
+		})
 	}
 }

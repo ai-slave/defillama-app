@@ -7,7 +7,11 @@ import { cachedResult, type CachedResultOptions } from '~/server/api/resultCache
  * and every page of that combination is then a slice — see offsetPage.server.ts
  * and cursorPage.server.ts.
  *
- * Namespace convention (plan D4): `table-pages:<surface>:prepared-rows` for
+ * The prepared payload is usually a row array, but a surface may carry
+ * derived aggregates of the same preparation alongside it (e.g. Yields'
+ * median APY over the filtered set) — hence the generic Prepared type.
+ *
+ * Namespace convention: `table-pages:<surface>:prepared-rows` for
  * new surfaces; pre-kernel namespaces keep their historical strings.
  */
 
@@ -16,7 +20,7 @@ export function hashTableQuerySignature(signature: string): string {
 	return createHash('sha256').update(signature).digest('base64url').slice(0, 22)
 }
 
-export function prepareTableRows<Row>({
+export function prepareTableRows<Prepared>({
 	namespace,
 	domain,
 	version,
@@ -30,12 +34,12 @@ export function prepareTableRows<Row>({
 	domain: string
 	/** The immutable dataset version the rows come from. */
 	version: string
-	/** Canonical query signature from defineTableQuery().signature. */
+	/** Canonical query signature (defineTableQuery().signature or canonicalQuerySignature). */
 	signature: string
 	memory: CachedResultOptions
-	prepare: () => Row[] | Promise<Row[]>
-	measureBytes?: (rows: Row[]) => number
-}): Promise<Row[]> {
+	prepare: () => Prepared | Promise<Prepared>
+	measureBytes?: (prepared: Prepared) => number
+}): Promise<Prepared> {
 	return cachedResult(
 		namespace,
 		`${domain}:${version}:${signature}`,

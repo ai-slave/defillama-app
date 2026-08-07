@@ -6,7 +6,7 @@ import { recordRuntimeError } from '~/utils/telemetry'
 
 /**
  * Keyed pointer + immutable blob store for runtime-built dataset snapshots
- * (plan D1). A deliberate sibling of DatasetSnapshotStore, not an
+ * A deliberate sibling of DatasetSnapshotStore, not an
  * implementation of it: this store holds single gzipped JSON blobs under
  * dynamic keys with TTL lifecycle, while the file store holds multi-file
  * generations under a static domain registry. The two share invariants, not
@@ -51,7 +51,7 @@ export type RedisBlobStore<T> = {
 	/**
 	 * Read the version named by `:last-good`. For the rebuild-FAILURE branch
 	 * only — never for ordinary freshness, where it would silently extend an
-	 * expired `:latest` (plan D1).
+	 * expired `:latest`.
 	 */
 	readLastGood: (key: string) => Promise<T | null>
 	/** Write blob, then `:latest`, then `:last-good`; false (and a recorded runtime error) on any failure. */

@@ -157,7 +157,7 @@ describe('getLSTPageData', () => {
 			return detail
 		})
 
-		const result = await getLSTPageData({ readJson: vi.fn() })
+		const result = await getLSTPageData({ generationId: 'test-gen', generatedAt: 0, readJson: vi.fn() })
 		const firstAreaRow = result.areaChartData[0]
 		const firstTokenRow = result.tokensList[0]
 		if (!firstAreaRow || !firstTokenRow) throw new Error('Expected LST chart and token rows')
@@ -201,7 +201,11 @@ describe('getLSTPageData', () => {
 		])
 
 		mocks.fetchLsdRates.mockRejectedValueOnce(new Error('legacy rates unavailable'))
-		const resultWithoutLegacyRates = await getLSTPageData({ readJson: vi.fn() })
+		const resultWithoutLegacyRates = await getLSTPageData({
+			generationId: 'test-gen',
+			generatedAt: 0,
+			readJson: vi.fn()
+		})
 
 		expect(resultWithoutLegacyRates.tokensList[0]).toMatchObject({
 			apy: 3,
@@ -225,7 +229,9 @@ describe('getLSTPageData', () => {
 			return protocolDetail({ name: protocolSlug, tokens: null, tokensInUsd: null })
 		})
 
-		await expect(getLSTPageData({ readJson: vi.fn() })).rejects.toThrow('member history unavailable')
+		await expect(getLSTPageData({ generationId: 'test-gen', generatedAt: 0, readJson: vi.fn() })).rejects.toThrow(
+			'member history unavailable'
+		)
 	})
 
 	it('preserves unavailable and explicit-zero LST measurements', async () => {
@@ -263,7 +269,7 @@ describe('getLSTPageData', () => {
 				: protocolDetail({ name: 'Crypto.com Liquid Staking', chain: 'Cronos', tokens: null, tokensInUsd: null })
 		)
 
-		const unavailableUsd = await getLSTPageData({ readJson: vi.fn() })
+		const unavailableUsd = await getLSTPageData({ generationId: 'test-gen', generatedAt: 0, readJson: vi.fn() })
 		expect(unavailableUsd.stakedEthInUsdSum).toBeNull()
 		expect(unavailableUsd.tokensList[0]).toMatchObject({
 			stakedEthInUsd: null,
@@ -281,7 +287,7 @@ describe('getLSTPageData', () => {
 					})
 				: protocolDetail({ name: 'Crypto.com Liquid Staking', chain: 'Cronos', tokens: null, tokensInUsd: null })
 		)
-		const explicitZeroUsd = await getLSTPageData({ readJson: vi.fn() })
+		const explicitZeroUsd = await getLSTPageData({ generationId: 'test-gen', generatedAt: 0, readJson: vi.fn() })
 		expect(explicitZeroUsd.stakedEthInUsdSum).toBe(0)
 		expect(explicitZeroUsd.tokensList[0]?.stakedEthInUsd).toBe(0)
 	})

@@ -42,14 +42,17 @@ import {
 } from '../borrow.server'
 import { getLoopsPage as getLoopsPageFromSnapshot } from '../loops.server'
 
-const snapshot = {} as never
+// Unique generation per call: the prepared-rows cache keys on generationId,
+// and each test case mocks different upstream data under the same filters.
+let generationCounter = 0
+const nextSnapshot = () => ({ generationId: `test-${++generationCounter}` }) as never
 const getBorrowMarketsPage = (query: Parameters<typeof getBorrowMarketsPageFromSnapshot>[1]) =>
-	getBorrowMarketsPageFromSnapshot(snapshot, query)
+	getBorrowMarketsPageFromSnapshot(nextSnapshot(), query)
 const getBorrowRoutesPage = (query: Parameters<typeof getBorrowRoutesPageFromSnapshot>[1]) =>
-	getBorrowRoutesPageFromSnapshot(snapshot, query)
-const getBorrowRoutesForTokenKeys = (keys: string[]) => getBorrowRoutesForTokenKeysFromSnapshot(snapshot, keys)
+	getBorrowRoutesPageFromSnapshot(nextSnapshot(), query)
+const getBorrowRoutesForTokenKeys = (keys: string[]) => getBorrowRoutesForTokenKeysFromSnapshot(nextSnapshot(), keys)
 const getLoopsPage = (query: Parameters<typeof getLoopsPageFromSnapshot>[1]) =>
-	getLoopsPageFromSnapshot(snapshot, query)
+	getLoopsPageFromSnapshot(nextSnapshot(), query)
 
 function windows(base: number | null, reward: number | null, total: number | null): ApyWindows {
 	const triple: ApyTriple = { base, reward, total }

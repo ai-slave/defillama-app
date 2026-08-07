@@ -17,6 +17,8 @@ describe('Yields v2 snapshot reader', () => {
 	it('reads every artifact through the same pinned handle', async () => {
 		const readJson = vi.fn()
 		const snapshot: YieldsSnapshot = {
+			generationId: 'test-gen',
+			generatedAt: 0,
 			async readJson<T>(path: string): Promise<T> {
 				readJson(path)
 				return path as T

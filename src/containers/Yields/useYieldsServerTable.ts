@@ -4,6 +4,7 @@ import * as React from 'react'
 import { useYieldsPaginatedTable } from './queries.client'
 import { pushYieldsQuery } from './queryUpdates.client'
 import type { IYieldsTableProps } from './Tables/types'
+import type { YieldsPaginatedTableResponse } from './yieldsTableQuery'
 import {
 	buildYieldsTableQueryString,
 	DEFAULT_YIELDS_TABLE_PAGE_SIZE,
@@ -17,12 +18,17 @@ export function useYieldsServerTable<TRow>({
 	endpoint,
 	enabled = true,
 	extraQuery,
-	defaultSorting = []
+	defaultSorting = [],
+	initialData,
+	initialDataUpdatedAt
 }: {
 	endpoint: string
 	enabled?: boolean
 	extraQuery?: QueryRecord
 	defaultSorting?: SortingState
+	/** ISR-provided first page of the DEFAULT view; ignored for parameterized URLs. */
+	initialData?: YieldsPaginatedTableResponse<TRow>
+	initialDataUpdatedAt?: number
 }) {
 	const router = useRouter()
 	const query = router.query as QueryRecord
@@ -36,17 +42,37 @@ export function useYieldsServerTable<TRow>({
 		if (!router.isReady) return null
 		return buildYieldsTableQueryString({ query, pagination: requestedPagination, sorting, extraQuery })
 	}, [enabled, extraQuery, query, requestedPagination, sorting, router.isReady])
-	const rowsQuery = useYieldsPaginatedTable<TRow>(endpoint, queryString)
-	const rows = rowsQuery.data?.rows ?? []
-	const total = rowsQuery.data?.total ?? 0
-	const medianApy = rowsQuery.data?.medianApy ?? null
+	const defaultQueryString = React.useMemo(
+		() =>
+			buildYieldsTableQueryString({
+				query: {},
+				pagination: { pageIndex: 0, pageSize: DEFAULT_YIELDS_TABLE_PAGE_SIZE },
+				sorting: defaultSorting,
+				extraQuery
+			}),
+		[defaultSorting, extraQuery]
+	)
+	const seed =
+		initialData && queryString === defaultQueryString
+			? { initialData, initialDataUpdatedAt: initialDataUpdatedAt ?? 0 }
+			: undefined
+	const rowsQuery = useYieldsPaginatedTable<TRow>(endpoint, queryString, seed)
+	// The seed renders during SSR/pre-hydration (the static HTML contains it, so
+	// dropping it before the router resolves would be a hydration mismatch) and
+	// for the default view. A URL known to carry filters must NOT show it - the
+	// seeded rows don't match the URL - and neither must a failed fetch.
+	const seedVisible = (!router.isReady || queryString === defaultQueryString) && !rowsQuery.isError
+	const data = rowsQuery.data ?? (seedVisible ? initialData : undefined)
+	const rows = data?.rows ?? []
+	const total = data?.total ?? 0
+	const medianApy = data?.medianApy ?? null
 	const pagination = React.useMemo<PaginationState>(() => {
-		if (!rowsQuery.data) return requestedPagination
+		if (!data) return requestedPagination
 		return {
-			pageIndex: Math.max(0, rowsQuery.data.page - 1),
-			pageSize: rowsQuery.data.pageSize || requestedPagination.pageSize
+			pageIndex: Math.max(0, data.page - 1),
+			pageSize: data.pageSize || requestedPagination.pageSize
 		}
-	}, [requestedPagination, rowsQuery.data])
+	}, [requestedPagination, data])
 
 	const handlePaginationChange = React.useCallback(
 		(nextPagination: PaginationState) => {

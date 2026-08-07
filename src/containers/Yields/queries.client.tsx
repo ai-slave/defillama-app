@@ -4,10 +4,18 @@ import { fetchBorrowMarketDetailHistory, fetchPoolDetailHistory } from './poolDe
 import type { BorrowMarketHistory, PoolHistory } from './poolDetail/types'
 import type { YieldsPaginatedTableResponse } from './yieldsTableQuery'
 
-export const useYieldsPaginatedTable = <TRow,>(endpoint: string, queryString: string | null) => {
+export const useYieldsPaginatedTable = <TRow,>(
+	endpoint: string,
+	queryString: string | null,
+	seed?: { initialData: YieldsPaginatedTableResponse<TRow>; initialDataUpdatedAt: number }
+) => {
 	const url = queryString ? `${endpoint}${queryString}` : null
 	return useQuery<YieldsPaginatedTableResponse<TRow>>({
 		queryKey: ['yield-paginated-table', endpoint, queryString],
+		// ISR-provided first page for the default view: rows render with zero
+		// fetches while fresh; staleness (dated from the ISR build) triggers at
+		// most one background refresh.
+		...(seed ? { initialData: seed.initialData, initialDataUpdatedAt: seed.initialDataUpdatedAt } : {}),
 		queryFn: async ({ signal }) =>
 			url
 				? fetchJson<YieldsPaginatedTableResponse<TRow>>(url, { signal })
