@@ -486,7 +486,6 @@ function hasAttestations(meta: RWAPlatformMeta): boolean {
 	return (
 		meta.attestationFrequency != null ||
 		meta.dateOfLastAttestation != null ||
-		meta.llamaGradeAttestation != null ||
 		meta.milestones.length > 0 ||
 		meta.keyMilestones != null
 	)
@@ -501,9 +500,6 @@ function Attestations({ meta }: { meta: RWAPlatformMeta }) {
 				) : null}
 				{meta.dateOfLastAttestation ? (
 					<ProfileField label="Last attestation" value={meta.dateOfLastAttestation} />
-				) : null}
-				{meta.llamaGradeAttestation != null ? (
-					<ProfileField label="Llama-grade attestation" value={meta.llamaGradeAttestation ? 'Yes' : 'No'} />
 				) : null}
 			</FactGrid>
 			{meta.milestones.length > 0 ? (

@@ -744,7 +744,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 			label="Chart type"
 			variant="default"
 			size="md"
-			className="mr-auto"
+			className="mr-auto max-w-full overflow-x-auto"
 		/>
 	)
 	/* The chart sits in two thirds of the summary grid on platform pages, where

@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 
-/* Behavioural contracts only — nothing here asserts on layout, class names or
-   UI copy, so the views can be restyled freely:
+/* Behavioural contracts only — nothing here asserts on layout or class names,
+   so the views can be restyled freely:
    - the peer dataset is fetched on demand, never on page load
    - the profile copy stays in the document whichever view is showing (SEO)
    - the selected view is shareable through ?view=
@@ -158,6 +158,30 @@ describe('RWA platform data views', () => {
 
 		const website = [...container.querySelectorAll('a')].find((link) => link.textContent === 'Website')
 		expect(website?.getAttribute('href')).toBe('https://official.example')
+	})
+
+	it('hides Llama Grade attestation without hiding other attestation details', async () => {
+		await render({
+			...data,
+			meta: {
+				...meta,
+				attestationFrequency: 'Monthly',
+				llamaGradeAttestation: true
+			} as RWAPlatformMeta
+		})
+
+		expect(container.textContent).toContain('Attestation frequency')
+		expect(container.textContent).toContain('Monthly')
+		expect(container.textContent).not.toContain('Llama-grade attestation')
+	})
+
+	it('does not show an empty attestation group for Llama Grade alone', async () => {
+		await render({
+			...data,
+			meta: { ...meta, llamaGradeAttestation: true } as RWAPlatformMeta
+		})
+
+		expect(container.textContent).not.toContain('Attestations & milestones')
 	})
 
 	it('publishes the selected view through ?view= and clears it for the default view', async () => {
