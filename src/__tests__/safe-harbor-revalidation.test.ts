@@ -22,8 +22,13 @@ vi.mock('~/utils/metadata', () => ({
 	}
 }))
 
-vi.mock('~/containers/ProtocolRankings/queries.server', () => ({
-	getProtocolsByChain: vi.fn().mockResolvedValue({
+vi.mock('~/containers/ProtocolRankings/server/tableData.server', () => ({
+	getProtocolRankingsSnapshot: vi.fn().mockResolvedValue({
+		chain: 'All',
+		createdAt: 1,
+		snapshot: 'aK3f9Qm2xLpR7Bn0Wc-T',
+		availableActivityMetrics: [],
+		source: { chains: ['Ethereum'], feeProtocols: null, dexs: null, perps: null },
 		protocols: [
 			{
 				name: 'Protocol',

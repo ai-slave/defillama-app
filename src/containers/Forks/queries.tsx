@@ -102,6 +102,10 @@ export async function getForksByProtocolPageData({ fork }: { fork: string }): Pr
 		const metadataCache = await import('~/utils/metadata').then((m) => m.default)
 		const [chartData, protocolsByChainData, forkBreakdownChartData] = await Promise.all([
 			fetchForkProtocolChart({ protocol: canonicalFork }),
+			// Deliberately NOT the shared rankings snapshot: the fork filter runs
+			// BEFORE parent aggregation, so a parent's totals cover only its
+			// fork-matching children. Post-filtering the 'All' snapshot cannot
+			// reproduce that without recomputing parent rows.
 			getProtocolsByChain({
 				chain: 'All',
 				chainMetadata: metadataCache.chainMetadata,

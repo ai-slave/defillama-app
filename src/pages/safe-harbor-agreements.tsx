@@ -4,7 +4,7 @@ import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
-import { getProtocolsByChain } from '~/containers/ProtocolRankings/queries.server'
+import { getProtocolRankingsSnapshot } from '~/containers/ProtocolRankings/server/tableData.server'
 import Layout from '~/layout'
 import { Icon } from '~/ui/Icon'
 import { slug } from '~/utils'
@@ -20,10 +20,11 @@ export const getStaticProps = withPerformanceLogging('safe-harbor-agreements', a
 
 	const [safeHarborProtocols, rankings] = await Promise.all([
 		fetchJson<Record<string, boolean>>('https://api.llama.fi/_fe/static/safe-harbor-projects'),
-		getProtocolsByChain({
+		getProtocolRankingsSnapshot({
 			chain: 'All',
 			chainMetadata: metadataCache.chainMetadata,
-			protocolMetadata: metadataCache.protocolMetadata
+			protocolMetadata: metadataCache.protocolMetadata,
+			categoriesAndTagsMetadata: metadataCache.categoriesAndTags
 		})
 	])
 	if (!rankings) throw new Error('All-chain protocol rankings are unavailable')

@@ -8,11 +8,11 @@ The app now has three server-paginated tables, built at three different times, t
 on the same five-layer pipeline — build an immutable dataset, store it under a version, prepare a
 filtered+sorted row order per query, slice a window, request the next window from the client:
 
-| Surface           | Store                                        | Version name           | Window            | Client                    |
-| ----------------- | -------------------------------------------- | ---------------------- | ----------------- | ------------------------- |
-| Yields            | Disk, `src/server/datasetSnapshots`          | `createdAt-uuid`       | offset            | React Query               |
-| Tokens            | Redis, `tokens-market-snapshot:v1:{rev}`     | `floor(now / 5min)`    | offset            | React Query               |
-| Protocol rankings | Redis, `protocol-rankings:v3:{chain}:{tok}`  | sha256 of content      | verified cursor   | reducer + sentinel        |
+| Surface           | Store                                       | Version name        | Window          | Client             |
+| ----------------- | ------------------------------------------- | ------------------- | --------------- | ------------------ |
+| Yields            | Disk, `src/server/datasetSnapshots`         | `createdAt-uuid`    | offset          | React Query        |
+| Tokens            | Redis, `tokens-market-snapshot:v1:{rev}`    | `floor(now / 5min)` | offset          | React Query        |
+| Protocol rankings | Redis, `protocol-rankings:v3:{chain}:{tok}` | sha256 of content   | verified cursor | reducer + sentinel |
 
 Every layer except storage is implemented three times with no shared code. The next large table becomes a
 fourth bespoke stack unless the common mechanism is extracted. This plan extracts it — as a small set of
@@ -68,19 +68,19 @@ Settled here so no phase blocks on a discussion. Each records the choice, the re
 `docs/dataset-snapshot-boundaries.md` anticipates a Redis implementation of the `DatasetSnapshotStore`
 contract, but the two stores answer different shapes of problem:
 
-|                      | `DatasetSnapshotStore` (disk)                  | `redisBlobStore` (new)                       |
-| -------------------- | ---------------------------------------------- | -------------------------------------------- |
-| Unit of storage      | multi-file generation with `manifest.json`     | one gzipped JSON blob                        |
-| Addressing           | static domain union in `contract.ts`           | dynamic key (e.g. chain slug) under a prefix |
-| Lifecycle            | staging dir → atomic rename → pruned retention | TTL expiry                                   |
-| Built                | before serving (prepare/refresh scripts)       | at runtime, on demand                        |
+|                 | `DatasetSnapshotStore` (disk)                  | `redisBlobStore` (new)                       |
+| --------------- | ---------------------------------------------- | -------------------------------------------- |
+| Unit of storage | multi-file generation with `manifest.json`     | one gzipped JSON blob                        |
+| Addressing      | static domain union in `contract.ts`           | dynamic key (e.g. chain slug) under a prefix |
+| Lifecycle       | staging dir → atomic rename → pruned retention | TTL expiry                                   |
+| Built           | before serving (prepare/refresh scripts)       | at runtime, on demand                        |
 
 Forcing the blob store through the file contract would mean either faking manifests for single-artifact
 payloads or breaking the registry's closed-union type safety to admit dynamic per-chain domains. Neither is
 worth it. Instead the two stores share **invariants**, not an interface — blob/generation written first,
 pointer advanced only on success, versions immutable, last-good never rolled back — and
 `docs/server-cache-layers.md` documents them as two rows with the same failure-behavior discipline
-(Phase K5). Revisit unification only if a third *partitioned, runtime-built* dataset appears; until then an
+(Phase K5). Revisit unification only if a third _partitioned, runtime-built_ dataset appears; until then an
 abstraction with two deliberately different implementations is a contract nobody can rely on.
 
 The store's full surface (final — K2 must not need to extend it):
@@ -88,14 +88,14 @@ The store's full surface (final — K2 must not need to extend it):
 ```ts
 // src/server/datasetSnapshots/redisBlobStore.server.ts
 export function createRedisBlobStore<T extends { key: string; version: string }>(config: {
-	prefix: string               // e.g. 'protocol-rankings:v3'
-	versionTtlSeconds: number    // immutable blob   — rankings: 14_400
-	pointerTtlSeconds: number    // ':latest'        — rankings: 3_300
-	lastGoodTtlSeconds: number   // ':last-good'     — rankings: 86_400
+	prefix: string // e.g. 'protocol-rankings:v3'
+	versionTtlSeconds: number // immutable blob   — rankings: 14_400
+	pointerTtlSeconds: number // ':latest'        — rankings: 3_300
+	lastGoodTtlSeconds: number // ':last-good'     — rankings: 86_400
 }): {
 	readVersion(key: string, version: string): Promise<T | null>
-	readCurrent(key: string): Promise<T | null>       // via ':latest'; null = caller rebuilds
-	readLastGood(key: string): Promise<T | null>      // stale-if-error path ONLY — never freshness
+	readCurrent(key: string): Promise<T | null> // via ':latest'; null = caller rebuilds
+	readLastGood(key: string): Promise<T | null> // stale-if-error path ONLY — never freshness
 	publish(key: string, payload: T): Promise<boolean>
 }
 ```
@@ -120,18 +120,18 @@ Semantics, all lifted from `snapshot.server.ts:61-119` plus hardening Phase 1b:
 
 Renames after the first consumer are pure churn, so these are final:
 
-| Thing                        | Name                                                          |
-| ---------------------------- | ------------------------------------------------------------- |
-| Server module tree           | `src/server/tablePages/`                                      |
-| Kernel files                 | `tableQuery.ts`, `preparedRows.server.ts`, `offsetPage.server.ts`, `cursorPage.server.ts`, `types.ts` |
-| Storage adapter              | `src/server/datasetSnapshots/redisBlobStore.server.ts`        |
-| Client hook                  | `src/hooks/useTablePages.ts`                                  |
-| Hook modes                   | `'local' \| 'offset' \| 'cursor'`                             |
-| Status/sentinel component    | `src/components/Table/TablePagesStatus.tsx`                   |
-| Per-surface files            | `containers/<S>/tableQuery.ts`, `containers/<S>/server/tableData.server.ts`, `containers/<S>/server/api.ts` |
+| Thing                     | Name                                                                                                        |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Server module tree        | `src/server/tablePages/`                                                                                    |
+| Kernel files              | `tableQuery.ts`, `preparedRows.server.ts`, `offsetPage.server.ts`, `cursorPage.server.ts`, `types.ts`       |
+| Storage adapter           | `src/server/datasetSnapshots/redisBlobStore.server.ts`                                                      |
+| Client hook               | `src/hooks/useTablePages.ts`                                                                                |
+| Hook modes                | `'local' \| 'offset' \| 'cursor'`                                                                           |
+| Status/sentinel component | `src/components/Table/TablePagesStatus.tsx`                                                                 |
+| Per-surface files         | `containers/<S>/tableQuery.ts`, `containers/<S>/server/tableData.server.ts`, `containers/<S>/server/api.ts` |
 
 Rationale: `tablePages` says what it serves without inventing vocabulary ("kernel", "windowing", "strategy"
-appear nowhere in code); mode names are the *same words* as the server modules so navigating from a hook
+appear nowhere in code); mode names are the _same words_ as the server modules so navigating from a hook
 call to the mechanism is a string match; `.server.ts` suffixes follow the source-boundary idiom in
 `docs/dataset-snapshot-boundaries.md`.
 
@@ -199,7 +199,7 @@ Rules, enforced by review on every phase of this plan:
   `readModel` variant renamed `ProtocolRankingActivitySourceKey`, every import pointed at its definer.
 - **Few files, single-purpose files — not merged files.** The way to avoid navigation sprawl is the small
   fixed per-surface census (`tableQuery.ts`, `server/tableData.server.ts`, `server/api.ts`), where each
-  file is the *only* home of its concept — not fewer files glued together by re-export stubs. If a file's
+  file is the _only_ home of its concept — not fewer files glued together by re-export stubs. If a file's
   top grows an `export { … } from` block, that block is the bug.
 - **Kernel included.** `src/server/tablePages/` has no `index.ts`; consumers import
   `~/server/tablePages/cursorPage.server` directly. Grep for a symbol must return exactly one definition
@@ -256,7 +256,7 @@ Rules that keep it navigable:
   beat a factory with ten options; revisit only if the third consumer proves the lines identical.
 - **Every kernel option must have a live consumer.** Precomputed signature lists and the aligned
   edge-expiry policy enter the kernel in the Tokens phase, not before.
-- **Browser/server split follows the existing idiom:** `tableQuery.ts` builds signature *strings* and is
+- **Browser/server split follows the existing idiom:** `tableQuery.ts` builds signature _strings_ and is
   browser-safe (the client needs identical normalization to build request params); hashing stays in
   `.server.ts` modules (`node:crypto`), satisfying the source-boundary tests described in
   `docs/dataset-snapshot-boundaries.md`.
@@ -287,7 +287,7 @@ largely absorbed by this branch. Disposition of its phases, so the hanging branc
 ## Phases
 
 Each phase is one reviewable PR, independently shippable and revertible. K1 ships as dead code by design —
-but *tested* dead code with a README, and its shape is treated as provisional until K2 (the first consumer)
+but _tested_ dead code with a README, and its shape is treated as provisional until K2 (the first consumer)
 validates it. The dead window should be days, not weeks.
 
 ### Phase K1 — Extract the kernel (dead code)
@@ -302,7 +302,7 @@ validates it. The dead window should be days, not weeks.
    means the normalizer set is wrong, not the field list.
 2. `preparedRows.server.ts`: lift the signature hash (`pagination.server.ts:88-90`) and the
    `cachedResult`-backed prepare cache (`server/api.ts:87-99`). Caller supplies `prepare(snapshotRows,
-   query)` plus an explicit namespace (D4); the module owns keying (`domain:version:signatureHash`) and
+query)` plus an explicit namespace (D4); the module owns keying (`domain:version:signatureHash`) and
    memoization options.
 3. `cursorPage.server.ts`: lift `encodeCursor`/`decodeCursor`/`paginateProtocolRankingRows`
    (`pagination.server.ts:92-254`) generalized over `rowId` and `getSortValue` callbacks. The cursor
@@ -409,7 +409,7 @@ substantive Tokens change.
    plan's P4 already flags its absence) with the same failure-behavior column as the disk store: "failed
    publish never advances the pointer; `:last-good` serves on rebuild failure". Document D1's
    sibling-by-design relationship in the dataset-snapshots section.
-2. ADR `docs/adr/000N-table-delivery-tiers.md`: record the three-tier decision rule and *why* cursor mode
+2. ADR `docs/adr/000N-table-delivery-tiers.md`: record the three-tier decision rule and _why_ cursor mode
    exists (accumulating UIs cannot tolerate a moving dataset; discrete pages can) — the reasoning the
    hardening plan notes is currently nowhere in the repo. Subsumes the ADR proposed there; write one ADR,
    not two.
@@ -434,7 +434,7 @@ infrastructure with the same status as `resultCache` or `datasetSnapshots`. The 
   own table component. Identical shape on every surface, forever.
 - **The census applies to every table surface, including local (tier-1) ones.** A local surface has a
   `tableQuery.ts` schema and `useTablePages({ mode: 'local' })` (rows from props, zero requests, same
-  return contract) and simply omits the two server files. Shape is uniform everywhere; *transport* is the
+  return contract) and simply omits the two server files. Shape is uniform everywhere; _transport_ is the
   only per-surface difference, so promoting a page across tiers changes its mode and adds files — never
   rewrites the page. Adoption rule: every NEW table page uses the census from day one regardless of tier;
   existing tier-1 pages adopt it opportunistically when next substantively touched — never as a standalone
@@ -455,7 +455,7 @@ Permanently rejected, so they are never relitigated: an `index.ts` barrel, a rou
 registry, wall-clock `revision` naming, speculative backings (S3/DB), and any kernel option without two
 live consumers. K3 is the validation gate for this end state: if Yields (offset, disk store, different row
 shape) fits the census without kernel edits, the shape is proven and the freeze takes effect at K5. If K3
-reveals a genuine gap, it is fixed *during K3* — the last window in which kernel churn is cheap — and the
+reveals a genuine gap, it is fixed _during K3_ — the last window in which kernel churn is cheap — and the
 freeze still lands with K5.
 
 ---
