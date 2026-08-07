@@ -1,7 +1,7 @@
 import { replaceAliases } from './customColumnsUtils'
 import { createFormulaEvaluator } from './formula.service'
-import { isProtocolRankingSortKey } from './query'
 import { getProtocolRankingSortValue } from './sortAccessors'
+import { isProtocolRankingSortKey } from './tableQuery'
 import type { IProtocol } from './types'
 
 export type ProtocolRankingExportColumn = {

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { parseStructuredProtocolRankingQuery } from '../query'
-import type { ProtocolRankingsCanonicalSnapshot } from '../snapshot.server'
+import type { ProtocolRankingsCanonicalSnapshot } from '../server/tableData.server'
+import { parseStructuredProtocolRankingQuery } from '../tableQuery'
 import type { IProtocol } from '../types'
 
 const mocks = vi.hoisted(() => ({
@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
 	isProtocolRankingSnapshotToken: (value: string) => /^[A-Za-z0-9_-]{20}$/.test(value)
 }))
 
-vi.mock('../snapshot.server', () => mocks)
+vi.mock('../server/tableData.server', () => mocks)
 
 import { parseProtocolRankingApiQuery, protocolRankingsApi } from '../server/api'
 
@@ -101,10 +101,12 @@ describe('protocol rankings API', () => {
 		})
 	})
 
-	it('prepares a sorted query once and slices later cursor pages from that order', async () => {
+	it('slices later cursor pages from the same prepared order', async () => {
+		// The sort-once memoization itself is covered by preparedRows.test.ts;
+		// here we only pin the observable contract: page 2 continues page 1's
+		// order under the same snapshot with no skipped or repeated rows.
 		const pagedSnapshot = { ...canonical, snapshot: 'abcdefghijklmnopqr99' }
 		mocks.getRequestedProtocolRankingsSnapshot.mockResolvedValue({ snapshot: pagedSnapshot, mismatch: false })
-		const toSorted = vi.spyOn(Array.prototype, 'toSorted')
 		const first = await protocolRankingsApi.handle({
 			method: 'GET',
 			url: '/api/public/protocol-rankings?chain=All&limit=1',
@@ -119,9 +121,8 @@ describe('protocol rankings API', () => {
 			headers: {}
 		})
 
+		expect(firstPage.rows.map((item: { id: string }) => item.id)).toEqual(['a'])
 		expect('serializedJson' in second && JSON.parse(second.serializedJson).rows[0].id).toBe('b')
-		expect(toSorted).toHaveBeenCalledTimes(1)
-		toSorted.mockRestore()
 	})
 
 	it('rejects malformed snapshot tokens before touching the snapshot cache', async () => {

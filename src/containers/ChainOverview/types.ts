@@ -1,4 +1,4 @@
-import type { ProtocolRankingInitialPage } from '~/containers/ProtocolRankings/query'
+import type { ProtocolRankingInitialPage } from '~/containers/ProtocolRankings/tableQuery'
 import type { IProtocol } from '~/containers/ProtocolRankings/types'
 import type { Raise } from '~/containers/Raises/model'
 import type { IChainMetadata, IProtocolLlamaswapChain as BuyOnLlamaswapChain } from '~/utils/metadata/types'

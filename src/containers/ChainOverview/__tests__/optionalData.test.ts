@@ -38,21 +38,26 @@ vi.mock('~/containers/Incentives/queries', () => ({
 	getChainIncentivesFromAggregatedEmissions: mocks.getChainIncentivesFromAggregatedEmissions
 }))
 vi.mock('~/containers/ProtocolRankings/queries.server', () => ({ getProtocolsByChain: mocks.getProtocolsByChain }))
-vi.mock('~/containers/ProtocolRankings/snapshot.server', () => ({
-	getProtocolRankingsSnapshot: async () => {
-		const result = await mocks.getProtocolsByChain()
-		if (!result) throw new Error('Missing protocol aggregation for Ethereum')
-		const { protocols, chains, fees, dexs, perps } = result
-		return {
-			chain: 'Ethereum',
-			createdAt: 1,
-			snapshot: 'test-snapshot',
-			protocols,
-			availableActivityMetrics: [],
-			source: { chains, feeProtocols: fees?.protocols ?? null, dexs, perps }
+vi.mock('~/containers/ProtocolRankings/server/tableData.server', () => {
+	// Version must be unique per build: the prepared-rows cache keys on
+	// (chain, version, signature) and trusts that a version names one content.
+	let snapshotCounter = 0
+	return {
+		getProtocolRankingsSnapshot: async () => {
+			const result = await mocks.getProtocolsByChain()
+			if (!result) throw new Error('Missing protocol aggregation for Ethereum')
+			const { protocols, chains, fees, dexs, perps } = result
+			return {
+				chain: 'Ethereum',
+				createdAt: 1,
+				snapshot: `test-snapshot-${++snapshotCounter}`,
+				protocols,
+				availableActivityMetrics: [],
+				source: { chains, feeProtocols: fees?.protocols ?? null, dexs, perps }
+			}
 		}
 	}
-}))
+})
 vi.mock('~/containers/Raises/api', () => ({ fetchRaises: mocks.fetchRaises }))
 vi.mock('~/containers/RWA/api', () => ({ fetchRWAStats: mocks.fetchRWAStats }))
 vi.mock('~/containers/Stablecoins/api', () => ({ fetchStablecoinAssetsApi: mocks.fetchStablecoinAssetsApi }))

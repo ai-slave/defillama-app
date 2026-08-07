@@ -17,7 +17,7 @@ import { getMarketCapToAnnualizedMetricRatio, getPercentChange, slug } from '~/u
 import type { IChainMetadata, IProtocolMetadata, ProtocolLlamaswapMetadata } from '~/utils/metadata/types'
 import {
 	buildDimensionProtocolMetrics,
-	type ProtocolRankingActivityMetricKey,
+	type ProtocolRankingActivitySourceKey,
 	type ProtocolRankingActivitySources
 } from './readModel'
 import type {
@@ -339,7 +339,7 @@ function aggregateEmissions(children: StoredChildProtocol[]): EmissionsMetrics |
 
 function aggregateActivityMetric(
 	children: StoredChildProtocol[],
-	metricKey: ProtocolRankingActivityMetricKey
+	metricKey: ProtocolRankingActivitySourceKey
 ): ProtocolRankingActivityMetric | undefined {
 	let hasMetric = false
 	const total24h: AvailableMetricTotal = { value: 0, hasValue: false }
@@ -602,7 +602,7 @@ export const getProtocolsByChain = async ({
 	if (dexAggregators) activity.dexAggregators = dexAggregators
 	if (perpsAggregators) activity.perpsAggregators = perpsAggregators
 	if (bridgeAggregators) activity.bridgeAggregators = bridgeAggregators
-	const activityMetricKeys = Object.keys(activity) as ProtocolRankingActivityMetricKey[]
+	const activityMetricKeys = Object.keys(activity) as ProtocolRankingActivitySourceKey[]
 	const dimensionProtocols = buildDimensionProtocolMetrics({
 		fees,
 		revenue,
@@ -782,7 +782,7 @@ export const getProtocolsByChain = async ({
 		const parentFees = aggregateFees(childProtocols, parentProtocol.mcap)
 		const parentRevenue = aggregateRevenue(childProtocols, parentProtocol.mcap)
 		const parentHoldersRevenue = aggregateHoldersRevenue(childProtocols)
-		const parentActivity = {} as Partial<Record<ProtocolRankingActivityMetricKey, ProtocolRankingActivityMetric>>
+		const parentActivity = {} as Partial<Record<ProtocolRankingActivitySourceKey, ProtocolRankingActivityMetric>>
 		for (const metricKey of activityMetricKeys) {
 			const metric = aggregateActivityMetric(childProtocols, metricKey)
 			if (metric) parentActivity[metricKey] = metric

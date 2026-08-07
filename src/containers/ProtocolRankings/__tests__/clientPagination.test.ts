@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_PROTOCOL_RANKING_QUERY, protocolRankingQuerySignature } from '../query'
+import { createTablePagesReducer } from '~/hooks/useTablePages'
+import { DEFAULT_PROTOCOL_RANKING_QUERY, protocolRankingQuery, type ProtocolRankingPage } from '../tableQuery'
 import type { IProtocol } from '../types'
-import { protocolRankingClientReducer, shouldReplaceProtocolRankingRows } from '../useProtocolRankingPages'
 
+// Rankings-shaped acceptance tests for the kernel reducer: the page carries
+// the wire `snapshot` field plus availableActivityMetrics, and rows dedupe on
+// id ?? slug exactly as before the K2 cutover.
+type RankingPage = ProtocolRankingPage<IProtocol> & { version: string }
+
+const reducer = createTablePagesReducer<IProtocol, RankingPage>((row) => row.id ?? row.slug)
 const row = (id: string) => ({ id, name: id, slug: id }) as IProtocol
 
 const initialState = {
@@ -10,56 +16,47 @@ const initialState = {
 	loadedQuerySignature: 'default',
 	nextCursor: 'next',
 	snapshot: 'v1',
+	version: 'v1',
 	total: 3,
 	hasMore: true,
 	availableActivityMetrics: [],
 	isReplacing: false,
 	isLoadingMore: false,
-	error: null,
+	error: null as 'replace' | 'append' | null,
 	activeRequest: 0
 }
 
+function page(rows: IProtocol[], overrides: Partial<RankingPage> = {}): RankingPage {
+	return {
+		rows,
+		nextCursor: null,
+		snapshot: 'v1',
+		version: 'v1',
+		total: rows.length,
+		hasMore: false,
+		availableActivityMetrics: [],
+		...overrides
+	}
+}
+
 describe('protocol ranking client request ordering', () => {
-	it('hydrates the default SSR query without immediately replacing its rows', () => {
-		expect(
-			shouldReplaceProtocolRankingRows({
-				enabled: true,
-				querySignature: 'default',
-				loadedQuerySignature: 'default'
-			})
-		).toBe(false)
-		expect(
-			shouldReplaceProtocolRankingRows({
-				enabled: true,
-				querySignature: 'persisted-fees',
-				loadedQuerySignature: 'default'
-			})
-		).toBe(true)
-		expect(
-			shouldReplaceProtocolRankingRows({
-				enabled: true,
-				querySignature: 'default',
-				loadedQuerySignature: 'persisted-fees'
-			})
-		).toBe(true)
-	})
 	it('retains rows during replacement and accepts only the latest response', () => {
-		const firstStarted = protocolRankingClientReducer(initialState, { type: 'replace-start', request: 1 })
+		const firstStarted = reducer(initialState, { type: 'replace-start', request: 1 })
 		expect(firstStarted.rows.map((item) => item.id)).toEqual(['ssr'])
 		expect(firstStarted.isReplacing).toBe(true)
-		const secondStarted = protocolRankingClientReducer(firstStarted, { type: 'replace-start', request: 2 })
-		const stale = protocolRankingClientReducer(secondStarted, {
+		const secondStarted = reducer(firstStarted, { type: 'replace-start', request: 2 })
+		const stale = reducer(secondStarted, {
 			type: 'success',
 			request: 1,
 			mode: 'replace',
-			page: { ...initialState, rows: [row('stale')] },
+			page: page([row('stale')]),
 			querySignature: 'first'
 		})
-		const latest = protocolRankingClientReducer(stale, {
+		const latest = reducer(stale, {
 			type: 'success',
 			request: 2,
 			mode: 'replace',
-			page: { ...initialState, rows: [row('latest')], nextCursor: null, hasMore: false },
+			page: page([row('latest')]),
 			querySignature: 'second'
 		})
 
@@ -68,31 +65,47 @@ describe('protocol ranking client request ordering', () => {
 		expect(latest.isReplacing).toBe(false)
 	})
 
+	it('dedupes appended rows on id ?? slug', () => {
+		const loading = reducer(initialState, { type: 'append-start', request: 1 })
+		const appended = reducer(loading, {
+			type: 'success',
+			request: 1,
+			mode: 'append',
+			page: page([row('ssr'), row('fresh')], { total: 3, hasMore: true, nextCursor: 'next-2' }),
+			querySignature: 'default'
+		})
+
+		expect(appended.rows.map((item) => item.id)).toEqual(['ssr', 'fresh'])
+		expect(appended.nextCursor).toBe('next-2')
+	})
+
 	it('accepts a refreshed static first page without remounting table state', () => {
-		const refreshed = protocolRankingClientReducer(initialState, {
+		const refreshed = reducer(initialState, {
 			type: 'source-change',
 			request: 1,
 			rows: [row('fresh-ssr')],
 			page: {
 				nextCursor: 'v2-next',
 				snapshot: 'v2',
+				version: 'v2',
 				total: 1,
 				hasMore: true,
 				availableActivityMetrics: []
-			}
+			},
+			defaultQuerySignature: protocolRankingQuery.signature(DEFAULT_PROTOCOL_RANKING_QUERY)
 		})
 
 		expect(refreshed).toMatchObject({
 			rows: [row('fresh-ssr')],
 			snapshot: 'v2',
 			nextCursor: 'v2-next',
-			loadedQuerySignature: protocolRankingQuerySignature(DEFAULT_PROTOCOL_RANKING_QUERY)
+			loadedQuerySignature: protocolRankingQuery.signature(DEFAULT_PROTOCOL_RANKING_QUERY)
 		})
 	})
 
 	it('keeps an incremental failure idle until an explicit retry', () => {
-		const loading = protocolRankingClientReducer(initialState, { type: 'append-start', request: 1 })
-		const failed = protocolRankingClientReducer(loading, { type: 'failed', request: 1, mode: 'append' })
+		const loading = reducer(initialState, { type: 'append-start', request: 1 })
+		const failed = reducer(loading, { type: 'failed', request: 1, mode: 'append' })
 
 		expect(failed).toMatchObject({
 			rows: initialState.rows,

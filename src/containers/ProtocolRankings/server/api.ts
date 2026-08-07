@@ -1,20 +1,21 @@
-import { cachedJsonResult, cachedResult } from '~/server/api/resultCache'
+import { cachedJsonResult } from '~/server/api/resultCache'
 import { defineApiRoute, type ApiQuery } from '~/server/api/types'
+import { TableCursorError } from '~/server/tablePages/cursorPage.server'
+import { prepareTableRows } from '~/server/tablePages/preparedRows.server'
 import { slug } from '~/utils'
 import metadataCache from '~/utils/metadata'
-import { getProtocolRankingRows, paginateProtocolRankingRows, ProtocolRankingCursorError } from '../pagination.server'
+import { getProtocolRankingRows, paginateProtocolRankingRows } from '../pagination.server'
 import {
 	DEFAULT_PROTOCOL_RANKING_QUERY,
-	PROTOCOL_RANKINGS_PAGE_LIMIT,
-	normalizeProtocolRankingQuery,
-	protocolRankingQuerySignature,
+	PROTOCOL_RANKINGS_LIMITS,
+	protocolRankingQuery,
 	type ProtocolRankingQuery
-} from '../query'
+} from '../tableQuery'
 import {
 	getProtocolRankingsSnapshot,
 	getRequestedProtocolRankingsSnapshot,
 	isProtocolRankingSnapshotToken
-} from '../snapshot.server'
+} from './tableData.server'
 
 function firstQueryValue(value: string | string[] | undefined): string | undefined {
 	return Array.isArray(value) ? value[0] : value
@@ -41,12 +42,12 @@ export function parseProtocolRankingApiQuery(query: ApiQuery): {
 	const chain = resolveProtocolRankingChain(firstQueryValue(query.chain))
 	if (!chain) return null
 	const rawSort = firstQueryValue(query.sort) ?? DEFAULT_PROTOCOL_RANKING_QUERY.sort
-	const rawLimit = Number(firstQueryValue(query.limit) ?? PROTOCOL_RANKINGS_PAGE_LIMIT)
+	const rawLimit = Number(firstQueryValue(query.limit) ?? PROTOCOL_RANKINGS_LIMITS.page)
 	const requestedSnapshot = firstQueryValue(query.snapshot) ?? null
 	const cursor = firstQueryValue(query.cursor) ?? null
 	if (requestedSnapshot && !isProtocolRankingSnapshotToken(requestedSnapshot)) return null
 	if (cursor && cursor.length > 500) return null
-	const normalizedQuery = normalizeProtocolRankingQuery({
+	const normalizedQuery = protocolRankingQuery.normalize({
 		search: firstQueryValue(query.search),
 		minTvl: parseNullableNumber(firstQueryValue(query.minTvl)),
 		maxTvl: parseNullableNumber(firstQueryValue(query.maxTvl)),
@@ -65,7 +66,7 @@ export function parseProtocolRankingApiQuery(query: ApiQuery): {
 		query: normalizedQuery,
 		cursor,
 		snapshot: requestedSnapshot,
-		limit: Number.isFinite(rawLimit) ? rawLimit : PROTOCOL_RANKINGS_PAGE_LIMIT
+		limit: Number.isFinite(rawLimit) ? rawLimit : PROTOCOL_RANKINGS_LIMITS.page
 	}
 }
 
@@ -89,13 +90,16 @@ export function loadPreparedProtocolRankingRows(
 	snapshot: Parameters<typeof getProtocolRankingRows>[0],
 	query: ProtocolRankingQuery
 ) {
-	return cachedResult(
-		'protocol-rankings-prepared-rows',
-		`${chain}:${snapshot.snapshot}:${protocolRankingQuerySignature(query)}`,
-		{ ttlMs: 5 * 60 * 1000, maxEntries: 32, maxBytes: 48 * 1024 * 1024 },
-		() => Promise.resolve(getProtocolRankingRows(snapshot, query)),
-		(rows) => rows.reduce((bytes, row) => bytes + 512 + (row.childProtocols?.length ?? 0) * 128, rows.length * 8)
-	)
+	return prepareTableRows({
+		namespace: 'protocol-rankings-prepared-rows',
+		domain: chain,
+		version: snapshot.snapshot,
+		signature: protocolRankingQuery.signature(query),
+		memory: { ttlMs: 5 * 60 * 1000, maxEntries: 32, maxBytes: 48 * 1024 * 1024 },
+		prepare: () => getProtocolRankingRows(snapshot, query),
+		measureBytes: (rows) =>
+			rows.reduce((bytes, row) => bytes + 512 + (row.childProtocols?.length ?? 0) * 128, rows.length * 8)
+	})
 }
 
 export const protocolRankingsApi = defineApiRoute({
@@ -114,7 +118,7 @@ export const protocolRankingsApi = defineApiRoute({
 		}
 
 		try {
-			const querySignature = protocolRankingQuerySignature(parsed.query)
+			const querySignature = protocolRankingQuery.signature(parsed.query)
 			const preparedRows = await loadPreparedProtocolRankingRows(parsed.chain, snapshot, parsed.query)
 			const cacheKey = `${parsed.chain}:${snapshot.snapshot}:${querySignature}:${parsed.cursor ?? ''}:${parsed.limit}`
 			const payload = await cachedJsonResult(
@@ -134,7 +138,7 @@ export const protocolRankingsApi = defineApiRoute({
 			)
 			return { status: 200, ...payload }
 		} catch (error) {
-			if (error instanceof ProtocolRankingCursorError) {
+			if (error instanceof TableCursorError) {
 				return { status: 400, body: { error: 'invalid_cursor' } }
 			}
 			throw error

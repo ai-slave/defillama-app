@@ -28,13 +28,13 @@ Start from the route file in `src/pages`, then follow imports here when the page
 - `customColumnsUtils.ts`: custom protocol table column definitions.
 - `CustomColumnModal.tsx`: custom column UI.
 - `formula.service.ts`: formula evaluation for custom columns.
-- `snapshot.server.ts`: Redis-backed, versioned canonical ranking snapshots shared by ISR and API routes.
+- `server/tableData.server.ts`: Redis-backed, versioned canonical ranking snapshots shared by ISR and API routes, built on `~/server/datasetSnapshots/redisBlobStore.server` with a publication gate (`snapshot.validation.ts`).
 - `sortAccessors.ts`: canonical typed sort registry shared by table columns, pagination, validation, and export.
-- `query.ts`: browser-safe ranking query types, validation, and signatures.
-- `pagination.server.ts`: global filtering, deterministic sorting, and snapshot-bound cursors with boundary validation.
+- `tableQuery.ts`: browser-safe ranking query schema, limits, validation, and signatures (built on `~/server/tablePages/tableQuery`).
+- `pagination.server.ts`: global filtering and deterministic sorting; cursor mechanics live in `~/server/tablePages/cursorPage.server`.
 - `api.server.ts`: paginated ranking API over the canonical snapshot, with prepared row order cached once per query.
 - `remoteTable.tsx`: remote-only debounce, query construction, CSV, scroll sentinel, and progress UI.
-- `useProtocolRankingPages.ts`: stale-request cancellation, replacement requests, and incremental page loading.
+- `~/hooks/useTablePages`: stale-request cancellation, replacement requests, and incremental page loading (shared kernel hook; see `src/server/tablePages/README.md`).
 
 ## Data Flow
 

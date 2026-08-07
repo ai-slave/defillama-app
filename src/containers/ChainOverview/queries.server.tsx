@@ -10,9 +10,10 @@ import { fetchChainChart } from '~/containers/Chains/api'
 import type { ChainChartResponse } from '~/containers/Chains/api.types'
 import { getETFData } from '~/containers/ETF/queries'
 import { getChainIncentivesFromAggregatedEmissions } from '~/containers/Incentives/queries'
-import { queryProtocolRankingSnapshot } from '~/containers/ProtocolRankings/pagination.server'
-import { DEFAULT_PROTOCOL_RANKING_QUERY, PROTOCOL_RANKINGS_INITIAL_LIMIT } from '~/containers/ProtocolRankings/query'
-import { getProtocolRankingsSnapshot } from '~/containers/ProtocolRankings/snapshot.server'
+import { paginateProtocolRankingRows } from '~/containers/ProtocolRankings/pagination.server'
+import { loadPreparedProtocolRankingRows } from '~/containers/ProtocolRankings/server/api'
+import { getProtocolRankingsSnapshot } from '~/containers/ProtocolRankings/server/tableData.server'
+import { DEFAULT_PROTOCOL_RANKING_QUERY, PROTOCOL_RANKINGS_LIMITS } from '~/containers/ProtocolRankings/tableQuery'
 import { fetchRaises } from '~/containers/Raises/api'
 import { fetchRWAStats } from '~/containers/RWA/api'
 import type { IRWAStatsResponse } from '~/containers/RWA/api.types'
@@ -473,14 +474,14 @@ export async function getChainOverviewData({
 		])
 		const { protocols: allProtocols, snapshot: rankingsSnapshot, availableActivityMetrics } = protocolRankingsSnapshot
 		const { chains, feeProtocols, dexs, perps } = protocolRankingsSnapshot.source
-		const initialProtocolPage = queryProtocolRankingSnapshot({
-			snapshot: {
-				snapshot: rankingsSnapshot,
-				protocols: allProtocols,
-				availableActivityMetrics
-			},
+		// Same prepare -> paginate pipeline as the public API, so ISR regeneration
+		// also warms the prepared-rows cache for the default query.
+		const rankingSnapshotData = { snapshot: rankingsSnapshot, protocols: allProtocols, availableActivityMetrics }
+		const initialProtocolPage = paginateProtocolRankingRows({
+			snapshot: rankingSnapshotData,
 			query: DEFAULT_PROTOCOL_RANKING_QUERY,
-			limit: PROTOCOL_RANKINGS_INITIAL_LIMIT
+			rows: await loadPreparedProtocolRankingRows(chain, rankingSnapshotData, DEFAULT_PROTOCOL_RANKING_QUERY),
+			limit: PROTOCOL_RANKINGS_LIMITS.initial
 		})
 		const stopOverviewTransform = phaseTimer?.start('overview_transform')
 

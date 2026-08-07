@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
 	DEFAULT_PROTOCOL_RANKING_QUERY,
 	parseStructuredProtocolRankingQuery,
-	protocolRankingQuerySignature
-} from '../query'
+	protocolRankingQuery
+} from '../tableQuery'
 
 describe('protocol ranking query contract', () => {
 	it('parses the structured export query without flattening arrays or custom sort state', () => {
@@ -26,8 +26,8 @@ describe('protocol ranking query contract', () => {
 		expect(parseStructuredProtocolRankingQuery({ ...DEFAULT_PROTOCOL_RANKING_QUERY, minTvl: '100' })).toBeNull()
 		expect(parseStructuredProtocolRankingQuery({ ...DEFAULT_PROTOCOL_RANKING_QUERY, sort: 'unknown' })).toBeNull()
 		const withUiPresetState = { ...DEFAULT_PROTOCOL_RANKING_QUERY, metric: 'Fees', period: '7d' }
-		expect(protocolRankingQuerySignature(withUiPresetState)).toBe(
-			protocolRankingQuerySignature(DEFAULT_PROTOCOL_RANKING_QUERY)
+		expect(protocolRankingQuery.signature(withUiPresetState)).toBe(
+			protocolRankingQuery.signature(DEFAULT_PROTOCOL_RANKING_QUERY)
 		)
 	})
 })

@@ -1,24 +1,41 @@
-import { createHash } from 'node:crypto'
-import { promisify } from 'node:util'
-import { gunzip, gzip } from 'node:zlib'
 import { cachedResult } from '~/server/api/resultCache'
+import {
+	contentHashVersion,
+	createRedisBlobStore,
+	isContentHashVersion
+} from '~/server/datasetSnapshots/redisBlobStore.server'
 import { slug } from '~/utils'
-import { getCache, getObjectCache, setCache, setObjectCache } from '~/utils/cache-client'
 import type {
 	ICategoriesAndTags,
 	IChainMetadata,
 	IProtocolMetadata,
 	ProtocolLlamaswapMetadata
 } from '~/utils/metadata/types'
-import { collectAvailableActivityMetrics, type ProtocolRankingsSnapshotData } from './pagination.server'
-import { getProtocolsByChain } from './queries.server'
+import { recordRuntimeError } from '~/utils/telemetry'
+import { getProtocolsByChain } from '../queries.server'
+import { assertPublishableSnapshot } from '../snapshot.validation'
+import { PROTOCOL_RANKING_ACTIVITY_METRIC_KEYS, type ProtocolRankingActivityMetricKey } from '../sortAccessors'
+import type { IProtocol } from '../types'
 
-const SNAPSHOT_CACHE_PREFIX = 'protocol-rankings:v3'
+/**
+ * Snapshot lifecycle for protocol rankings (delivery tier: cursor — see
+ * src/server/tablePages/README.md). One canonical snapshot per chain is
+ * content-hashed, published to the Redis blob store, and pinned by clients;
+ * ChainOverview ISR reads the same snapshot's `source` block so it never
+ * refetches adapters.
+ *
+ * Freshness: the in-process layer below is short and blocking on expiry so
+ * process uptime cannot extend an expired `:latest` pointer through another
+ * ISR cycle — Redis owns shared freshness. The pointer's 55 minutes sit just
+ * under the ~hourly ISR cadence; the 4-hour blob overhang is the grace
+ * window for in-flight cursors. Do not shorten it below pointer + scroll
+ * session length.
+ */
+
 const SNAPSHOT_TTL_SECONDS = 4 * 60 * 60
 const LATEST_POINTER_TTL_SECONDS = 55 * 60
+const LAST_GOOD_POINTER_TTL_SECONDS = 24 * 60 * 60
 const SNAPSHOT_MEMORY_OPTIONS = {
-	// Redis `latest` owns shared freshness. Keep this short and blocking on expiry so
-	// process uptime cannot extend an expired pointer through another ISR cycle.
 	ttlMs: 5 * 60 * 1000,
 	maxEntries: 24,
 	maxBytes: 128 * 1024 * 1024
@@ -28,12 +45,17 @@ const SNAPSHOT_VERSION_MEMORY_OPTIONS = {
 	maxEntries: 24,
 	maxBytes: 128 * 1024 * 1024
 }
-const SNAPSHOT_TOKEN_PATTERN = /^[A-Za-z0-9_-]{20}$/
-const gzipAsync = promisify(gzip)
-const gunzipAsync = promisify(gunzip)
 
-export function isProtocolRankingSnapshotToken(value: string): boolean {
-	return SNAPSHOT_TOKEN_PATTERN.test(value)
+export type ProtocolRankingsSnapshotData = {
+	snapshot: string
+	protocols: IProtocol[]
+	availableActivityMetrics: ProtocolRankingActivityMetricKey[]
+}
+
+export function collectAvailableActivityMetrics(protocols: IProtocol[]): ProtocolRankingActivityMetricKey[] {
+	return PROTOCOL_RANKING_ACTIVITY_METRIC_KEYS.filter((key) =>
+		protocols.some((protocol) => protocol[key] !== undefined)
+	)
 }
 
 export type ProtocolRankingsCanonicalSnapshot = ProtocolRankingsSnapshotData & {
@@ -62,12 +84,20 @@ function chainCacheKey(chain: string): string {
 	return slug(chain === 'All' ? 'all' : chain)
 }
 
-function latestPointerKey(chain: string): string {
-	return `${SNAPSHOT_CACHE_PREFIX}:${chainCacheKey(chain)}:latest`
+const snapshotStore = createRedisBlobStore<ProtocolRankingsCanonicalSnapshot>({
+	prefix: 'protocol-rankings:v3',
+	versionTtlSeconds: SNAPSHOT_TTL_SECONDS,
+	pointerTtlSeconds: LATEST_POINTER_TTL_SECONDS,
+	lastGoodTtlSeconds: LAST_GOOD_POINTER_TTL_SECONDS,
+	getIdentity: (payload) => ({ key: chainCacheKey(payload.chain), version: payload.snapshot })
+})
+
+export function isProtocolRankingSnapshotToken(value: string): boolean {
+	return isContentHashVersion(value)
 }
 
-function versionedSnapshotKey(chain: string, snapshot: string): string {
-	return `${SNAPSHOT_CACHE_PREFIX}:${chainCacheKey(chain)}:${snapshot}`
+function measureSnapshotBytes(snapshot: ProtocolRankingsCanonicalSnapshot): number {
+	return Buffer.byteLength(JSON.stringify(snapshot))
 }
 
 class ProtocolRankingSnapshotCacheMiss extends Error {}
@@ -82,39 +112,14 @@ async function readVersionedSnapshot(
 			`${chainCacheKey(chain)}:${snapshot}`,
 			SNAPSHOT_VERSION_MEMORY_OPTIONS,
 			async () => {
-				const cached = await getCache(versionedSnapshotKey(chain, snapshot))
-				if (!cached) throw new ProtocolRankingSnapshotCacheMiss()
-				const parsed = JSON.parse(
-					(await gunzipAsync(cached.Body)).toString('utf8')
-				) as ProtocolRankingsCanonicalSnapshot
-				if (parsed.snapshot !== snapshot || parsed.chain !== chain) throw new ProtocolRankingSnapshotCacheMiss()
-				return parsed
+				const stored = await snapshotStore.readVersion(chainCacheKey(chain), snapshot)
+				if (!stored || stored.chain !== chain) throw new ProtocolRankingSnapshotCacheMiss()
+				return stored
 			},
-			(value) => Buffer.byteLength(JSON.stringify(value))
+			measureSnapshotBytes
 		)
 	} catch {
 		return null
-	}
-}
-
-async function readLatestSnapshot(chain: string): Promise<ProtocolRankingsCanonicalSnapshot | null> {
-	const pointer = await getObjectCache<{ snapshot: string }>(latestPointerKey(chain))
-	if (!pointer?.snapshot) return null
-	return readVersionedSnapshot(chain, pointer.snapshot)
-}
-
-async function storeSnapshot(snapshot: ProtocolRankingsCanonicalSnapshot): Promise<void> {
-	const compressed = await gzipAsync(Buffer.from(JSON.stringify(snapshot)))
-	const stored = await setCache(
-		{
-			Key: versionedSnapshotKey(snapshot.chain, snapshot.snapshot),
-			Body: compressed,
-			ContentType: 'application/json+gzip'
-		},
-		SNAPSHOT_TTL_SECONDS
-	)
-	if (stored) {
-		await setObjectCache(latestPointerKey(snapshot.chain), { snapshot: snapshot.snapshot }, LATEST_POINTER_TTL_SECONDS)
 	}
 }
 
@@ -156,8 +161,8 @@ export async function getProtocolRankingsSnapshot({
 		chainCacheKey(chain),
 		SNAPSHOT_MEMORY_OPTIONS,
 		async () => {
-			const cached = await readLatestSnapshot(chain)
-			if (cached) return cached
+			const cached = await snapshotStore.readCurrent(chainCacheKey(chain))
+			if (cached && cached.chain === chain) return cached
 
 			const { shouldFetchDexs, shouldFetchPerps } = getProtocolRankingSourceOptions({
 				chain,
@@ -174,15 +179,11 @@ export async function getProtocolRankingsSnapshot({
 				includeExtendedMetrics: true
 			})
 			if (!result) throw new Error(`Missing protocol rankings source for ${chain}`)
-			const snapshotVersion = createHash('sha256')
-				.update(JSON.stringify(result.protocols))
-				.digest('base64url')
-				.slice(0, 20)
 			const { protocols } = result
 			const snapshot: ProtocolRankingsCanonicalSnapshot = {
 				chain,
 				createdAt: Date.now(),
-				snapshot: snapshotVersion,
+				snapshot: contentHashVersion(JSON.stringify(protocols)),
 				protocols,
 				availableActivityMetrics: collectAvailableActivityMetrics(protocols),
 				source: {
@@ -209,10 +210,31 @@ export async function getProtocolRankingsSnapshot({
 						: null
 				}
 			}
-			await storeSnapshot(snapshot)
+			const lastGood = await snapshotStore.readLastGood(chainCacheKey(chain))
+			try {
+				assertPublishableSnapshot(snapshot, {
+					expectDexs: shouldFetchDexs,
+					expectPerps: shouldFetchPerps,
+					previousProtocolCount: lastGood?.protocols.length ?? null
+				})
+			} catch (error) {
+				// Never publish a degraded snapshot — it would be pinned for hours.
+				// Serve the freshest healthy version instead: a concurrent process
+				// may have published since our pointer read missed, and :last-good
+				// outlives :latest exactly for this branch.
+				recordRuntimeError(error, 'unknown', { protocol_rankings_chain: chain })
+				const fallback = (await snapshotStore.readCurrent(chainCacheKey(chain))) ?? lastGood
+				if (fallback && fallback.chain === chain) return fallback
+				throw error
+			}
+			// A failed publish (Redis unreachable) is deliberately not fatal: the
+			// build is validated, telemetry recorded the failure inside the store,
+			// and falling back to Redis reads would fail for the same reason. Each
+			// process serves its own rebuild until Redis recovers (hardening P3).
+			await snapshotStore.publish(snapshot)
 			return snapshot
 		},
-		(snapshot) => Buffer.byteLength(JSON.stringify(snapshot))
+		measureSnapshotBytes
 	)
 }
 

@@ -19,9 +19,10 @@ import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { VirtualTable } from '~/components/Table/Table'
+import { TablePagesStatus } from '~/components/Table/TablePagesStatus'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
-import { removedCategoriesFromChainTvlSet } from '~/containers/ProtocolRankings/constants'
+import { getProtocolTvlStrike } from '~/containers/ProtocolRankings/tvlStrike'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import {
 	useCustomColumns,
@@ -39,6 +40,7 @@ import { PercentChange } from '~/ui/PercentChange'
 import { popoverFooterActionStyles } from '~/ui/Popover'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { TagGroup } from '~/ui/SegmentedControl'
+import { SurfaceLoadingOverlay } from '~/ui/Status'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
@@ -48,8 +50,7 @@ import { CustomColumnModal } from './CustomColumnModal'
 import { parseProtocolTableColumnVisibility, replaceAliases, sampleProtocol } from './customColumnsUtils'
 import { createFormulaEvaluator, formatCustomColumnValue, getSortableValue } from './formula.service'
 import { prepareProtocolsForTable } from './prepareProtocolsForTable'
-import type { ProtocolRankingInitialPage } from './query'
-import { RemoteProtocolRankingsStatus, useRemoteProtocolRankingsTable } from './remoteTable'
+import { useRemoteProtocolRankingsTable } from './remoteTable'
 import {
 	PROTOCOL_RANKING_RESET_QUERY,
 	PROTOCOL_RANKING_RESET_STORAGE_KEYS,
@@ -61,6 +62,7 @@ import {
 	type ProtocolRankingActivityMetricKey,
 	type ProtocolRankingSortKey
 } from './sortAccessors'
+import type { ProtocolRankingInitialPage } from './tableQuery'
 import type { IProtocol } from './types'
 
 type ChainProtocolsTableProps = {
@@ -604,9 +606,17 @@ const ChainProtocolsTableInner = ({
 					<div className="px-2 pb-2">{secondaryToolbarControls}</div>
 				</div>
 			)}
-			<VirtualTable instance={instance} useStickyHeader={useStickyHeader} />
+			<div className="relative">
+				<VirtualTable instance={instance} useStickyHeader={useStickyHeader} />
+				{/* Replacements (sort/search/preset) invalidate the visible order, so they
+				    get the same overlay Yields uses; appends keep only the footer indicator. */}
+				{remoteEnabled && remoteRankings.isReplacing ? <SurfaceLoadingOverlay label="Updating rankings…" /> : null}
+			</div>
 			{remoteEnabled ? (
-				<RemoteProtocolRankingsStatus
+				<TablePagesStatus
+					noun="protocols"
+					replacingLabel={null}
+					replaceFailedLabel="Couldn't update rankings."
 					sentinelRef={remoteRankings.sentinelRef}
 					error={remoteRankings.error}
 					isReplacing={remoteRankings.isReplacing}
@@ -1790,38 +1800,23 @@ export function getProtocolRankingDefaultColumnVisibility(customColumnCount = 0)
 }
 
 const ProtocolTvlCell = ({ rowValues }: { rowValues: IProtocol }) => {
+	// Same settings source the toolbar's "Include in TVL" menu writes to, so the
+	// strike marker reacts to the toggles in the same render pass.
+	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 	const tvl = rowValues.tvl
 	if (!tvl) return null
 
-	let text = null
-
-	if (rowValues.strikeTvl) {
-		text = 'This protocol is excluded from chain TVL to avoid double counting'
-
-		const whiteLabeledVaultProviders = ['Veda']
-		if (whiteLabeledVaultProviders.includes(rowValues.name)) {
-			text =
-				'This protocol issues white-labeled vaults which may result in TVL being counted by another protocol (e.g., double counted).'
-		}
-
-		if (rowValues.category && removedCategoriesFromChainTvlSet.has(rowValues.category)) {
-			text = `${rowValues.category} protocols are not counted into Chain TVL`
-		}
-
-		if (text && rowValues.childProtocols) {
-			text = 'Some sub-protocols are excluded from chain tvl'
-		}
-	}
+	const strike = getProtocolTvlStrike(rowValues, extraTvlsEnabled)
 
 	return (
 		<span className="flex items-center justify-end gap-1">
-			{text ? <QuestionHelper text={text} /> : null}
+			{strike.text ? <QuestionHelper text={strike.text} /> : null}
 			{tvl.excludeParent && rowValues.childProtocols ? (
 				<QuestionHelper
 					text={"There's some internal doublecounting that is excluded from parent TVL, so sum won't match"}
 				/>
 			) : null}
-			<span className={rowValues.strikeTvl ? 'text-tertiary' : ''}>
+			<span className={strike.struck ? 'text-tertiary' : ''}>
 				{formatUsd(tvl.default.tvl, {
 					compact: true,
 					minimumCompactValue: 1_000_000,

@@ -1,12 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { buildProtocolRankingsCsv, type ProtocolRankingExportColumn } from '~/containers/ProtocolRankings/export.server'
-import { parseStructuredProtocolRankingQuery } from '~/containers/ProtocolRankings/query'
 import {
 	loadPreparedProtocolRankingRows,
 	loadProtocolRankingSnapshot,
 	resolveProtocolRankingChain
 } from '~/containers/ProtocolRankings/server/api'
-import { isProtocolRankingSnapshotToken } from '~/containers/ProtocolRankings/snapshot.server'
+import { isProtocolRankingSnapshotToken } from '~/containers/ProtocolRankings/server/tableData.server'
+import { parseStructuredProtocolRankingQuery } from '~/containers/ProtocolRankings/tableQuery'
 import { withApiRouteTelemetry } from '~/utils/telemetry'
 
 type ExportBody = {

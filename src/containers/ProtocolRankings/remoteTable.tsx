@@ -1,38 +1,76 @@
 import type { ExpandedState, SortingState } from '@tanstack/react-table'
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { isProtocolListTvlKey } from '~/containers/ProtocolLists/api.types'
 import type { CustomColumnDef, TvlSettingsKey } from '~/contexts/LocalStorage'
 import { useDebouncedValue } from '~/hooks/useDebounce'
+import { useTablePages } from '~/hooks/useTablePages'
 import {
 	DEFAULT_PROTOCOL_RANKING_QUERY,
+	PROTOCOL_RANKINGS_LIMITS,
 	isProtocolRankingSortKey,
-	protocolRankingQuerySignature,
+	protocolRankingQuery,
 	type ProtocolRankingInitialPage,
+	type ProtocolRankingPage,
 	type ProtocolRankingQuery
-} from './query'
+} from './tableQuery'
 import type { IProtocol } from './types'
-import { useProtocolRankingPages } from './useProtocolRankingPages'
 
 type ExportColumn = { key: string; name: string; formula?: string }
+
+/** Wire page (public contract: `snapshot`) widened with the kernel's `version`. */
+type RankingPage = ProtocolRankingPage<IProtocol> & { version: string }
+
+export function buildProtocolRankingApiUrl({
+	chain,
+	query,
+	snapshot,
+	cursor
+}: {
+	chain: string
+	query: ProtocolRankingQuery
+	snapshot?: string | null
+	cursor?: string | null
+}): string {
+	const params = new URLSearchParams({
+		chain,
+		sort: query.sort,
+		order: query.order,
+		limit: String(PROTOCOL_RANKINGS_LIMITS.page)
+	})
+	if (query.search) params.set('search', query.search)
+	if (query.minTvl !== null) params.set('minTvl', String(query.minTvl))
+	if (query.maxTvl !== null) params.set('maxTvl', String(query.maxTvl))
+	if (query.tvlKeys.length) params.set('tvlKeys', query.tvlKeys.join(','))
+	if (query.sort === 'custom' && query.customSort) {
+		params.set('customFormula', query.customSort.formula)
+		params.set('customFormat', query.customSort.formatType)
+	}
+	if (snapshot) params.set('snapshot', snapshot)
+	if (cursor) params.set('cursor', cursor)
+	return `/api/public/protocol-rankings?${params.toString()}`
+}
 
 async function fetchProtocolRankingsCsv({
 	chain,
 	query,
 	snapshot,
-	columns
+	columns,
+	signal
 }: {
 	chain: string
 	query: ProtocolRankingQuery
 	snapshot: string
 	columns: ExportColumn[]
+	signal: AbortSignal
 }): Promise<Blob | null> {
 	const request = (requestedSnapshot: string) =>
 		fetch('/api/dynamic/protocol-rankings/export', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ chain, query, snapshot: requestedSnapshot, columns })
+			body: JSON.stringify({ chain, query, snapshot: requestedSnapshot, columns }),
+			signal
 		})
 	try {
 		let response = await request(snapshot)
@@ -118,14 +156,22 @@ export function useRemoteProtocolRankingsTable({
 		hasMore: false,
 		availableActivityMetrics: []
 	}
-	const pages = useProtocolRankingPages({
-		chain,
+	const querySignature = protocolRankingQuery.signature(query)
+	const pages = useTablePages<IProtocol, RankingPage>({
+		mode: 'cursor',
+		enabled,
+		sourceKey: `${chain}:${fallbackPage.snapshot}`,
 		initialRows,
-		initialPage: fallbackPage,
-		query,
-		enabled
+		initialPage: { ...fallbackPage, version: fallbackPage.snapshot },
+		querySignature,
+		defaultQuerySignature: protocolRankingQuery.signature(DEFAULT_PROTOCOL_RANKING_QUERY),
+		getRowKey: (row) => row.id ?? row.slug,
+		buildPageUrl: ({ version, cursor }) => buildProtocolRankingApiUrl({ chain, query, snapshot: version, cursor }),
+		parsePage: (json) => {
+			const page = json as ProtocolRankingPage<IProtocol>
+			return { ...page, version: page.snapshot }
+		}
 	})
-	const querySignature = protocolRankingQuerySignature(query)
 	const searchExpanded = useMemo<ExpandedState | null>(() => {
 		const normalizedQuery = search.trim().toLowerCase()
 		if (!enabled || !normalizedQuery || pages.loadedQuerySignature !== querySignature) return null
@@ -139,34 +185,26 @@ export function useRemoteProtocolRankingsTable({
 		return expanded
 	}, [enabled, pages.loadedQuerySignature, pages.rows, querySignature, search])
 
-	const sentinelRef = useRef<HTMLDivElement>(null)
-	const { loadMore } = pages
-	useEffect(() => {
-		const sentinel = sentinelRef.current
-		if (!enabled || !sentinel || !pages.hasMore || pages.error) return
-		const observer = new IntersectionObserver(
-			(entries) => {
-				if (entries.some((entry) => entry.isIntersecting)) void loadMore()
-			},
-			{ rootMargin: '800px 0px' }
-		)
-		observer.observe(sentinel)
-		return () => observer.disconnect()
-	}, [enabled, loadMore, pages.error, pages.hasMore])
-
 	const [csvLoading, setCsvLoading] = useState(false)
 	const csvPendingRef = useRef(false)
+	const csvAbortRef = useRef<AbortController | null>(null)
+	useEffect(() => () => csvAbortRef.current?.abort(), [])
 	const downloadCsv = async () => {
 		if (!enabled || csvPendingRef.current) return
 		csvPendingRef.current = true
 		setCsvLoading(true)
+		const controller = new AbortController()
+		csvAbortRef.current = controller
 		const blob = await fetchProtocolRankingsCsv({
 			chain,
 			query,
-			snapshot: pages.snapshot,
-			columns: exportColumns
+			snapshot: pages.version,
+			columns: exportColumns,
+			signal: controller.signal
 		})
 		csvPendingRef.current = false
+		// Unmounted mid-download: skip state updates and the browser download.
+		if (controller.signal.aborted) return
 		setCsvLoading(false)
 		if (blob) downloadBlob(blob, exportFilename)
 		else toast.error('Failed to download CSV')
@@ -177,53 +215,6 @@ export function useRemoteProtocolRankingsTable({
 		query,
 		search,
 		searchExpanded,
-		sentinelRef,
 		csvButton: enabled ? <CSVDownloadButton onClick={downloadCsv} isLoading={csvLoading} smol size="md" /> : null
 	}
-}
-
-export function RemoteProtocolRankingsStatus({
-	sentinelRef,
-	error,
-	isReplacing,
-	isLoadingMore,
-	rowCount,
-	total,
-	hasMore,
-	retry
-}: {
-	sentinelRef: RefObject<HTMLDivElement | null>
-	error: 'replace' | 'append' | null
-	isReplacing: boolean
-	isLoadingMore: boolean
-	rowCount: number
-	total: number
-	hasMore: boolean
-	retry?: () => Promise<void>
-}) {
-	return (
-		<div
-			ref={sentinelRef}
-			role="status"
-			aria-live="polite"
-			className="flex min-h-8 items-center justify-center px-3 py-4 text-xs text-tertiary"
-		>
-			{error ? (
-				<>
-					Couldn't {error === 'replace' ? 'update rankings' : 'load more protocols'}.
-					<button type="button" className="ml-1 underline" onClick={() => void retry?.()}>
-						Retry
-					</button>
-				</>
-			) : isReplacing ? (
-				'Updating rankings…'
-			) : isLoadingMore ? (
-				`Loading more protocols… ${rowCount} of ${total}`
-			) : hasMore ? (
-				`${rowCount} of ${total} protocols`
-			) : (
-				`${total} protocols`
-			)}
-		</div>
-	)
 }

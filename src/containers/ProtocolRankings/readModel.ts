@@ -3,7 +3,10 @@ import type { IChildProtocol, ProtocolRankingActivityMetric } from './types'
 
 type DimensionFees = Omit<NonNullable<IChildProtocol['fees']>, 'pf'>
 type DimensionRevenue = Omit<NonNullable<IChildProtocol['revenue']>, 'ps'>
-export type ProtocolRankingActivityMetricKey =
+// Upstream activity SOURCES (includes 'dexs'). Deliberately distinct from
+// sortAccessors' ProtocolRankingActivityMetricKey, which lists the activity
+// METRIC COLUMNS the table exposes (no 'dexs' - DEX volume has its own path).
+export type ProtocolRankingActivitySourceKey =
 	| 'dexs'
 	| 'perps'
 	| 'normalizedVolume'
@@ -32,7 +35,7 @@ export interface IProtocolRankingsDimensionMetrics {
 }
 
 export type ProtocolRankingActivitySources = Partial<
-	Record<ProtocolRankingActivityMetricKey, IAdapterChainMetrics | null>
+	Record<ProtocolRankingActivitySourceKey, IAdapterChainMetrics | null>
 >
 
 export function getProtocolEarningsValue(
@@ -97,7 +100,7 @@ export function buildDimensionProtocolMetrics({
 		}
 	}
 
-	for (const metricKey of Object.keys(activity) as ProtocolRankingActivityMetricKey[]) {
+	for (const metricKey of Object.keys(activity) as ProtocolRankingActivitySourceKey[]) {
 		for (const protocol of activity[metricKey]?.protocols ?? []) {
 			const row = (dimensionProtocols[protocol.defillamaId] ??= {})
 			const preserveLegacyDexZeros = metricKey === 'dexs'

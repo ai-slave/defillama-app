@@ -1,10 +1,28 @@
 import { describe, expect, it } from 'vitest'
-import {
-	ProtocolRankingCursorError,
-	queryProtocolRankingSnapshot,
-	type ProtocolRankingsSnapshotData
-} from '../pagination.server'
-import { DEFAULT_PROTOCOL_RANKING_QUERY } from '../query'
+import { TableCursorError } from '~/server/tablePages/cursorPage.server'
+import { getProtocolRankingRows, paginateProtocolRankingRows } from '../pagination.server'
+import type { ProtocolRankingsSnapshotData } from '../server/tableData.server'
+import { DEFAULT_PROTOCOL_RANKING_QUERY, type ProtocolRankingQuery } from '../tableQuery'
+
+function queryProtocolRankingSnapshot({
+	snapshot: data,
+	query,
+	cursor = null,
+	limit
+}: {
+	snapshot: ProtocolRankingsSnapshotData
+	query: ProtocolRankingQuery
+	cursor?: string | null
+	limit?: number
+}) {
+	return paginateProtocolRankingRows({
+		snapshot: data,
+		query,
+		rows: getProtocolRankingRows(data, query),
+		cursor,
+		limit
+	})
+}
 import type { IProtocol } from '../types'
 
 function row(id: string, name: string, tvl: number, fees30d = 0, children?: IProtocol['childProtocols']): IProtocol {
@@ -91,7 +109,7 @@ describe('protocol ranking pagination', () => {
 				cursor: first.nextCursor,
 				limit: 1
 			})
-		).toThrow(ProtocolRankingCursorError)
+		).toThrow(TableCursorError)
 		expect(() =>
 			queryProtocolRankingSnapshot({
 				snapshot: snapshot('old', [row('a', 'A', 2), row('b', 'B', 1)]),
@@ -99,7 +117,7 @@ describe('protocol ranking pagination', () => {
 				cursor: first.nextCursor,
 				limit: 1
 			})
-		).toThrow(ProtocolRankingCursorError)
+		).toThrow(TableCursorError)
 	})
 
 	it('rejects a cursor whose cached-order offset was altered', () => {
@@ -120,7 +138,7 @@ describe('protocol ranking pagination', () => {
 				cursor: altered,
 				limit: 1
 			})
-		).toThrow(ProtocolRankingCursorError)
+		).toThrow(TableCursorError)
 	})
 
 	it('ships sorted children with their parent and narrows children for a child-name search', () => {
