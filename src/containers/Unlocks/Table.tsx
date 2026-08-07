@@ -29,6 +29,7 @@ import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles
 import { PercentChange } from '~/ui/PercentChange'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
+import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 
@@ -390,6 +391,7 @@ const defaultColumns = JSON.stringify(Object.fromEntries(columnOptions.map((colu
 
 export interface IEmission {
 	name: string
+	gecko_id?: string | null
 	maxSupply: number
 	circSupply: number
 	totalLocked: number
@@ -432,11 +434,17 @@ const emissionsColumns = [
 		enableSorting: false,
 		cell: ({ row }) => {
 			const protocolName = row.original.name
+			const geckoId = row.original.gecko_id
 			return (
 				<div className="flex h-full items-center">
 					<span className="relative flex items-center gap-2 pl-6">
 						<Bookmark readableName={protocolName} data-bookmark className="absolute -left-0.5" />
-						<TokenLogo name={protocolName} kind="token" alt={`Logo of ${protocolName}`} />
+						<TokenLogo
+							name={protocolName}
+							kind="token"
+							fallbackSrc={geckoId ? geckoTokenIconUrl(geckoId) : null}
+							alt={`Logo of ${protocolName}`}
+						/>
 						<BasicLink
 							href={`/unlocks/${slug(protocolName)}`}
 							className="truncate text-sm font-medium text-link hover:underline"
