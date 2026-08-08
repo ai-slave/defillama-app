@@ -81,8 +81,13 @@ describe('getEarnPage prepared-rows memoization', () => {
 		expect(getEnrichedEarn).toHaveBeenCalledTimes(1)
 		expect(first.rows).toHaveLength(50)
 		expect(second.rows).toHaveLength(50)
-		expect(first.rows[0].id).toBe('p0')
-		expect(second.rows[0].id).toBe('p50')
+		const firstRow = first.rows[0]
+		const secondRow = second.rows[0]
+		expect(firstRow).toBeDefined()
+		expect(secondRow).toBeDefined()
+		if (!firstRow || !secondRow) throw new Error('Missing prepared page row')
+		expect(firstRow.id).toBe('p0')
+		expect(secondRow.id).toBe('p50')
 		expect(new Set([...first.rows, ...second.rows].map((row) => row.id)).size).toBe(100)
 		expect(second.medianApy).toBe(first.medianApy)
 	})

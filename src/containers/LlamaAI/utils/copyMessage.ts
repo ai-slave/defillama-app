@@ -1,7 +1,8 @@
 import {
 	describeFigure,
 	findCitedCell,
-	sanitizeExcerpt
+	sanitizeExcerpt,
+	type CitedCellRef
 } from '~/containers/LlamaAI/components/messages/citationPillHelpers'
 import type { ArtifactRegistry } from '~/containers/LlamaAI/renderModel'
 import type { UnifiedCitationReference } from '~/containers/LlamaAI/types'
@@ -97,9 +98,10 @@ function parseCsv(text: string): string[][] {
 }
 
 function csvToMarkdownTable(rows: string[][]): string {
-	if (rows.length === 0) return ''
+	const header = rows[0]
+	if (!header) return ''
 	const escapeCell = (cell: string) => cell.replaceAll('|', '\\|').replaceAll('\n', ' ')
-	const [header, ...body] = rows
+	const body = rows.slice(1)
 	const lines = [
 		`| ${header.map(escapeCell).join(' | ')} |`,
 		`| ${header.map(() => '---').join(' | ')} |`,
@@ -109,8 +111,9 @@ function csvToMarkdownTable(rows: string[][]): string {
 }
 
 function csvToHtmlTable(rows: string[][]): string {
-	if (rows.length === 0) return ''
-	const [header, ...body] = rows
+	const header = rows[0]
+	if (!header) return ''
+	const body = rows.slice(1)
 	const headerHtml = `<tr>${header.map((cell) => `<th>${escapeHtml(cell)}</th>`).join('')}</tr>`
 	const bodyHtml = body
 		.map((cells) => `<tr>${cells.map((cell) => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`)
@@ -168,7 +171,14 @@ function citationState(source: CopyMessageSource) {
 				return valid.map((id) => `[${id}]`).join('')
 			})
 		)
-	const citedRefs = () => [...cited].sort((a, b) => a - b).map((id) => byId.get(id)) as UnifiedCitationReference[]
+	const citedRefs = () => {
+		const refs: UnifiedCitationReference[] = []
+		for (const id of [...cited].sort((a, b) => a - b)) {
+			const ref = byId.get(id)
+			if (ref) refs.push(ref)
+		}
+		return refs
+	}
 	return { processText, citedRefs }
 }
 
@@ -176,11 +186,12 @@ function citationState(source: CopyMessageSource) {
 // ("Edgex · Pct Change = -68.13"), not the internal result name ("returns").
 function describeCitation(ref: UnifiedCitationReference): string {
 	if (ref.sourceType === 'data' || ref.sourceType === 'computed') {
-		const citedCell = findCitedCell(ref.rows, ref.columns, {
-			field: ref.field,
-			rowIndex: ref.rowIndex,
-			value: ref.value
-		})
+		const cellRef: CitedCellRef = {
+			...(ref.field === undefined ? {} : { field: ref.field }),
+			...(ref.rowIndex === undefined ? {} : { rowIndex: ref.rowIndex }),
+			...(ref.value === undefined ? {} : { value: ref.value })
+		}
+		const citedCell = findCitedCell(ref.rows, ref.columns, cellRef)
 		const figure = describeFigure(ref, citedCell) ?? ref.label
 		const value = ref.value ? ` = ${ref.value}` : ''
 		const asOf = ref.asOf ? ` (as of ${ref.asOf})` : ''

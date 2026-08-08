@@ -6,11 +6,10 @@ import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { YIELD_EARN_DATASET_API } from '../constants'
-import type { TokenOption } from '../data/types'
+import type { EarnPageMeta } from '../data/earnMeta.server'
 import { prepareYieldPoolsCsv } from '../domain/poolCsv'
 import { YieldFilters } from '../Filters'
 import { ApyViewControls } from '../Filters/ApyViewControls'
-import { EARN_ATTRIBUTE_IDS, type AttributeId } from '../Filters/attributeOptions'
 import { CuratedViews } from '../Filters/CuratedViews'
 import { IncludeTokens } from '../Filters/IncludeTokens'
 import { getYieldsQuestionContext } from '../getYieldsQuestionContext'
@@ -26,30 +25,25 @@ import { YieldsTabs } from '../YieldsTabs'
 
 const EMPTY_POOL_ROWS: IYieldTableRow[] = []
 const EMPTY_STRINGS: string[] = []
-const EMPTY_TOKENS: TokenOption[] = []
 type EarnRowsResponse = { rows: IYieldTableRow[] }
 
+export type EarnViewProps = EarnPageMeta & {
+	entityQuestions: string[]
+	initialEarnPage: YieldsPaginatedTableResponse<IYieldTableRow>
+	initialEarnPageGeneratedAt: number
+}
+
 const EarnView = ({
-	projectList = EMPTY_STRINGS,
-	chainList = EMPTY_STRINGS,
-	categoryList = EMPTY_STRINGS,
-	evmChains = EMPTY_STRINGS,
-	tokens = EMPTY_TOKENS,
-	attributeIds = EARN_ATTRIBUTE_IDS,
+	projectList,
+	chainList,
+	categoryList,
+	evmChains,
+	tokens,
+	attributeIds,
 	entityQuestions: baseQuestions,
 	initialEarnPage,
 	initialEarnPageGeneratedAt
-}: {
-	projectList?: string[]
-	chainList?: string[]
-	categoryList?: string[]
-	evmChains?: string[]
-	tokens?: TokenOption[]
-	attributeIds?: AttributeId[]
-	entityQuestions?: string[]
-	initialEarnPage?: YieldsPaginatedTableResponse<IYieldTableRow>
-	initialEarnPageGeneratedAt?: number
-}) => {
+}: EarnViewProps) => {
 	const router = useRouter()
 
 	// Rewrite legacy bookmark params to canonical before the first fetch (gates `enabled`).
@@ -98,8 +92,10 @@ const EarnView = ({
 		endpoint: YIELD_EARN_DATASET_API,
 		enabled: normalized,
 		extraQuery,
-		initialData: initialEarnPage,
-		initialDataUpdatedAt: initialEarnPageGeneratedAt
+		initialSeed: {
+			initialData: initialEarnPage,
+			initialDataUpdatedAt: initialEarnPageGeneratedAt
+		}
 	})
 	const poolsData = serverRows.length > 0 ? serverRows : EMPTY_POOL_ROWS
 
@@ -178,9 +174,9 @@ const EarnView = ({
 
 			<NewsletterSignup layout="strip" />
 
-			{questions?.length > 0 || isQuestionsLoading ? (
+			{questions.length > 0 || isQuestionsLoading ? (
 				<EntityQuestionsStrip
-					questions={questions ?? []}
+					questions={questions}
 					entitySlug="yields"
 					entityType="page"
 					entityName="Yields"

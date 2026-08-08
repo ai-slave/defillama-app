@@ -30,8 +30,8 @@ export function buildProtocolRankingApiUrl({
 }: {
 	chain: string
 	query: ProtocolRankingQuery
-	snapshot?: string | null
-	cursor?: string | null
+	snapshot: string | null | undefined
+	cursor: string | null | undefined
 }): string {
 	const params = new URLSearchParams({
 		chain,
@@ -113,7 +113,7 @@ export function useRemoteProtocolRankingsTable({
 	enabled: boolean
 	chain: string
 	initialRows: IProtocol[]
-	initialPage?: ProtocolRankingInitialPage
+	initialPage: ProtocolRankingInitialPage | undefined
 	nameSearch: string
 	minTvl: number | null
 	maxTvl: number | null

@@ -1,4 +1,4 @@
-import { type CellContext, type ColumnDef, createColumnHelper } from '@tanstack/react-table'
+import { type CellContext, createColumnHelper } from '@tanstack/react-table'
 import { lazy, Suspense, useDeferredValue, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
@@ -228,10 +228,9 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 }
 
 type ProtocolRow = IProtocolTaxonomyPageData['protocols'][0]
-// This heterogeneous collection never exposes a shared accessor value to callers.
-type ProtocolColumnDef = ColumnDef<ProtocolRow, never>
 
 const columnHelper = createColumnHelper<ProtocolRow>()
+type ProtocolTaxonomyColumn = ReturnType<(typeof columnHelper)['accessor']>
 type ProtocolMetricValue = number | null | undefined
 
 const sortableNumber = (value: ProtocolMetricValue): number | undefined => value ?? undefined
@@ -759,7 +758,8 @@ const COLUMN_REGISTRY = {
 			headerHelperText: '(Total amount supplied / Total value locked) ratio'
 		}
 	})
-} satisfies Record<ProtocolCategoryColumn, ProtocolColumnDef>
+	// `satisfies` validates exhaustive keys and helper-produced values without widening each accessor's TValue.
+} satisfies Record<ProtocolCategoryColumn, ProtocolTaxonomyColumn>
 
 export function getColumnsForCategory(effectiveCategory: string | null) {
 	const columnIds = getProtocolCategoryColumns(effectiveCategory)

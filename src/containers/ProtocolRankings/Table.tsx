@@ -480,8 +480,12 @@ const ChainProtocolsTableInner = ({
 		manualSorting: remoteEnabled,
 		manualFiltering: remoteEnabled,
 		getCoreRowModel: getCoreRowModel(),
-		getFilteredRowModel: remoteEnabled ? undefined : getFilteredRowModel(),
-		getSortedRowModel: remoteEnabled ? undefined : getSortedRowModel(),
+		...(remoteEnabled
+			? {}
+			: {
+					getFilteredRowModel: getFilteredRowModel(),
+					getSortedRowModel: getSortedRowModel()
+				}),
 		getExpandedRowModel: getExpandedRowModel()
 	})
 
@@ -736,110 +740,228 @@ type ProtocolTableColumnOption = {
 	metricKey?: ProtocolRankingActivityMetricKey
 }
 
-const ACTIVITY_PERIODS = [
-	{ suffix: '24h', tablePeriod: TABLE_PERIODS.ONE_DAY },
-	{ suffix: '7d', tablePeriod: TABLE_PERIODS.SEVEN_DAYS },
-	{ suffix: '30d', tablePeriod: TABLE_PERIODS.ONE_MONTH }
-] as const
+type ActivityPeriodColumn<Suffix extends '24h' | '7d' | '30d', Period extends TablePeriod> = {
+	id: Extract<ProtocolRankingSortKey, `${string}_${Suffix}`>
+	suffix: Suffix
+	tablePeriod: Period
+	helperText: string
+	width: string
+}
 
-const EXTENDED_ACTIVITY_METRICS: Array<{
+type ExtendedActivityMetric = {
 	metricKey: Exclude<ProtocolRankingActivityMetricKey, 'openInterest' | 'activeLiquidity'>
-	idPrefix: string
 	label: string
 	group: TABLE_COLUMN_GROUPS
 	preset?: TablePreset
-	helperText: readonly [string, string, string]
-	widths: readonly [string, string, string]
 	overlapWarning?: string
-}> = [
+	columns: readonly [
+		ActivityPeriodColumn<'24h', typeof TABLE_PERIODS.ONE_DAY>,
+		ActivityPeriodColumn<'7d', typeof TABLE_PERIODS.SEVEN_DAYS>,
+		ActivityPeriodColumn<'30d', typeof TABLE_PERIODS.ONE_MONTH>
+	]
+}
+
+const EXTENDED_ACTIVITY_METRICS: readonly ExtendedActivityMetric[] = [
 	{
 		metricKey: 'perps',
-		idPrefix: 'perp_volume',
 		label: 'Perp Volume',
 		group: TABLE_COLUMN_GROUPS.PERPS,
 		preset: TABLE_PRESETS.PERPS,
-		helperText: [
-			definitions.perps.protocol['24h'],
-			definitions.perps.protocol['7d'],
-			definitions.perps.protocol['30d']
-		],
-		widths: ['w-[154px] min-w-[154px]', 'w-[143px] min-w-[143px]', 'w-[154px] min-w-[154px]']
+		columns: [
+			{
+				id: 'perp_volume_24h',
+				suffix: '24h',
+				tablePeriod: TABLE_PERIODS.ONE_DAY,
+				helperText: definitions.perps.protocol['24h'],
+				width: 'w-[154px] min-w-[154px]'
+			},
+			{
+				id: 'perp_volume_7d',
+				suffix: '7d',
+				tablePeriod: TABLE_PERIODS.SEVEN_DAYS,
+				helperText: definitions.perps.protocol['7d'],
+				width: 'w-[143px] min-w-[143px]'
+			},
+			{
+				id: 'perp_volume_30d',
+				suffix: '30d',
+				tablePeriod: TABLE_PERIODS.ONE_MONTH,
+				helperText: definitions.perps.protocol['30d'],
+				width: 'w-[154px] min-w-[154px]'
+			}
+		]
 	},
 	{
 		metricKey: 'normalizedVolume',
-		idPrefix: 'normalized_volume',
 		label: 'Normalized Volume',
 		group: TABLE_COLUMN_GROUPS.PERPS,
 		preset: TABLE_PRESETS.PERPS,
-		helperText: [
-			definitions.normalizedVolume.protocol['24h'],
-			definitions.normalizedVolume.protocol['7d'],
-			definitions.normalizedVolume.protocol['30d']
-		],
-		widths: ['w-[199px] min-w-[199px]', 'w-[189px] min-w-[189px]', 'w-[199px] min-w-[199px]']
+		columns: [
+			{
+				id: 'normalized_volume_24h',
+				suffix: '24h',
+				tablePeriod: TABLE_PERIODS.ONE_DAY,
+				helperText: definitions.normalizedVolume.protocol['24h'],
+				width: 'w-[199px] min-w-[199px]'
+			},
+			{
+				id: 'normalized_volume_7d',
+				suffix: '7d',
+				tablePeriod: TABLE_PERIODS.SEVEN_DAYS,
+				helperText: definitions.normalizedVolume.protocol['7d'],
+				width: 'w-[189px] min-w-[189px]'
+			},
+			{
+				id: 'normalized_volume_30d',
+				suffix: '30d',
+				tablePeriod: TABLE_PERIODS.ONE_MONTH,
+				helperText: definitions.normalizedVolume.protocol['30d'],
+				width: 'w-[199px] min-w-[199px]'
+			}
+		]
 	},
 	{
 		metricKey: 'optionsPremiumVolume',
-		idPrefix: 'options_premium_volume',
 		label: 'Options Premium Volume',
 		group: TABLE_COLUMN_GROUPS.OPTIONS,
-		helperText: [
-			definitions.optionsPremium.protocol['24h'],
-			definitions.optionsPremium.protocol['7d'],
-			definitions.optionsPremium.protocol['30d']
-		],
-		widths: ['w-[237px] min-w-[237px]', 'w-[227px] min-w-[227px]', 'w-[238px] min-w-[238px]']
+		columns: [
+			{
+				id: 'options_premium_volume_24h',
+				suffix: '24h',
+				tablePeriod: TABLE_PERIODS.ONE_DAY,
+				helperText: definitions.optionsPremium.protocol['24h'],
+				width: 'w-[237px] min-w-[237px]'
+			},
+			{
+				id: 'options_premium_volume_7d',
+				suffix: '7d',
+				tablePeriod: TABLE_PERIODS.SEVEN_DAYS,
+				helperText: definitions.optionsPremium.protocol['7d'],
+				width: 'w-[227px] min-w-[227px]'
+			},
+			{
+				id: 'options_premium_volume_30d',
+				suffix: '30d',
+				tablePeriod: TABLE_PERIODS.ONE_MONTH,
+				helperText: definitions.optionsPremium.protocol['30d'],
+				width: 'w-[238px] min-w-[238px]'
+			}
+		]
 	},
 	{
 		metricKey: 'optionsNotionalVolume',
-		idPrefix: 'options_notional_volume',
 		label: 'Options Notional Volume',
 		group: TABLE_COLUMN_GROUPS.OPTIONS,
-		helperText: [
-			definitions.optionsNotional.protocol['24h'],
-			definitions.optionsNotional.protocol['7d'],
-			definitions.optionsNotional.protocol['30d']
-		],
-		widths: ['w-[234px] min-w-[234px]', 'w-[224px] min-w-[224px]', 'w-[234px] min-w-[234px]']
+		columns: [
+			{
+				id: 'options_notional_volume_24h',
+				suffix: '24h',
+				tablePeriod: TABLE_PERIODS.ONE_DAY,
+				helperText: definitions.optionsNotional.protocol['24h'],
+				width: 'w-[234px] min-w-[234px]'
+			},
+			{
+				id: 'options_notional_volume_7d',
+				suffix: '7d',
+				tablePeriod: TABLE_PERIODS.SEVEN_DAYS,
+				helperText: definitions.optionsNotional.protocol['7d'],
+				width: 'w-[224px] min-w-[224px]'
+			},
+			{
+				id: 'options_notional_volume_30d',
+				suffix: '30d',
+				tablePeriod: TABLE_PERIODS.ONE_MONTH,
+				helperText: definitions.optionsNotional.protocol['30d'],
+				width: 'w-[234px] min-w-[234px]'
+			}
+		]
 	},
 	{
 		metricKey: 'dexAggregators',
-		idPrefix: 'dex_aggregator_volume',
 		label: 'DEX Aggregator Volume',
 		group: TABLE_COLUMN_GROUPS.SPOT,
-		helperText: [
-			definitions.dexAggregators.protocol['24h'],
-			definitions.dexAggregators.protocol['7d'],
-			definitions.dexAggregators.protocol['30d']
-		],
-		widths: ['w-[230px] min-w-[230px]', 'w-[220px] min-w-[220px]', 'w-[230px] min-w-[230px]'],
-		overlapWarning: 'Routed volume can overlap spot venue volume; do not add them together'
+		overlapWarning: 'Routed volume can overlap spot venue volume; do not add them together',
+		columns: [
+			{
+				id: 'dex_aggregator_volume_24h',
+				suffix: '24h',
+				tablePeriod: TABLE_PERIODS.ONE_DAY,
+				helperText: definitions.dexAggregators.protocol['24h'],
+				width: 'w-[230px] min-w-[230px]'
+			},
+			{
+				id: 'dex_aggregator_volume_7d',
+				suffix: '7d',
+				tablePeriod: TABLE_PERIODS.SEVEN_DAYS,
+				helperText: definitions.dexAggregators.protocol['7d'],
+				width: 'w-[220px] min-w-[220px]'
+			},
+			{
+				id: 'dex_aggregator_volume_30d',
+				suffix: '30d',
+				tablePeriod: TABLE_PERIODS.ONE_MONTH,
+				helperText: definitions.dexAggregators.protocol['30d'],
+				width: 'w-[230px] min-w-[230px]'
+			}
+		]
 	},
 	{
 		metricKey: 'perpsAggregators',
-		idPrefix: 'perp_aggregator_volume',
 		label: 'Perp Aggregator Volume',
 		group: TABLE_COLUMN_GROUPS.PERPS,
-		helperText: [
-			definitions.perpsAggregators.protocol['24h'],
-			definitions.perpsAggregators.protocol['7d'],
-			definitions.perpsAggregators.protocol['30d']
-		],
-		widths: ['w-[233px] min-w-[233px]', 'w-[223px] min-w-[223px]', 'w-[233px] min-w-[233px]'],
-		overlapWarning: 'Routed volume can overlap perp venue volume; do not add them together'
+		overlapWarning: 'Routed volume can overlap perp venue volume; do not add them together',
+		columns: [
+			{
+				id: 'perp_aggregator_volume_24h',
+				suffix: '24h',
+				tablePeriod: TABLE_PERIODS.ONE_DAY,
+				helperText: definitions.perpsAggregators.protocol['24h'],
+				width: 'w-[233px] min-w-[233px]'
+			},
+			{
+				id: 'perp_aggregator_volume_7d',
+				suffix: '7d',
+				tablePeriod: TABLE_PERIODS.SEVEN_DAYS,
+				helperText: definitions.perpsAggregators.protocol['7d'],
+				width: 'w-[223px] min-w-[223px]'
+			},
+			{
+				id: 'perp_aggregator_volume_30d',
+				suffix: '30d',
+				tablePeriod: TABLE_PERIODS.ONE_MONTH,
+				helperText: definitions.perpsAggregators.protocol['30d'],
+				width: 'w-[233px] min-w-[233px]'
+			}
+		]
 	},
 	{
 		metricKey: 'bridgeAggregators',
-		idPrefix: 'bridge_aggregator_volume',
 		label: 'Bridge Aggregator Volume',
 		group: TABLE_COLUMN_GROUPS.BRIDGES,
-		helperText: [
-			definitions.bridgeAggregators.protocol['24h'],
-			definitions.bridgeAggregators.protocol['7d'],
-			definitions.bridgeAggregators.protocol['30d']
-		],
-		widths: ['w-[245px] min-w-[245px]', 'w-[235px] min-w-[235px]', 'w-[246px] min-w-[246px]'],
-		overlapWarning: 'Routed volume can overlap underlying bridge volume; do not add them together'
+		overlapWarning: 'Routed volume can overlap underlying bridge volume; do not add them together',
+		columns: [
+			{
+				id: 'bridge_aggregator_volume_24h',
+				suffix: '24h',
+				tablePeriod: TABLE_PERIODS.ONE_DAY,
+				helperText: definitions.bridgeAggregators.protocol['24h'],
+				width: 'w-[245px] min-w-[245px]'
+			},
+			{
+				id: 'bridge_aggregator_volume_7d',
+				suffix: '7d',
+				tablePeriod: TABLE_PERIODS.SEVEN_DAYS,
+				helperText: definitions.bridgeAggregators.protocol['7d'],
+				width: 'w-[235px] min-w-[235px]'
+			},
+			{
+				id: 'bridge_aggregator_volume_30d',
+				suffix: '30d',
+				tablePeriod: TABLE_PERIODS.ONE_MONTH,
+				helperText: definitions.bridgeAggregators.protocol['30d'],
+				width: 'w-[246px] min-w-[246px]'
+			}
+		]
 	}
 ]
 
@@ -957,11 +1079,11 @@ const columnOptions: ProtocolTableColumnOption[] = [
 	},
 	{ name: 'Spot Cumulative Volume', key: 'dex_cumulative_volume', preset: TABLE_PRESETS.SPOT },
 	...EXTENDED_ACTIVITY_METRICS.flatMap((metric) =>
-		ACTIVITY_PERIODS.map((period) => ({
-			name: `${metric.label} ${period.suffix}`,
-			key: `${metric.idPrefix}_${period.suffix}`,
-			preset: metric.preset,
-			period: period.tablePeriod,
+		metric.columns.map((column) => ({
+			name: `${metric.label} ${column.suffix}`,
+			key: column.id,
+			...(metric.preset === undefined ? {} : { preset: metric.preset }),
+			period: column.tablePeriod,
 			extended: true,
 			defaultVisible: false,
 			metricKey: metric.metricKey
@@ -1049,12 +1171,13 @@ const activityMetricColumn = ({
 
 const activityMetricColumnsByGroup = (group: TABLE_COLUMN_GROUPS) =>
 	EXTENDED_ACTIVITY_METRICS.filter((metric) => metric.group === group).flatMap((metric) =>
-		ACTIVITY_PERIODS.map((period, index) =>
+		metric.columns.map((column) =>
 			activityMetricColumn({
-				id: `${metric.idPrefix}_${period.suffix}` as ProtocolRankingSortKey,
-				header: `${metric.label} ${period.suffix}`,
-				headerHelperText: [metric.helperText[index], metric.overlapWarning].filter(Boolean).join('. '),
-				headerClassName: metric.widths[index]
+				id: column.id,
+				header: `${metric.label} ${column.suffix}`,
+				headerHelperText:
+					metric.overlapWarning === undefined ? column.helperText : `${column.helperText}. ${metric.overlapWarning}`,
+				headerClassName: column.width
 			})
 		)
 	)

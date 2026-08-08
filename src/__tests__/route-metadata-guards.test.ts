@@ -18,21 +18,8 @@ const {
 	fetchStablecoinAssetsApiMock,
 	getStablecoinAssetPageDataMock,
 	metadataCache
-} = vi.hoisted(() => ({
-	fetchChainMock: vi.fn(),
-	getObjectCacheMock: vi.fn(),
-	setObjectCacheMock: vi.fn(),
-	getCategoryInfoMock: vi.fn(),
-	getCoinPerformanceMock: vi.fn(),
-	getOracleDetailPageDataMock: vi.fn(),
-	getOraclesListPageDataMock: vi.fn(),
-	getDATOverviewDataByAssetMock: vi.fn(),
-	getDATCompanyDataMock: vi.fn(),
-	getProtocolOverviewPageDataMock: vi.fn(),
-	fetchEntityQuestionsMock: vi.fn(),
-	fetchStablecoinAssetsApiMock: vi.fn(),
-	getStablecoinAssetPageDataMock: vi.fn(),
-	metadataCache: {
+} = vi.hoisted(() => {
+	const metadataCache: MetadataCache = {
 		chainMetadata: {},
 		chainRouteKeyBySlug: {},
 		categoriesAndTags: { categories: [], tags: [], tagCategoryMap: {}, configs: {} },
@@ -43,7 +30,16 @@ const {
 		cexs: [],
 		cexRouteIdBySlug: {},
 		cexMetadataBySlug: {},
-		rwaList: { canonicalMarketIds: [], platforms: [], chains: [], categories: [], assetGroups: [], idMap: {} },
+		rwaList: {
+			canonicalMarketIds: [],
+			platforms: [],
+			platformRoutes: [],
+			chains: [],
+			categories: [],
+			assetGroups: [],
+			idMap: {}
+		},
+		rwaPlatformsIndex: { generatedAt: 0, byPid: {}, platforms: {} },
 		rwaPerpsList: { contracts: [], venues: [], categories: [], assetGroups: [], total: 0 },
 		tokenlist: {},
 		tokenDirectory: {},
@@ -74,8 +70,24 @@ const {
 		stablecoinPeggedAssetSlugsSet: new Set<string>(),
 		equitiesCompanyRoutes: [],
 		equitiesCompanySlugsSet: new Set<string>()
-	} as MetadataCache
-}))
+	}
+	return {
+		fetchChainMock: vi.fn(),
+		getObjectCacheMock: vi.fn(),
+		setObjectCacheMock: vi.fn(),
+		getCategoryInfoMock: vi.fn(),
+		getCoinPerformanceMock: vi.fn(),
+		getOracleDetailPageDataMock: vi.fn(),
+		getOraclesListPageDataMock: vi.fn(),
+		getDATOverviewDataByAssetMock: vi.fn(),
+		getDATCompanyDataMock: vi.fn(),
+		getProtocolOverviewPageDataMock: vi.fn(),
+		fetchEntityQuestionsMock: vi.fn(),
+		fetchStablecoinAssetsApiMock: vi.fn(),
+		getStablecoinAssetPageDataMock: vi.fn(),
+		metadataCache
+	}
+})
 
 vi.mock('~/constants', async (importOriginal) => ({
 	...(await importOriginal<typeof import('~/constants')>()),

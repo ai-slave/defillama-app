@@ -1,6 +1,6 @@
 import { resolveAllowedChainNamesFromCategories } from '~/containers/ProDashboard/server/chartBuilder/breakdownChains'
 import { fetchStablecoinChartAllApi, fetchStablecoinDominanceAllApi } from '~/containers/Stablecoins/api'
-import type { StablecoinChartPoint, StablecoinDominanceChartPoint } from '~/containers/Stablecoins/api.types'
+import type { StablecoinDominanceChartPoint } from '~/containers/Stablecoins/api.types'
 import { buildStablecoinAggregatePairs, sumStablecoinPegBalances } from '~/containers/Stablecoins/utils'
 import { stableCacheKey } from '~/server/api/cacheKey'
 import { addApiRoutePhase, timeApiRoutePhase } from '~/server/api/phaseTelemetry'
@@ -31,7 +31,7 @@ interface StablecoinByChainBase {
 }
 
 // Pegged-assets chart dates are Unix-second strings and USD totals are flat peg-type maps.
-const toStablecoinPair = (point: StablecoinChartPoint | StablecoinDominanceChartPoint): [number, number] => [
+const toStablecoinPair = (point: StablecoinDominanceChartPoint): [number, number] => [
 	Number(point.date),
 	sumStablecoinPegBalances(point.totalCirculatingUSD)
 ]

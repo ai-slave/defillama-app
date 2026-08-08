@@ -272,7 +272,10 @@ describe('ChartStyleEditor', () => {
 
 		await clickButton('Save')
 		expect(onSave).toHaveBeenCalledOnce()
-		const patch = onSave.mock.calls[0][1]
+		const call = onSave.mock.calls[0]
+		expect(call).toBeDefined()
+		if (!call) throw new Error('Missing save call')
+		const patch = call[1]
 		expect(patch.order).toEqual([1, 0, 2, 3])
 		expect(patch.series?.map((s) => s.name)).toEqual(['2 days', '11-20 days', '6-10 days', '1 day'])
 	})
@@ -285,7 +288,10 @@ describe('ChartStyleEditor', () => {
 		expect(previewNames()).toBe('1 day|2 days|6-10 days|11-20 days')
 
 		await clickButton('Save')
-		const patch = onSave.mock.calls[0][1]
+		const call = onSave.mock.calls[0]
+		expect(call).toBeDefined()
+		if (!call) throw new Error('Missing save call')
+		const patch = call[1]
 		expect(patch.order).toEqual([3, 1, 2, 0])
 	})
 
@@ -294,7 +300,10 @@ describe('ChartStyleEditor', () => {
 		await act(async () => root.render(<EditorHarness editorConfig={bucketConfig} onSave={onSave} />))
 
 		await clickButton('Save')
-		const patch = onSave.mock.calls[0][1]
+		const call = onSave.mock.calls[0]
+		expect(call).toBeDefined()
+		if (!call) throw new Error('Missing save call')
+		const patch = call[1]
 		expect(patch.order).toBeUndefined()
 	})
 
@@ -318,7 +327,10 @@ describe('ChartStyleEditor', () => {
 		expect(previewNames()).toBe('2 days|1 day')
 
 		await clickButton('Save')
-		const patch = onSave.mock.calls[0][1]
+		const call = onSave.mock.calls[0]
+		expect(call).toBeDefined()
+		if (!call) throw new Error('Missing save call')
+		const patch = call[1]
 		expect(patch.order).toEqual([1, 0])
 	})
 })

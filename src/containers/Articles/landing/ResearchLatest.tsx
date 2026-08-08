@@ -65,14 +65,14 @@ type NormalizedItem = {
 	href: string
 }
 
-function normalizeItem(article: ArticleDocument, index: number): NormalizedItem | null {
+function normalizeItem(article: ArticleDocument, index: number): NormalizedItem {
 	const label = article.section?.replace(/-/g, ' ') ?? 'Research'
 	return {
 		_key: `${article.id}-${index}`,
 		label: label.toUpperCase(),
 		title: article.title,
-		image: article.coverImage?.url,
-		alt: article.coverImage?.alt,
+		...(article.coverImage?.url === undefined ? {} : { image: article.coverImage.url }),
+		...(article.coverImage?.alt === undefined ? {} : { alt: article.coverImage.alt }),
 		href: articleHref(article)
 	}
 }
@@ -82,7 +82,7 @@ const CardSlot = ({
 	titlePlacement = 'bottom',
 	className
 }: {
-	item?: NormalizedItem
+	item: NormalizedItem | undefined
 	titlePlacement?: TitlePlacement
 	className: string
 }) =>
@@ -167,15 +167,12 @@ export const ResearchLatest: React.FC<ResearchLatestProps> = ({ articles = [], i
 	const { data } = useQuery<BannerLookupResult>({
 		queryKey: ['research', 'banner', 'landing'],
 		queryFn: () => getLandingBanner(),
-		initialData: initialData ?? undefined,
+		...(initialData == null ? {} : { initialData }),
 		retry: false,
 		staleTime: 60_000
 	})
 
-	const normalized = articles
-		.slice(0, 6)
-		.map((a, i) => normalizeItem(a, i))
-		.filter(Boolean) as NormalizedItem[]
+	const normalized = articles.slice(0, 6).map((article, index) => normalizeItem(article, index))
 
 	if (normalized.length === 0) return null
 

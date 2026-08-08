@@ -180,7 +180,7 @@ export function ResponseControls({
 		const context = copyContext?.()
 		const source: CopyMessageSource = {
 			artifacts: context?.artifacts ?? new Map(),
-			citations: context?.citations,
+			...(context?.citations === undefined ? {} : { citations: context.citations }),
 			// The cache lets both flavors (and the plain-text fallback) share one
 			// request per artifact; the timeout keeps a hung fetch from leaving the
 			// clipboard write pending forever — builders degrade to artifact links.

@@ -4,10 +4,15 @@ import { fetchBorrowMarketDetailHistory, fetchPoolDetailHistory } from './poolDe
 import type { BorrowMarketHistory, PoolHistory } from './poolDetail/types'
 import type { YieldsPaginatedTableResponse } from './yieldsTableQuery'
 
+export type YieldsTableSeed<TRow> = {
+	initialData: YieldsPaginatedTableResponse<TRow>
+	initialDataUpdatedAt: number
+}
+
 export const useYieldsPaginatedTable = <TRow,>(
 	endpoint: string,
 	queryString: string | null,
-	seed?: { initialData: YieldsPaginatedTableResponse<TRow>; initialDataUpdatedAt: number }
+	seed?: YieldsTableSeed<TRow>
 ) => {
 	const url = queryString ? `${endpoint}${queryString}` : null
 	return useQuery<YieldsPaginatedTableResponse<TRow>>({

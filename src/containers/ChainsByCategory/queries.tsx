@@ -6,6 +6,7 @@ import type { ChainsAssetTotalsResponse } from '~/containers/BridgedTVL/api.type
 import { fetchChainsByCategory } from '~/containers/Chains/api'
 import type { ChainsByCategoryResponse } from '~/containers/Chains/api.types'
 import { fetchStablecoinAssetsApi } from '~/containers/Stablecoins/api'
+import { sumStablecoinPegBalances } from '~/containers/Stablecoins/utils'
 import { TVL_SETTINGS_KEYS } from '~/contexts/LocalStorage'
 import { getNDistinctColors, slug } from '~/utils'
 import type { IChainMetadata } from '~/utils/metadata/types'
@@ -290,12 +291,7 @@ export const getChainsByCategory = async ({
 	for (const chain of stablecoins.chains) {
 		const key = slug(chain.name)
 		if (stablesChainMcapMap.has(key)) continue
-		let total = 0
-		for (const peggedAssetId in chain.totalCirculatingUSD) {
-			const value = chain.totalCirculatingUSD[peggedAssetId]
-			if (value != null) total += value
-		}
-		stablesChainMcapMap.set(key, total)
+		stablesChainMcapMap.set(key, sumStablecoinPegBalances(chain.totalCirculatingUSD))
 	}
 
 	type AdapterProtocol = AdapterChainProtocolTotalsResponse['protocols'][number]

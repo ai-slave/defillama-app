@@ -20,7 +20,7 @@ function queryProtocolRankingSnapshot({
 		query,
 		rows: getProtocolRankingRows(data, query),
 		cursor,
-		limit
+		...(limit === undefined ? {} : { limit })
 	})
 }
 import type { IProtocol } from '../types'

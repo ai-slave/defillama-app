@@ -14,6 +14,20 @@ function resultWithRows(n: number): QueryResult {
 
 const AT = '2026-06-24T12:00:00.000Z'
 
+class JsonBackedSqlValue {
+	readonly toJSON: () => unknown
+
+	constructor(value: unknown) {
+		this.toJSON = () => value
+	}
+}
+
+const jsonBackedSqlValue = (value: unknown) =>
+	new Proxy(new JsonBackedSqlValue(value), {
+		// Arrow StructRow proxies expose `toJSON` through property access but not the `in` operator.
+		has: () => false
+	})
+
 describe('captureSnapshot', () => {
 	it('keeps all rows and omits the truncated flag when under the cap', () => {
 		const snap = captureSnapshot(resultWithRows(3), 'browser', AT)
@@ -66,6 +80,47 @@ describe('captureSnapshot', () => {
 		const snap = captureSnapshot(result, 'browser', AT)
 		expect(snap.rows).toEqual([[42, '2026-06-24T00:00:00.000Z']])
 		expect(() => JSON.stringify(snap)).not.toThrow()
+	})
+
+	it('normalizes nested plain records and omits undefined properties', () => {
+		const result: QueryResult = {
+			columns: [{ name: 'value', type: 'STRUCT' }],
+			rows: [[{ amount: 42n, values: [1, new Date('2026-06-24T00:00:00.000Z')], missing: undefined }]]
+		}
+
+		expect(captureSnapshot(result, 'browser', AT).rows).toEqual([
+			[{ amount: 42, values: [1, '2026-06-24T00:00:00.000Z'] }]
+		])
+	})
+
+	it('normalizes JSON-backed LIST and STRUCT values returned by the SQL engine', () => {
+		const result: QueryResult = {
+			columns: [{ name: 'value', type: 'STRUCT' }],
+			rows: [
+				[
+					jsonBackedSqlValue({
+						amount: 42n,
+						values: jsonBackedSqlValue([1, new Date('2026-06-24T00:00:00.000Z')])
+					})
+				]
+			]
+		}
+
+		expect(captureSnapshot(result, 'browser', AT).rows).toEqual([
+			[{ amount: 42, values: [1, '2026-06-24T00:00:00.000Z'] }]
+		])
+	})
+
+	it('does not invent JSON shapes for unsupported object instances', () => {
+		const result: QueryResult = {
+			columns: [
+				{ name: 'map', type: 'UNKNOWN' },
+				{ name: 'inherited', type: 'UNKNOWN' }
+			],
+			rows: [[new Map([['value', 1]]), Object.create({ inherited: 1 })]]
+		}
+
+		expect(captureSnapshot(result, 'browser', AT).rows).toEqual([[null, null]])
 	})
 })
 

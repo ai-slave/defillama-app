@@ -11,6 +11,15 @@ export function clampRowCap(value: number | undefined): number {
 	return Math.min(SQL_SNAPSHOT_ROW_CAP_MAX, Math.max(SQL_SNAPSHOT_ROW_CAP_MIN, Math.round(value)))
 }
 
+function isPlainRecord(value: object): value is Record<string, unknown> {
+	const prototype = Object.getPrototypeOf(value)
+	return prototype === Object.prototype || prototype === null
+}
+
+function hasJsonRepresentation(value: object): value is { toJSON: () => unknown } {
+	return typeof (value as { toJSON?: unknown }).toJSON === 'function'
+}
+
 function toJsonSafe(value: QueryResult['rows'][number][number]): SqlSnapshotValue {
 	if (value === null) return null
 	if (typeof value === 'string') return value
@@ -22,9 +31,10 @@ function toJsonSafe(value: QueryResult['rows'][number][number]): SqlSnapshotValu
 	if (value instanceof Date) return value.toISOString()
 	if (Array.isArray(value)) return value.map(toJsonSafe)
 	if (typeof value === 'object') {
+		// DuckDB-Wasm exposes LIST and STRUCT cells as Arrow wrappers with JSON representations.
+		if (!isPlainRecord(value)) return hasJsonRepresentation(value) ? toJsonSafe(value.toJSON()) : null
 		const out: Record<string, SqlSnapshotValue> = {}
-		for (const key in value) {
-			const nestedValue = value[key]
+		for (const [key, nestedValue] of Object.entries(value)) {
 			if (nestedValue !== undefined) out[key] = toJsonSafe(nestedValue)
 		}
 		return out

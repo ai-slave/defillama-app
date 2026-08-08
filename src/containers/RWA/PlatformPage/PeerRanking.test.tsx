@@ -80,10 +80,10 @@ describe('RWA platform peer ranking', () => {
 	})
 
 	it('reveals the selected row after client data arrives', async () => {
-		vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(function () {
+		vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(function (this: HTMLElement) {
 			return this.classList.contains('overflow-auto') ? 200 : 0
 		})
-		vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
+		vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
 			if (this.classList.contains('overflow-auto')) return new DOMRect(0, 0, 800, 200)
 			if (this.tagName === 'THEAD') return new DOMRect(0, 0, 800, 40)
 			if (this.tagName === 'TR' && this.querySelector('[aria-current="page"]')) {
@@ -103,10 +103,10 @@ describe('RWA platform peer ranking', () => {
 
 	it('does not move the table when the selected row is already visible', async () => {
 		queryState = { data: peers, isLoading: false, error: null }
-		vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(function () {
+		vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(function (this: HTMLElement) {
 			return this.classList.contains('overflow-auto') ? 200 : 0
 		})
-		vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
+		vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
 			if (this.classList.contains('overflow-auto')) return new DOMRect(0, 0, 800, 200)
 			if (this.tagName === 'THEAD') return new DOMRect(0, 0, 800, 40)
 			if (this.tagName === 'TR' && this.querySelector('[aria-current="page"]')) {

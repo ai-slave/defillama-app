@@ -113,8 +113,8 @@ describe('Protocol Rankings hydration', () => {
 	it('hydrates the static TVL page before reconciling persisted client presets', async () => {
 		await hydrateTable()
 
-		const hydrationErrors = consoleError.mock.calls.filter(([message]) =>
-			String(message).toLowerCase().includes('hydration')
+		const hydrationErrors = consoleError.mock.calls.filter((call: unknown[]) =>
+			String(call[0]).toLowerCase().includes('hydration')
 		)
 		expect(hydrationErrors).toEqual([])
 		await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(1))

@@ -88,7 +88,7 @@ export const Cexs = ({ cexs }: { cexs: Array<ICex> }) => {
 	)
 
 	return (
-		<TableWithSearch
+		<TableWithSearch<CexRow>
 			data={enrichedData}
 			columns={columns}
 			columnToSearch={'name'}

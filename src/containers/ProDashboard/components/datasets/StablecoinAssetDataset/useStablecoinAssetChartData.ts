@@ -30,7 +30,8 @@ import {
 import {
 	getStablecoinValueFromPoint,
 	isInactiveStablecoin,
-	isStablecoinChartDateVisible
+	isStablecoinChartDateVisible,
+	sumStablecoinPegBalances
 } from '~/containers/Stablecoins/utils'
 import type { StablecoinAssetChartType } from '../../../types'
 
@@ -295,11 +296,7 @@ export function useStablecoinAssetsList() {
 				: await fetchStablecoinAssetsApi()
 			const assets: StablecoinAssetInfo[] = []
 			for (const asset of data.peggedAssets) {
-				let mcap = 0
-				for (const key in asset.circulating) {
-					const value = asset.circulating[key]
-					if (value !== undefined) mcap += value
-				}
+				const mcap = sumStablecoinPegBalances(asset.circulating)
 				const isInactive = isInactiveStablecoin(asset)
 				if (mcap > 0 || isInactive) {
 					assets.push({

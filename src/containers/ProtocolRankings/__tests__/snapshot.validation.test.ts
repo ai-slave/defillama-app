@@ -222,7 +222,7 @@ describe('getProtocolRankingsSnapshot publication gate', () => {
 
 		expect(result.snapshot).toBe(current.snapshot)
 		expect(queriesMocks.getProtocolsByChain).not.toHaveBeenCalled()
-		const pointerReads = cacheMocks.getObjectCache.mock.calls.map(([key]: [string]) => key)
-		expect(pointerReads.some((key: string) => key.endsWith(':last-good'))).toBe(false)
+		const pointerReads = cacheMocks.getObjectCache.mock.calls.map((call) => call[0])
+		expect(pointerReads.some((key) => key.endsWith(':last-good'))).toBe(false)
 	})
 })

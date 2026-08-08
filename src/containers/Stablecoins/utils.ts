@@ -29,10 +29,15 @@ export interface StablecoinMcapPoint {
 
 export type StablecoinAggregatePair = [timestamp: number, value: number]
 
-export function sumStablecoinPegBalances<T extends string>(balances: Partial<Record<T, number>> | undefined): number {
-	if (!balances) return 0
+export function sumStablecoinPegBalances(balances: StablecoinPegBalances | undefined): number {
+	// Historical chain charts prune zero-valued metrics by omitting the field.
+	if (balances === undefined) return 0
 	let total = 0
-	for (const pegType in balances) total += balances[pegType] ?? 0
+	for (const key in balances) {
+		// The API contract is a finite peg-key map; `for...in` widens its key to `string`.
+		const value = balances[key as keyof StablecoinPegBalances]
+		if (value !== undefined) total += value
+	}
 	return total
 }
 

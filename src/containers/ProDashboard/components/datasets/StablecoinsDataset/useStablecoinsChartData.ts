@@ -26,6 +26,7 @@ import {
 	type StablecoinOverviewChartType
 } from '~/containers/Stablecoins/chartSeries'
 import type { IBuildStablecoinChartDataParams } from '~/containers/Stablecoins/utils'
+import { sumStablecoinPegBalances } from '~/containers/Stablecoins/utils'
 import type { StablecoinChartType } from '../../../types'
 
 interface UseStablecoinsChartDataResult {
@@ -272,14 +273,9 @@ export function useStablecoinChainsList() {
 				: await fetchStablecoinAssetsApi()
 			const chains: StablecoinChainInfo[] = []
 			for (const chain of data.chains) {
-				let tvl = 0
-				for (const key in chain.totalCirculatingUSD) {
-					const value = chain.totalCirculatingUSD[key]
-					if (value !== undefined) tvl += value
-				}
 				chains.push({
 					name: chain.name,
-					tvl
+					tvl: sumStablecoinPegBalances(chain.totalCirculatingUSD)
 				})
 			}
 			chains.sort((a, b) => b.tvl - a.tvl)

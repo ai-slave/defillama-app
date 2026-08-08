@@ -79,7 +79,7 @@ export const toSlug = (name: string = ''): string => name?.toLowerCase().split('
 
 const toUtcDay = (ts: number): number => Math.floor(ts / 86400) * 86400
 
-export const normalizeDailyPairs = (pairs: SeriesPoint[], mode: 'sum' | 'last' = 'sum'): SeriesPoint[] => {
+export const normalizeDailyPairs = (pairs: SeriesPoint[], mode: 'sum' | 'last'): SeriesPoint[] => {
 	const daily = new Map<number, number>()
 	for (const [ts, v] of pairs) {
 		const day = toUtcDay(Number(ts))

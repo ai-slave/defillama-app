@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import type {
+	DefaultLabelFormatterCallbackParams,
 	EChartsOption,
 	SeriesOption,
 	TitleComponentOption,
@@ -50,6 +51,14 @@ const TREEMAP_EXPORT_BOTTOM_PADDING = 16
 const TREEMAP_EXPORT_LABEL_Z = 10000
 const EXPORT_TITLE_Z = 10002
 
+type TreemapLabelOption = NonNullable<TreemapSeriesOption['label']>
+type TreemapSeriesLevelOption = NonNullable<TreemapSeriesOption['levels']>[number]
+type TreemapDataItem = NonNullable<TreemapSeriesOption['data']>[number]
+type TreemapExportLabelOption = Omit<TreemapLabelOption, 'formatter' | 'show'> & {
+	formatter: (params: DefaultLabelFormatterCallbackParams) => string
+	show: boolean
+}
+
 // --- Small utilities ---
 
 const parsePixelValue = (value: unknown) => {
@@ -83,13 +92,17 @@ export type TreemapViewportExportState =
 	  }
 	| { rootRect: Rect; sourceLayout: { width: number; height: number } }
 
-function getTreemapNumericValue(rawValue: any): number {
+function getTreemapNumericValue(rawValue: unknown): number {
 	const value = Array.isArray(rawValue) ? rawValue[0] : rawValue
 	const numeric = typeof value === 'number' ? value : Number(value ?? 0)
 	return Number.isFinite(numeric) ? numeric : 0
 }
 
-function formatTreemapExportLabel(params: any, total: number, sourceFormatter: any): string {
+function formatTreemapExportLabel(
+	params: DefaultLabelFormatterCallbackParams,
+	total: number,
+	sourceFormatter: TreemapLabelOption['formatter']
+): string {
 	if (typeof sourceFormatter === 'function') {
 		const label = sourceFormatter(params)
 		if (label != null && label !== '') return String(label)
@@ -131,9 +144,12 @@ export function sanitizeRichImagesForExport(rich: any) {
 	return sanitized
 }
 
-function applyTreemapDataExportLabels(data: any[], label: any, upperLabel: any): any[] {
+function applyTreemapDataExportLabels(
+	data: TreemapDataItem[],
+	label: TreemapExportLabelOption,
+	upperLabel: TreemapExportLabelOption
+): TreemapDataItem[] {
 	return data.map((item) => {
-		if (!item || typeof item !== 'object' || Array.isArray(item)) return item
 		const itemLabel = item.label ?? {}
 		const itemUpperLabel = item.upperLabel ?? {}
 		return {
@@ -152,9 +168,7 @@ function applyTreemapDataExportLabels(data: any[], label: any, upperLabel: any):
 				rich: sanitizeRichImagesForExport(itemUpperLabel.rich ?? upperLabel.rich),
 				formatter: typeof itemUpperLabel.formatter === 'function' ? itemUpperLabel.formatter : upperLabel.formatter
 			},
-			...(Array.isArray(item.children)
-				? { children: applyTreemapDataExportLabels(item.children, label, upperLabel) }
-				: {})
+			...(item.children ? { children: applyTreemapDataExportLabels(item.children, label, upperLabel) } : {})
 		}
 	})
 }
@@ -163,41 +177,47 @@ function stripRichText(value: string): string {
 	return value.replace(/\{[^|{}]+\|([^{}]*)\}/g, '$1')
 }
 
-function findTreemapDataNodeByPath(data: any[], path: string[], seriesName: string | undefined): any | null {
+function findTreemapDataNodeByPath(
+	data: TreemapDataItem[],
+	path: string[],
+	seriesName: TreemapSeriesOption['name']
+): TreemapDataItem | null {
 	if (path.length === 0) return null
 	const startIndex = seriesName && path[0] === seriesName ? 1 : 0
 	let nodes = data
-	let match: any | null = null
+	let match: TreemapDataItem | null = null
 
 	for (let i = startIndex; i < path.length; i++) {
+		const segment = path[i]
+		if (segment === undefined) return null
 		match = null
 		for (const node of nodes) {
-			if (node && typeof node === 'object' && !Array.isArray(node) && node.name === path[i]) {
+			if (node.name === segment) {
 				match = node
 				break
 			}
 		}
 		if (!match) return null
-		nodes = Array.isArray(match.children) ? match.children : []
+		nodes = match.children ?? []
 	}
 
 	return match
 }
 
-function findTreemapDataNodeByIndexPath(data: any[], indexPath: number[]): any | null {
+function findTreemapDataNodeByIndexPath(data: TreemapDataItem[], indexPath: number[]): TreemapDataItem | null {
 	let nodes = data
-	let match: any | null = null
+	let match: TreemapDataItem | null = null
 	for (const index of indexPath) {
-		match = nodes[index]
-		if (!match || typeof match !== 'object' || Array.isArray(match)) return null
-		nodes = Array.isArray(match.children) ? match.children : []
+		match = nodes[index] ?? null
+		if (!match) return null
+		nodes = match.children ?? []
 	}
 	return match
 }
 
-export function getTreemapTargetDataRoot(series: any, state: TreemapViewportExportState | null) {
+export function getTreemapTargetDataRoot(series: TreemapSeriesOption, state: TreemapViewportExportState | null) {
 	if (!state || !('actionType' in state)) return null
-	if (!Array.isArray(series.data)) return null
+	if (!series.data) return null
 
 	const target =
 		state.targetNodeIndexPath && state.targetNodeIndexPath.length > 0
@@ -205,14 +225,12 @@ export function getTreemapTargetDataRoot(series: any, state: TreemapViewportExpo
 			: state.targetNodePath && state.targetNodePath.length > 0
 				? findTreemapDataNodeByPath(series.data, state.targetNodePath, series.name)
 				: null
-	if (!target || typeof target !== 'object' || Array.isArray(target)) return null
+	if (!target) return null
+	const { children: _children, ...targetWithoutChildren } = target
 
 	return {
 		name: typeof target.name === 'string' && target.name ? target.name : series.name,
-		data:
-			Array.isArray(target.children) && target.children.length > 0
-				? target.children
-				: [{ ...target, children: undefined }]
+		data: target.children && target.children.length > 0 ? target.children : [targetWithoutChildren]
 	}
 }
 
@@ -1112,13 +1130,14 @@ function adjustSeriesForExport(opts: {
 			// The cloned export must declare labels at both series and level scope.
 			// ECharts treemap levels can override series labels, which previously produced normalized PNGs with no text.
 			const total = Array.isArray(s.data)
-				? s.data.reduce((sum: number, item: any) => {
+				? s.data.reduce((sum: number, item) => {
 						return sum + getTreemapNumericValue(item?.value)
 					}, 0)
 				: 0
 			const sourceLabel = s.label ?? {}
-			const exportLabelFormatter = (params: any) => formatTreemapExportLabel(params, total, sourceLabel.formatter)
-			const exportLabel = {
+			const exportLabelFormatter = (params: DefaultLabelFormatterCallbackParams) =>
+				formatTreemapExportLabel(params, total, sourceLabel.formatter)
+			const exportLabel: TreemapExportLabelOption = {
 				...sourceLabel,
 				show: true,
 				position: sourceLabel.position ?? 'insideTopLeft',
@@ -1140,14 +1159,14 @@ function adjustSeriesForExport(opts: {
 				}
 			}
 			const sourceUpperLabel = s.upperLabel ?? {}
-			const exportUpperLabel = {
+			const exportUpperLabel: TreemapExportLabelOption = {
 				...sourceUpperLabel,
 				show: sourceUpperLabel.show !== false,
 				color: sourceUpperLabel.color ?? getChartTheme(isDark).treemapLabel,
 				formatter:
 					typeof sourceUpperLabel.formatter === 'function'
 						? sourceUpperLabel.formatter
-						: (params: any) => String(params?.name ?? '')
+						: (params: DefaultLabelFormatterCallbackParams) => String(params.name ?? '')
 			}
 			const targetDataRoot = getTreemapTargetDataRoot(s, treemapViewportState ?? null)
 			const exportData = targetDataRoot?.data ?? s.data
@@ -1168,7 +1187,7 @@ function adjustSeriesForExport(opts: {
 				next.data = exportData
 			}
 			if (Array.isArray(sourceLevels)) {
-				next.levels = sourceLevels.map((level: any) => {
+				next.levels = sourceLevels.map((level: TreemapSeriesLevelOption) => {
 					const levelLabel = level?.label ?? {}
 					const levelUpperLabel = level?.upperLabel ?? {}
 					return {

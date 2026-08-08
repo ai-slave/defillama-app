@@ -1,10 +1,9 @@
 import type { PaginationState, SortingState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import * as React from 'react'
-import { useYieldsPaginatedTable } from './queries.client'
+import { useYieldsPaginatedTable, type YieldsTableSeed } from './queries.client'
 import { pushYieldsQuery } from './queryUpdates.client'
 import type { IYieldsTableProps } from './Tables/types'
-import type { YieldsPaginatedTableResponse } from './yieldsTableQuery'
 import {
 	buildYieldsTableQueryString,
 	DEFAULT_YIELDS_TABLE_PAGE_SIZE,
@@ -14,22 +13,17 @@ import {
 
 type QueryRecord = Record<string, string | string[] | undefined>
 
-export function useYieldsServerTable<TRow>({
-	endpoint,
-	enabled = true,
-	extraQuery,
-	defaultSorting = [],
-	initialData,
-	initialDataUpdatedAt
-}: {
+type YieldsServerTableOptions<TRow> = {
 	endpoint: string
 	enabled?: boolean
 	extraQuery?: QueryRecord
 	defaultSorting?: SortingState
 	/** ISR-provided first page of the DEFAULT view; ignored for parameterized URLs. */
-	initialData?: YieldsPaginatedTableResponse<TRow>
-	initialDataUpdatedAt?: number
-}) {
+	initialSeed?: YieldsTableSeed<TRow>
+}
+
+export function useYieldsServerTable<TRow>(options: YieldsServerTableOptions<TRow>) {
+	const { endpoint, enabled = true, extraQuery, defaultSorting = [] } = options
 	const router = useRouter()
 	const query = router.query as QueryRecord
 	const requestedPagination = React.useMemo(() => getYieldsTablePaginationFromQuery(query), [query])
@@ -40,7 +34,12 @@ export function useYieldsServerTable<TRow>({
 		// first render and hydrates a moment later — fetching before that would issue a
 		// paramless request whose rows flash in the wrong order, then get replaced.
 		if (!router.isReady) return null
-		return buildYieldsTableQueryString({ query, pagination: requestedPagination, sorting, extraQuery })
+		return buildYieldsTableQueryString({
+			query,
+			pagination: requestedPagination,
+			sorting,
+			...(extraQuery === undefined ? {} : { extraQuery })
+		})
 	}, [enabled, extraQuery, query, requestedPagination, sorting, router.isReady])
 	const defaultQueryString = React.useMemo(
 		() =>
@@ -48,21 +47,18 @@ export function useYieldsServerTable<TRow>({
 				query: {},
 				pagination: { pageIndex: 0, pageSize: DEFAULT_YIELDS_TABLE_PAGE_SIZE },
 				sorting: defaultSorting,
-				extraQuery
+				...(extraQuery === undefined ? {} : { extraQuery })
 			}),
 		[defaultSorting, extraQuery]
 	)
-	const seed =
-		initialData && queryString === defaultQueryString
-			? { initialData, initialDataUpdatedAt: initialDataUpdatedAt ?? 0 }
-			: undefined
+	const seed = options.initialSeed && queryString === defaultQueryString ? options.initialSeed : undefined
 	const rowsQuery = useYieldsPaginatedTable<TRow>(endpoint, queryString, seed)
 	// The seed renders during SSR/pre-hydration (the static HTML contains it, so
 	// dropping it before the router resolves would be a hydration mismatch) and
 	// for the default view. A URL known to carry filters must NOT show it - the
 	// seeded rows don't match the URL - and neither must a failed fetch.
 	const seedVisible = (!router.isReady || queryString === defaultQueryString) && !rowsQuery.isError
-	const data = rowsQuery.data ?? (seedVisible ? initialData : undefined)
+	const data = rowsQuery.data ?? (seedVisible ? options.initialSeed?.initialData : undefined)
 	const rows = data?.rows ?? []
 	const total = data?.total ?? 0
 	const medianApy = data?.medianApy ?? null
@@ -107,7 +103,7 @@ export function useYieldsServerTable<TRow>({
 				pagination: { ...pagination, pageIndex: 0 },
 				sorting,
 				pageSize: 'all',
-				extraQuery
+				...(extraQuery === undefined ? {} : { extraQuery })
 			}),
 		[extraQuery, pagination, query, sorting]
 	)

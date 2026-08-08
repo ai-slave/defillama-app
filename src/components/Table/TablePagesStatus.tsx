@@ -26,7 +26,7 @@ export function TablePagesStatus({
 	rowCount: number
 	total: number
 	hasMore: boolean
-	retry?: () => Promise<void>
+	retry: (() => Promise<void>) | undefined
 	/** Plural item label, e.g. 'protocols'. */
 	noun?: string
 	/** Pass null when an overlay owns the replacing signal; the footer then keeps showing the row count. */

@@ -45,4 +45,26 @@ describe('getCompleteAdapterMetricChainSeries', () => {
 			}
 		])
 	})
+
+	it.each([
+		['perps', 14],
+		['open-interest', 9]
+	] as const)('uses the %s metric daily aggregation contract', async (metric, expected) => {
+		vi.mocked(fetchAdapterChainChartDataByChainBreakdown).mockResolvedValue([
+			[86_400 + 60, { Ethereum: 5 }],
+			[86_400 + 120, { Ethereum: 9 }]
+		])
+
+		const result = await getCompleteAdapterMetricChainSeries({
+			metric,
+			chains: [],
+			chainFilterMode: 'include',
+			chainCategoryFilterMode: 'include',
+			protocolCategoryFilterMode: 'include',
+			chainCategories: [],
+			protocolCategories: []
+		})
+
+		expect(result.series[0]?.data).toEqual([[86_400, expected]])
+	})
 })

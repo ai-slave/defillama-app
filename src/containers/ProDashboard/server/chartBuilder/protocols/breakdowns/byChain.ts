@@ -103,7 +103,12 @@ async function getAllProtocolsTopChainsTvlData(
 		for (const chainResponse of chainResponses) {
 			const { name, data: j } = chainResponse
 			const adjustedTvl = processAdjustedTvl(j)
-			const normalized = filterOutToday(normalizeDailyPairs(adjustedTvl.map(([ts, v]) => [Number(ts), Number(v)])))
+			const normalized = filterOutToday(
+				normalizeDailyPairs(
+					adjustedTvl.map(([ts, v]) => [Number(ts), Number(v)]),
+					'last'
+				)
+			)
 			const color = BREAKDOWN_COLOR_PALETTE[colorIndex % BREAKDOWN_COLOR_PALETTE.length]
 			colorIndex++
 			topSeriesRaw.push({
@@ -129,7 +134,12 @@ async function getAllProtocolsTopChainsTvlData(
 
 		if (!globalJson) throw new Error('Missing the unfiltered global TVL series')
 		const adjustedGlobalTvl = processAdjustedTvl(globalJson)
-		const totalSeries = filterOutToday(normalizeDailyPairs(adjustedGlobalTvl.map(([ts, v]) => [Number(ts), Number(v)])))
+		const totalSeries = filterOutToday(
+			normalizeDailyPairs(
+				adjustedGlobalTvl.map(([ts, v]) => [Number(ts), Number(v)]),
+				'last'
+			)
+		)
 		const { alignedTopSeries, othersData } = buildAlignedTopAndOthers(topSeriesRaw, totalSeries)
 
 		const includedTopCount = topSeriesRaw.length

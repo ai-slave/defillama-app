@@ -125,8 +125,11 @@ describe('buildTokenUsageTreemapTreeData', () => {
 			{ name: 'B/C', amountUsd: 40, category: 'A' }
 		])
 		const options = getTokenUsageTreemapProtocolOptions(tree)
+		const selected = options.find((option) => option.key === '["A","B/C"]')
 
 		expect(new Set(options.map((option) => option.key)).size).toBe(2)
-		expect(filterTokenUsageTreemapTreeData(tree, new Set([options[1].key]))).toHaveLength(1)
+		expect(selected).toBeDefined()
+		if (!selected) throw new Error('Missing slash-containing protocol option')
+		expect(filterTokenUsageTreemapTreeData(tree, new Set([selected.key]))).toHaveLength(1)
 	})
 })

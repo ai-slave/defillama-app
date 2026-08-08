@@ -2,13 +2,14 @@ import type { InferGetStaticPropsType } from 'next/types'
 import { ChainOverview } from '~/containers/ChainOverview'
 import { ChainOverviewAnnouncement } from '~/containers/ChainOverview/Announcement'
 import { getChainOverviewData } from '~/containers/ChainOverview/queries.server'
+import type { IChainOverviewData } from '~/containers/ChainOverview/types'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { createRoutePhaseTimer, withPerformanceLogging } from '~/utils/perf'
 
 const pageName = ['Overview']
 
-export const getStaticProps = withPerformanceLogging(
+export const getStaticProps = withPerformanceLogging<IChainOverviewData>(
 	'index',
 	async () => {
 		const phaseTimer = createRoutePhaseTimer()
@@ -30,6 +31,7 @@ export const getStaticProps = withPerformanceLogging(
 					phaseTimer
 				})
 			)
+			if (!data) throw new Error('Missing homepage chain overview data')
 
 			return {
 				props: data,

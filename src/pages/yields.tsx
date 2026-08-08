@@ -1,12 +1,13 @@
+import type { InferGetStaticPropsType } from 'next'
 import { Announcement } from '~/components/Announcement'
 import { fetchEntityQuestions } from '~/containers/LlamaAI/api'
 import { disclaimer } from '~/containers/Yields/constants'
-import YieldPage from '~/containers/Yields/views/EarnView'
+import YieldPage, { type EarnViewProps } from '~/containers/Yields/views/EarnView'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
-export const getStaticProps = withPerformanceLogging('yields', async () => {
+export const getStaticProps = withPerformanceLogging<EarnViewProps>('yields', async () => {
 	const [{ getEarnPageMeta }, { getEarnPage }, { acquireYieldsSnapshot }] = await Promise.all([
 		import('~/containers/Yields/data/earnMeta.server'),
 		import('~/containers/Yields/data/earn.server'),
@@ -18,9 +19,7 @@ export const getStaticProps = withPerformanceLogging('yields', async () => {
 		// Default-view first page: rows in the initial HTML, and the same call
 		// warms the prepared-rows cache for the API's first readers.
 		getEarnPage(snapshot, {}),
-		fetchEntityQuestions('yields', 'page').catch(() => ({
-			questions: [] as string[]
-		}))
+		fetchEntityQuestions('yields', 'page')
 	])
 
 	return {
@@ -31,7 +30,7 @@ export const getStaticProps = withPerformanceLogging('yields', async () => {
 
 const pageName = ['Yields: Earn']
 
-export default function ApyHomePage(data) {
+export default function ApyHomePage(data: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout
 			title="Yield Farming Rankings - Best DeFi APY Pools - DefiLlama"

@@ -420,7 +420,8 @@ async function getAllProtocolsTopChainsDimensionsData(
 							breakdownSeries.map(([timestamp, protocolsAtTimestamp]) => [
 								timestamp,
 								aggregateProtocolsForTimestamp(protocolsAtTimestamp)
-							])
+							]),
+							config.dailyMode
 						)
 					)
 				} else {
@@ -429,7 +430,7 @@ async function getAllProtocolsTopChainsDimensionsData(
 						chain: endpointSlug,
 						...(config.dataType ? { dataType: config.dataType } : {})
 					})
-					normalized = filterOutToday(normalizeDailyPairs(totalDataChart))
+					normalized = filterOutToday(normalizeDailyPairs(totalDataChart, config.dailyMode))
 				}
 
 				return {
@@ -595,7 +596,7 @@ async function getCompleteAllProtocolsAdapterChainSeries(
 	const series: ChartSeries[] = []
 	let colorIndex = 0
 	for (const [chain, values] of valuesByChain) {
-		const data = filterOutToday(normalizeDailyPairs(values))
+		const data = filterOutToday(normalizeDailyPairs(values, config.dailyMode))
 		if (data.length === 0) continue
 		series.push({ name: displayChainName(chain), data, color: getBreakdownColor(colorIndex++) })
 	}

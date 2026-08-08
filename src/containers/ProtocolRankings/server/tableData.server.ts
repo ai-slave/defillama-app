@@ -131,16 +131,16 @@ export function getProtocolRankingSourceOptions({
 }: {
 	chain: string
 	chainMetadata: Record<string, IChainMetadata>
-	categoriesAndTagsMetadata?: ICategoriesAndTags
+	categoriesAndTagsMetadata: ICategoriesAndTags
 }): { shouldFetchDexs: boolean; shouldFetchPerps: boolean } {
 	const metadata = chain === 'All' ? { id: 'all', name: 'All', dexs: true, perps: true } : chainMetadata[slug(chain)]
 	if (!metadata) return { shouldFetchDexs: false, shouldFetchPerps: false }
 	if (chain === 'All' || metadata.id === 'all') return { shouldFetchDexs: true, shouldFetchPerps: true }
 	return {
 		shouldFetchDexs:
-			!!metadata.dexs && (categoriesAndTagsMetadata?.configs?.Dexs?.chains?.includes(metadata.id) ?? false),
+			!!metadata.dexs && (categoriesAndTagsMetadata.configs.Dexs?.chains?.includes(metadata.id) ?? false),
 		shouldFetchPerps:
-			!!metadata.perps && (categoriesAndTagsMetadata?.configs?.Derivatives?.chains?.includes(metadata.id) ?? false)
+			!!metadata.perps && (categoriesAndTagsMetadata.configs.Derivatives?.chains?.includes(metadata.id) ?? false)
 	}
 }
 
@@ -154,7 +154,7 @@ export async function getProtocolRankingsSnapshot({
 	chain: string
 	chainMetadata: Record<string, IChainMetadata>
 	protocolMetadata: Record<string, IProtocolMetadata>
-	categoriesAndTagsMetadata?: ICategoriesAndTags
+	categoriesAndTagsMetadata: ICategoriesAndTags
 	protocolLlamaswapDataset?: ProtocolLlamaswapMetadata | null
 }): Promise<ProtocolRankingsCanonicalSnapshot> {
 	return cachedResult(
@@ -192,7 +192,7 @@ export async function getProtocolRankingsSnapshot({
 					feeProtocols:
 						result.fees?.protocols.map((protocol) => ({
 							slug: protocol.slug,
-							total24h: protocol.total24h
+							...(protocol.total24h === undefined ? {} : { total24h: protocol.total24h })
 						})) ?? null,
 					dexs: result.dexs
 						? {
@@ -204,9 +204,9 @@ export async function getProtocolRankingsSnapshot({
 						: null,
 					perps: result.perps
 						? {
-								total24h: result.perps.total24h,
-								total7d: result.perps.total7d,
-								change_7dover7d: result.perps.change_7dover7d
+								...(result.perps.total24h === undefined ? {} : { total24h: result.perps.total24h }),
+								...(result.perps.total7d === undefined ? {} : { total7d: result.perps.total7d }),
+								...(result.perps.change_7dover7d === undefined ? {} : { change_7dover7d: result.perps.change_7dover7d })
 							}
 						: null
 				}

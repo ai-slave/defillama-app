@@ -29,14 +29,14 @@ function row(id: string, name: string, tvl: number): IProtocol {
 	}
 }
 
-const canonical = {
+const canonical: ProtocolRankingsCanonicalSnapshot = {
 	chain: 'All',
 	createdAt: 1,
 	snapshot: 'abcdefghijklmnopqrst',
 	protocols: [row('a', 'Alpha', 2), row('b', 'Beta', 1)],
 	availableActivityMetrics: [],
-	source: {}
-} as ProtocolRankingsCanonicalSnapshot
+	source: { chains: [], feeProtocols: null, dexs: null, perps: null }
+}
 
 describe('protocol rankings API', () => {
 	beforeEach(() => {

@@ -1,5 +1,4 @@
 import {
-	type ColumnDef,
 	type ColumnFiltersState,
 	type ColumnOrderState,
 	type ExpandedState,
@@ -10,6 +9,7 @@ import {
 	getFilteredRowModel,
 	getSortedRowModel,
 	type SortingState,
+	type TableOptions,
 	useReactTable
 } from '@tanstack/react-table'
 import * as React from 'react'
@@ -35,13 +35,11 @@ const EMPTY_EXPANDED: ExpandedState = {}
 
 type CustomFiltersProp = React.ReactNode | (() => React.ReactNode)
 
-// TanStack columns have heterogeneous accessor value types. `never` preserves each
-// column's inferred value type while collecting them without falling back to `any`.
-type TableColumnDef<T extends RowData> = ColumnDef<T> | ColumnDef<T, never>
-
 interface ITableWithSearchBaseProps<T extends RowData> {
 	data: T[]
-	columns: TableColumnDef<T>[]
+	// Each column keeps the value type inferred by createColumnHelper; TanStack erases
+	// those heterogeneous value types only when the columns enter a table together.
+	columns: TableOptions<T>['columns']
 	placeholder?: string
 	columnToSearch?: string
 	header?: string | null

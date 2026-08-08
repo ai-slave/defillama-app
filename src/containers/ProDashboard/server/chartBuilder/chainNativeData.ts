@@ -131,7 +131,7 @@ async function getChainNativeByChainBreakdownData({
 		})
 		return {
 			name: entry.name,
-			data: filterOutToday(normalizeDailyPairs(chart)),
+			data: filterOutToday(normalizeDailyPairs(chart, 'sum')),
 			color: getBreakdownColor(index)
 		}
 	})

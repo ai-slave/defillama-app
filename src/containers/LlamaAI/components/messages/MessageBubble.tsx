@@ -646,23 +646,26 @@ export function MessageBubble({
 			{message.id && !isDraft ? (
 				<ResponseControls
 					messageId={message.id}
-					content={message.content}
-					copyContext={() => ({
-						artifacts: parseMessageToRenderModel(message).artifactsById,
-						citations: message.citations?.length
+					{...(message.content === undefined ? {} : { content: message.content })}
+					copyContext={() => {
+						const citations = message.citations?.length
 							? message.citations
 							: message.legacyUrlCitations?.length
 								? wrapLegacyUrlCitations(message.legacyUrlCitations)
 								: undefined
-					})}
-					onShare={onShare}
+						return {
+							artifacts: parseMessageToRenderModel(message).artifactsById,
+							...(citations === undefined ? {} : { citations })
+						}
+					}}
+					{...(onShare === undefined ? {} : { onShare })}
 					sessionId={sessionId}
 					readOnly={readOnly}
-					messageMetadata={message.messageMetadata}
+					{...(message.messageMetadata === undefined ? {} : { messageMetadata: message.messageMetadata })}
 					isLatest={isLatestAssistant}
-					articleExportRequest={
-						message.content && message.id
-							? () =>
+					{...(message.content
+						? {
+								articleExportRequest: () =>
 									buildMessageExportRequest({
 										markdown: message.content ?? '',
 										messageId: message.id as string,
@@ -670,8 +673,8 @@ export function MessageBubble({
 										chartGroups: message.charts,
 										generatedImages: message.generatedImages
 									})
-							: undefined
-					}
+							}
+						: {})}
 				/>
 			) : null}
 		</div>

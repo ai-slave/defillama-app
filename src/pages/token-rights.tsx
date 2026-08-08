@@ -137,10 +137,7 @@ export const getStaticProps = withPerformanceLogging('token-rights', async () =>
 		parentProtocols
 	)
 	const deprecatedProtocolIds = new Set(
-		liteProtocols
-			.filter((protocol) => protocol.deprecated)
-			.map((protocol) => String(protocol.defillamaId ?? protocol.id ?? ''))
-			.filter(Boolean)
+		liteProtocols.filter((protocol) => protocol.deprecated).map((protocol) => protocol.defillamaId)
 	)
 
 	const protocols: TokenRightsListItem[] = []

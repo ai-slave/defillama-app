@@ -40,8 +40,7 @@ function Harness({ onRender }: { onRender: (result: HookResult) => void }) {
 	onRender(
 		useYieldsServerTable<Row>({
 			endpoint: '/api/public/yields/earn',
-			initialData,
-			initialDataUpdatedAt: Date.now()
+			initialSeed: { initialData, initialDataUpdatedAt: Date.now() }
 		})
 	)
 	return null

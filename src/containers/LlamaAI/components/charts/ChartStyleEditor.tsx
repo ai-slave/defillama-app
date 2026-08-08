@@ -53,6 +53,17 @@ const fromDateInput = (value: string): number => Math.floor(new Date(`${value}T0
 
 const identityOrder = (length: number): number[] => Array.from({ length }, (_, i) => i)
 
+function reorderByPositions<T>(items: readonly T[], positions: readonly number[]): T[] | null {
+	if (items.length !== positions.length) return null
+	const reordered: T[] = []
+	for (const position of positions) {
+		const item = items[position]
+		if (item === undefined) return null
+		reordered.push(item)
+	}
+	return reordered
+}
+
 // Series carry no id; their data binding is the only edit-proof identity (names are editable).
 const seriesKey = (s: ChartConfiguration['series'][number]): string => JSON.stringify([s.yAxisId, s.dataMapping])
 
@@ -226,14 +237,17 @@ export function ChartStyleEditor({
 	// `positions[i]` = current draft position of the series that lands at position i.
 	const reorderSeries = (positions: number[]) => {
 		const next = clone(draft)
-		next.series = positions.map((p) => next.series[p])
-		setSeriesOrder((prev) => positions.map((p) => prev[p]))
+		const reorderedSeries = reorderByPositions(next.series, positions)
+		const reorderedSeriesOrder = reorderByPositions(seriesOrder, positions)
+		if (!reorderedSeries || !reorderedSeriesOrder) return
+		next.series = reorderedSeries
+		setSeriesOrder(reorderedSeriesOrder)
 		setDraft(next)
 		publishPreview(next, draftView, 'immediate')
 	}
 
 	const moveSeries = (from: number, to: number) => {
-		if (to < 0 || to >= (draft.series?.length ?? 0)) return
+		if (from < 0 || from >= draft.series.length || to < 0 || to >= draft.series.length) return
 		const positions = identityOrder(draft.series.length)
 		positions[from] = to
 		positions[to] = from
@@ -241,9 +255,10 @@ export function ChartStyleEditor({
 	}
 
 	const sortSeries = () => {
-		const positions = identityOrder(draft.series.length).sort((a, b) =>
-			draft.series[a].name.localeCompare(draft.series[b].name, undefined, { numeric: true, sensitivity: 'base' })
-		)
+		const positions = draft.series
+			.map((series, index) => ({ index, name: series.name }))
+			.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }))
+			.map(({ index }) => index)
 		reorderSeries(positions)
 	}
 

@@ -184,6 +184,25 @@ describe('token rights page', () => {
 		})
 	}, 30_000)
 
+	it('uses the canonical lite protocol id for deprecated rows', async () => {
+		const page = await setupPageModule({
+			liteProtocols: [{ defillamaId: '182', deprecated: true }],
+			protocolMetadata: {
+				'182': { displayName: 'Lido', gecko_id: 'lido-dao' }
+			},
+			tokensJson: {
+				ldo: { name: 'Lido DAO', symbol: 'LDO', token_nk: 'coingecko:lido-dao', route: '/token/LDO' }
+			},
+			tokenRightsEntries: [tokenRightsEntry({ 'Protocol Name': 'Lido DAO', 'DefiLlama ID': '182' })]
+		})
+
+		await expect(page.getStaticProps({} as never)).resolves.toMatchObject({
+			props: {
+				protocols: [{ name: 'Lido', deprecated: true }]
+			}
+		})
+	})
+
 	it('uses child protocol holders revenue for parent token-rights rows', async () => {
 		const page = await setupPageModule({
 			tokenRightsEntries: [
