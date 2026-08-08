@@ -117,6 +117,41 @@ describe('createRedisBlobStore reads', () => {
 	})
 })
 
+describe('createRedisBlobStore monotonic pointers', () => {
+	const datedStore = createRedisBlobStore<Payload & { builtAt: number }>({
+		prefix: 'test-table:v1',
+		versionTtlSeconds: 14_400,
+		pointerTtlSeconds: 3_300,
+		lastGoodTtlSeconds: 86_400,
+		getIdentity: (value) => ({ key: value.chain, version: value.snapshot }),
+		getPublishedAt: (value) => value.builtAt
+	})
+
+	it('never moves the pointer back to an older build', async () => {
+		cacheMocks.setCache.mockResolvedValue(true)
+		cacheMocks.setObjectCache.mockResolvedValue(true)
+		cacheMocks.getObjectCache.mockResolvedValue({ version: 'newer-version-000000n', publishedAt: 2_000 })
+
+		expect(await datedStore.publish({ ...payload, builtAt: 1_000 })).toBe(true)
+		// blob still stored (readable by version), pointers untouched
+		expect(cacheMocks.setCache).toHaveBeenCalledTimes(1)
+		expect(cacheMocks.setObjectCache).not.toHaveBeenCalled()
+	})
+
+	it('advances the pointer for a newer build and stamps publishedAt', async () => {
+		cacheMocks.setCache.mockResolvedValue(true)
+		cacheMocks.setObjectCache.mockResolvedValue(true)
+		cacheMocks.getObjectCache.mockResolvedValue({ version: 'older-version-000000o', publishedAt: 500 })
+
+		expect(await datedStore.publish({ ...payload, builtAt: 1_000 })).toBe(true)
+		expect(cacheMocks.setObjectCache).toHaveBeenCalledWith(
+			'test-table:v1:ethereum:latest',
+			{ version: payload.snapshot, publishedAt: 1_000 },
+			3_300
+		)
+	})
+})
+
 describe('contentHashVersion', () => {
 	it('is deterministic, 20 chars, url-safe, and validated by isContentHashVersion', () => {
 		const version = contentHashVersion(JSON.stringify([{ id: 'aave' }]))

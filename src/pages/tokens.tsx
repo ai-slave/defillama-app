@@ -8,7 +8,7 @@ import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
 const getServerSidePropsHandler: GetServerSideProps<TokensPageProps> = async ({ res }) => {
 	const snapshot = await getTokensInitialPageSnapshot()
-	res.setHeader('Cache-Control', getTokensCacheControl(snapshot.revision))
+	res.setHeader('Cache-Control', getTokensCacheControl(snapshot.generatedAt))
 	return {
 		props: { initialData: snapshot.data, initialChartData: snapshot.chartData }
 	}

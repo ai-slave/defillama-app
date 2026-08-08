@@ -37,6 +37,9 @@ const SubscribeProModal = lazy(() =>
 	}))
 )
 
+const EMPTY_SAVED_PROTOCOLS: IProtocol[] = []
+const EMPTY_SAVED_CHAINS: IChainsByCategoryData['chains'] = []
+
 async function fetchWatchedRows<Row>(url: string, names: string[]): Promise<Row[]> {
 	const response = await fetch(url, {
 		method: 'POST',
@@ -73,13 +76,17 @@ export function DefiWatchlistContainer({
 		}
 	}, [protocolNames, savedProtocols])
 
-	const { data: savedProtocolsList = [], isLoading: isLoadingProtocolRows } = useQuery({
+	const { data: protocolRowsData, isLoading: isLoadingProtocolRows } = useQuery({
 		queryKey: ['watchlist-protocol-rows', watchedNames],
 		queryFn: () => fetchWatchedRows<IProtocol>('/api/dynamic/protocol-rankings/rows', watchedNames),
 		enabled: !isLoadingWatchlist && watchedNames.length > 0,
 		staleTime: 5 * 60 * 1000,
 		placeholderData: keepPreviousData
 	})
+	// An emptied watchlist disables the query, and keepPreviousData would keep
+	// the deleted rows on screen forever - the empty set is decided locally.
+	const savedProtocolsList =
+		watchedNames.length > 0 ? (protocolRowsData ?? EMPTY_SAVED_PROTOCOLS) : EMPTY_SAVED_PROTOCOLS
 
 	const router = useRouter()
 
@@ -110,7 +117,7 @@ export function DefiWatchlistContainer({
 		}
 	}, [chainNames, savedChains])
 
-	const { data: savedChainsList = [], isLoading: isLoadingChainRows } = useQuery({
+	const { data: chainRowsData, isLoading: isLoadingChainRows } = useQuery({
 		queryKey: ['watchlist-chain-rows', watchedChainNames],
 		queryFn: () =>
 			fetchWatchedRows<IChainsByCategoryData['chains'][number]>(
@@ -121,6 +128,7 @@ export function DefiWatchlistContainer({
 		staleTime: 5 * 60 * 1000,
 		placeholderData: keepPreviousData
 	})
+	const savedChainsList = watchedChainNames.length > 0 ? (chainRowsData ?? EMPTY_SAVED_CHAINS) : EMPTY_SAVED_CHAINS
 
 	const { chainsTableData } = useGroupAndFormatChains({ chains: savedChainsList, category: 'All', hideGroupBy: true })
 

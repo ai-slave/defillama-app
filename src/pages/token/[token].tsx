@@ -24,7 +24,7 @@ import { TokenYieldsSection } from '~/containers/Token/TokenYieldsSection'
 import type { TokenPageProps, TokenPageSection } from '~/containers/Token/types'
 import { TokenRightsByProtocol } from '~/containers/TokenRights/TokenRightsByProtocol'
 import { parseTokenRightsEntry } from '~/containers/TokenRights/utils'
-import { getTokensCacheControl, getTokensCacheRevision } from '~/containers/Tokens/cache.server'
+import { getTokensCacheControl } from '~/containers/Tokens/cache.server'
 import { getTokenOverviewCurrentSnapshot } from '~/containers/Tokens/queries.server'
 import Layout from '~/layout'
 import { slug } from '~/utils'
@@ -296,7 +296,7 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 		? `Track ${displayName} price, market cap, circulating supply, max supply, trading volume, and token rights.`
 		: `Track ${displayName} price, market cap, circulating supply, max supply, and trading volume.`
 
-	res.setHeader('Cache-Control', getTokensCacheControl(currentSnapshot?.revision ?? getTokensCacheRevision()))
+	res.setHeader('Cache-Control', getTokensCacheControl(currentSnapshot?.generatedAt ?? Date.now()))
 	return {
 		props: {
 			seoTitle,

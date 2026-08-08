@@ -1,11 +1,9 @@
 import type { ParsedUrlQuery } from 'querystring'
-import { fetchCoinGeckoTokensListFromDataset } from '~/api/coingecko'
 import type { IResponseCGTokenRankingsDatasetItem } from '~/api/coingecko.types'
 import { fetchAdapterChainMetrics } from '~/containers/AdapterMetrics/api'
 import type { IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import type { TokenMarketsListResponse } from '~/containers/Markets/api.types'
-import { fetchTokenMarketsList } from '~/containers/Markets/server/dataset.server'
 import { fetchStablecoinAssetsApi } from '~/containers/Stablecoins/api'
 import type { TokenOverviewCurrentMetrics } from '~/containers/Token/tokenOverview'
 import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
@@ -24,12 +22,15 @@ import { geckoTokenIconUrl } from '~/utils/icons'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
 import { getCanonicalTokenRoute, type TokenDirectoryRecord } from '~/utils/tokenDirectory'
 import type { TokensRawProtocolEmission } from './api.types'
+import { TOKENS_SOURCE_CACHE_TTL_MS } from './cache.server'
 import {
-	getOrCreateSharedTokensSnapshot,
-	getTokensCacheRevision,
-	TOKENS_MARKET_SNAPSHOT_CACHE_TTL_MS,
-	TOKENS_SOURCE_CACHE_TTL_MS
-} from './cache.server'
+	buildMarketsMap,
+	buildTokenDirectoryIndexes,
+	buildUniqueTokenSymbols,
+	resolveEmissionsProtocolSlug,
+	resolveProtocolId
+} from './readModel'
+import { getTokensMarketSnapshot, type TokensMarketSnapshot } from './server/tableData.server'
 import type {
 	TokenMarketSummary,
 	TokensChartDataset,
@@ -54,27 +55,17 @@ interface TokensSourceRows {
 }
 
 interface TokensSourceData extends TokensSourceRows {
-	revision: number
-}
-
-interface SharedTokensMarketSnapshot {
-	revision: number
-	tokens: IResponseCGTokenRankingsDatasetItem[]
-	markets: TokenMarketsListResponse
-	currentMetricsById: Record<string, TokenOverviewCurrentMetrics>
-}
-
-interface TokensMarketSnapshot extends SharedTokensMarketSnapshot {
-	tokenIndexById: Map<string, number>
+	generatedAt: number
+	version: string
 }
 
 export interface TokenOverviewCurrentSnapshot {
-	revision: number
+	generatedAt: number
 	metrics: TokenOverviewCurrentMetrics | null
 }
 
 export interface TokensPageSnapshot {
-	revision: number
+	generatedAt: number
 	data: TokensPageResponse
 }
 
@@ -84,51 +75,10 @@ export interface TokensInitialPageSnapshot extends TokensPageSnapshot {
 
 export const TOKENS_CHART_ROW_LIMIT = 300
 
-interface TokenDirectoryIndexes {
-	byGeckoId: Map<string, TokenDirectoryRecord>
-	protocolIdByGeckoId: Map<string, string>
-}
-
 interface TokenUnlockMetrics {
 	unlockedPercent: number | null
 	unlock30dUsd: number | null
 	upcomingUnlockUsd: number | null
-}
-
-const EMPTY_MARKETS_LIST: TokenMarketsListResponse = {
-	last_updated: '',
-	tokens: []
-}
-
-function tokenRecordGeckoId(record: TokenDirectoryRecord): string | null {
-	if (!record.token_nk?.startsWith('coingecko:')) return null
-	const geckoId = record.token_nk.slice('coingecko:'.length).toLowerCase()
-	return geckoId || null
-}
-
-function buildTokenDirectoryIndexes(metadata: MetadataCache): TokenDirectoryIndexes {
-	const byGeckoId = new Map<string, TokenDirectoryRecord>()
-	const protocolIdByGeckoId = new Map<string, string>()
-
-	for (const key in metadata.tokenDirectory) {
-		const record = metadata.tokenDirectory[key]
-		if (record === undefined) continue
-		const geckoId = tokenRecordGeckoId(record)
-		if (geckoId && !byGeckoId.has(geckoId)) byGeckoId.set(geckoId, record)
-	}
-
-	for (const protocolId in metadata.protocolMetadata) {
-		const protocol = metadata.protocolMetadata[protocolId]
-		if (protocol === undefined) continue
-		const geckoId = protocol.gecko_id?.toLowerCase()
-		if (!geckoId) continue
-		const currentProtocolId = protocolIdByGeckoId.get(geckoId)
-		if (!currentProtocolId || (!currentProtocolId.startsWith('parent#') && protocolId.startsWith('parent#'))) {
-			protocolIdByGeckoId.set(geckoId, protocolId)
-		}
-	}
-
-	return { byGeckoId, protocolIdByGeckoId }
 }
 
 function buildMetricMap(rows: AdapterProtocolMetric[]): Map<string, number> {
@@ -147,33 +97,6 @@ function buildMetricMap(rows: AdapterProtocolMetric[]): Map<string, number> {
 		if (!map.has(parentProtocol)) map.set(parentProtocol, total24h)
 	}
 
-	return map
-}
-
-function buildUniqueTokenSymbols(tokens: IResponseCGTokenRankingsDatasetItem[]): Set<string> {
-	const counts = new Map<string, number>()
-	for (const token of tokens) {
-		const symbol = token.symbol.toUpperCase()
-		counts.set(symbol, (counts.get(symbol) ?? 0) + 1)
-	}
-
-	const uniqueSymbols = new Set<string>()
-	for (const [symbol, count] of counts) {
-		if (count === 1) uniqueSymbols.add(symbol)
-	}
-	return uniqueSymbols
-}
-
-function buildMarketsMap(
-	markets: TokenMarketsListResponse,
-	uniqueTokenSymbols: Set<string>
-): Map<string, TokenMarketsListResponse['tokens'][number]> {
-	const map = new Map<string, TokenMarketsListResponse['tokens'][number]>()
-	for (const entry of markets.tokens) {
-		const symbol = entry.symbol.toUpperCase()
-		// The markets dataset is symbol-keyed, so duplicate CoinGecko symbols would otherwise inherit each other's metrics.
-		if (uniqueTokenSymbols.has(symbol)) map.set(symbol, entry)
-	}
 	return map
 }
 
@@ -256,14 +179,6 @@ function buildUnlocksMap(rows: TokensRawProtocolEmission[], nowSec: number): Map
 	return map
 }
 
-function resolveProtocolId(
-	geckoId: string,
-	record: TokenDirectoryRecord | undefined,
-	indexes: TokenDirectoryIndexes
-): string | null {
-	return record?.protocolId ?? indexes.protocolIdByGeckoId.get(geckoId) ?? null
-}
-
 function resolveTokenRightsSummary(
 	record: TokenDirectoryRecord | undefined,
 	protocolId: string | null,
@@ -278,27 +193,6 @@ function resolveTokenRightsSummary(
 		if (rights) return rights
 	}
 	return protocolId ? (rightsByDefillamaId.get(protocolId) ?? null) : null
-}
-
-function resolveEmissionsProtocolSlug(
-	record: TokenDirectoryRecord | undefined,
-	protocolId: string | null,
-	protocolMetadata: MetadataCache['protocolMetadata'][string] | undefined,
-	metadata: MetadataCache
-): string | null {
-	const candidates = [
-		protocolId?.replace(/^parent#/, ''),
-		protocolMetadata?.name,
-		protocolMetadata?.displayName,
-		record?.chainId
-	]
-
-	for (const candidate of candidates) {
-		const candidateSlug = slug(candidate)
-		if (candidateSlug && metadata.emissionsSupplyMetrics[candidateSlug]) return candidateSlug
-	}
-
-	return null
 }
 
 function sumSegments(
@@ -356,48 +250,6 @@ function firstUpdatedAt(
 	return null
 }
 
-export function buildTokenOverviewCurrentMetricsById({
-	tokens,
-	markets,
-	metadata
-}: {
-	tokens: IResponseCGTokenRankingsDatasetItem[]
-	markets: TokenMarketsListResponse
-	metadata: MetadataCache
-}): Record<string, TokenOverviewCurrentMetrics> {
-	const currentMetricsById: Record<string, TokenOverviewCurrentMetrics> = {}
-	const indexes = buildTokenDirectoryIndexes(metadata)
-	const marketsBySymbol = buildMarketsMap(markets, buildUniqueTokenSymbols(tokens))
-
-	for (const token of tokens) {
-		const geckoId = token.id.toLowerCase()
-		const record = indexes.byGeckoId.get(geckoId)
-		const protocolId = resolveProtocolId(geckoId, record, indexes)
-		const protocolMetadata = protocolId ? metadata.protocolMetadata[protocolId] : undefined
-		const emissionsProtocolSlug = resolveEmissionsProtocolSlug(record, protocolId, protocolMetadata, metadata)
-		const adjustedSupply = emissionsProtocolSlug
-			? (metadata.emissionsSupplyMetrics[emissionsProtocolSlug]?.supplyMetrics.adjustedSupply ?? null)
-			: null
-		const currentPrice =
-			token.current_price ?? marketsBySymbol.get(token.symbol.toUpperCase())?.segments.spot?.price ?? null
-
-		currentMetricsById[geckoId] = {
-			currentPrice,
-			percentChange24h: token.price_change_percentage_24h_in_currency ?? token.price_change_percentage_24h ?? null,
-			circulatingSupply: token.circulating_supply ?? null,
-			totalSupply: token.total_supply ?? null,
-			maxSupply: token.max_supply ?? null,
-			mcap: token.market_cap ?? null,
-			fdv: token.fully_diluted_valuation ?? null,
-			volume24h: token.total_volume ?? null,
-			outstandingFDV:
-				adjustedSupply != null && token.current_price != null ? adjustedSupply * token.current_price : null
-		}
-	}
-
-	return currentMetricsById
-}
-
 export function buildTokenMarketSummary(
 	token: IResponseCGTokenRankingsDatasetItem,
 	currentMetrics: TokenOverviewCurrentMetrics | null,
@@ -419,88 +271,47 @@ export function buildTokenMarketSummary(
 	}
 }
 
-function buildTokenIndexById(tokens: IResponseCGTokenRankingsDatasetItem[]): Map<string, number> {
-	const tokenIndexById = new Map<string, number>()
-	let index = 0
-	for (const token of tokens) {
-		tokenIndexById.set(token.id.toLowerCase(), index)
-		index++
-	}
-	return tokenIndexById
-}
-
-async function getTokensMarketSnapshot(revision: number): Promise<TokensMarketSnapshot> {
-	return cachedResult(
-		'tokens-market-snapshot',
-		`v2:${revision}`,
-		{ ttlMs: TOKENS_MARKET_SNAPSHOT_CACHE_TTL_MS, maxEntries: 2 },
-		async () => {
-			const sharedSnapshot = await getOrCreateSharedTokensSnapshot<SharedTokensMarketSnapshot>(revision, async () => {
-				const [tokens, markets, metadataModule] = await Promise.all([
-					fetchCoinGeckoTokensListFromDataset(),
-					fetchTokenMarketsList().catch(() => EMPTY_MARKETS_LIST),
-					import('~/utils/metadata')
-				])
-				metadataModule.refreshMetadataInBackgroundIfStale('tokens')
-				return {
-					revision,
-					tokens,
-					markets,
-					currentMetricsById: buildTokenOverviewCurrentMetricsById({
-						tokens,
-						markets,
-						metadata: metadataModule.default
-					})
-				}
-			})
-			return { ...sharedSnapshot, tokenIndexById: buildTokenIndexById(sharedSnapshot.tokens) }
-		}
-	)
-}
-
-export async function fetchTokensSourceRows(revision: number): Promise<TokensSourceData> {
+export async function fetchTokensSourceRows(marketSnapshot: TokensMarketSnapshot): Promise<TokensSourceData> {
 	const nowSec = Math.floor(Date.now() / 1000)
 	const metadataModule = await import('~/utils/metadata')
 	metadataModule.refreshMetadataInBackgroundIfStale('tokens')
 	const metadata = metadataModule.default
 
-	const [marketSnapshot, tokenRightsEntries, stablecoinGeckoIds, fees, revenue, holdersRevenue, unlocks] =
-		await Promise.all([
-			getTokensMarketSnapshot(revision),
-			fetchTokenRightsEntries().catch(() => []),
-			fetchStablecoinAssetsApi()
-				.then((data) => {
-					const geckoIds = new Set<string>()
-					for (const asset of data.peggedAssets) {
-						if (asset.gecko_id) geckoIds.add(asset.gecko_id.toLowerCase())
-					}
-					return geckoIds
-				})
-				.catch(() => new Set<string>()),
-			fetchAdapterChainMetrics({ adapterType: ADAPTER_TYPES.FEES, chain: 'All' })
-				.then((data) => data.protocols)
-				.catch(() => []),
-			fetchAdapterChainMetrics({
-				adapterType: ADAPTER_TYPES.FEES,
-				chain: 'All',
-				dataType: ADAPTER_DATA_TYPES.DAILY_REVENUE
+	const [tokenRightsEntries, stablecoinGeckoIds, fees, revenue, holdersRevenue, unlocks] = await Promise.all([
+		fetchTokenRightsEntries().catch(() => []),
+		fetchStablecoinAssetsApi()
+			.then((data) => {
+				const geckoIds = new Set<string>()
+				for (const asset of data.peggedAssets) {
+					if (asset.gecko_id) geckoIds.add(asset.gecko_id.toLowerCase())
+				}
+				return geckoIds
 			})
-				.then((data) => data.protocols)
-				.catch(() => []),
-			fetchAdapterChainMetrics({
-				adapterType: ADAPTER_TYPES.FEES,
-				chain: 'All',
-				dataType: ADAPTER_DATA_TYPES.DAILY_HOLDERS_REVENUE
-			})
-				.then((data) => data.protocols)
-				.catch(() => []),
-			getAllProtocolEmissions({
-				startDate: nowSec - THIRTY_DAYS_SECONDS,
-				endDate: nowSec,
-				getHistoricalPrices: false,
-				tokenlist: metadata.tokenlist
-			}).catch(() => [])
-		])
+			.catch(() => new Set<string>()),
+		fetchAdapterChainMetrics({ adapterType: ADAPTER_TYPES.FEES, chain: 'All' })
+			.then((data) => data.protocols)
+			.catch(() => []),
+		fetchAdapterChainMetrics({
+			adapterType: ADAPTER_TYPES.FEES,
+			chain: 'All',
+			dataType: ADAPTER_DATA_TYPES.DAILY_REVENUE
+		})
+			.then((data) => data.protocols)
+			.catch(() => []),
+		fetchAdapterChainMetrics({
+			adapterType: ADAPTER_TYPES.FEES,
+			chain: 'All',
+			dataType: ADAPTER_DATA_TYPES.DAILY_HOLDERS_REVENUE
+		})
+			.then((data) => data.protocols)
+			.catch(() => []),
+		getAllProtocolEmissions({
+			startDate: nowSec - THIRTY_DAYS_SECONDS,
+			endDate: nowSec,
+			getHistoricalPrices: false,
+			tokenlist: metadata.tokenlist
+		}).catch(() => [])
+	])
 
 	return {
 		...buildTokensSourceRows({
@@ -516,7 +327,8 @@ export async function fetchTokensSourceRows(revision: number): Promise<TokensSou
 			metadata,
 			nowSec
 		}),
-		revision: marketSnapshot.revision
+		version: marketSnapshot.version,
+		generatedAt: marketSnapshot.generatedAt
 	}
 }
 
@@ -658,37 +470,27 @@ export function buildTokensSourceRows({
 }
 
 export async function getTokensSourceData(): Promise<TokensSourceData> {
-	while (true) {
-		const revision = getTokensCacheRevision()
-		const data = await cachedResult(
-			'tokens-source-rows',
-			`v10:${revision}`,
-			{ ttlMs: TOKENS_SOURCE_CACHE_TTL_MS, maxEntries: 1 },
-			() => fetchTokensSourceRows(revision)
-		)
-		if (data.revision === getTokensCacheRevision()) return data
-	}
+	const marketSnapshot = await getTokensMarketSnapshot()
+	return cachedResult(
+		'tokens-source-rows',
+		`v10:${marketSnapshot.version}`,
+		{ ttlMs: TOKENS_SOURCE_CACHE_TTL_MS, maxEntries: 2 },
+		() => fetchTokensSourceRows(marketSnapshot)
+	)
 }
 
 export async function getTokenOverviewCurrentSnapshot(geckoId: string): Promise<TokenOverviewCurrentSnapshot> {
-	while (true) {
-		const revision = getTokensCacheRevision()
-		const marketSnapshot = await getTokensMarketSnapshot(revision)
-		if (marketSnapshot.revision === getTokensCacheRevision()) {
-			return {
-				revision: marketSnapshot.revision,
-				metrics: marketSnapshot.currentMetricsById[geckoId.toLowerCase()] ?? null
-			}
-		}
+	const marketSnapshot = await getTokensMarketSnapshot()
+	return {
+		generatedAt: marketSnapshot.generatedAt,
+		metrics: marketSnapshot.currentMetricsById[geckoId.toLowerCase()] ?? null
 	}
 }
 
 export async function getTokenMarketSummaryByGeckoId(geckoId: string): Promise<TokenMarketSummary | null> {
 	const normalizedGeckoId = geckoId.toLowerCase()
-	while (true) {
-		const revision = getTokensCacheRevision()
-		const marketSnapshot = await getTokensMarketSnapshot(revision)
-		if (marketSnapshot.revision !== getTokensCacheRevision()) continue
+	{
+		const marketSnapshot = await getTokensMarketSnapshot()
 
 		const tokenIndex = marketSnapshot.tokenIndexById.get(normalizedGeckoId)
 		if (tokenIndex == null) return null
@@ -757,7 +559,7 @@ function getTokensPageResponse(data: TokensSourceData, query: ParsedUrlQuery): T
 export async function getTokensPageSnapshot(query: ParsedUrlQuery = {}): Promise<TokensPageSnapshot> {
 	const data = await getTokensSourceData()
 	return {
-		revision: data.revision,
+		generatedAt: data.generatedAt,
 		data: getTokensPageResponse(data, query)
 	}
 }
@@ -765,7 +567,7 @@ export async function getTokensPageSnapshot(query: ParsedUrlQuery = {}): Promise
 export async function getTokensInitialPageSnapshot(): Promise<TokensInitialPageSnapshot> {
 	const data = await getTokensSourceData()
 	return {
-		revision: data.revision,
+		generatedAt: data.generatedAt,
 		data: getTokensPageResponse(data, {}),
 		chartData: buildTokensChartDataset(data.sortIndexes.marketCap)
 	}

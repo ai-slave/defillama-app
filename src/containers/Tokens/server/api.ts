@@ -9,7 +9,7 @@ export const tokensDataset = defineApiRoute({
 	handle: async (req) => {
 		try {
 			const snapshot = await getTokensPageSnapshot(req.query)
-			return ok(snapshot.data, { 'Cache-Control': getTokensCacheControl(snapshot.revision) })
+			return ok(snapshot.data, { 'Cache-Control': getTokensCacheControl(snapshot.generatedAt) })
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Failed to fetch tokens data')

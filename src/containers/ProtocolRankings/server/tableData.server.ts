@@ -89,7 +89,8 @@ const snapshotStore = createRedisBlobStore<ProtocolRankingsCanonicalSnapshot>({
 	versionTtlSeconds: SNAPSHOT_TTL_SECONDS,
 	pointerTtlSeconds: LATEST_POINTER_TTL_SECONDS,
 	lastGoodTtlSeconds: LAST_GOOD_POINTER_TTL_SECONDS,
-	getIdentity: (payload) => ({ key: chainCacheKey(payload.chain), version: payload.snapshot })
+	getIdentity: (payload) => ({ key: chainCacheKey(payload.chain), version: payload.snapshot }),
+	getPublishedAt: (payload) => payload.createdAt
 })
 
 export function isProtocolRankingSnapshotToken(value: string): boolean {

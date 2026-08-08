@@ -416,7 +416,7 @@ vi.mock('~/containers/Tokens/cache.server', () => ({
 }))
 
 vi.mock('~/containers/Tokens/queries.server', () => ({
-	getTokenOverviewCurrentSnapshot: vi.fn().mockResolvedValue({ revision: 42, metrics: null })
+	getTokenOverviewCurrentSnapshot: vi.fn().mockResolvedValue({ generatedAt: 42, metrics: null })
 }))
 
 vi.mock('~/utils/telemetry', () => ({
@@ -761,7 +761,7 @@ describe('token page', () => {
 			volume24h: 777,
 			outstandingFDV: 1200
 		}
-		vi.mocked(getTokenOverviewCurrentSnapshot).mockResolvedValueOnce({ revision: 42, metrics: currentMetrics })
+		vi.mocked(getTokenOverviewCurrentSnapshot).mockResolvedValueOnce({ generatedAt: 42, metrics: currentMetrics })
 
 		await runTokenPageRequest({ params: { token: 'BTC' } } as never)
 

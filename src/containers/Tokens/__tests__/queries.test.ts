@@ -4,12 +4,8 @@ import type { IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types
 import type { MarketSegmentSummary, TokenMarketsListResponse } from '~/containers/Markets/api.types'
 import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
-import {
-	buildTokenMarketSummary,
-	buildTokenOverviewCurrentMetricsById,
-	buildTokensChartDataset,
-	buildTokensSourceRows
-} from '../queries.server'
+import { buildTokenMarketSummary, buildTokensChartDataset, buildTokensSourceRows } from '../queries.server'
+import { buildTokenOverviewCurrentMetricsById } from '../readModel'
 
 function marketSegment(overrides: Partial<MarketSegmentSummary>): MarketSegmentSummary {
 	return {

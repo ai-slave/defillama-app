@@ -10,16 +10,22 @@ import {
 } from '../tableQuery'
 
 describe('canonicalQuerySignature', () => {
-	it('signs identically across key order, value order, and excluded paging params', () => {
+	it('signs identically across key order and excluded paging params', () => {
 		const a = canonicalQuerySignature(
 			{ chain: ['Base', 'Ethereum'], minApy: '5', page: '3', pageSize: '50' },
 			{ exclude: ['page', 'pageSize'] }
 		)
 		const b = canonicalQuerySignature(
-			{ pageSize: '100', minApy: '5', page: '1', chain: ['Ethereum', 'Base'] },
+			{ pageSize: '100', minApy: '5', page: '1', chain: ['Base', 'Ethereum'] },
 			{ exclude: ['page', 'pageSize'] }
 		)
 		expect(a).toBe(b)
+	})
+
+	it('keeps repeated-value order significant - parsers may read only the first value', () => {
+		const tvlFirst = canonicalQuerySignature({ sortBy: ['tvl', 'apy'] }, { exclude: [] })
+		const apyFirst = canonicalQuerySignature({ sortBy: ['apy', 'tvl'] }, { exclude: [] })
+		expect(tvlFirst).not.toBe(apyFirst)
 	})
 
 	it('distinguishes real filter differences; absent params drop but empty strings sign', () => {

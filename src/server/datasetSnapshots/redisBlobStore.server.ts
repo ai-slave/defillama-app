@@ -69,6 +69,12 @@ export function createRedisBlobStore<T>(config: {
 	lastGoodTtlSeconds: number
 	/** Extract the identity a payload claims; reads verify it against what was asked for. */
 	getIdentity: (payload: T) => { key: string; version: string }
+	/**
+	 * When the payload was built. Publishing skips the pointer advance if the
+	 * current pointer already names a newer build, so a slow concurrent
+	 * publisher cannot move readers backwards in time. Omit to always advance.
+	 */
+	getPublishedAt?: (payload: T) => number
 }): RedisBlobStore<T> {
 	const latestKey = (key: string) => `${config.prefix}:${key}:latest`
 	const lastGoodKey = (key: string) => `${config.prefix}:${key}:last-good`
@@ -116,12 +122,37 @@ export function createRedisBlobStore<T>(config: {
 				reportFailure('blob', key)
 				return false
 			}
-			const latestSet = await setObjectCache(latestKey(key), { version }, config.pointerTtlSeconds)
+			if (config.getPublishedAt) {
+				// Monotonic pointers: a concurrent publisher may have advanced the
+				// pointer to a newer build while this one was in flight. Skipping
+				// the advance (blob stays readable by version) beats moving every
+				// reader back to an older sample. Check-then-set still leaves a
+				// millisecond race - cache-client has no compare-and-set - but the
+				// window shrinks from a full build to one round-trip.
+				const existing = await getObjectCache<{ version: string; publishedAt?: number }>(latestKey(key))
+				if (
+					existing?.version &&
+					existing.version !== version &&
+					(existing.publishedAt ?? 0) > config.getPublishedAt(payload)
+				) {
+					return true
+				}
+			}
+			const publishedAt = config.getPublishedAt?.(payload)
+			const latestSet = await setObjectCache(
+				latestKey(key),
+				publishedAt === undefined ? { version } : { version, publishedAt },
+				config.pointerTtlSeconds
+			)
 			if (!latestSet) {
 				reportFailure('latest pointer', key)
 				return false
 			}
-			const lastGoodSet = await setObjectCache(lastGoodKey(key), { version }, config.lastGoodTtlSeconds)
+			const lastGoodSet = await setObjectCache(
+				lastGoodKey(key),
+				publishedAt === undefined ? { version } : { version, publishedAt },
+				config.lastGoodTtlSeconds
+			)
 			if (!lastGoodSet) {
 				reportFailure('last-good pointer', key)
 				return false

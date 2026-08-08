@@ -138,12 +138,12 @@ export function shapeOrNullField<Shape extends Record<string, unknown>>(fields: 
 /**
  * Canonical signature over raw wire params, for surfaces whose filter space is
  * too large to enumerate as a field schema (dozens of established params with
- * battle-tested parsers). Keys are sorted, values normalized to sorted string
- * arrays, absent values dropped, and paging params excluded — so every
- * spelling of the same filter set signs identically and every page of it
- * shares one prepared-rows entry. Empty-string values are kept: if a parser
- * ever distinguishes `?x=` from an absent `x`, aliasing them would poison the
- * cache, while keeping them distinct merely spends a slot. Prefer defineTableQuery for bounded query
+ * battle-tested parsers). Keys are sorted, absent values dropped, and paging
+ * params excluded — so every KEY ordering of the same filter set signs
+ * identically and every page of it shares one prepared-rows entry. Value ORDER is preserved and empty strings
+ * are kept: parsers may read only the first of repeated params (`sortBy`) or
+ * distinguish `?x=` from an absent `x`, and aliasing either case would poison
+ * the cache, while a distinct signature merely spends a slot. Prefer defineTableQuery for bounded query
  * shapes; this is the escape hatch that keeps existing parsers untouched.
  */
 export function canonicalQuerySignature(
@@ -156,8 +156,7 @@ export function canonicalQuerySignature(
 		if (excluded.has(key)) continue
 		const raw = query[key]
 		if (raw === undefined) continue
-		const values = Array.isArray(raw) ? [...raw].sort() : [raw]
-		entries.push([key, values])
+		entries.push([key, Array.isArray(raw) ? raw : [raw]])
 	}
 	return JSON.stringify(entries)
 }

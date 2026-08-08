@@ -22,7 +22,7 @@ const tokensPageResponse = { ok: true }
 beforeEach(() => {
 	vi.clearAllMocks()
 	vi.stubEnv('NEXT_STATIC_REVALIDATE_JITTER_SECONDS', '0')
-	getTokensPageSnapshotMock.mockResolvedValue({ revision: 42, data: tokensPageResponse })
+	getTokensPageSnapshotMock.mockResolvedValue({ generatedAt: 42, data: tokensPageResponse })
 })
 
 afterEach(() => {

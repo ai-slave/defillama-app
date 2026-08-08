@@ -1,62 +1,28 @@
-import Redis from 'ioredis'
-
 const TOKENS_CACHE_INTERVAL_MS = 5 * 60 * 1000
-const TOKENS_SHARED_SNAPSHOT_TTL_SECONDS = (TOKENS_CACHE_INTERVAL_MS * 2) / 1000
 
-let sharedSnapshotCache: Redis | null | undefined
-
-function getSharedSnapshotCache(): Redis | null {
-	if (sharedSnapshotCache !== undefined) return sharedSnapshotCache
-
-	const redisUrl = process.env.REDIS_URL
-	if (!redisUrl) {
-		sharedSnapshotCache = null
-		return null
-	}
-
-	sharedSnapshotCache = new Redis(redisUrl, { connectTimeout: 2_000, maxRetriesPerRequest: 1 })
-	sharedSnapshotCache.on('error', () => {})
-	return sharedSnapshotCache
+/** The wall-clock five-minute window a timestamp falls in. */
+export function tokensCacheWindow(atMs: number): number {
+	return Math.floor(atMs / TOKENS_CACHE_INTERVAL_MS)
 }
 
-export function getTokensCacheRevision(): number {
-	return Math.floor(Date.now() / TOKENS_CACHE_INTERVAL_MS)
-}
-
-export function getTokensCacheControl(revision: number): string {
-	if (revision !== getTokensCacheRevision()) return 'private, no-store'
-
-	const nextRevisionAt = (revision + 1) * TOKENS_CACHE_INTERVAL_MS
-	const secondsUntilNextRevision = Math.max(1, Math.ceil((nextRevisionAt - Date.now()) / 1000))
-	return `public, s-maxage=${secondsUntilNextRevision}, must-revalidate`
+/** Whether a build belongs to the CURRENT wall-clock window. */
+export function isCurrentTokensWindow(generatedAt: number): boolean {
+	return tokensCacheWindow(generatedAt) === tokensCacheWindow(Date.now())
 }
 
 export const TOKENS_SOURCE_CACHE_TTL_MS = TOKENS_CACHE_INTERVAL_MS
-export const TOKENS_MARKET_SNAPSHOT_CACHE_TTL_MS = TOKENS_CACHE_INTERVAL_MS * 2
 
 /**
- * The first runtime to publish a revision wins. Other runtimes read that same
- * immutable value instead of independently sampling the mutable upstream file.
+ * Every edge copy of a tokens response expires at the same wall-clock
+ * five-minute boundary, so all CDN nodes flip to fresh data together. A
+ * response built in an earlier boundary window must not be cached forward
+ * into the current one.
  */
-export async function getOrCreateSharedTokensSnapshot<T>(revision: number, create: () => Promise<T>): Promise<T> {
-	const cache = getSharedSnapshotCache()
-	if (!cache) return create()
+export function getTokensCacheControl(generatedAt: number): string {
+	const now = Date.now()
+	if (!isCurrentTokensWindow(generatedAt)) return 'private, no-store'
 
-	const key = `tokens-market-snapshot:v1:${revision}`
-	try {
-		const cached = await cache.get(key)
-		if (cached) return JSON.parse(cached) as T
-	} catch {}
-
-	const candidate = await create()
-	try {
-		const serialized = JSON.stringify(candidate)
-		const stored = await cache.set(key, serialized, 'EX', TOKENS_SHARED_SNAPSHOT_TTL_SECONDS, 'NX')
-		if (stored === 'OK') return candidate
-
-		const winner = await cache.get(key)
-		if (winner) return JSON.parse(winner) as T
-	} catch {}
-
-	return candidate
+	const bucketEndsAt = (tokensCacheWindow(now) + 1) * TOKENS_CACHE_INTERVAL_MS
+	const secondsUntilBucketEnd = Math.max(1, Math.ceil((bucketEndsAt - now) / 1000))
+	return `public, s-maxage=${secondsUntilBucketEnd}, must-revalidate`
 }
