@@ -565,6 +565,7 @@ export async function getUnlocksCalendarStaticPropsData(): Promise<{
 			unlockDay.totalValue += dailyData.value
 			unlockDay.events.push({
 				protocol: protocol.name,
+				geckoId: protocol.gecko_id ?? null,
 				value: dailyData.value,
 				details: dailyData.details.join(', '),
 				unlockType: dailyData.unlockTypes.find((type) => type !== '') || '',

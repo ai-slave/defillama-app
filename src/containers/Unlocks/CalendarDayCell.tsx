@@ -4,6 +4,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
+import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
 import type { DailyUnlocks, DayInfo } from './calendarTypes'
 import { interpolateColor } from './colorUtils'
@@ -100,7 +101,13 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({ dayInfo, unloc
 											target="_blank"
 											className="group flex min-w-0 shrink items-center gap-1.5 text-sm font-medium hover:underline"
 										>
-											<TokenLogo name={event.protocol} kind="token" size={16} alt={`Logo of ${event.protocol}`} />
+											<TokenLogo
+												name={event.protocol}
+												kind="token"
+												size={16}
+												fallbackSrc={event.geckoId ? geckoTokenIconUrl(event.geckoId) : null}
+												alt={`Logo of ${event.protocol}`}
+											/>
 											<span className="truncate">{event.protocol}</span>
 										</BasicLink>
 										<span className="text-sm font-medium whitespace-nowrap text-secondary">

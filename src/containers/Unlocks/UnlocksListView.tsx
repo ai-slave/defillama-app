@@ -5,6 +5,7 @@ import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
 import { slug } from '~/utils'
+import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
 import type { DailyUnlocks } from './calendarTypes'
 
@@ -52,7 +53,13 @@ export const UnlocksListView: React.FC<UnlocksListViewProps> = ({ events }) => {
 							>
 								<div className="flex items-center justify-between gap-2 rounded-md border border-medium p-2 hover:bg-hover-row">
 									<span className="flex items-center gap-2 text-sm font-medium">
-										<TokenLogo name={event.protocol} kind="token" size={20} alt={`Logo of ${event.protocol}`} />
+										<TokenLogo
+											name={event.protocol}
+											kind="token"
+											size={20}
+											fallbackSrc={event.geckoId ? geckoTokenIconUrl(event.geckoId) : null}
+											alt={`Logo of ${event.protocol}`}
+										/>
 										{event.protocol}
 									</span>
 									<span className="text-sm font-medium text-secondary">

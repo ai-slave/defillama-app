@@ -2,15 +2,17 @@ import type { ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { slug } from '~/utils'
+import { geckoTokenIconUrl } from '~/utils/icons'
 
 interface TopThreeRowProps {
 	name: string
 	symbol: string
+	geckoId?: string | null
 	value: ReactNode
 	trailingIcon?: ReactNode
 }
 
-export function TopThreeRow({ name, symbol, value, trailingIcon = null }: TopThreeRowProps) {
+export function TopThreeRow({ name, symbol, geckoId, value, trailingIcon = null }: TopThreeRowProps) {
 	const hasTrailingIcon = trailingIcon != null
 
 	return (
@@ -20,7 +22,12 @@ export function TopThreeRow({ name, symbol, value, trailingIcon = null }: TopThr
 			} items-center gap-2`}
 		>
 			<div className="flex min-w-0 items-center gap-2">
-				<TokenLogo name={name} kind="token" alt={`Logo of ${name}`} />
+				<TokenLogo
+					name={name}
+					kind="token"
+					fallbackSrc={geckoId ? geckoTokenIconUrl(geckoId) : null}
+					alt={`Logo of ${name}`}
+				/>
 				<BasicLink href={`/unlocks/${slug(name)}`} className="min-w-0 truncate text-link hover:underline">
 					{name}
 					{symbol ? ` (${symbol})` : null}

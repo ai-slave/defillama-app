@@ -13,6 +13,7 @@ import {
 } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
 import { generateGoogleCalendarUrl } from '~/utils/calendar'
+import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 
 const EMPTY_TOKENS: number[][] = []
@@ -110,6 +111,7 @@ interface UpcomingEventProps {
 	mcap: number | null | undefined
 	maxSupply: number | null | undefined
 	name: string
+	geckoId?: string | null
 	isProtocolPage?: boolean
 }
 
@@ -195,6 +197,7 @@ export const UpcomingEvent = ({
 	mcap,
 	maxSupply,
 	name,
+	geckoId,
 	isProtocolPage = false
 }: UpcomingEventProps) => {
 	const tokenSymbol = symbol ? symbol.toUpperCase() : ''
@@ -542,7 +545,13 @@ export const UpcomingEvent = ({
 				>
 					<span className="flex items-center justify-between gap-4">
 						<span className="flex items-center gap-2 font-medium">
-							<TokenLogo name={name} kind="token" size={30} alt={`Logo of ${name}`} />
+							<TokenLogo
+								name={name}
+								kind="token"
+								size={30}
+								fallbackSrc={geckoId ? geckoTokenIconUrl(geckoId) : null}
+								alt={`Logo of ${name}`}
+							/>
 							{tokenSymbol}
 						</span>
 						<span className="flex flex-col items-end">

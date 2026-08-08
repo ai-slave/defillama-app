@@ -24,6 +24,7 @@ export const TopUnlocks: React.FC<TopUnlocksProps> = ({ data, period, title, cla
 			{
 				name: string
 				symbol: string
+				geckoId?: string | null
 				value: number
 			}
 		>()
@@ -52,6 +53,7 @@ export const TopUnlocks: React.FC<TopUnlocksProps> = ({ data, period, title, cla
 					protocolUnlocks.set(protocol.name, {
 						name: protocol.name,
 						symbol: protocol.tSymbol ?? '',
+						geckoId: protocol.gecko_id,
 						value: totalUnlockValue
 					})
 				}
@@ -79,6 +81,7 @@ export const TopUnlocks: React.FC<TopUnlocksProps> = ({ data, period, title, cla
 					key={unlock.name}
 					name={unlock.name}
 					symbol={unlock.symbol}
+					geckoId={unlock.geckoId}
 					value={
 						<span className="mono-md-bold text-primary">
 							{formatUsd(unlock.value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}

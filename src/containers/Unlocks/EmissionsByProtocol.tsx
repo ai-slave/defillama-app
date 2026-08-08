@@ -20,6 +20,7 @@ import { LoadingIndicator } from '~/ui/Status'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
 import { capitalizeFirstLetter, firstDayOfMonth, lastDayOfWeek, slug } from '~/utils'
+import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatUsd, formatCompactNumber, formatPercent, formatPercentChange, roundNumber } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { EmissionsChartConfig, EmissionsDataset, Insider } from './api.types'
@@ -328,15 +329,22 @@ const sumValuesExcludingKey = (data: Record<string, unknown>, keyToSkip: string)
 function TokenHeader({
 	name,
 	tokenPrice,
-	percentChange
+	percentChange,
+	geckoId
 }: {
 	name: string
 	tokenPrice: number | undefined
 	percentChange: number | null
+	geckoId: string | null
 }) {
 	return (
 		<div className="flex w-full items-center gap-3 rounded-lg border border-subtle bg-surface p-3">
-			<TokenLogo name={name} kind="token" alt={`Logo of ${name}`} />
+			<TokenLogo
+				name={name}
+				kind="token"
+				fallbackSrc={geckoId ? geckoTokenIconUrl(geckoId) : null}
+				alt={`Logo of ${name}`}
+			/>
 			<h1 className="heading-sm">{name}</h1>
 
 			{tokenPrice != null ? (
@@ -661,11 +669,12 @@ const ChartContainer = ({
 						mcap: tokenMcap,
 						maxSupply: data.meta?.maxSupply,
 						name: data.name ?? '',
+						geckoId: data.geckoId,
 						isProtocolPage: true
 					}}
 				/>
 			)),
-		[sortedEvents, tokenPrice, tokenMcap, data.meta?.maxSupply, data.name, data.tokenPrice?.symbol]
+		[sortedEvents, tokenPrice, tokenMcap, data.meta?.maxSupply, data.name, data.geckoId, data.tokenPrice?.symbol]
 	)
 
 	const chartData = useMemo(() => {
@@ -950,7 +959,9 @@ const ChartContainer = ({
 
 	return (
 		<>
-			{isEmissionsPage ? <TokenHeader name={data.name} tokenPrice={tokenPrice} percentChange={percentChange} /> : null}
+			{isEmissionsPage ? (
+				<TokenHeader name={data.name} tokenPrice={tokenPrice} percentChange={percentChange} geckoId={data.geckoId} />
+			) : null}
 
 			{hideTokenStats ? null : (
 				<TokenStats

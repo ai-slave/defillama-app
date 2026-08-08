@@ -5,6 +5,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
 import { PercentChange } from '~/ui/PercentChange'
 import { Tooltip } from '~/ui/Tooltip'
+import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import { TopThreeRow } from './TopThreeRow'
 import type { ProtocolEmissionWithHistory } from './types'
@@ -51,6 +52,7 @@ export const PastUnlockPriceImpact: React.FC<PastUnlockPriceImpactProps> = ({
 			{
 				name: string
 				symbol: string
+				geckoId?: string | null
 				impact: number
 				value: number
 				timestamp: number
@@ -115,6 +117,7 @@ export const PastUnlockPriceImpact: React.FC<PastUnlockPriceImpactProps> = ({
 			protocolImpacts.set(protocol.name, {
 				name: protocol.name,
 				symbol: protocol.tSymbol,
+				geckoId: protocol.gecko_id,
 				impact,
 				value: unlockValue,
 				timestamp: latestTimestamp,
@@ -146,6 +149,7 @@ export const PastUnlockPriceImpact: React.FC<PastUnlockPriceImpactProps> = ({
 					key={impact.name}
 					name={impact.name}
 					symbol={impact.symbol}
+					geckoId={impact.geckoId}
 					value={
 						<span className="mono-md-bold">
 							<PercentChange percent={impact.impact} />
@@ -165,7 +169,13 @@ export const PastUnlockPriceImpact: React.FC<PastUnlockPriceImpactProps> = ({
 							>
 								<span className="flex items-center justify-between gap-4">
 									<span className="flex items-center gap-2 font-medium">
-										<TokenLogo name={impact.name} kind="token" size={30} alt={`Logo of ${impact.name}`} />
+										<TokenLogo
+											name={impact.name}
+											kind="token"
+											size={30}
+											fallbackSrc={impact.geckoId ? geckoTokenIconUrl(impact.geckoId) : null}
+											alt={`Logo of ${impact.name}`}
+										/>
 										{impact.symbol}
 									</span>
 									<span className="flex flex-col items-end">

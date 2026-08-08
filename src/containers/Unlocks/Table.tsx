@@ -653,7 +653,8 @@ const upcomingEventColumn = (nowSec: number) =>
 							symbol: row.original.tSymbol,
 							mcap: row.original.mcap,
 							maxSupply: row.original.maxSupply,
-							name: row.original.name
+							name: row.original.name,
+							geckoId: row.original.gecko_id
 						}}
 					/>
 				)

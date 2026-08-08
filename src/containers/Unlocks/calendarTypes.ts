@@ -8,6 +8,7 @@ export type UnlocksMultiSeriesChart = {
 
 export interface CalendarUnlockEvent {
 	protocol: string
+	geckoId?: string | null
 	value: number
 	details: string
 	unlockType: string
