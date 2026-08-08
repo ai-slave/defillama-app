@@ -1,15 +1,41 @@
 # Server Cache Layers
 
-The app has four independent server-side cache layers. Their names describe
+The app has independent server-side cache layers. Their names describe
 what they retain; none is a generic `cache` fallback.
 
 | Layer                      | Owner                                                | Lifetime                                          | Freshness                                                                          | Failure behavior                                                                         |
 | -------------------------- | ---------------------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | Dataset snapshots          | `src/server/datasetSnapshots`                        | Durable across requests and restarts              | Domain policy in the registry; Yields refreshes every 10 minutes and others hourly | A failed candidate never changes `current.json`; the last good version remains available |
+| Redis snapshot blobs       | `src/server/datasetSnapshots/redisBlobStore.server`  | Durable across restarts, TTL-expiring             | `:latest` pointer TTL is the refresh trigger; immutable versions outlive it        | A failed publish never advances a pointer; `:last-good` serves when a rebuild fails      |
 | Parsed snapshot artifacts  | One immutable snapshot handle                        | Current Node.js process and snapshot ID           | A new snapshot ID creates a new handle and new parsed references                   | A malformed current artifact is an integrity error                                       |
 | Derived domain memoization | Domain transform modules, such as Yields row indexes | Current Node.js process and input object identity | New artifact references invalidate naturally                                       | Always recomputable from snapshot artifacts                                              |
 | Serialized result cache    | `src/server/api/resultCache.ts`                      | Bounded current Node.js process                   | Route-specific TTL                                                                 | Failed computations are not cached; this is never authoritative storage                  |
 | HTTP/CDN cache             | Route `Cache-Control` headers                        | CDN-defined                                       | `s-maxage` and `stale-while-revalidate`                                            | Independent of durable snapshot freshness                                                |
+
+## Redis snapshot blobs
+
+Runtime-built datasets (protocol rankings per chain, the tokens market
+snapshot) publish through `createRedisBlobStore`: an immutable gzipped blob
+per content-hashed version plus two small pointers.
+
+```text
+{prefix}:{key}:latest     -> { version, publishedAt }   freshness pointer, short TTL
+{prefix}:{key}:last-good  -> { version, publishedAt }   fallback pointer, long TTL
+{prefix}:{key}:{version}  -> gzip blob                  immutable, outlives :latest
+```
+
+The store is a deliberate sibling of the file store below, sharing invariants
+rather than an interface: the blob is written before any pointer, pointers are
+monotonic (a publish never moves readers back to an older build), versions are
+immutable, and `:last-good` is read only when a rebuild fails — never for
+ordinary freshness, which would silently extend an expired `:latest`.
+
+Data sourcing rule for the enriched protocol dataset: `getProtocolsByChain`
+(the multi-adapter aggregation) has exactly one caller — the rankings snapshot
+builder — plus a documented forks exception whose fork filter must run before
+parent aggregation. Pages needing enriched cross-metric rows read the cached
+snapshot; light pages join `lite/protocols2` (`fetchProtocols`) with their own
+domain data instead.
 
 ## Dataset snapshots
 

@@ -4,8 +4,8 @@ Shared mechanism for server-paginated tables. Product code lives in
 `src/containers/<Surface>/`; nothing in this directory may know what a
 protocol, pool, or token is. If a product name appears here, the extraction
 has failed. There is deliberately no `index.ts` — import each module directly
-so a grep for any symbol returns exactly one definition site (plan D7 in
-`docs/table-pages-plan.md`).
+so a grep for any symbol returns exactly one definition site. Design record
+and change policy: `docs/adr/0005-table-delivery-tiers.md`.
 
 ## The delivery-tier decision rule
 
