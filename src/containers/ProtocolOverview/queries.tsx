@@ -699,6 +699,7 @@ export const getProtocolOverviewPageData = async ({
 						if (!protocol.category) continue
 						if (protocol.category.toLowerCase() !== currentCategory) continue
 						if (protocol.name.toLowerCase() === currentName) continue
+						if (protocolData.isParentProtocol && protocol.parentProtocol === protocolData.id) continue
 						const candidateChainsSet = new Set(protocol.chains)
 						let hasCommonChain = false
 						for (const chain of candidateChainsSet) {

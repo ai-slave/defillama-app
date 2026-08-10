@@ -34,6 +34,7 @@ const fetchProtocolTvlChart = vi.hoisted(() => vi.fn().mockResolvedValue([]))
 const fetchOracleMetrics = vi.hoisted(() => vi.fn().mockResolvedValue(null))
 const fetchOracleProtocolChart = vi.hoisted(() => vi.fn().mockResolvedValue([]))
 const fetchTreasuries = vi.hoisted(() => vi.fn().mockResolvedValue([]))
+const fetchProtocols = vi.hoisted(() => vi.fn().mockResolvedValue({ protocols: [], chains: [], parentProtocols: [] }))
 const fetchJson = vi.hoisted(() => vi.fn().mockResolvedValue({ content_elements: [] }))
 const getTokenMarketSummaryByGeckoId = vi.hoisted(() => vi.fn().mockResolvedValue(null))
 const optionalPageData = vi.hoisted(() =>
@@ -83,7 +84,7 @@ vi.mock('~/containers/Oracles/api', () => ({
 }))
 
 vi.mock('~/containers/ProtocolLists/api', () => ({
-	fetchProtocols: vi.fn().mockResolvedValue({ protocols: [], chains: [], parentProtocols: [] })
+	fetchProtocols
 }))
 
 vi.mock('~/containers/Treasuries/api', () => ({
@@ -125,12 +126,70 @@ describe('getProtocolOverviewPageData', () => {
 		fetchOracleProtocolChart.mockClear()
 		fetchTreasuries.mockResolvedValue([])
 		fetchTreasuries.mockClear()
+		fetchProtocols.mockResolvedValue({ protocols: [], chains: [], parentProtocols: [] })
+		fetchProtocols.mockClear()
 		fetchJson.mockResolvedValue({ content_elements: [] })
 		fetchJson.mockClear()
 		optionalPageData.mockClear()
 		getTokenMarketSummaryByGeckoId.mockClear()
 		fetchProtocolOverviewMetrics.mockClear()
 		formatAdapterData.mockClear()
+	})
+
+	it('excludes child protocols from their parent protocol competitors', async () => {
+		fetchProtocolOverviewMetrics.mockResolvedValueOnce({
+			id: 'parent#arcus',
+			name: 'Arcus',
+			isParentProtocol: true,
+			symbol: null,
+			url: 'https://arcus.exchange',
+			description: 'Arcus parent protocol',
+			logo: 'arcus.png',
+			gecko_id: null,
+			cmcId: null,
+			chains: ['Robinhood Chain'],
+			currentChainTvls: {},
+			mcap: null,
+			raises: [],
+			hacks: [],
+			otherProtocols: ['Arcus', 'Arcus Perps', 'Arcus Spot'],
+			twitter: null,
+			treasury: null
+		})
+		fetchProtocols.mockResolvedValueOnce({
+			protocols: [
+				{
+					name: 'Arcus Perps',
+					parentProtocol: 'parent#arcus',
+					category: 'Derivatives',
+					chains: ['Robinhood Chain'],
+					tvl: 20_000_000
+				},
+				{
+					name: 'Lighter Robinhood Perps',
+					parentProtocol: 'parent#lighter',
+					category: 'Derivatives',
+					chains: ['Robinhood Chain'],
+					tvl: 11_000_000
+				}
+			],
+			chains: ['Robinhood Chain'],
+			parentProtocols: []
+		})
+		const { getProtocolOverviewPageData } = await import('../queries')
+
+		const data = await getProtocolOverviewPageData({
+			protocolId: 'parent#arcus',
+			currentProtocolMetadata: { displayName: 'Arcus' } satisfies IProtocolMetadata,
+			chainMetadata: {},
+			tokenlist: {},
+			cgExchangeIdentifiers: [],
+			emissionsSupplyMetrics: {},
+			protocolLlamaswapDataset: {},
+			yieldsSnapshot
+		})
+
+		expect(data.competitors).toEqual([{ name: 'Lighter Robinhood Perps', tvl: 11_000_000 }])
 	})
 
 	it('distinguishes absent TVL capability from successful empty and explicit-zero TVL responses', async () => {
