@@ -319,8 +319,8 @@
 	position: relative;
 }
 
-.root :global(.article-qa::before),
-.root :global(.ProseMirror dl[data-article-qa]::before) {
+.root :global(.article-qa)::before,
+.root :global(.ProseMirror dl[data-article-qa])::before {
 	content: 'Q · ' counter(qa-counter, decimal-leading-zero);
 	display: block;
 	margin-bottom: 1.125rem;
@@ -365,8 +365,8 @@
 	margin: 0;
 }
 
-.root :global(.article-qa-answer > p:first-child:not(.is-empty)::before),
-.root :global(.ProseMirror dd[data-article-qa-answer] > p:first-child:not(.is-empty)::before) {
+.root :global(.article-qa-answer > p:first-child:not(.is-empty))::before,
+.root :global(.ProseMirror dd[data-article-qa-answer] > p:first-child:not(.is-empty))::before {
 	content: '— ';
 	color: color-mix(in oklch, var(--text-link) 70%, transparent);
 	font-weight: 500;
