@@ -70,7 +70,7 @@ const EarnView = ({
 		single && multi ? ['true', 'false'] : single ? 'true' : multi ? 'false' : undefined
 	const extraQuery = {
 		chain: selectedSubsetQuery(selectedChains, chainList),
-		protocol: selectedSubsetQuery(selectedProjects, projectList),
+		protocol: router.query.excludeProtocol ? router.query.protocol : selectedSubsetQuery(selectedProjects, projectList),
 		category: selectedSubsetQuery(selectedCategories, categoryList),
 		stablecoin: attributeSet.has('stablecoins') ? 'true' : undefined,
 		halal: attributeSet.has('halal') ? 'true' : undefined,
