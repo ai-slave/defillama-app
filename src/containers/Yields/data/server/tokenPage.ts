@@ -64,13 +64,20 @@ export interface TokenEarnRows {
 }
 
 // Produce the earn rows for the token page's yields section by reusing the shared
-// getEarnPage machinery (filter by reference_asset token keys, default tvl desc).
+// getEarnPage machinery (filter by token keys on both targets, default tvl desc).
 export async function getTokenEarnRows(snapshot: YieldsSnapshot, symbol: string): Promise<TokenEarnRows> {
 	const tokenKeys = await resolveTokenOptionKeys(snapshot, symbol)
 	if (tokenKeys.length === 0) return { rows: [], tokenKeys }
 
 	// Token pages include meme pools: the page's token selection already scopes the noise,
 	// and hiding a meme token's own pools on its own page serves nobody.
-	const page = await getEarnPage(snapshot, { token: tokenKeys, pageSize: 'all', includeMemeTokens: 'true' })
+	// tokenOn 'both': a token page should list pools where the token is the reference
+	// asset AND pools that merely hold it, not just the reference-asset subset.
+	const page = await getEarnPage(snapshot, {
+		token: tokenKeys,
+		tokenOn: 'both',
+		pageSize: 'all',
+		includeMemeTokens: 'true'
+	})
 	return { rows: page.rows, tokenKeys }
 }
