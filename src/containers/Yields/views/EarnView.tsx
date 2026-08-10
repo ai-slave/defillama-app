@@ -109,6 +109,9 @@ const EarnView = ({
 		selectedTokenValues.length === 1
 			? (tokens.find(([, value]) => value === selectedTokenValues[0])?.[0] ?? 'selection')
 			: 'selection'
+	// Same gate as the strip; the cells surface the comparison as a tooltip-only pp delta.
+	const apyCellMedian =
+		selectedTokenValues.length > 0 && medianApy != null ? { label: medianLabel, apy: medianApy } : undefined
 
 	const filterContext = getYieldsQuestionContext(router.query)
 	const { data: filteredQuestionsData, isFetching: isQuestionsLoading } = useEntityQuestions(
@@ -141,7 +144,9 @@ const EarnView = ({
 							<>
 								{' · '}
 								{medianLabel === 'selection' ? 'median APY of selection' : `${medianLabel} median APY`}{' '}
-								<strong className="text-primary">{formatPercent(medianApy, YIELD_PERCENT_OPTIONS)}</strong>
+								<strong className="rounded-md bg-brand-muted px-1.5 py-0.5 text-link-on-tint">
+									{formatPercent(medianApy, YIELD_PERCENT_OPTIONS)}
+								</strong>
 							</>
 						) : null}
 					</p>
@@ -189,7 +194,7 @@ const EarnView = ({
 			) : rowsQuery.isError && !rowsQuery.data ? (
 				<PanelStatus variant="error">Couldn't load pools.</PanelStatus>
 			) : poolsData.length > 0 ? (
-				<PaginatedYieldsPoolTable data={poolsData} {...tableProps} />
+				<PaginatedYieldsPoolTable data={poolsData} median={apyCellMedian} {...tableProps} />
 			) : (
 				<PanelStatus variant="empty">No pools match current filters.</PanelStatus>
 			)}

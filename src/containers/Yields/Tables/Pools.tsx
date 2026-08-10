@@ -12,7 +12,7 @@ import { PaginatedYieldsTable } from './PaginatedYieldsTable'
 import { Sparkline } from './Sparkline'
 import { hasSparkline } from './sparklineModel'
 import type { IYieldsTableProps, IYieldTableRow, YieldsTableAppearance } from './types'
-import { EarnApyCell, EmptyCell, RewardApyCell, SupplyCapBar } from './YieldsCells'
+import { EarnApyCell, EmptyCell, RewardApyCell, SupplyCapBar, type EarnApyMedian } from './YieldsCells'
 
 const STABILITY_RATING_STYLES: Record<string, string> = {
 	stable: 'bg-(--apy-mid)/10 text-(--yield-positive-text)',
@@ -100,7 +100,10 @@ function apyHeader(query: Record<string, unknown>, label: string) {
 	return `${label}${suffix}`
 }
 
-function createEarnColumns(query: Record<string, unknown>): Array<ColumnDef<IYieldTableRow, unknown>> {
+function createEarnColumns(
+	query: Record<string, unknown>,
+	median?: EarnApyMedian
+): Array<ColumnDef<IYieldTableRow, unknown>> {
 	const selected = new Set(parseSelectedEarnColumns(query.column as string | string[] | undefined))
 	const columns: Array<ColumnDef<IYieldTableRow, unknown>> = [
 		columnHelper.accessor('pool', {
@@ -202,7 +205,7 @@ function createEarnColumns(query: Record<string, unknown>): Array<ColumnDef<IYie
 			id: 'apy',
 			header: apyHeader(query, 'APY'),
 			enableSorting: true,
-			cell: ({ row }) => <EarnApyCell row={row.original} />,
+			cell: ({ row }) => <EarnApyCell row={row.original} median={median} />,
 			meta: {
 				headerClassName: 'w-[120px] min-w-[120px]',
 				align: 'end',
@@ -295,26 +298,30 @@ function createEarnColumns(query: Record<string, unknown>): Array<ColumnDef<IYie
 				const { top10Pct, avgPositionUsd } = row.original
 				const content =
 					top10Pct == null && avgPositionUsd == null ? null : (
-						<span className="flex flex-col gap-0.5">
+						<span className="flex flex-col gap-1">
 							{top10Pct != null ? (
-								<span>
-									Top 10:{' '}
-									{formatPercent(top10Pct, {
-										input: 'percent',
-										minimumFractionDigits: 1,
-										maximumFractionDigits: 1,
-										useGrouping: false
-									})}
+								<span className="flex justify-between gap-4">
+									<span className="text-secondary">Top 10 share</span>
+									<span>
+										{formatPercent(top10Pct, {
+											input: 'percent',
+											minimumFractionDigits: 1,
+											maximumFractionDigits: 1,
+											useGrouping: false
+										})}
+									</span>
 								</span>
 							) : null}
 							{avgPositionUsd != null ? (
-								<span>
-									Avg:{' '}
-									{formatUsd(avgPositionUsd, {
-										compact: true,
-										minimumCompactValue: 1_000_000,
-										compactSuffix: 'lowercase'
-									})}
+								<span className="flex justify-between gap-4">
+									<span className="text-secondary">Avg position</span>
+									<span>
+										{formatUsd(avgPositionUsd, {
+											compact: true,
+											minimumCompactValue: 1_000_000,
+											compactSuffix: 'lowercase'
+										})}
+									</span>
 								</span>
 							) : null}
 						</span>
@@ -425,10 +432,11 @@ export function PaginatedYieldsPoolTable({
 	onSortingChange,
 	interactionDisabled = false,
 	loadingLabel,
-	appearance = 'standalone'
-}: IYieldsTableProps & { appearance?: YieldsTableAppearance }) {
+	appearance = 'standalone',
+	median
+}: IYieldsTableProps & { appearance?: YieldsTableAppearance; median?: EarnApyMedian }) {
 	const { query } = useRouter()
-	const columns = createEarnColumns(query)
+	const columns = createEarnColumns(query, median)
 
 	return (
 		<PaginatedYieldsTable

@@ -5,7 +5,7 @@ import { fetchBlockExplorers } from '~/api'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
-import { formatRatio, formatUsd, formatPercent } from '~/utils/numberFormat'
+import { formatNumber, formatRatio, formatUsd, formatPercent } from '~/utils/numberFormat'
 import { getDepegWarningSeverity, hasPart } from '../domain/apyPresentation'
 import { InstantTooltip } from '../InstantTooltip'
 import { YIELD_PERCENT_OPTIONS } from '../poolDetail/format'
@@ -30,6 +30,18 @@ function signedPct(value: number, signed?: SignMode): string {
 	if (signed === 'minus') return `-${formatPercent(Math.abs(value), YIELD_PERCENT_OPTIONS)}`
 	if (signed === 'auto') return `${value >= 0 ? '+' : ''}${formatPercent(value, YIELD_PERCENT_OPTIONS)}`
 	return formatPercent(value, YIELD_PERCENT_OPTIONS)
+}
+
+// Percentage-point delta (median comparisons) — pp, not %, so it can't be confused
+// with a rate or a relative change. exceptZero signs after rounding, so a sub-0.005
+// delta prints "0.00pp" rather than "-0.00pp".
+function signedPp(value: number): string {
+	return `${formatNumber(value, {
+		signDisplay: 'exceptZero',
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2,
+		useGrouping: false
+	})}pp`
 }
 
 // The single, shared "no data" marker used across every yields table cell. A plain inline em
@@ -99,7 +111,8 @@ export function SupplyCapBar({ tvl, available }: { tvl: number | null; available
 // --- earn APY cell -------------------------------------------------------------------------
 // Neutral total (the column header is the category) over a composition sub-line that renders
 // only the non-null resolved-view components: base (secondary), +reward% (amber), +intrinsic%
-// (secondary). A label/value tooltip mirrors the components with a bordered Total row.
+// (secondary). A label/value tooltip mirrors the components with a bordered Total row; when a
+// token filter supplies a median, the tooltip appends a "vs median" pp-delta row
 
 // Quiet explainer for a null APY under the current toggles when the pool has
 // components the view excludes — distinguishes "nothing for this lens" from
@@ -108,7 +121,13 @@ function ComponentsOnlyHint({ label }: { label: string }) {
 	return <span className="block text-right body-sm text-tertiary">{label}</span>
 }
 
-export function EarnApyCell({ row }: { row: IYieldTableRow }) {
+export interface EarnApyMedian {
+	/** Display name of the filtered set the median describes: a token symbol or 'selection'. */
+	label: string
+	apy: number
+}
+
+export function EarnApyCell({ row, median }: { row: IYieldTableRow; median?: EarnApyMedian }) {
 	const resolved = row.resolvedApy
 	const total = row.apy
 	if (total == null) {
@@ -133,7 +152,7 @@ export function EarnApyCell({ row }: { row: IYieldTableRow }) {
 		tipRows.push({ label: src ? `Intrinsic · ${src}` : 'Intrinsic', value: intrinsic })
 	}
 
-	const showTooltip = tipRows.length > 0
+	const showTooltip = tipRows.length > 0 || median != null
 
 	const body = (
 		<span className="flex flex-col items-end leading-tight">
@@ -165,6 +184,9 @@ export function EarnApyCell({ row }: { row: IYieldTableRow }) {
 		)
 	}
 
+	// The Total separator only earns its rule when component rows sit above it.
+	const totalRowClassName = tipRows.length > 0 ? 'mt-0.5 border-t border-subtle pt-1.5' : ''
+
 	return (
 		<span className="ml-auto flex w-fit max-w-full items-center justify-end gap-1">
 			{depeg}
@@ -179,10 +201,16 @@ export function EarnApyCell({ row }: { row: IYieldTableRow }) {
 								<span className="text-right text-primary">{formatPercent(tip.value, YIELD_PERCENT_OPTIONS)}</span>
 							</Fragment>
 						))}
-						<span className="mt-0.5 border-t border-subtle pt-1.5 text-secondary">Total</span>
-						<span className="mt-0.5 border-t border-subtle pt-1.5 text-right font-semibold">
+						<span className={`${totalRowClassName} text-secondary`.trim()}>Total</span>
+						<span className={`${totalRowClassName} text-right font-semibold`.trim()}>
 							{formatPercent(total, YIELD_PERCENT_OPTIONS)}
 						</span>
+						{median != null ? (
+							<>
+								<span className="text-secondary">{`vs ${median.label} median`}</span>
+								<span className="text-right text-primary">{signedPp(total - median.apy)}</span>
+							</>
+						) : null}
 					</span>
 				}
 			>
