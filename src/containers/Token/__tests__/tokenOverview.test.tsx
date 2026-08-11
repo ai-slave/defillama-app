@@ -8,9 +8,25 @@ import type { TokenDirectoryRecord } from '~/utils/tokenDirectory'
 import {
 	buildDisplayedTokenChartData,
 	buildTokenOverviewRawChartData,
+	resolveCirculatingSupply,
 	type TokenOverviewData,
 	getTokenOverviewData
 } from '../tokenOverview'
+
+describe('resolveCirculatingSupply', () => {
+	it('uses total supply as circulating for an override token whose CG circulating is 0', () => {
+		expect(resolveCirculatingSupply('spark-savings-usdt', 0, 1_191_693_444)).toBe(1_191_693_444)
+	})
+
+	it('keeps CG circulating when the override token already reports a positive value', () => {
+		expect(resolveCirculatingSupply('spark-savings-usdt', 500, 1_000)).toBe(500)
+	})
+
+	it('leaves non-override tokens untouched', () => {
+		expect(resolveCirculatingSupply('usd-coin', 0, 1_000)).toBe(0)
+		expect(resolveCirculatingSupply(null, 0, 1_000)).toBe(0)
+	})
+})
 import { TokenOverviewSection, TokenPageHero } from '../TokenOverviewSection'
 
 function getRecordKeys<T extends Record<string, unknown>>(record: T): string[] {

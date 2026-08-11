@@ -187,14 +187,31 @@ async function fetchTokenOverviewCoinDetail(geckoId: string): Promise<TokenOverv
 	}).catch(() => null)
 }
 
+// CoinGecko reports circulating_supply = 0 for some fully-outstanding wrapper/savings
+// tokens, which zeros out their market cap. Treat total supply as circulating for these.
+const CIRCULATING_SUPPLY_OVERRIDES: Record<string, 'totalSupply'> = {
+	'spark-savings-usdt': 'totalSupply'
+}
+
+export function resolveCirculatingSupply(
+	geckoId: string | null,
+	circulatingSupply: number | null,
+	totalSupply: number | null
+): number | null {
+	if (!geckoId || !CIRCULATING_SUPPLY_OVERRIDES[geckoId]) return circulatingSupply
+	if (circulatingSupply != null && circulatingSupply > 0) return circulatingSupply
+	return totalSupply ?? circulatingSupply
+}
+
 function buildTokenMarketDataFallback(
 	coinDetail: TokenOverviewCoinDetail | null | undefined,
-	currentPriceViaLlama: { price?: number | null; timestamp?: number | null } | null
+	currentPriceViaLlama: { price?: number | null; timestamp?: number | null } | null,
+	geckoId: string | null
 ): TokenOverviewMarketData {
 	const marketData = coinDetail?.market_data
 	const currentPrice = currentPriceViaLlama?.price ?? marketData?.current_price?.usd ?? null
-	const circulatingSupply = marketData?.circulating_supply ?? null
 	const totalSupply = marketData?.total_supply ?? null
+	const circulatingSupply = resolveCirculatingSupply(geckoId, marketData?.circulating_supply ?? null, totalSupply)
 	const maxSupply = marketData?.max_supply ?? null
 	const ath = resolveCurrentAth({
 		currentPrice,
@@ -290,7 +307,8 @@ function buildTokenMarketData(
 	cgExchangeIdentifiers: string[],
 	currentMetrics: TokenOverviewCurrentMetrics | null,
 	marketDataFallback: TokenOverviewMarketData = emptyMarketData,
-	currentPriceTimestamp: number | null = null
+	currentPriceTimestamp: number | null = null,
+	geckoId: string | null = null
 ): TokenOverviewMarketData {
 	if (!tokenEntry && !currentMetrics) {
 		return marketDataFallback
@@ -321,12 +339,16 @@ function buildTokenMarketData(
 	const currentPrice = currentMetrics
 		? currentMetrics.currentPrice
 		: (marketDataFallback.currentPrice ?? tokenEntry?.current_price ?? null)
-	const circulatingSupply = currentMetrics
-		? currentMetrics.circulatingSupply
-		: (tokenEntry?.circulating_supply ?? marketDataFallback.circulatingSupply)
 	const totalSupply = currentMetrics
 		? currentMetrics.totalSupply
 		: (tokenEntry?.total_supply ?? marketDataFallback.totalSupply)
+	const circulatingSupply = resolveCirculatingSupply(
+		geckoId,
+		currentMetrics
+			? currentMetrics.circulatingSupply
+			: (tokenEntry?.circulating_supply ?? marketDataFallback.circulatingSupply),
+		totalSupply
+	)
 	const maxSupply = currentMetrics ? currentMetrics.maxSupply : (tokenEntry?.max_supply ?? marketDataFallback.maxSupply)
 	const ath = resolveCurrentAth({
 		currentPrice,
@@ -572,14 +594,15 @@ export async function getTokenOverviewData({
 				? [null, await fetchLiquidityDatasetEntryByProtocolId(protocolData.id).catch(() => null)]
 				: [null, null]
 
-	const marketDataFallback = buildTokenMarketDataFallback(coinDetail, currentPriceViaLlama)
+	const marketDataFallback = buildTokenMarketDataFallback(coinDetail, currentPriceViaLlama, geckoId)
 	const marketData = buildTokenMarketData(
 		tokenEntry,
 		cgChart?.data?.coinData?.tickers,
 		cgExchangeIdentifiers,
 		currentMetrics,
 		marketDataFallback,
-		currentPriceViaLlama?.timestamp ?? null
+		currentPriceViaLlama?.timestamp ?? null,
+		geckoId
 	)
 	const treasury = shouldFetchTreasury ? buildTreasurySummary(treasuries) : null
 
