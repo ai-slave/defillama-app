@@ -110,6 +110,24 @@ describe('article banners', () => {
 		expect(articleHtml).not.toContain('Section strip')
 	})
 
+	it('keys text banner dismissals by banner id and optional API version', () => {
+		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
+			...emptyLookup(),
+			text: banner({ id: 'landing-text', scope: 'landing', text: 'Landing strip', dismissalVersion: '2026-08' })
+		})
+
+		const versionedHtml = renderToStaticMarkup(<ArticleBannerStrip scope="landing" />)
+		expect(versionedHtml).toContain('announcement-token--research-banner-landing-text--2026-08')
+
+		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
+			...emptyLookup(),
+			text: banner({ id: 'fallback-text', scope: 'landing', text: 'Fallback strip' })
+		})
+
+		const fallbackHtml = renderToStaticMarkup(<ArticleBannerStrip scope="landing" />)
+		expect(fallbackHtml).toContain('announcement-token--research-banner-fallback-text--v1')
+	})
+
 	it('falls back to all-articles image banners when article and section images are absent', () => {
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'article', 'article-id']), emptyLookup())
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'section', 'report']), emptyLookup())

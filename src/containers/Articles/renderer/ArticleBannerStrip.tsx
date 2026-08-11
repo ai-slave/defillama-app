@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { Announcement } from '~/components/Announcement'
 import { getAllArticlesBanner, getArticleBanner, getLandingBanner, getSectionBanner } from '~/containers/Articles/api'
 import { allArticlesBannerForArticle } from '~/containers/Articles/renderer/bannerExclusion'
 import type { ArticleSection, Banner, BannerLookupResult } from '~/containers/Articles/types'
@@ -20,7 +20,7 @@ export type ArticleBannerStripInitialData = {
 	landing?: BannerLookupResult | null
 }
 
-const DISMISSED_KEY_PREFIX = 'research-banner-dismissed:'
+const FALLBACK_DISMISSAL_VERSION = 'v1'
 
 function isExternalUrl(url: string) {
 	return /^https?:\/\//i.test(url)
@@ -92,71 +92,47 @@ export function ArticleBannerStrip({ scope, section, articleId, initialData }: P
 				? (sectionBannerQuery.data?.text ?? null)
 				: (landingBannerQuery.data?.text ?? null)
 
-	const [dismissed, setDismissed] = useState(false)
-	const bannerId = banner?.id
-
-	useEffect(() => {
-		setDismissed(false)
-		if (typeof window === 'undefined' || !bannerId) return
-		try {
-			if (window.localStorage.getItem(DISMISSED_KEY_PREFIX + bannerId)) {
-				setDismissed(true)
-			}
-		} catch {}
-	}, [bannerId])
-
-	if (!banner || !banner.enabled || dismissed) return null
-
-	const dismiss = () => {
-		setDismissed(true)
-		if (typeof window === 'undefined') return
-		try {
-			window.localStorage.setItem(DISMISSED_KEY_PREFIX + banner.id, '1')
-		} catch {}
-	}
+	if (!banner || !banner.enabled) return null
 
 	const linkLabel = banner.linkLabel?.trim() || 'Read more'
 	const linkUrl = banner.linkUrl?.trim() || ''
 	const hasLink = !!linkUrl
 
 	return (
-		<div className="flex w-full items-center gap-3 bg-research-banner px-4 py-2.5 text-on-brand">
-			<div className="flex flex-1 items-center justify-center">
-				<p className="m-0 text-center font-jetbrains text-[11px] font-semibold tracking-[0.18em] uppercase">
-					<span>{banner.text}</span>
-					{hasLink ? (
-						<>
-							{' '}
-							{isExternalUrl(linkUrl) ? (
-								<a
-									href={linkUrl}
-									target="_blank"
-									rel="noopener noreferrer"
-									className="inline-flex items-center gap-1 underline underline-offset-2 transition-opacity hover:opacity-80"
-								>
-									{linkLabel}
-									<Icon name="arrow-up-right" height={10} width={10} />
-								</a>
-							) : (
-								<Link
-									href={linkUrl}
-									className="inline-flex items-center gap-1 underline underline-offset-2 transition-opacity hover:opacity-80"
-								>
-									{linkLabel}
-								</Link>
-							)}
-						</>
-					) : null}
-				</p>
-			</div>
-			<button
-				type="button"
-				onClick={dismiss}
-				aria-label="Dismiss banner"
-				className="flex size-6 shrink-0 items-center justify-center rounded-full text-on-brand/80 transition-colors hover:bg-research-white/10 hover:text-on-brand"
-			>
-				<Icon name="x" height={14} width={14} />
-			</button>
-		</div>
+		<Announcement
+			announcementId={`research-banner-${banner.id}`}
+			version={banner.dismissalVersion ?? FALLBACK_DISMISSAL_VERSION}
+			className="min-h-0 w-full gap-3 rounded-none bg-research-banner px-4 py-2.5 text-on-brand"
+			contentClassName="flex items-center justify-center"
+			dismissButtonClassName="rounded-full text-on-brand/80 transition-colors hover:bg-research-white/10 hover:text-on-brand"
+			dismissLabel="Dismiss banner"
+		>
+			<p className="m-0 text-center font-jetbrains text-[11px] font-semibold tracking-[0.18em] uppercase">
+				<span>{banner.text}</span>
+				{hasLink ? (
+					<>
+						{' '}
+						{isExternalUrl(linkUrl) ? (
+							<a
+								href={linkUrl}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="inline-flex items-center gap-1 underline underline-offset-2 transition-opacity hover:opacity-80"
+							>
+								{linkLabel}
+								<Icon name="arrow-up-right" height={10} width={10} />
+							</a>
+						) : (
+							<Link
+								href={linkUrl}
+								className="inline-flex items-center gap-1 underline underline-offset-2 transition-opacity hover:opacity-80"
+							>
+								{linkLabel}
+							</Link>
+						)}
+					</>
+				) : null}
+			</p>
+		</Announcement>
 	)
 }

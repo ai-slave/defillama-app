@@ -11,6 +11,8 @@ type DismissibleAnnouncementProps = {
 	warning?: boolean
 	className?: string
 	contentClassName?: string
+	dismissButtonClassName?: string
+	dismissLabel?: string
 }
 
 type PermanentAnnouncementProps = {
@@ -19,6 +21,8 @@ type PermanentAnnouncementProps = {
 	warning?: boolean
 	className?: string
 	contentClassName?: string
+	dismissButtonClassName?: string
+	dismissLabel?: string
 	announcementId?: never
 	version?: never
 }
@@ -26,7 +30,15 @@ type PermanentAnnouncementProps = {
 type AnnouncementProps = DismissibleAnnouncementProps | PermanentAnnouncementProps
 
 export function Announcement(props: AnnouncementProps) {
-	const { children, notCancellable, warning = false, className, contentClassName } = props
+	const {
+		children,
+		notCancellable,
+		warning = false,
+		className,
+		contentClassName,
+		dismissButtonClassName,
+		dismissLabel = 'Close'
+	} = props
 	const dismissalToken = props.notCancellable
 		? null
 		: createAnnouncementDismissalToken(props.announcementId, props.version)
@@ -66,11 +78,14 @@ export function Announcement(props: AnnouncementProps) {
 			<div className={clsx('flex-1 text-center', contentClassName)}>{children}</div>
 			{!notCancellable ? (
 				<button
-					className="flex size-6 shrink-0 items-center justify-center self-center rounded-md hover:bg-surface-elevated-1"
+					className={clsx(
+						'flex size-6 shrink-0 items-center justify-center self-center rounded-md hover:bg-surface-elevated-1',
+						dismissButtonClassName
+					)}
 					onClick={closeAnnouncement}
 				>
 					<Icon name="x" height={16} width={16} />
-					<span className="sr-only">Close</span>
+					<span className="sr-only">{dismissLabel}</span>
 				</button>
 			) : null}
 		</div>

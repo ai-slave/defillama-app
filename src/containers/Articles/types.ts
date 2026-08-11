@@ -332,6 +332,7 @@ export const BANNER_KIND_DESCRIPTIONS: Record<BannerKind, string> = {
 
 export type Banner = {
 	id: string
+	dismissalVersion?: string | null
 	type: BannerKind
 	scope: BannerScope
 	section: ArticleSection | null
