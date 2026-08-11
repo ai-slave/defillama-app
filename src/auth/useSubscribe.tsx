@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
+import { getReferrer } from '~/auth/referrer'
 import { AUTH_SERVER } from '~/constants'
 import { getStorageItem, removeStorageItem, setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { handleSimpleFetchResponse } from '~/utils/async'
@@ -15,6 +16,7 @@ interface SubscriptionRequest {
 	subscriptionType: string
 	billingInterval?: 'year' | 'month'
 	isTrial?: boolean
+	referralCode?: string | null
 }
 
 interface SubscriptionCreateResponse {
@@ -218,7 +220,8 @@ export const useSubscribe = () => {
 				provider: paymentMethod,
 				subscriptionType,
 				billingInterval,
-				isTrial
+				isTrial,
+				referralCode: getReferrer()
 			}
 
 			queryClient.setQueryData(['subscription', userId], defaultInactiveSubscription)
