@@ -56,11 +56,10 @@ function Prose({ children }: { children: string }) {
 	)
 }
 
-/** Collapsed-by-default detail group: keeps methodology prose out of the
-    resting layout without moving it off the page. */
+/** Expandable detail group, initially open so its information is visible. */
 function Disclosure({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
-		<details className="group/disclosure flex flex-col border-t border-subtle py-2">
+		<details open={true} className="group/disclosure flex flex-col border-t border-subtle py-2">
 			<summary className="flex cursor-pointer items-center gap-1 label-md text-secondary hover:text-primary">
 				{title}
 				<Icon

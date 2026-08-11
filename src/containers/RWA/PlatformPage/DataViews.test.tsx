@@ -4,6 +4,7 @@
    so the views can be restyled freely:
    - the peer dataset is fetched on demand, never on page load
    - the profile copy stays in the document whichever view is showing (SEO)
+   - information disclosures are expanded by default
    - the selected view is shareable through ?view=
    - an unavailable view falls back instead of rendering an empty panel */
 
@@ -182,6 +183,21 @@ describe('RWA platform data views', () => {
 		})
 
 		expect(container.textContent).not.toContain('Attestations & milestones')
+	})
+
+	it('expands the information disclosures by default', async () => {
+		await render({
+			...data,
+			meta: {
+				...meta,
+				revenueModel: 'Management fees',
+				founders: 'Jane Doe'
+			} as RWAPlatformMeta
+		})
+
+		const disclosures = [...container.querySelectorAll('details')]
+		expect(disclosures).toHaveLength(2)
+		expect(disclosures.every((disclosure) => disclosure.open)).toBe(true)
 	})
 
 	it('publishes the selected view through ?view= and clears it for the default view', async () => {

@@ -7,6 +7,7 @@ import {
 	buildRWAFlowRotationChart,
 	formatSignedRWAFlow,
 	getRWAFlowDefaultStartTimestamp,
+	getRWAFlowModeQueryValue,
 	getRWAFlowOverlayQueryValue,
 	getRWAFlowRotationSeriesNames,
 	getRWAFlowVsPriceAssetSummaries,
@@ -42,6 +43,32 @@ describe('RWA flow chart data', () => {
 			view: null,
 			groupBy: 'monthly'
 		})
+	})
+
+	it('defaults flow vs price to weekly without changing net flow defaults', () => {
+		expect(parseRWAFlowQueryState('flowVsPrice', undefined, true)).toEqual({
+			view: 'flowVsPrice',
+			groupBy: 'weekly'
+		})
+		expect(parseRWAFlowQueryState('flowVsPrice', 'daily', true)).toEqual({
+			view: 'flowVsPrice',
+			groupBy: 'daily'
+		})
+		expect(parseRWAFlowQueryState('flows', undefined, true)).toEqual({
+			view: 'netFlows',
+			groupBy: 'daily'
+		})
+		expect(parseRWAFlowQueryState('flowVsPrice', undefined, false)).toEqual({
+			view: null,
+			groupBy: 'daily'
+		})
+	})
+
+	it('serializes flow grouping against the selected chart default', () => {
+		expect(getRWAFlowModeQueryValue('weekly', 'flowVsPrice')).toBeUndefined()
+		expect(getRWAFlowModeQueryValue('daily', 'flowVsPrice')).toBe('daily')
+		expect(getRWAFlowModeQueryValue('daily', 'netFlows')).toBeUndefined()
+		expect(getRWAFlowModeQueryValue('weekly', 'netFlows')).toBe('weekly')
 	})
 
 	it('parses every asset flow grouping and defaults unknown values to daily', () => {

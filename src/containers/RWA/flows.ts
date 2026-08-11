@@ -95,8 +95,12 @@ export const RWA_FLOW_GROUPING_OPTIONS = [
 	}
 ] as const
 
-export function parseRWAFlowGrouping(value: string | undefined): RWAFlowGrouping {
+export function parseRWAFlowGrouping(
+	value: string | undefined,
+	defaultGrouping: RWAFlowGrouping = 'daily'
+): RWAFlowGrouping {
 	if (
+		value === 'daily' ||
 		value === 'weekly' ||
 		value === 'monthly' ||
 		value === 'quarterly' ||
@@ -105,12 +109,23 @@ export function parseRWAFlowGrouping(value: string | undefined): RWAFlowGrouping
 	) {
 		return value
 	}
-	return 'daily'
+	return defaultGrouping
 }
 
 export type RWAFlowQueryState = {
 	view: 'netFlows' | 'flowVsPrice' | null
 	groupBy: RWAFlowGrouping
+}
+
+function getRWAFlowDefaultGrouping(view: RWAFlowQueryState['view']): RWAFlowGrouping {
+	return view === 'flowVsPrice' ? 'weekly' : 'daily'
+}
+
+export function getRWAFlowModeQueryValue(
+	groupBy: RWAFlowGrouping,
+	view: RWAFlowQueryState['view']
+): RWAFlowGrouping | undefined {
+	return groupBy === getRWAFlowDefaultGrouping(view) ? undefined : groupBy
 }
 
 export type RWAFlowVisibleRange = {
@@ -127,7 +142,7 @@ export function parseRWAFlowQueryState(
 		allowFlowVsPrice && chartType === 'flowVsPrice' ? 'flowVsPrice' : chartType === 'flows' ? 'netFlows' : null
 	return {
 		view,
-		groupBy: parseRWAFlowGrouping(flowMode)
+		groupBy: parseRWAFlowGrouping(flowMode, getRWAFlowDefaultGrouping(view))
 	}
 }
 

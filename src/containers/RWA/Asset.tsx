@@ -37,6 +37,7 @@ import {
 import {
 	buildRWAFlowChart,
 	formatSignedRWAFlow,
+	getRWAFlowModeQueryValue,
 	getRWAFlowTextClass,
 	getRWAFlowVsPriceSummary,
 	parseRWAFlowQueryState,
@@ -592,7 +593,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 									value={flowGroupBy}
 									onValueChange={(nextGroupBy) => {
 										void pushShallowQuery(router, {
-											flowMode: nextGroupBy === 'daily' ? undefined : nextGroupBy
+											flowMode: getRWAFlowModeQueryValue(nextGroupBy, flowQueryState.view)
 										})
 									}}
 									options={RWA_FLOW_GROUPING_OPTIONS}

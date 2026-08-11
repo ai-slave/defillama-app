@@ -65,6 +65,7 @@ import {
 	buildRWAFilteredFlowBreakdown,
 	buildRWAFlowRotationChart,
 	getRWAFlowDefaultStartTimestamp,
+	getRWAFlowModeQueryValue,
 	getRWAFlowOverlayQueryValue,
 	getRWAFlowVsPriceAssetSummaries,
 	getRWAFlowVsPriceSummary,
@@ -1018,7 +1019,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 								value={flowGroupBy}
 								onValueChange={(nextFlowMode) => {
 									void pushShallowQuery(router, {
-										flowMode: nextFlowMode === 'daily' ? undefined : nextFlowMode
+										flowMode: getRWAFlowModeQueryValue(nextFlowMode, flowQueryState.view)
 									})
 								}}
 								options={RWA_FLOW_GROUPING_OPTIONS}
