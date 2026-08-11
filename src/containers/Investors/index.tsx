@@ -8,6 +8,7 @@ import { CustomOnlyContent, DEFAULT_TABS, InvestorsContent, SkeletonTable } from
 import type { DashboardModule, DashboardTabConfig } from './dashboardTypes'
 import { Logo } from './Logo'
 import { getDashboardModule } from './registry'
+import { scrollToPageTop } from './scrollToPageTop'
 
 export { useContentReady } from './ContentReadyContext'
 
@@ -163,6 +164,7 @@ function InvestorsShell({
 											if (isActive && !project.comingSoon) {
 												setExpandedProject(isExpanded ? null : project.id)
 											} else {
+												scrollToPageTop()
 												setActiveProject(project.id)
 												setExpandedProject(project.comingSoon ? expandedProject : project.id)
 												if (!project.comingSoon) {
@@ -246,6 +248,7 @@ function InvestorsShell({
 														) : (
 															<button
 																onClick={() => {
+																	if (resolvedTab !== tab.id) scrollToPageTop()
 																	setActiveTab(tab.id)
 																	closeSidebar()
 																}}
