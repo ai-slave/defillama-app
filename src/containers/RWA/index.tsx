@@ -196,7 +196,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		)
 	}, [])
 	const canBreakdownByChain = isCategoryMode || isPlatformMode || isAssetGroupMode || props.selectedChain === 'All'
-	const chartMode = createRwaChartModeState(mode, canBreakdownByChain)
+	const chartMode = createRwaChartModeState(mode, canBreakdownByChain, props.assetGroupSlug)
 	const chartState = parseRwaChartState(router.query, chartMode)
 	const isFlowMetric = flowQueryState.view != null
 	const chartTypeKey = chartState.metric

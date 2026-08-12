@@ -38,6 +38,7 @@ import {
 	buildRwaCanonicalMetricDataset,
 	type RWAChartAggregationMode
 } from './chartAggregation'
+import { getRwaTimeSeriesDefaultBreakdown } from './chartState'
 import {
 	filterCategoriesForStandardRwaOverview,
 	getDefaultRWAOverviewInclusion,
@@ -557,7 +558,7 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 					includeGovernance: defaultInclusion.includeGovernance
 				})
 			: (prefetchedChartRows ?? null)
-		const aggregationMode: RWAChartAggregationMode = selectedAssetGroup ? 'assetName' : 'assetGroup'
+		const aggregationMode: RWAChartAggregationMode = getRwaTimeSeriesDefaultBreakdown(mode, selectedAssetGroup ?? null)
 		const defaultFilteredAssets = applyDefaultAssetFilters(assets, {
 			includeStablecoins: defaultInclusion.includeStablecoins,
 			includeGovernance: defaultInclusion.includeGovernance,

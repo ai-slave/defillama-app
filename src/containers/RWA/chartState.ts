@@ -5,14 +5,15 @@ import type { RWAOverviewMode } from './constants'
 export type RWAChartMetric = 'activeMcap' | 'onChainMcap' | 'defiActiveTvl'
 export type RWAChartView = 'timeSeries' | 'pie' | 'treemap' | 'hbar'
 export type RWAChartBreakdown = 'chain' | 'category' | 'assetClass' | 'assetName' | 'platform' | 'assetGroup'
+export type RWATimeSeriesChartBreakdown = Exclude<RWAChartBreakdown, 'chain'>
 export type RwaTreemapParentGrouping = RWAChartBreakdown
 export type RwaTreemapNestedBy = 'none' | 'assetClass' | 'assetName' | 'category'
 export type RWAChartOption<T extends string> = { key: T; name: string }
 export type RWAChartModeState =
-	| { mode: 'chain'; canBreakdownByChain: boolean }
-	| { mode: 'category'; canBreakdownByChain: boolean }
-	| { mode: 'platform'; canBreakdownByChain: boolean }
-	| { mode: 'assetGroup'; canBreakdownByChain: boolean }
+	| { mode: 'chain'; canBreakdownByChain: boolean; timeSeriesDefaultBreakdown: RWATimeSeriesChartBreakdown }
+	| { mode: 'category'; canBreakdownByChain: boolean; timeSeriesDefaultBreakdown: RWATimeSeriesChartBreakdown }
+	| { mode: 'platform'; canBreakdownByChain: boolean; timeSeriesDefaultBreakdown: RWATimeSeriesChartBreakdown }
+	| { mode: 'assetGroup'; canBreakdownByChain: boolean; timeSeriesDefaultBreakdown: RWATimeSeriesChartBreakdown }
 
 export type RWAChartState = {
 	mode: RWAChartModeState
@@ -87,7 +88,7 @@ const NON_TIME_SERIES_DEFAULTS: Record<RWAOverviewMode, RWAChartBreakdown> = {
 	assetGroup: 'assetName'
 }
 
-const TIME_SERIES_DEFAULTS: Record<RWAOverviewMode, RWAChartBreakdown> = {
+const TIME_SERIES_DEFAULTS: Record<RWAOverviewMode, RWATimeSeriesChartBreakdown> = {
 	chain: 'assetGroup',
 	category: 'assetGroup',
 	platform: 'assetGroup',
@@ -124,16 +125,29 @@ export function assertNever(value: never): never {
 	throw new Error(`Unexpected value: ${String(value)}`)
 }
 
-export function createRwaChartModeState(mode: RWAOverviewMode, canBreakdownByChain: boolean): RWAChartModeState {
+export function getRwaTimeSeriesDefaultBreakdown(
+	mode: RWAOverviewMode,
+	assetGroupSlug: string | null
+): RWATimeSeriesChartBreakdown {
+	if (mode === 'assetGroup' && assetGroupSlug === 'public-equities') return 'platform'
+	return TIME_SERIES_DEFAULTS[mode]
+}
+
+export function createRwaChartModeState(
+	mode: RWAOverviewMode,
+	canBreakdownByChain: boolean,
+	assetGroupSlug: string | null
+): RWAChartModeState {
+	const timeSeriesDefaultBreakdown = getRwaTimeSeriesDefaultBreakdown(mode, assetGroupSlug)
 	switch (mode) {
 		case 'chain':
-			return { mode, canBreakdownByChain }
+			return { mode, canBreakdownByChain, timeSeriesDefaultBreakdown }
 		case 'category':
-			return { mode, canBreakdownByChain }
+			return { mode, canBreakdownByChain, timeSeriesDefaultBreakdown }
 		case 'platform':
-			return { mode, canBreakdownByChain }
+			return { mode, canBreakdownByChain, timeSeriesDefaultBreakdown }
 		case 'assetGroup':
-			return { mode, canBreakdownByChain }
+			return { mode, canBreakdownByChain, timeSeriesDefaultBreakdown }
 		default:
 			return assertNever(mode)
 	}
@@ -162,7 +176,7 @@ export function getTreemapNestedByLabel(nestedBy: RwaTreemapNestedBy): string {
 }
 
 export function getDefaultChartBreakdown(mode: RWAChartModeState, view: RWAChartView): RWAChartBreakdown {
-	if (view === 'timeSeries') return TIME_SERIES_DEFAULTS[mode.mode]
+	if (view === 'timeSeries') return mode.timeSeriesDefaultBreakdown
 	return NON_TIME_SERIES_DEFAULTS[mode.mode]
 }
 

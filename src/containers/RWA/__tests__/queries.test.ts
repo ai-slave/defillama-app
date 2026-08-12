@@ -136,6 +136,54 @@ describe('rwa queries', () => {
 		})
 	})
 
+	it('groups the public equities initial chart by platform', async () => {
+		fetchRWAActiveTVLsMock.mockResolvedValue([
+			{
+				id: 'alpha',
+				canonicalMarketId: 'alpha',
+				ticker: 'ALPHA',
+				assetName: 'Alpha',
+				assetGroup: 'Public Equities',
+				parentPlatform: 'Ondo',
+				category: ['Public Equities'],
+				onChainMcap: { Ethereum: 12 },
+				activeMcap: { Ethereum: 10 },
+				defiActiveTvl: {}
+			},
+			{
+				id: 'beta',
+				canonicalMarketId: 'beta',
+				ticker: 'BETA',
+				assetName: 'Beta',
+				assetGroup: 'Public Equities',
+				parentPlatform: 'Backed',
+				category: ['Public Equities'],
+				onChainMcap: { Ethereum: 24 },
+				activeMcap: { Ethereum: 20 },
+				defiActiveTvl: {}
+			}
+		])
+		fetchRWAChartMetricDataByAssetMock.mockResolvedValue([{ timestamp: 1_000, alpha: 10, beta: 20 }])
+
+		const result = await getRWAAssetsOverview({
+			assetGroup: 'public-equities',
+			rwaList: {
+				chains: ['Ethereum'],
+				categories: ['Public Equities'],
+				platforms: ['Ondo', 'Backed'],
+				assetGroups: ['Public Equities']
+			} as never
+		})
+
+		expect(result?.initialChartDataset).toEqual({
+			metric: 'activeMcap',
+			dataset: {
+				dimensions: ['timestamp', 'Total Active Mcap', 'Backed', 'Ondo'],
+				source: [[1_000, 30, 20, 10]]
+			}
+		})
+	})
+
 	it('keeps selected-chain table metric breakdowns filtered and sorted', async () => {
 		fetchRWAActiveTVLsMock.mockResolvedValue([
 			{
