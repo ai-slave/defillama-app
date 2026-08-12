@@ -11,6 +11,7 @@ import {
 	useSyncExternalStore
 } from 'react'
 import toast from 'react-hot-toast'
+import { OAuthWelcomeDialog } from '~/auth/OAuthWelcomeDialog'
 import { getReferrer } from '~/auth/referrer'
 import { clearSignupSource, getSignupSource } from '~/auth/signupSource'
 import { VerifyEmailConfirmDialog } from '~/auth/VerifyEmailConfirmDialog'
@@ -210,6 +211,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 	const authStoreState = useSyncExternalStore(subscribeToAuthStore, getAuthStoreSnapshot, getServerSnapshot)
 	const [verifyEmailPrompt, setVerifyEmailPrompt] = useState<{ isOpen: boolean; email?: string }>({ isOpen: false })
 	const [verifyEmailConfirm, setVerifyEmailConfirm] = useState<{ isOpen: boolean; email?: string }>({ isOpen: false })
+	const [oauthWelcomeOpen, setOauthWelcomeOpen] = useState(false)
 
 	const promptVerifyEmail = useCallback((email?: string) => {
 		setVerifyEmailConfirm({ isOpen: true, email })
@@ -494,6 +496,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 			})
 
 			if (authData.meta?.isNew) {
+				setOauthWelcomeOpen(true)
 				try {
 					await fetch(`${AUTH_SERVER}/user/attribution`, {
 						method: 'POST',
@@ -805,6 +808,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 				verifyOtp={contextValue.verifyOtp}
 				loaders={contextValue.loaders}
 				onClose={() => setVerifyEmailPrompt({ isOpen: false })}
+			/>
+			<OAuthWelcomeDialog
+				isOpen={oauthWelcomeOpen}
+				onContinue={(value) => {
+					setPromotionalEmails.mutate(value)
+					setOauthWelcomeOpen(false)
+				}}
 			/>
 		</AuthContext.Provider>
 	)
