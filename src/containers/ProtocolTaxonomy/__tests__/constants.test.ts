@@ -41,6 +41,13 @@ describe('ProtocolTaxonomy constants', () => {
 		expect(getProtocolCategoryChartMetricLabel('dexVolume', 'Interface')).toBe('Spot Volume')
 	})
 
+	it('uses revenue without TVL for Physical TCG while preserving normal category TVL', () => {
+		expect(getProtocolCategoryChartMetrics('Physical TCG')).toEqual(['revenue'])
+		expect(getProtocolCategoryChartMetrics('Services')).toEqual(['tvl', 'revenue'])
+		expect(getProtocolCategoryChartMetrics('Onchain Capital Allocator')).toEqual(['tvl', 'fees'])
+		expect(getProtocolCategoryChartMetrics('Yield')).toEqual(['tvl'])
+	})
+
 	it('keeps every configured default sort backed by a visible category column', () => {
 		for (const category in protocolCategoryConfig) {
 			const defaultSort = protocolCategoryConfig[category]?.defaultSort

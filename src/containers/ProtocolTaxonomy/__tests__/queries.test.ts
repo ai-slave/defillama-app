@@ -314,6 +314,8 @@ describe('ProtocolTaxonomy queries', () => {
 			effectiveCategory: 'Interface',
 			metrics: ['tvl', 'dexVolume', 'perpVolume'],
 			tvlChartData: [[1710000000, 100]],
+			feesChartData: null,
+			revenueChartData: null,
 			dexVolumeChartData: [[1710000000, 10]],
 			dexAggregatorsVolumeChartData: null,
 			perpVolumeChartData: [[1710000000, 4]],
@@ -327,6 +329,88 @@ describe('ProtocolTaxonomy queries', () => {
 		expect(chart.dataset.dimensions).toEqual(['timestamp', 'TVL', 'Spot Volume', 'Perp Volume'])
 		expect(chart.dataset.source).toEqual([[1710000000000, 100, 10, 4]])
 		expect(chart.charts.map((series) => series.name)).toEqual(['TVL', 'Spot Volume', 'Perp Volume'])
+	})
+
+	it('builds revenue-only charts without restoring explicitly disabled TVL', () => {
+		const chart = buildCategoryCharts({
+			effectiveCategory: 'Physical TCG',
+			metrics: ['revenue'],
+			tvlChartData: [[1710000000, 100]],
+			feesChartData: null,
+			revenueChartData: [[1710000000, 25]],
+			dexVolumeChartData: null,
+			dexAggregatorsVolumeChartData: null,
+			perpVolumeChartData: null,
+			openInterestChartData: null,
+			optionsPremiumVolumeChartData: null,
+			optionsNotionalVolumeChartData: null,
+			borrowedChartData: undefined,
+			stakingChartData: undefined
+		})
+
+		expect(chart.dataset).toEqual({ dimensions: ['timestamp', 'Revenue'], source: [[1710000000000, 25]] })
+		expect(chart.charts).toEqual([
+			expect.objectContaining({ type: 'bar', name: 'Revenue', yAxisIndex: 1, valueSymbol: '$' })
+		])
+	})
+
+	it('leaves a revenue-only chart empty when revenue history is unavailable', () => {
+		const chart = buildCategoryCharts({
+			effectiveCategory: 'Physical TCG',
+			metrics: ['revenue'],
+			tvlChartData: [[1710000000, 100]],
+			feesChartData: null,
+			revenueChartData: null,
+			dexVolumeChartData: null,
+			dexAggregatorsVolumeChartData: null,
+			perpVolumeChartData: null,
+			openInterestChartData: null,
+			optionsPremiumVolumeChartData: null,
+			optionsNotionalVolumeChartData: null,
+			borrowedChartData: undefined,
+			stakingChartData: undefined
+		})
+
+		expect(chart.dataset).toEqual({ dimensions: ['timestamp'], source: [] })
+		expect(chart.charts).toEqual([])
+	})
+
+	it('fetches and publishes Physical TCG revenue history without TVL', async () => {
+		fetchAdapterChainChartDataMock.mockImplementation(async ({ adapterType, dataType }) => {
+			if (adapterType === 'fees' && dataType === 'dailyRevenue') return [[1710000000, 25]]
+			return []
+		})
+
+		const result = await getProtocolTaxonomyPageData({
+			kind: 'category',
+			category: 'Physical TCG',
+			categoriesAndTags: {
+				categories: ['Physical TCG'],
+				tags: [],
+				tagCategoryMap: {},
+				configs: {
+					'Physical TCG': {
+						category: 'Physical TCG',
+						slug: 'physical-tcg',
+						fees: true,
+						revenue: true
+					}
+				}
+			},
+			chainMetadata: {}
+		})
+
+		expect(fetchAdapterChainChartDataMock).toHaveBeenCalledOnce()
+		expect(fetchAdapterChainChartDataMock).toHaveBeenCalledWith({
+			chain: 'All',
+			adapterType: 'fees',
+			dataType: 'dailyRevenue',
+			category: 'physical-tcg'
+		})
+		expect(result?.charts.dataset).toEqual({
+			dimensions: ['timestamp', 'Revenue'],
+			source: [[1710000000000, 25]]
+		})
 	})
 
 	it('builds protocol categories page data without fetching category chart summary', async () => {

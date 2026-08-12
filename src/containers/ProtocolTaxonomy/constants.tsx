@@ -3,6 +3,8 @@ import { capitalizeFirstLetter } from '~/utils'
 
 export type ProtocolCategoryChartMetric =
 	| 'tvl'
+	| 'fees'
+	| 'revenue'
 	| 'dexVolume'
 	| 'dexAggregatorsVolume'
 	| 'perpVolume'
@@ -14,6 +16,8 @@ export type ProtocolCategoryChartMetric =
 
 export interface ProtocolCategoryMetrics {
 	tvl?: boolean
+	fees?: boolean
+	revenue?: boolean
 	dexVolume?: boolean
 	dexAggregatorsVolume?: boolean
 	perpVolume?: boolean
@@ -160,7 +164,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 	Staking: { description: 'Protocols that allow you to stake assets in exchange of a reward' },
 	Services: {
 		description: 'Protocols that provide a service to the user',
-		defaultChart: 'revenue',
+		metrics: { revenue: true },
 		defaultSort: 'revenue_7d'
 	},
 	'Yield Aggregator': {
@@ -257,7 +261,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 	},
 	Launchpad: {
 		description: 'Protocols that launch new projects and coins',
-		defaultChart: 'revenue',
+		metrics: { revenue: true },
 		headingLabel: 'Launchpads',
 		seoLabel: 'Launchpads',
 		seoBaseTitle: 'Crypto Launchpad Protocols - Revenue & TVL',
@@ -295,7 +299,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 	'Algo-Stables': { description: 'Protocols that provide algorithmic coins to stablecoins' },
 	'NFT Marketplace': {
 		description: 'Protocols where users can buy/sell/rent NFTs',
-		defaultChart: 'revenue',
+		metrics: { revenue: true },
 		seoBaseTitle: 'Top Crypto NFT Marketplaces - Volume & Revenue',
 		directorySubject: 'Foundation',
 		directoryListingLabel: 'NFT marketplaces',
@@ -303,7 +307,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 	},
 	'NFT Lending': {
 		description: 'Protocols that allow you to collateralize your NFT for a loan',
-		defaultChart: 'revenue',
+		metrics: { revenue: true },
 		seoBaseTitle: 'NFT Lending Protocols - TVL & Revenue',
 		defaultSort: 'revenue_7d'
 	},
@@ -369,7 +373,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 	},
 	SoFi: {
 		description: 'Social Finance Networks',
-		defaultChart: 'revenue',
+		metrics: { revenue: true },
 		defaultSort: 'revenue_7d'
 	},
 	'DEX Aggregator': {
@@ -407,7 +411,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 	},
 	Wallets: {
 		description: 'Protocols where you have a form of digital storage to secure access to your crypto.',
-		defaultChart: 'revenue',
+		metrics: { revenue: true },
 		tableHeader: 'Wallets TVL Rankings',
 		searchPlaceholder: 'Search wallets...',
 		defaultSort: 'revenue_7d'
@@ -415,7 +419,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 	NftFi: { description: 'NFT leverage protocols' },
 	'Telegram Bot': {
 		description: 'Trading bots for Telegram users',
-		defaultChart: 'revenue',
+		metrics: { revenue: true },
 		headingLabel: 'Telegram Bots',
 		seoLabel: 'Telegram Bots',
 		tableHeader: 'Telegram Bot Rankings',
@@ -495,17 +499,18 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 	'Onchain Capital Allocator': {
 		description:
 			'Protocols where token pools are actively controlled and managed by a designated operator or governance',
-		defaultChart: 'fees'
+		metrics: { fees: true }
 	},
 	'Developer Tools': {
 		description:
 			'Platforms and services providing APIs, integrations, or other resources to facilitate the development and management of blockchain applications',
+		metrics: { revenue: true },
 		defaultSort: 'revenue_7d'
 	},
 	'Stablecoin Issuer': {
 		description:
 			'Company that creates and manages stablecoins designed to maintain a stable value, typically pegged to a fiat like the US dollar',
-		defaultChart: 'revenue',
+		metrics: { revenue: true },
 		headingLabel: 'Stablecoin Issuers',
 		seoLabel: 'Stablecoin Issuers',
 		tableHeader: 'Stablecoin Issuer Rankings',
@@ -522,15 +527,18 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 	},
 	Domains: {
 		description: 'Decentralized naming services that map human-readable names to blockchain addresses',
+		metrics: { revenue: true },
 		defaultSort: 'revenue_7d'
 	},
 	'NFT Launchpad': {
 		description: 'Platforms that enable creators to mint, manage, and launch NFT collections',
+		metrics: { revenue: true },
 		defaultSort: 'revenue_7d'
 	},
 	'Trading App': {
 		description:
 			'Apps that simplify trading tokens like memecoins with user-friendly interfaces, real-time updates, self-custodial tools, and direct fiat on-ramps for casual traders',
+		metrics: { revenue: true },
 		headingLabel: 'Trading Apps',
 		seoLabel: 'Trading Apps',
 		tableHeader: 'Trading App Rankings',
@@ -673,7 +681,10 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		seoLabel: 'Dual-Token Stablecoins',
 		searchPlaceholder: 'Search dual-token stablecoins...'
 	},
-	'Physical TCG': { description: 'Protocols that allow you to trade physical trading cards' },
+	'Physical TCG': {
+		description: 'Protocols that allow you to trade physical trading cards',
+		metrics: { tvl: false, revenue: true }
+	},
 	'Mining Pools': { description: 'Protocols that coordinate user resources into shared mining pools' },
 	'NFT Automated Strategies': {
 		description:
@@ -750,6 +761,10 @@ export function getProtocolCategoryChartMetricLabel(
 	switch (metric) {
 		case 'tvl':
 			return 'TVL'
+		case 'fees':
+			return 'Fees'
+		case 'revenue':
+			return 'Revenue'
 		case 'dexVolume':
 			return getProtocolCategoryDexVolumeLabel(effectiveCategory)
 		case 'dexAggregatorsVolume':
@@ -852,6 +867,8 @@ export function getProtocolCategoryChartMetrics(effectiveCategory: string | null
 	if (!m) return ['tvl']
 	const result: ProtocolCategoryChartMetric[] = []
 	if (m.tvl !== false) result.push('tvl')
+	if (m.fees) result.push('fees')
+	if (m.revenue) result.push('revenue')
 	if (m.dexVolume) result.push('dexVolume')
 	if (m.dexAggregatorsVolume) result.push('dexAggregatorsVolume')
 	if (m.perpVolume) result.push('perpVolume')

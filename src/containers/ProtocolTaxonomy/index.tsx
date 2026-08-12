@@ -95,7 +95,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 						<h1 className="heading-xs">{`${categoryPresentation.headingLabel} on ${props.chain}`}</h1>
 					)}
 					<div className="mb-auto flex flex-1 flex-col">
-						{props.charts.dataset?.source.length > 0 ? (
+						{charts.dataset.source.length > 0 && charts.dataset.dimensions.includes('TVL') ? (
 							<MetricRow
 								label="Total Value Locked"
 								tooltip="Sum of value of all coins held in smart contracts of all the protocols on the chain"

@@ -57,6 +57,8 @@ type GetProtocolTaxonomyPageDataParams = {
 
 const CHART_METRIC_SERIES_TYPE: Record<ProtocolCategoryChartMetric, 'line' | 'bar'> = {
 	tvl: 'line',
+	fees: 'bar',
+	revenue: 'bar',
 	dexVolume: 'bar',
 	dexAggregatorsVolume: 'bar',
 	perpVolume: 'bar',
@@ -69,6 +71,8 @@ const CHART_METRIC_SERIES_TYPE: Record<ProtocolCategoryChartMetric, 'line' | 'ba
 
 const CHART_METRIC_Y_AXIS_INDEX: Record<ProtocolCategoryChartMetric, number> = {
 	tvl: 0,
+	fees: 1,
+	revenue: 1,
 	dexVolume: 1,
 	dexAggregatorsVolume: 1,
 	perpVolume: 1,
@@ -202,6 +206,8 @@ export const buildCategoryCharts = ({
 	effectiveCategory,
 	metrics,
 	tvlChartData,
+	feesChartData,
+	revenueChartData,
 	dexVolumeChartData,
 	dexAggregatorsVolumeChartData,
 	perpVolumeChartData,
@@ -214,6 +220,8 @@ export const buildCategoryCharts = ({
 	effectiveCategory: string | null
 	metrics: ProtocolCategoryChartMetric[]
 	tvlChartData: Array<[number, number | null]>
+	feesChartData: Array<[number, number]> | null
+	revenueChartData: Array<[number, number]> | null
 	dexVolumeChartData: Array<[number, number]> | null
 	dexAggregatorsVolumeChartData: Array<[number, number]> | null
 	perpVolumeChartData: Array<[number, number]> | null
@@ -225,6 +233,8 @@ export const buildCategoryCharts = ({
 }): IProtocolTaxonomyPageData['charts'] => {
 	const chartMapsByMetric: Record<ProtocolCategoryChartMetric, Map<number, number | null>> = {
 		tvl: createTimeSeriesMap(tvlChartData),
+		fees: createTimeSeriesMap(feesChartData),
+		revenue: createTimeSeriesMap(revenueChartData),
 		dexVolume: createTimeSeriesMap(dexVolumeChartData),
 		dexAggregatorsVolume: createTimeSeriesMap(dexAggregatorsVolumeChartData),
 		perpVolume: createTimeSeriesMap(perpVolumeChartData),
@@ -239,7 +249,7 @@ export const buildCategoryCharts = ({
 	const activeMetrics = selectedMetrics.filter(
 		(metric) => metric === 'tvl' || (chartMapsByMetric[metric]?.size ?? 0) > 0
 	)
-	const finalMetrics = activeMetrics.length > 0 ? activeMetrics : FALLBACK_CHART_METRICS
+	const finalMetrics = activeMetrics
 
 	const timestamps = new Set<number>()
 	for (const metric of finalMetrics) {
@@ -460,6 +470,8 @@ export async function getProtocolTaxonomyPageData(
 		optionsPremiumData,
 		optionsNotionalData,
 		chartData,
+		feesChartData,
+		revenueChartData,
 		dexVolumeChartData,
 		dexAggregatorsVolumeChartData,
 		perpVolumeChartData,
@@ -531,6 +543,21 @@ export async function getProtocolTaxonomyPageData(
 		params.kind === 'tag'
 			? fetchTagChart({ tag: params.tag, ...(chain ? { chain } : {}) })
 			: fetchCategoryChart({ category: params.category, ...(chain ? { chain } : {}) }),
+		hasFees && categoryMetrics?.fees && currentChainMetadata.fees
+			? fetchAdapterChainChartData({
+					chain: chain ?? 'All',
+					adapterType: 'fees',
+					category: dimensionCategory
+				}).catch(() => null)
+			: null,
+		hasRevenue && categoryMetrics?.revenue && currentChainMetadata.fees
+			? fetchAdapterChainChartData({
+					chain: chain ?? 'All',
+					adapterType: 'fees',
+					dataType: 'dailyRevenue',
+					category: dimensionCategory
+				}).catch(() => null)
+			: null,
 		hasDexVolume && categoryMetrics?.dexVolume && currentChainMetadata.dexs
 			? fetchAdapterChainChartData({
 					chain: chain ?? 'All',
@@ -914,6 +941,8 @@ export async function getProtocolTaxonomyPageData(
 		effectiveCategory,
 		metrics: chartMetrics,
 		tvlChartData: filteredTvlChart,
+		feesChartData,
+		revenueChartData,
 		dexVolumeChartData,
 		dexAggregatorsVolumeChartData,
 		perpVolumeChartData,
