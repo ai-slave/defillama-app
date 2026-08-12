@@ -13,6 +13,9 @@ import {
 	type SessionListPage,
 	type SessionListResponse
 } from '~/containers/LlamaAI/hooks/sessionListCache'
+import { projectSessionsKey } from '~/containers/LlamaAI/projects/queryKeys'
+import { bumpProjectSessionActivity } from '~/containers/LlamaAI/projects/sessionOrdering'
+import type { ProjectChatSession } from '~/containers/LlamaAI/projects/types'
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { assertResponse } from '~/containers/LlamaAI/utils/assertResponse'
 import { handleSimpleFetchResponse } from '~/utils/async'
@@ -74,12 +77,20 @@ export function useSessionList() {
 	const data = useMemo(() => flattenSessionListData(queryData), [queryData])
 
 	const moveSessionToTop = useCallback(
-		(sessionId: string) => {
-			if (!user) return
+		(sessionId: string, projectId?: string | null) => {
+			const lastActivity = new Date().toISOString()
 
-			queryClient.setQueryData([SESSIONS_QUERY_KEY, user.id], (old: SessionListInfiniteData | undefined) =>
-				moveSessionToTopInInfiniteData(old, sessionId, new Date().toISOString())
-			)
+			if (user) {
+				queryClient.setQueryData([SESSIONS_QUERY_KEY, user.id], (old: SessionListInfiniteData | undefined) =>
+					moveSessionToTopInInfiniteData(old, sessionId, lastActivity)
+				)
+			}
+
+			if (projectId) {
+				queryClient.setQueryData<ProjectChatSession[]>(projectSessionsKey(projectId), (old) =>
+					bumpProjectSessionActivity(old, sessionId, lastActivity)
+				)
+			}
 		},
 		[user, queryClient]
 	)

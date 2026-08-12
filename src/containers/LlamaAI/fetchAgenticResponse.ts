@@ -74,6 +74,9 @@ export interface AgenticSSECallbacks {
 	onSiblingInfo?: (messageId: string, siblingInfo: SiblingInfoEvent['siblingInfo']) => void
 	onTokenLimit?: () => void
 	onContextWarning?: (warning: ContextWarningPayload) => void
+	onDuelStart?: (pairId: string) => void
+	onDuelReady?: () => void
+	onArmEvent?: (event: AgenticArmEvent) => void
 	onError: (content: string) => void
 	onDone: () => void
 }
@@ -234,6 +237,27 @@ interface DoneEvent {
 	type: 'done'
 }
 
+interface ResponseEndEvent {
+	type: 'response_end'
+}
+
+interface DuelStartEvent {
+	type: 'duel_start'
+	pairId: string
+	arms?: string[]
+}
+
+// Emitted only once both answers are confirmed persisted; until then neither can be resolved
+// to a message id, so neither can be voted for.
+interface DuelReadyEvent {
+	type: 'duel_ready'
+}
+
+interface ArmMessageIdEvent {
+	type: 'arm_message_id'
+	messageId: string
+}
+
 interface MessageMetadataEvent {
 	type: 'message_metadata'
 	content: {
@@ -245,7 +269,7 @@ interface MessageMetadataEvent {
 	}
 }
 
-type AgenticSSEEvent =
+export type AgenticSSEEvent =
 	| SessionEvent
 	| ToolCallEvent
 	| ResponseChunkEvent
@@ -272,6 +296,19 @@ type AgenticSSEEvent =
 	| ContextWarningEvent
 	| ErrorEvent
 	| DoneEvent
+	| ResponseEndEvent
+	| DuelStartEvent
+	| DuelReadyEvent
+	| ArmMessageIdEvent
+
+type DispatchableAgenticEvent = Exclude<
+	AgenticSSEEvent,
+	DuelStartEvent | DuelReadyEvent | ArmMessageIdEvent | ResponseEndEvent
+>
+
+type AgenticArmPayloadEvent = Exclude<DispatchableAgenticEvent, SessionEvent | DoneEvent>
+
+export type AgenticArmEvent = (AgenticArmPayloadEvent | ArmMessageIdEvent | ResponseEndEvent) & { arm: 'a' | 'b' }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return !!value && typeof value === 'object' && !Array.isArray(value)
@@ -455,6 +492,125 @@ async function getResponseErrorMessage(response: Response, fallback: string) {
 	return fallback
 }
 
+export function dispatchAgenticEvent(data: DispatchableAgenticEvent, callbacks: AgenticSSECallbacks) {
+	switch (data.type) {
+		case 'session':
+			callbacks.onSessionId(data.sessionId, data.startedAt)
+			break
+		case 'tool_call':
+			callbacks.onProgress(data.name, data.isPremium)
+			break
+		case 'response_chunk': {
+			const chunk = typeof data.content === 'string' ? data.content.replace(/<bill\s*\/>/g, '') : ''
+			if (chunk) callbacks.onToken(chunk)
+			break
+		}
+		case 'charts': {
+			const charts = normalizeChartConfigs(data.charts)
+			const chartData = normalizeChartDataByKey(data.chartData, charts)
+			const artifactRefs = normalizeChartArtifactRefs(data.artifactRefs)
+			if (artifactRefs) callbacks.onCharts(charts, chartData, artifactRefs)
+			else callbacks.onCharts(charts, chartData)
+			break
+		}
+		case 'generated_images':
+			callbacks.onGeneratedImages?.(normalizeArray(data.images, isGeneratedImage))
+			break
+		case 'csv_export':
+			callbacks.onCsvExport?.(normalizeArray(data.exports, isCsvExport))
+			break
+		case 'md_export':
+			callbacks.onMdExport?.(normalizeArray(data.exports, isMdExport))
+			break
+		case 'alert_proposed':
+			callbacks.onAlertProposed?.(normalizeAlertProposedData(data))
+			break
+		case 'dashboard': {
+			const config = data.dashboardConfig || data.content?.dashboardConfig
+			const chartData = data.chartData || data.content?.chartData
+			const artifactOutcomes = data.artifactOutcomes || data.content?.artifactOutcomes
+			if (config && callbacks.onDashboard) {
+				// Dashboard events can arrive in both top-level and nested `content`
+				// forms around PR #2790; normalize both shapes here.
+				const items = migrateDashboardItems(config.items)
+				const dashboardName =
+					typeof config.dashboardName === 'string' && config.dashboardName.trim() ? config.dashboardName : 'Dashboard'
+				const sourceDashboardId = typeof config.sourceDashboardId === 'string' ? config.sourceDashboardId : undefined
+				const dashboardChartData = normalizeDashboardChartData(chartData)
+				const normalizedArtifactOutcomes = normalizeDashboardArtifactOutcomes(artifactOutcomes)
+				const stableId =
+					data.dashboard_id ||
+					data.content?.dashboard_id ||
+					`dashboard_${dashboardName}_${sourceDashboardId ?? ''}_${dashboardItemsHash(items)}`
+				callbacks.onDashboard({
+					id: stableId,
+					dashboardName,
+					items,
+					...(typeof config.timePeriod === 'string' && { timePeriod: config.timePeriod }),
+					...(sourceDashboardId && { sourceDashboardId }),
+					...(dashboardChartData && { chartData: dashboardChartData }),
+					...(normalizedArtifactOutcomes && { artifactOutcomes: normalizedArtifactOutcomes })
+				})
+			}
+			break
+		}
+		case 'spawn_progress':
+			callbacks.onSpawnProgress(data)
+			break
+		case 'compaction':
+			callbacks.onCompaction?.(data)
+			break
+		case 'tool_execution':
+			callbacks.onToolExecution?.(data)
+			break
+		case 'todo_snapshot':
+			callbacks.onTodos?.(normalizeArray(data.todos, isTodoItem))
+			break
+		case 'message_metadata':
+			callbacks.onMessageMetadata?.(data.content)
+			break
+		case 'thinking':
+			if (typeof data.content === 'string') callbacks.onThinking?.(data.content)
+			break
+		case 'citations':
+			callbacks.onCitations(normalizeArray(data.citations, isString))
+			break
+		case 'fact_check_status':
+			callbacks.onFactCheckStatus?.(data.status)
+			break
+		case 'fact_check_citations':
+			callbacks.onFactCheckCitations?.(
+				data.sources || data.citations || [],
+				typeof data.response === 'string' ? data.response : undefined
+			)
+			break
+		case 'title':
+			if (typeof data.content === 'string') callbacks.onTitle?.(data.content)
+			break
+		case 'message_id':
+			callbacks.onMessageId?.(data.messageId)
+			break
+		case 'user_message_id':
+			callbacks.onUserMessageId?.(data.messageId)
+			break
+		case 'sibling_info':
+			callbacks.onSiblingInfo?.(data.messageId, data.siblingInfo)
+			break
+		case 'token_limit':
+			callbacks.onTokenLimit?.()
+			break
+		case 'context_warning':
+			if (data.content) callbacks.onContextWarning?.(data.content)
+			break
+		case 'error':
+			callbacks.onError(data.content || 'Unknown error')
+			break
+		case 'done':
+			callbacks.onDone()
+			break
+	}
+}
+
 /** @internal Exported for testing only. */
 export function parseSSEStream(
 	reader: ReadableStreamDefaultReader<Uint8Array>,
@@ -476,125 +632,24 @@ export function parseSSEStream(
 			if (eventCounter) eventCounter.count++
 			if (data.type === 'done') sawDone = true
 
-			switch (data.type) {
-				case 'session':
-					callbacks.onSessionId(data.sessionId, data.startedAt)
-					break
-				case 'tool_call':
-					callbacks.onProgress(data.name, data.isPremium)
-					break
-				case 'response_chunk': {
-					const chunk = typeof data.content === 'string' ? data.content.replace(/<bill\s*\/>/g, '') : ''
-					if (chunk) callbacks.onToken(chunk)
-					break
-				}
-				case 'charts': {
-					const charts = normalizeChartConfigs(data.charts)
-					const chartData = normalizeChartDataByKey(data.chartData, charts)
-					const artifactRefs = normalizeChartArtifactRefs(data.artifactRefs)
-					if (artifactRefs) callbacks.onCharts(charts, chartData, artifactRefs)
-					else callbacks.onCharts(charts, chartData)
-					break
-				}
-				case 'generated_images':
-					callbacks.onGeneratedImages?.(normalizeArray(data.images, isGeneratedImage))
-					break
-				case 'csv_export':
-					callbacks.onCsvExport?.(normalizeArray(data.exports, isCsvExport))
-					break
-				case 'md_export':
-					callbacks.onMdExport?.(normalizeArray(data.exports, isMdExport))
-					break
-				case 'alert_proposed':
-					callbacks.onAlertProposed?.(normalizeAlertProposedData(data))
-					break
-				case 'dashboard': {
-					const config = data.dashboardConfig || data.content?.dashboardConfig
-					const chartData = data.chartData || data.content?.chartData
-					const artifactOutcomes = data.artifactOutcomes || data.content?.artifactOutcomes
-					if (config && callbacks.onDashboard) {
-						// Dashboard events can arrive in both top-level and nested `content`
-						// forms around PR #2790; normalize both shapes here.
-						const items = migrateDashboardItems(config.items)
-						const dashboardName =
-							typeof config.dashboardName === 'string' && config.dashboardName.trim()
-								? config.dashboardName
-								: 'Dashboard'
-						const sourceDashboardId =
-							typeof config.sourceDashboardId === 'string' ? config.sourceDashboardId : undefined
-						const dashboardChartData = normalizeDashboardChartData(chartData)
-						const normalizedArtifactOutcomes = normalizeDashboardArtifactOutcomes(artifactOutcomes)
-						const stableId =
-							data.dashboard_id ||
-							data.content?.dashboard_id ||
-							`dashboard_${dashboardName}_${sourceDashboardId ?? ''}_${dashboardItemsHash(items)}`
-						callbacks.onDashboard({
-							id: stableId,
-							dashboardName,
-							items,
-							...(typeof config.timePeriod === 'string' && { timePeriod: config.timePeriod }),
-							...(sourceDashboardId && { sourceDashboardId }),
-							...(dashboardChartData && { chartData: dashboardChartData }),
-							...(normalizedArtifactOutcomes && { artifactOutcomes: normalizedArtifactOutcomes })
-						})
-					}
-					break
-				}
-				case 'spawn_progress':
-					callbacks.onSpawnProgress(data)
-					break
-				case 'compaction':
-					callbacks.onCompaction?.(data)
-					break
-				case 'tool_execution':
-					callbacks.onToolExecution?.(data)
-					break
-				case 'todo_snapshot':
-					callbacks.onTodos?.(normalizeArray(data.todos, isTodoItem))
-					break
-				case 'message_metadata':
-					callbacks.onMessageMetadata?.(data.content)
-					break
-				case 'thinking':
-					if (typeof data.content === 'string') callbacks.onThinking?.(data.content)
-					break
-				case 'citations':
-					callbacks.onCitations(normalizeArray(data.citations, isString))
-					break
-				case 'fact_check_status':
-					callbacks.onFactCheckStatus?.(data.status)
-					break
-				case 'fact_check_citations':
-					callbacks.onFactCheckCitations?.(
-						data.sources || data.citations || [],
-						typeof data.response === 'string' ? data.response : undefined
-					)
-					break
-				case 'title':
-					if (typeof data.content === 'string') callbacks.onTitle?.(data.content)
-					break
-				case 'message_id':
-					callbacks.onMessageId?.(data.messageId)
-					break
-				case 'user_message_id':
-					callbacks.onUserMessageId?.(data.messageId)
-					break
-				case 'sibling_info':
-					callbacks.onSiblingInfo?.(data.messageId, data.siblingInfo)
-					break
-				case 'token_limit':
-					callbacks.onTokenLimit?.()
-					break
-				case 'context_warning':
-					if (data.content) callbacks.onContextWarning?.(data.content)
-					break
-				case 'error':
-					callbacks.onError(data.content || 'Unknown error')
-					break
-				case 'done':
-					callbacks.onDone()
-					break
+			if (data.type === 'duel_start') {
+				callbacks.onDuelStart?.(data.pairId)
+				return
 			}
+			if (data.type === 'duel_ready') {
+				callbacks.onDuelReady?.()
+				return
+			}
+			// Arm-tagged events belong to one side of a duel; feeding them into the
+			// single-answer pipeline would interleave both answers into one message.
+			if ('arm' in data) {
+				callbacks.onArmEvent?.(data as AgenticArmEvent)
+				return
+			}
+			// These events are valid only when tagged with an arm.
+			if (data.type === 'arm_message_id' || data.type === 'response_end') return
+
+			dispatchAgenticEvent(data, callbacks)
 		} catch (error) {
 			console.debug('[llama-ai] [sse] failed to parse event:', line, error)
 		}
@@ -698,10 +753,12 @@ export async function fetchAgenticResponse({
 		shareToken?: string
 		editMessageId?: string
 		projectId?: string
+		duelCapable: true
 	} = {
 		message,
 		stream: true,
-		enablePremiumTools
+		enablePremiumTools,
+		duelCapable: true
 	}
 
 	if (sessionId) {

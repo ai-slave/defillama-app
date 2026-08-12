@@ -366,6 +366,7 @@ export function MessageBubble({
 	sessionId,
 	isDraft = false,
 	readOnly = false,
+	hideControls = false,
 	isSharedView = false,
 	isLlama = false,
 	isLatestAssistant = false,
@@ -385,6 +386,7 @@ export function MessageBubble({
 	sessionId: string | null
 	isDraft?: boolean
 	readOnly?: boolean
+	hideControls?: boolean
 	isSharedView?: boolean
 	isLlama?: boolean
 	isLatestAssistant?: boolean
@@ -643,7 +645,18 @@ export function MessageBubble({
 				sessionId={sessionId}
 				messageId={message.id}
 			/>
-			{message.id && !isDraft ? (
+			{message.id &&
+			!isDraft &&
+			!readOnly &&
+			!hideControls &&
+			onBranchSwitch &&
+			message.siblingInfo &&
+			message.siblingInfo.totalVersions > 1 ? (
+				<div className="mt-1 flex items-center gap-0.5">
+					<BranchArrows info={message.siblingInfo} onSwitch={onBranchSwitch} disabled={isBranchSwitching} />
+				</div>
+			) : null}
+			{message.id && !isDraft && !hideControls ? (
 				<ResponseControls
 					messageId={message.id}
 					{...(message.content === undefined ? {} : { content: message.content })}

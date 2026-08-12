@@ -107,9 +107,9 @@ export const TOOL_LABELS: Record<string, string> = {
 	search_messages: 'Searching messages'
 }
 
-export const getToolLabel = (name: string): string =>
-	TOOL_LABELS[name] ??
-	name
+export const getToolLabel = (name: string | undefined | null): string =>
+	(name ? TOOL_LABELS[name] : undefined) ??
+	(name ?? 'Tool')
 		.split('_')
 		.map((word) => (word ? word[0].toUpperCase() + word.slice(1) : word))
 		.join(' ')

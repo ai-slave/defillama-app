@@ -1,5 +1,5 @@
 import type { RefObject } from 'react'
-import type { AgenticSSECallbacks, SpawnProgressData } from '~/containers/LlamaAI/fetchAgenticResponse'
+import type { AgenticArmEvent, AgenticSSECallbacks, SpawnProgressData } from '~/containers/LlamaAI/fetchAgenticResponse'
 import { isActiveRequest } from '~/containers/LlamaAI/requestLifecycle'
 import {
 	buildAssistantMessage,
@@ -48,6 +48,9 @@ export function createAgenticCallbacks({
 	deferEmptyDone,
 	onFactCheckStatus,
 	onFactCheckCitations,
+	onDuelStart,
+	onDuelReady,
+	onArmEvent,
 	notify
 }: {
 	requestId: number
@@ -66,6 +69,9 @@ export function createAgenticCallbacks({
 	deferEmptyDone?: boolean
 	onFactCheckStatus?: (status: 'drafting' | 'verifying' | 'finalizing') => void
 	onFactCheckCitations?: (refs: UnifiedCitationReference[], finalizedText?: string) => void
+	onDuelStart?: (pairId: string) => void
+	onDuelReady?: () => void
+	onArmEvent?: (event: AgenticArmEvent) => void
 	notify: () => void
 }): AgenticSSECallbacks {
 	// One guard wraps every callback so late chunks from an aborted or superseded
@@ -206,6 +212,15 @@ export function createAgenticCallbacks({
 			if (hasFinalizedText) buffer.text = finalizedText
 			dispatch({ type: 'SET_CITATIONS', citations: refs, ...(hasFinalizedText ? { text: finalizedText } : {}) })
 			onFactCheckCitations?.(refs, finalizedText)
+		}),
+		onDuelStart: guard((pairId) => {
+			onDuelStart?.(pairId)
+		}),
+		onDuelReady: guard(() => {
+			onDuelReady?.()
+		}),
+		onArmEvent: guard((event) => {
+			onArmEvent?.(event)
 		}),
 		onError: guard((content) => {
 			buffer.error = content

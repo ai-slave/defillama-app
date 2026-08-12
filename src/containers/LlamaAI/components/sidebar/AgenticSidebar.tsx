@@ -18,6 +18,7 @@ import { SearchResults } from '~/containers/LlamaAI/components/sidebar/SearchRes
 import { useSemanticSearch } from '~/containers/LlamaAI/hooks/useSemanticSearch'
 import { ProjectsSidebarSection } from '~/containers/LlamaAI/projects/ProjectsSidebarSection'
 import type { ChatSession } from '~/containers/LlamaAI/types'
+import { compareSessionsByActivity } from '~/containers/LlamaAI/utils/sessionActivityOrder'
 import { useAiBalance } from '~/containers/Subscription/useTopup'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { Icon } from '~/ui/Icon'
@@ -267,10 +268,8 @@ export function AgenticSidebar({
 	}, [nonProjectSessions, trimmedSearchQuery])
 
 	const { pinnedSessions, unpinnedSessions } = useMemo(() => {
-		const pinned = filteredSessions
-			.filter((s) => s.isPinned)
-			.sort((a, b) => new Date(b.pinnedAt || 0).getTime() - new Date(a.pinnedAt || 0).getTime())
-		const unpinned = filteredSessions.filter((s) => !s.isPinned)
+		const pinned = filteredSessions.filter((s) => s.isPinned).sort(compareSessionsByActivity)
+		const unpinned = filteredSessions.filter((s) => !s.isPinned).sort(compareSessionsByActivity)
 		return { pinnedSessions: pinned, unpinnedSessions: unpinned }
 	}, [filteredSessions])
 

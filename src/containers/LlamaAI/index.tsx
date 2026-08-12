@@ -21,6 +21,7 @@ import {
 	consumePendingPageContext,
 	consumePendingSuggestedFlag
 } from '~/components/LlamaAIFloatingButton'
+import { AI_SERVER } from '~/constants'
 import { authorizedFetchAsFetch } from '~/containers/LlamaAI/authorizedFetchAdapter'
 import { LlamaAIChromeContext, useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
 import { ArticleExportProvider } from '~/containers/LlamaAI/components/AddToArticle/ArticleExportContext'
@@ -111,6 +112,8 @@ import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatUsd } from '~/utils/numberFormat'
+import { DuelPanel, type DuelChoice } from './components/DuelPanel'
+import { useDuelStream } from './hooks/useDuelStream'
 import {
 	isSameAgenticRouteTransition,
 	shouldSkipCurrentSessionRouteRestore,
@@ -260,6 +263,17 @@ export function AgenticChat({
 
 	// Adapt the auth helper to the native fetch signature while preserving non-2xx responses for downstream error handling.
 	const authorizedFetchCompat = useMemo(() => authorizedFetchAsFetch(authorizedFetch), [authorizedFetch])
+
+	const duelStream = useDuelStream()
+	const duelPairId = duelStream.pairId
+	const duelMessageIdA = duelStream.a.messageId
+	const duelMessageIdB = duelStream.b.messageId
+	const startDuel = duelStream.start
+	const handleDuelArmEvent = duelStream.handleArmEvent
+	const finishDuel = duelStream.finish
+	const resetDuel = duelStream.reset
+	const markDuelReady = duelStream.markReady
+
 	// Guard authenticated fetches so downstream code never has to handle a null/empty response object.
 	const isLlama = !!user?.flags?.is_llama
 	const {
@@ -865,12 +879,15 @@ export function AgenticChat({
 								replaceLocalUserMessageId,
 								setMessageSiblingInfo,
 								notify,
+								onDuelStart: startDuel,
+								onArmEvent: handleDuelArmEvent,
+								onDuelReady: markDuelReady,
 								onDashboardArtifact: (dashboard) => dispatchDashboardPanel({ type: 'APPEND', value: dashboard }),
 								onTokenLimit: () => setShowTokenLimitModal(true),
 								onTitle: (title) => {
 									if (targetSessionId === sessionId) setSessionTitle(title)
 									applyServerSessionTitle(targetSessionId, title, currentSessionProjectIdRef.current)
-									moveSessionToTop(targetSessionId)
+									moveSessionToTop(targetSessionId, currentSessionProjectIdRef.current)
 								}
 							}),
 						execute: ({ callbacks, signal, eventCounter }) =>
@@ -937,12 +954,15 @@ export function AgenticChat({
 						replaceLocalUserMessageId,
 						setMessageSiblingInfo,
 						notify,
+						onDuelStart: startDuel,
+						onArmEvent: handleDuelArmEvent,
+						onDuelReady: markDuelReady,
 						onDashboardArtifact: (dashboard) => dispatchDashboardPanel({ type: 'APPEND', value: dashboard }),
 						onTokenLimit: () => setShowTokenLimitModal(true),
 						onTitle: (title) => {
 							if (targetSessionId === sessionId) setSessionTitle(title)
 							applyServerSessionTitle(targetSessionId, title, currentSessionProjectIdRef.current)
-							moveSessionToTop(targetSessionId)
+							moveSessionToTop(targetSessionId, currentSessionProjectIdRef.current)
 						}
 					}),
 				execute: ({ callbacks, signal, eventCounter }) =>
@@ -988,11 +1008,14 @@ export function AgenticChat({
 			appendMessage,
 			applyServerSessionTitle,
 			clearRecoveryController,
+			handleDuelArmEvent,
+			markDuelReady,
 			moveSessionToTop,
 			notify,
 			replaceLocalUserMessageId,
 			sessionId,
-			setMessageSiblingInfo
+			setMessageSiblingInfo,
+			startDuel
 		]
 	)
 
@@ -1270,6 +1293,7 @@ export function AgenticChat({
 		setMessages([])
 		setActiveLeafMessageId(null)
 		setQuotedText(null)
+		resetDuel()
 		setConversationViewResetKey((current) => current + 1)
 		setSessionId(null)
 		setSessionTitle(null)
@@ -1279,7 +1303,7 @@ export function AgenticChat({
 		isFirstMessageRef.current = true
 		attach()
 		setPaginationState({ hasMore: false, cursor: null })
-	}, [abortActiveRequest, attach, clearConversationRuntimeState])
+	}, [abortActiveRequest, attach, clearConversationRuntimeState, resetDuel])
 
 	// Start a brand-new chat, keeping project-owned sessions inside their project.
 	const handleNewChat = useCallback(async () => {
@@ -1454,6 +1478,7 @@ export function AgenticChat({
 				setMessages([])
 				setActiveLeafMessageId(null)
 				setSessionTitle(null)
+				resetDuel()
 				dispatchDashboardPanel({ type: 'RESET' })
 				setPaginationState({ hasMore: false, cursor: null })
 				restoredSessionIdRef.current = null
@@ -1478,7 +1503,7 @@ export function AgenticChat({
 		}
 
 		void transition()
-	}, [routeTransition, clearConversationState, handleSessionSelect])
+	}, [routeTransition, clearConversationState, handleSessionSelect, resetDuel])
 
 	// Submit a new prompt, create a fake local session for the first message if needed, and stream the response.
 	const handleSubmit = useCallback(
@@ -1515,11 +1540,21 @@ export function AgenticChat({
 				} catch {}
 			}
 
+			const abandonedDuelSessionId = duelPairId ? sessionId : null
+
 			void abortActiveRequest()
-				.then(() => {
+				.then(async () => {
 					setViewError(null)
 					setPaginationError(null)
 					primeAudio()
+					resetDuel()
+					// Both duel answers only ever lived in the duel panel, never in the message list,
+					// so moving on without choosing would erase that turn from the thread. Reload the
+					// persisted branch instead: the server has already resolved it to the default
+					// answer, and asking for it keeps the client blind to which arm that was.
+					if (abandonedDuelSessionId) {
+						await restoreSessionSnapshot(abandonedDuelSessionId, activeRequestIdRef.current)
+					}
 					dispatchStream({ type: 'START_STREAM' })
 					currentMessageIdRef.current = null
 
@@ -1557,6 +1592,7 @@ export function AgenticChat({
 						}
 					])
 					attach()
+					if (currentSessionId) moveSessionToTop(currentSessionId, submitProjectId)
 
 					const buffer = createStreamBuffer()
 					// A share token forks a public snapshot exactly once; later messages
@@ -1592,6 +1628,12 @@ export function AgenticChat({
 								setMessageSiblingInfo,
 								deferEmptyDone: true,
 								notify,
+								onDuelStart: (pairId) => {
+									startDuel(pairId)
+									trackUmamiEvent('llamaai-duel-shown')
+								},
+								onArmEvent: handleDuelArmEvent,
+								onDuelReady: markDuelReady,
 								onDashboardArtifact: (dashboard) => dispatchDashboardPanel({ type: 'APPEND', value: dashboard }),
 								onTokenLimit: () => setShowTokenLimitModal(true),
 								onSessionId: (id) => {
@@ -1622,7 +1664,7 @@ export function AgenticChat({
 									setSessionTitle(title)
 									if (currentSessionId) {
 										applyServerSessionTitle(currentSessionId, title, submitProjectId)
-										moveSessionToTop(currentSessionId)
+										moveSessionToTop(currentSessionId, submitProjectId)
 									}
 								}
 							}),
@@ -1746,6 +1788,7 @@ export function AgenticChat({
 						},
 						onFinally: () => {
 							promptSubmissionLockRef.current = false
+							finishDuel()
 						}
 					})
 				})
@@ -1754,6 +1797,13 @@ export function AgenticChat({
 				})
 		},
 		[
+			startDuel,
+			handleDuelArmEvent,
+			markDuelReady,
+			finishDuel,
+			resetDuel,
+			duelPairId,
+			restoreSessionSnapshot,
 			isStreaming,
 			sessionId,
 			mode,
@@ -1862,6 +1912,9 @@ export function AgenticChat({
 						setMessageSiblingInfo,
 						deferEmptyDone: true,
 						notify,
+						onDuelStart: startDuel,
+						onArmEvent: handleDuelArmEvent,
+						onDuelReady: markDuelReady,
 						onDashboardArtifact: (dashboard) => dispatchDashboardPanel({ type: 'APPEND', value: dashboard }),
 						onTokenLimit: () => setShowTokenLimitModal(true),
 						onTitle: (title) => {
@@ -1980,6 +2033,7 @@ export function AgenticChat({
 				},
 				onFinally: () => {
 					promptSubmissionLockRef.current = false
+					finishDuel()
 				}
 			})
 			if (!handedOffToResume && shouldThrowEditError) {
@@ -2001,6 +2055,9 @@ export function AgenticChat({
 			attach,
 			authorizedFetchCompat,
 			abortActiveRequest,
+			handleDuelArmEvent,
+			markDuelReady,
+			finishDuel,
 			isMobileChatView,
 			mode,
 			messages,
@@ -2008,6 +2065,7 @@ export function AgenticChat({
 			researchModalStore,
 			resumeRunningExecution,
 			sessionId,
+			startDuel,
 			currentSessionProjectId,
 			settings.customInstructions,
 			settings.enablePremiumTools,
@@ -2054,12 +2112,39 @@ export function AgenticChat({
 		[abortActiveRequest, isStreaming, restoreSessionSnapshot, sessionId, switchActiveLeaf]
 	)
 
+	const submitDuelVote = useCallback(
+		(choice: DuelChoice) => {
+			if (!duelPairId) return
+			// Ties and "neither is good" still have to leave the thread on one answer; arm A is
+			// the run whose messages were appended to the live conversation history.
+			const winnerMessageId = choice === 'b' ? duelMessageIdB : duelMessageIdA
+			trackUmamiEvent('llamaai-duel-vote', { choice })
+			// Not awaited: the branch switch aborts the active request, so letting the vote
+			// round-trip first lets it land on a prompt the user submitted in the meantime.
+			void authorizedFetchCompat(`${AI_SERVER}/agentic/ab-vote`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ pairId: duelPairId, choice, winnerMessageId, sessionId })
+			}).catch((voteError) => {
+				console.error('[llama-ai] [ab-vote] failed:', getErrorMessage(voteError))
+			})
+			void (async () => {
+				// Both answers are persisted as siblings, so the chosen one renders through
+				// the normal branch loader with sibling navigation to the other answer.
+				if (winnerMessageId) await handleBranchSwitch(winnerMessageId)
+				resetDuel()
+			})()
+		},
+		[authorizedFetchCompat, duelMessageIdA, duelMessageIdB, duelPairId, handleBranchSwitch, resetDuel, sessionId]
+	)
+
 	// Stop the active streamed response while preserving already-buffered output.
 	const handleStopRequest = useCallback(() => {
 		if (sessionId) void stopAgenticExecution(sessionId, authorizedFetchCompat)
 		void abortActiveRequest()
+		resetDuel()
 		dispatchStream({ type: 'RESET_STREAM' })
-	}, [sessionId, abortActiveRequest, authorizedFetchCompat])
+	}, [sessionId, abortActiveRequest, authorizedFetchCompat, resetDuel])
 
 	// Reuse the same submit path for assistant action buttons.
 	const handleActionClick = useCallback(
@@ -2344,6 +2429,17 @@ export function AgenticChat({
 		spawnIsResearchMode,
 		streamingThinking,
 		streamingDraft,
+		duelSlot: duelPairId ? (
+			<DuelPanel
+				key={duelPairId}
+				a={duelStream.a}
+				b={duelStream.b}
+				sessionId={sessionId}
+				isStreaming={isStreaming}
+				canResolve={duelStream.ready}
+				onVote={submitDuelVote}
+			/>
+		) : null,
 		isCompacting,
 		paginationState: renderedPaginationState,
 		paginationError,

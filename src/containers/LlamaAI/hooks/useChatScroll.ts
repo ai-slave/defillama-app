@@ -22,6 +22,7 @@ interface UseChatScrollParams {
 type ScrollMode = 'attached' | 'detached' | 'reattaching'
 
 const ATTACHED_THRESHOLD_PX = 48
+const USER_SCROLL_TOLERANCE_PX = 4
 const TOP_PAGINATION_THRESHOLD_PX = 50
 const BOTTOM_PAGINATION_THRESHOLD_PX = 50
 const STREAM_FOLLOW_INTERVAL_MS = 200
@@ -73,6 +74,7 @@ export function useChatScroll({
 	const setMode = useCallback(
 		(mode: ScrollMode, container: HTMLDivElement | null = scrollContainerRef.current) => {
 			modeRef.current = mode
+			if (mode === 'attached') lastAutoScrollTopRef.current = null
 			setIsAttached(mode === 'attached')
 			syncScrollToBottomVisibility(container)
 		},
@@ -80,6 +82,7 @@ export function useChatScroll({
 	)
 
 	const reattachCleanupRef = useRef<(() => void) | null>(null)
+	const lastAutoScrollTopRef = useRef<number | null>(null)
 
 	const cancelPendingReattach = useCallback(() => {
 		reattachCleanupRef.current?.()
@@ -90,6 +93,24 @@ export function useChatScroll({
 		cancelPendingReattach()
 		setMode('attached')
 	}, [cancelPendingReattach, setMode])
+
+	// The single writer for auto-follow. Content growing pushes the bottom away while leaving
+	// scrollTop untouched, so "distance from bottom" cannot tell content growth apart from a
+	// user scrolling up. Comparing against the position we last set ourselves can: anything
+	// lower than that came from the user, and the user always wins.
+	const followBottom = useCallback(
+		(container: HTMLDivElement) => {
+			const lastAutoScrollTop = lastAutoScrollTopRef.current
+			if (lastAutoScrollTop != null && container.scrollTop < lastAutoScrollTop - USER_SCROLL_TOLERANCE_PX) {
+				lastAutoScrollTopRef.current = null
+				setMode('detached', container)
+				return
+			}
+			container.scrollTop = container.scrollHeight
+			lastAutoScrollTopRef.current = container.scrollTop
+		},
+		[setMode]
+	)
 
 	const scrollToBottom = useCallback(() => {
 		const container = scrollContainerRef.current
@@ -159,11 +180,11 @@ export function useChatScroll({
 			if (!container) return
 
 			if (modeRef.current === 'attached') {
-				container.scrollTop = container.scrollHeight
+				followBottom(container)
 			}
 		}, STREAM_FOLLOW_INTERVAL_MS)
 		return () => clearInterval(interval)
-	}, [isStreaming, scrollContainerRef, setMode, syncScrollToBottomVisibility])
+	}, [followBottom, isStreaming, scrollContainerRef, setMode, syncScrollToBottomVisibility])
 
 	// Items effect: when the message list changes (new message added, content updated),
 	// snap to bottom in the next frame — but only if already attached. This handles
@@ -174,11 +195,11 @@ export function useChatScroll({
 			requestAnimationFrame(() => {
 				const currentContainer = scrollContainerRef.current
 				if (currentContainer && modeRef.current === 'attached') {
-					currentContainer.scrollTop = currentContainer.scrollHeight
+					followBottom(currentContainer)
 				}
 			})
 		}
-	}, [items, scrollContainerRef])
+	}, [followBottom, items, scrollContainerRef])
 
 	useEffect(() => {
 		const container = scrollContainerRef.current
@@ -186,14 +207,14 @@ export function useChatScroll({
 
 		const resizeObserver = new ResizeObserver(() => {
 			if (modeRef.current === 'attached') {
-				container.scrollTop = container.scrollHeight
+				followBottom(container)
 			}
 			syncScrollToBottomVisibility(container)
 			lastScrollTopRef.current = container.scrollTop
 		})
 		resizeObserver.observe(container)
 		return () => resizeObserver.disconnect()
-	}, [scrollContainerRef, syncScrollToBottomVisibility])
+	}, [followBottom, scrollContainerRef, syncScrollToBottomVisibility])
 
 	// Keyboard open: when the soft keyboard appears and we're attached, snap to bottom
 	// so the latest content stays visible above the input.
@@ -209,6 +230,48 @@ export function useChatScroll({
 			}
 		}
 	}, [keyboardOpen, scrollContainerRef])
+
+	// Wheel/touch intent: while content streams, the ResizeObserver and the follow interval
+	// rewrite scrollTop (and lastScrollTopRef) between a user's scroll and the scroll event,
+	// which erases the upward delta the scroll handler detaches on — the viewport then snaps
+	// back and the user cannot scroll up at all. These listeners read the gesture itself, so
+	// intent survives whatever else is writing scrollTop.
+	useEffect(() => {
+		const container = scrollContainerRef.current
+		if (!container) return
+
+		const detachOnUpwardIntent = () => {
+			if (modeRef.current === 'attached') setMode('detached', container)
+			else if (modeRef.current === 'reattaching') {
+				cancelPendingReattach()
+				setMode('detached', container)
+			}
+		}
+
+		const onWheel = (event: WheelEvent) => {
+			if (event.deltaY < 0) detachOnUpwardIntent()
+		}
+
+		let touchStartY: number | null = null
+		const onTouchStart = (event: TouchEvent) => {
+			touchStartY = event.touches[0]?.clientY ?? null
+		}
+		const onTouchMove = (event: TouchEvent) => {
+			const currentY = event.touches[0]?.clientY
+			if (touchStartY == null || currentY == null) return
+			// Dragging the finger downward scrolls the content up.
+			if (currentY - touchStartY > 8) detachOnUpwardIntent()
+		}
+
+		container.addEventListener('wheel', onWheel, { passive: true })
+		container.addEventListener('touchstart', onTouchStart, { passive: true })
+		container.addEventListener('touchmove', onTouchMove, { passive: true })
+		return () => {
+			container.removeEventListener('wheel', onWheel)
+			container.removeEventListener('touchstart', onTouchStart)
+			container.removeEventListener('touchmove', onTouchMove)
+		}
+	}, [cancelPendingReattach, scrollContainerRef, setMode])
 
 	// Scroll event handler: interprets user scroll intent and manages mode transitions.
 	//

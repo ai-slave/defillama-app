@@ -1,0 +1,258 @@
+// @vitest-environment happy-dom
+
+import { act, createElement } from 'react'
+import { createRoot } from 'react-dom/client'
+import { describe, expect, it, vi } from 'vitest'
+import { AI_SERVER } from '~/constants'
+import {
+	fetchAgenticResponse,
+	parseSSEStream,
+	type AgenticSSECallbacks
+} from '~/containers/LlamaAI/fetchAgenticResponse'
+import { useDuelStream } from '~/containers/LlamaAI/hooks/useDuelStream'
+
+type MockFetch = (input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => Promise<Response>
+type MockFetchSpy = ReturnType<typeof vi.fn<MockFetch>>
+
+function encodeSseEvents(events: string[]) {
+	return events.map((event) => `data: ${event}\n\n`).join('')
+}
+
+function sseReader(...events: string[]) {
+	const encoder = new TextEncoder()
+	const stream = new ReadableStream<Uint8Array>({
+		start(controller) {
+			controller.enqueue(encoder.encode(encodeSseEvents(events)))
+			controller.close()
+		}
+	})
+	return stream.getReader()
+}
+
+function sseResponse(events: string[]) {
+	return new Response(encodeSseEvents(events), {
+		status: 200,
+		headers: { 'Content-Type': 'text/event-stream' }
+	})
+}
+
+function readRequestBody(fetchSpy: MockFetchSpy) {
+	const init = fetchSpy.mock.calls[0]?.[1] as RequestInit | undefined
+	if (!init || typeof init.body !== 'string') throw new Error('Expected JSON request body')
+	return JSON.parse(init.body) as Record<string, unknown>
+}
+
+function callbacks(): AgenticSSECallbacks {
+	return {
+		onToken: vi.fn(),
+		onCharts: vi.fn(),
+		onProgress: vi.fn(),
+		onSpawnProgress: vi.fn(),
+		onSessionId: vi.fn(),
+		onCitations: vi.fn(),
+		onThinking: vi.fn(),
+		onMessageId: vi.fn(),
+		onDuelStart: vi.fn(),
+		onArmEvent: vi.fn(),
+		onError: vi.fn(),
+		onDone: vi.fn()
+	}
+}
+
+describe('duel capability handshake', () => {
+	it('declares duelCapable on every prompt so the backend may sample the turn', async () => {
+		const fetchFn = vi.fn<MockFetch>(async () => sseResponse([JSON.stringify({ type: 'done' })]))
+
+		await fetchAgenticResponse({
+			message: 'what is defillama?',
+			sessionId: null,
+			enablePremiumTools: true,
+			callbacks: callbacks(),
+			fetchFn: fetchFn as unknown as typeof fetch,
+			eventCounter: { count: 0 }
+		})
+
+		expect(fetchFn.mock.calls[0]?.[0]).toBe(`${AI_SERVER}/agentic`)
+		expect(readRequestBody(fetchFn)).toMatchObject({ duelCapable: true })
+	})
+})
+
+describe('duel stream routing', () => {
+	it('routes duel_start to onDuelStart instead of the single-answer pipeline', async () => {
+		const cb = callbacks()
+
+		await parseSSEStream(
+			sseReader(
+				JSON.stringify({ type: 'duel_start', pairId: 'pair-1', arms: ['a', 'b'] }),
+				JSON.stringify({ type: 'done' })
+			),
+			cb
+		)
+
+		expect(cb.onDuelStart).toHaveBeenCalledWith('pair-1')
+		expect(cb.onDone).toHaveBeenCalledOnce()
+	})
+
+	it('keeps arm-tagged answer events out of the single-answer callbacks', async () => {
+		const cb = callbacks()
+
+		await parseSSEStream(
+			sseReader(
+				JSON.stringify({ type: 'duel_start', pairId: 'pair-1', arms: ['a', 'b'] }),
+				JSON.stringify({ type: 'response_chunk', content: 'from arm a', arm: 'a' }),
+				JSON.stringify({ type: 'thinking', content: 'from arm b', arm: 'b' }),
+				JSON.stringify({ type: 'done' })
+			),
+			cb
+		)
+
+		// Both answers share one stream; anything tagged with an arm must never reach the
+		// normal accumulator or the two answers interleave into one garbled message.
+		expect(cb.onToken).not.toHaveBeenCalled()
+		expect(cb.onThinking).not.toHaveBeenCalled()
+		expect(vi.mocked(cb.onArmEvent!).mock.calls.map(([event]) => event)).toEqual([
+			{ type: 'response_chunk', content: 'from arm a', arm: 'a' },
+			{ type: 'thinking', content: 'from arm b', arm: 'b' }
+		])
+	})
+
+	it('leaves untagged events on the normal path so a non-duel turn is unchanged', async () => {
+		const cb = callbacks()
+
+		await parseSSEStream(
+			sseReader(
+				JSON.stringify({ type: 'session', sessionId: 'session-1' }),
+				JSON.stringify({ type: 'response_chunk', content: 'hello' }),
+				JSON.stringify({ type: 'message_id', messageId: 'message-1' }),
+				JSON.stringify({ type: 'done' })
+			),
+			cb
+		)
+
+		expect(cb.onSessionId).toHaveBeenCalledWith('session-1', undefined)
+		expect(cb.onToken).toHaveBeenCalledWith('hello')
+		expect(cb.onMessageId).toHaveBeenCalledWith('message-1')
+		expect(cb.onDuelStart).not.toHaveBeenCalled()
+		expect(cb.onArmEvent).not.toHaveBeenCalled()
+	})
+})
+
+function mountDuelStream() {
+	const root = createRoot(document.createElement('div'))
+	let latest: ReturnType<typeof useDuelStream> | null = null
+
+	function Probe() {
+		latest = useDuelStream()
+		return null
+	}
+
+	act(() => root.render(createElement(Probe)))
+
+	return {
+		get current() {
+			if (!latest) throw new Error('useDuelStream did not mount')
+			return latest
+		},
+		unmount: () => act(() => root.unmount())
+	}
+}
+
+describe('useDuelStream', () => {
+	it('binds each arm to its persisted message id without rendering it as answer content', () => {
+		const duel = mountDuelStream()
+
+		act(() => duel.current.start('pair-1'))
+		act(() => {
+			duel.current.handleArmEvent({ type: 'arm_message_id', messageId: 'message-a', arm: 'a' })
+			duel.current.handleArmEvent({ type: 'arm_message_id', messageId: 'message-b', arm: 'b' })
+		})
+
+		// The vote resolves the thread by switching to the winning sibling, so each arm
+		// must carry the real persisted id — and the id must never leak into the answer.
+		expect(duel.current.a.messageId).toBe('message-a')
+		expect(duel.current.b.messageId).toBe('message-b')
+		expect(duel.current.a.message).toBeNull()
+		expect(duel.current.b.message).toBeNull()
+
+		act(() => {
+			duel.current.handleArmEvent({ type: 'response_chunk', content: 'answer a', arm: 'a' })
+		})
+
+		expect(duel.current.a.message?.content).toBe('answer a')
+		expect(duel.current.a.messageId).toBe('message-a')
+
+		act(() => duel.current.reset())
+
+		expect(duel.current.a.messageId).toBeNull()
+		expect(duel.current.b.messageId).toBeNull()
+
+		duel.unmount()
+	})
+
+	it('settles both arms when the outer request finishes without response_end events', () => {
+		const duel = mountDuelStream()
+
+		act(() => duel.current.start('pair-1'))
+		act(() => {
+			duel.current.handleArmEvent({ type: 'response_chunk', content: 'answer a', arm: 'a' })
+			duel.current.handleArmEvent({ type: 'response_chunk', content: 'answer b', arm: 'b' })
+		})
+
+		expect(duel.current.a.isStreaming).toBe(true)
+		expect(duel.current.b.isStreaming).toBe(true)
+
+		act(() => duel.current.finish())
+
+		expect(duel.current.a.isStreaming).toBe(false)
+		expect(duel.current.b.isStreaming).toBe(false)
+		expect(duel.current.a.message?.content).toBe('answer a')
+		expect(duel.current.b.message?.content).toBe('answer b')
+
+		duel.unmount()
+	})
+
+	it('settles an arm on its typed response_end event', () => {
+		const duel = mountDuelStream()
+
+		act(() => duel.current.start('pair-1'))
+		act(() => {
+			duel.current.handleArmEvent({ type: 'response_chunk', content: 'answer a', arm: 'a' })
+			duel.current.handleArmEvent({ type: 'response_end', arm: 'a' })
+		})
+
+		expect(duel.current.a.isStreaming).toBe(false)
+		expect(duel.current.b.isStreaming).toBe(true)
+		expect(duel.current.a.message?.content).toBe('answer a')
+
+		duel.unmount()
+	})
+
+	it('clears arm errors before the next duel starts', () => {
+		const duel = mountDuelStream()
+
+		act(() => duel.current.start('pair-1'))
+		act(() => duel.current.handleArmEvent({ type: 'error', content: 'arm failed', arm: 'a' }))
+		expect(duel.current.a.error).toBe('arm failed')
+
+		act(() => duel.current.reset())
+		act(() => duel.current.start('pair-2'))
+
+		expect(duel.current.a.error).toBeNull()
+		expect(duel.current.a.isStreaming).toBe(true)
+
+		duel.unmount()
+	})
+
+	it('keeps consuming chunks after an outer stream hands off', () => {
+		const duel = mountDuelStream()
+
+		act(() => duel.current.start('pair-1'))
+		act(() => duel.current.handleArmEvent({ type: 'response_chunk', content: 'partial', arm: 'a' }))
+		act(() => duel.current.finish())
+		act(() => duel.current.handleArmEvent({ type: 'response_chunk', content: ' answer', arm: 'a' }))
+
+		expect(duel.current.a.message?.content).toBe('partial answer')
+
+		duel.unmount()
+	})
+})

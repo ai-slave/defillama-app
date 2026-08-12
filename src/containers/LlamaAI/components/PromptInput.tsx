@@ -9,6 +9,7 @@ import { SubmitButton } from '~/containers/LlamaAI/components/input/SubmitButton
 import { PastedContentModal } from '~/containers/LlamaAI/components/PastedContentModal'
 import { useEntityCombobox } from '~/containers/LlamaAI/hooks/useEntityCombobox'
 import { fileToBase64, useImageUpload } from '~/containers/LlamaAI/hooks/useImageUpload'
+import { usePromptDraft } from '~/containers/LlamaAI/hooks/usePromptDraft'
 import type { AgenticAnswerMode, FactCheckedUsage, ResearchUsage } from '~/containers/LlamaAI/types'
 import { setInputSize, syncHighlightScroll } from '~/containers/LlamaAI/utils/scrollUtils'
 import { highlightWord } from '~/containers/LlamaAI/utils/textUtils'
@@ -94,7 +95,7 @@ export function PromptInput({
 	enterToSend,
 	walkthroughActive
 }: PromptInputProps) {
-	const [value, setValue] = useState('')
+	const [value, setValue] = usePromptDraft()
 	const [submitError, setSubmitError] = useState<string | null>(null)
 	const highlightRef = useRef<HTMLDivElement>(null)
 	const pendingSelectionRef = useRef<PendingSelection | null>(null)
@@ -147,7 +148,7 @@ export function PromptInput({
 						}
 			setValue(nextValue)
 		},
-		[]
+		[setValue]
 	)
 
 	// Image upload handling

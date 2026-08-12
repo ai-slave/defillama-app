@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { orderVisibleProjectSessions } from '../sessionOrdering'
+import { bumpProjectSessionActivity, orderVisibleProjectSessions } from '../sessionOrdering'
 import type { ProjectChatSession } from '../types'
 
 function session(overrides: Partial<ProjectChatSession> & { sessionId: string }): ProjectChatSession {
@@ -99,5 +99,56 @@ describe('orderVisibleProjectSessions', () => {
 		const sessions = [session({ sessionId: 'u1' }), session({ sessionId: 'u2' })]
 		const result = orderVisibleProjectSessions(sessions, 'u2', 5)
 		expect(result.map((s) => s.sessionId)).toEqual(['u1', 'u2'])
+	})
+})
+
+describe('orderVisibleProjectSessions activity ordering', () => {
+	it('lifts the most recently used chat to the top of the pinned block', () => {
+		const sessions = [
+			session({
+				sessionId: 'pinned-recently',
+				isPinned: true,
+				pinnedAt: '2026-07-09T00:00:00Z',
+				lastActivity: '2026-08-01T00:00:00Z'
+			}),
+			session({
+				sessionId: 'just-used',
+				isPinned: true,
+				pinnedAt: '2026-07-01T00:00:00Z',
+				lastActivity: '2026-08-09T00:00:00Z'
+			})
+		]
+		const result = orderVisibleProjectSessions(sessions, null, 5)
+		expect(result.map((s) => s.sessionId)).toEqual(['just-used', 'pinned-recently'])
+	})
+
+	it('orders unpinned sessions by activity regardless of server order', () => {
+		const sessions = [
+			session({ sessionId: 'stale', lastActivity: '2026-08-01T00:00:00Z' }),
+			session({ sessionId: 'fresh', lastActivity: '2026-08-09T00:00:00Z' })
+		]
+		const result = orderVisibleProjectSessions(sessions, null, 5)
+		expect(result.map((s) => s.sessionId)).toEqual(['fresh', 'stale'])
+	})
+})
+
+describe('bumpProjectSessionActivity', () => {
+	it('stamps the bumped session with the new activity time', () => {
+		const sessions = [
+			session({ sessionId: 'a', lastActivity: '2026-08-01T00:00:00Z' }),
+			session({ sessionId: 'b', lastActivity: '2026-08-02T00:00:00Z' })
+		]
+		const result = bumpProjectSessionActivity(sessions, 'a', '2026-08-09T00:00:00Z')
+		expect(result?.find((s) => s.sessionId === 'a')?.lastActivity).toBe('2026-08-09T00:00:00Z')
+		expect(result?.find((s) => s.sessionId === 'b')?.lastActivity).toBe('2026-08-02T00:00:00Z')
+	})
+
+	it('leaves the list untouched when the session is not in it', () => {
+		const sessions = [session({ sessionId: 'a' })]
+		expect(bumpProjectSessionActivity(sessions, 'missing', '2026-08-09T00:00:00Z')).toBe(sessions)
+	})
+
+	it('returns undefined when there is no cached list', () => {
+		expect(bumpProjectSessionActivity(undefined, 'a', '2026-08-09T00:00:00Z')).toBeUndefined()
 	})
 })

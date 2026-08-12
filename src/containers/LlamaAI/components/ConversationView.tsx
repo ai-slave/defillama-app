@@ -1,4 +1,13 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefCallback, type RefObject } from 'react'
+import {
+	useEffect,
+	useLayoutEffect,
+	useMemo,
+	useRef,
+	useState,
+	type ReactNode,
+	type RefCallback,
+	type RefObject
+} from 'react'
 import { useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
 import { ContextWarningBanner } from '~/containers/LlamaAI/components/ContextWarningBanner'
 import { MessageBubble } from '~/containers/LlamaAI/components/messages/MessageBubble'
@@ -43,6 +52,7 @@ export interface ConversationViewModel {
 	spawnIsResearchMode: boolean
 	streamingThinking: string
 	streamingDraft: Message | null
+	duelSlot?: ReactNode
 	isCompacting: boolean
 	paginationState: {
 		hasMore: boolean
@@ -117,6 +127,7 @@ function getMessageAnchorIdFromHash(hash: string) {
 type ActiveExchangeItem =
 	| { type: 'message'; key: string; message: Message; isDraft?: boolean }
 	| { type: 'live-status'; key: string }
+	| { type: 'duel-slot'; key: string }
 
 function ConversationMessageItem({
 	message,
@@ -202,7 +213,9 @@ function ConversationLiveStatus({
 	isLlama,
 	onTableFullscreenOpen,
 	factCheckPhase,
-	renderStreamingDraft = true
+	renderStreamingDraft = true,
+	duelSlot = null,
+	isScrollAttached = true
 }: {
 	isStreaming: boolean
 	activeToolCalls: ToolCall[]
@@ -227,6 +240,8 @@ function ConversationLiveStatus({
 	onTableFullscreenOpen?: () => void
 	factCheckPhase?: 'drafting' | 'verifying' | 'finalizing' | null
 	renderStreamingDraft?: boolean
+	duelSlot?: ReactNode
+	isScrollAttached?: boolean
 }) {
 	const hasTodos = shouldShowLiveTodoChecklist({
 		todoCount: todos.length,
@@ -275,7 +290,9 @@ function ConversationLiveStatus({
 				)}
 			</div>
 
-			{renderStreamingDraft && streamingDraft ? (
+			{duelSlot ? (
+				<div style={{ overflowAnchor: isScrollAttached ? 'none' : 'auto' }}>{duelSlot}</div>
+			) : renderStreamingDraft && streamingDraft ? (
 				<div style={{ overflowAnchor: 'none' }}>
 					<MessageBubble
 						key={streamingDraft.id || 'streaming-draft'}
@@ -368,6 +385,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 		spawnIsResearchMode,
 		streamingThinking,
 		streamingDraft,
+		duelSlot = null,
 		isCompacting,
 		paginationState,
 		paginationError,
@@ -585,7 +603,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 		}))
 		if (isLiveExchange) {
 			items.push({ type: 'live-status', key: 'live-status' })
-			if (streamingDraft) {
+			if (!duelSlot && streamingDraft) {
 				items.push({
 					type: 'message',
 					key: streamingDraft.id || 'streaming-draft',
@@ -593,6 +611,9 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 					isDraft: true
 				})
 			}
+		}
+		if (duelSlot) {
+			items.push({ type: 'duel-slot', key: 'duel-slot' })
 		}
 		return items
 	})()
@@ -700,6 +721,13 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 										style={activeExchangeMinHeight != null ? { minHeight: activeExchangeMinHeight } : undefined}
 									>
 										{activeExchangeItems.map((item) => {
+											if (item.type === 'duel-slot') {
+												return (
+													<div key={item.key} style={{ overflowAnchor: isScrollAttached ? 'none' : 'auto' }}>
+														{duelSlot}
+													</div>
+												)
+											}
 											if (item.type === 'live-status') {
 												return (
 													<ConversationLiveStatus
@@ -780,6 +808,8 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 										isLlama={isLlama}
 										onTableFullscreenOpen={onTableFullscreenOpen}
 										factCheckPhase={factCheckPhase}
+										duelSlot={duelSlot}
+										isScrollAttached={isScrollAttached}
 									/>
 								)}
 							</div>
