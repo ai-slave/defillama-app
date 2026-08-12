@@ -2,7 +2,7 @@
 
 import { act, useEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LLAMA_AI_PROMPT_DRAFT_KEY, usePromptDraft } from '~/containers/LlamaAI/hooks/usePromptDraft'
 import { setStorageItem } from '~/contexts/localStorageStore'
 
@@ -28,6 +28,7 @@ describe('usePromptDraft', () => {
 
 	beforeEach(() => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
+		vi.useFakeTimers()
 		localStorage.clear()
 		container = document.createElement('div')
 		document.body.appendChild(container)
@@ -36,6 +37,8 @@ describe('usePromptDraft', () => {
 
 	afterEach(async () => {
 		await act(async () => root.unmount())
+		await vi.runAllTimersAsync()
+		vi.useRealTimers()
 		container.remove()
 	})
 
@@ -49,7 +52,7 @@ describe('usePromptDraft', () => {
 		expect(container.textContent).toBe('Compare ETH and SOL revenue')
 	})
 
-	it('persists edits and removes the draft when the composer clears', async () => {
+	it('debounces persistence until typing pauses', async () => {
 		let updateDraft: (nextDraft: string) => void = () => undefined
 
 		await act(async () => {
@@ -62,19 +65,69 @@ describe('usePromptDraft', () => {
 			)
 		})
 
-		await act(async () => {
-			updateDraft('Show me stablecoin inflows')
-			await new Promise((resolve) => setTimeout(resolve, 0))
+		act(() => {
+			updateDraft('Show me stablecoin')
 		})
+
+		await act(async () => vi.advanceTimersByTime(299))
+		expect(localStorage.getItem(LLAMA_AI_PROMPT_DRAFT_KEY)).toBeNull()
+
+		act(() => {
+			updateDraft('Show me stablecoin inflows')
+		})
+		await act(async () => vi.advanceTimersByTime(299))
+		expect(localStorage.getItem(LLAMA_AI_PROMPT_DRAFT_KEY)).toBeNull()
+
+		await act(async () => vi.advanceTimersByTime(1))
 		expect(localStorage.getItem(LLAMA_AI_PROMPT_DRAFT_KEY)).toBe('Show me stablecoin inflows')
 		expect(container.textContent).toBe('Show me stablecoin inflows')
+	})
+
+	it('removes a cleared draft immediately and cancels pending persistence', async () => {
+		localStorage.setItem(LLAMA_AI_PROMPT_DRAFT_KEY, 'Existing draft')
+		let updateDraft: (nextDraft: string) => void = () => undefined
 
 		await act(async () => {
-			updateDraft('')
-			await new Promise((resolve) => setTimeout(resolve, 0))
+			root.render(
+				<DraftProbe
+					onDraft={(_draft, setDraft) => {
+						updateDraft = setDraft
+					}}
+				/>
+			)
 		})
+
+		act(() => {
+			updateDraft('Replacement draft')
+			updateDraft('')
+		})
+
+		expect(localStorage.getItem(LLAMA_AI_PROMPT_DRAFT_KEY)).toBeNull()
+		await act(async () => vi.advanceTimersByTime(300))
 		expect(localStorage.getItem(LLAMA_AI_PROMPT_DRAFT_KEY)).toBeNull()
 		expect(container.textContent).toBe('')
+	})
+
+	it('flushes pending persistence when the composer unmounts', async () => {
+		let updateDraft: (nextDraft: string) => void = () => undefined
+
+		await act(async () => {
+			root.render(
+				<DraftProbe
+					onDraft={(_draft, setDraft) => {
+						updateDraft = setDraft
+					}}
+				/>
+			)
+		})
+
+		act(() => {
+			updateDraft('Persist before leaving')
+		})
+		expect(localStorage.getItem(LLAMA_AI_PROMPT_DRAFT_KEY)).toBeNull()
+
+		await act(async () => root.render(null))
+		expect(localStorage.getItem(LLAMA_AI_PROMPT_DRAFT_KEY)).toBe('Persist before leaving')
 	})
 
 	it('preserves the caret when editing in the middle of the draft', async () => {
@@ -105,7 +158,7 @@ describe('usePromptDraft', () => {
 
 		await act(async () => {
 			setStorageItem(LLAMA_AI_PROMPT_DRAFT_KEY, 'Draft from another composer')
-			await new Promise((resolve) => setTimeout(resolve, 0))
+			await vi.runAllTimersAsync()
 		})
 
 		expect(container.textContent).toBe('Draft from another composer')

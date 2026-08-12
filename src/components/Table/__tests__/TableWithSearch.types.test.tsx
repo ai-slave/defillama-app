@@ -1,5 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { describe, expect, it } from 'vitest'
+import { formatNumber } from '~/utils/numberFormat'
 import { TableWithSearch } from '../TableWithSearch'
 
 interface TestRow {
@@ -17,7 +18,7 @@ const columns = [
 	}),
 	columnHelper.accessor('amount', {
 		header: 'Amount',
-		cell: (info) => info.getValue().toFixed(2),
+		cell: (info) => formatNumber(info.getValue(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
 		meta: { headerClassName: 'w-[120px] min-w-[120px]' }
 	}),
 	columnHelper.accessor((row) => row.tags.length, {

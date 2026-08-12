@@ -67,8 +67,8 @@ function AnswerColumn({
 				) : null}
 				{!error && !hasVisibleContent ? (
 					<div className="flex flex-col gap-2 py-3" aria-label={`${label} is still loading`}>
-						<span className="h-3 w-4/5 animate-pulse rounded bg-ai-skeleton" />
-						<span className="h-3 w-3/5 animate-pulse rounded bg-ai-skeleton" />
+						<span className="h-3 w-4/5 animate-pulse rounded-sm bg-ai-skeleton" />
+						<span className="h-3 w-3/5 animate-pulse rounded-sm bg-ai-skeleton" />
 					</div>
 				) : null}
 			</div>
