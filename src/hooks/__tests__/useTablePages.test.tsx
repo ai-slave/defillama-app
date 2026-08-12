@@ -149,6 +149,18 @@ describe('useTablePages cursor mode', () => {
 		expect(latest.version).toBe('v-rotated')
 	})
 
+	it('keeps a failed append recovery classified as an append failure', async () => {
+		await render(DEFAULT_SIGNATURE)
+		act(() => void latest.loadMore())
+
+		await act(async () => pending[0]?.resolve(response({ error: 'snapshot_mismatch' }, 409)))
+		await act(async () => pending[1]?.resolve(response({ error: 'snapshot_mismatch' }, 409)))
+		await act(async () => pending[2]?.resolve(response(page('unused'), 403)))
+
+		expect(latest.error).toBe('append')
+		expect(latest.rows.map((item) => item.id)).toEqual(['ssr'])
+	})
+
 	it('exposes a failed append for explicit retry without starting another request', async () => {
 		await render(DEFAULT_SIGNATURE)
 		act(() => void latest.loadMore())

@@ -5,7 +5,7 @@ import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { isProtocolListTvlKey } from '~/containers/ProtocolLists/api.types'
 import type { CustomColumnDef, TvlSettingsKey } from '~/contexts/LocalStorage'
 import { useDebouncedValue } from '~/hooks/useDebounce'
-import { useTablePages } from '~/hooks/useTablePages'
+import { useTablePages, type TablePageRequestResult } from '~/hooks/useTablePages'
 import {
 	DEFAULT_PROTOCOL_RANKING_QUERY,
 	PROTOCOL_RANKINGS_LIMITS,
@@ -108,7 +108,8 @@ export function useRemoteProtocolRankingsTable({
 	customColumns,
 	extraTvlsEnabled,
 	exportColumns,
-	exportFilename
+	exportFilename,
+	onRequestSettled
 }: {
 	enabled: boolean
 	chain: string
@@ -122,6 +123,7 @@ export function useRemoteProtocolRankingsTable({
 	extraTvlsEnabled: Record<TvlSettingsKey, boolean>
 	exportColumns: ExportColumn[]
 	exportFilename: string
+	onRequestSettled?: (result: TablePageRequestResult) => void
 }) {
 	const normalizedSearch = nameSearch.trim()
 	const search = useDebouncedValue(normalizedSearch, enabled && normalizedSearch ? 250 : 0)
@@ -167,6 +169,7 @@ export function useRemoteProtocolRankingsTable({
 		defaultQuerySignature: protocolRankingQuery.signature(DEFAULT_PROTOCOL_RANKING_QUERY),
 		getRowKey: (row) => row.id ?? row.slug,
 		buildPageUrl: ({ version, cursor }) => buildProtocolRankingApiUrl({ chain, query, snapshot: version, cursor }),
+		onRequestSettled,
 		parsePage: (json) => {
 			const page = json as ProtocolRankingPage<IProtocol>
 			return { ...page, version: page.snapshot }

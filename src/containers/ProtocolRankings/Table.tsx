@@ -11,6 +11,7 @@ import {
 } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import toast from 'react-hot-toast'
 import { Bookmark } from '~/components/Bookmark'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
@@ -31,6 +32,7 @@ import {
 	type TvlSettingsKey
 } from '~/contexts/LocalStorage'
 import { removeStorageItem, setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
+import type { TablePageRequestResult } from '~/hooks/useTablePages'
 import { definitions } from '~/public/definitions'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
@@ -40,7 +42,6 @@ import { PercentChange } from '~/ui/PercentChange'
 import { popoverFooterActionStyles } from '~/ui/Popover'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { TagGroup } from '~/ui/SegmentedControl'
-import { SurfaceLoadingOverlay } from '~/ui/Status'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
@@ -307,6 +308,7 @@ const ChainProtocolsTableInner = ({
 		)
 	}, [getMainColumnForPreset, selectedMetricPreset, selectedPeriod])
 	const [expanded, setExpanded] = useState<ExpandedState>({})
+	const userReplacementPendingRef = useRef(false)
 	const sortingRef = useRef(sorting)
 	sortingRef.current = sorting
 	const chainQuery = router.query.chain
@@ -336,7 +338,15 @@ const ChainProtocolsTableInner = ({
 		customColumns,
 		extraTvlsEnabled,
 		exportColumns,
-		exportFilename: `defillama-${activeChain ?? 'all'}-protocols.csv`
+		exportFilename: `defillama-${activeChain ?? 'all'}-protocols.csv`,
+		onRequestSettled: ({ mode, status }: TablePageRequestResult) => {
+			if (mode !== 'replace') return
+			const userInitiated = userReplacementPendingRef.current
+			userReplacementPendingRef.current = false
+			if (status === 'error' && userInitiated) {
+				toast.error("Couldn't update rankings. Please retry.", { id: 'protocol-rankings-update-error' })
+			}
+		}
 	})
 	const finalProtocols = useMemo(
 		() =>
@@ -476,7 +486,10 @@ const ChainProtocolsTableInner = ({
 		onExpandedChange: (updater) => startTransition(() => setExpanded(updater)),
 		getSubRows: (row: IProtocol) => row.childProtocols,
 		getRowId: (row, index, parent) => row.id ?? `${parent?.id ?? 'root'}:${row.slug || index}`,
-		onSortingChange: setSorting,
+		onSortingChange: (updater) => {
+			userReplacementPendingRef.current = true
+			setSorting(updater)
+		},
 		manualSorting: remoteEnabled,
 		manualFiltering: remoteEnabled,
 		getCoreRowModel: getCoreRowModel(),
@@ -492,7 +505,11 @@ const ChainProtocolsTableInner = ({
 	const setSortingForPresetSelection = (selection: TablePresetSelection) => {
 		const metricPreset = selection.type === 'period' ? null : selection.metric
 		const period = selection.type === 'metric' ? null : selection.period
-		setSorting([{ id: metricPreset ? getMainColumnForPreset(metricPreset, period) : 'tvl', desc: true }])
+		const id = metricPreset ? getMainColumnForPreset(metricPreset, period) : 'tvl'
+		if (sorting.length !== 1 || sorting[0]?.id !== id || !sorting[0].desc) {
+			userReplacementPendingRef.current = true
+		}
+		setSorting([{ id, desc: true }])
 	}
 	const setMetricPreset = (metricPreset: TablePreset) => {
 		removeStorageItem(legacyTableFilterStateKey)
@@ -513,6 +530,16 @@ const ChainProtocolsTableInner = ({
 		)
 	}
 	const resetTable = () => {
+		if (
+			nameSearch ||
+			effectiveMinTvl !== null ||
+			effectiveMaxTvl !== null ||
+			sorting.length !== 1 ||
+			sorting[0]?.id !== 'tvl' ||
+			!sorting[0].desc
+		) {
+			userReplacementPendingRef.current = true
+		}
 		setNameSearch('')
 		setExpanded({})
 		setSorting([{ id: 'tvl', desc: true }])
@@ -530,7 +557,10 @@ const ChainProtocolsTableInner = ({
 				<input
 					type="search"
 					value={nameSearch}
-					onChange={(event) => setNameSearch(event.currentTarget.value)}
+					onChange={(event) => {
+						userReplacementPendingRef.current = true
+						setNameSearch(event.currentTarget.value)
+					}}
 					placeholder="Search protocols..."
 					autoComplete="off"
 					className={searchFieldInputStyles}
@@ -563,7 +593,14 @@ const ChainProtocolsTableInner = ({
 				onEditCustomColumn={handleEditCustomColumn}
 				onDeleteCustomColumn={handleDeleteCustomColumn}
 			/>
-			<TVLRange size="md" />
+			<TVLRange
+				size="md"
+				onValueChange={(nextMinTvl, nextMaxTvl) => {
+					if (nextMinTvl !== effectiveMinTvl || nextMaxTvl !== effectiveMaxTvl) {
+						userReplacementPendingRef.current = true
+					}
+				}}
+			/>
 			{remoteEnabled ? (
 				remoteRankings.csvButton
 			) : (
@@ -610,16 +647,10 @@ const ChainProtocolsTableInner = ({
 					<div className="px-2 pb-2">{secondaryToolbarControls}</div>
 				</div>
 			)}
-			<div className="relative">
-				<VirtualTable instance={instance} useStickyHeader={useStickyHeader} />
-				{/* Replacements (sort/search/preset) invalidate the visible order, so they
-				    get the same overlay Yields uses; appends keep only the footer indicator. */}
-				{remoteEnabled && remoteRankings.isReplacing ? <SurfaceLoadingOverlay label="Updating rankings…" /> : null}
-			</div>
+			<VirtualTable instance={instance} useStickyHeader={useStickyHeader} />
 			{remoteEnabled ? (
 				<TablePagesStatus
 					noun="protocols"
-					replacingLabel={null}
 					replaceFailedLabel="Couldn't update rankings."
 					sentinelRef={remoteRankings.sentinelRef}
 					error={remoteRankings.error}

@@ -14,10 +14,13 @@ const router = vi.hoisted(() => ({
 	push: vi.fn(),
 	replace: vi.fn()
 }))
+const toastError = vi.hoisted(() => vi.fn())
 
 vi.mock('next/router', () => ({
 	useRouter: () => router
 }))
+
+vi.mock('react-hot-toast', () => ({ default: { error: toastError } }))
 
 vi.mock('~/components/Table/Table', () => ({
 	VirtualTable: ({
@@ -91,6 +94,7 @@ describe('Protocol Rankings hydration', () => {
 		})
 		router.replace.mockReset()
 		rankingResponse = responsePage
+		toastError.mockReset()
 		localStorage.clear()
 		localStorage.setItem('ptcmp', 'Fees')
 		localStorage.setItem('ptcp', '7d')
@@ -118,6 +122,36 @@ describe('Protocol Rankings hydration', () => {
 		)
 		expect(hydrationErrors).toEqual([])
 		await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(1))
+	})
+
+	it('does not toast when an automatic persisted-preset request fails', async () => {
+		vi.mocked(fetch).mockResolvedValue({ ok: false, status: 403 } as Response)
+
+		await hydrateTable()
+		await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(1))
+
+		expect(toastError).not.toHaveBeenCalled()
+	})
+
+	it('toasts when a user search request fails', async () => {
+		localStorage.clear()
+		vi.mocked(fetch).mockResolvedValue({ ok: false, status: 403 } as Response)
+		await hydrateTable()
+		const search = container.querySelector<HTMLInputElement>('input[type="search"]')
+		if (!search) throw new Error('Expected protocol search input')
+
+		await act(async () => {
+			const setInputValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+			if (!setInputValue) throw new Error('Expected native input value setter')
+			setInputValue.call(search, 'aave')
+			search.dispatchEvent(new InputEvent('input', { bubbles: true }))
+			await new Promise((resolve) => setTimeout(resolve, 275))
+			await Promise.resolve()
+		})
+
+		expect(toastError).toHaveBeenCalledWith("Couldn't update rankings. Please retry.", {
+			id: 'protocol-rankings-update-error'
+		})
 	})
 
 	it('clears persisted ranking state and requests the default page on Reset', async () => {

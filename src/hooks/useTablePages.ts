@@ -22,6 +22,11 @@ import type { CursorTablePage } from '~/server/tablePages/types'
 
 type PageState<Row> = Omit<CursorTablePage<Row>, 'rows'>
 
+export type TablePageRequestResult = {
+	mode: 'replace' | 'append'
+	status: 'success' | 'error'
+}
+
 type ClientState<Row, Page extends CursorTablePage<Row>> = Omit<Page, 'rows'> & {
 	rows: Row[]
 	loadedQuerySignature: string
@@ -104,6 +109,7 @@ export function useTablePages<Row, Page extends CursorTablePage<Row>>({
 	defaultQuerySignature,
 	getRowKey,
 	buildPageUrl,
+	onRequestSettled,
 	parsePage = (json) => json as Page,
 	rootMargin = '800px 0px'
 }: {
@@ -120,6 +126,7 @@ export function useTablePages<Row, Page extends CursorTablePage<Row>>({
 	getRowKey: (row: Row) => string
 	/** Build a request URL; the hook supplies version/cursor, the surface owns everything else. */
 	buildPageUrl: (args: { version?: string | null; cursor?: string | null }) => string
+	onRequestSettled?: (result: TablePageRequestResult) => void
 	/** Map a response body to the page shape (e.g. wire field `snapshot` -> `version`). */
 	parsePage?: (json: unknown) => Page
 	rootMargin?: string
@@ -131,6 +138,8 @@ export function useTablePages<Row, Page extends CursorTablePage<Row>>({
 	// replacements forever via the signature-divergence effect below.
 	const parsePageRef = useRef(parsePage)
 	parsePageRef.current = parsePage
+	const onRequestSettledRef = useRef(onRequestSettled)
+	onRequestSettledRef.current = onRequestSettled
 	const [state, dispatch] = useReducer(reducerRef.current, {
 		...(initialPage as PageState<Row> as Omit<Page, 'rows'>),
 		rows: initialRows,
@@ -162,29 +171,40 @@ export function useTablePages<Row, Page extends CursorTablePage<Row>>({
 		})
 	}, [defaultQuerySignature, initialPage, initialRows, sourceKey])
 
-	const replace = useCallback(async () => {
-		if (!enabled) return
-		abortRef.current?.abort()
-		const controller = new AbortController()
-		abortRef.current = controller
-		const request = ++requestRef.current
-		requestPendingRef.current = true
-		dispatch({ type: 'replace-start', request })
-		const pinned = await fetchPage<Row, Page>(replacementUrl, controller.signal, parsePageRef.current).catch(() => null)
-		const retried =
-			pinned === 'version_mismatch'
-				? await fetchPage<Row, Page>(latestUrl, controller.signal, parsePageRef.current).catch(() => null)
-				: pinned
-		const page = retried === 'version_mismatch' ? null : retried
-		if (requestRef.current === request) requestPendingRef.current = false
-		if (controller.signal.aborted) return
-		if (page) dispatch({ type: 'success', request, mode: 'replace', page, querySignature })
-		else dispatch({ type: 'failed', request, mode: 'replace' })
-	}, [enabled, latestUrl, querySignature, replacementUrl])
+	const replace = useCallback(
+		async (requestMode: 'replace' | 'append') => {
+			if (!enabled) return
+			abortRef.current?.abort()
+			const controller = new AbortController()
+			abortRef.current = controller
+			const request = ++requestRef.current
+			requestPendingRef.current = true
+			dispatch({ type: 'replace-start', request })
+			const pinned = await fetchPage<Row, Page>(replacementUrl, controller.signal, parsePageRef.current).catch(
+				() => null
+			)
+			const retried =
+				pinned === 'version_mismatch'
+					? await fetchPage<Row, Page>(latestUrl, controller.signal, parsePageRef.current).catch(() => null)
+					: pinned
+			const page = retried === 'version_mismatch' ? null : retried
+			const isCurrent = requestRef.current === request
+			if (isCurrent) requestPendingRef.current = false
+			if (controller.signal.aborted || !isCurrent) return
+			if (page) {
+				dispatch({ type: 'success', request, mode: 'replace', page, querySignature })
+				onRequestSettledRef.current?.({ mode: requestMode, status: 'success' })
+			} else {
+				dispatch({ type: 'failed', request, mode: requestMode })
+				onRequestSettledRef.current?.({ mode: requestMode, status: 'error' })
+			}
+		},
+		[enabled, latestUrl, querySignature, replacementUrl]
+	)
 
 	useEffect(() => {
 		if (!enabled || querySignature === state.loadedQuerySignature) return
-		void replace()
+		void replace('replace')
 		return () => abortRef.current?.abort()
 	}, [enabled, querySignature, replace, state.loadedQuerySignature])
 
@@ -206,14 +226,20 @@ export function useTablePages<Row, Page extends CursorTablePage<Row>>({
 		requestPendingRef.current = true
 		dispatch({ type: 'append-start', request })
 		const page = await fetchPage<Row, Page>(appendUrl, controller.signal, parsePageRef.current).catch(() => null)
-		if (requestRef.current === request) requestPendingRef.current = false
-		if (controller.signal.aborted) return
+		const isCurrent = requestRef.current === request
+		if (isCurrent) requestPendingRef.current = false
+		if (controller.signal.aborted || !isCurrent) return
 		if (page === 'version_mismatch') {
-			void replace()
+			void replace('append')
 			return
 		}
-		if (page) dispatch({ type: 'success', request, mode: 'append', page, querySignature })
-		else dispatch({ type: 'failed', request, mode: 'append' })
+		if (page) {
+			dispatch({ type: 'success', request, mode: 'append', page, querySignature })
+			onRequestSettledRef.current?.({ mode: 'append', status: 'success' })
+		} else {
+			dispatch({ type: 'failed', request, mode: 'append' })
+			onRequestSettledRef.current?.({ mode: 'append', status: 'error' })
+		}
 	}, [
 		appendUrl,
 		enabled,
@@ -244,7 +270,7 @@ export function useTablePages<Row, Page extends CursorTablePage<Row>>({
 	}, [enabled, loadMore, rootMargin, state.error, state.hasMore, state.isLoadingMore, state.isReplacing])
 
 	useEffect(() => () => abortRef.current?.abort(), [])
-	const retry = state.error === 'replace' ? replace : state.error === 'append' ? loadMore : undefined
+	const retry = state.error === 'replace' ? () => replace('replace') : state.error === 'append' ? loadMore : undefined
 
 	return { ...state, loadMore, retry, sentinelRef }
 }
