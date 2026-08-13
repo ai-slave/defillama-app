@@ -11,7 +11,7 @@ export const SKIP_BUILD_STATIC_GENERATION =
 export const STRIPE_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? ''
 
 // Base servers
-export const AUTH_SERVER = process.env.NEXT_PUBLIC_AUTH_SERVER_URL ?? 'https://auth.llama.fi'
+export const AUTH_SERVER = 'https://features.llama.fi'
 export const AI_SERVER = 'https://ai.llama.fi'
 export const FEATURES_SERVER = process.env.NEXT_PUBLIC_FEATURES_SERVER_URL ?? 'https://features.llama.fi'
 export const DATASETS_SERVER_URL =
