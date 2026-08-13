@@ -85,6 +85,16 @@ export default function ResearchAdminHubPage() {
 									Attach a PDF, carousel image, sponsor logo, and description to each Report article.
 								</span>
 							</Link>
+							<Link
+								href="/research/admin/sponsors"
+								className="group grid gap-2 rounded-md border border-medium bg-surface p-5 transition-colors hover:border-link/40"
+							>
+								<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Reports</span>
+								<span className="text-lg font-semibold text-primary group-hover:text-link">Sponsored reports</span>
+								<span className="text-sm text-secondary">
+									Link Research articles to protocol, chain, and CEX pages.
+								</span>
+							</Link>
 						</div>
 					</div>
 				</ArticlesAccessGate>

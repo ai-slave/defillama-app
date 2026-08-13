@@ -6,8 +6,7 @@ import { V2_SERVER_URL } from '~/constants'
 import { chainCoingeckoIdsForGasNotMcap } from '~/constants/chainTokens'
 import { CHART_COLORS } from '~/constants/colors'
 import { fetchAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api'
-import { listArticles } from '~/containers/Articles/api'
-import { articleHref } from '~/containers/Articles/landing/utils'
+import { getSponsoredResearchReports } from '~/containers/Articles/api'
 import { fetchBridgeVolumeBySlug } from '~/containers/Bridges/api'
 import type { BridgeVolumePoint } from '~/containers/Bridges/api.types'
 import { governanceIdsToApis } from '~/containers/Governance/api'
@@ -155,7 +154,8 @@ export const getProtocolOverviewPageData = async ({
 	tokenDirectory = null,
 	yieldsSnapshot,
 	includeFaq = true,
-	getTokenMarketSummary = null
+	getTokenMarketSummary = null,
+	researchSponsorEntitySlug
 }: {
 	protocolId: string
 	currentProtocolMetadata: IProtocolMetadata
@@ -169,6 +169,7 @@ export const getProtocolOverviewPageData = async ({
 	yieldsSnapshot: YieldsSnapshot | null
 	includeFaq?: boolean
 	getTokenMarketSummary?: ((geckoId: string) => Promise<TokenMarketSummary | null>) | null
+	researchSponsorEntitySlug?: string
 }): Promise<IProtocolOverviewPageData> => {
 	const displayName = currentProtocolMetadata.displayName ?? ''
 	const currentProtocolSlug = slug(displayName)
@@ -179,15 +180,9 @@ export const getProtocolOverviewPageData = async ({
 	const researchReportsPromise = optionalProtocolData(
 		'research',
 		() =>
-			listArticles({ tags: [currentProtocolSlug], section: 'report', limit: 3, sort: 'newest' }).then(
-				(res): IProtocolOverviewPageData['articles'] =>
-					res.items.map((article) => ({
-						headline: article.title,
-						date: article.displayDate ?? article.publishedAt ?? article.updatedAt,
-						href: articleHref(article),
-						imgSrc: article.coverImage?.url ?? null
-					}))
-			),
+			getSponsoredResearchReports(isCEX ? 'cex' : 'protocol', researchSponsorEntitySlug ?? currentProtocolSlug, {
+				limit: 3
+			}).then((result) => result.reports),
 		[]
 	)
 	const protocolDataPromise = fetchProtocolOverviewMetrics(currentProtocolSlug).then(
@@ -1040,6 +1035,10 @@ export const getProtocolOverviewPageData = async ({
 					}
 				: null,
 		isCEX,
+		researchSponsorEntity: {
+			entityType: isCEX ? 'cex' : 'protocol',
+			entitySlug: researchSponsorEntitySlug ?? currentProtocolSlug
+		},
 		hasKeyMetrics,
 		competitors: competitorsList,
 		hacks,

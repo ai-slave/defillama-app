@@ -67,6 +67,7 @@ export const getStaticProps = withPerformanceLogging(
 					protocolLlamaswapDataset: metadataCache.protocolLlamaswapDataset,
 					tokenDirectory: metadataCache.tokenDirectory,
 					yieldsSnapshot,
+					researchSponsorEntitySlug: protocolRoute.canonicalSlug,
 					getTokenMarketSummary: (geckoId) =>
 						import('~/containers/Tokens/queries.server').then(({ getTokenMarketSummaryByGeckoId }) =>
 							getTokenMarketSummaryByGeckoId(geckoId)

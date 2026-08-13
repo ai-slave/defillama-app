@@ -427,3 +427,52 @@ export type TrustedByLookupResult = {
 	logos: TrustedLogo[]
 	mentions: SocialMention[]
 }
+
+export type ResearchSponsorEntityType = 'protocol' | 'chain' | 'cex'
+
+export type SponsoredResearchReportSummary = {
+	id: string
+	title: string
+	slug: string
+	section: ArticleSection | null
+	coverImage: ArticleImage | null
+	carouselImage: ArticleImage | null
+	excerpt: string | null
+	reportDescription: string | null
+	displayDate: string | null
+	publishedAt: string | null
+}
+
+export type ResearchSponsorSummary = {
+	id: string
+	displayName: string
+	entityType: ResearchSponsorEntityType
+	entitySlug: string
+	createdAt: string
+	updatedAt: string
+}
+
+export type ResearchArticleLifecycleStatus = 'draft' | 'published' | 'hidden' | 'archived'
+
+export type ResearchSponsorArticleSearchResult = SponsoredResearchReportSummary & {
+	lifecycleStatus: ResearchArticleLifecycleStatus
+}
+
+export type ResearchSponsorAdminReport = ResearchSponsorArticleSearchResult & {
+	linkedAt: string
+}
+
+export type ResearchSponsorAdmin = ResearchSponsorSummary & {
+	reports: ResearchSponsorAdminReport[]
+}
+
+export type ResearchSponsorPayload = {
+	displayName: string
+	entityType: ResearchSponsorEntityType
+	entitySlug: string
+}
+
+export type ResearchSponsorLookupResult = {
+	sponsor: ResearchSponsorSummary | null
+	reports: SponsoredResearchReportSummary[]
+}

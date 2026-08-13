@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
 	ArticleApiError,
+	getSponsoredResearchReports,
 	getAllArticlesBanner,
+	linkResearchSponsorReport,
 	listArticlePaths,
 	listArticles,
 	listArticlesByTag,
@@ -11,7 +13,8 @@ import {
 	revalidateResearchLanding,
 	setEditorialTag,
 	updateEditorialTagMetadata,
-	updateReportHighlightSponsorLogo
+	updateReportHighlightSponsorLogo,
+	unlinkResearchSponsorReport
 } from '../api'
 import { EDITORIAL_TAGS } from '../editorialTags'
 
@@ -228,6 +231,32 @@ describe('articles api client', () => {
 
 		const url = new URL(fetchFn.mock.calls[0][0])
 		expect(url.pathname).toBe('/banners/lookup/all-articles')
+	})
+
+	it('requests sponsored reports by canonical entity identity with a cache nonce', async () => {
+		vi.spyOn(Date, 'now').mockReturnValue(1786635600000)
+		const fetchFn = createFetchMock(new Response(JSON.stringify({ sponsor: null, reports: [] })))
+
+		await getSponsoredResearchReports('chain', 'starknet', { limit: 3, fetchFn })
+
+		const url = new URL(fetchFn.mock.calls[0][0])
+		expect(url.pathname).toBe('/research/sponsors/lookup/chain/starknet')
+		expect(url.searchParams.get('limit')).toBe('3')
+		expect(url.searchParams.get('_n')).toBe('1786635600000')
+	})
+
+	it('links and unlinks a sponsored report through the researcher API', async () => {
+		const authorizedFetch = createFetchMock(new Response(JSON.stringify({ linked: true })))
+
+		await linkResearchSponsorReport('sponsor/id', 'article/id', authorizedFetch)
+		await unlinkResearchSponsorReport('sponsor/id', 'article/id', authorizedFetch)
+
+		const [linkUrl, linkOptions] = authorizedFetch.mock.calls[0]
+		const [unlinkUrl, unlinkOptions] = authorizedFetch.mock.calls[1]
+		expect(new URL(linkUrl).pathname).toBe('/research/sponsors/sponsor%2Fid/reports/article%2Fid')
+		expect(linkOptions?.method).toBe('PUT')
+		expect(new URL(unlinkUrl).pathname).toBe('/research/sponsors/sponsor%2Fid/reports/article%2Fid')
+		expect(unlinkOptions?.method).toBe('DELETE')
 	})
 
 	it('surfaces server errors', async () => {

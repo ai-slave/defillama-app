@@ -1,3 +1,4 @@
+import type { SponsoredResearchReportSummary } from '~/containers/Articles/types'
 import type { ProtocolRankingInitialPage } from '~/containers/ProtocolRankings/tableQuery'
 import type { IProtocol } from '~/containers/ProtocolRankings/types'
 import type { Raise } from '~/containers/Raises/model'
@@ -97,6 +98,8 @@ export interface IChainOverviewData {
 	warningBanners?: Array<IChainWarningBanner>
 	entityQuestions?: string[]
 	customServerData?: Record<string, unknown>
+	sponsoredResearchReports?: SponsoredResearchReportSummary[]
+	researchSponsorEntitySlug?: string
 }
 
 interface IChainWarningBanner {

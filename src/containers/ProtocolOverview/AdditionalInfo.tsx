@@ -1,6 +1,4 @@
 import * as Ariakit from '@ariakit/react'
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
@@ -8,6 +6,7 @@ import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink, ButtonLink } from '~/components/Link'
 import { Menu } from '~/components/Menu'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
+import { SponsoredResearchReportsCard } from '~/components/Research/SponsoredResearchReportsCard'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
@@ -19,8 +18,6 @@ import { slug } from '~/utils'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import type { IProtocolOverviewPageData } from './types'
-
-dayjs.extend(utc)
 
 const EMPTY_COMPETITORS: Array<{ name: string; tvl: number }> = []
 const INFO_ACTION_STYLES = buttonStyles({ size: 'md' })
@@ -60,7 +57,12 @@ export const AdditionalInfo = (props: IProtocolOverviewPageData) => {
 			<div className="col-span-full grid grid-cols-1 gap-2 xl:grid-cols-2">
 				<div className="col-span-1 flex flex-col gap-2">
 					<ProtocolInfo {...props} />
-					<Articles {...props} />
+					<SponsoredResearchReportsCard
+						reports={props.articles}
+						entityType={props.researchSponsorEntity?.entityType ?? (props.isCEX ? 'cex' : 'protocol')}
+						entitySlug={props.researchSponsorEntity?.entitySlug ?? slug(props.name)}
+						className="col-span-1"
+					/>
 					<Yields {...props} />
 					<UserActivity users={props.users} gasUsedValueSymbol={props.chartDenominations[1]?.symbol ?? null} />
 				</div>
@@ -75,7 +77,12 @@ export const AdditionalInfo = (props: IProtocolOverviewPageData) => {
 	return (
 		<div className="col-span-full grid grid-cols-1 gap-2 min-[1536px]:grid-cols-3 min-[1792px]:grid-cols-3 xl:grid-cols-2">
 			<ProtocolInfo {...props} />
-			<Articles {...props} />
+			<SponsoredResearchReportsCard
+				reports={props.articles}
+				entityType={props.researchSponsorEntity?.entityType ?? (props.isCEX ? 'cex' : 'protocol')}
+				entitySlug={props.researchSponsorEntity?.entitySlug ?? slug(props.name)}
+				className="col-span-1"
+			/>
 			<Methodology {...props} />
 			<NewsletterSignup layout="strip" className="col-span-full" />
 			<Yields {...props} />
@@ -83,62 +90,6 @@ export const AdditionalInfo = (props: IProtocolOverviewPageData) => {
 			<Hacks {...props} />
 			<Competitors {...props} />
 		</div>
-	)
-}
-
-const Articles = (props: IProtocolOverviewPageData) => {
-	if (!props.articles?.length) return null
-
-	return (
-		<Card as="section" padding="sm" className="col-span-1 flex flex-col gap-3 body-md">
-			<div className="flex items-center justify-between gap-3">
-				<SectionHeader id="research">Latest from DefiLlama Research</SectionHeader>
-				<BasicLink href="/research" className="shrink-0">
-					<span className="relative block h-6 w-[76px]">
-						<img
-							src="/assets/research_logo_dark.webp"
-							width={76}
-							height={24}
-							className="invisible absolute inset-0 object-contain object-right dark:visible"
-							alt=""
-						/>
-						<img
-							src="/assets/research_logo.webp"
-							width={76}
-							height={24}
-							className="visible absolute inset-0 object-contain object-right dark:invisible"
-							alt=""
-						/>
-					</span>
-					<span className="sr-only">Visit DefiLlama Research</span>
-				</BasicLink>
-			</div>
-
-			{props.articles.map((article) => (
-				<BasicLink
-					key={`research_card_${article.href}`}
-					href={article.href}
-					className="hover-wash flex flex-col gap-3 rounded-md border border-subtle bg-surface p-2"
-				>
-					{article.imgSrc ? (
-						<img
-							className="h-[100px] w-full shrink-0 rounded-md object-cover"
-							src={article.imgSrc}
-							alt={article.headline}
-						/>
-					) : null}
-					<div className="flex flex-col justify-between gap-3">
-						<p className="label-md break-keep whitespace-pre-wrap text-primary">{article.headline}</p>
-						<div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-							<p className="label-sm text-tertiary">{dayjs.utc(article.date).format('MMMM D, YYYY')}</p>
-							<p className="flex flex-nowrap items-center justify-between gap-1 label-sm text-primary">
-								<span>Read report</span> <Icon name="arrow-up-right" height={14} width={14} />
-							</p>
-						</div>
-					</div>
-				</BasicLink>
-			))}
-		</Card>
 	)
 }
 

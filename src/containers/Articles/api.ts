@@ -17,7 +17,13 @@ import type {
 	TrustedLogoPayload,
 	SocialMention,
 	SocialMentionPayload,
-	TrustedByLookupResult
+	TrustedByLookupResult,
+	ResearchSponsorAdmin,
+	ResearchSponsorArticleSearchResult,
+	ResearchSponsorEntityType,
+	ResearchSponsorLookupResult,
+	ResearchSponsorPayload,
+	ResearchSponsorSummary
 } from './types'
 
 type AuthorizedFetch = (url: string, options?: RequestInit) => Promise<Response | null>
@@ -803,4 +809,98 @@ export async function reorderSocialMentions(ids: string[], authorizedFetch: Auth
 		})
 	)
 	return data.mentions
+}
+
+export async function getSponsoredResearchReports(
+	entityType: ResearchSponsorEntityType,
+	entitySlug: string,
+	options: { limit?: number; fetchFn?: FetchLike } = {}
+): Promise<ResearchSponsorLookupResult> {
+	const search = new URLSearchParams()
+	appendSearchParam(search, 'limit', options.limit)
+	const suffix = search.toString() ? `?${search}` : ''
+	const path = `/research/sponsors/lookup/${encodeURIComponent(entityType)}/${encodeURIComponent(entitySlug)}${suffix}`
+	return parseResponse(await (options.fetchFn ?? fetch)(articleUrlWithCacheNonce(path)))
+}
+
+export async function listResearchSponsors(authorizedFetch: AuthorizedFetch): Promise<ResearchSponsorAdmin[]> {
+	const data = await parseResponse<{ sponsors: ResearchSponsorAdmin[] }>(
+		await authorizedFetch(articleUrl('/research/sponsors'))
+	)
+	return data.sponsors
+}
+
+export async function searchResearchSponsorArticles(
+	query: string,
+	authorizedFetch: AuthorizedFetch,
+	limit = 20
+): Promise<ResearchSponsorArticleSearchResult[]> {
+	const search = new URLSearchParams()
+	appendSearchParam(search, 'q', query)
+	appendSearchParam(search, 'limit', limit)
+	const data = await parseResponse<{ articles: ResearchSponsorArticleSearchResult[] }>(
+		await authorizedFetch(articleUrl(`/research/sponsors/articles?${search}`))
+	)
+	return data.articles
+}
+
+export async function createResearchSponsor(
+	payload: ResearchSponsorPayload,
+	authorizedFetch: AuthorizedFetch
+): Promise<ResearchSponsorAdmin> {
+	const data = await parseResponse<{ sponsor: ResearchSponsorAdmin }>(
+		await authorizedFetch(articleUrl('/research/sponsors'), {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(payload)
+		})
+	)
+	return data.sponsor
+}
+
+export async function updateResearchSponsor(
+	id: string,
+	payload: Partial<ResearchSponsorPayload>,
+	authorizedFetch: AuthorizedFetch
+): Promise<ResearchSponsorSummary> {
+	const data = await parseResponse<{ sponsor: ResearchSponsorSummary }>(
+		await authorizedFetch(articleUrl(`/research/sponsors/${encodeURIComponent(id)}`), {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(payload)
+		})
+	)
+	return data.sponsor
+}
+
+export async function deleteResearchSponsor(id: string, authorizedFetch: AuthorizedFetch): Promise<void> {
+	await parseResponse(
+		await authorizedFetch(articleUrl(`/research/sponsors/${encodeURIComponent(id)}`), { method: 'DELETE' })
+	)
+}
+
+export async function linkResearchSponsorReport(
+	sponsorId: string,
+	articleId: string,
+	authorizedFetch: AuthorizedFetch
+): Promise<void> {
+	await parseResponse(
+		await authorizedFetch(
+			articleUrl(`/research/sponsors/${encodeURIComponent(sponsorId)}/reports/${encodeURIComponent(articleId)}`),
+			{ method: 'PUT' }
+		)
+	)
+}
+
+export async function unlinkResearchSponsorReport(
+	sponsorId: string,
+	articleId: string,
+	authorizedFetch: AuthorizedFetch
+): Promise<void> {
+	await parseResponse(
+		await authorizedFetch(
+			articleUrl(`/research/sponsors/${encodeURIComponent(sponsorId)}/reports/${encodeURIComponent(articleId)}`),
+			{ method: 'DELETE' }
+		)
+	)
 }

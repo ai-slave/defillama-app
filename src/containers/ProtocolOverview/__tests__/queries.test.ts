@@ -37,6 +37,7 @@ const fetchTreasuries = vi.hoisted(() => vi.fn().mockResolvedValue([]))
 const fetchProtocols = vi.hoisted(() => vi.fn().mockResolvedValue({ protocols: [], chains: [], parentProtocols: [] }))
 const fetchJson = vi.hoisted(() => vi.fn().mockResolvedValue({ content_elements: [] }))
 const getTokenMarketSummaryByGeckoId = vi.hoisted(() => vi.fn().mockResolvedValue(null))
+const getSponsoredResearchReports = vi.hoisted(() => vi.fn().mockResolvedValue({ sponsor: null, reports: [] }))
 const optionalPageData = vi.hoisted(() =>
 	vi.fn(async (_label: string, run: () => Promise<unknown>, fallback: unknown) => {
 		try {
@@ -66,7 +67,7 @@ vi.mock('~/containers/Bridges/api', () => ({
 }))
 
 vi.mock('~/containers/Articles/api', () => ({
-	listArticles: vi.fn().mockResolvedValue({ items: [] })
+	getSponsoredResearchReports
 }))
 
 vi.mock('~/containers/AdapterMetrics/api', () => ({
@@ -132,8 +133,48 @@ describe('getProtocolOverviewPageData', () => {
 		fetchJson.mockClear()
 		optionalPageData.mockClear()
 		getTokenMarketSummaryByGeckoId.mockClear()
+		getSponsoredResearchReports.mockResolvedValue({ sponsor: null, reports: [] })
+		getSponsoredResearchReports.mockClear()
 		fetchProtocolOverviewMetrics.mockClear()
 		formatAdapterData.mockClear()
+	})
+
+	it('looks up sponsored reports by the canonical protocol page identity', async () => {
+		const report = {
+			id: 'report-id',
+			title: 'Canonical report',
+			slug: 'canonical-report',
+			section: 'report' as const,
+			coverImage: null,
+			carouselImage: null,
+			excerpt: null,
+			reportDescription: null,
+			displayDate: null,
+			publishedAt: '2026-08-01T00:00:00.000Z'
+		}
+		getSponsoredResearchReports.mockResolvedValueOnce({ sponsor: null, reports: [report] })
+		const { getProtocolOverviewPageData } = await import('../queries')
+
+		const data = await getProtocolOverviewPageData({
+			protocolId: 'test-protocol',
+			researchSponsorEntitySlug: 'canonical-test-protocol',
+			currentProtocolMetadata: { displayName: 'Test Protocol' } satisfies IProtocolMetadata,
+			chainMetadata: {},
+			tokenlist: {},
+			cgExchangeIdentifiers: [],
+			emissionsSupplyMetrics: {},
+			protocolLlamaswapDataset: {},
+			yieldsSnapshot
+		})
+
+		expect(getSponsoredResearchReports).toHaveBeenCalledWith('protocol', 'canonical-test-protocol', {
+			limit: 3
+		})
+		expect(data.articles).toEqual([report])
+		expect(data.researchSponsorEntity).toEqual({
+			entityType: 'protocol',
+			entitySlug: 'canonical-test-protocol'
+		})
 	})
 
 	it('excludes child protocols from their parent protocol competitors', async () => {

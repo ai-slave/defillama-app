@@ -4,6 +4,7 @@ import type {
 	ChartTimeGroupingWithCumulative,
 	MultiSeriesChartOptions
 } from '~/components/ECharts/MultiSeriesChart/types'
+import type { SponsoredResearchReportSummary } from '~/containers/Articles/types'
 import type { BridgeVolumePoint } from '~/containers/Bridges/api.types'
 import type { Hack } from '~/containers/Hacks/model'
 import type { Raise } from '~/containers/Raises/model'
@@ -146,7 +147,7 @@ export interface IProtocolOverviewPageData {
 			status: string
 		}
 	} | null
-	articles: IArticle[] | null
+	articles: SponsoredResearchReportSummary[] | null
 	users?: {
 		activeUsers: number | null
 		newUsers: number | null
@@ -192,6 +193,10 @@ export interface IProtocolOverviewPageData {
 		note: string | null
 	} | null
 	isCEX?: boolean
+	researchSponsorEntity?: {
+		entityType: 'protocol' | 'cex'
+		entitySlug: string
+	}
 	hasKeyMetrics?: boolean
 	competitors?: Array<{ name: string; tvl: number }>
 	hacks: Array<Hack>
@@ -225,13 +230,6 @@ export interface IProtocolOverviewPageData {
 	faqItems?: IProtocolFaqItem[]
 	treasuryMethodologyUrl?: string | null
 	llamaswapChains?: BuyOnLlamaswapChain[] | null
-}
-
-interface IArticle {
-	headline: string
-	date: string
-	href: string
-	imgSrc: string | null
 }
 
 export interface IToggledMetrics extends Record<

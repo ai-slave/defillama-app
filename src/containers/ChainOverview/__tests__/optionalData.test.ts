@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
 	fetchStablecoinAssetsApi: vi.fn(),
 	getStablecoinChainMcapSummary: vi.fn(),
 	fetchTreasuries: vi.fn(),
+	getSponsoredResearchReports: vi.fn(),
 	fetchJson: vi.fn(),
 	recordOptionalPageDataFailure: vi.fn(),
 	fetchHomepageUnlocksSummary: vi.fn()
@@ -65,6 +66,7 @@ vi.mock('~/containers/Stablecoins/queries.server', () => ({
 	getStablecoinChainMcapSummary: mocks.getStablecoinChainMcapSummary
 }))
 vi.mock('~/containers/Treasuries/api', () => ({ fetchTreasuries: mocks.fetchTreasuries }))
+vi.mock('~/containers/Articles/api', () => ({ getSponsoredResearchReports: mocks.getSponsoredResearchReports }))
 vi.mock('~/utils/async', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('~/utils/async')>()
 	return { ...actual, fetchJson: mocks.fetchJson }
@@ -114,6 +116,7 @@ function resetMocks() {
 	mocks.fetchStablecoinAssetsApi.mockResolvedValue({ peggedAssets: [], chains: [] })
 	mocks.getStablecoinChainMcapSummary.mockResolvedValue(null)
 	mocks.fetchTreasuries.mockResolvedValue([])
+	mocks.getSponsoredResearchReports.mockResolvedValue({ sponsor: null, reports: [] })
 	mocks.fetchJson.mockResolvedValue(null)
 	mocks.recordOptionalPageDataFailure.mockClear()
 	mocks.fetchHomepageUnlocksSummary.mockResolvedValue(null)
@@ -139,6 +142,25 @@ describe('getChainOverviewData optional sections', () => {
 
 		expect(data?.stablecoins).toBeNull()
 		expect(mocks.recordOptionalPageDataFailure).toHaveBeenCalledWith('chain:Ethereum:stablecoins', error)
+	})
+
+	it('looks up sponsored reports by the canonical chain page identity', async () => {
+		resetMocks()
+		const reports = [{ id: 'report-id' }]
+		mocks.getSponsoredResearchReports.mockResolvedValueOnce({ sponsor: null, reports })
+		const { getChainOverviewData } = await import('../queries.server')
+
+		const data = await getChainOverviewData({
+			chain: 'Ethereum',
+			chainMetadata: { ethereum },
+			protocolMetadata: {},
+			categoriesAndTagsMetadata,
+			researchSponsorEntitySlug: 'canonical-ethereum'
+		})
+
+		expect(mocks.getSponsoredResearchReports).toHaveBeenCalledWith('chain', 'canonical-ethereum', { limit: 3 })
+		expect(data?.sponsoredResearchReports).toEqual(reports)
+		expect(data?.researchSponsorEntitySlug).toBe('canonical-ethereum')
 	})
 
 	it('still rejects when protocols by chain fail', async () => {

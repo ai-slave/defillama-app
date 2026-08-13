@@ -3,6 +3,7 @@ import { lazy, Suspense } from 'react'
 import { DeprecatedEntityText } from '~/components/DeprecatedEntityMarker'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
+import { SponsoredResearchReportsCard } from '~/components/Research/SponsoredResearchReportsCard'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { TokenLogo } from '~/components/TokenLogo'
 import { IrTabLabel } from '~/containers/Investors/IrTabLabel'
@@ -25,6 +26,7 @@ const InvestorRelationsView = lazy(() =>
 export function ChainOverview(props: IChainOverviewData) {
 	const router = useRouter()
 	const entitySlug = slug(props.metadata.name)
+	const researchSponsorEntitySlug = props.researchSponsorEntitySlug ?? entitySlug
 	const irDashboard = getMainSiteIrDashboard('chain', entitySlug)
 	const showInvestorRelations = !!irDashboard
 	const irActive = showInvestorRelations && router.query.tab === 'investor-relations'
@@ -136,6 +138,14 @@ export function ChainOverview(props: IChainOverviewData) {
 									</Card>
 								))}
 							</div>
+						) : null}
+						{props.metadata.name !== 'All' ? (
+							<SponsoredResearchReportsCard
+								reports={props.sponsoredResearchReports}
+								entityType="chain"
+								entitySlug={researchSponsorEntitySlug}
+								layout="grid"
+							/>
 						) : null}
 						<NewsletterSignup layout="strip" />
 						{props.protocolRankings.total > 0 ? (

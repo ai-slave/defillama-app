@@ -4,6 +4,7 @@ import { tvlOptions } from '~/components/Filters/options'
 import { TRADFI_API } from '~/constants'
 import { fetchAdapterChainMetrics, fetchAdapterProtocolMetrics, fetchCexVolume } from '~/containers/AdapterMetrics/api'
 import { REV_PROTOCOLS } from '~/containers/AdapterMetrics/constants'
+import { getSponsoredResearchReports } from '~/containers/Articles/api'
 import { fetchChainsAssetTotals } from '~/containers/BridgedTVL/api'
 import { getBridgeChainNetInflows } from '~/containers/Bridges/queries.server'
 import { fetchChainChart } from '~/containers/Chains/api'
@@ -204,7 +205,8 @@ export async function getChainOverviewData({
 	protocolLlamaswapDataset = null,
 	rwaChainsForActiveMcap = null,
 	tokenDirectory = null,
-	phaseTimer
+	phaseTimer,
+	researchSponsorEntitySlug
 }: {
 	chain: string
 	chainMetadata: Record<string, IChainMetadata>
@@ -214,6 +216,7 @@ export async function getChainOverviewData({
 	rwaChainsForActiveMcap?: string[] | null
 	tokenDirectory?: TokenDirectory | null
 	phaseTimer?: RoutePhaseTimer
+	researchSponsorEntitySlug?: string
 }): Promise<IChainOverviewData | null> {
 	const resolvedChainMetadata =
 		chain === 'All'
@@ -266,6 +269,16 @@ export async function getChainOverviewData({
 		metadata: currentChainMetadata,
 		chain
 	})
+	const sponsoredResearchReportsPromise = timePhase(
+		'research_sponsors',
+		() =>
+			chain === 'All'
+				? Promise.resolve([])
+				: getSponsoredResearchReports('chain', researchSponsorEntitySlug ?? slug(currentChainMetadata.name), {
+						limit: 3
+					}).then((result) => result.reports),
+		{ fallback: [] }
+	)
 	try {
 		const [
 			chartData,
@@ -291,7 +304,8 @@ export async function getChainOverviewData({
 			datInflows,
 			stablecoinsData,
 			chainConfig,
-			rwaStats
+			rwaStats,
+			sponsoredResearchReports
 		] = await Promise.all([
 			timePhase('chain_chart', () => fetchChainChart(chain === 'All' ? undefined : currentChainMetadata.name), {
 				fallback: emptyLiteChart()
@@ -470,7 +484,8 @@ export async function getChainOverviewData({
 			),
 			timePhase('rwa_stats', () => (shouldFetchRwaActiveMcap ? fetchRWAStats() : Promise.resolve(null)), {
 				fallback: null
-			})
+			}),
+			sponsoredResearchReportsPromise
 		])
 		const { protocols: allProtocols, snapshot: rankingsSnapshot, availableActivityMetrics } = protocolRankingsSnapshot
 		const { chains, feeProtocols, dexs, perps } = protocolRankingsSnapshot.source
@@ -716,7 +731,9 @@ export async function getChainOverviewData({
 					return { name: coinData?.name ?? coin, url: `/stablecoin/${coin}`, symbol: coinData?.symbol ?? null }
 				}) ?? null,
 			website: chainConfig?.website ?? null,
-			warningBanners: getChainWarningBanners(chainConfig?.warningBanners)
+			warningBanners: getChainWarningBanners(chainConfig?.warningBanners),
+			sponsoredResearchReports,
+			researchSponsorEntitySlug: researchSponsorEntitySlug ?? slug(currentChainMetadata.name)
 		}
 		stopOverviewTransform?.()
 		return result
