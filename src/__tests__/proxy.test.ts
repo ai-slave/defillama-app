@@ -176,7 +176,7 @@ describe('investors proxy routing', () => {
 			expect(rewriteUrl(response)).toBe('https://investors.defillama.com/404')
 		}
 
-		for (const projectId of ['flare']) {
+		for (const projectId of ['flare', 'kpk']) {
 			const response = proxy(pageRequest(`https://investors.defillama.com/${projectId}`))
 
 			expect(rewriteUrl(response)).toBe('https://investors.defillama.com/404')
@@ -186,7 +186,7 @@ describe('investors proxy routing', () => {
 	it('serves preview investor projects on the investors domain when preview is enabled', async () => {
 		const { proxy, investorsConfig } = await loadProxyWithInvestorsConfig('investors', 'true')
 
-		expect(investorsConfig.INVESTORS_PROTOCOL_IDS).toEqual(['spark', 'sonic', 'near', 'thorchain', 'flare'])
+		expect(investorsConfig.INVESTORS_PROTOCOL_IDS).toEqual(['spark', 'sonic', 'near', 'thorchain', 'flare', 'kpk'])
 
 		for (const projectId of investorsConfig.INVESTORS_PROTOCOL_IDS) {
 			const response = proxy(pageRequest(`https://investors.defillama.com/${projectId}`))
@@ -246,7 +246,7 @@ describe('investors landing links', () => {
 	it('keeps coming-soon projects on the investors landing page but not routable as dashboards', async () => {
 		const { proxy, investorsConfig } = await loadProxyWithInvestorsConfig('investors')
 
-		expect(investorsConfig.INVESTORS_COMING_SOON_PROJECTS.map((project) => project.id)).toEqual(['flare'])
+		expect(investorsConfig.INVESTORS_COMING_SOON_PROJECTS.map((project) => project.id)).toEqual(['flare', 'kpk'])
 		expect(investorsConfig.INVESTORS_LANDING_PROJECTS.map((project) => project.id)).toEqual([
 			'spark',
 			'sonic',
@@ -264,16 +264,16 @@ describe('investors landing links', () => {
 	it('keeps preview investor dashboards as coming-soon cards rather than active landing dashboards', async () => {
 		const config = await loadInvestorsConfig('investors', 'true')
 
-		expect(config.INVESTORS_PROTOCOL_IDS).toEqual(['spark', 'sonic', 'near', 'thorchain', 'flare'])
+		expect(config.INVESTORS_PROTOCOL_IDS).toEqual(['spark', 'sonic', 'near', 'thorchain', 'flare', 'kpk'])
 		expect(config.INVESTORS_LANDING_PROJECTS.map((project) => project.id)).toEqual([
 			'spark',
 			'sonic',
 			'near',
 			'thorchain'
 		])
-		expect(config.INVESTORS_COMING_SOON_PROJECTS.map((project) => project.id)).toEqual(['flare'])
+		expect(config.INVESTORS_COMING_SOON_PROJECTS.map((project) => project.id)).toEqual(['flare', 'kpk'])
 
-		for (const projectId of ['flare'] as const) {
+		for (const projectId of ['flare', 'kpk'] as const) {
 			expect(config.getInvestorsLandingProjectHref(projectId)).toBe(`/${projectId}`)
 			expect(config.isInvestorsLandingProjectExternal(projectId)).toBe(false)
 		}

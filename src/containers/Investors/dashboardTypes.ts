@@ -16,6 +16,11 @@ export interface DashboardTabConfig {
 	externalHref?: string
 	/** Tooltip shown on an external-link tab (e.g. "Opens Octav in a new tab"). */
 	externalTooltip?: string
+	/**
+	 * Renders a "Coming soon" chip beside the label. The tab stays selectable — without a
+	 * `component` it shows the shared placeholder panel, which says the same thing again.
+	 */
+	comingSoon?: boolean
 }
 
 export interface DashboardModule {

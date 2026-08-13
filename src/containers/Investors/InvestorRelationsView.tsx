@@ -2,7 +2,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
 import { ContentReadyContext } from './ContentReadyContext'
 import { CustomServerDataContext } from './CustomServerDataContext'
-import { CustomOnlyContent, DEFAULT_TABS, InvestorsContent, SkeletonTable } from './DashboardTabsContent'
+import { CustomOnlyContent, DEFAULT_TABS, InvestorsContent, SkeletonTable, TabLabel } from './DashboardTabsContent'
 import type { DashboardModule, DashboardTabConfig } from './dashboardTypes'
 import { getDashboardModule } from './registry'
 
@@ -30,7 +30,7 @@ function PillStrip({
 							title={tab.externalTooltip ?? 'Opens in a new tab on a third-party site'}
 							className="flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap text-pro-text-secondary transition-colors hover:bg-sl-hover-bg hover:text-pro-text-primary"
 						>
-							{tab.label}
+							<TabLabel tab={tab} />
 							<svg
 								viewBox="0 0 24 24"
 								fill="none"
@@ -60,7 +60,7 @@ function PillStrip({
 								: 'text-pro-text-secondary hover:bg-sl-hover-bg hover:text-pro-text-primary'
 						}`}
 					>
-						{tab.label}
+						<TabLabel tab={tab} />
 					</button>
 				)
 			})}

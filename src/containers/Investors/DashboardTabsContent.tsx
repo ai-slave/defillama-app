@@ -69,6 +69,18 @@ function ComingSoonSection({ label }: { label: string }) {
 
 export const DEFAULT_TABS: DashboardTabConfig[] = [{ id: 'dashboard', label: 'Overview' }]
 
+export function TabLabel({ tab }: { tab: DashboardTabConfig }) {
+	if (!tab.comingSoon) return <>{tab.label}</>
+	return (
+		<span className="flex items-center gap-1.5">
+			{tab.label}
+			<span className="rounded border border-pro-cards-border px-1 py-px text-[9.5px] font-normal tracking-wide text-pro-text-tertiary">
+				Coming soon
+			</span>
+		</span>
+	)
+}
+
 function DashboardTabInner() {
 	const { items } = useProDashboardItemsState()
 	const { protocolsLoading } = useProDashboardCatalog()

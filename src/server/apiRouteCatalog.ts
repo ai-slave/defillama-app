@@ -116,6 +116,7 @@ export const allApiRoutePaths = [
 	'hyperliquid/spot',
 	'icon-proxy',
 	'income-statement',
+	'kpk/[tab]',
 	'liquidations',
 	'liquidations/[protocol]',
 	'liquidations/[protocol]/[chain]',

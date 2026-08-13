@@ -4,7 +4,7 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { INVESTORS_PROJECTS, SHOW_INVESTORS_COMING_SOON_PROJECT, isInvestorsEnabled } from './config'
 import { ContentReadyContext } from './ContentReadyContext'
 import { CustomServerDataContext } from './CustomServerDataContext'
-import { CustomOnlyContent, DEFAULT_TABS, InvestorsContent, SkeletonTable } from './DashboardTabsContent'
+import { CustomOnlyContent, DEFAULT_TABS, InvestorsContent, SkeletonTable, TabLabel } from './DashboardTabsContent'
 import type { DashboardModule, DashboardTabConfig } from './dashboardTypes'
 import { Logo } from './Logo'
 import { getDashboardModule } from './registry'
@@ -258,7 +258,7 @@ function InvestorsShell({
 																		: 'text-pro-text-secondary hover:bg-sl-hover-bg hover:text-pro-text-primary'
 																}`}
 															>
-																{tab.label}
+																<TabLabel tab={tab} />
 															</button>
 														)}
 													</div>

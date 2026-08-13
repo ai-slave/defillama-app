@@ -8,7 +8,8 @@ export const ALL_INVESTORS_PROJECTS = [
 	{ id: 'near', name: 'NEAR', dashboardId: 'n34rr3v3nu3d4sh', customOnly: true },
 	{ id: 'flare', name: 'Flare', dashboardId: 'fl4r3d4shb0ard1', customOnly: true },
 	{ id: 'odyssey-ecosystem', name: 'Odyssey Ecosystem', dashboardId: '0dyss3y3c0sys7m1', customOnly: true },
-	{ id: 'thorchain', name: 'THORChain', dashboardId: 'bfqwxro9m0xnc9z', customOnly: true }
+	{ id: 'thorchain', name: 'THORChain', dashboardId: 'bfqwxro9m0xnc9z', customOnly: true },
+	{ id: 'kpk', name: 'KPK', dashboardId: 'kpk1nv3st0rsd4s', customOnly: true }
 ] as const
 
 export type InvestorsProject = (typeof ALL_INVESTORS_PROJECTS)[number]
@@ -20,7 +21,7 @@ const INVESTORS_LIVE_PROJECT_IDS = [
 	'near',
 	'thorchain'
 ] as const satisfies readonly InvestorsProjectId[]
-const INVESTORS_PREVIEW_PROJECT_IDS = ['flare'] as const satisfies readonly InvestorsProjectId[]
+const INVESTORS_PREVIEW_PROJECT_IDS = ['flare', 'kpk'] as const satisfies readonly InvestorsProjectId[]
 const INVESTORS_PREVIEW_ENABLED = process.env.NEXT_PUBLIC_INVESTORS_PREVIEW === 'true'
 const INVESTORS_DOMAIN_PROJECT_IDS = [
 	...INVESTORS_LIVE_PROJECT_IDS,

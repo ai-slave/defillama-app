@@ -165,6 +165,7 @@ export const config = {
 		'/near',
 		'/flare',
 		'/odyssey-ecosystem',
-		'/thorchain'
+		'/thorchain',
+		'/kpk'
 	]
 }
