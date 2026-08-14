@@ -110,22 +110,28 @@ describe('article banners', () => {
 		expect(articleHtml).not.toContain('Section strip')
 	})
 
-	it('keys text banner dismissals by banner id and optional API version', () => {
+	it('changes the text banner dismissal key only when the banner is edited', () => {
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
 			...emptyLookup(),
-			text: banner({ id: 'landing-text', scope: 'landing', text: 'Landing strip', dismissalVersion: '2026-08' })
+			text: banner({ id: 'landing-text', scope: 'landing', text: 'Landing strip' })
 		})
 
-		const versionedHtml = renderToStaticMarkup(<ArticleBannerStrip scope="landing" />)
-		expect(versionedHtml).toContain('announcement-token--research-banner-landing-text--2026-08')
+		const originalHtml = renderToStaticMarkup(<ArticleBannerStrip scope="landing" />)
+		expect(originalHtml).toContain('announcement-token--research-banner-landing-text--2026-05-14t00-00-00-000z')
 
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
 			...emptyLookup(),
-			text: banner({ id: 'fallback-text', scope: 'landing', text: 'Fallback strip' })
+			text: banner({
+				id: 'landing-text',
+				scope: 'landing',
+				text: 'Updated landing strip',
+				updatedAt: '2026-08-14T12:34:56.000Z'
+			})
 		})
 
-		const fallbackHtml = renderToStaticMarkup(<ArticleBannerStrip scope="landing" />)
-		expect(fallbackHtml).toContain('announcement-token--research-banner-fallback-text--v1')
+		const updatedHtml = renderToStaticMarkup(<ArticleBannerStrip scope="landing" />)
+		expect(updatedHtml).toContain('announcement-token--research-banner-landing-text--2026-08-14t12-34-56-000z')
+		expect(updatedHtml).not.toContain('announcement-token--research-banner-landing-text--2026-05-14')
 	})
 
 	it('falls back to all-articles image banners when article and section images are absent', () => {
