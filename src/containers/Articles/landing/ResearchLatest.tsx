@@ -8,12 +8,12 @@ import { articleHref } from '~/containers/Articles/landing/utils'
 import type { ArticleDocument, Banner, BannerLookupResult } from '~/containers/Articles/types'
 
 const NAV_ITEMS: Array<{ id: string; label: string; anchor: string }> = [
-	{ id: 'spotlight', label: 'Spotlight', anchor: '#spotlight' },
-	{ id: 'interviews', label: 'Interviews', anchor: '#interviews' },
+	{ id: 'spotlight', label: 'Spotlights', anchor: '#spotlight' },
 	{ id: 'reports', label: 'Reports', anchor: '#reports' },
 	{ id: 'insights', label: 'Insights', anchor: '#insights' },
-	{ id: 'clients', label: 'Trusted by', anchor: '#clients' },
-	{ id: 'collections', label: 'Collections', anchor: '#collections' }
+	{ id: 'interviews', label: 'Interviews', anchor: '#interviews' },
+	{ id: 'collections', label: 'Collections', anchor: '#collections' },
+	{ id: 'clients', label: 'Trusted by', anchor: '#clients' }
 ]
 
 type TitlePlacement = 'bottom' | 'right50' | 'right33'
@@ -182,6 +182,18 @@ export const ResearchLatest: React.FC<ResearchLatestProps> = ({ articles = [], i
 
 	return (
 		<div>
+			<div className="mb-8 flex scrollbar-none max-w-full touch-pan-x flex-nowrap gap-3 overflow-x-auto [-webkit-overflow-scrolling:touch] lg:flex-wrap lg:justify-center lg:overflow-x-visible">
+				{NAV_ITEMS.map((cat) => (
+					<Link
+						key={cat.id}
+						href={cat.anchor}
+						className="w-auto shrink-0 rounded-[4px] border border-research-accent/35 bg-transparent px-3.75 py-0.75 text-center text-sm font-medium text-research-accent-strong uppercase transition-[color,border-color,background-color,transform] duration-200 ease-out hover:border-research-accent hover:text-research-accent-strong focus-visible:border-research-accent focus-visible:text-research-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-research-accent motion-safe:hover:scale-[1.03] motion-safe:focus-visible:scale-[1.03] dark:border-research-invert dark:text-research-ink dark:hover:border-research-accent dark:hover:text-research-accent-soft dark:focus-visible:border-research-accent dark:focus-visible:text-research-accent-soft"
+					>
+						{cat.label}
+					</Link>
+				))}
+			</div>
+
 			<div className="mb-8">
 				<TitleLine title="Latest from DefiLlama Research" />
 			</div>
@@ -218,18 +230,6 @@ export const ResearchLatest: React.FC<ResearchLatestProps> = ({ articles = [], i
 					</div>
 				</div>
 			)}
-
-			<div className="grid grid-cols-2 gap-3 lg:flex lg:flex-wrap lg:justify-start">
-				{NAV_ITEMS.map((cat) => (
-					<Link
-						key={cat.id}
-						href={cat.anchor}
-						className="w-full rounded-[4px] border border-research-accent/35 bg-transparent px-3.75 py-0.75 text-center text-sm font-medium text-research-accent-strong uppercase transition-[color,border-color,background-color,transform] duration-200 ease-out hover:border-research-accent hover:text-research-accent-strong focus-visible:border-research-accent focus-visible:text-research-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-research-accent motion-safe:hover:scale-[1.03] motion-safe:focus-visible:scale-[1.03] lg:w-auto dark:border-research-invert dark:text-research-ink dark:hover:border-research-accent dark:hover:text-research-accent-soft dark:focus-visible:border-research-accent dark:focus-visible:text-research-accent-soft"
-					>
-						{cat.label}
-					</Link>
-				))}
-			</div>
 		</div>
 	)
 }

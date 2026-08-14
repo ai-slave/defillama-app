@@ -114,6 +114,19 @@ describe('ResearchLatest', () => {
 		expect(html).not.toContain('/uploads/square/banner')
 	})
 
+	it('renders the Figma navigation order before the latest articles', () => {
+		queryState.lookups.set(landingKey, emptyLookup())
+
+		const html = renderToStaticMarkup(<ResearchLatest articles={articles()} />)
+		const anchors = ['#spotlight', '#reports', '#insights', '#interviews', '#collections', '#clients']
+		const positions = anchors.map((anchor) => html.indexOf(`href="${anchor}"`))
+
+		expect(positions.every((position) => position >= 0)).toBe(true)
+		expect([...positions].sort((a, b) => a - b)).toEqual(positions)
+		expect(html).toContain('>Spotlights</a>')
+		expect(positions[5]).toBeLessThan(html.indexOf('Latest from DefiLlama Research'))
+	})
+
 	it('replaces articles 4-6 with the square banner when configured', () => {
 		queryState.lookups.set(landingKey, { ...emptyLookup(), imageSquare: squareBanner() })
 
