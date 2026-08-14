@@ -71,15 +71,16 @@ describe('Protocol Rankings hydration', () => {
 	let container: HTMLDivElement
 	let root: Root | null = null
 	let consoleError: ReturnType<typeof vi.spyOn>
+	let triggerIntersection: (() => void) | null
 
-	const hydrateTable = async () => {
+	const hydrateTable = async (page: ProtocolRankingInitialPage = initialPage) => {
 		container.innerHTML = renderToString(
-			<ChainProtocolsTable protocols={[protocol]} protocolRankings={initialPage} chain="All" showExtendedMetrics />
+			<ChainProtocolsTable protocols={[protocol]} protocolRankings={page} chain="All" showExtendedMetrics />
 		)
 		await act(async () => {
 			root = hydrateRoot(
 				container,
-				<ChainProtocolsTable protocols={[protocol]} protocolRankings={initialPage} chain="All" showExtendedMetrics />
+				<ChainProtocolsTable protocols={[protocol]} protocolRankings={page} chain="All" showExtendedMetrics />
 			)
 			await Promise.resolve()
 		})
@@ -95,12 +96,24 @@ describe('Protocol Rankings hydration', () => {
 		router.replace.mockReset()
 		rankingResponse = responsePage
 		toastError.mockReset()
+		triggerIntersection = null
 		localStorage.clear()
 		localStorage.setItem('ptcmp', 'Fees')
 		localStorage.setItem('ptcp', '7d')
 		vi.stubGlobal(
 			'fetch',
 			vi.fn(async () => ({ ok: true, status: 200, json: async () => rankingResponse }) as Response)
+		)
+		vi.stubGlobal(
+			'IntersectionObserver',
+			class {
+				constructor(callback: IntersectionObserverCallback) {
+					triggerIntersection = () =>
+						callback([{ isIntersecting: true } as IntersectionObserverEntry], this as unknown as IntersectionObserver)
+				}
+				observe() {}
+				disconnect() {}
+			}
 		)
 		consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
 		container = document.createElement('div')
@@ -152,6 +165,50 @@ describe('Protocol Rankings hydration', () => {
 		expect(toastError).toHaveBeenCalledWith("Couldn't update rankings. Please retry.", {
 			id: 'protocol-rankings-update-error'
 		})
+	})
+
+	it('covers stale rows while a replacement request is pending', async () => {
+		localStorage.clear()
+		let resolveRequest: ((response: Response) => void) | undefined
+		vi.mocked(fetch).mockImplementation(
+			() =>
+				new Promise<Response>((resolve) => {
+					resolveRequest = resolve
+				})
+		)
+		await hydrateTable()
+		const search = container.querySelector<HTMLInputElement>('input[type="search"]')
+		if (!search) throw new Error('Expected protocol search input')
+
+		await act(async () => {
+			const setInputValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+			if (!setInputValue) throw new Error('Expected native input value setter')
+			setInputValue.call(search, 'aave')
+			search.dispatchEvent(new InputEvent('input', { bubbles: true }))
+			await new Promise((resolve) => setTimeout(resolve, 275))
+			await Promise.resolve()
+		})
+
+		expect(container.textContent).toContain('Updating rankings…')
+
+		await act(async () => {
+			resolveRequest?.({ ok: true, status: 200, json: async () => responsePage } as Response)
+			await Promise.resolve()
+		})
+		expect(container.textContent).not.toContain('Updating rankings…')
+	})
+
+	it('keeps infinite-scroll loading in the footer without an overlay', async () => {
+		localStorage.clear()
+		const paginatedPage = { ...initialPage, nextCursor: 'next', total: 2, hasMore: true }
+		vi.mocked(fetch).mockImplementation(() => new Promise<Response>(() => undefined))
+		await hydrateTable(paginatedPage)
+		if (!triggerIntersection) throw new Error('Expected protocol rankings scroll observer')
+
+		act(() => triggerIntersection?.())
+		await vi.waitFor(() => expect(container.textContent).toContain('Loading more protocols… 1 of 2'))
+
+		expect(container.textContent).not.toContain('Updating rankings…')
 	})
 
 	it('clears persisted ranking state and requests the default page on Reset', async () => {

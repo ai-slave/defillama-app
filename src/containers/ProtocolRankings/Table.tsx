@@ -42,6 +42,7 @@ import { PercentChange } from '~/ui/PercentChange'
 import { popoverFooterActionStyles } from '~/ui/Popover'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { TagGroup } from '~/ui/SegmentedControl'
+import { SurfaceLoadingOverlay } from '~/ui/Status'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
@@ -647,10 +648,14 @@ const ChainProtocolsTableInner = ({
 					<div className="px-2 pb-2">{secondaryToolbarControls}</div>
 				</div>
 			)}
-			<VirtualTable instance={instance} useStickyHeader={useStickyHeader} />
+			<div className="relative">
+				<VirtualTable instance={instance} useStickyHeader={useStickyHeader} />
+				{remoteEnabled && remoteRankings.isReplacing ? <SurfaceLoadingOverlay label="Updating rankings…" /> : null}
+			</div>
 			{remoteEnabled ? (
 				<TablePagesStatus
 					noun="protocols"
+					replacingLabel={null}
 					replaceFailedLabel="Couldn't update rankings."
 					sentinelRef={remoteRankings.sentinelRef}
 					error={remoteRankings.error}
