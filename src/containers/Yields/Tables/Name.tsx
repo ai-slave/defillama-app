@@ -103,7 +103,7 @@ export function PoolNameLockup({
 			{hasRiskData ? <RiskDataHint configID={configID} className={poolMeta ? 'self-end pb-0.5' : undefined} /> : null}
 			<DepegWarningIcon deviation={pegDeviation} symbol={pegTokenSymbol} consequence={pegConsequence} />
 			{exploited ? (
-				<Tooltip content="This pool involves a protocol or token affected by an exploit. Proceed with extreme caution.">
+				<Tooltip content="This pool involves a protocol or token affected by an exploit or an ongoing incident. Proceed with extreme caution.">
 					<Icon name="alert-triangle" height={14} width={14} className="shrink-0 text-data-down" />
 				</Tooltip>
 			) : null}
