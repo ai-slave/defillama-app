@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { formatFixedNumber, formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
+import { formatNumber, formatPercent, formatUsd, roundNumber } from '~/utils/numberFormat'
 import type { KpkRef } from './api'
 import { KPK_BENCH_BG, KPK_MINT_BG, KPK_MINT_BORDER, KPK_MINT_TEXT } from './chartDefaults'
 import { MILLION } from './transform'
@@ -30,7 +30,11 @@ export function pct(value: number | null | undefined, decimals = 2): string {
 /** Signed percentage points, for an APY spread over its benchmark. */
 export function signedPp(value: number | null | undefined): string {
 	if (value == null || !Number.isFinite(value)) return '—'
-	return `${value >= 0 ? '+' : '−'}${formatFixedNumber(Math.abs(value), 2)} pp`
+	return `${value >= 0 ? '+' : '−'}${formatNumber(Math.abs(value), {
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2,
+		useGrouping: false
+	})} pp`
 }
 
 export function signedBps(value: number | null | undefined): string {
@@ -84,7 +88,7 @@ export function LedgerTile({
 }) {
 	return (
 		<div className="flex min-w-0 flex-col gap-2 border-t border-pro-cards-border p-5 first:border-t-0 lg:border-t-0 lg:border-l lg:first:border-l-0 sm:[&:nth-child(-n+2)]:border-t-0">
-			<span className="text-[11px] font-medium tracking-wider text-pro-text-label uppercase">{label}</span>
+			<span className="label-sm tracking-wider text-pro-text-label uppercase">{label}</span>
 			{value == null ? (
 				<div className="h-8 w-28 animate-pulse rounded-sm bg-tertiary opacity-20" />
 			) : (
@@ -93,10 +97,10 @@ export function LedgerTile({
 					{suffix && <small className="text-sm font-normal text-pro-text-label">{suffix}</small>}
 				</span>
 			)}
-			{sub && <span className="text-[11px] leading-snug text-pro-text-secondary">{sub}</span>}
+			{sub && <span className="body-sm text-pro-text-secondary">{sub}</span>}
 			{metric && (
-				<span className="mt-auto flex items-baseline gap-1.5 border-t border-pro-cards-border pt-2.5 text-[11px] text-pro-text-secondary">
-					<b className="font-mono text-[13px] font-medium text-pro-text-primary tabular-nums">{metric}</b>
+				<span className="mt-auto flex items-baseline gap-1.5 border-t border-pro-cards-border pt-2.5 body-sm text-pro-text-secondary">
+					<b className="font-mono text-sm font-medium text-pro-text-primary tabular-nums">{metric}</b>
 					{metricLabel}
 				</span>
 			)}
@@ -112,7 +116,7 @@ export function LedgerTile({
 export function SectionHeader({ title, children }: { title: string; children?: React.ReactNode }) {
 	return (
 		<div className="flex flex-wrap items-center justify-between gap-3">
-			<h2 className="text-[13px] font-semibold text-pro-text-primary">{title}</h2>
+			<h2 className="text-sm font-semibold text-pro-text-primary">{title}</h2>
 			{children}
 		</div>
 	)
@@ -197,7 +201,7 @@ export function RefLinks({ refs }: { refs: KpkRef[] | undefined }) {
 					href={ref.url}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="rounded-md border border-pro-cards-border px-2.5 py-1 text-[11px] text-pro-text-secondary transition-colors hover:border-sl-accent hover:text-pro-text-primary"
+					className="rounded-md border border-pro-cards-border px-2.5 py-1 label-sm text-pro-text-secondary transition-colors hover:border-sl-accent hover:text-pro-text-primary"
 				>
 					{ref.label} ↗
 				</a>
@@ -209,8 +213,8 @@ export function RefLinks({ refs }: { refs: KpkRef[] | undefined }) {
 export function Disclaimer({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
 		<div className="border-t border-pro-cards-border pt-4">
-			<h3 className="mb-1.5 text-[10.5px] font-semibold tracking-wider text-pro-text-label uppercase">{title}</h3>
-			<p className="text-[11.5px] leading-relaxed text-pro-text-tertiary">{children}</p>
+			<h3 className="mb-1.5 label-xs tracking-wider text-pro-text-label uppercase">{title}</h3>
+			<p className="body-sm text-pro-text-tertiary">{children}</p>
 		</div>
 	)
 }
@@ -236,7 +240,7 @@ export function Spark({ values, label }: { values: number[] | undefined; label: 
 			.map((value, index) => {
 				const x = (index / (values.length - 1)) * 64
 				const y = range === 0 ? 9 : 16 - ((value - min) / range) * 14
-				return `${formatFixedNumber(x, 1)},${formatFixedNumber(y, 1)}`
+				return `${roundNumber(x, 1)},${roundNumber(y, 1)}`
 			})
 			.join(' ')
 	}, [values])
@@ -310,7 +314,7 @@ export function CompareBars({
 	if (value == null || benchmark == null || !(scale > 0)) return null
 	const width = (n: number) => `${Math.max(2, Math.min(100, (n / scale) * 100))}%`
 	return (
-		<span className="flex w-full min-w-[110px] flex-col gap-[3px]" role="img" aria-label={labels.value}>
+		<span className="flex w-full min-w-[110px] flex-col gap-1" role="img" aria-label={labels.value}>
 			<span className={`block h-1.5 rounded-sm ${KPK_MINT_BG}`} style={{ width: width(value) }} />
 			<span className={`block h-1.5 rounded-sm ${KPK_BENCH_BG}`} style={{ width: width(benchmark) }} />
 			<span className="sr-only">{labels.benchmark}</span>
@@ -326,7 +330,7 @@ export function Chip({ tone, children }: { tone: 'ok' | 'watch' | 'muted'; child
 				? 'border-warning/40 text-warning'
 				: 'border-pro-cards-border text-pro-text-tertiary'
 	return (
-		<span className={`inline-flex rounded-full border px-2 py-0.5 text-[10.5px] whitespace-nowrap ${toneClass}`}>
+		<span className={`inline-flex rounded-full border px-2 py-0.5 label-xs whitespace-nowrap ${toneClass}`}>
 			{children}
 		</span>
 	)
@@ -436,14 +440,14 @@ export function DataTable<Row extends object>({
 		<div className="overflow-x-auto">
 			{/* Content-sized so `nowrap` columns keep their width and scroll, but never
 			    narrower than the card when there is room to spare. */}
-			<table className="w-max min-w-full text-[12.5px]">
+			<table className="w-max min-w-full text-xs">
 				<thead>
 					<tr className="border-b border-pro-cards-border">
 						{cols.map((col) => (
 							<th
 								key={col.key}
 								style={col.width ? { width: col.width } : undefined}
-								className={`px-3 py-2.5 text-[10.5px] font-semibold tracking-wider whitespace-nowrap text-pro-text-label uppercase first:pl-0 last:pr-0 ${
+								className={`px-3 py-2.5 label-xs tracking-wider whitespace-nowrap text-pro-text-label uppercase first:pl-0 last:pr-0 ${
 									col.right ? 'text-right' : 'text-left'
 								}`}
 							>

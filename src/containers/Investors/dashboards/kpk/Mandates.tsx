@@ -37,7 +37,7 @@ function SleeveCell({ sleeve }: { sleeve: KpkMandateSleeve }) {
 	return (
 		<span className="flex flex-col items-end">
 			{pct(sleeve.mix, 0)}
-			{sleeve.alpha != null && <span className={`text-[11px] ${KPK_MINT_TEXT}`}>{signedBps(sleeve.alpha)}</span>}
+			{sleeve.alpha != null && <span className={`body-sm ${KPK_MINT_TEXT}`}>{signedBps(sleeve.alpha)}</span>}
 		</span>
 	)
 }
@@ -144,18 +144,16 @@ export default function Mandates() {
 					/>
 					<div className="mt-4 flex flex-wrap gap-8 border-t border-pro-cards-border pt-4">
 						<div className="flex flex-col gap-1">
-							<span className="text-[11px] font-medium tracking-wider text-pro-text-label uppercase">
-								Annual excess return
-							</span>
+							<span className="label-sm tracking-wider text-pro-text-label uppercase">Annual excess return</span>
 							<span className={`font-mono text-xl font-medium tabular-nums ${KPK_MINT_TEXT}`}>
 								{perf ? usdFromMillions(perf.excess) : '—'}
 							</span>
-							<span className="text-[11px] text-pro-text-secondary">
+							<span className="body-sm text-pro-text-secondary">
 								Trailing 12 months, {activeDenom ?? '—'}-denominated
 							</span>
 						</div>
 						<div className="flex flex-col gap-1">
-							<span className="text-[11px] font-medium tracking-wider text-pro-text-label uppercase">Benchmark</span>
+							<span className="label-sm tracking-wider text-pro-text-label uppercase">Benchmark</span>
 							<span className="text-sm text-pro-text-primary">{perf?.benchLabel ?? '—'}</span>
 						</div>
 					</div>

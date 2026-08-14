@@ -60,7 +60,7 @@ export function CompositionSection<K extends string>({
 					)}
 				</Card>
 				<Card>
-					<h3 className="mb-2 text-[11px] font-medium tracking-wider text-pro-text-label uppercase">
+					<h3 className="mb-2 label-sm tracking-wider text-pro-text-label uppercase">
 						{model?.title ?? options.find((option) => option.key === breakdown)?.label}
 					</h3>
 					<DataTable

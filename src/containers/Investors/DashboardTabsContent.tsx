@@ -74,7 +74,7 @@ export function TabLabel({ tab }: { tab: DashboardTabConfig }) {
 	return (
 		<span className="flex items-center gap-1.5">
 			{tab.label}
-			<span className="rounded border border-pro-cards-border px-1 py-px text-[9.5px] font-normal tracking-wide text-pro-text-tertiary">
+			<span className="rounded-sm border border-pro-cards-border px-1 py-px label-xs tracking-wide text-pro-text-tertiary">
 				Coming soon
 			</span>
 		</span>

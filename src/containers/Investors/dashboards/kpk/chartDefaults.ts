@@ -52,11 +52,11 @@ export const kpkPalette = (isDark: boolean): readonly string[] => (isDark ? KPK_
  * without a render-time theme read. Mint carries KPK's own figures, periwinkle the
  * benchmark it is measured against — the same division as the mockup.
  */
-export const KPK_MINT_TEXT = 'text-[#007556] dark:text-[#00af82]'
-export const KPK_MINT_BG = 'bg-[#007556] dark:bg-[#00af82]'
-export const KPK_MINT_BORDER = 'border-[#007556]/45 dark:border-[#00af82]/45'
-export const KPK_BENCH_TEXT = 'text-[#5865cd] dark:text-[#7384ef]'
-export const KPK_BENCH_BG = 'bg-[#5865cd] dark:bg-[#7384ef]'
+export const KPK_MINT_TEXT = 'text-sl-kpk-mint'
+export const KPK_MINT_BG = 'bg-sl-kpk-mint'
+export const KPK_MINT_BORDER = 'border-sl-kpk-mint/45'
+export const KPK_BENCH_TEXT = 'text-sl-kpk-benchmark'
+export const KPK_BENCH_BG = 'bg-sl-kpk-benchmark'
 
 /** Compact USD for chart axes and tooltips, matching the page's `$47.27m` house style. */
 function chartUsd(value: number): string {

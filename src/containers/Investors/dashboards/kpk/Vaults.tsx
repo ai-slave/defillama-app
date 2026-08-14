@@ -137,7 +137,7 @@ export default function Vaults() {
 								render: (row) => (
 									<span className="flex flex-col">
 										<span className="text-pro-text-primary">{row.name}</span>
-										<span className="text-[11px] text-pro-text-tertiary">
+										<span className="body-sm text-pro-text-tertiary">
 											{row.venue} · {row.chain}
 										</span>
 									</span>
@@ -163,7 +163,7 @@ export default function Vaults() {
 								render: (row) => (
 									<span className="flex flex-col items-end">
 										<span className={signClass(row.spreadBps)}>{signedBps(row.spreadBps)}</span>
-										{row.benchName && <span className="text-[11px] text-pro-text-tertiary">{row.benchName}</span>}
+										{row.benchName && <span className="body-sm text-pro-text-tertiary">{row.benchName}</span>}
 									</span>
 								)
 							},
