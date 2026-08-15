@@ -231,7 +231,7 @@ function SectionArticleContent({
 		)
 	}
 
-	if (error || !article) {
+	if (!article) {
 		const message = error instanceof ArticleApiError ? error.message : 'Failed to load research'
 		return (
 			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error/30 bg-error/5 p-6">

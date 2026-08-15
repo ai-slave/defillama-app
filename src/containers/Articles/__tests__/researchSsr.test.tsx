@@ -70,14 +70,17 @@ vi.mock('~/layout', () => ({
 	default: ({ children }: { children: ReactNode }) => <>{children}</>
 }))
 
-function renderWithQueryClient(element: ReactElement) {
-	const queryClient = new QueryClient({
+function createQueryClient() {
+	return new QueryClient({
 		defaultOptions: {
 			queries: {
 				retry: false
 			}
 		}
 	})
+}
+
+function renderWithQueryClient(element: ReactElement, queryClient = createQueryClient()) {
 	return renderToStaticMarkup(<QueryClientProvider client={queryClient}>{element}</QueryClientProvider>)
 }
 
@@ -424,6 +427,26 @@ describe('research SSR data loading', () => {
 			<SectionArticlePage initialArticle={article({ status: 'draft' })} initialBanners={{}} />
 		)
 		expect(html).not.toContain('Draft preview')
+	})
+
+	it('keeps the server-rendered article visible when its background refetch fails', () => {
+		const queryClient = createQueryClient()
+		const queryKey = ['research', 'article', 'canonical-research']
+		queryClient.setQueryData(queryKey, article())
+		const cachedQuery = queryClient.getQueryCache().find({ queryKey })
+		if (!cachedQuery) throw new Error('expected cached article query')
+		cachedQuery.setState({
+			error: new Error('Background refetch failed'),
+			status: 'error'
+		})
+
+		const html = renderWithQueryClient(
+			<SectionArticlePage initialArticle={article()} initialBanners={{}} />,
+			queryClient
+		)
+		expect(html).toContain('Canonical Research')
+		expect(html).toContain('Server rendered body')
+		expect(html).not.toContain("Couldn't load research")
 	})
 
 	it('returns notFound for missing articles and redirects non-canonical article urls', async () => {
