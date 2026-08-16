@@ -11,8 +11,12 @@ import type { CursorTablePage } from '~/server/tablePages/types'
  * - a query-signature change triggers a REPLACEMENT (fresh first page under
  *   the pinned version) while the existing rows stay on screen until the new
  *   page wins;
- * - a version mismatch (HTTP 409) transparently replaces at the latest
- *   version; appended rows dedupe on `getRowKey`;
+ * - a version mismatch (HTTP 409) transparently replaces at the version the
+ *   409 body names (wire field `snapshot`), falling back to an unpinned
+ *   "latest" fetch when the body names none. A heal that lands back on the
+ *   version that just mismatched (a stale CDN-cached "latest" response) is
+ *   treated as a failure — adopting it would re-409 on the next append and
+ *   loop forever. Appended rows dedupe on `getRowKey`;
  * - the returned `sentinelRef` drives loadMore via an IntersectionObserver —
  *   attach it to the status footer below the table (TablePagesStatus).
  *
@@ -88,13 +92,21 @@ export function createTablePagesReducer<Row, Page extends CursorTablePage<Row>>(
 	}
 }
 
+/** A 409 result; `version` is the server's current version when the body named one. */
+class TablePageVersionMismatch {
+	constructor(readonly version: string | null) {}
+}
+
 async function fetchPage<Row, Page extends CursorTablePage<Row>>(
 	url: string,
 	signal: AbortSignal,
 	parsePage: (json: unknown) => Page
-): Promise<Page | 'version_mismatch'> {
+): Promise<Page | TablePageVersionMismatch> {
 	const response = await fetch(url, { signal })
-	if (response.status === 409) return 'version_mismatch'
+	if (response.status === 409) {
+		const body = (await response.json().catch(() => null)) as { snapshot?: unknown } | null
+		return new TablePageVersionMismatch(typeof body?.snapshot === 'string' ? body.snapshot : null)
+	}
 	if (!response.ok) throw new Error(`Table page request failed with ${response.status}`)
 	return parsePage(await response.json())
 }
@@ -138,6 +150,8 @@ export function useTablePages<Row, Page extends CursorTablePage<Row>>({
 	// replacements forever via the signature-divergence effect below.
 	const parsePageRef = useRef(parsePage)
 	parsePageRef.current = parsePage
+	const buildPageUrlRef = useRef(buildPageUrl)
+	buildPageUrlRef.current = buildPageUrl
 	const onRequestSettledRef = useRef(onRequestSettled)
 	onRequestSettledRef.current = onRequestSettled
 	const [state, dispatch] = useReducer(reducerRef.current, {
@@ -153,7 +167,8 @@ export function useTablePages<Row, Page extends CursorTablePage<Row>>({
 	const abortRef = useRef<AbortController | null>(null)
 	const requestPendingRef = useRef(false)
 	const sourceKeyRef = useRef(sourceKey)
-	const replacementUrl = buildPageUrl({ version: state.version })
+	const pinnedVersion = state.version
+	const replacementUrl = buildPageUrl({ version: pinnedVersion })
 	const latestUrl = buildPageUrl({})
 	const appendUrl = state.nextCursor ? buildPageUrl({ version: state.version, cursor: state.nextCursor }) : null
 
@@ -172,7 +187,9 @@ export function useTablePages<Row, Page extends CursorTablePage<Row>>({
 	}, [defaultQuerySignature, initialPage, initialRows, sourceKey])
 
 	const replace = useCallback(
-		async (requestMode: 'replace' | 'append') => {
+		// `knownMismatch` skips the pinned fetch when the caller already holds a
+		// 409 for the current version — refetching it could only 409 again.
+		async (requestMode: 'replace' | 'append', knownMismatch?: TablePageVersionMismatch) => {
 			if (!enabled) return
 			abortRef.current?.abort()
 			const controller = new AbortController()
@@ -180,14 +197,25 @@ export function useTablePages<Row, Page extends CursorTablePage<Row>>({
 			const request = ++requestRef.current
 			requestPendingRef.current = true
 			dispatch({ type: 'replace-start', request })
-			const pinned = await fetchPage<Row, Page>(replacementUrl, controller.signal, parsePageRef.current).catch(
-				() => null
-			)
-			const retried =
-				pinned === 'version_mismatch'
-					? await fetchPage<Row, Page>(latestUrl, controller.signal, parsePageRef.current).catch(() => null)
+			const pinned =
+				knownMismatch ??
+				(await fetchPage<Row, Page>(replacementUrl, controller.signal, parsePageRef.current).catch(() => null))
+			// Heal a mismatch at the version the 409 named: the pinned URL is a
+			// fresh cache key, so the response is origin truth, unlike the unpinned
+			// fallback which a CDN may serve stale.
+			const healed =
+				pinned instanceof TablePageVersionMismatch
+					? await fetchPage<Row, Page>(
+							pinned.version ? buildPageUrlRef.current({ version: pinned.version }) : latestUrl,
+							controller.signal,
+							parsePageRef.current
+						).catch(() => null)
 					: pinned
-			const page = retried === 'version_mismatch' ? null : retried
+			const page =
+				healed instanceof TablePageVersionMismatch ||
+				(healed && pinned instanceof TablePageVersionMismatch && healed.version === pinnedVersion)
+					? null
+					: healed
 			const isCurrent = requestRef.current === request
 			if (isCurrent) requestPendingRef.current = false
 			if (controller.signal.aborted || !isCurrent) return
@@ -199,7 +227,7 @@ export function useTablePages<Row, Page extends CursorTablePage<Row>>({
 				onRequestSettledRef.current?.({ mode: requestMode, status: 'error' })
 			}
 		},
-		[enabled, latestUrl, querySignature, replacementUrl]
+		[enabled, latestUrl, pinnedVersion, querySignature, replacementUrl]
 	)
 
 	useEffect(() => {
@@ -229,8 +257,8 @@ export function useTablePages<Row, Page extends CursorTablePage<Row>>({
 		const isCurrent = requestRef.current === request
 		if (isCurrent) requestPendingRef.current = false
 		if (controller.signal.aborted || !isCurrent) return
-		if (page === 'version_mismatch') {
-			void replace('append')
+		if (page instanceof TablePageVersionMismatch) {
+			void replace('append', page)
 			return
 		}
 		if (page) {

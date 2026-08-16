@@ -44,7 +44,7 @@ function page(id: string, overrides: Partial<Page> = {}): Page {
 	return { rows: [row(id)], nextCursor: null, version: 'v-initial', total: 1, hasMore: false, ...overrides }
 }
 
-function response(body: Page | { error: string }, status = 200): Response {
+function response(body: Page | { error: string; snapshot?: string }, status = 200): Response {
 	return { ok: status >= 200 && status < 300, status, json: async () => body } as Response
 }
 
@@ -105,6 +105,19 @@ describe('useTablePages cursor mode', () => {
 		expect(latest.isReplacing).toBe(false)
 	})
 
+	it('replaces against the pinned version, then re-pins to the version a 409 names', async () => {
+		await render('sig:changed')
+		expect(pending[0]?.url).toContain('version=v-initial')
+
+		await act(async () => pending[0]?.resolve(response({ error: 'snapshot_mismatch', snapshot: 'v-rotated' }, 409)))
+		expect(pending).toHaveLength(2)
+		expect(pending[1]?.url).toContain('version=v-rotated')
+
+		await act(async () => pending[1]?.resolve(response(page('fresh', { version: 'v-rotated' }))))
+		expect(latest.rows.map((item) => item.id)).toEqual(['fresh'])
+		expect(latest.version).toBe('v-rotated')
+	})
+
 	it('replaces against the pinned version, then retries at latest on 409', async () => {
 		await render('sig:changed')
 		expect(pending[0]?.url).toContain('version=v-initial')
@@ -130,32 +143,57 @@ describe('useTablePages cursor mode', () => {
 		expect(latest.isLoadingMore).toBe(false)
 	})
 
-	it('recovers from an append 409 by replacing at the latest version', async () => {
+	it('recovers from an append 409 by replacing at the version the 409 names', async () => {
 		await render(DEFAULT_SIGNATURE)
 		act(() => void latest.loadMore())
 		expect(pending[0]?.url).toContain('cursor=next')
 
-		await act(async () => pending[0]?.resolve(response({ error: 'snapshot_mismatch' }, 409)))
+		await act(async () => pending[0]?.resolve(response({ error: 'snapshot_mismatch', snapshot: 'v-rotated' }, 409)))
 		expect(pending).toHaveLength(2)
-		expect(pending[1]?.url).toContain('version=v-initial')
+		expect(pending[1]?.url).toContain('version=v-rotated')
 		expect(pending[1]?.url).not.toContain('cursor=')
 
-		await act(async () => pending[1]?.resolve(response({ error: 'snapshot_mismatch' }, 409)))
-		expect(pending).toHaveLength(3)
-		expect(pending[2]?.url).not.toContain('version=')
-
-		await act(async () => pending[2]?.resolve(response(page('restarted', { version: 'v-rotated' }))))
+		await act(async () => pending[1]?.resolve(response(page('restarted', { version: 'v-rotated' }))))
 		expect(latest.rows.map((item) => item.id)).toEqual(['restarted'])
 		expect(latest.version).toBe('v-rotated')
+	})
+
+	it('falls back to an unpinned replacement when the append 409 names no version', async () => {
+		await render(DEFAULT_SIGNATURE)
+		act(() => void latest.loadMore())
+
+		await act(async () => pending[0]?.resolve(response({ error: 'snapshot_mismatch' }, 409)))
+		expect(pending).toHaveLength(2)
+		expect(pending[1]?.url).not.toContain('version=')
+		expect(pending[1]?.url).not.toContain('cursor=')
+
+		await act(async () => pending[1]?.resolve(response(page('restarted', { version: 'v-rotated' }))))
+		expect(latest.rows.map((item) => item.id)).toEqual(['restarted'])
+		expect(latest.version).toBe('v-rotated')
+	})
+
+	it('fails instead of adopting a heal that returns the mismatched version', async () => {
+		await render(DEFAULT_SIGNATURE)
+		act(() => void latest.loadMore())
+
+		await act(async () => pending[0]?.resolve(response({ error: 'snapshot_mismatch' }, 409)))
+		// A stale CDN-cached "latest" still naming the mismatched version would
+		// re-409 the next append forever; the hook must stop, not loop.
+		await act(async () =>
+			pending[1]?.resolve(response(page('stale', { version: 'v-initial', hasMore: true, nextCursor: 'next' })))
+		)
+
+		expect(latest.error).toBe('append')
+		expect(latest.rows.map((item) => item.id)).toEqual(['ssr'])
+		expect(pending).toHaveLength(2)
 	})
 
 	it('keeps a failed append recovery classified as an append failure', async () => {
 		await render(DEFAULT_SIGNATURE)
 		act(() => void latest.loadMore())
 
-		await act(async () => pending[0]?.resolve(response({ error: 'snapshot_mismatch' }, 409)))
-		await act(async () => pending[1]?.resolve(response({ error: 'snapshot_mismatch' }, 409)))
-		await act(async () => pending[2]?.resolve(response(page('unused'), 403)))
+		await act(async () => pending[0]?.resolve(response({ error: 'snapshot_mismatch', snapshot: 'v-rotated' }, 409)))
+		await act(async () => pending[1]?.resolve(response(page('unused'), 403)))
 
 		expect(latest.error).toBe('append')
 		expect(latest.rows.map((item) => item.id)).toEqual(['ssr'])
