@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { memo, useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import { BasicLink } from '~/components/Link'
 import type { MemoryEntry } from '~/containers/LlamaAI/api/agentHome'
 import type { TelegramStatus } from '~/containers/LlamaAI/api/telegram'
 import { getIntegrationRowResetKey, IntegrationRow } from '~/containers/LlamaAI/components/IntegrationRow'
@@ -609,6 +610,23 @@ export const SettingsModal = memo(function SettingsModal({
 												title="Slack"
 												description="Receive scheduled alerts in your Slack channels. Multi-workspace supported."
 											/>
+											<div className="rounded-xl border border-ai-line-subtle bg-ai-hover-faint p-4">
+												<div className="flex flex-wrap items-start justify-between gap-3">
+													<div className="min-w-0 flex-1">
+														<p className="m-0 text-sm font-medium text-ai-primary">Mobile app</p>
+														<p className="m-0 mt-0.5 text-xs text-ai-tertiary">
+															Chat with LlamaAI and receive alerts on your phone. iOS and Android.
+														</p>
+													</div>
+													<BasicLink
+														href="/app"
+														data-umami-event="mobile-app-settings-click"
+														className="shrink-0 rounded-lg bg-ai-accent-blue-deep px-3 py-1.5 text-xs whitespace-nowrap text-ai-white hover:bg-ai-accent-blue-deep/90"
+													>
+														Get the app
+													</BasicLink>
+												</div>
+											</div>
 										</div>
 									)}
 								</div>

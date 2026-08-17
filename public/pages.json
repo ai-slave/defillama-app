@@ -1127,8 +1127,16 @@
       "icon": "users"
     },
     {
+      "name": "Mobile App",
+      "route": "/app",
+      "icon": "smartphone",
+      "isNew": true,
+      "umamiEvent": "nav-mobile-app-click"
+    },
+    {
       "name": "LlamaAI",
-      "route": "/ai"
+      "route": "/ai",
+      "umamiEvent": "nav-llamaai-click"
     },
     {
       "name": "Downloads",

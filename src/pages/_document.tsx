@@ -15,6 +15,7 @@ export default function Document() {
 				<link rel="icon" href="/favicon.ico" />
 				<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
 				<link rel="manifest" href="/manifest.json" />
+				<meta name="apple-itunes-app" content="app-id=6761379469" />
 				<link href="/fonts/inter.woff2" rel="preload" as="font" type="font/woff2" crossOrigin="anonymous" />
 				<link href="/fonts/jetbrains.ttf" rel="preload" as="font" type="font/ttf" crossOrigin="anonymous" />
 				<link href="/icons/v43.svg" rel="prefetch" as="image" type="image/svg+xml" />

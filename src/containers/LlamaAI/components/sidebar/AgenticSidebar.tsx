@@ -12,6 +12,7 @@ import {
 	useState
 } from 'react'
 import { useAuthContext } from '~/auth'
+import { BasicLink } from '~/components/Link'
 import { useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
 import { AgenticSessionItem } from '~/containers/LlamaAI/components/sidebar/AgenticSessionItem'
 import { SearchResults } from '~/containers/LlamaAI/components/sidebar/SearchResults'
@@ -640,21 +641,35 @@ export function AgenticSidebar({
 						Delete{selectedSessionIds.size > 0 ? ` (${selectedSessionIds.size})` : ''}
 					</button>
 				</footer>
-			) : onOpenSettings ? (
-				<button
-					type="button"
-					onClick={onOpenSettings}
-					className="flex min-h-[52px] w-full shrink-0 items-center gap-2.5 border-t border-ai-line px-4 py-3 text-left text-xs text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary"
-				>
-					<div className="relative">
-						<Icon name="settings" height={14} width={14} />
-						{hasCustomInstructions ? (
-							<span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-ai-accent-blue-deep" />
-						) : null}
-					</div>
-					<span>Settings</span>
-				</button>
-			) : null}
+			) : (
+				<footer className="flex min-h-[52px] shrink-0 items-stretch border-t border-ai-line">
+					{onOpenSettings ? (
+						<button
+							type="button"
+							onClick={onOpenSettings}
+							className="flex min-w-0 flex-1 items-center gap-2.5 px-4 py-3 text-left text-xs text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary"
+						>
+							<div className="relative">
+								<Icon name="settings" height={14} width={14} />
+								{hasCustomInstructions ? (
+									<span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-ai-accent-blue-deep" />
+								) : null}
+							</div>
+							<span>Settings</span>
+						</button>
+					) : (
+						<span className="flex-1" />
+					)}
+					<Tooltip
+						content="Get the mobile app · iOS & Android"
+						render={<BasicLink href="/app" data-umami-event="mobile-app-chat-sidebar-click" />}
+						className="flex shrink-0 items-center justify-center px-4 text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary"
+					>
+						<Icon name="download" height={14} width={14} />
+						<span className="sr-only">Get the mobile app</span>
+					</Tooltip>
+				</footer>
+			)}
 
 			{isTopupModalOpen ? (
 				<Suspense fallback={<></>}>

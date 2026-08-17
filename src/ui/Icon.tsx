@@ -3,6 +3,8 @@ import { type SVGProps } from 'react'
 const ICON_NAMES = [
 	'arrow-up-right',
 	'download-cloud',
+	'download',
+	'smartphone',
 	'chevron-up',
 	'chevron-down',
 	'chevron-left',

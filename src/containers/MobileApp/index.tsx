@@ -110,6 +110,7 @@ export function useDevicePlatform(): 'ios' | 'android' | null {
 // own dark buttons so the pair matches in weight, corners and height in both themes.
 // Fixed button size keeps the pair identical; artwork fills the height and centers.
 const storeButtonSizeClassNames = {
+	sm: 'h-10 w-34',
 	md: 'h-12 w-44 md:h-14 md:w-[196px]',
 	lg: 'h-14 w-full max-w-[300px]'
 } as const
