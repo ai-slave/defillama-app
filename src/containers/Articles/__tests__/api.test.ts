@@ -3,6 +3,8 @@ import {
 	ArticleApiError,
 	getSponsoredResearchReports,
 	getAllArticlesBanner,
+	getLandingBanner,
+	getTrustedBySection,
 	linkResearchSponsorReport,
 	listArticlePaths,
 	listArticles,
@@ -231,6 +233,39 @@ describe('articles api client', () => {
 
 		const url = new URL(fetchFn.mock.calls[0][0])
 		expect(url.pathname).toBe('/banners/lookup/all-articles')
+	})
+
+	it('strips PocketBase creator ids from public banner and trusted-by lookups', async () => {
+		const bannerFetch = createFetchMock(
+			new Response(
+				JSON.stringify({
+					text: {
+						id: 'banner-id',
+						type: 'text',
+						createdByPbUserId: 'banner-creator-id'
+					},
+					image: null,
+					imageHorizontal: null,
+					promo: null,
+					imageSquare: null
+				})
+			)
+		)
+		const trustedByFetch = createFetchMock(
+			new Response(
+				JSON.stringify({
+					logos: [{ id: 'logo-id', createdByPbUserId: 'logo-creator-id' }],
+					mentions: [{ id: 'mention-id', createdByPbUserId: 'mention-creator-id' }]
+				})
+			)
+		)
+
+		const banner = await getLandingBanner(bannerFetch)
+		const trustedBy = await getTrustedBySection(trustedByFetch)
+
+		expect(banner.text).not.toHaveProperty('createdByPbUserId')
+		expect(trustedBy.logos[0]).not.toHaveProperty('createdByPbUserId')
+		expect(trustedBy.mentions[0]).not.toHaveProperty('createdByPbUserId')
 	})
 
 	it('requests sponsored reports by canonical entity identity with a cache nonce', async () => {

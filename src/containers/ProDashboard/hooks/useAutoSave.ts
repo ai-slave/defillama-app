@@ -15,7 +15,7 @@ interface UseAutoSaveOptions {
 	customTimePeriod: CustomTimePeriod | null
 	isAuthenticated: boolean
 	isReadOnly: boolean
-	currentDashboard: { user: string; aiGenerated?: AIGeneratedData | null } | null
+	currentDashboard: { user?: string; aiGenerated?: AIGeneratedData | null } | null
 	userId: string | undefined
 	updateDashboard: (params: {
 		id: string

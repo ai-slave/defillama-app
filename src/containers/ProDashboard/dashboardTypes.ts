@@ -34,7 +34,7 @@ export type DashboardMode = 'view' | 'edit'
 export interface Dashboard {
 	id: string
 	slug?: string
-	user: string
+	user?: string
 	data: {
 		items: DashboardItemConfig[]
 		dashboardName: string

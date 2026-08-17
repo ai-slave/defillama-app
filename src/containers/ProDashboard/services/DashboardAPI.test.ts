@@ -40,7 +40,6 @@ describe('Dashboard API save contract', () => {
 			return new Response(
 				JSON.stringify({
 					id: 'dashboard-1',
-					user: 'owner-1',
 					created: '2026-01-01T00:00:00.000Z',
 					updated: '2026-01-02T00:00:00.000Z',
 					data: {
@@ -65,6 +64,7 @@ describe('Dashboard API save contract', () => {
 			configVersion: 3,
 			strategy: 'protocols'
 		})
+		expect(dashboard).not.toHaveProperty('user')
 		expect(urls).toHaveLength(1)
 		expect(urls[0]).toContain('/dashboards/slug%2Fwith-separator?_=')
 	})

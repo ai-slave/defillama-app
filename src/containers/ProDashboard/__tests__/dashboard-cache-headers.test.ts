@@ -595,6 +595,11 @@ describe('pro dashboard cache headers', () => {
 		expect(res.setHeader).toHaveBeenCalledWith('X-Accel-Buffering', 'no')
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', PUBLIC_DASHBOARD_CACHE_CONTROL)
 		expect(fetchDashboardConfigMock).toHaveBeenCalledWith('dashboard-1', null)
+		const dashboardLine = JSON.parse(String(res.write.mock.calls[0]?.[0]))
+		expect(dashboardLine.data).not.toHaveProperty('user')
+		expect(dashboardLine.data).not.toHaveProperty('aiGenerated')
+		expect(dashboardLine.data).not.toHaveProperty('collectionId')
+		expect(dashboardLine.data).not.toHaveProperty('collectionName')
 		expect(res.end).toHaveBeenCalled()
 	})
 

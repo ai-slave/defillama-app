@@ -27,7 +27,7 @@ export function useDashboardPermissions(dashboard: Dashboard | null): DashboardP
 			return {
 				isReadOnly: !isOwner,
 				isOwner,
-				dashboardOwnerId: dashboard.user
+				dashboardOwnerId: dashboard.user ?? null
 			}
 		}
 
@@ -36,7 +36,7 @@ export function useDashboardPermissions(dashboard: Dashboard | null): DashboardP
 		return {
 			isReadOnly: !isOwner || !hasActiveSubscription,
 			isOwner: isOwner && hasActiveSubscription,
-			dashboardOwnerId: dashboard.user
+			dashboardOwnerId: dashboard.user ?? null
 		}
 	}, [dashboard, user?.id, hasActiveSubscription, isAuthenticated])
 }

@@ -77,6 +77,18 @@ export function toPublicDashboardInitialRenderPayload(dashboard: Dashboard): Pub
 	}
 }
 
+export function toPublicDashboardResponse(dashboard: Dashboard): Dashboard {
+	const {
+		user: _user,
+		aiGenerated: _aiGenerated,
+		collectionId: _collectionId,
+		collectionName: _collectionName,
+		data: { aiUndoState: _aiUndoState, ...publicData },
+		...publicDashboard
+	} = dashboard
+	return { ...publicDashboard, data: publicData }
+}
+
 export function toOwnerDashboardInitialRenderPayload(dashboard: Dashboard): DashboardInitialRenderPayload {
 	return {
 		...publicFields(dashboard),

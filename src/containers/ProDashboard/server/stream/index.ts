@@ -11,6 +11,7 @@ import {
 	type DashboardStreamChunk
 } from '~/containers/ProDashboard/dashboardStreamContract'
 import { getEquitiesTableQueryKey } from '~/containers/ProDashboard/equitiesTableQueryKeys'
+import { toPublicDashboardResponse } from '~/containers/ProDashboard/initialDashboard'
 import { buildProDashboardProtocolRelations } from '~/containers/ProDashboard/protocolCatalog'
 import {
 	fetchAppMetadata,
@@ -192,7 +193,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 				: 'private, no-cache, no-store, must-revalidate'
 		)
 
-		await writeLine({ type: 'dashboard', data: dashboard })
+		await writeLine({
+			type: 'dashboard',
+			data: canCacheAtEdge && dashboard ? toPublicDashboardResponse(dashboard) : dashboard
+		})
 		if (isStreamStopped()) {
 			await endStream()
 			return

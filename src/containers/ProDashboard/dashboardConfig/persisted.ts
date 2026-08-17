@@ -610,7 +610,7 @@ export type PersistedDashboardItemConfig =
 export interface PersistedDashboard {
 	id: string
 	slug?: string
-	user: string
+	user?: string
 	data: {
 		items: PersistedDashboardItemConfig[]
 		dashboardName: string

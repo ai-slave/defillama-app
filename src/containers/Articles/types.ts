@@ -349,7 +349,7 @@ export type Banner = {
 	showOnLanding: boolean
 	excludedArticleIds: string[]
 	enabled: boolean
-	createdByPbUserId: string
+	createdByPbUserId?: string
 	createdAt: string
 	updatedAt: string
 }

@@ -665,18 +665,35 @@ const EMPTY_BANNER_LOOKUP: BannerLookupResult = {
 	imageSquare: null
 }
 
+function sanitizePublicBanner(banner: Banner | null): Banner | null {
+	if (!banner) return null
+	const { createdByPbUserId: _createdByPbUserId, ...publicBanner } = banner
+	return publicBanner
+}
+
+function sanitizePublicBannerLookup(data: BannerLookupResult | null): BannerLookupResult {
+	if (!data) return EMPTY_BANNER_LOOKUP
+	return {
+		text: sanitizePublicBanner(data.text),
+		image: sanitizePublicBanner(data.image),
+		imageHorizontal: sanitizePublicBanner(data.imageHorizontal),
+		promo: sanitizePublicBanner(data.promo),
+		imageSquare: sanitizePublicBanner(data.imageSquare)
+	}
+}
+
 export async function getLandingBanner(fetchFn: FetchLike = fetch): Promise<BannerLookupResult> {
 	const data = await parseResponse<BannerLookupResult | null>(
 		await fetchFn(articleUrlWithCacheNonce('/banners/lookup/landing'))
 	)
-	return data ?? EMPTY_BANNER_LOOKUP
+	return sanitizePublicBannerLookup(data)
 }
 
 export async function getAllArticlesBanner(fetchFn: FetchLike = fetch): Promise<BannerLookupResult> {
 	const data = await parseResponse<BannerLookupResult | null>(
 		await fetchFn(articleUrlWithCacheNonce('/banners/lookup/all-articles'))
 	)
-	return data ?? EMPTY_BANNER_LOOKUP
+	return sanitizePublicBannerLookup(data)
 }
 
 export async function getSectionBanner(
@@ -686,23 +703,34 @@ export async function getSectionBanner(
 	const data = await parseResponse<BannerLookupResult | null>(
 		await fetchFn(articleUrlWithCacheNonce(`/banners/lookup/section/${encodeURIComponent(section)}`))
 	)
-	return data ?? EMPTY_BANNER_LOOKUP
+	return sanitizePublicBannerLookup(data)
 }
 
 export async function getArticleBanner(articleId: string, fetchFn: FetchLike = fetch): Promise<BannerLookupResult> {
 	const data = await parseResponse<BannerLookupResult | null>(
 		await fetchFn(articleUrlWithCacheNonce(`/banners/lookup/article/${encodeURIComponent(articleId)}`))
 	)
-	return data ?? EMPTY_BANNER_LOOKUP
+	return sanitizePublicBannerLookup(data)
 }
 
 const EMPTY_TRUSTED_BY: TrustedByLookupResult = { logos: [], mentions: [] }
+
+function withoutPublicCreatorId<T extends object>(record: T): T {
+	const { createdByPbUserId: _createdByPbUserId, ...publicRecord } = record as T & {
+		createdByPbUserId?: string
+	}
+	return publicRecord as T
+}
 
 export async function getTrustedBySection(fetchFn: FetchLike = fetch): Promise<TrustedByLookupResult> {
 	const data = await parseResponse<TrustedByLookupResult | null>(
 		await fetchFn(articleUrlWithCacheNonce('/research/trusted-by/lookup'))
 	)
-	return data ?? EMPTY_TRUSTED_BY
+	if (!data) return EMPTY_TRUSTED_BY
+	return {
+		logos: data.logos.map(withoutPublicCreatorId),
+		mentions: data.mentions.map(withoutPublicCreatorId)
+	}
 }
 
 export async function listTrustedLogos(authorizedFetch: AuthorizedFetch): Promise<TrustedLogo[]> {
