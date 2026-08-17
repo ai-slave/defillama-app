@@ -83,6 +83,12 @@
 	   token, at which point this collapses back into --text-link. */
 	--text-link-on-tint: var(--text-link);
 
+	/* Error-colored text ON an error-tinted background (pool exploit banner).
+	   Light Text/data-down passes AA there; the dark override below lifts
+	   red-500 (only 4.2:1 on error/10 over surface) — same pattern as
+	   text-link-on-tint. */
+	--text-error-on-tint: var(--error);
+
 	/* Chips */
 	--chip-bg: #dedede; /* Chips/bg-default */
 	--chip-text: #484848; /* Chips/text-default */
@@ -168,6 +174,7 @@ html.dark {
 	--hover-row: #ffffff0f; /* States/hover-neutral-normal (dark) */
 	--hover-card: #ffffff08; /* States/hover-neutral-subtle (dark) */
 	--text-link-on-tint: #6a9be0; /* ~5.4:1 on brand-muted over surface (AA) */
+	--text-error-on-tint: #ec7a73; /* ~6:1 on error/10 over surface (AA) */
 
 	/* Chips */
 	--chip-bg: var(--neutral-800);
@@ -221,6 +228,7 @@ html.dark {
 	--color-disabled: var(--text-disabled);
 	--color-link: var(--text-link);
 	--color-link-on-tint: var(--text-link-on-tint);
+	--color-error-on-tint: var(--text-error-on-tint);
 	--color-data-up: var(--text-data-up);
 	--color-data-down: var(--text-data-down);
 	--color-data-up-alt: var(--text-data-up-alt);

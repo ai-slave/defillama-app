@@ -1,7 +1,7 @@
 import type { GetServerSideProps } from 'next'
 import { resolveApy, resolveVariant, stabilityRatingFromScore } from '~/containers/Yields/data/apy'
 import { getReferralUrls } from '~/containers/Yields/data/server/raiseValuations'
-import { readYieldsMeta, type YieldsSnapshot } from '~/containers/Yields/data/snapshot'
+import { readYieldsExploits, readYieldsMeta, type YieldsSnapshot } from '~/containers/Yields/data/snapshot'
 import type { ApyComponent } from '~/containers/Yields/data/types'
 import {
 	fetchBorrowMarketDetail,
@@ -63,7 +63,7 @@ async function buildBorrowOnlyProps(
 	id: string,
 	market: BorrowMarketDetail,
 	initialRange: PoolHistoryRange
-): Promise<Omit<PoolDetailViewProps, 'hasRisk'>> {
+): Promise<Omit<PoolDetailViewProps, 'hasRisk' | 'exploited'>> {
 	const available = market.available_history ?? { supply: false, borrow: true }
 	const metaPromise = readYieldsMeta(snapshot)
 	const [borrowHistory, meta, referralUrls] = await Promise.all([
@@ -158,13 +158,18 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 	// The risk-entry check only needs the pool id, so it runs alongside the pool data
 	// (hasVaultRisk never throws — it resolves false on any failure).
 	const { hasVaultRisk } = await import('~/containers/Yields/VaultRisk/loader')
-	const [pool, hasRisk] = await Promise.all([optionalResource(() => fetchPoolDetail(id)), hasVaultRisk(id)])
+	const [pool, hasRisk, exploits] = await Promise.all([
+		optionalResource(() => fetchPoolDetail(id)),
+		hasVaultRisk(id),
+		readYieldsExploits(snapshot)
+	])
+	const exploited = exploits.includes(id)
 	if (!pool) {
 		// Borrow-only market: no earn row, fall back to the borrow-markets detail endpoint.
 		const market = await optionalResource(() => fetchBorrowMarketDetail(id))
 		if (!market) return { notFound: true }
 		res.setHeader('cache-control', 'public, s-maxage=300, stale-while-revalidate=600')
-		return { props: { ...(await buildBorrowOnlyProps(snapshot, id, market, initialRange)), hasRisk } }
+		return { props: { ...(await buildBorrowOnlyProps(snapshot, id, market, initialRange)), hasRisk, exploited } }
 	}
 
 	// `available_history` gates the history fetch (fallback: assume supply history exists).
@@ -237,6 +242,7 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 	return {
 		props: {
 			hasRisk,
+			exploited,
 			poolId: id,
 			mode: 'pool',
 			initialRange,

@@ -54,7 +54,8 @@ vi.mock('~/containers/Yields/server/dataset.server', () => ({
 
 vi.mock('~/containers/Yields/data/snapshot', async (importOriginal) => ({
 	...(await importOriginal<typeof import('~/containers/Yields/data/snapshot')>()),
-	readYieldsMeta: getYieldsMetaMock
+	readYieldsMeta: getYieldsMetaMock,
+	readYieldsExploits: () => Promise.resolve([])
 }))
 
 vi.mock('~/containers/Yields/data/server/raiseValuations', () => ({

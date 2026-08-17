@@ -49,6 +49,7 @@ export interface PoolDetailViewProps {
 	mode: 'pool' | 'borrow'
 	// Whether a vault-risk entry exists for this pool (gates the "View risk data" link).
 	hasRisk: boolean
+	exploited: boolean
 	initialRange: PoolHistoryRange
 	symbol: string
 	name: string
@@ -148,6 +149,7 @@ export function PoolDetailView({
 	poolId,
 	mode,
 	hasRisk,
+	exploited,
 	initialRange,
 	symbol,
 	name,
@@ -199,6 +201,16 @@ export function PoolDetailView({
 	// on a summary rail once the pool content itself is wide enough for both regions.
 	return (
 		<div className="@container flex w-full flex-col gap-2">
+			{exploited ? (
+				<p
+					role="alert"
+					className="flex items-center gap-2.5 rounded-lg border border-error/30 bg-error/10 px-3 py-2.5 body-sm text-error-on-tint"
+				>
+					<Icon name="alert-triangle" height={16} width={16} className="shrink-0" />
+					This pool involves a protocol or token affected by an exploit or an ongoing incident. Proceed with extreme
+					caution.
+				</p>
+			) : null}
 			<div className="grid grid-cols-1 gap-2 @min-[90rem]:grid-cols-[minmax(320px,360px)_minmax(0,1fr)]">
 				<Card padding="sm" className="flex flex-col gap-3">
 					<PoolHeader symbol={symbol} name={name} protocol={protocol} chain={chain} />
