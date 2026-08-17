@@ -747,6 +747,10 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 	'Interest Rate Derivatives': {
 		description:
 			'Protocols where users long, short, or hedge rate-based markets such as perp funding, instead of taking directional exposure to the underlying asset'
+	},
+	'Collateral Markets': {
+		description:
+			'Protocols that connect providers of onchain collateral with applications that require committed capital, enabling collateral to be allocated and underwritten against defined financial obligations'
 	}
 }
 
