@@ -61,7 +61,8 @@ export const dynamicApiRoutePaths = [
 	'pro-dashboard/token-usage',
 	'pro-dashboard/tokens/search',
 	'roundupMarkdown',
-	'sonic/burn-stream'
+	'sonic/burn-stream',
+	'visitor-region'
 ] as const
 
 export const allApiRoutePaths = [
@@ -205,6 +206,7 @@ export const allApiRoutePaths = [
 	'tokens/charts/coingecko/[geckoId]',
 	'token-unlocks/[protocol]',
 	'token-usage/[symbol]',
+	'visitor-region',
 	'yields/borrow-markets',
 	'yields/borrow-routes',
 	'yields/earn',
