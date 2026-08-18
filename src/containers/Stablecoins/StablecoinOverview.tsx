@@ -111,6 +111,14 @@ export default function PeggedContainer(props: PeggedAssetPageProps) {
 	)
 }
 
+type PeggedAssetInfoProps = PeggedAssetPageProps & {
+	stablecoinOptions?: ReadonlyArray<{ id: string; name: string; symbol: string }>
+	onStablecoinChange?: (id: string) => void
+}
+
+const getStablecoinOptionLabel = ({ name, symbol }: { name: string; symbol: string }) =>
+	symbol && symbol !== '-' && symbol !== name ? `${name} (${symbol})` : name
+
 export const PeggedAssetInfo = ({
 	chainsUnique: _chainsUnique,
 	chainCirculatings,
@@ -121,8 +129,10 @@ export const PeggedAssetInfo = ({
 	mcap,
 	bridgeInfo,
 	blockExplorerUrl,
-	blockExplorerName
-}: PeggedAssetPageProps) => {
+	blockExplorerName,
+	stablecoinOptions,
+	onStablecoinChange
+}: PeggedAssetInfoProps) => {
 	const router = useRouter()
 	const lifecycleStatus = peggedAssetData.deadFrom
 		? `Ended on ${peggedAssetData.deadFrom}`
@@ -357,6 +367,7 @@ export const PeggedAssetInfo = ({
 
 	const hasInfo =
 		description || pegMechanism || mintRedeemDescription || (auditLinks != null && auditLinks.length > 0) || url
+	const showStablecoinMenu = stablecoinOptions != null && stablecoinOptions.length > 1 && onStablecoinChange != null
 
 	return (
 		<>
@@ -365,8 +376,25 @@ export const PeggedAssetInfo = ({
 				<SummaryStatsCard>
 					<h1 className="flex flex-wrap items-center gap-2 text-xl">
 						<TokenLogo name={name} kind="pegged" alt={`Logo of ${name}`} size={24} />
-						<span className="font-bold">{name}</span>
-						{symbol && symbol !== '-' ? <span className="font-normal">({symbol})</span> : null}
+						{showStablecoinMenu ? (
+							<span className="flex min-w-0 flex-col gap-0.5">
+								<span className="label-xs font-normal text-tertiary">Stablecoin</span>
+								<Menu
+									name={getStablecoinOptionLabel({ name, symbol })}
+									options={stablecoinOptions.map(getStablecoinOptionLabel)}
+									onItemClick={(selectedLabel) => {
+										const selectedOption = stablecoinOptions.find(
+											(option) => getStablecoinOptionLabel(option) === selectedLabel
+										)
+										if (selectedOption) onStablecoinChange(selectedOption.id)
+									}}
+									className="-ml-1 flex w-fit items-center gap-1 rounded-md px-1 py-0.5 font-bold text-primary hover:bg-hover-row focus-visible:bg-hover-row"
+								/>
+							</span>
+						) : (
+							<span className="font-bold">{name}</span>
+						)}
+						{!showStablecoinMenu && symbol && symbol !== '-' ? <span className="font-normal">({symbol})</span> : null}
 						{lifecycleStatus ? <DeprecatedProtocolMarker size={18} content={lifecycleStatus} /> : null}
 						{url ? (
 							<span className="-m-2 ml-auto flex items-center justify-end gap-1">

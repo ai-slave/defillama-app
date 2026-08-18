@@ -1,4 +1,5 @@
 import type { GetStaticPropsContext } from 'next'
+import { useState } from 'react'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
@@ -46,10 +47,10 @@ export const getStaticProps = withPerformanceLogging(
 		const seoTitle = `${protocolData.name} Stablecoin Data & Reserves - DefiLlama`
 		const seoDescription = `Track ${protocolData.name} stablecoin market cap, peg stability, chain distribution, and reserves on DefiLlama.`
 
-		const stablecoinData =
+		const stablecoinsData =
 			Array.isArray(protocolData?.stablecoins) && protocolData.stablecoins.length > 0
-				? await getStablecoinAssetPageData(protocolData.stablecoins[0])
-				: null
+				? await Promise.all(protocolData.stablecoins.map((stablecoin) => getStablecoinAssetPageData(stablecoin)))
+				: []
 
 		return {
 			props: {
@@ -57,7 +58,7 @@ export const getStaticProps = withPerformanceLogging(
 				otherProtocols: protocolData?.otherProtocols ?? [],
 				category: protocolData?.category ?? null,
 				metrics,
-				stablecoinData: stablecoinData?.props ?? null,
+				stablecoinsData: stablecoinsData.flatMap((stablecoin) => (stablecoin ? [stablecoin.props] : [])),
 				warningBanners: getProtocolWarningBanners(protocolData),
 				seoTitle,
 				seoDescription
@@ -82,6 +83,13 @@ export const getStaticPaths = () => {
 }
 
 export default function Protocols({ clientSide: _clientSide, protocolData: _protocolData, ...props }) {
+	const [selectedStablecoinId, setSelectedStablecoinId] = useState(
+		() => props.stablecoinsData[0]?.peggedAssetData.id ?? null
+	)
+	const selectedStablecoin =
+		props.stablecoinsData.find((stablecoin) => stablecoin.peggedAssetData.id === selectedStablecoinId) ??
+		props.stablecoinsData[0]
+
 	return (
 		<ProtocolOverviewLayout
 			name={props.name}
@@ -94,8 +102,17 @@ export default function Protocols({ clientSide: _clientSide, protocolData: _prot
 			seoTitle={props.seoTitle}
 			seoDescription={props.seoDescription}
 		>
-			{props.stablecoinData ? (
-				<PeggedAssetInfo {...props.stablecoinData} />
+			{selectedStablecoin ? (
+				<PeggedAssetInfo
+					key={selectedStablecoin.peggedAssetData.id}
+					{...selectedStablecoin}
+					stablecoinOptions={props.stablecoinsData.map((stablecoin) => ({
+						id: stablecoin.peggedAssetData.id,
+						name: stablecoin.peggedAssetData.name,
+						symbol: stablecoin.peggedAssetData.symbol
+					}))}
+					onStablecoinChange={setSelectedStablecoinId}
+				/>
 			) : (
 				<PanelStatus variant="error">Failed to fetch</PanelStatus>
 			)}

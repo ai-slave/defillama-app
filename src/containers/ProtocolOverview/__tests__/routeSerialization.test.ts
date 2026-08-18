@@ -1,3 +1,5 @@
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IAdapterProtocolOverview } from '~/containers/AdapterMetrics/types'
 import { getStaticProps as getProtocolStaticProps } from '~/pages/protocol/[protocol]'
@@ -5,6 +7,9 @@ import { getStaticProps as getProtocolActiveLoansStaticProps } from '~/pages/pro
 import { getStaticProps as getProtocolDexStaticProps } from '~/pages/protocol/dexs/[protocol]'
 import { getStaticProps as getProtocolFeesStaticProps } from '~/pages/protocol/fees/[protocol]'
 import { getStaticProps as getProtocolOptionsStaticProps } from '~/pages/protocol/options/[protocol]'
+import ProtocolStablecoinsPage, {
+	getStaticProps as getProtocolStablecoinsStaticProps
+} from '~/pages/protocol/stablecoins/[protocol]'
 import { getStaticProps as getProtocolTvlStaticProps } from '~/pages/protocol/tvl/[protocol]'
 import type { IProtocolOverviewPageData, IProtocolPageMetrics } from '../types'
 
@@ -15,6 +20,8 @@ const mocks = vi.hoisted(() => ({
 	getProtocolMetricFlags: vi.fn(),
 	getProtocolOverviewPageData: vi.fn(),
 	getProtocolWarningBanners: vi.fn(),
+	getStablecoinAssetPageData: vi.fn(),
+	peggedAssetInfo: vi.fn((_props: unknown) => null),
 	protocolMetadata: {}
 }))
 
@@ -37,6 +44,18 @@ vi.mock('~/containers/ProtocolOverview/queries', () => ({
 
 vi.mock('~/containers/ProtocolOverview/utils', () => ({
 	getProtocolWarningBanners: mocks.getProtocolWarningBanners
+}))
+
+vi.mock('~/containers/ProtocolOverview/Layout', () => ({
+	ProtocolOverviewLayout: ({ children }: { children: React.ReactNode }) => children
+}))
+
+vi.mock('~/containers/Stablecoins/queries.server', () => ({
+	getStablecoinAssetPageData: mocks.getStablecoinAssetPageData
+}))
+
+vi.mock('~/containers/Stablecoins/StablecoinOverview', () => ({
+	PeggedAssetInfo: mocks.peggedAssetInfo
 }))
 
 vi.mock('~/containers/ProtocolOverview/server/routes', () => ({
@@ -250,6 +269,8 @@ describe('protocol static props serialization', () => {
 		mocks.getProtocolMetricFlags.mockReset()
 		mocks.getProtocolOverviewPageData.mockReset()
 		mocks.getProtocolWarningBanners.mockReset()
+		mocks.getStablecoinAssetPageData.mockReset()
+		mocks.peggedAssetInfo.mockClear()
 		for (const protocolId of Object.keys(mocks.protocolMetadata)) {
 			Reflect.deleteProperty(mocks.protocolMetadata, protocolId)
 		}
@@ -285,6 +306,45 @@ describe('protocol static props serialization', () => {
 				toggleOptions: [{ name: 'Staking', key: 'staking' }],
 				chainsUnique: ['Ethereum']
 			}
+		})
+	})
+
+	it('loads and renders every stablecoin configured for a protocol', async () => {
+		mocks.fetchProtocolOverviewMetrics.mockResolvedValueOnce({
+			name: 'Test Protocol',
+			stablecoins: ['coin-a', 'coin-b'],
+			otherProtocols: [],
+			category: 'Stablecoin'
+		})
+		mocks.getProtocolMetricFlags.mockReturnValueOnce({ ...protocolMetrics, stablecoins: true })
+		mocks.getProtocolWarningBanners.mockReturnValueOnce([])
+		mocks.getStablecoinAssetPageData.mockImplementation(async (stablecoin: string) => ({
+			props: { peggedAssetData: { id: stablecoin, name: stablecoin, symbol: stablecoin.toUpperCase() } }
+		}))
+
+		const result = await getProtocolStablecoinsStaticProps({ params: { protocol: 'test-protocol' } })
+
+		expectJsonRoundTrip(result)
+		expect(mocks.getStablecoinAssetPageData).toHaveBeenNthCalledWith(1, 'coin-a')
+		expect(mocks.getStablecoinAssetPageData).toHaveBeenNthCalledWith(2, 'coin-b')
+		expect(result).toMatchObject({
+			props: {
+				stablecoinsData: [
+					{ peggedAssetData: { id: 'coin-a', name: 'coin-a', symbol: 'COIN-A' } },
+					{ peggedAssetData: { id: 'coin-b', name: 'coin-b', symbol: 'COIN-B' } }
+				]
+			}
+		})
+
+		renderToStaticMarkup(createElement(ProtocolStablecoinsPage, result.props))
+		expect(mocks.peggedAssetInfo).toHaveBeenCalledTimes(1)
+		expect(mocks.peggedAssetInfo.mock.calls[0]?.[0]).toMatchObject({
+			peggedAssetData: { id: 'coin-a', name: 'coin-a', symbol: 'COIN-A' },
+			stablecoinOptions: [
+				{ id: 'coin-a', name: 'coin-a', symbol: 'COIN-A' },
+				{ id: 'coin-b', name: 'coin-b', symbol: 'COIN-B' }
+			],
+			onStablecoinChange: expect.any(Function)
 		})
 	})
 
