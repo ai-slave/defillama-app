@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import React from 'react'
 import { getLandingBanner } from '~/containers/Articles/api'
+import { useEligibleBanner } from '~/containers/Articles/bannerTargeting'
 import { InViewAnalytics, pushResearchAnalyticsEvent } from '~/containers/Articles/landing/Analytics'
 import { PromoDisclosure } from '~/containers/Articles/PromoDisclosure'
 import type { BannerLookupResult } from '~/containers/Articles/types'
@@ -18,7 +19,7 @@ export const ResearchPromoBanner: React.FC<{ initialData?: BannerLookupResult | 
 		staleTime: 60_000
 	})
 
-	const banner = data?.promo ?? null
+	const banner = useEligibleBanner([data?.promo ?? null], data === undefined)
 	const imageUrl = (isMobile ? (banner?.imageMobileUrl ?? banner?.imageCardUrl) : banner?.imageWideUrl)?.trim()
 
 	if (!banner || !banner.enabled || banner.showOnLanding === false || !imageUrl) {

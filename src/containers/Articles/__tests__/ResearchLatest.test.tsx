@@ -40,6 +40,7 @@ const squareBanner = (overrides: Partial<Banner> = {}): Banner => ({
 	disclosureUrl: null,
 	showOnLanding: true,
 	excludedArticleIds: [],
+	targetCountries: [],
 	enabled: true,
 	createdByPbUserId: 'user-id',
 	createdAt: '2026-08-05T00:00:00.000Z',
@@ -155,6 +156,18 @@ describe('ResearchLatest', () => {
 		expect(html).toContain('/research/report/latest-article-6')
 		expect(html).not.toContain('/uploads/square/banner')
 		expect(html).not.toContain('https://example.com/square')
+	})
+
+	it('keeps six articles while a restricted square banner has no resolved visitor country', () => {
+		queryState.lookups.set(landingKey, {
+			...emptyLookup(),
+			imageSquare: squareBanner({ targetCountries: ['FI'] })
+		})
+
+		const html = renderToStaticMarkup(<ResearchLatest articles={articles()} />)
+
+		expect(html).toContain('/research/report/latest-article-6')
+		expect(html).not.toContain('/uploads/square/banner')
 	})
 
 	it('renders the square banner without a link when linkUrl is empty', () => {

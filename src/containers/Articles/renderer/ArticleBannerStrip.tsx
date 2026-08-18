@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { Announcement } from '~/components/Announcement'
 import { getAllArticlesBanner, getArticleBanner, getLandingBanner, getSectionBanner } from '~/containers/Articles/api'
+import { useEligibleBanner } from '~/containers/Articles/bannerTargeting'
 import { allArticlesBannerForArticle } from '~/containers/Articles/renderer/bannerExclusion'
 import type { ArticleSection, Banner, BannerLookupResult } from '~/containers/Articles/types'
 import { Icon } from '~/ui/Icon'
@@ -36,12 +37,7 @@ export function ArticleBannerStrip({ scope, section, articleId, initialData }: P
 	})
 
 	const sectionSlug = scope === 'section' ? section : scope === 'article' ? section : null
-	const sectionEnabled =
-		scope === 'section'
-			? !!section
-			: scope === 'article'
-				? !!section && !articleBannerQuery.isLoading && !articleBannerQuery.data?.text
-				: false
+	const sectionEnabled = scope === 'section' ? !!section : scope === 'article' ? !!section && !!articleId : false
 
 	const sectionBannerQuery = useQuery<BannerLookupResult>({
 		queryKey: ['research', 'banner', 'section', sectionSlug],
@@ -53,13 +49,7 @@ export function ArticleBannerStrip({ scope, section, articleId, initialData }: P
 		refetchOnMount: 'always'
 	})
 
-	const allArticlesEnabled =
-		scope === 'article' &&
-		!!articleId &&
-		!articleBannerQuery.isLoading &&
-		!articleBannerQuery.data?.text &&
-		!sectionBannerQuery.isLoading &&
-		!sectionBannerQuery.data?.text
+	const allArticlesEnabled = scope === 'article' && !!articleId
 
 	const allArticlesBannerQuery = useQuery<BannerLookupResult>({
 		queryKey: ['research', 'banner', 'all-articles'],
@@ -81,14 +71,24 @@ export function ArticleBannerStrip({ scope, section, articleId, initialData }: P
 		refetchOnMount: 'always'
 	})
 
-	const banner: Banner | null =
+	const candidates: Array<Banner | null> =
 		scope === 'article'
-			? (articleBannerQuery.data?.text ??
-				sectionBannerQuery.data?.text ??
-				allArticlesBannerForArticle(allArticlesBannerQuery.data?.text ?? null, articleId))
+			? [
+					articleBannerQuery.data?.text ?? null,
+					sectionBannerQuery.data?.text ?? null,
+					allArticlesBannerForArticle(allArticlesBannerQuery.data?.text ?? null, articleId)
+				]
 			: scope === 'section'
-				? (sectionBannerQuery.data?.text ?? null)
-				: (landingBannerQuery.data?.text ?? null)
+				? [sectionBannerQuery.data?.text ?? null]
+				: [landingBannerQuery.data?.text ?? null]
+	const candidatesLoading =
+		(scope === 'article' &&
+			(articleBannerQuery.isLoading ||
+				(sectionEnabled && sectionBannerQuery.isLoading) ||
+				allArticlesBannerQuery.isLoading)) ||
+		(scope === 'section' && sectionBannerQuery.isLoading) ||
+		(scope === 'landing' && landingBannerQuery.isLoading)
+	const banner = useEligibleBanner(candidates, candidatesLoading)
 
 	if (!banner || !banner.enabled) return null
 

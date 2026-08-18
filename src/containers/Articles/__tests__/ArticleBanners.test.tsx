@@ -51,6 +51,7 @@ const banner = (overrides: Partial<Banner>): Banner => ({
 	disclosureUrl: null,
 	showOnLanding: true,
 	excludedArticleIds: [],
+	targetCountries: [],
 	enabled: true,
 	createdByPbUserId: 'user-id',
 	createdAt: '2026-05-14T00:00:00.000Z',
@@ -236,6 +237,15 @@ describe('article banners', () => {
 			...emptyLookup(),
 			promo: promoBanner({ imageWideUrl: null })
 		})
+		expect(renderToStaticMarkup(<ResearchPromoBanner />)).toBe('')
+	})
+
+	it('does not server-render a restricted promo before visitor country resolves', () => {
+		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
+			...emptyLookup(),
+			promo: promoBanner({ targetCountries: ['FI'] })
+		})
+
 		expect(renderToStaticMarkup(<ResearchPromoBanner />)).toBe('')
 	})
 

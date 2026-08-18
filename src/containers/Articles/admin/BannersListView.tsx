@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import { ArticleApiError, deleteBanner, listBanners, updateBanner } from '~/containers/Articles/api'
+import { bannerAudienceLabel } from '~/containers/Articles/bannerCountryGroups'
 import type { Banner } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_LABELS, BANNER_KIND_LABELS, BANNER_SCOPE_LABELS } from '~/containers/Articles/types'
 
@@ -104,12 +105,15 @@ export function BannersListView() {
 							<div className="grid min-w-0 gap-1">
 								<div className="flex flex-wrap items-center gap-2">
 									<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">
-										{banner.type === 'promo' ? 'Global' : BANNER_SCOPE_LABELS[banner.scope]}
+										{banner.type === 'promo' ? 'Landing + all articles' : BANNER_SCOPE_LABELS[banner.scope]}
 										{banner.scope === 'section' && banner.section ? ` · ${ARTICLE_SECTION_LABELS[banner.section]}` : ''}
 										{banner.scope === 'article' && banner.articleId ? ` · #${banner.articleId.slice(0, 8)}` : ''}
 									</span>
 									<span className="inline-flex items-center rounded-full bg-research-tint px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.18em] text-link uppercase">
 										{BANNER_KIND_LABELS[banner.type]}
+									</span>
+									<span className="inline-flex items-center rounded-full bg-surface-elevated-1 px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.12em] text-secondary uppercase">
+										{bannerAudienceLabel(banner.targetCountries)}
 									</span>
 									<span
 										className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.18em] uppercase ${

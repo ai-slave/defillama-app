@@ -95,6 +95,7 @@ export const MultiSelectCombobox = ({
 					<div className="flex flex-wrap items-center gap-1 pl-1">
 						{selectedValues.map((value) => (
 							<button
+								type="button"
 								key={`mutliselectcombobox-selected-${value}`}
 								className="hover-wash flex items-center gap-1 rounded-md border border-brand bg-brand-muted p-1.5 label-sm text-link"
 								onClick={() => {

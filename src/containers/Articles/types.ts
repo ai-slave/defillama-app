@@ -326,7 +326,7 @@ export const BANNER_KIND_DESCRIPTIONS: Record<BannerKind, string> = {
 	text: 'Full-width dismissible strip at the top of the page',
 	image: 'Desktop image used by landing placements or the article right rail',
 	'image-horizontal': 'Wide image used by landing placements or the mobile article body',
-	promo: 'Global promo shown below Latest on the landing page and on every article',
+	promo: 'Promo shown below Latest on the landing page and on every article',
 	'image-square': 'Square promo shown inside Latest on the landing page in place of articles 4-6'
 }
 
@@ -348,6 +348,7 @@ export type Banner = {
 	disclosureUrl: string | null
 	showOnLanding: boolean
 	excludedArticleIds: string[]
+	targetCountries: string[]
 	enabled: boolean
 	createdByPbUserId?: string
 	createdAt: string
@@ -371,6 +372,7 @@ export type BannerPayload = {
 	disclosureUrl?: string | null
 	showOnLanding?: boolean
 	excludedArticleIds?: string[] | null
+	targetCountries?: string[] | null
 	enabled?: boolean
 }
 

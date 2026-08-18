@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import React from 'react'
 import { getLandingBanner } from '~/containers/Articles/api'
+import { useEligibleBanner } from '~/containers/Articles/bannerTargeting'
 import { InViewAnalytics, pushResearchAnalyticsEvent } from '~/containers/Articles/landing/Analytics'
 import { TitleLine } from '~/containers/Articles/landing/TitleLine'
 import { articleHref } from '~/containers/Articles/landing/utils'
@@ -171,12 +172,13 @@ export const ResearchLatest: React.FC<ResearchLatestProps> = ({ articles = [], i
 		retry: false,
 		staleTime: 60_000
 	})
+	const eligibleSquareBanner = useEligibleBanner([data?.imageSquare ?? null], data === undefined)
 
 	const normalized = articles.slice(0, 6).map((article, index) => normalizeItem(article, index))
 
 	if (normalized.length === 0) return null
 
-	const squareBanner = data?.imageSquare?.enabled && data.imageSquare.imageUrl?.trim() ? data.imageSquare : null
+	const squareBanner = eligibleSquareBanner?.imageUrl?.trim() ? eligibleSquareBanner : null
 
 	const [item1, item2, item3, item4, item5, item6] = normalized
 

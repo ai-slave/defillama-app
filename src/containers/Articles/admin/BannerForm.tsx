@@ -4,11 +4,28 @@ import { useRouter } from 'next/router'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
+import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
 import { ArticleMultiPicker } from '~/containers/Articles/admin/ArticleMultiPicker'
 import { ArticlePicker } from '~/containers/Articles/admin/ArticlePicker'
+import {
+	bannerToForm,
+	buildPayload,
+	DISCLOSURE_TEXT_MAX,
+	IMAGE_ALT_MAX,
+	LINK_LABEL_MAX,
+	LINK_URL_MAX,
+	TEXT_MAX,
+	validateBannerForm,
+	type BannerFormState
+} from '~/containers/Articles/admin/bannerFormState'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import { ArticleApiError, createBanner, deleteBanner, updateBanner } from '~/containers/Articles/api'
-import type { ArticleSection, Banner, BannerKind, BannerPayload, BannerScope } from '~/containers/Articles/types'
+import {
+	BANNER_COUNTRY_GROUPS,
+	BANNER_COUNTRY_OPTIONS,
+	expandBannerCountrySelection
+} from '~/containers/Articles/bannerCountryGroups'
+import type { ArticleSection, Banner, BannerKind } from '~/containers/Articles/types'
 import {
 	ARTICLE_SECTIONS,
 	ARTICLE_SECTION_LABELS,
@@ -21,184 +38,7 @@ import {
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import type { UploadScope } from '~/containers/Articles/upload/useImageUpload'
 
-const TEXT_MAX = 500
-const LINK_URL_MAX = 2000
-const LINK_LABEL_MAX = 64
-const IMAGE_ALT_MAX = 200
-const DISCLOSURE_TEXT_MAX = 64
-
-type FormState = {
-	kind: BannerKind
-	scope: BannerScope
-	section: ArticleSection | ''
-	articleId: string | null
-	excludedArticleIds: string[]
-	text: string
-	linkUrl: string
-	linkLabel: string
-	imageUrl: string
-	imageAlt: string
-	imageWideUrl: string
-	imageCardUrl: string
-	imageMobileUrl: string
-	disclosureText: string
-	disclosureUrl: string
-	showOnLanding: boolean
-	enabled: boolean
-}
-
-function bannerToForm(banner: Banner | null): FormState {
-	if (!banner) {
-		return {
-			kind: 'text',
-			scope: 'landing',
-			section: '',
-			articleId: null,
-			excludedArticleIds: [],
-			text: '',
-			linkUrl: '',
-			linkLabel: '',
-			imageUrl: '',
-			imageAlt: '',
-			imageWideUrl: '',
-			imageCardUrl: '',
-			imageMobileUrl: '',
-			disclosureText: '',
-			disclosureUrl: '',
-			showOnLanding: true,
-			enabled: true
-		}
-	}
-	return {
-		kind: banner.type,
-		scope: banner.scope,
-		section: banner.section ?? '',
-		articleId: banner.articleId,
-		excludedArticleIds: banner.excludedArticleIds ?? [],
-		text: banner.text ?? '',
-		linkUrl: banner.linkUrl ?? '',
-		linkLabel: banner.linkLabel ?? '',
-		imageUrl: banner.imageUrl ?? '',
-		imageAlt: banner.imageAlt ?? '',
-		imageWideUrl: banner.imageWideUrl ?? '',
-		imageCardUrl: banner.imageCardUrl ?? '',
-		imageMobileUrl: banner.imageMobileUrl ?? '',
-		disclosureText: banner.disclosureText ?? '',
-		disclosureUrl: banner.disclosureUrl ?? '',
-		showOnLanding: banner.showOnLanding !== false,
-		enabled: banner.enabled
-	}
-}
-
-function buildPayload(state: FormState): BannerPayload {
-	const linkUrl = state.linkUrl.trim() || null
-	if (state.kind === 'image-square') {
-		return {
-			type: 'image-square',
-			scope: 'landing',
-			section: null,
-			articleId: null,
-			excludedArticleIds: [],
-			linkUrl,
-			enabled: state.enabled,
-			text: null,
-			linkLabel: null,
-			imageUrl: state.imageUrl.trim(),
-			imageAlt: state.imageAlt.trim() || null,
-			imageWideUrl: null,
-			imageCardUrl: null,
-			imageMobileUrl: null,
-			disclosureText: null,
-			disclosureUrl: null,
-			showOnLanding: true
-		}
-	}
-	if (state.kind === 'promo') {
-		return {
-			type: 'promo',
-			scope: 'landing',
-			section: null,
-			articleId: null,
-			excludedArticleIds: state.excludedArticleIds,
-			linkUrl,
-			enabled: state.enabled,
-			text: null,
-			linkLabel: null,
-			imageUrl: null,
-			imageAlt: state.imageAlt.trim() || null,
-			imageWideUrl: state.imageWideUrl.trim() || null,
-			imageCardUrl: state.imageCardUrl.trim() || null,
-			imageMobileUrl: state.imageMobileUrl.trim() || null,
-			disclosureText: state.disclosureText.trim() || null,
-			disclosureUrl: state.disclosureUrl.trim() || null,
-			showOnLanding: state.showOnLanding
-		}
-	}
-	const base: BannerPayload = {
-		type: state.kind,
-		scope: state.scope,
-		section: state.scope === 'section' ? (state.section as ArticleSection) : null,
-		articleId: state.scope === 'article' ? state.articleId : null,
-		excludedArticleIds: state.scope === 'all_articles' ? state.excludedArticleIds : [],
-		linkUrl,
-		enabled: state.enabled
-	}
-	if (state.kind === 'text') {
-		return {
-			...base,
-			text: state.text.trim(),
-			linkLabel: state.linkLabel.trim() || null,
-			imageUrl: null,
-			imageAlt: null
-		}
-	}
-	return {
-		...base,
-		text: null,
-		linkLabel: null,
-		imageUrl: state.imageUrl.trim(),
-		imageAlt: state.imageAlt.trim() || null
-	}
-}
-
-type FormErrors = {
-	text?: string
-	section?: string
-	articleId?: string
-	linkUrl?: string
-	imageUrl?: string
-	disclosureUrl?: string
-}
-
-function validate(state: FormState): FormErrors {
-	const errors: FormErrors = {}
-	if (state.kind === 'text') {
-		if (!state.text.trim()) errors.text = 'Banner text is required'
-		else if (state.text.length > TEXT_MAX) errors.text = `Max ${TEXT_MAX} characters`
-	} else if (state.kind === 'promo') {
-		if (!state.imageWideUrl.trim() && !state.imageCardUrl.trim() && !state.imageMobileUrl.trim()) {
-			errors.imageUrl = 'Upload at least one image'
-		}
-		if (!state.linkUrl.trim()) errors.linkUrl = 'Link URL is required'
-		const disclosure = state.disclosureUrl.trim()
-		if (disclosure && !/^(https?:\/\/|\/)/.test(disclosure)) {
-			errors.disclosureUrl = 'Must start with http://, https://, or /'
-		}
-	} else {
-		if (!state.imageUrl.trim()) errors.imageUrl = 'Image is required'
-	}
-	if (state.kind !== 'promo' && state.kind !== 'image-square') {
-		if (state.scope === 'section' && !state.section) errors.section = 'Pick a section'
-		if (state.scope === 'article' && !state.articleId) errors.articleId = 'Pick an article'
-	}
-	const link = state.linkUrl.trim()
-	if (link && !/^(https?:\/\/|\/)/.test(link)) {
-		errors.linkUrl = 'Must start with http://, https://, or /'
-	}
-	return errors
-}
-
-function imageUploadConfig(state: FormState): { scope: UploadScope; helperText: string } {
+function imageUploadConfig(state: BannerFormState): { scope: UploadScope; helperText: string } {
 	if (state.kind === 'image-square') {
 		return {
 			scope: 'banner-landing-square',
@@ -237,14 +77,14 @@ export function BannerForm({ banner }: Props) {
 	const router = useRouter()
 	const { authorizedFetch } = useAuthContext()
 	const revalidateLanding = useResearchLandingRevalidation()
-	const [state, setState] = useState<FormState>(() => bannerToForm(banner))
+	const [state, setState] = useState<BannerFormState>(() => bannerToForm(banner))
 	const initial = useMemo(() => bannerToForm(banner), [banner])
 
 	useEffect(() => {
 		setState(bannerToForm(banner))
 	}, [banner])
 
-	const errors = validate(state)
+	const errors = validateBannerForm(state)
 	const hasError = Object.keys(errors).length > 0
 
 	const dirty =
@@ -253,6 +93,9 @@ export function BannerForm({ banner }: Props) {
 		state.section !== initial.section ||
 		state.articleId !== initial.articleId ||
 		state.excludedArticleIds.join(',') !== initial.excludedArticleIds.join(',') ||
+		state.audienceMode !== initial.audienceMode ||
+		state.targetGroups.join(',') !== initial.targetGroups.join(',') ||
+		state.targetCountries.join(',') !== initial.targetCountries.join(',') ||
 		state.text !== initial.text ||
 		state.linkUrl !== initial.linkUrl ||
 		state.linkLabel !== initial.linkLabel ||
@@ -281,7 +124,7 @@ export function BannerForm({ banner }: Props) {
 		}
 	})
 
-	const update = (patch: Partial<FormState>) => setState((prev) => ({ ...prev, ...patch }))
+	const update = (patch: Partial<BannerFormState>) => setState((prev) => ({ ...prev, ...patch }))
 	const imageUpload = imageUploadConfig(state)
 
 	const handleKindChange = (kind: BannerKind) => {
@@ -289,6 +132,13 @@ export function BannerForm({ banner }: Props) {
 	}
 
 	const visibleScopes = BANNER_SCOPES
+	const countriesCoveredByGroups = new Set<string>()
+	const selectedGroupIds = new Set(state.targetGroups)
+	for (const group of BANNER_COUNTRY_GROUPS) {
+		if (!selectedGroupIds.has(group.id)) continue
+		for (const country of group.countries) countriesCoveredByGroups.add(country)
+	}
+	const availableCountryOptions = BANNER_COUNTRY_OPTIONS.filter((option) => !countriesCoveredByGroups.has(option.value))
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
@@ -325,6 +175,8 @@ export function BannerForm({ banner }: Props) {
 		section: state.kind !== 'image-square' && state.scope === 'section' ? (state.section as ArticleSection) : null,
 		articleId: state.kind !== 'image-square' && state.scope === 'article' ? state.articleId : null,
 		excludedArticleIds: state.excludedArticleIds,
+		targetCountries:
+			state.audienceMode === 'selected' ? expandBannerCountrySelection(state.targetGroups, state.targetCountries) : [],
 		text: state.kind === 'text' ? state.text || 'Banner preview text — write your message above' : null,
 		linkUrl: state.linkUrl.trim() || null,
 		linkLabel: state.kind === 'text' ? state.linkLabel.trim() || null : null,
@@ -348,7 +200,7 @@ export function BannerForm({ banner }: Props) {
 
 			<Section
 				title="Kind"
-				description="Text shows as a dismissible strip at the top of the page. Desktop images are used by landing placements or the article right rail. Wide/mobile images are used by landing placements or the mobile article body. Promo is a single global placement below Latest on the landing page and on every article. Square landing banner shows inside Latest on the landing page in place of articles 4-6."
+				description="Text shows as a dismissible strip at the top of the page. Desktop images are used by landing placements or the article right rail. Wide/mobile images are used by landing placements or the mobile article body. Promo is a shared placement below Latest on the landing page and on every article. Square landing banner shows inside Latest on the landing page in place of articles 4-6."
 			>
 				<div className="grid gap-2 sm:grid-cols-2">
 					{BANNER_KINDS.map((kind) => (
@@ -514,6 +366,97 @@ export function BannerForm({ banner }: Props) {
 					) : null}
 				</Section>
 			)}
+
+			<Section
+				title="Audience"
+				description="Show this banner globally or only to visitors in selected regions and countries."
+			>
+				<div className="grid gap-2 sm:grid-cols-2">
+					{(
+						[
+							['global', 'Global', 'Show to every visitor'],
+							['selected', 'Selected locations', 'Show only when the visitor country matches']
+						] as const
+					).map(([mode, label, description]) => (
+						<label
+							key={mode}
+							className={`flex cursor-pointer items-start gap-3 rounded-md border px-4 py-3 transition-colors ${
+								state.audienceMode === mode ? 'border-link/60 bg-research-tint' : 'border-medium hover:border-link/40'
+							}`}
+						>
+							<input
+								type="radio"
+								name="audience"
+								value={mode}
+								checked={state.audienceMode === mode}
+								onChange={() => update({ audienceMode: mode })}
+								className="mt-0.5 accent-link"
+							/>
+							<div className="grid gap-0.5">
+								<span className="text-sm font-medium text-primary">{label}</span>
+								<span className="text-xs text-tertiary">{description}</span>
+							</div>
+						</label>
+					))}
+				</div>
+
+				{state.audienceMode === 'selected' ? (
+					<div className="grid gap-5">
+						<div className="grid gap-2">
+							<span className="text-sm font-medium text-primary">Regions</span>
+							<div className="grid gap-2 sm:grid-cols-2">
+								{BANNER_COUNTRY_GROUPS.map((group) => {
+									const selected = state.targetGroups.includes(group.id)
+									return (
+										<label
+											key={group.id}
+											className={`flex cursor-pointer items-start gap-3 rounded-md border px-4 py-3 transition-colors ${
+												selected ? 'border-link/60 bg-research-tint' : 'border-medium hover:border-link/40'
+											}`}
+										>
+											<input
+												type="checkbox"
+												checked={selected}
+												onChange={(event) => {
+													if (event.target.checked) {
+														const groupCountries = new Set<string>(group.countries)
+														update({
+															targetGroups: [...state.targetGroups, group.id],
+															targetCountries: state.targetCountries.filter((country) => !groupCountries.has(country))
+														})
+													} else {
+														update({ targetGroups: state.targetGroups.filter((id) => id !== group.id) })
+													}
+												}}
+												className="mt-0.5 size-4 accent-link"
+											/>
+											<div className="grid gap-0.5">
+												<span className="text-sm font-medium text-primary">{group.label}</span>
+												<span className="text-xs text-tertiary">{group.description}</span>
+											</div>
+										</label>
+									)
+								})}
+							</div>
+						</div>
+
+						<div className="grid gap-1.5">
+							<span className="text-sm font-medium text-primary">
+								Countries <span className="font-normal text-tertiary">(optional when a region is selected)</span>
+							</span>
+							<MultiSelectCombobox
+								data={availableCountryOptions}
+								placeholder="Search countries…"
+								selectedValues={state.targetCountries}
+								setSelectedValues={(targetCountries) => update({ targetCountries })}
+								emptyMessage="No countries found"
+							/>
+							<p className="text-xs text-tertiary">Countries and regions are combined with OR matching.</p>
+						</div>
+						{errors.audience ? <p className="text-xs text-error">{errors.audience}</p> : null}
+					</div>
+				) : null}
+			</Section>
 
 			{state.kind === 'text' ? (
 				<Section title="Content" description="The text readers see and an optional link.">

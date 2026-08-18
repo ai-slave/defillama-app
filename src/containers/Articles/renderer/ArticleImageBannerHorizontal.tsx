@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { getAllArticlesBanner, getArticleBanner, getSectionBanner } from '~/containers/Articles/api'
+import { useEligibleBanner } from '~/containers/Articles/bannerTargeting'
 import { allArticlesBannerForArticle } from '~/containers/Articles/renderer/bannerExclusion'
-import type { ArticleSection, Banner, BannerLookupResult } from '~/containers/Articles/types'
+import type { ArticleSection, BannerLookupResult } from '~/containers/Articles/types'
 
 type Props = {
 	articleId: string
@@ -26,7 +27,7 @@ export function ArticleImageBannerHorizontal({ articleId, section }: Props) {
 	const sectionBannerQuery = useQuery<BannerLookupResult>({
 		queryKey: ['research', 'banner', 'section', section],
 		queryFn: () => getSectionBanner(section as ArticleSection),
-		enabled: !!section && !!articleId && !articleBannerQuery.isLoading && !articleBannerQuery.data?.imageHorizontal,
+		enabled: !!section && !!articleId,
 		retry: false,
 		staleTime: 0,
 		refetchOnMount: 'always'
@@ -35,21 +36,20 @@ export function ArticleImageBannerHorizontal({ articleId, section }: Props) {
 	const allArticlesBannerQuery = useQuery<BannerLookupResult>({
 		queryKey: ['research', 'banner', 'all-articles'],
 		queryFn: () => getAllArticlesBanner(),
-		enabled:
-			!!articleId &&
-			!articleBannerQuery.isLoading &&
-			!articleBannerQuery.data?.imageHorizontal &&
-			!sectionBannerQuery.isLoading &&
-			!sectionBannerQuery.data?.imageHorizontal,
+		enabled: !!articleId,
 		retry: false,
 		staleTime: 0,
 		refetchOnMount: 'always'
 	})
 
-	const banner: Banner | null =
-		articleBannerQuery.data?.imageHorizontal ??
-		sectionBannerQuery.data?.imageHorizontal ??
-		allArticlesBannerForArticle(allArticlesBannerQuery.data?.imageHorizontal ?? null, articleId)
+	const banner = useEligibleBanner(
+		[
+			articleBannerQuery.data?.imageHorizontal ?? null,
+			sectionBannerQuery.data?.imageHorizontal ?? null,
+			allArticlesBannerForArticle(allArticlesBannerQuery.data?.imageHorizontal ?? null, articleId)
+		],
+		articleBannerQuery.isLoading || (!!section && sectionBannerQuery.isLoading) || allArticlesBannerQuery.isLoading
+	)
 
 	if (!banner || !banner.enabled || !banner.imageUrl) return null
 

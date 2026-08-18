@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { getAllArticlesBanner, getArticleBanner, getSectionBanner } from '~/containers/Articles/api'
+import { useEligibleBanner } from '~/containers/Articles/bannerTargeting'
 import { allArticlesBannerForArticle } from '~/containers/Articles/renderer/bannerExclusion'
-import type { ArticleSection, Banner, BannerLookupResult } from '~/containers/Articles/types'
+import type { ArticleSection, BannerLookupResult } from '~/containers/Articles/types'
 
 type Props = {
 	articleId: string
@@ -26,7 +27,7 @@ export function ArticleImageBanner({ articleId, section }: Props) {
 	const sectionBannerQuery = useQuery<BannerLookupResult>({
 		queryKey: ['research', 'banner', 'section', section],
 		queryFn: () => getSectionBanner(section as ArticleSection),
-		enabled: !!section && !!articleId && !articleBannerQuery.isLoading && !articleBannerQuery.data?.image,
+		enabled: !!section && !!articleId,
 		retry: false,
 		staleTime: 0,
 		refetchOnMount: 'always'
@@ -35,21 +36,20 @@ export function ArticleImageBanner({ articleId, section }: Props) {
 	const allArticlesBannerQuery = useQuery<BannerLookupResult>({
 		queryKey: ['research', 'banner', 'all-articles'],
 		queryFn: () => getAllArticlesBanner(),
-		enabled:
-			!!articleId &&
-			!articleBannerQuery.isLoading &&
-			!articleBannerQuery.data?.image &&
-			!sectionBannerQuery.isLoading &&
-			!sectionBannerQuery.data?.image,
+		enabled: !!articleId,
 		retry: false,
 		staleTime: 0,
 		refetchOnMount: 'always'
 	})
 
-	const banner: Banner | null =
-		articleBannerQuery.data?.image ??
-		sectionBannerQuery.data?.image ??
-		allArticlesBannerForArticle(allArticlesBannerQuery.data?.image ?? null, articleId)
+	const banner = useEligibleBanner(
+		[
+			articleBannerQuery.data?.image ?? null,
+			sectionBannerQuery.data?.image ?? null,
+			allArticlesBannerForArticle(allArticlesBannerQuery.data?.image ?? null, articleId)
+		],
+		articleBannerQuery.isLoading || (!!section && sectionBannerQuery.isLoading) || allArticlesBannerQuery.isLoading
+	)
 
 	if (!banner || !banner.enabled || !banner.imageUrl) return null
 

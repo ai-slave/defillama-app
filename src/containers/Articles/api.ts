@@ -613,14 +613,14 @@ export async function transferOwnership(
 
 export async function listBanners(authorizedFetch: AuthorizedFetch): Promise<Banner[]> {
 	const data = await parseResponse<{ banners: Banner[] }>(await authorizedFetch(articleUrl('/banners')))
-	return data.banners
+	return data.banners.map(normalizeBannerTargeting)
 }
 
 export async function getBanner(id: string, authorizedFetch: AuthorizedFetch): Promise<Banner> {
 	const data = await parseResponse<{ banner: Banner }>(
 		await authorizedFetch(articleUrl(`/banners/${encodeURIComponent(id)}`))
 	)
-	return data.banner
+	return normalizeBannerTargeting(data.banner)
 }
 
 export async function createBanner(payload: BannerPayload, authorizedFetch: AuthorizedFetch): Promise<Banner> {
@@ -631,7 +631,7 @@ export async function createBanner(payload: BannerPayload, authorizedFetch: Auth
 			body: JSON.stringify(payload)
 		})
 	)
-	return data.banner
+	return normalizeBannerTargeting(data.banner)
 }
 
 export async function updateBanner(
@@ -646,7 +646,7 @@ export async function updateBanner(
 			body: JSON.stringify(payload)
 		})
 	)
-	return data.banner
+	return normalizeBannerTargeting(data.banner)
 }
 
 export async function deleteBanner(id: string, authorizedFetch: AuthorizedFetch): Promise<void> {
@@ -667,8 +667,26 @@ const EMPTY_BANNER_LOOKUP: BannerLookupResult = {
 
 function sanitizePublicBanner(banner: Banner | null): Banner | null {
 	if (!banner) return null
-	const { createdByPbUserId: _createdByPbUserId, ...publicBanner } = banner
+	const { createdByPbUserId: _createdByPbUserId, ...publicBanner } = normalizeBannerTargeting(banner)
 	return publicBanner
+}
+
+function normalizeBannerTargeting(banner: Banner): Banner {
+	const targetCountries: string[] = []
+	const seenCountries = new Set<string>()
+	if (Array.isArray(banner.targetCountries)) {
+		for (const value of banner.targetCountries) {
+			if (typeof value !== 'string') continue
+			const country = value.trim().toUpperCase()
+			if (!/^[A-Z]{2}$/.test(country) || country === 'XX' || seenCountries.has(country)) continue
+			seenCountries.add(country)
+			targetCountries.push(country)
+		}
+	}
+	return {
+		...banner,
+		targetCountries
+	}
 }
 
 function sanitizePublicBannerLookup(data: BannerLookupResult | null): BannerLookupResult {

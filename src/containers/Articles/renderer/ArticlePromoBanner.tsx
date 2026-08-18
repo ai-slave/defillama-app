@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { getAllArticlesBanner } from '~/containers/Articles/api'
+import { useEligibleBanner } from '~/containers/Articles/bannerTargeting'
 import { PromoDisclosure } from '~/containers/Articles/PromoDisclosure'
 import { allArticlesBannerForArticle } from '~/containers/Articles/renderer/bannerExclusion'
 import type { Banner, BannerLookupResult } from '~/containers/Articles/types'
@@ -18,7 +19,10 @@ export function usePromoBanner(articleId: string | null | undefined): Banner | n
 		refetchOnMount: 'always'
 	})
 
-	return allArticlesBannerForArticle(allArticlesBannerQuery.data?.promo ?? null, articleId)
+	return useEligibleBanner(
+		[allArticlesBannerForArticle(allArticlesBannerQuery.data?.promo ?? null, articleId)],
+		allArticlesBannerQuery.isLoading
+	)
 }
 
 export function mobilePromoImageUrl(banner: Banner | null): string | undefined {
