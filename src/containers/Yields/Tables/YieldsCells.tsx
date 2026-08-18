@@ -91,7 +91,7 @@ export function SupplyCapBar({ tvl, available }: { tvl: number | null; available
 	const full = available === 0
 	const label = full
 		? 'No capacity for new deposits — pool is at its supply cap'
-		: `${formatUsd(available, { compact: true, compactSuffix: 'lowercase' })} can still be deposited — pool is ~${formatPercent(fill, { input: 'fraction', maximumFractionDigits: 0 })} full`
+		: `${formatUsd(available, { compact: true, compactSuffix: 'lowercase' })} can still be deposited — supply cap is ~${formatPercent(fill, { input: 'fraction', maximumFractionDigits: 0 })} utilized`
 	return (
 		<InstantTooltip content={label} className="ml-auto w-fit max-w-full justify-end">
 			<span
@@ -406,8 +406,8 @@ export function SignedApyCell({
 }
 
 // --- available (borrow capacity) cell ------------------------------------------------------
-// `$available` primary over a thin MUTED single-color bar encoding utilisation. No threshold
-// color flip and no caption — the exact "N% filled" figure lives in the hover tooltip only.
+// `$available` primary over a thin MUTED single-color bar encoding utilization. No threshold
+// color flip and no caption — the exact "N% utilized" figure lives in the hover tooltip only.
 
 export function AvailableCell({
 	available,
@@ -440,7 +440,7 @@ export function AvailableCell({
 	// cell width — otherwise the anchor spans the whole right-aligned cell and the tooltip drifts left.
 	return (
 		<InstantTooltip
-			content={`${formatPercent(pct, { input: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })} filled`}
+			content={`${formatPercent(pct, { input: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })} utilized`}
 			className="ml-auto w-fit max-w-full justify-end"
 		>
 			{body}

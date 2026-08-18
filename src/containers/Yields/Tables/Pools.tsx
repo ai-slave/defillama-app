@@ -199,7 +199,11 @@ function createEarnColumns(
 						) : null}
 					</span>
 				),
-			meta: { headerClassName: 'w-[100px] min-w-[100px]', align: 'end' }
+			meta: {
+				headerClassName: 'w-[100px] min-w-[100px]',
+				align: 'end',
+				headerHelperText: 'Total value deposited in the pool. For lending pools, this is total supplied.'
+			}
 		}),
 		columnHelper.accessor((row) => row.apy ?? undefined, {
 			id: 'apy',
