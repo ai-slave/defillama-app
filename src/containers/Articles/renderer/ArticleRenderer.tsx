@@ -13,6 +13,7 @@ import { getTiptapNodeText } from '../extractors'
 import { pushResearchAnalyticsEvent } from '../landing/Analytics'
 import { DownloadPdfLink } from '../landing/DownloadPdfLink'
 import { getArticleBylineAuthorEntries } from '../landing/utils'
+import { normalizeQAQuestionNumber } from '../qa'
 import type {
 	ArticleCalloutTone,
 	ArticleCitation,
@@ -378,8 +379,9 @@ function renderNode(node: TiptapJson, key: string, ctx: RenderContext): ReactNod
 		const questionNode = (node.content ?? []).find((child) => child?.type === 'qaQuestion')
 		const questionText = questionNode ? getTiptapNodeText(questionNode).trim() : ''
 		const qaId = questionText ? `qa-${headingSlug(questionText)}` : undefined
+		const questionNumber = normalizeQAQuestionNumber(node.attrs?.questionNumber) ?? undefined
 		return (
-			<ArticleQABlock key={key} id={qaId}>
+			<ArticleQABlock key={key} id={qaId} questionNumber={questionNumber}>
 				{renderChildren(node, key, ctx)}
 			</ArticleQABlock>
 		)
@@ -507,7 +509,8 @@ function collectToc(node: TiptapJson | null | undefined, out: TocEntry[]) {
 		const text = questionNode ? getTiptapNodeText(questionNode).trim() : ''
 		if (text) {
 			const qIndex = out.filter((entry) => entry.id.startsWith('qa-')).length + 1
-			out.push({ id: `qa-${headingSlug(text)}`, text: `Q${qIndex}. ${text}`, level: 3 })
+			const questionNumber = normalizeQAQuestionNumber(node.attrs?.questionNumber) ?? String(qIndex)
+			out.push({ id: `qa-${headingSlug(text)}`, text: `Q${questionNumber}. ${text}`, level: 3 })
 		}
 		return
 	}

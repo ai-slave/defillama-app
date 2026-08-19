@@ -204,6 +204,42 @@ describe('ArticleRenderer', () => {
 		expect(html).toContain('Question three?')
 		expect(html).not.toMatch(/data-article-qa-answer="true"[^>]*>(?:(?!<\/dd>)[\s\S])*<dl data-article-qa="true"/)
 	})
+
+	it('renders an editor-defined Q&A question number', () => {
+		const normalized = normalizeLocalArticleDocument({
+			id: 'custom-question-number',
+			title: 'Numbered interview',
+			status: 'published',
+			contentJson: {
+				type: 'doc',
+				content: [
+					{
+						type: 'qa',
+						attrs: { questionNumber: '07' },
+						content: [
+							{ type: 'qaQuestion', content: [{ type: 'text', text: 'Why seven?' }] },
+							{
+								type: 'qaAnswer',
+								content: [{ type: 'paragraph', content: [{ type: 'text', text: 'It is intentional.' }] }]
+							}
+						]
+					}
+				]
+			}
+		})
+
+		expect(normalized.ok).toBe(true)
+		if (!normalized.ok) return
+
+		const client = new QueryClient()
+		const html = renderToStaticMarkup(
+			<QueryClientProvider client={client}>
+				<ArticleRenderer article={normalized.value} />
+			</QueryClientProvider>
+		)
+
+		expect(html).toContain('data-qa-number="07"')
+	})
 })
 
 describe('llamaaiChart figure captions', () => {

@@ -1,5 +1,8 @@
 import { mergeAttributes, Node } from '@tiptap/core'
 import { TextSelection } from '@tiptap/pm/state'
+import { ReactNodeViewRenderer } from '@tiptap/react'
+import { normalizeQAQuestionNumber } from '../../qa'
+import { QABlockNodeView } from './QABlockNodeView'
 
 function createQAPairNode(type: string) {
 	return {
@@ -73,6 +76,19 @@ export const QABlock = Node.create({
 	draggable: true,
 	selectable: true,
 
+	addAttributes() {
+		return {
+			questionNumber: {
+				default: null,
+				parseHTML: (element) => normalizeQAQuestionNumber(element.getAttribute('data-qa-number')),
+				renderHTML: (attributes) => {
+					const questionNumber = normalizeQAQuestionNumber(attributes.questionNumber)
+					return questionNumber ? { 'data-qa-number': questionNumber } : {}
+				}
+			}
+		}
+	},
+
 	parseHTML() {
 		return [{ tag: 'dl[data-article-qa]' }]
 	},
@@ -86,6 +102,10 @@ export const QABlock = Node.create({
 			}),
 			0
 		]
+	},
+
+	addNodeView() {
+		return ReactNodeViewRenderer(QABlockNodeView)
 	},
 
 	addCommands() {

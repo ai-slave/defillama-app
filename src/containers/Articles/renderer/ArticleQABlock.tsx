@@ -1,8 +1,16 @@
 import type { ReactNode } from 'react'
 
-export function ArticleQABlock({ id, children }: { id?: string; children: ReactNode }) {
+export function ArticleQABlock({
+	id,
+	questionNumber,
+	children
+}: {
+	id?: string
+	questionNumber?: string
+	children: ReactNode
+}) {
 	return (
-		<dl data-article-qa="true" className="article-qa" id={id}>
+		<dl data-article-qa="true" data-qa-number={questionNumber} className="article-qa" id={id}>
 			{children}
 		</dl>
 	)

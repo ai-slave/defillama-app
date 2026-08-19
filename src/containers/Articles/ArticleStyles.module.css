@@ -332,6 +332,29 @@
 	text-transform: uppercase;
 }
 
+.root :global(.article-qa[data-qa-number])::before,
+.root :global(.ProseMirror dl[data-article-qa][data-qa-number])::before {
+	content: 'Q · ' attr(data-qa-number);
+}
+
+.root :global(.ProseMirror .article-qa[data-qa-node-view])::before {
+	display: none;
+}
+
+.root :global(.article-qa-number-editor) {
+	display: flex;
+	align-items: center;
+	width: fit-content;
+	margin-bottom: 1.125rem;
+	font-family: var(--font-jetbrains, ui-monospace, monospace);
+	font-size: 0.6875rem;
+	font-weight: 600;
+	line-height: 1.4;
+	letter-spacing: 0.22em;
+	color: var(--text-link);
+	text-transform: uppercase;
+}
+
 .root :global(.article-qa:first-child),
 .root :global(.ProseMirror dl[data-article-qa]:first-child) {
 	margin-top: 0.5rem;
