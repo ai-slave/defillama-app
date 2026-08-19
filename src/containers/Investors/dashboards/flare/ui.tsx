@@ -79,6 +79,6 @@ export function NarrativeCallout({ children }: { children: React.ReactNode }) {
 }
 
 export function formatPct(n: number, decimals = 2): string {
-	if (!Number.isFinite(n)) return '—'
+	if (!Number.isFinite(n)) return '-'
 	return `${formatPercent(n, { input: 'percent', minimumFractionDigits: decimals, maximumFractionDigits: decimals, useGrouping: false })}`
 }

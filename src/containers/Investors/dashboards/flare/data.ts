@@ -78,11 +78,41 @@ export interface FAssetsAPIResponse {
 	}
 }
 
+export interface FirePoolWallet {
+	name: string
+	wallet: string
+	feeToken: string
+	feesToken: number
+	feesUsd: number
+	feesUsdFormatted: string
+	txCount: number
+}
+
+// FIRE went live in May 2026 (FIP.16); the extra fields only exist on the
+// live payload, so everything beyond the original stub stays optional.
+export interface FirePoolAPI {
+	status: string
+	note: string
+	burnDestination: string
+	liveSince?: string
+	feesChart?: UpstreamChart
+	fdcRewardsChart?: UpstreamChart
+	wallets?: FirePoolWallet[]
+	revenueSources?: { section: string; name: string; totalUsd: number; formatted: string }[]
+	kpis?: {
+		totalCollectedUsd: FormattedValue
+		collected30dUsd: FormattedValue
+		fdcCollectedUsd: FormattedValue
+		mintingFeeCollectedUsd: FormattedValue
+		tagsCollectedUsd: FormattedValue
+	}
+}
+
 export interface TokenomicsAPIResponse {
 	narrative?: string
 	burn: {
 		burnChart: UpstreamChart
-		firePool: { status: string; note: string; burnDestination: string }
+		firePool: FirePoolAPI
 		kpis: {
 			latestDailyBurn: FormattedValue
 			burn7d: FormattedValue
@@ -107,6 +137,20 @@ export interface TokenomicsAPIResponse {
 			epochsTracked: FormattedValue
 		}
 		note?: string
+	}
+	// Synced with dune.com/flare/tokenomics (added Aug 2026).
+	inflation?: {
+		inflationPctChart?: UpstreamChart
+		circulatingSupplyChart?: UpstreamChart
+		emittedByProtocolChart?: UpstreamChart
+		burnedByProtocolChart?: UpstreamChart
+		kpis: {
+			annualizedInflationPct: FormattedValue
+			circulatingSupply: FormattedValue
+			cumulativeOnchainBurned: FormattedValue
+			lastMonthEmitted: FormattedValue
+			lastMonthBurned: FormattedValue
+		}
 	}
 }
 
@@ -376,6 +420,119 @@ export function buildFlareFAssetsData(data: FAssetsAPIResponse) {
 	}
 }
 
+const FIRE_SOURCE_COLORS: Record<string, string> = {
+	FDC: FLARE_BLUE,
+	'FAssets Minting Fee': FLARE_ORANGE,
+	Tags: FLARE_GREEN
+}
+
+// FIRE fees chart: daily per-source bars stacked, cumulative USD as a line.
+function buildFireView(firePool: FirePoolAPI) {
+	const feesChart = firePool.feesChart
+	if (firePool.status !== 'live' || !feesChart || !firePool.kpis) return null
+
+	const charts = new Array<MultiSeriesChartSeriesConfig>(feesChart.series.length)
+	for (let i = 0; i < feesChart.series.length; i++) {
+		const series = feesChart.series[i]
+		charts[i] =
+			series.type === 'line'
+				? {
+						type: 'line',
+						name: series.name,
+						encode: { x: 'timestamp', y: series.name },
+						color: FLARE_PINK,
+						hideAreaStyle: true
+					}
+				: {
+						type: 'bar',
+						name: series.name,
+						encode: { x: 'timestamp', y: series.name },
+						color: FIRE_SOURCE_COLORS[series.name] ?? DONUT_PALETTE[i % DONUT_PALETTE.length],
+						stack: 'fire'
+					}
+	}
+
+	return {
+		liveSince: firePool.liveSince ?? null,
+		note: firePool.note,
+		title: feesChart.title ?? 'FIRE Fees Collected (USD)',
+		subtitle: feesChart.subtitle,
+		dataset: buildColumnarTimeSeriesDataset(feesChart.dates, feesChart.series, parseDateToTimestampMs, 0),
+		chartOptions: timeSeriesChartOptions(feesChart.dates.length, '$'),
+		charts,
+		wallets: firePool.wallets ?? [],
+		kpis: {
+			totalCollectedUsd: firePool.kpis.totalCollectedUsd.formatted,
+			collected30dUsd: firePool.kpis.collected30dUsd.formatted,
+			fdcCollectedUsd: firePool.kpis.fdcCollectedUsd.formatted,
+			mintingFeeCollectedUsd: firePool.kpis.mintingFeeCollectedUsd.formatted,
+			tagsCollectedUsd: firePool.kpis.tagsCollectedUsd.formatted
+		}
+	}
+}
+
+function buildLineChartView(chart: UpstreamChart | undefined, valueSymbol: string, color: string, zoom = true) {
+	if (!chart || chart.series.length === 0) return null
+	const charts = new Array<MultiSeriesChartSeriesConfig>(chart.series.length)
+	for (let i = 0; i < chart.series.length; i++) {
+		const name = chart.series[i].name
+		charts[i] = {
+			type: 'line',
+			name,
+			encode: { x: 'timestamp', y: name },
+			...(i === 0 ? { color } : { hideAreaStyle: true })
+		}
+	}
+	return {
+		title: chart.title,
+		subtitle: chart.subtitle,
+		dataset: buildColumnarTimeSeriesDataset(chart.dates, chart.series, parseDateToTimestampMs, 0),
+		// zoom=false shows the full history (e.g. the FIP.16 5% → 3% inflation cut).
+		chartOptions: timeSeriesChartOptions(zoom ? chart.dates.length : 0, valueSymbol),
+		charts
+	}
+}
+
+// Monthly FLR emitted/burned stacked by protocol (Dune 7319929).
+function buildProtocolStackView(chart: UpstreamChart | undefined) {
+	if (!chart || chart.series.length === 0) return null
+	const charts = new Array<MultiSeriesChartSeriesConfig>(chart.series.length)
+	for (let i = 0; i < chart.series.length; i++) {
+		const name = chart.series[i].name
+		charts[i] = {
+			type: 'bar',
+			name,
+			encode: { x: 'timestamp', y: name },
+			color: DONUT_PALETTE[i % DONUT_PALETTE.length],
+			stack: 'protocol'
+		}
+	}
+	return {
+		title: chart.title,
+		subtitle: chart.subtitle,
+		dataset: buildColumnarTimeSeriesDataset(chart.dates, chart.series, parseDateToTimestampMs, 0),
+		chartOptions: timeSeriesChartOptions(0, ''),
+		charts
+	}
+}
+
+function buildInflationView(inflation: TokenomicsAPIResponse['inflation']) {
+	if (!inflation) return null
+	return {
+		kpis: {
+			annualizedInflationPct: inflation.kpis.annualizedInflationPct.formatted,
+			circulatingSupply: inflation.kpis.circulatingSupply.formatted,
+			cumulativeOnchainBurned: inflation.kpis.cumulativeOnchainBurned.formatted,
+			lastMonthEmitted: inflation.kpis.lastMonthEmitted.formatted,
+			lastMonthBurned: inflation.kpis.lastMonthBurned.formatted
+		},
+		pctChart: buildLineChartView(inflation.inflationPctChart, '%', FLARE_PINK, false),
+		circulatingChart: buildLineChartView(inflation.circulatingSupplyChart, '', FLARE_BLUE, false),
+		emittedByProtocol: buildProtocolStackView(inflation.emittedByProtocolChart),
+		burnedByProtocol: buildProtocolStackView(inflation.burnedByProtocolChart)
+	}
+}
+
 export function buildFlareTokenomicsData(data: TokenomicsAPIResponse) {
 	const burn = data.burn
 	const emissions = data.emissions
@@ -415,6 +572,8 @@ export function buildFlareTokenomicsData(data: TokenomicsAPIResponse) {
 	const chartOptions = timeSeriesChartOptions(burn.burnChart.dates.length, '')
 	return {
 		narrative: data.narrative,
+		fire: buildFireView(burn.firePool),
+		inflation: buildInflationView(data.inflation),
 		burn: {
 			burnTitle: burn.burnChart.title ?? 'FLR Burned (Daily Gas)',
 			dailyDataset: {

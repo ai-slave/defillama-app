@@ -89,7 +89,7 @@ describe('Flare query data builders', () => {
 					{ name: 'Cumulative Burn', data: [100, 103] },
 					{ name: 'Daily Burn', data: [2, 3] }
 				]),
-				firePool: { status: 'soon', note: 'Pool note', burnDestination: '0x0' },
+				firePool: { status: 'coming_soon', note: 'Pool note', burnDestination: '0x0' },
 				kpis: {
 					latestDailyBurn: formatted(3),
 					burn7d: formatted(4),
@@ -151,6 +151,181 @@ describe('Flare query data builders', () => {
 			['FLR Burned', 'b'],
 			['Net Inflation', 'c']
 		])
+		// Pre-FIP.16-launch payload: no live FIRE data, no inflation block.
+		expect(result.fire).toBeNull()
+		expect(result.inflation).toBeNull()
+	})
+
+	test('builds live FIRE view with stacked source bars, cumulative line, and wallet passthrough', () => {
+		const dates = ['2026-05-12', '2026-05-13']
+		const wallet = {
+			name: 'FIRE - FDC',
+			wallet: '0x0ce6831DF00A6018c4d316009980DbAa6c44E525',
+			feeToken: 'FLR',
+			feesToken: 1262790.9,
+			feesUsd: 7416.37,
+			feesUsdFormatted: '$7.4K',
+			txCount: 1
+		}
+		const result = buildFlareTokenomicsData({
+			burn: {
+				burnChart: chart(dates, [
+					{ name: 'Daily Burn', data: [2, 3] },
+					{ name: 'Cumulative Burn', data: [100, 103] }
+				]),
+				firePool: {
+					status: 'live',
+					note: 'FIRE note',
+					burnDestination: '0xdEaD',
+					liveSince: '2026-05-12',
+					feesChart: {
+						title: 'FIRE Fees Collected (USD)',
+						dates,
+						series: [
+							{ name: 'FDC', type: 'bar', data: [0, 5] },
+							{ name: 'FAssets Minting Fee', type: 'bar', data: [3, 1] },
+							{ name: 'Tags', type: 'bar', data: [7, 0.5] },
+							{ name: 'Cumulative', type: 'line', data: [10, 16.5] }
+						]
+					},
+					wallets: [wallet],
+					kpis: {
+						totalCollectedUsd: formatted(16.5),
+						collected30dUsd: formatted(16.5),
+						fdcCollectedUsd: formatted(5),
+						mintingFeeCollectedUsd: formatted(4),
+						tagsCollectedUsd: formatted(7.5)
+					}
+				},
+				kpis: {
+					latestDailyBurn: formatted(3),
+					burn7d: formatted(4),
+					burn30d: formatted(5),
+					burnYtd: formatted(6),
+					totalGasBurned: formatted(103)
+				}
+			},
+			emissions: {
+				emissionsChart: chart(dates, [{ name: 'Per Epoch', data: [5, 6] }]),
+				burnVsEmitChart: chart(dates, [
+					{ name: 'FLR Emitted', data: [5, 6] },
+					{ name: 'FLR Burned', data: [2, 3] },
+					{ name: 'Net Inflation', data: [3, 3] }
+				]),
+				kpis: {
+					latestEpochEmit: formatted(1),
+					latestEpochBurn: formatted(2),
+					latestNetInflation: formatted(3),
+					latestBurnVsEmitPct: formatted(4),
+					emit30d: formatted(5),
+					burn30d: formatted(6),
+					netInflation30d: formatted(7),
+					burnVsEmit30dPct: formatted(8),
+					cumulativeEmissionsTracked: formatted(9),
+					epochsTracked: formatted(10)
+				}
+			},
+			inflation: {
+				inflationPctChart: chart(
+					['2022-08-04', '2026-07-30'],
+					[{ name: 'Annualized Inflation %', type: 'line', data: [10.14, 3.02] }],
+					'Annualized Inflation Rate'
+				),
+				circulatingSupplyChart: chart(
+					['2026-07-01', '2026-08-01'],
+					[
+						{ name: 'Circulating Supply', type: 'line', data: [87.03e9, 87.19e9] },
+						{ name: 'Cumulative On-chain Burned', type: 'line', data: [4.16e9, 4.2e9] }
+					]
+				),
+				emittedByProtocolChart: chart(
+					['2026-07-01'],
+					[
+						{ name: 'FSP', type: 'bar', data: [154e6] },
+						{ name: 'Staking', type: 'bar', data: [88e6] }
+					]
+				),
+				burnedByProtocolChart: chart(['2026-07-01'], [{ name: 'FeeBurns', type: 'bar', data: [1.09e6] }]),
+				kpis: {
+					annualizedInflationPct: formatted(3.02),
+					circulatingSupply: formatted(87.19e9),
+					cumulativeOnchainBurned: formatted(4.2e9),
+					lastMonthEmitted: formatted(354.26e6),
+					lastMonthBurned: formatted(47.24e6)
+				}
+			}
+		} satisfies TokenomicsAPIResponse)
+
+		const fire = result.fire
+		expect(fire).not.toBeNull()
+		expect(fire?.liveSince).toBe('2026-05-12')
+		expect(fire?.dataset.dimensions).toEqual(['timestamp', 'FDC', 'FAssets Minting Fee', 'Tags', 'Cumulative'])
+		expect(fire?.dataset.source[0]).toEqual([Date.UTC(2026, 4, 12), 0, 3, 7, 10])
+		expect(fire?.charts.map(({ name, type, stack }) => [name, type, stack])).toEqual([
+			['FDC', 'bar', 'fire'],
+			['FAssets Minting Fee', 'bar', 'fire'],
+			['Tags', 'bar', 'fire'],
+			['Cumulative', 'line', undefined]
+		])
+		expect(fire?.wallets).toEqual([wallet])
+		expect(fire?.kpis.totalCollectedUsd).toBe('formatted:16.5')
+
+		const inf = result.inflation
+		expect(inf).not.toBeNull()
+		expect(inf?.kpis.annualizedInflationPct).toBe('formatted:3.02')
+		expect(inf?.pctChart?.dataset.source).toEqual([
+			[Date.UTC(2022, 7, 4), 10.14],
+			[Date.UTC(2026, 6, 30), 3.02]
+		])
+		// Full FIP.16 history must stay visible: no default data zoom on these charts.
+		expect(inf?.pctChart?.chartOptions?.dataZoom).toBeUndefined()
+		expect(inf?.emittedByProtocol?.charts.map(({ name, stack }) => [name, stack])).toEqual([
+			['FSP', 'protocol'],
+			['Staking', 'protocol']
+		])
+		expect(inf?.circulatingChart?.charts).toMatchObject([
+			{ name: 'Circulating Supply', color: '#2D63F6' },
+			{ name: 'Cumulative On-chain Burned', hideAreaStyle: true }
+		])
+	})
+
+	test('falls back to null FIRE view when the pool payload has no chart or kpis', () => {
+		const dates = ['2026-05-12']
+		const base = {
+			burnChart: chart(dates, [
+				{ name: 'Daily Burn', data: [2] },
+				{ name: 'Cumulative Burn', data: [100] }
+			]),
+			kpis: {
+				latestDailyBurn: formatted(3),
+				burn7d: formatted(4),
+				burn30d: formatted(5),
+				burnYtd: formatted(6),
+				totalGasBurned: formatted(103)
+			}
+		}
+		const emissions = {
+			emissionsChart: chart(dates, [{ name: 'Per Epoch', data: [5] }]),
+			burnVsEmitChart: chart(dates, [{ name: 'FLR Emitted', data: [5] }]),
+			kpis: {
+				latestEpochEmit: formatted(1),
+				latestEpochBurn: formatted(2),
+				latestNetInflation: formatted(3),
+				latestBurnVsEmitPct: formatted(4),
+				emit30d: formatted(5),
+				burn30d: formatted(6),
+				netInflation30d: formatted(7),
+				burnVsEmit30dPct: formatted(8),
+				cumulativeEmissionsTracked: formatted(9),
+				epochsTracked: formatted(10)
+			}
+		}
+		const liveWithoutChart = buildFlareTokenomicsData({
+			burn: { ...base, firePool: { status: 'live', note: 'n', burnDestination: '0x0' } },
+			emissions
+		} satisfies TokenomicsAPIResponse)
+		expect(liveWithoutChart.fire).toBeNull()
+		expect(liveWithoutChart.burn.firePoolNote).toBe('n')
 	})
 
 	test('retains FAssets USD preference, fallback, pie order, and line-area styling', () => {

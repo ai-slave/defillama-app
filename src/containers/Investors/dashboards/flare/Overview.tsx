@@ -66,7 +66,7 @@ export default function Overview() {
 				<KpiCard label="Bridged" value={stables.kpis.bridged} />
 			</div>
 
-			<ChartCard title={stables.title} subtitle="Stablecoin supply circulating on Flare — native-minted vs. bridged.">
+			<ChartCard title={stables.title} subtitle="Stablecoin supply circulating on Flare: native-minted vs. bridged.">
 				<MultiSeriesChart
 					dataset={stables.dataset}
 					charts={stables.charts}

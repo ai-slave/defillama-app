@@ -46,7 +46,10 @@ export default function FAssets() {
 			</div>
 
 			{charts.locked && (
-				<ChartCard title={charts.locked.title} subtitle="USD value of FXRP locked in Flare DeFi over time.">
+				<ChartCard
+					title={charts.locked.title}
+					subtitle="USD value of FXRP locked in DeFi over time, across all networks."
+				>
 					<MultiSeriesChart
 						dataset={charts.locked.dataset}
 						charts={charts.locked.charts}
@@ -59,7 +62,7 @@ export default function FAssets() {
 			)}
 
 			{charts.dist && (
-				<ChartCard title={charts.dist.title} subtitle="Share of FXRP locked, by DeFi protocol.">
+				<ChartCard title={charts.dist.title} subtitle="Share of FXRP locked, by DeFi protocol, across all networks.">
 					<div className="mx-auto w-full max-w-3xl">
 						<PieChart
 							chartData={charts.dist.data}
