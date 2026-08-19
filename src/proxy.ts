@@ -166,6 +166,7 @@ export const config = {
 		'/flare',
 		'/odyssey-ecosystem',
 		'/thorchain',
-		'/kpk'
+		'/kpk',
+		'/uniswap'
 	]
 }

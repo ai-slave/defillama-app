@@ -10,6 +10,12 @@ const SERVER_DATA_FETCHERS: Record<string, Fetcher> = {
 			m.fetchThorchainServerData().then((d) => ({
 				thorchainUnlocks: { emissions: d.emissions, initialTokenMarketData: d.initialTokenMarketData }
 			}))
+		),
+	un1swapd4shb0rd: () =>
+		import('./dashboards/uniswap/serverData').then((m) =>
+			m.fetchUniswapServerData().then((d) => ({
+				uniswapUnlocks: { emissions: d.emissions, initialTokenMarketData: d.initialTokenMarketData }
+			}))
 		)
 }
 

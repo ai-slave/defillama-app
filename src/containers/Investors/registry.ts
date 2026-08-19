@@ -13,7 +13,8 @@ const DASHBOARD_REGISTRY: Record<string, () => Promise<DashboardModule>> = {
 	fl4r3d4shb0ard1: () => import('./dashboards/flare'),
 	'0dyss3y3c0sys7m1': () => import('./dashboards/odyssey-ecosystem'),
 	bfqwxro9m0xnc9z: () => import('./dashboards/thorchain'),
-	kpk1nv3st0rsd4s: () => import('./dashboards/kpk')
+	kpk1nv3st0rsd4s: () => import('./dashboards/kpk'),
+	un1swapd4shb0rd: () => import('./dashboards/uniswap')
 }
 
 export function getDashboardModule(dashboardId: string) {

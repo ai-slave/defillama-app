@@ -1,0 +1,396 @@
+import { useQuery } from '@tanstack/react-query'
+import { lazy, useMemo } from 'react'
+import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
+import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
+import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import { CHART_INSET, CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/chartSpacing'
+import { fetchAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api'
+import type { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
+import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
+import { formatUsd } from '~/utils/numberFormat'
+import { readInvestorApiJson } from '../../api.types'
+import { chartToDataset, unitSymbol, type Chart, type Kpi as KpiT } from './transform'
+
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
+const HBarChart = lazy(() => import('~/components/ECharts/HBarChart')) as React.FC<IHBarChartProps>
+
+// DefiLlama protocol slug. DefiLlama-sourced figures are read client-side from the
+// DefiLlama APIs directly (not through the ir-server), so the ir-server only has to
+// keep serving what DefiLlama doesn't have (the Dune-sourced metrics).
+export const PROTOCOL = 'uniswap'
+
+export const QUERY_OPTS = { staleTime: 10 * 60 * 1000, refetchOnWindowFocus: false } as const
+
+// Headline totals (24h/30d/all-time + chains) for one adapter metric, straight from DefiLlama.
+export function useProtocolMetrics(adapterType: `${ADAPTER_TYPES}`, dataType?: `${ADAPTER_DATA_TYPES}`) {
+	return useQuery({
+		queryKey: ['uniswap-protocol-metrics', adapterType, dataType ?? 'default'],
+		queryFn: () => fetchAdapterProtocolMetrics({ adapterType, protocol: PROTOCOL, ...(dataType ? { dataType } : {}) }),
+		...QUERY_OPTS
+	})
+}
+
+export function usdKpi(value: number | null | undefined): KpiT | undefined {
+	if (value == null || !Number.isFinite(value)) return undefined
+	// Fixed 2 fraction digits to match the ir-server's pre-formatted figures ($3.80T, $5.72B).
+	return {
+		value,
+		formatted: formatUsd(value, { compact: true, minimumFractionDigits: 2, maximumFractionDigits: 2 })
+	}
+}
+
+export function countKpi(value: number | null | undefined, suffix: string): KpiT | undefined {
+	if (value == null || !Number.isFinite(value)) return undefined
+	return { value, formatted: `${value} ${suffix}` }
+}
+
+export function useUniswapData<T>(tab: string) {
+	return useQuery<T>({
+		queryKey: ['uniswap', tab],
+		queryFn: async () => {
+			const res = await fetch(`/api/public/uniswap/${tab}`)
+			if (!res.ok) throw new Error(`Uniswap ${tab} error: ${res.status}`)
+			return readInvestorApiJson<T>(res)
+		},
+		...QUERY_OPTS
+	})
+}
+
+// One-line financial-term definitions served by the ir-server (metadata.definitions),
+// surfaced as (i) tooltips so every metric is defined in place.
+export function useUniswapDefs(): Record<string, string> {
+	const { data } = useUniswapData<{ definitions?: Record<string, string> }>('metadata')
+	return data?.definitions ?? {}
+}
+
+// Uniswap pink first, then an ordered set of distinct hues. 13 entries so the widest
+// charts (volume by chain: 12 + Other) never wrap back to a repeated color.
+export const UNI_PINK = '#FF007A'
+export const PALETTE = [
+	'#FF007A',
+	'#4C82FB',
+	'#9E62FF',
+	'#40B66B',
+	'#FFB238',
+	'#00C3A0',
+	'#FF5F52',
+	'#5B8DEF',
+	'#FC72FF',
+	'#F97316',
+	'#0EA5E9',
+	'#84CC16',
+	'#94A3B8'
+]
+
+// Catch-all buckets ("Other", "Others") always render slate gray, so they never
+// share a real category's color.
+const OTHERS_GRAY = '#94A3B8'
+
+export function paletteColor(index: number): string {
+	const color = PALETTE[index % PALETTE.length]
+	if (color === undefined) throw new Error('Expected the Uniswap chart palette to be non-empty')
+	return color
+}
+
+// ---------------------------------------------------------------- KPI + layout
+
+function KpiCard({ label, value, def }: { label: string; value: string; def?: string | undefined }) {
+	return (
+		<div className="flex flex-col gap-1.5 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
+			<span className="flex items-center gap-1 text-[11px] font-medium tracking-wider text-pro-text-tertiary uppercase">
+				{label}
+				{/* Shared Tooltip, not a `title` attribute: `title` never opens on touch. Padding
+				    buys a ~29px tap target; the negative margins keep the row height unchanged. */}
+				{def && (
+					<Tooltip content={def} className="-my-2 -mr-2 cursor-help p-2" aria-label={def}>
+						<Icon name="help-circle" height={13} width={13} />
+					</Tooltip>
+				)}
+			</span>
+			<span className="font-jetbrains text-xl font-semibold tracking-tight text-pro-text-primary tabular-nums">
+				{value}
+			</span>
+		</div>
+	)
+}
+
+// Renders KPIs straight from the payload's KPI map; pass the ordered keys + labels.
+// The tooltip prefers an explicit definition, falling back to the KPI's own `note`.
+export function KpiGrid({
+	kpis,
+	items,
+	label,
+	cols = 4
+}: {
+	kpis: Record<string, KpiT | undefined>
+	items: Array<[string, string] | [string, string, string | undefined]>
+	label?: string
+	cols?: 3 | 4
+}) {
+	const grid = (
+		<div
+			className={`grid gap-3 ${cols === 3 ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'}`}
+		>
+			{items.map(([key, lbl, def]) => {
+				const k = kpis[key]
+				return k ? <KpiCard key={key} label={lbl} value={k.formatted} def={def ?? k.note} /> : null
+			})}
+		</div>
+	)
+	if (!label) return grid
+	return (
+		<div className="flex flex-col gap-3">
+			<span className="text-[11px] font-semibold tracking-wider text-pro-text-secondary uppercase">{label}</span>
+			{grid}
+		</div>
+	)
+}
+
+export function SectionHeader({ children }: { children: React.ReactNode }) {
+	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-tertiary uppercase">{children}</h2>
+}
+
+export function PageLoader() {
+	return (
+		<div className="flex min-h-[60vh] items-center justify-center">
+			<div className="size-5 animate-spin rounded-full border-2 border-tertiary border-t-transparent" />
+		</div>
+	)
+}
+
+// Card chrome with an "awaiting data" body + the awaited API field, so the target
+// layout is visible before the backend ships the data.
+export function PlaceholderCard({
+	title,
+	subtitle,
+	note,
+	height = '360px'
+}: {
+	title: string
+	subtitle?: string | undefined
+	note?: string
+	height?: string
+}) {
+	return (
+		<ChartCard title={title} subtitle={subtitle}>
+			<div
+				className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-pro-cards-border text-center"
+				style={{ height }}
+			>
+				<span className="text-xs text-pro-text-tertiary">Awaiting data</span>
+				{note && (
+					<code className="rounded-sm bg-pro-app-bg px-2 py-0.5 font-jetbrains text-[10px] text-tertiary">{note}</code>
+				)}
+			</div>
+		</ChartCard>
+	)
+}
+
+export function ChartCard({
+	title,
+	subtitle,
+	value,
+	control,
+	children
+}: {
+	title: string
+	subtitle?: string | undefined
+	value?: string | undefined
+	/** Optional header-right control (e.g. a Daily/Cumulative toggle). */
+	control?: React.ReactNode
+	children: React.ReactNode
+}) {
+	return (
+		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
+			<div className="mb-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
+				<div className="min-w-0">
+					<h3 className="text-sm font-semibold text-pro-text-primary">{title}</h3>
+					{subtitle && <p className="mt-0.5 text-xs leading-relaxed text-pro-text-tertiary">{subtitle}</p>}
+				</div>
+				<div className="flex items-center gap-3">
+					{value && (
+						<p className="font-jetbrains text-xl font-semibold tracking-tight text-pro-text-primary tabular-nums">
+							{value}
+						</p>
+					)}
+					{control}
+				</div>
+			</div>
+			{children}
+		</div>
+	)
+}
+
+export function SegToggle<T extends string>({
+	options,
+	value,
+	onChange
+}: {
+	options: { value: T; label: string }[]
+	value: T
+	onChange: (v: T) => void
+}) {
+	// Wraps rather than overflowing so multi-option toggles fit a phone in one row.
+	return (
+		<div className="flex flex-wrap justify-end rounded-md border border-pro-cards-border p-0.5">
+			{options.map((o) => (
+				<button
+					key={o.value}
+					type="button"
+					onClick={() => onChange(o.value)}
+					className={`rounded-sm px-2 py-0.5 text-[11px] font-medium transition-colors ${
+						value === o.value
+							? 'bg-sl-accent-muted text-sl-accent'
+							: 'text-pro-text-tertiary hover:text-pro-text-primary'
+					}`}
+				>
+					{o.label}
+				</button>
+			))}
+		</div>
+	)
+}
+
+// ------------------------------------------------------------------ chart cards
+
+// Shared pre-formatted table: headers set alignment, right-aligned cells render mono.
+export function MiniTable({
+	grid,
+	headers,
+	rows,
+	maxHeight
+}: {
+	grid: string
+	headers: Array<[string, 'left' | 'right']>
+	rows: Array<Array<string | number>>
+	maxHeight?: string
+}) {
+	return (
+		<div className="w-full overflow-auto rounded-lg border border-pro-cards-border" style={{ maxHeight }}>
+			<div style={{ display: 'grid', gridTemplateColumns: grid }}>
+				{headers.map(([label, align]) => (
+					<div
+						key={label}
+						className="sticky top-0 z-[1] border-b border-subtle bg-pro-cards-bg px-3 py-2.5 text-[11px] font-semibold tracking-wider text-pro-text-tertiary uppercase"
+						style={{ textAlign: align }}
+					>
+						{label}
+					</div>
+				))}
+				{rows.map((row, rowIndex) =>
+					row.map((cell, cellIndex) => {
+						const align = headers[cellIndex]?.[1] ?? 'left'
+						return (
+							<div
+								key={`${rowIndex}-${cellIndex}`}
+								className={`truncate border-b border-subtle px-3 py-2.5 text-[13px] text-pro-text-primary ${
+									align === 'right' ? 'text-right font-jetbrains tabular-nums' : ''
+								} ${rowIndex % 2 === 1 ? 'bg-pro-cards-bg' : ''}`}
+							>
+								{cell}
+							</div>
+						)
+					})
+				)}
+			</div>
+		</div>
+	)
+}
+
+// Ranked horizontal bars over named items (audits by firm, TVL by segment), one
+// palette color per bar; catch-all "Other" bars go gray.
+export function BarListCard({
+	title,
+	subtitle,
+	items,
+	valueSymbol = ''
+}: {
+	title: string
+	subtitle?: string
+	items: Array<{ name: string; value: number }>
+	valueSymbol?: string
+}) {
+	return (
+		<ChartCard title={title} subtitle={subtitle}>
+			<HBarChart
+				categories={items.map((item) => item.name)}
+				values={items.map((item) => item.value)}
+				colors={items.map((item, index) => (item.name.startsWith('Other') ? OTHERS_GRAY : paletteColor(index)))}
+				valueSymbol={valueSymbol}
+				height="360px"
+			/>
+		</ChartCard>
+	)
+}
+
+// Area/line time series. Single series renders as a pink area; multiple series
+// render as overlaid lines, or as stacked areas with `stacked` (for series that are
+// composition parts, e.g. burns by source or TVL by chain).
+export function TimeAreaCard({
+	chart,
+	title,
+	subtitle,
+	value,
+	valueSymbol,
+	stacked,
+	control,
+	zoomLastPoints
+}: {
+	chart: Chart
+	/** Fixed card title; defaults to the chart payload's own title. */
+	title?: string
+	subtitle?: string
+	value?: string | undefined
+	valueSymbol?: string
+	stacked?: boolean
+	/** Optional header-right control (e.g. a Total / By Chain toggle). */
+	control?: React.ReactNode
+	/** Open zoomed to the last N points (full history stays reachable via the zoom slider). */
+	zoomLastPoints?: number
+}) {
+	const resolvedValueSymbol = valueSymbol ?? unitSymbol(chart.unit)
+	const multipleSeries = chart.series.length > 1
+	const { dataset, charts, chartOptions } = useMemo(() => {
+		const dataset = chartToDataset(chart)
+		const zoom =
+			zoomLastPoints && dataset.source.length > zoomLastPoints
+				? { dataZoom: { start: ((dataset.source.length - zoomLastPoints) / dataset.source.length) * 100, end: 100 } }
+				: {}
+		return {
+			dataset,
+			charts: chart.series.map(
+				(series, index): MultiSeriesChartSeriesConfig => ({
+					type: 'line',
+					name: series.name,
+					encode: { x: 'timestamp', y: series.name },
+					color: paletteColor(index),
+					...(stacked ? { stack: 'total' } : { hideAreaStyle: multipleSeries })
+				})
+			),
+			chartOptions: {
+				...createTimeSeriesChartOptions(resolvedValueSymbol),
+				// The legend doubles as the per-series enable/disable toggle.
+				...(multipleSeries
+					? { legend: { type: 'scroll' as const, top: CHART_INSET }, grid: { top: CHART_LEGEND_RESERVE } }
+					: {}),
+				...zoom
+			}
+		}
+	}, [chart, stacked, multipleSeries, resolvedValueSymbol, zoomLastPoints])
+	if (!chart.series.length) return <PlaceholderCard title={chart.title ?? ''} subtitle={subtitle} note="empty series" />
+	return (
+		<ChartCard title={title ?? chart.title ?? ''} subtitle={subtitle ?? chart.subtitle} value={value} control={control}>
+			<MultiSeriesChart
+				dataset={dataset}
+				charts={charts}
+				valueSymbol={resolvedValueSymbol}
+				title=""
+				height="360px"
+				hideDefaultLegend={!multipleSeries}
+				exportButtons="hidden"
+				chartOptions={chartOptions}
+			/>
+		</ChartCard>
+	)
+}

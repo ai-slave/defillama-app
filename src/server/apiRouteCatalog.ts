@@ -206,6 +206,7 @@ export const allApiRoutePaths = [
 	'tokens/charts/coingecko/[geckoId]',
 	'token-unlocks/[protocol]',
 	'token-usage/[symbol]',
+	'uniswap/[tab]',
 	'visitor-region',
 	'yields/borrow-markets',
 	'yields/borrow-routes',
