@@ -184,12 +184,12 @@ export const ResearchLatest: React.FC<ResearchLatestProps> = ({ articles = [], i
 
 	return (
 		<div>
-			<div className="mb-8 flex scrollbar-none max-w-full touch-pan-x flex-nowrap gap-3 overflow-x-auto [-webkit-overflow-scrolling:touch] lg:flex-wrap lg:justify-center lg:overflow-x-visible">
+			<div className="mb-8 grid grid-cols-2 gap-3 lg:flex lg:flex-wrap lg:justify-center">
 				{NAV_ITEMS.map((cat) => (
 					<Link
 						key={cat.id}
 						href={cat.anchor}
-						className="w-auto shrink-0 rounded-[4px] border border-research-accent/35 bg-transparent px-3.75 py-0.75 text-center text-sm font-medium text-research-accent-strong uppercase transition-[color,border-color,background-color,transform] duration-200 ease-out hover:border-research-accent hover:text-research-accent-strong focus-visible:border-research-accent focus-visible:text-research-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-research-accent motion-safe:hover:scale-[1.03] motion-safe:focus-visible:scale-[1.03] dark:border-research-invert dark:text-research-ink dark:hover:border-research-accent dark:hover:text-research-accent-soft dark:focus-visible:border-research-accent dark:focus-visible:text-research-accent-soft"
+						className="w-full rounded-[4px] border border-research-accent/35 bg-transparent px-3.75 py-0.75 text-center text-sm font-medium text-research-accent-strong uppercase transition-[color,border-color,background-color,transform] duration-200 ease-out hover:border-research-accent hover:text-research-accent-strong focus-visible:border-research-accent focus-visible:text-research-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-research-accent motion-safe:hover:scale-[1.03] motion-safe:focus-visible:scale-[1.03] lg:w-auto dark:border-research-invert dark:text-research-ink dark:hover:border-research-accent dark:hover:text-research-accent-soft dark:focus-visible:border-research-accent dark:focus-visible:text-research-accent-soft"
 					>
 						{cat.label}
 					</Link>
