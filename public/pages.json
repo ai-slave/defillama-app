@@ -501,7 +501,7 @@
       ]
     },
     {
-      "name": "Exchange Reserves",
+      "name": "CEXs",
       "route": "/cexs",
       "category": "Exchanges",
       "description": "Assets held in tracked centralized exchange wallets, clean reserves, and net inflows",

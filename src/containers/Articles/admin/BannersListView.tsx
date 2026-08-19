@@ -112,7 +112,7 @@ export function BannersListView() {
 									<span className="inline-flex items-center rounded-full bg-research-tint px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.18em] text-link uppercase">
 										{BANNER_KIND_LABELS[banner.type]}
 									</span>
-									<span className="inline-flex items-center rounded-full bg-surface-elevated-1 px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.12em] text-secondary uppercase">
+									<span className="inline-flex items-center rounded-full bg-surface-elevated-1 px-2 py-0.5 label-xs tracking-[0.12em] text-secondary uppercase">
 										{bannerAudienceLabel(banner.targetCountries)}
 									</span>
 									<span

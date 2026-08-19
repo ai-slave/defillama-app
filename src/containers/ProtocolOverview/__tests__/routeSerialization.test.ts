@@ -336,6 +336,7 @@ describe('protocol static props serialization', () => {
 			}
 		})
 
+		if (!('props' in result)) throw new Error('expected props')
 		renderToStaticMarkup(createElement(ProtocolStablecoinsPage, result.props))
 		expect(mocks.peggedAssetInfo).toHaveBeenCalledTimes(1)
 		expect(mocks.peggedAssetInfo.mock.calls[0]?.[0]).toMatchObject({

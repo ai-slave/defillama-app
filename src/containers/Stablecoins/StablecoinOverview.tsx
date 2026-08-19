@@ -378,7 +378,7 @@ export const PeggedAssetInfo = ({
 						<TokenLogo name={name} kind="pegged" alt={`Logo of ${name}`} size={24} />
 						{showStablecoinMenu ? (
 							<span className="flex min-w-0 flex-col gap-0.5">
-								<span className="label-xs font-normal text-tertiary">Stablecoin</span>
+								<span className="label-xs text-tertiary">Stablecoin</span>
 								<Menu
 									name={getStablecoinOptionLabel({ name, symbol })}
 									options={stablecoinOptions.map(getStablecoinOptionLabel)}

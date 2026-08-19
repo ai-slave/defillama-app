@@ -1,4 +1,4 @@
-import type { GetStaticPropsContext } from 'next'
+import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import { useState } from 'react'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
@@ -82,7 +82,7 @@ export const getStaticPaths = () => {
 	return { paths: [], fallback: 'blocking' }
 }
 
-export default function Protocols({ clientSide: _clientSide, protocolData: _protocolData, ...props }) {
+export default function Protocols(props: InferGetStaticPropsType<typeof getStaticProps>) {
 	const [selectedStablecoinId, setSelectedStablecoinId] = useState(
 		() => props.stablecoinsData[0]?.peggedAssetData.id ?? null
 	)
