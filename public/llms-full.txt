@@ -235,6 +235,7 @@ Common usage examples:
 ## Dashboard catalog - Premium
 
 - [Pricing](https://defillama.com/subscription)
+- [Mobile App](https://defillama.com/app)
 - [LlamaAI](https://defillama.com/ai)
 - [Downloads](https://defillama.com/downloads)
 - [Custom Dashboards](https://defillama.com/pro)
