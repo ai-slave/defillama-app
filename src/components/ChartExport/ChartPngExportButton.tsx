@@ -912,6 +912,8 @@ export function scaleYAxisForExport(
 		}
 		if (isHorizontalBarChart && axis.type === 'category') {
 			scaled.boundaryGap = true
+			// getOption() includes the live hover status; the export clone should not keep that shadow.
+			scaled.axisPointer = { ...(scaled.axisPointer ?? {}), status: 'hide' }
 		}
 		return scaled
 	})

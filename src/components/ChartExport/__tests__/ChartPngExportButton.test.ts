@@ -129,6 +129,32 @@ import { BASE_TOP_PADDING, computeExportLayout, EXPORT_HALLMARK_LABEL_RESERVE } 
 
 describe('scaleYAxisForExport', () => {
 	// EXPORT_FONT_SIZE = 24; on-screen category labels use the ECharts default 12px font.
+	it('hides the cloned hbar hover shadow without mutating the live axis state', () => {
+		const axis = {
+			type: 'category' as const,
+			axisPointer: {
+				type: 'shadow' as const,
+				status: 'show' as const,
+				value: 2,
+				seriesDataIndices: [{ seriesIndex: 0, dataIndex: 2, dataIndexInside: 2 }]
+			}
+		}
+
+		const [scaled] = scaleYAxisForExport([axis], true)
+
+		expect(scaled.axisPointer).toMatchObject({ type: 'shadow', status: 'hide', value: 2 })
+		expect(axis.axisPointer.status).toBe('show')
+	})
+
+	it('preserves an explicit axis pointer outside hbar exports', () => {
+		const [scaled] = scaleYAxisForExport(
+			[{ type: 'category', axisPointer: { type: 'shadow', status: 'show', value: 2 } }],
+			false
+		)
+
+		expect(scaled.axisPointer).toMatchObject({ type: 'shadow', status: 'show', value: 2 })
+	})
+
 	it('scales the category-label width cap by the font ratio so the doubled export font keeps the same visible length', () => {
 		// horizontal bar y-axis: venue names truncated to 120px at 12px on screen ("Bybit.eu (MiCA)" fits)
 		const [scaled] = scaleYAxisForExport([{ type: 'category', axisLabel: { width: 120, overflow: 'truncate' } }], true)
