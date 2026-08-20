@@ -24,6 +24,16 @@ describe('getDefaultRWAOverviewInclusion', () => {
 		}
 	})
 
+	it('enables governance by default for the governance-tokens category page', () => {
+		// every asset in this category is governance-classified, so the page
+		// would render empty with the toggle off
+		expect(getDefaultRWAOverviewInclusion({ mode: 'category', categorySlug: 'governance-tokens' })).toEqual({
+			includeStablecoins: false,
+			includeGovernance: true,
+			includeRwaPerps: false
+		})
+	})
+
 	it('enables stablecoins and governance by default for other-rwas category pages', () => {
 		expect(getDefaultRWAOverviewInclusion({ mode: 'category', categorySlug: 'other-rwas' })).toEqual({
 			includeStablecoins: true,

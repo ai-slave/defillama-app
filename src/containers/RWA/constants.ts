@@ -35,10 +35,14 @@ const STABLECOINS_DEFAULT_RWA_PATHS = new Set<RWAOverviewPath>([
 	'/rwa/category/rwa-yield-wrapper'
 ])
 const GOVERNANCE_DEFAULT_RWA_PATHS = new Set<RWAOverviewPath>([
+	'/rwa/category/governance-tokens',
 	'/rwa/category/other-rwas',
 	'/rwa/category/rwa-yield-wrapper'
 ])
 
+// NOTE: defillama-server mirrors this inference to weigh RWA platform search
+// results by their default-visible mcap (getRwaPlatformDefaultVisibleMcap in
+// defi/src/updateSearch.ts) - keep the two implementations in sync.
 export function inferPlatformRWAOverviewInclusion(
 	assets: Array<{
 		stablecoin: boolean | null

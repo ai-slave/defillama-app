@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { startTransition, useEffect, useMemo, useRef, useState } from 'react'
-import { searchApi } from '~/api'
+import { multiSearchApi, searchApi } from '~/api'
 import { useAuthContext } from '~/auth'
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { BasicLink } from '~/components/Link'
@@ -14,6 +14,7 @@ import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import { LoadingDots } from '~/ui/Loaders'
 import { fetchJson } from '~/utils/async'
+import { findCategoryToPromote, mergePromotedCategory } from './categoryPromotion'
 
 const SEARCH_PAGE_SIZE = 20
 const EMPTY_SEARCH_ITEMS: ISearchItem[] = []
@@ -27,7 +28,17 @@ async function getDefaultSearchList() {
 	}
 }
 async function fetchSearchPage(query: string, offset: number): Promise<Array<ISearchItem>> {
-	return searchApi<ISearchItem>({ indexUid: 'pages', limit: SEARCH_PAGE_SIZE, offset, q: query })
+	// Follow-up pages don't need the category merge - only the top of the list
+	// is eligible for promotion.
+	if (offset > 0) {
+		return searchApi<ISearchItem>({ indexUid: 'pages', limit: SEARCH_PAGE_SIZE, offset, q: query })
+	}
+
+	const [hits, categoryHits] = await multiSearchApi<ISearchItem>([
+		{ indexUid: 'pages', limit: SEARCH_PAGE_SIZE, offset, q: query },
+		{ indexUid: 'pages', limit: 3, offset: 0, q: query, filter: [['type = "Category"']] }
+	])
+	return mergePromotedCategory(hits, findCategoryToPromote(hits, categoryHits, query))
 }
 
 interface ISearchItem {
@@ -39,6 +50,7 @@ interface ISearchItem {
 	deprecated?: boolean
 	hideType?: boolean
 	subName?: string
+	r?: number
 }
 
 export const MobileSearch = () => {

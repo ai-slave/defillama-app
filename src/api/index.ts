@@ -23,14 +23,19 @@ import type {
 
 /** Generic search API helper for the DefiLlama multi-search endpoint. */
 export async function searchApi<T = Record<string, unknown>>(query: SearchQuery): Promise<Array<T>> {
+	return multiSearchApi<T>([query]).then((results) => results[0] ?? [])
+}
+
+/** Run several queries in one multi-search request; returns hits per query, in order. */
+export async function multiSearchApi<T = Record<string, unknown>>(queries: SearchQuery[]): Promise<Array<Array<T>>> {
 	return fetchJson(SEARCH_API_URL, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
 			Authorization: `Bearer ${SEARCH_API_TOKEN}`
 		},
-		body: JSON.stringify({ queries: [query] })
-	}).then((res) => res?.results?.[0]?.hits ?? [])
+		body: JSON.stringify({ queries })
+	}).then((res) => queries.map((_, i) => res?.results?.[i]?.hits ?? []))
 }
 
 // ---------------------------------------------------------------------------

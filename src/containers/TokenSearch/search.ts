@@ -67,9 +67,16 @@ export async function searchTokens(query: string, limit = TOKEN_SEARCH_LIMIT): P
 		sort: ['mcapRank:asc']
 	})
 
+	// The `sort` param above only breaks ties at the last ranking rule, so the
+	// response is still mostly relevance-ordered. Order the page by market cap
+	// rank here; unranked tokens go last and keep their relevance order.
+	const sortedHits = [...hits].sort(
+		(a, b) => (a.mcapRank || Number.MAX_SAFE_INTEGER) - (b.mcapRank || Number.MAX_SAFE_INTEGER)
+	)
+
 	const tokens: TokenSearchResult[] = []
-	for (let index = 0; index < hits.length; index++) {
-		tokens.push(toTokenSearchResult(hits[index], index + 1))
+	for (let index = 0; index < sortedHits.length; index++) {
+		tokens.push(toTokenSearchResult(sortedHits[index], index + 1))
 	}
 	return tokens
 }
