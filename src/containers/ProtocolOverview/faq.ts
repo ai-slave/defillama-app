@@ -6,7 +6,7 @@ import type { IProtocolFaqAnswerPart, IProtocolFaqItem } from './types'
 const MAX_FAQ_ITEMS = 10
 const MAX_LINKED_CHAINS = 5
 const MAX_LINKED_CHILDREN = 5
-const MAX_LINKED_PEERS = 3
+const MAX_LINKED_PEERS = 10
 
 export interface ProtocolFaqChain {
 	name: string
@@ -21,12 +21,14 @@ export interface ProtocolFaqComparison {
 	protocolCount: number
 	totalTvl: number
 	sharePercent: number
-	peers: Array<{ name: string; href: string }>
+	peers: Array<{ name: string; href: string; tvl: number }>
 }
 
 export interface ProtocolFaqChild {
 	name: string
 	href: string
+	category: string | null
+	chains: string[]
 }
 
 interface ProtocolFaqToken {
@@ -90,16 +92,17 @@ interface ProtocolFaqRelationshipInput {
 	protocolName: string
 	category: string | null
 	isParent: boolean
+	chains: string[]
 	protocols: Array<{
 		name: string
 		slug?: string
 		defillamaId: string
 		category?: string
+		chains: string[]
 		tvl: number | null
 		parentProtocol?: string
 		deprecated?: boolean
 	}>
-	parentProtocols: Array<{ id: string; name: string }>
 }
 
 export function buildProtocolFaqRelationship({
@@ -107,18 +110,30 @@ export function buildProtocolFaqRelationship({
 	protocolName,
 	category,
 	isParent,
-	protocols,
-	parentProtocols
+	chains,
+	protocols
 }: ProtocolFaqRelationshipInput): {
 	comparison: ProtocolFaqComparison | null
 	children: ProtocolFaqChild[]
 	useChildrenQuestion: boolean
 } {
-	const parentNames = new Map(parentProtocols.map((parent) => [parent.id, parent.name]))
-	const rawChildren: Array<{ name: string; slug?: string; category: string | null; tvl: number | null }> = []
-	const grouped = new Map<string, { name: string; tvl: number; href: string }>()
+	const rawChildren: Array<{
+		name: string
+		slug?: string
+		category: string | null
+		chains: string[]
+		tvl: number | null
+	}> = []
+	const rows: Array<{
+		id: string
+		name: string
+		tvl: number
+		href: string
+		commonChains: number
+	}> = []
 	const normalizedCategory = category?.toLowerCase() ?? null
-	let currentProtocolHasParent = false
+	const chainSet = new Set(chains)
+	let currentParentTvl = 0
 
 	for (const protocol of protocols) {
 		if (protocol.deprecated) continue
@@ -127,63 +142,85 @@ export function buildProtocolFaqRelationship({
 				name: protocol.name,
 				...(protocol.slug !== undefined ? { slug: protocol.slug } : {}),
 				category: protocol.category ?? null,
+				chains: protocol.chains,
 				tvl: protocol.tvl ?? null
 			})
 		}
-		if (!isParent && protocol.defillamaId === protocolId && protocol.parentProtocol) {
-			currentProtocolHasParent = true
-		}
 		if (!normalizedCategory || !protocol.category || protocol.category.toLowerCase() !== normalizedCategory) continue
 
-		const entityId = protocol.parentProtocol ?? protocol.defillamaId
-		const entityName =
-			entityId === protocolId
-				? protocolName
-				: protocol.parentProtocol
-					? (parentNames.get(protocol.parentProtocol) ?? protocol.name)
-					: protocol.name
-		const entityHref = protocol.parentProtocol
-			? `/protocol/${slug(entityName)}`
-			: `/protocol/${protocol.slug ?? slug(entityName)}`
-		const existing = grouped.get(entityId)
-		if (existing) {
-			existing.tvl += protocol.tvl ?? 0
-		} else {
-			grouped.set(entityId, {
-				name: entityName,
-				tvl: protocol.tvl ?? 0,
-				href: entityHref
-			})
+		// Keep peers at product level; only aggregate the current parent so its own children are not competitors.
+		if (isParent && protocol.parentProtocol === protocolId) {
+			currentParentTvl += protocol.tvl ?? 0
+			continue
 		}
+
+		rows.push({
+			id: protocol.defillamaId,
+			name: protocol.name,
+			tvl: protocol.tvl ?? 0,
+			href: `/protocol/${protocol.slug ?? slug(protocol.name)}`,
+			commonChains: protocol.chains.filter((chain) => chainSet.has(chain)).length
+		})
+	}
+
+	if (isParent && normalizedCategory) {
+		rows.push({
+			id: protocolId,
+			name: protocolName,
+			tvl: currentParentTvl,
+			href: `/protocol/${slug(protocolName)}`,
+			commonChains: chains.length
+		})
 	}
 
 	const children = rawChildren
 		.toSorted((a, b) => (b.tvl ?? 0) - (a.tvl ?? 0))
-		.map((protocol) => ({ name: protocol.name, href: `/protocol/${protocol.slug ?? slug(protocol.name)}` }))
+		.map((protocol) => ({
+			name: protocol.name,
+			href: `/protocol/${protocol.slug ?? slug(protocol.name)}`,
+			category: protocol.category,
+			chains: protocol.chains
+		}))
 	const childCategories = new Set(
 		rawChildren.map((child) => child.category).filter((value): value is string => value != null)
 	)
 	const useChildrenQuestion = isParent && children.length > 0 && childCategories.size !== 1
 
-	if (!category || useChildrenQuestion || currentProtocolHasParent) {
+	if (!category || useChildrenQuestion) {
 		return { comparison: null, children, useChildrenQuestion }
 	}
 
-	const rows = Array.from(grouped.entries()).toSorted((a, b) => b[1].tvl - a[1].tvl)
-	const currentIndex = rows.findIndex(([entityId]) => entityId === protocolId)
+	rows.sort((a, b) => b.tvl - a.tvl)
+	const currentIndex = rows.findIndex((row) => row.id === protocolId)
 	if (currentIndex === -1) {
-		return { comparison: null, children, useChildrenQuestion: isParent && children.length > 0 }
+		return {
+			comparison: null,
+			children,
+			useChildrenQuestion: isParent && children.length > 0
+		}
 	}
 
-	const totalTvl = rows.reduce((sum, [, row]) => sum + row.tvl, 0)
+	const totalTvl = rows.reduce((sum, row) => sum + row.tvl, 0)
 	const currentRow = rows[currentIndex]
 	if (currentRow === undefined) {
-		return { comparison: null, children, useChildrenQuestion: isParent && children.length > 0 }
+		return {
+			comparison: null,
+			children,
+			useChildrenQuestion: isParent && children.length > 0
+		}
 	}
-	const currentTvl = currentRow[1].tvl
+	const currentTvl = currentRow.tvl
 	if (totalTvl <= 0) {
-		return { comparison: null, children, useChildrenQuestion: isParent && children.length > 0 }
+		return {
+			comparison: null,
+			children,
+			useChildrenQuestion: isParent && children.length > 0
+		}
 	}
+
+	const peers = rows
+		.filter((row) => row.id !== protocolId)
+		.toSorted((a, b) => b.commonChains - a.commonChains || b.tvl - a.tvl)
 
 	return {
 		comparison: {
@@ -193,10 +230,7 @@ export function buildProtocolFaqRelationship({
 			protocolCount: rows.length,
 			totalTvl,
 			sharePercent: (currentTvl / totalTvl) * 100,
-			peers: rows
-				.filter(([entityId]) => entityId !== protocolId)
-				.slice(0, MAX_LINKED_PEERS)
-				.map(([, row]) => ({ name: row.name, href: row.href }))
+			peers: peers.slice(0, MAX_LINKED_PEERS).map((row) => ({ name: row.name, href: row.href, tvl: row.tvl }))
 		},
 		children,
 		useChildrenQuestion: false
@@ -242,7 +276,10 @@ function possessive(name: string): string {
 }
 
 function formatPercentMagnitude(value: number): string {
-	return formatPercent(Math.abs(value), { input: 'percent', maximumFractionDigits: 1 })
+	return formatPercent(Math.abs(value), {
+		input: 'percent',
+		maximumFractionDigits: 1
+	})
 }
 
 function buildDescriptionQuestion(context: ProtocolFaqContext): IProtocolFaqItem | null {

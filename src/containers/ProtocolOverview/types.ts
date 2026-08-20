@@ -93,6 +93,12 @@ export interface IProtocolOverviewPageData {
 	category?: string | null
 	tags?: Array<string> | null
 	otherProtocols?: Array<string> | null
+	childProtocols?: Array<{
+		name: string
+		href: string
+		category: string | null
+		chains: string[]
+	}>
 	deprecated?: boolean
 	chains: Array<string> | null
 	currentTvlByChain: Record<string, number> | null

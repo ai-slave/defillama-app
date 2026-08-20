@@ -125,7 +125,10 @@ export const getProtocolMetricFlags = ({
 }
 
 type IBridgeVolumeResult = BridgeVolumePoint[] | null
-type IProtocolTvlChartSeedResult = { data: IProtocolValueChart; failed: boolean }
+type IProtocolTvlChartSeedResult = {
+	data: IProtocolValueChart
+	failed: boolean
+}
 
 function isOracleExtraTvlBreakdownKey(key: string): boolean {
 	if (TVL_SETTINGS_KEYS_SET.has(key) || key === 'dcAndLsOverlap') return true
@@ -196,7 +199,10 @@ export const getProtocolOverviewPageData = async ({
 								.then((res) => res?.data?.coinData?.tickers)
 								.catch(() => undefined)
 						: undefined
-				return { ...data, tokenCGData: getTokenCGData(tokenEntry, tickers, cgExchangeIdentifiers) }
+				return {
+					...data,
+					tokenCGData: getTokenCGData(tokenEntry, tickers, cgExchangeIdentifiers)
+				}
 			} catch (e) {
 				console.log('[HTTP]:[ERROR]:[TOKEN_CG_DATA]:', e)
 				return data
@@ -285,8 +291,16 @@ export const getProtocolOverviewPageData = async ({
 	] = await Promise.all([
 		protocolDataPromise,
 		currentProtocolMetadata.tvl && !isOracleProtocol
-			? fetchProtocolTvlChart({ protocol: currentProtocolSlug, timeout: getFastJsonTimeoutMs() })
-					.then((chart): IProtocolTvlChartSeedResult => ({ data: chart, failed: false }))
+			? fetchProtocolTvlChart({
+					protocol: currentProtocolSlug,
+					timeout: getFastJsonTimeoutMs()
+				})
+					.then(
+						(chart): IProtocolTvlChartSeedResult => ({
+							data: chart,
+							failed: false
+						})
+					)
 					.catch((err): IProtocolTvlChartSeedResult => {
 						console.log(
 							'[HTTP]:[ERROR]:[PROTOCOL_TVL_CHART]:',
@@ -295,7 +309,10 @@ export const getProtocolOverviewPageData = async ({
 						)
 						return { data: [], failed: true }
 					})
-			: Promise.resolve<IProtocolTvlChartSeedResult>({ data: [], failed: false }),
+			: Promise.resolve<IProtocolTvlChartSeedResult>({
+					data: [],
+					failed: false
+				}),
 		currentProtocolMetadata.fees
 			? fetchAdapterProtocolMetrics({
 					adapterType: 'fees',
@@ -514,7 +531,12 @@ export const getProtocolOverviewPageData = async ({
 			? optionalProtocolData('liquidity_tokens', () => fetchLiquidityTokensDataset(), [])
 			: Promise.resolve([]),
 		fetchProtocols().catch(
-			(): ProtocolsResponse => ({ protocols: [], chains: [], parentProtocols: [], protocolCategories: [] })
+			(): ProtocolsResponse => ({
+				protocols: [],
+				chains: [],
+				parentProtocols: [],
+				protocolCategories: []
+			})
 		),
 		currentProtocolMetadata.bridge
 			? optionalProtocolData(
@@ -682,66 +704,19 @@ export const getProtocolOverviewPageData = async ({
 	const resolvedProtocolChains = protocolData.chains.length
 		? protocolData.chains
 		: (currentProtocolMetadata.chains ?? [])
-	const protocolChainsSet = new Set(resolvedProtocolChains)
-
-	const competitors =
-		liteProtocolsData && resolvedCategory
-			? (() => {
-					const rows: Array<{ name: string; tvl: number; commonChains: number }> = []
-					const currentCategory = resolvedCategory.toLowerCase()
-					const currentName = protocolData.name.toLowerCase()
-					for (const protocol of liteProtocolsData.protocols) {
-						if (!protocol.category) continue
-						if (protocol.category.toLowerCase() !== currentCategory) continue
-						if (protocol.name.toLowerCase() === currentName) continue
-						if (protocolData.isParentProtocol && protocol.parentProtocol === protocolData.id) continue
-						const candidateChainsSet = new Set(protocol.chains)
-						let hasCommonChain = false
-						for (const chain of candidateChainsSet) {
-							if (protocolChainsSet.has(chain)) {
-								hasCommonChain = true
-								break
-							}
-						}
-						if (!hasCommonChain) continue
-
-						let commonChains = 0
-						for (const chain of resolvedProtocolChains) {
-							if (candidateChainsSet.has(chain)) {
-								commonChains += 1
-							}
-						}
-
-						rows.push({ name: protocol.name, tvl: protocol.tvl ?? 0, commonChains })
-					}
-					rows.sort((a, b) => b.tvl - a.tvl)
-					return rows
-				})()
-			: []
-
-	const competitorsSet = new Set<string>()
-	const competitorsMap = new Map(competitors.map((p) => [p.name, p]))
-
-	const protocolsWithCommonChains = competitors.toSorted((a, b) => b.commonChains - a.commonChains).slice(0, 5)
-
-	// first 5 are the protocols that are on same chain + same category
-	for (const p of protocolsWithCommonChains) {
-		competitorsSet.add(p.name)
-	}
-
-	// last 5 are the protocols in same category
-	for (const p of competitors) {
-		if (competitorsSet.size < 10) {
-			competitorsSet.add(p.name)
-		}
-	}
-
-	const competitorsList: Array<{ name: string; tvl: number }> = []
-	for (const protocolName of competitorsSet) {
-		const competitor = competitorsMap.get(protocolName)
-		if (!competitor) continue
-		competitorsList.push({ name: competitor.name, tvl: competitor.tvl })
-	}
+	const relationship = buildProtocolFaqRelationship({
+		protocolId,
+		protocolName: protocolData.name,
+		category: resolvedCategory,
+		isParent: Boolean(protocolData.isParentProtocol || protocolId.startsWith('parent#')),
+		chains: resolvedProtocolChains,
+		protocols: liteProtocolsData.protocols
+	})
+	const competitorsList =
+		relationship.comparison?.peers.map((peer) => ({
+			name: peer.name,
+			tvl: peer.tvl
+		})) ?? []
 
 	const hacks = protocolData.hacks.toSorted((a, b) => (a.date ?? 0) - (b.date ?? 0))
 
@@ -781,7 +756,10 @@ export const getProtocolOverviewPageData = async ({
 				geckoId: chainGas.geckoId
 			})
 		} else if (cmetadata?.gecko_id) {
-			chartDenominations.push({ symbol: cmetadata.tokenSymbol ?? '', geckoId: cmetadata.gecko_id })
+			chartDenominations.push({
+				symbol: cmetadata.tokenSymbol ?? '',
+				geckoId: cmetadata.gecko_id
+			})
 		} else {
 			const ethereumGeckoId = chainMetadata?.['ethereum']?.gecko_id
 			chartDenominations.push({
@@ -944,6 +922,16 @@ export const getProtocolOverviewPageData = async ({
 		category: resolvedCategory,
 		tags: protocolData.tags ?? null,
 		otherProtocols: protocolData.otherProtocols ?? null,
+		...(relationship.children.length
+			? {
+					childProtocols: relationship.children.map((child) => ({
+						name: child.name,
+						href: child.href,
+						category: child.category,
+						chains: child.chains
+					}))
+				}
+			: {}),
 		deprecated: protocolData.deprecated ?? false,
 		chains: resolvedProtocolChains,
 		currentTvlByChain,
@@ -1019,7 +1007,10 @@ export const getProtocolOverviewPageData = async ({
 		expenses: formattedExpenses,
 		tokenLiquidity:
 			tokenLiquidity?.length > 0
-				? { pools: tokenLiquidity, total: tokenLiquidity.reduce((acc, curr) => acc + curr[2], 0) }
+				? {
+						pools: tokenLiquidity,
+						total: tokenLiquidity.reduce((acc, curr) => acc + curr[2], 0)
+					}
 				: null,
 		tokenCGData: protocolData.tokenCGData ?? null,
 		outstandingFDV:
@@ -1077,14 +1068,6 @@ export const getProtocolOverviewPageData = async ({
 
 	if (isCEX || !includeFaq) return pageData
 
-	const relationship = buildProtocolFaqRelationship({
-		protocolId,
-		protocolName: name,
-		category: resolvedCategory,
-		isParent: Boolean(protocolData.isParentProtocol || protocolId.startsWith('parent#')),
-		protocols: liteProtocolsData.protocols,
-		parentProtocols: liteProtocolsData.parentProtocols
-	})
 	const chainTvl = protocolData.currentChainTvls
 	const hasCurrentChainTvl = resolvedProtocolChains.some((chain) => chainTvl[chain] != null)
 	const currentTvlFromChains = hasCurrentChainTvl
@@ -1410,7 +1393,12 @@ async function getIncomeStatement(source: IncomeStatementSource) {
 
 		const cumulative =
 			Object.keys(cumulativeMetrics).length > 0
-				? { cumulative: { timestamp: latestMonthlyTimestamp, values: cumulativeMetrics } }
+				? {
+						cumulative: {
+							timestamp: latestMonthlyTimestamp,
+							values: cumulativeMetrics
+						}
+					}
 				: {}
 
 		const finalLabelsByType: Record<string, Array<string>> = {}
@@ -1439,8 +1427,14 @@ async function getIncomeStatement(source: IncomeStatementSource) {
 	}
 }
 
-type NormalizedIncomeStatementMetric = { value: number; 'by-label'?: Record<string, number> }
-type NormalizedIncomeStatementPeriod = { timestamp: number; values: Record<string, NormalizedIncomeStatementMetric> }
+type NormalizedIncomeStatementMetric = {
+	value: number
+	'by-label'?: Record<string, number>
+}
+type NormalizedIncomeStatementPeriod = {
+	timestamp: number
+	values: Record<string, NormalizedIncomeStatementMetric>
+}
 type NormalizedIncomeStatementPeriods = Record<string, NormalizedIncomeStatementPeriod>
 
 const getIncomeStatementPeriodTimestamp = (period: string): number => {
@@ -1465,7 +1459,10 @@ const normalizeIncomeStatementPeriods = (periods: IncomeStatementPeriods): Norma
 				...(byLabel === undefined ? {} : { 'by-label': { ...byLabel } })
 			}
 		}
-		normalized[period] = { timestamp: getIncomeStatementPeriodTimestamp(period), values: metrics }
+		normalized[period] = {
+			timestamp: getIncomeStatementPeriodTimestamp(period),
+			values: metrics
+		}
 	}
 	return normalized
 }

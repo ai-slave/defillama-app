@@ -579,7 +579,7 @@ describe('ProtocolOverview SEO contract', () => {
 })
 
 describe('ProtocolInfo category links', () => {
-	it('renders a category CTA linking back to the category page', async () => {
+	it('renders category links and parent product metadata', async () => {
 		vi.doMock('~/ui/Icon', () => ({
 			Icon: () => null
 		}))
@@ -596,6 +596,10 @@ describe('ProtocolInfo category links', () => {
 		}))
 		vi.doMock('~/components/Menu', () => ({
 			Menu: () => null
+		}))
+		vi.doMock('~/components/IconsRow', () => ({
+			IconsRow: ({ items }: { items: Array<{ label: string }> }) =>
+				React.createElement('span', { 'data-chain-icons': items.map((item) => item.label).join(',') })
 		}))
 		vi.doMock('~/ui/MetricPrimitives', () => ({
 			MetricRow: () => null
@@ -634,5 +638,50 @@ describe('ProtocolInfo category links', () => {
 		expect(markup).toContain('href="/protocols/prediction-market"')
 		expect(markup).toContain('Prediction Market')
 		expect(markup).toContain('Category:')
+
+		const parentMarkup = renderToStaticMarkup(
+			React.createElement(ProtocolInfo, {
+				...createOverviewProps(),
+				id: 'parent#rho',
+				name: 'Rho',
+				description: 'Rho parent protocol.',
+				category: 'Interest Rate Derivatives',
+				childProtocols: [
+					{
+						name: 'Rho X',
+						href: '/protocol/rho-x',
+						category: 'Interest Rate Derivatives',
+						chains: ['Ethereum', 'Arbitrum']
+					},
+					{
+						name: 'Rho X LP Vault',
+						href: '/protocol/rho-x-lp-vault',
+						category: 'Yield',
+						chains: ['Ethereum']
+					},
+					{
+						name: 'Rho Protocol',
+						href: '/protocol/rho-protocol',
+						category: 'Dexs',
+						chains: ['Arbitrum']
+					}
+				],
+				tags: null,
+				audits: null,
+				website: null,
+				github: null,
+				twitter: null,
+				safeHarbor: false,
+				isCEX: false
+			})
+		)
+
+		expect(parentMarkup).not.toContain('Primary Category')
+		expect(parentMarkup).toContain('Categories:')
+		expect(parentMarkup).toContain('Rho X LP Vault')
+		expect(parentMarkup).toContain('href="/protocols/interest-rate-derivatives"')
+		expect(parentMarkup).toContain('href="/protocols/yield"')
+		expect(parentMarkup).toContain('href="/dexs"')
+		expect(parentMarkup).toContain('data-chain-icons="Ethereum,Arbitrum"')
 	})
 })

@@ -3,10 +3,13 @@ import { lazy, Suspense, useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
+import { IconsRow } from '~/components/IconsRow'
+import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink, ButtonLink } from '~/components/Link'
 import { Menu } from '~/components/Menu'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { SponsoredResearchReportsCard } from '~/components/Research/SponsoredResearchReportsCard'
+import { TokenLogo } from '~/components/TokenLogo'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
@@ -162,7 +165,19 @@ export function UserActivity({
 }
 
 export const ProtocolInfo = (props: IProtocolOverviewPageData) => {
-	const categoryHref = props.category ? getCategoryRoute(slug(props.category)) : null
+	const childProtocols = props.childProtocols ?? []
+	// Parent protocols spread across categories: the protocol's own category leads, children add the rest.
+	const categories: Array<string> = []
+	const seenCategories = new Set<string>()
+	if (props.category) {
+		categories.push(props.category)
+		seenCategories.add(props.category)
+	}
+	for (const child of childProtocols) {
+		if (!child.category || seenCategories.has(child.category)) continue
+		seenCategories.add(child.category)
+		categories.push(child.category)
+	}
 
 	return (
 		<Card as="section" padding="sm" className="col-span-1 flex flex-col gap-3 body-md">
@@ -170,16 +185,32 @@ export const ProtocolInfo = (props: IProtocolOverviewPageData) => {
 				{props.isCEX ? 'Exchange Information' : 'Protocol Information'}
 			</SectionHeader>
 			{props.description ? <p>{props.description}</p> : null}
-			{props.category && categoryHref ? (
-				<p className="flex flex-wrap items-center gap-2">
-					<span className="label-md text-secondary">Category:</span>
-					<BasicLink href={categoryHref} className={INFO_ACTION_STYLES}>
-						{props.category}
-						<Icon name="arrow-up-right" className="size-3.5" />
-					</BasicLink>
-				</p>
+			{categories.length ? (
+				<div className="flex flex-wrap items-center gap-2">
+					<span className="label-md text-secondary">{categories.length > 1 ? 'Categories' : 'Category'}:</span>
+					{categories.map((category) => (
+						<BasicLink
+							href={getCategoryRoute(slug(category))}
+							className={INFO_ACTION_STYLES}
+							key={`${props.id}-category-${category}`}
+						>
+							{category}
+							<Icon name="arrow-up-right" className="size-3.5" />
+						</BasicLink>
+					))}
+				</div>
 			) : null}
 			{props.tags?.length ? <p className="flex items-center gap-1">Sub Category: {props.tags.join(', ')}</p> : null}
+			{childProtocols.length ? (
+				<div className="@container flex flex-col gap-2">
+					<span className="label-md text-secondary">Products:</span>
+					<ul className="grid gap-2 @2xl:grid-cols-2">
+						{childProtocols.map((child) => (
+							<ChildProtocolRow child={child} key={child.name} />
+						))}
+					</ul>
+				</div>
+			) : null}
 
 			{props.audits ? (
 				<>
@@ -237,6 +268,22 @@ export const ProtocolInfo = (props: IProtocolOverviewPageData) => {
 		</Card>
 	)
 }
+
+const ChildProtocolRow = ({ child }: { child: NonNullable<IProtocolOverviewPageData['childProtocols']>[number] }) => (
+	<li className="flex items-center gap-2 rounded-lg bg-surface-elevated-1 p-2">
+		<TokenLogo name={child.name} kind="token" size={24} alt="" />
+		<div className="flex min-w-0 flex-1 flex-col gap-0.5">
+			<BasicLink href={child.href} className="truncate label-md text-primary hover:text-link hover:underline">
+				{child.name}
+			</BasicLink>
+			{child.category ? <span className="truncate label-sm text-secondary">{child.category}</span> : null}
+		</div>
+		{/* Fixed width: IconsRow sizes its overflow from its own measured width, so a shrink-to-fit cell renders nothing. */}
+		<div className="w-24 shrink-0">
+			<IconsRow items={toChainIconItems(child.chains, (chain) => chainHref('/chain', chain))} align="end" />
+		</div>
+	</li>
+)
 
 const Methodology = (props: IProtocolOverviewPageData) => {
 	return (
