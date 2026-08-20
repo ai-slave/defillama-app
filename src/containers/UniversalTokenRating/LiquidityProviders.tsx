@@ -1,4 +1,5 @@
 import { Panel } from '~/ui/Panel'
+import { formatPercent } from '~/utils/numberFormat'
 
 export function LpPerformanceInsights({
 	mmDepthPct,
@@ -9,7 +10,16 @@ export function LpPerformanceInsights({
 	mmVolumePct: number | null
 	avgSpreadPct: number | null
 }) {
-	const fmt = (value: number | null) => (value == null ? 'N/A' : `${value.toFixed(2)}%`)
+	const fmt = (value: number | null) =>
+		value == null
+			? 'N/A'
+			: formatPercent(value, {
+					input: 'percent',
+					minimumFractionDigits: 2,
+					maximumFractionDigits: 2,
+					smallValueDisplay: 'rounded',
+					useGrouping: false
+				})
 	return (
 		<Panel padding="none">
 			<div className="border-b border-subtle px-4 py-3">

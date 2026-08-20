@@ -6,6 +6,7 @@ import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { formatNumber } from '~/utils/numberFormat'
 import { CLAIM_BLOCKS, type ClaimColumn, type ClaimTableSection } from './claimFormConfig'
 import type { UtrClaimProjectOption } from './types'
 import { UtrDocsDrawer } from './UtrDocsDrawer'
@@ -42,7 +43,7 @@ function AttachDocuments({ id }: { id: string }) {
 					{files.map((name, index) => (
 						<span
 							key={`${name}-${index}`}
-							className="flex items-center gap-1.5 rounded-full border border-medium bg-surface-elevated-1 px-3 py-1 font-jetbrains body-sm"
+							className="flex items-center gap-1.5 rounded-full border border-medium bg-surface-elevated-1 px-3 py-1 mono-sm"
 						>
 							{name}
 							<button
@@ -291,7 +292,13 @@ export function ClaimTokenProfile({
 				selectedProject.criteriaCount
 					? `${selectedProject.gradedCount}/${selectedProject.criteriaCount} criteria scored`
 					: 'Not scored',
-				selectedProject.disclosureScore == null ? null : `Disclosure ${selectedProject.disclosureScore.toFixed(2)}/10`
+				selectedProject.disclosureScore == null
+					? null
+					: `Disclosure ${formatNumber(selectedProject.disclosureScore, {
+							minimumFractionDigits: 2,
+							maximumFractionDigits: 2,
+							useGrouping: false
+						})}/10`
 			]
 				.filter(Boolean)
 				.join(' · ')
@@ -346,7 +353,7 @@ export function ClaimTokenProfile({
 											</option>
 										))}
 									</select>
-									<span className="rounded-full border border-medium bg-surface-elevated-1 px-2.5 py-0.5 font-jetbrains label-sm text-secondary">
+									<span className="rounded-full border border-medium bg-surface-elevated-1 px-2.5 py-0.5 mono-sm text-secondary">
 										{selectedProjectStatus ?? 'Token list unavailable'}
 									</span>
 								</span>

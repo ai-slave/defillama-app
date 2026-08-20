@@ -64,7 +64,7 @@ function scoreRow(label: string, value: number | null, hex: string, max: number)
 	return `<div style="display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:4px;">
 		<span>${label}</span>
 		<span style="display:flex;align-items:center;gap:8px;font-family:var(--font-jetbrains,monospace);">
-			${value == null ? 'N/A' : value.toFixed(2)}
+			${value == null ? 'N/A' : formatNumber(value, { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}
 			<span style="display:inline-block;width:44px;height:8px;border-radius:999px;background:rgba(128,128,128,0.25);overflow:hidden;">
 				<span style="display:block;height:100%;border-radius:999px;width:${pct}%;background:${hex};"></span>
 			</span>
@@ -241,14 +241,14 @@ export function PerformanceMatrix({
 		<div className={`flex flex-col ${className}`}>
 			<p className="pt-2 text-center label-sm text-secondary">Performance | Disclosures</p>
 			<div className="flex min-h-0 flex-1">
-				<div className="-mr-4 flex flex-col items-center gap-1 pt-3 pb-8 pl-2 text-[10px] text-tertiary">
+				<div className="-mr-4 flex flex-col items-center gap-1 pt-3 pb-8 pl-2 label-xs text-tertiary">
 					<span className="rotate-180 [writing-mode:vertical-rl]">Best</span>
 					<AxisArrow direction="up" />
 					<span className="rotate-180 [writing-mode:vertical-rl]">Worst</span>
 				</div>
 				<div className="flex min-w-0 flex-1 flex-col">
 					<div ref={containerRef} className="min-h-[200px] w-full flex-1" />
-					<div className="flex items-center gap-2 pr-5 pb-2 pl-10 text-[10px] text-tertiary">
+					<div className="flex items-center gap-2 pr-5 pb-2 pl-10 label-xs text-tertiary">
 						<span>Worst</span>
 						<AxisArrow direction="right" />
 						<span>Best</span>

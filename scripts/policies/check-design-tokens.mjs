@@ -41,6 +41,7 @@ const PRODUCT_SURFACE_PREFIXES = [
 	'src/containers/ProDashboard/',
 	'src/containers/Sheets/',
 	'src/containers/Subscription/',
+	'src/containers/UniversalTokenRating/',
 	'src/pages/ai/',
 	'src/pages/authors/',
 	'src/pages/investors',
@@ -242,7 +243,7 @@ const RULES = [
 		id: 'product-token-leak',
 		description:
 			'product-theme token (--pro/--sub/--sl/--ai/--research/--callout) referenced in core app code — product palettes must not leak outside their surfaces',
-		pattern: /--(?:pro|sub|sl|ai|research|callout)-[a-zA-Z0-9-]+/g,
+		pattern: /--(?:pro|sub|sl|ai|research|callout|utr)-[a-zA-Z0-9-]+/g,
 		productLeak: true
 	},
 	{
@@ -268,7 +269,7 @@ const RULES = [
 		description:
 			'product-theme utility class (pro-*/sub-*/sl-*/ai-*) used in core app code — product palettes must not leak outside their surfaces (`dialog` and `pro-dashboard` from themes/pro.css are not tracked: those names also appear as route slugs / aria roles)',
 		pattern:
-			/(?<![\w-])(?:(?:text|bg|border|from|to|via|fill|stroke|ring|outline|decoration|accent|caret|divide|shadow|placeholder)-(?:pro|sub|sl|ai)-[a-z0-9-]+|pro-(?:panel-bg|panel-raised|hover-fill|glass-fill|border|divider|glass|hover-bg|info-card|btn-(?:ai|primary)(?:-outline)?))(?![\w-])/g,
+			/(?<![\w-])(?:(?:text|bg|border|from|to|via|fill|stroke|ring|outline|decoration|accent|caret|divide|shadow|placeholder)-(?:pro|sub|sl|ai|utr)-[a-z0-9-]+|pro-(?:panel-bg|panel-raised|hover-fill|glass-fill|border|divider|glass|hover-bg|info-card|btn-(?:ai|primary)(?:-outline)?))(?![\w-])/g,
 		productLeak: true
 	},
 	{

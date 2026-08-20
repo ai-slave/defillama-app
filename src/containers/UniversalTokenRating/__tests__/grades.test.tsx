@@ -6,8 +6,8 @@ describe('GradeBadge', () => {
 	it('renders the resolved letter on a solid grade-colored chip', () => {
 		const html = renderToStaticMarkup(<GradeBadge score={96} />)
 		expect(html).toContain('AAA')
-		expect(html).toContain('bg-[#11935f]')
-		expect(html).toContain('text-white')
+		expect(html).toContain('bg-utr-grade-aaa')
+		expect(html).toContain('text-utr-grade-on-color')
 	})
 
 	it('falls back to a muted N/A chip when the score is missing', () => {
@@ -22,8 +22,8 @@ describe('GradeChip', () => {
 		const html = renderToStaticMarkup(<GradeChip score={45} />)
 		expect(html).toContain('Token Grade')
 		expect(html).toContain('>B<')
-		expect(html).toContain('bg-[rgba(185,109,57,0.1)]')
-		expect(html).toContain('text-[#b96d39]')
+		expect(html).toContain('bg-utr-grade-b-tint')
+		expect(html).toContain('text-utr-grade-b')
 	})
 })
 

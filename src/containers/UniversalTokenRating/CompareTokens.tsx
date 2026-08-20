@@ -55,7 +55,7 @@ function SummaryCard({ row }: { row: UtrLeaderboardRow }) {
 						<span className="body-xs text-tertiary">{row.name}</span>
 					</span>
 				</span>
-				<span className="font-jetbrains label-sm tabular-nums">
+				<span className="mono-sm tabular-nums">
 					Rank: <span className="text-primary">{row.scores.rank ?? 'N/A'}</span>
 				</span>
 			</div>

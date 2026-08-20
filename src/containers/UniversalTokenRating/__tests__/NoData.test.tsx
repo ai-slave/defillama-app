@@ -13,6 +13,20 @@ describe('UTR empty states', () => {
 		expect(renderToStaticMarkup(<TopMovers movers={[]} />)).toContain('NO DATA YET')
 	})
 
+	it('keeps explicit mover signs while using canonical percent formatting', () => {
+		const html = renderToStaticMarkup(
+			<TopMovers
+				movers={[
+					{ asset: 'flat', name: 'Flat', momChangePct: 0 },
+					{ asset: 'down', name: 'Down', momChangePct: -1.234 }
+				]}
+			/>
+		)
+
+		expect(html).toContain('+0%')
+		expect(html).toContain('-1.23%')
+	})
+
 	it('keeps available fundraising metadata and marks missing metrics', () => {
 		const html = renderToStaticMarkup(<PreTgePerformance hasFundraising lastRound="Strategic" />)
 

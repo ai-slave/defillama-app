@@ -1,0 +1,38 @@
+/* Universal Token Rating uses a fixed grade palette in both color modes. */
+@layer base {
+	:root {
+		--utr-grade-aaa: #11935f;
+		--utr-grade-aa: #359b58;
+		--utr-grade-a: #58a351;
+		--utr-grade-bbb: #9fb242;
+		--utr-grade-bb: #c0a03a;
+		--utr-grade-b: #b96d39;
+		--utr-grade-ccc: #b23a38;
+		--utr-grade-on-color: #ffffff;
+		--utr-grade-aaa-tint: color-mix(in srgb, var(--utr-grade-aaa) 10%, transparent);
+		--utr-grade-aa-tint: color-mix(in srgb, var(--utr-grade-aa) 10%, transparent);
+		--utr-grade-a-tint: color-mix(in srgb, var(--utr-grade-a) 10%, transparent);
+		--utr-grade-bbb-tint: color-mix(in srgb, var(--utr-grade-bbb) 10%, transparent);
+		--utr-grade-bb-tint: color-mix(in srgb, var(--utr-grade-bb) 10%, transparent);
+		--utr-grade-b-tint: color-mix(in srgb, var(--utr-grade-b) 10%, transparent);
+		--utr-grade-ccc-tint: color-mix(in srgb, var(--utr-grade-ccc) 10%, transparent);
+	}
+}
+
+@theme inline {
+	--color-utr-grade-aaa: var(--utr-grade-aaa);
+	--color-utr-grade-aa: var(--utr-grade-aa);
+	--color-utr-grade-a: var(--utr-grade-a);
+	--color-utr-grade-bbb: var(--utr-grade-bbb);
+	--color-utr-grade-bb: var(--utr-grade-bb);
+	--color-utr-grade-b: var(--utr-grade-b);
+	--color-utr-grade-ccc: var(--utr-grade-ccc);
+	--color-utr-grade-on-color: var(--utr-grade-on-color);
+	--color-utr-grade-aaa-tint: var(--utr-grade-aaa-tint);
+	--color-utr-grade-aa-tint: var(--utr-grade-aa-tint);
+	--color-utr-grade-a-tint: var(--utr-grade-a-tint);
+	--color-utr-grade-bbb-tint: var(--utr-grade-bbb-tint);
+	--color-utr-grade-bb-tint: var(--utr-grade-bb-tint);
+	--color-utr-grade-b-tint: var(--utr-grade-b-tint);
+	--color-utr-grade-ccc-tint: var(--utr-grade-ccc-tint);
+}

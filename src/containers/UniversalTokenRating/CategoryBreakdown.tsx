@@ -1,3 +1,4 @@
+import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { GradeBadge, ScoreBar } from './grades'
 import type { UtrCategoryBreakdown, UtrRubricScore } from './types'
 
@@ -50,7 +51,17 @@ function PercentileCell({ percentile }: { percentile: number | null }) {
 	const width = Math.max(0, Math.min(100, percentile ?? 0))
 	return (
 		<span className="flex items-center justify-between gap-2">
-			<span className="font-jetbrains tabular-nums">{percentile == null ? 'N/A' : `${percentile.toFixed(2)}%`}</span>
+			<span className="font-jetbrains tabular-nums">
+				{percentile == null
+					? 'N/A'
+					: formatPercent(percentile, {
+							input: 'percent',
+							minimumFractionDigits: 2,
+							maximumFractionDigits: 2,
+							smallValueDisplay: 'rounded',
+							useGrouping: false
+						})}
+			</span>
 			<span className="h-2 w-10 shrink-0 overflow-hidden rounded-full bg-surface-elevated-1">
 				<span className="block h-full rounded-full bg-(--text-primary)" style={{ width: `${width}%` }} />
 			</span>
@@ -86,7 +97,13 @@ export function CategoryBreakdownTable({ title, columns }: { title: string; colu
 							<td key={column.key} className="border-l border-subtle px-4 py-2">
 								<span className="flex items-center justify-between gap-2">
 									<span className="font-jetbrains tabular-nums">
-										{column.score == null ? 'N/A' : column.score.toFixed(1)}
+										{column.score == null
+											? 'N/A'
+											: formatNumber(column.score, {
+													minimumFractionDigits: 1,
+													maximumFractionDigits: 1,
+													useGrouping: false
+												})}
 										<span className="text-tertiary"> /10</span>
 									</span>
 									<ScoreBar score={column.score} scale={10} grade={column.grade ?? undefined} showValue={false} />

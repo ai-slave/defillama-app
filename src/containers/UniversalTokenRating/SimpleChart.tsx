@@ -7,7 +7,7 @@ import { useEffect, useRef, type ReactNode } from 'react'
 import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
-import { formatCompactNumber, formatNumber } from '~/utils/numberFormat'
+import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 
 echarts.use([LineChart, BarChart, CandlestickChart, GridComponent, TooltipComponent, CanvasRenderer])
 
@@ -33,7 +33,7 @@ export type AxisFormat = 'usd' | 'pct'
 
 function formatAxisValue(value: number, format: AxisFormat): string {
 	return format === 'pct'
-		? `${formatNumber(value, { maximumSignificantDigits: 3 })}%`
+		? formatPercent(value, { input: 'percent', maximumSignificantDigits: 3 })
 		: `$${formatCompactNumber(value)}`
 }
 

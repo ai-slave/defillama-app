@@ -229,6 +229,7 @@ Common usage examples:
 - [RWA](https://defillama.com/rwa)
 - [MiCA](https://defillama.com/mica)
 - [Market Makers](https://defillama.com/market-makers)
+- [Universal Token Rating](https://defillama.com/universal-token-rating)
 - [Support](https://defillama.com/support)
 - [DefiLlama Research](https://defillama.com/research)
 

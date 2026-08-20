@@ -4,6 +4,7 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { Switch } from '~/ui/Switch'
+import { formatNumber } from '~/utils/numberFormat'
 import { FDV_RANGES, LISTING_STATUS_LABELS, UTR_SECTORS } from './constants'
 import { Leaderboard, type UtrSort } from './Leaderboard'
 import { MobileFiltersDrawer } from './MobileFiltersDrawer'
@@ -109,7 +110,7 @@ export function UniversalTokenRating({ universe, topMovers }: UniversalTokenRati
 
 	const scoredLabel = (
 		<span className="body-sm text-secondary">
-			<strong className="text-primary">{filteredRows.length}</strong> of {universe.totalCount.toLocaleString()} tokens
+			<strong className="text-primary">{filteredRows.length}</strong> of {formatNumber(universe.totalCount)} tokens
 			scored
 		</span>
 	)

@@ -5,8 +5,21 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
+import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { resolveUtrGrade, utrGradeColor } from './gradeBands'
 import { GradeBadge, ScoreBar } from './grades'
+
+function formatPercentile(percentile: number | null | undefined): string {
+	return (
+		formatPercent(percentile, {
+			input: 'percent',
+			minimumFractionDigits: 2,
+			maximumFractionDigits: 2,
+			smallValueDisplay: 'rounded',
+			useGrouping: false
+		}) ?? 'N/A'
+	)
+}
 
 export function GradeFooter({
 	score,
@@ -19,7 +32,7 @@ export function GradeFooter({
 	percentile?: number | null
 	divider?: boolean
 }) {
-	const percentileLabel = percentile == null ? 'N/A' : `${percentile.toFixed(2)}%`
+	const percentileLabel = formatPercentile(percentile)
 	const percentileWidth = percentile == null ? 0 : Math.max(0, Math.min(100, percentile))
 	return (
 		<div
@@ -83,7 +96,7 @@ export function GradeFooterColumns({
 	grade?: string | null
 	percentile?: number | null
 }) {
-	const percentileLabel = percentile == null ? 'N/A' : `${percentile.toFixed(2)}%`
+	const percentileLabel = formatPercentile(percentile)
 	const percentileWidth = percentile == null ? 0 : Math.max(0, Math.min(100, percentile))
 	return (
 		<div className="flex items-start gap-x-2 border-t border-subtle px-4 py-2.5">
@@ -103,7 +116,7 @@ export function GradeFooterColumns({
 			<div className="flex flex-col gap-1.5">
 				<span className="label-sm text-secondary">Percentile</span>
 				<span className="flex items-center gap-2">
-					<span className="font-jetbrains label-sm text-primary tabular-nums">{percentileLabel}</span>
+					<span className="mono-sm text-primary tabular-nums">{percentileLabel}</span>
 					<span className="h-2 w-10 shrink-0 overflow-hidden rounded-full bg-surface-elevated-1">
 						<span className="block h-full rounded-full bg-(--text-primary)" style={{ width: `${percentileWidth}%` }} />
 					</span>
@@ -122,7 +135,7 @@ export function GradeFooterStacked({
 	grade?: string | null
 	percentile?: number | null
 }) {
-	const percentileLabel = percentile == null ? 'N/A' : `${percentile.toFixed(2)}%`
+	const percentileLabel = formatPercentile(percentile)
 	const percentileWidth = percentile == null ? 0 : Math.max(0, Math.min(100, percentile))
 	return (
 		<div className="flex flex-col border-t border-subtle px-4 py-1.5">
@@ -140,7 +153,7 @@ export function GradeFooterStacked({
 			<div className="flex min-h-6 items-center justify-between gap-2">
 				<span className="label-sm text-secondary">Percentile</span>
 				<span className="flex items-center gap-2">
-					<span className="font-jetbrains label-sm text-primary tabular-nums">{percentileLabel}</span>
+					<span className="mono-sm text-primary tabular-nums">{percentileLabel}</span>
 					<span className="h-2 w-10 shrink-0 overflow-hidden rounded-full bg-surface-elevated-1">
 						<span className="block h-full rounded-full bg-(--text-primary)" style={{ width: `${percentileWidth}%` }} />
 					</span>
@@ -204,7 +217,7 @@ export function KvTable({ rows }: { rows: [ReactNode, ReactNode][] }) {
 					className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-2 last:border-b-0"
 				>
 					<span className="body-sm text-secondary">{label}</span>
-					<span className="font-jetbrains body-sm text-primary tabular-nums">{value}</span>
+					<span className="mono-sm text-primary tabular-nums">{value}</span>
 				</div>
 			))}
 		</div>
@@ -264,8 +277,10 @@ export function TickScoreStrip({
 				<span className="label-md text-secondary">
 					{label} <span className={color.text}>{grade ?? 'N/A'}</span>
 				</span>
-				<span className="font-jetbrains label-md tabular-nums">
-					{score == null ? 'N/A' : score.toFixed(2)}
+				<span className="mono-md tabular-nums">
+					{score == null
+						? 'N/A'
+						: formatNumber(score, { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}
 					<span className="text-tertiary"> /10</span>
 				</span>
 			</div>

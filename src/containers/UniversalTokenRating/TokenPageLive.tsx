@@ -7,7 +7,7 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { geckoTokenIconUrl } from '~/utils/icons'
-import { formatCompactNumber, formatNumber } from '~/utils/numberFormat'
+import { formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
 import { CriteriaDrawer, type CriteriaDrawerState } from './CriteriaDrawer'
 import { GradeBadge, GradeChip, ScoreBar } from './grades'
 import { LpPerformanceInsights } from './LiquidityProviders'
@@ -135,7 +135,15 @@ function usd(value: number | null | undefined): string {
 }
 
 function pct(value: number | null | undefined, digits = 2): string {
-	return value == null ? 'N/A' : `${value.toFixed(digits)}%`
+	return (
+		formatPercent(value, {
+			input: 'percent',
+			minimumFractionDigits: digits,
+			maximumFractionDigits: digits,
+			smallValueDisplay: 'rounded',
+			useGrouping: false
+		}) ?? 'N/A'
+	)
 }
 
 function toTime(date: string): number {
@@ -241,8 +249,14 @@ function AboutDrawer({
 					<span className="flex flex-col gap-0.5">
 						<span className="body-sm text-tertiary">Overall Score</span>
 						<span className="flex items-center gap-2">
-							<span className="font-jetbrains label-md tabular-nums">
-								{asset.overallScore == null ? 'N/A' : asset.overallScore.toFixed(1)}
+							<span className="mono-md tabular-nums">
+								{asset.overallScore == null
+									? 'N/A'
+									: formatNumber(asset.overallScore, {
+											minimumFractionDigits: 1,
+											maximumFractionDigits: 1,
+											useGrouping: false
+										})}
 								<span className="text-tertiary"> /100</span>
 							</span>
 							<ScoreBar score={asset.overallScore} grade={asset.grade} showValue={false} />
@@ -250,14 +264,14 @@ function AboutDrawer({
 					</span>
 					<span className="flex flex-col gap-0.5">
 						<span className="body-sm text-tertiary">Rank</span>
-						<span className="font-jetbrains label-md tabular-nums">
+						<span className="mono-md tabular-nums">
 							{asset.rank ?? 'N/A'} of {asset.ratedCount}
 						</span>
 					</span>
 					<span className="flex flex-col gap-0.5">
 						<span className="body-sm text-tertiary">Percentile</span>
 						<span className="flex items-center gap-2">
-							<span className="font-jetbrains label-md tabular-nums">{pct(rankPercentile)}</span>
+							<span className="mono-md tabular-nums">{pct(rankPercentile)}</span>
 							<span className="h-2 w-10 shrink-0 overflow-hidden rounded-full bg-surface-elevated-1">
 								<span
 									className="block h-full rounded-full bg-(--text-primary)"
@@ -362,7 +376,13 @@ export function TokenPageLive({
 		{
 			title: 'Market Cap vs. FDV (Ratio)',
 			value:
-				metrics?.marketCapUsd && metrics?.fdvUsd ? `${(metrics.marketCapUsd / metrics.fdvUsd).toFixed(2)}:1` : 'N/A',
+				metrics?.marketCapUsd && metrics?.fdvUsd
+					? `${formatNumber(metrics.marketCapUsd / metrics.fdvUsd, {
+							minimumFractionDigits: 2,
+							maximumFractionDigits: 2,
+							useGrouping: false
+						})}:1`
+					: 'N/A',
 			criterion: findTokenomicsCriterion('mcap_vs_fdv')
 		},
 		{
@@ -451,7 +471,15 @@ export function TokenPageLive({
 						<div className="flex flex-col">
 							<span className="label-md">
 								Overall Score:{' '}
-								<span className="font-jetbrains tabular-nums">{asset.overallScore?.toFixed(1) ?? 'N/A'}</span>
+								<span className="font-jetbrains tabular-nums">
+									{asset.overallScore == null
+										? 'N/A'
+										: formatNumber(asset.overallScore, {
+												minimumFractionDigits: 1,
+												maximumFractionDigits: 1,
+												useGrouping: false
+											})}
+								</span>
 								<span className="text-tertiary"> /100</span>
 							</span>
 							{asset.rank != null ? (
@@ -528,8 +556,14 @@ export function TokenPageLive({
 											</span>
 											<span className="flex items-center gap-2">
 												<GradeBadge score={item.score} scale={10} grade={item.grade} />
-												<span className="min-w-[8ch] text-right font-jetbrains body-sm tabular-nums">
-													{item.score == null ? 'N/A' : item.score.toFixed(1)}
+												<span className="min-w-[8ch] text-right mono-sm tabular-nums">
+													{item.score == null
+														? 'N/A'
+														: formatNumber(item.score, {
+																minimumFractionDigits: 1,
+																maximumFractionDigits: 1,
+																useGrouping: false
+															})}
 													<span className="text-tertiary"> /10</span>
 												</span>
 											</span>

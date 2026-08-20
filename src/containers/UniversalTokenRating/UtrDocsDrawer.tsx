@@ -30,7 +30,9 @@ function GradeCell({ value }: { value: string }) {
 	const color = UTR_GRADE_COLORS[value as UtrGradeLabel]
 	if (!color || value === 'N/A') return <>{value}</>
 	return (
-		<span className={`inline-flex items-center justify-center rounded px-2 py-0.5 label-sm text-white ${color.solid}`}>
+		<span
+			className={`inline-flex items-center justify-center rounded-sm px-2 py-0.5 label-sm text-utr-grade-on-color ${color.solid}`}
+		>
 			{value}
 		</span>
 	)

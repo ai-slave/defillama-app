@@ -1,7 +1,7 @@
 import { SecondaryBadge } from '~/containers/MarketMakers/badges'
 import { Drawer } from '~/containers/MarketMakers/Drawer'
 import { QuestionHelper } from '~/ui/QuestionHelper'
-import { formatNumber } from '~/utils/numberFormat'
+import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { GradeBadge, ScoreBar } from './grades'
 import type { UtrCriterionBreakdown, UtrCriterionDoc } from './types'
 
@@ -30,7 +30,7 @@ const RUBRIC_VALUE_COLORS = [
 function RubricValueBadge({ value }: { value: number }) {
 	return (
 		<span
-			className="inline-flex min-w-8 items-center justify-center rounded px-2 py-0.5 font-jetbrains label-sm text-white tabular-nums"
+			className="inline-flex min-w-8 items-center justify-center rounded-sm px-2 py-0.5 mono-sm text-utr-grade-on-color tabular-nums"
 			style={{ backgroundColor: RUBRIC_VALUE_COLORS[Math.max(0, Math.min(10, value))] }}
 		>
 			{value}
@@ -104,13 +104,21 @@ export function CriteriaDrawer({
 						</span>
 						<span className="flex flex-col gap-1">
 							<span className="body-sm text-tertiary">Percentile</span>
-							<span className="font-jetbrains label-md tabular-nums">
-								{active.percentile == null ? 'N/A' : `${active.percentile.toFixed(2)}%`}
+							<span className="mono-md tabular-nums">
+								{active.percentile == null
+									? 'N/A'
+									: formatPercent(active.percentile, {
+											input: 'percent',
+											minimumFractionDigits: 2,
+											maximumFractionDigits: 2,
+											smallValueDisplay: 'rounded',
+											useGrouping: false
+										})}
 							</span>
 						</span>
 						<span className="flex flex-col gap-1">
 							<span className="body-sm text-tertiary">Weight</span>
-							<span className="font-jetbrains label-md tabular-nums">{Math.round(active.weight * 100)}%</span>
+							<span className="mono-md tabular-nums">{Math.round(active.weight * 100)}%</span>
 						</span>
 					</div>
 					{active.note ? <p className="body-lg text-secondary">{active.note}</p> : null}

@@ -8,7 +8,7 @@ import type { ArticleImage } from '~/containers/Articles/types'
  */
 export function SponsoredByBadge({ sponsorLogo }: { sponsorLogo: ArticleImage }) {
 	return (
-		<div className="pointer-events-none absolute right-[12px] bottom-[12px] flex items-center gap-2 rounded-full bg-black/55 px-2 py-1 text-white backdrop-blur-sm">
+		<div className="pointer-events-none absolute right-[12px] bottom-[12px] flex items-center gap-2 rounded-full bg-research-backdrop-soft px-2 py-1 text-research-white backdrop-blur-sm">
 			<span className="font-jetbrains text-[8px] tracking-[0.16em] uppercase opacity-80">Sponsored by</span>
 			<img
 				src={sponsorLogo.url}

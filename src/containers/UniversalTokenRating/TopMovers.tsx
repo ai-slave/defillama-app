@@ -1,4 +1,5 @@
 import { TokenLogo } from '~/components/TokenLogo'
+import { formatPercent } from '~/utils/numberFormat'
 import type { UtrTopMover } from './types'
 
 export function TopMovers({ movers }: { movers: UtrTopMover[] }) {
@@ -11,8 +12,13 @@ export function TopMovers({ movers }: { movers: UtrTopMover[] }) {
 					<TokenLogo src={mover.logoUrl ?? null} size={18} />
 					<span className="text-primary">{mover.name}</span>
 					<span className={mover.momChangePct >= 0 ? 'text-success' : 'text-error'}>
-						{mover.momChangePct >= 0 ? '+' : ''}
-						{Number(mover.momChangePct.toFixed(2))}%
+						{formatPercent(mover.momChangePct, {
+							input: 'percent',
+							maximumFractionDigits: 2,
+							signDisplay: 'always',
+							smallValueDisplay: 'rounded',
+							useGrouping: false
+						})}
 					</span>
 				</span>
 			))}

@@ -7,7 +7,7 @@ import { Icon } from '~/ui/Icon'
 import { formatPercentChangeText } from '~/ui/PercentChange'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { geckoTokenIconUrl } from '~/utils/icons'
-import { formatNumber } from '~/utils/numberFormat'
+import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { CategoryBreakdownTable, rowBreakdownColumns, type BreakdownColumn } from './CategoryBreakdown'
 import { GradeBadge, ScoreBar } from './grades'
 import { PerformanceMatrix } from './PerformanceMatrix'
@@ -62,13 +62,27 @@ function breakdownValue(column: BreakdownColumn, mode: BreakdownMode) {
 	if (mode === 'score')
 		return (
 			<span className="font-jetbrains tabular-nums">
-				{column.score == null ? 'N/A' : column.score.toFixed(1)}
+				{column.score == null
+					? 'N/A'
+					: formatNumber(column.score, {
+							minimumFractionDigits: 1,
+							maximumFractionDigits: 1,
+							useGrouping: false
+						})}
 				<span className="text-tertiary"> /10</span>
 			</span>
 		)
 	return (
 		<span className="font-jetbrains tabular-nums">
-			{column.percentile == null ? 'N/A' : `${column.percentile.toFixed(2)}%`}
+			{column.percentile == null
+				? 'N/A'
+				: formatPercent(column.percentile, {
+						input: 'percent',
+						minimumFractionDigits: 2,
+						maximumFractionDigits: 2,
+						smallValueDisplay: 'rounded',
+						useGrouping: false
+					})}
 		</span>
 	)
 }

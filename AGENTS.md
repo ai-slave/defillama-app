@@ -53,12 +53,6 @@ Before finalizing without full verification, state which targeted checks ran and
 
 Do not run `bun run build` as part of verification.
 
-## Next.js Requirement
-
-Before starting any Next.js work, read the relevant documentation in `node_modules/next/dist/docs/`.
-
-Treat those local docs as the source of truth.
-
 ## Metric Semantics
 
 Before changing metric routes, chart queries, metadata flags, public API validation, or adapter data types, read `docs/metrics.md`.
