@@ -172,14 +172,14 @@ function AuditReportsTable({ reports }: { reports: AuditReport[] }) {
 				{REPORT_HEADERS.map((label) => (
 					<div
 						key={label}
-						className="sticky top-0 z-[1] border-b border-subtle bg-pro-cards-bg px-3 py-2.5 text-[11px] font-semibold tracking-wider text-pro-text-tertiary uppercase"
+						className="sticky top-0 z-[1] border-b border-subtle bg-pro-cards-bg px-3 py-2.5 text-sm font-medium tracking-wider text-pro-text-tertiary uppercase"
 					>
 						{label}
 					</div>
 				))}
 				{sorted.map((report, index) => {
 					const rowBg = index % 2 === 1 ? 'bg-pro-cards-bg' : ''
-					const cell = `truncate border-b border-subtle px-3 py-2.5 text-[13px] text-pro-text-primary ${rowBg}`
+					const cell = `truncate border-b border-subtle px-3 py-2.5 text-sm text-pro-text-primary ${rowBg}`
 					return [
 						<div key={`${index}-repo`} className={cell}>
 							{report.repo}

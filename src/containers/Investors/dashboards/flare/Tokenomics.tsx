@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy, useEffect, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { formatNumber } from '~/utils/numberFormat'
 import { readInvestorApiJson } from '../../api.types'
 import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { buildFlareTokenomicsData, type TokenomicsAPIResponse } from './data'
@@ -303,7 +304,7 @@ export default function Tokenomics() {
 									{fire.subtitle ?? 'Daily fees collected by source and cumulative total.'}
 								</p>
 							</div>
-							<span className="rounded-full border border-pro-cards-border px-2.5 py-0.5 text-[10px] font-semibold tracking-wide text-success uppercase">
+							<span className="rounded-full border border-pro-cards-border px-2.5 py-0.5 label-xs tracking-wide text-success uppercase">
 								Live{fire.liveSince ? ` since ${fire.liveSince}` : ''}
 							</span>
 						</div>
@@ -322,7 +323,7 @@ export default function Tokenomics() {
 						<div className="overflow-x-auto rounded-lg border border-pro-cards-border bg-pro-cards-bg">
 							<table className="w-full text-left text-sm">
 								<thead>
-									<tr className="border-b border-pro-cards-border text-[11px] font-medium tracking-wider text-pro-text-label uppercase">
+									<tr className="border-b border-pro-cards-border text-sm font-medium tracking-wider text-pro-text-label uppercase">
 										<th className="p-3">Source</th>
 										<th className="p-3">Wallet</th>
 										<th className="p-3 text-right">Fees</th>
@@ -345,13 +346,13 @@ export default function Tokenomics() {
 												</a>
 											</td>
 											<td className="p-3 text-right font-mono text-xs text-pro-text-secondary tabular-nums">
-												{w.feesToken.toLocaleString(undefined, { maximumFractionDigits: 0 })} {w.feeToken}
+												{formatNumber(w.feesToken, { maximumFractionDigits: 0 })} {w.feeToken}
 											</td>
 											<td className="p-3 text-right font-mono text-xs text-pro-text-primary tabular-nums">
 												{w.feesUsdFormatted}
 											</td>
 											<td className="p-3 text-right font-mono text-xs text-pro-text-secondary tabular-nums">
-												{w.txCount.toLocaleString()}
+												{formatNumber(w.txCount)}
 											</td>
 										</tr>
 									))}

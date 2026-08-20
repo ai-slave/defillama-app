@@ -84,8 +84,8 @@ function FeeSwitchTimeline({ feeSwitch }: { feeSwitch: FeeSwitchData }) {
 			<div className="flex flex-wrap items-center gap-x-2 gap-y-1">
 				<h3 className="text-sm font-semibold text-pro-text-primary">Fee Switch</h3>
 				<span
-					className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-						isActive ? 'bg-[#40B66B]/15 text-[#40B66B]' : 'bg-sl-btn-inactive-bg text-pro-text-tertiary'
+					className={`rounded-full px-2 py-0.5 label-sm ${
+						isActive ? 'bg-success/15 text-success' : 'bg-sl-btn-inactive-bg text-pro-text-tertiary'
 					}`}
 				>
 					{feeSwitch.status}
@@ -104,18 +104,16 @@ function FeeSwitchTimeline({ feeSwitch }: { feeSwitch: FeeSwitchData }) {
 							style={{ flex: `${gap} 1 110px` }}
 						>
 							<div className="flex items-center gap-1">
-								<span className="size-2.5 shrink-0 rounded-full bg-[#40B66B]" />
+								<span className="size-2.5 shrink-0 rounded-full bg-success" />
 								{gaps[index] > 0 && (
 									<>
 										<span className="h-px min-w-2 flex-1 bg-pro-cards-border" />
-										<span className="font-jetbrains text-[10px] whitespace-nowrap text-pro-text-tertiary">
-											+{gaps[index]}d
-										</span>
+										<span className="mono-sm whitespace-nowrap text-pro-text-tertiary">+{gaps[index]}d</span>
 										<span className="h-px min-w-2 flex-1 bg-pro-cards-border" />
 									</>
 								)}
 							</div>
-							<span className="font-jetbrains text-[11px] text-pro-text-tertiary tabular-nums">{wave.date}</span>
+							<span className="mono-sm text-pro-text-tertiary tabular-nums">{wave.date}</span>
 							<div className="flex flex-wrap gap-1 pr-3">
 								{wave.chains.map((chain) => (
 									<img
@@ -151,7 +149,7 @@ function FeeActivationTable({ rows }: { rows: FeeActivationRow[] }) {
 				{ACTIVATION_HEADERS.map(([label, align]) => (
 					<div
 						key={label}
-						className="sticky top-0 z-[1] border-b border-subtle bg-pro-cards-bg px-3 py-2.5 text-[11px] font-semibold tracking-wider text-pro-text-tertiary uppercase"
+						className="sticky top-0 z-[1] border-b border-subtle bg-pro-cards-bg px-3 py-2.5 text-sm font-medium tracking-wider text-pro-text-tertiary uppercase"
 						style={{ textAlign: align }}
 					>
 						{label}
@@ -159,7 +157,7 @@ function FeeActivationTable({ rows }: { rows: FeeActivationRow[] }) {
 				))}
 				{rows.map((row, index) => {
 					const rowBg = index % 2 === 1 ? 'bg-pro-cards-bg' : ''
-					const cell = `truncate border-b border-subtle px-3 py-2.5 text-[13px] text-pro-text-primary ${rowBg}`
+					const cell = `truncate border-b border-subtle px-3 py-2.5 text-sm text-pro-text-primary ${rowBg}`
 					const numCell = `${cell} text-right font-jetbrains tabular-nums`
 					return [
 						<div key={`${index}-chain`} className={cell}>

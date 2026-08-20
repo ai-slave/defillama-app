@@ -12,6 +12,7 @@ import {
 import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { formatDate } from '~/utils/dateFormat'
 import { formatPercent } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import {
@@ -27,7 +28,6 @@ const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeri
 const GROUPING_QUERY_KEY = 'spotShareGroupBy'
 const CHART_TITLE = 'DEX Share of Spot Volume'
 const EMPTY_DATASET: MultiSeriesTimeSeriesDataset = { dimensions: ['timestamp', 'DEX Share'], source: [] }
-const UTC_DATE = new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeZone: 'UTC' })
 const CHARTS: MultiSeriesChartSeriesConfig[] = [
 	{
 		type: 'line',
@@ -46,7 +46,7 @@ function chartAriaLabel(dataset: ReturnType<typeof buildDexSpotShareDataset>, me
 
 	const firstValue = formatPercent(first[1] as number, { input: 'percent', maximumFractionDigits: 2 })
 	const lastValue = formatPercent(last[1] as number, { input: 'percent', maximumFractionDigits: 2 })
-	return `${CHART_TITLE}. ${methodology} From ${firstValue} on ${UTC_DATE.format(new Date(first[0]))} to ${lastValue} on ${UTC_DATE.format(new Date(last[0]))}.`
+	return `${CHART_TITLE}. ${methodology} From ${firstValue} on ${formatDate(first[0], { input: 'milliseconds' })} to ${lastValue} on ${formatDate(last[0], { input: 'milliseconds' })}.`
 }
 
 export function DexSpotShareChart({

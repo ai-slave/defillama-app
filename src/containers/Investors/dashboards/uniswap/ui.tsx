@@ -98,7 +98,7 @@ export function paletteColor(index: number): string {
 function KpiCard({ label, value, def }: { label: string; value: string; def?: string | undefined }) {
 	return (
 		<div className="flex flex-col gap-1.5 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="flex items-center gap-1 text-[11px] font-medium tracking-wider text-pro-text-tertiary uppercase">
+			<span className="flex items-center gap-1 label-sm tracking-wider text-pro-text-tertiary uppercase">
 				{label}
 				{/* Shared Tooltip, not a `title` attribute: `title` never opens on touch. Padding
 				    buys a ~29px tap target; the negative margins keep the row height unchanged. */}
@@ -141,7 +141,7 @@ export function KpiGrid({
 	if (!label) return grid
 	return (
 		<div className="flex flex-col gap-3">
-			<span className="text-[11px] font-semibold tracking-wider text-pro-text-secondary uppercase">{label}</span>
+			<span className="label-sm tracking-wider text-pro-text-secondary uppercase">{label}</span>
 			{grid}
 		</div>
 	)
@@ -180,7 +180,7 @@ export function PlaceholderCard({
 			>
 				<span className="text-xs text-pro-text-tertiary">Awaiting data</span>
 				{note && (
-					<code className="rounded-sm bg-pro-app-bg px-2 py-0.5 font-jetbrains text-[10px] text-tertiary">{note}</code>
+					<code className="rounded-sm bg-pro-app-bg px-2 py-0.5 font-jetbrains text-xs text-tertiary">{note}</code>
 				)}
 			</div>
 		</ChartCard>
@@ -239,7 +239,7 @@ export function SegToggle<T extends string>({
 					key={o.value}
 					type="button"
 					onClick={() => onChange(o.value)}
-					className={`rounded-sm px-2 py-0.5 text-[11px] font-medium transition-colors ${
+					className={`rounded-sm px-2 py-0.5 label-sm transition-colors ${
 						value === o.value
 							? 'bg-sl-accent-muted text-sl-accent'
 							: 'text-pro-text-tertiary hover:text-pro-text-primary'
@@ -272,7 +272,7 @@ export function MiniTable({
 				{headers.map(([label, align]) => (
 					<div
 						key={label}
-						className="sticky top-0 z-[1] border-b border-subtle bg-pro-cards-bg px-3 py-2.5 text-[11px] font-semibold tracking-wider text-pro-text-tertiary uppercase"
+						className="sticky top-0 z-[1] border-b border-subtle bg-pro-cards-bg px-3 py-2.5 text-sm font-medium tracking-wider text-pro-text-tertiary uppercase"
 						style={{ textAlign: align }}
 					>
 						{label}
@@ -284,7 +284,7 @@ export function MiniTable({
 						return (
 							<div
 								key={`${rowIndex}-${cellIndex}`}
-								className={`truncate border-b border-subtle px-3 py-2.5 text-[13px] text-pro-text-primary ${
+								className={`truncate border-b border-subtle px-3 py-2.5 text-sm text-pro-text-primary ${
 									align === 'right' ? 'text-right font-jetbrains tabular-nums' : ''
 								} ${rowIndex % 2 === 1 ? 'bg-pro-cards-bg' : ''}`}
 							>
