@@ -7,11 +7,10 @@ import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { CLAIM_BLOCKS, type ClaimColumn, type ClaimTableSection } from './claimFormConfig'
+import type { UtrClaimProjectOption } from './types'
 import { UtrDocsDrawer } from './UtrDocsDrawer'
 
 const ATTACH_HINT = 'Supported formats: PDF, DOCX, XLSX, TXT, MD – Max file size: 10mb'
-
-const MOCK_TOKENS = ['Abeezee (ABC)', 'Fableborne (FAB)', 'Hivello (HIV)', 'Metaplex (MET)'] as const
 
 function AttachDocuments({ id }: { id: string }) {
 	const [files, setFiles] = useState<string[]>([])
@@ -82,14 +81,16 @@ function CellInput({
 	onChange: (value: string) => void
 }) {
 	if (column.type === 'select') {
+		const options = column.options ?? []
 		return (
 			<select
 				className={`${inputStyles} w-full cursor-pointer`}
 				value={value}
+				disabled={!options.length}
 				onChange={(e) => onChange(e.target.value)}
 			>
-				<option value="" />
-				{column.options?.map((option) => (
+				<option value="">{options.length ? '' : 'NO DATA YET'}</option>
+				{options.map((option) => (
 					<option key={option} value={option}>
 						{option}
 					</option>
@@ -119,6 +120,16 @@ function CellInput({
 			className="w-full"
 		/>
 	)
+}
+
+function withExchangeOptions(section: ClaimTableSection, exchangeOptions: string[]): ClaimTableSection {
+	if (section.id !== 'exchanges') return section
+	return {
+		...section,
+		columns: section.columns.map((column) =>
+			column.key === 'exchange' ? { ...column, options: exchangeOptions } : column
+		)
+	}
 }
 
 function InlineTableSection({
@@ -227,8 +238,16 @@ function ClaimConfirmation() {
 	)
 }
 
-export function ClaimTokenProfile({ variant = 'claim' }: { variant?: 'claim' | 'join' }) {
-	const [token, setToken] = useState<string>(variant === 'claim' ? MOCK_TOKENS[0] : '')
+export function ClaimTokenProfile({
+	variant = 'claim',
+	projects = [],
+	exchangeOptions = []
+}: {
+	variant?: 'claim' | 'join'
+	projects?: UtrClaimProjectOption[]
+	exchangeOptions?: string[]
+}) {
+	const [token, setToken] = useState<string>(variant === 'claim' ? (projects[0]?.arcticId ?? '') : '')
 	const [firstName, setFirstName] = useState('')
 	const [lastName, setLastName] = useState('')
 	const [position, setPosition] = useState('')
@@ -265,6 +284,18 @@ export function ClaimTokenProfile({ variant = 'claim' }: { variant?: 'claim' | '
 	}
 	const isValid = Object.values(errors).every((error) => error == null)
 	const showError = (key: string) => (submitAttempted ? errors[key] : null)
+	const selectedProject = variant === 'claim' ? (projects.find((project) => project.arcticId === token) ?? null) : null
+	const selectedProjectStatus = selectedProject
+		? [
+				selectedProject.tgeStatus === 'post' ? 'Listed' : 'Pre-TGE',
+				selectedProject.criteriaCount
+					? `${selectedProject.gradedCount}/${selectedProject.criteriaCount} criteria scored`
+					: 'Not scored',
+				selectedProject.disclosureScore == null ? null : `Disclosure ${selectedProject.disclosureScore.toFixed(2)}/10`
+			]
+				.filter(Boolean)
+				.join(' · ')
+		: null
 
 	const onSubmit = () => {
 		if (!isValid) {
@@ -305,16 +336,18 @@ export function ClaimTokenProfile({ variant = 'claim' }: { variant?: 'claim' | '
 									<select
 										className={`${inputStyles} min-w-64 flex-1 cursor-pointer`}
 										value={token}
+										disabled={!projects.length}
 										onChange={(e) => setToken(e.target.value)}
 									>
-										{MOCK_TOKENS.map((option) => (
-											<option key={option} value={option}>
-												{option}
+										{projects.length ? null : <option value="">Token list unavailable</option>}
+										{projects.map((project) => (
+											<option key={project.arcticId} value={project.arcticId}>
+												{project.projectName} ({project.symbol})
 											</option>
 										))}
 									</select>
 									<span className="rounded-full border border-medium bg-surface-elevated-1 px-2.5 py-0.5 font-jetbrains label-sm text-secondary">
-										Listed Token
+										{selectedProjectStatus ?? 'Token list unavailable'}
 									</span>
 								</span>
 							</LabeledField>
@@ -408,7 +441,7 @@ export function ClaimTokenProfile({ variant = 'claim' }: { variant?: 'claim' | '
 							{block.sections.map((section) => (
 								<InlineTableSection
 									key={section.id}
-									section={section}
+									section={withExchangeOptions(section, exchangeOptions)}
 									rows={rowsBySection[section.id]}
 									onChange={(rows) => setRowsBySection((prev) => ({ ...prev, [section.id]: rows }))}
 								/>

@@ -1108,7 +1108,7 @@ export function TokenPageLive({
 					) : null}
 				</>
 			) : (
-				<PreTgePerformance live />
+				<PreTgePerformance hasFundraising={asset.hasFundraising ?? null} lastRound={asset.lastRound ?? null} />
 			)}
 
 			<p className="body-sm text-tertiary">

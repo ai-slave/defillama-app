@@ -8,7 +8,7 @@ import { FDV_RANGES, LISTING_STATUS_LABELS, UTR_SECTORS } from './constants'
 import { Leaderboard, type UtrSort } from './Leaderboard'
 import { MobileFiltersDrawer } from './MobileFiltersDrawer'
 import { PerformanceMatrix } from './PerformanceMatrix'
-import { CantFindTokenBanner } from './TokenPage'
+import { CantFindTokenBanner, NoDataPlaceholder } from './TokenPage'
 import { TopMovers } from './TopMovers'
 import type { UtrTopMover, UtrUniverse } from './types'
 import { UtrDocsDrawer } from './UtrDocsDrawer'
@@ -114,9 +114,11 @@ export function UniversalTokenRating({ universe, topMovers }: UniversalTokenRati
 		</span>
 	)
 
+	if (!universe.rows.length) return <NoDataPlaceholder />
+
 	return (
 		<div className="flex flex-col gap-2">
-			{topMovers.length ? <TopMovers movers={topMovers} /> : null}
+			<TopMovers movers={topMovers} />
 
 			<div className="flex flex-wrap items-center gap-2 rounded-lg border border-subtle bg-surface p-2">
 				<span className="max-lg:hidden">

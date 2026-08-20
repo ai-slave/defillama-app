@@ -1,15 +1,3 @@
-export const UTR_SCORED_COUNT = 340
-export const UTR_TOTAL_COUNT = 1294
-
-export const DISCLOSURE_RUBRICS = [
-	'Core Contributors',
-	'Tokenomics (D)',
-	'Legal & Financial',
-	'Service Providers'
-] as const
-
-export const PERFORMANCE_RUBRICS = ['Total Market', 'Market Makers', 'Liquidity Footprint', 'Tokenomics (P)'] as const
-
 export const UTR_SECTORS = ['DeFi', 'Gaming', 'Infrastructure', 'AI', 'RWA', 'Memecoins', 'Layer 1', 'Layer 2'] as const
 
 export const FDV_RANGES = [

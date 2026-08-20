@@ -70,9 +70,6 @@ export type UtrBatchResponse = {
 	notFound: string[]
 }
 
-// Provisional shapes for data Forgd has not exposed yet (scores, universe,
-// disclosures). Only mocks.ts produces them; replace the adapter when the
-// real endpoints ship.
 export type UtrRubricScore = {
 	rubric: string
 	weighted: number | null
@@ -117,6 +114,40 @@ export type UtrUniverse = {
 	rows: UtrLeaderboardRow[]
 	scoredCount: number
 	totalCount: number
+}
+
+export type UtrProject = {
+	arcticId: string
+	projectName: string
+	symbol: string
+	sector: string | null
+	tgeStatus: 'pre' | 'post'
+	isActive: boolean
+	createdAt: string
+	updatedAt: string
+	coingeckoId: string | null
+	cmcId: string | null
+	hasData: boolean
+}
+
+export type UtrDisclosureScoreSummary = {
+	arcticId: string
+	gradedCount: number
+	criteriaCount: number
+	maxScore: number
+	disclosureScore: number | null
+	scoredAt: string | null
+	scoredBy: string | null
+}
+
+export type UtrClaimProjectOption = {
+	arcticId: string
+	projectName: string
+	symbol: string
+	tgeStatus: 'pre' | 'post'
+	disclosureScore: number | null
+	gradedCount: number
+	criteriaCount: number
 }
 
 export type UtrTopMover = {
@@ -385,6 +416,7 @@ export type UtrAssetResponse = {
 	logoUrl?: string | null
 	hasMmData?: boolean
 	hasFundraising?: boolean
+	lastRound?: string | null
 	notRated: boolean
 	rank: number | null
 	ratedCount: number

@@ -3,7 +3,7 @@ import { ScatterChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
@@ -182,7 +182,27 @@ export function PerformanceMatrix({
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const [icons, setIcons] = useState<Record<string, string>>({})
 
-	useChartResize(chartRef, containerRef)
+	const applyOption = useCallback(() => {
+		const instance = chartRef.current
+		if (!instance || instance.isDisposed()) return
+		instance.setOption(buildMatrixOption(rows, axisColor, icons, isDark), { notMerge: true })
+	}, [rows, axisColor, icons, isDark])
+
+	const initializeChart = useCallback(() => {
+		const chartDom = containerRef.current
+		if (!chartDom?.isConnected) return
+		if (chartRef.current && !chartRef.current.isDisposed()) return
+		if (chartDom.clientWidth <= 0 || chartDom.clientHeight <= 0) return
+		const instance = echarts.init(chartDom, null, { renderer: 'canvas' })
+		chartRef.current = instance
+		applyOption()
+	}, [applyOption])
+
+	useChartResize(chartRef, containerRef, {
+		onVisibilityChange: (isVisible) => {
+			if (isVisible) initializeChart()
+		}
+	})
 
 	useEffect(() => {
 		let cancelled = false
@@ -201,21 +221,21 @@ export function PerformanceMatrix({
 	}, [rows])
 
 	useEffect(() => {
-		const chartDom = containerRef.current
-		if (!chartDom) return
-		const instance = echarts.init(chartDom, null, { renderer: 'canvas' })
-		chartRef.current = instance
-		return () => {
-			chartRef.current = null
-			instance.dispose()
+		const instance = chartRef.current
+		if (!instance || instance.isDisposed()) {
+			initializeChart()
+			return
 		}
-	}, [])
+		applyOption()
+	}, [applyOption, initializeChart])
 
 	useEffect(() => {
-		const instance = chartRef.current
-		if (!instance) return
-		instance.setOption(buildMatrixOption(rows, axisColor, icons, isDark), { notMerge: true })
-	}, [rows, axisColor, icons, isDark])
+		return () => {
+			const instance = chartRef.current
+			chartRef.current = null
+			if (instance && !instance.isDisposed()) instance.dispose()
+		}
+	}, [])
 
 	return (
 		<div className={`flex flex-col ${className}`}>
@@ -227,7 +247,7 @@ export function PerformanceMatrix({
 					<span className="rotate-180 [writing-mode:vertical-rl]">Worst</span>
 				</div>
 				<div className="flex min-w-0 flex-1 flex-col">
-					<div ref={containerRef} className="min-h-0 w-full flex-1" />
+					<div ref={containerRef} className="min-h-[200px] w-full flex-1" />
 					<div className="flex items-center gap-2 pr-5 pb-2 pl-10 text-[10px] text-tertiary">
 						<span>Worst</span>
 						<AxisArrow direction="right" />

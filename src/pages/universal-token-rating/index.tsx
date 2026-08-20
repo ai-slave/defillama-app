@@ -1,7 +1,6 @@
 import type { InferGetStaticPropsType } from 'next'
 import { UniversalTokenRating } from '~/containers/UniversalTokenRating'
 import { UtrAccessGate } from '~/containers/UniversalTokenRating/AccessGate'
-import { getMockTopMovers } from '~/containers/UniversalTokenRating/mocks'
 import { fetchUtrLeaderboardMom, fetchUtrUniverseWithLive } from '~/containers/UniversalTokenRating/server'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -20,9 +19,8 @@ export const getStaticProps = withPerformanceLogging('universal-token-rating', a
 			momChangePct: row.momChangePct!,
 			logoUrl: row.logoUrl
 		}))
-	const topMovers = liveMovers.length ? liveMovers : process.env.NODE_ENV === 'production' ? [] : getMockTopMovers()
 	return {
-		props: { universe, topMovers },
+		props: { universe, topMovers: liveMovers },
 		revalidate: maxAgeForNext([22])
 	}
 })

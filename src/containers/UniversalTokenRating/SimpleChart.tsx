@@ -8,15 +8,24 @@ import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { formatCompactNumber, formatNumber } from '~/utils/numberFormat'
-import type { MockCandle, MockSeriesPoint } from './mocks'
 
 echarts.use([LineChart, BarChart, CandlestickChart, GridComponent, TooltipComponent, CanvasRenderer])
+
+export type SimpleSeriesPoint = [number, number]
+
+export type SimpleCandle = {
+	time: number
+	open: number
+	close: number
+	low: number
+	high: number
+}
 
 export type SimpleSeries = {
 	name: string
 	type: 'line' | 'area' | 'bar'
 	color: string
-	data: MockSeriesPoint[]
+	data: SimpleSeriesPoint[]
 	stack?: string
 }
 
@@ -120,7 +129,7 @@ export function ChartLegend({ items }: { items: { label: string; color: string }
 	)
 }
 
-export function buildCandleOption(candles: MockCandle[], axisColor?: string): EChartsOption {
+export function buildCandleOption(candles: SimpleCandle[], axisColor?: string): EChartsOption {
 	return {
 		...baseOption(axisColor),
 		yAxis: {

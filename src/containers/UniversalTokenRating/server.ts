@@ -1,6 +1,5 @@
 import { fetchJson } from '~/utils/async'
 import { geckoTokenIconUrl } from '~/utils/icons'
-import { getMockUniverse } from './mocks'
 import type {
 	UtrAssetResponse,
 	UtrBatchResponse,
@@ -9,18 +8,57 @@ import type {
 	UtrLeaderboardResponse,
 	UtrLeaderboardRow,
 	UtrMomResponse,
+	UtrProject,
 	UtrScoringDocs,
 	UtrUniverse,
-	UtrExchangesResponse
+	UtrExchangesResponse,
+	UtrDisclosureScoreSummary
 } from './types'
-
-export const UTR_LIVE_ASSETS = ['hyperliquid', 'bittensor', 'celestia']
 
 const FORGD_HOST = process.env.FORGD_API_URL ?? 'https://dev.quant.api.forgd.com'
 
 function forgdUtrHeaders(): Record<string, string> | undefined {
 	const key = process.env.API_KEY_FORGD?.trim()
 	return key ? { Authorization: `Bearer ${key}` } : undefined
+}
+
+export async function fetchUtrProjects(): Promise<UtrProject[]> {
+	try {
+		return await fetchJson<UtrProject[]>(`${FORGD_HOST}/api/utr/projects`, {
+			timeout: 30_000,
+			headers: forgdUtrHeaders()
+		})
+	} catch {
+		return []
+	}
+}
+
+export async function fetchUtrDisclosureScoreSummaries(): Promise<UtrDisclosureScoreSummary[]> {
+	try {
+		return await fetchJson<UtrDisclosureScoreSummary[]>(`${FORGD_HOST}/api/utr/projects/disclosure-scores`, {
+			timeout: 30_000,
+			headers: forgdUtrHeaders()
+		})
+	} catch {
+		return []
+	}
+}
+
+export async function fetchUtrExchangeOptions(): Promise<string[]> {
+	try {
+		const response = await fetchJson<{
+			exchanges: {
+				tier1: { displayName: string }[]
+				tier2: { displayName: string }[]
+			}
+		}>(`${FORGD_HOST}/api/utr/scoring-config`, {
+			timeout: 30_000,
+			headers: forgdUtrHeaders()
+		})
+		return [...response.exchanges.tier1, ...response.exchanges.tier2].map((exchange) => exchange.displayName)
+	} catch {
+		return []
+	}
 }
 
 export async function fetchUtrBatchMetrics(assets: string[]): Promise<UtrBatchResponse | null> {
@@ -32,34 +70,6 @@ export async function fetchUtrBatchMetrics(assets: string[]): Promise<UtrBatchRe
 		)
 	} catch {
 		return null
-	}
-}
-
-export function rowFromAssetResponse(asset: UtrAssetResponse): UtrLeaderboardRow {
-	return {
-		asset: asset.coingeckoId ?? asset.arcticId,
-		name: asset.projectName,
-		symbol: asset.symbol.toUpperCase(),
-		sector: asset.sector,
-		listingStatus: asset.tgeStatus === 'post' ? 'listed' : 'pre-tge',
-		disclosureLevel: 'full',
-		claimed: false,
-		fdvUsd: asset.fdvUsd,
-		coingeckoId: asset.coingeckoId,
-		grade: asset.grade,
-		breakdown: {
-			disclosure: asset.disclosure?.categories ?? [],
-			performance: asset.performance?.categories ?? []
-		},
-		scores: {
-			overall: asset.overallScore,
-			overallMomChangePct: asset.momChangePct,
-			disclosure: asset.disclosure?.score ?? null,
-			performance: asset.performance?.score ?? null,
-			rank: asset.rank,
-			disclosureRubrics: [],
-			performanceRubrics: []
-		}
 	}
 }
 
@@ -200,16 +210,5 @@ export async function fetchUtrUniverseWithLive(): Promise<UtrUniverse> {
 		)
 		return { rows, scoredCount: leaderboard.scoredCount, totalCount: leaderboard.totalCount }
 	}
-	if (process.env.NODE_ENV === 'production') {
-		throw new Error('utr leaderboard unavailable')
-	}
-	const universe = getMockUniverse()
-	const liveResponses = await Promise.all(
-		UTR_LIVE_ASSETS.map((asset) => fetchUtrAssetResponse(asset).catch(() => null))
-	)
-	const liveRows = liveResponses
-		.filter((asset): asset is UtrAssetResponse => asset != null)
-		.map(rowFromAssetResponse)
-		.sort((a, b) => (a.scores.rank ?? Infinity) - (b.scores.rank ?? Infinity))
-	return { ...universe, rows: [...liveRows, ...universe.rows] }
+	return { rows: [], scoredCount: leaderboard?.scoredCount ?? 0, totalCount: leaderboard?.totalCount ?? 0 }
 }
