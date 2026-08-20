@@ -13,6 +13,7 @@ import {
 import toast from 'react-hot-toast'
 import { OAuthWelcomeDialog } from '~/auth/OAuthWelcomeDialog'
 import { getReferrer } from '~/auth/referrer'
+import { isGoogleLinkChallenge, type GoogleLinkChallenge } from '~/auth/signInFlowStore'
 import { clearSignupSource, getSignupSource } from '~/auth/signupSource'
 import { VerifyEmailConfirmDialog } from '~/auth/VerifyEmailConfirmDialog'
 import { VerifyEmailDialog } from '~/auth/VerifyEmailDialog'
@@ -21,6 +22,56 @@ import { fetchJson, handleSimpleFetchResponse } from '~/utils/async'
 import pb, { type AuthModel } from '~/utils/pocketbase'
 
 export type PromotionalEmailsValue = 'initial' | 'on' | 'off'
+
+export type { GoogleLinkChallenge } from '~/auth/signInFlowStore'
+
+type GoogleAuthSession = {
+	isNew: boolean
+	kind: 'authenticated'
+	token: string
+	user: {
+		email: string
+		id: string
+		verified: boolean
+	}
+}
+
+export type GoogleAuthResult = GoogleAuthSession | GoogleLinkChallenge
+
+export function readGoogleAuthResult(value: unknown): GoogleAuthResult {
+	if (!value || typeof value !== 'object' || !('kind' in value)) throw new Error('Invalid Google sign-in response')
+	if (value.kind === 'link_verification_required') {
+		if (!isGoogleLinkChallenge(value)) throw new Error('Invalid Google sign-in response')
+		return value
+	}
+	if (
+		value.kind !== 'authenticated' ||
+		!('token' in value) ||
+		typeof value.token !== 'string' ||
+		!('user' in value) ||
+		!value.user ||
+		typeof value.user !== 'object' ||
+		!('id' in value.user) ||
+		typeof value.user.id !== 'string' ||
+		!('email' in value.user) ||
+		typeof value.user.email !== 'string' ||
+		!('verified' in value.user) ||
+		typeof value.user.verified !== 'boolean' ||
+		('isNew' in value && typeof value.isNew !== 'boolean')
+	) {
+		throw new Error('Invalid Google sign-in response')
+	}
+	return {
+		isNew: 'isNew' in value && value.isNew === true,
+		kind: value.kind,
+		token: value.token,
+		user: {
+			email: value.user.email,
+			id: value.user.id,
+			verified: value.user.verified
+		}
+	}
+}
 
 function syncAuthTokenToCookie(token: string | null) {
 	if (typeof document === 'undefined') return
@@ -176,7 +227,9 @@ interface AuthContextType {
 		unknown
 	>
 	signInWithGithubMutation: UseMutationResult<RecordAuthResponse, Error, void>
-	signInWithGoogleMutation: UseMutationResult<RecordAuthResponse, Error, void>
+	signInWithGoogleMutation: UseMutationResult<GoogleAuthResult, Error, string>
+	confirmGoogleLinkMutation: UseMutationResult<GoogleAuthSession, Error, { challengeToken: string; code: string }>
+	resendGoogleLinkMutation: UseMutationResult<GoogleLinkChallenge, Error, string>
 	addWallet: (address: string, signMessageFunction: any, onSuccess?: () => void) => Promise<void>
 	resetPasswordMutation: UseMutationResult<void, Error, string>
 	changeEmail: (email: string) => void
@@ -488,10 +541,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 		}
 	})
 
-	const signInWithOAuth2 = async (provider: 'github' | 'google') => {
+	const signInWithGithub = async () => {
 		try {
 			const authData = await pb.collection('users').authWithOAuth2({
-				provider,
+				provider: 'github',
 				redirectTo: `${window.location.origin}/subscription`
 			})
 
@@ -507,7 +560,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 						body: JSON.stringify({
 							source: getSignupSource(),
 							referrer: getReferrer(),
-							provider
+							provider: 'github'
 						})
 					})
 				} catch {}
@@ -515,17 +568,98 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
 			return authData
 		} catch (error) {
-			console.log(`${provider} sign-in error:`, error)
-			throw new Error(`Failed to sign in with ${provider}`)
+			console.log('github sign-in error:', error)
+			throw new Error('Failed to sign in with GitHub')
 		}
 	}
 
 	const signInWithGithubMutation = useMutation({
-		mutationFn: () => signInWithOAuth2('github')
+		mutationFn: signInWithGithub
 	})
 
+	const saveGoogleSession = async (session: GoogleAuthSession) => {
+		pb.authStore.save(session.token)
+		try {
+			await pb.collection('users').authRefresh()
+		} catch (error) {
+			console.log('Error refreshing auth after Google sign-in:', error)
+		}
+		toast.success('Successfully signed in with Google')
+	}
+
 	const signInWithGoogleMutation = useMutation({
-		mutationFn: () => signInWithOAuth2('google')
+		mutationFn: async (identityToken: string) => {
+			const source = getSignupSource()
+			const referrer = getReferrer()
+			const response = await fetch(`${AUTH_SERVER}/auth/google-signin`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					identityToken,
+					signupClient: 'web',
+					source
+				})
+			})
+			if (!response.ok) {
+				throw new Error(await getAuthErrorMessageFromResponse(response, 'Failed to sign in with Google'))
+			}
+			const result = readGoogleAuthResult(await response.json())
+			if (result.kind === 'link_verification_required') return result
+			await saveGoogleSession(result)
+			if (result.isNew) {
+				setOauthWelcomeOpen(true)
+				try {
+					await fetch(`${AUTH_SERVER}/user/attribution`, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							Authorization: `Bearer ${pb.authStore.token}`
+						},
+						body: JSON.stringify({
+							referrer,
+							source,
+							provider: 'google'
+						})
+					})
+				} catch {}
+			}
+			clearSignupSource()
+			return result
+		}
+	})
+
+	const confirmGoogleLinkMutation = useMutation({
+		mutationFn: async ({ challengeToken, code }: { challengeToken: string; code: string }) => {
+			const response = await fetch(`${AUTH_SERVER}/auth/social-link/confirm`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ challengeToken, code })
+			})
+			if (!response.ok) {
+				throw new Error(await getAuthErrorMessageFromResponse(response, 'Invalid or expired code'))
+			}
+			const result = readGoogleAuthResult(await response.json())
+			if (result.kind !== 'authenticated') throw new Error('Invalid Google link response')
+			await saveGoogleSession(result)
+			clearSignupSource()
+			return result
+		}
+	})
+
+	const resendGoogleLinkMutation = useMutation({
+		mutationFn: async (challengeToken: string) => {
+			const response = await fetch(`${AUTH_SERVER}/auth/social-link/resend`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ challengeToken })
+			})
+			if (!response.ok) {
+				throw new Error(await getAuthErrorMessageFromResponse(response, 'Failed to resend verification code'))
+			}
+			const result = readGoogleAuthResult(await response.json())
+			if (result.kind !== 'link_verification_required') throw new Error('Invalid Google link response')
+			return result
+		}
 	})
 
 	const addWalletMutation = useMutation({
@@ -763,6 +897,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 		signInWithEthereumMutation,
 		signInWithGithubMutation,
 		signInWithGoogleMutation,
+		confirmGoogleLinkMutation,
+		resendGoogleLinkMutation,
 		addWallet,
 		resetPasswordMutation,
 		changeEmail: changeEmail.mutate,

@@ -9,6 +9,9 @@ export const SEARCH_API_TOKEN = process.env.NEXT_PUBLIC_SEARCH_API_TOKEN
 export const SKIP_BUILD_STATIC_GENERATION =
 	SKIP_BUILD_STATIC_GENERATION_ENV !== 'false' && SKIP_BUILD_STATIC_GENERATION_ENV !== '0'
 export const STRIPE_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? ''
+export const GOOGLE_WEB_CLIENT_ID =
+	process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
+	'137607440574-52q46ue3f50ciegcdq6do2h50esah040.apps.googleusercontent.com'
 
 // Base servers
 export const AUTH_SERVER = 'https://features.llama.fi'

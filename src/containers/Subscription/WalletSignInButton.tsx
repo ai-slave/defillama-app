@@ -9,6 +9,7 @@ export type WalletSignInButtonProps = {
 	dialogStore: Ariakit.DialogStore
 	setError: (error: string) => void
 	autoStart?: boolean
+	onAuthenticated?: () => void
 }
 
 export function WalletSignInButton(props: WalletSignInButtonProps) {
@@ -19,7 +20,12 @@ export function WalletSignInButton(props: WalletSignInButtonProps) {
 	)
 }
 
-function WalletSignInButtonInner({ dialogStore, setError, autoStart = false }: WalletSignInButtonProps) {
+function WalletSignInButtonInner({
+	dialogStore,
+	setError,
+	autoStart = false,
+	onAuthenticated
+}: WalletSignInButtonProps) {
 	const startedRef = useRef(false)
 	const { signInWithEthereumMutation } = useAuthContext()
 	const { openConnectModal } = useConnectModal()
@@ -31,6 +37,7 @@ function WalletSignInButtonInner({ dialogStore, setError, autoStart = false }: W
 		if (address) {
 			try {
 				await signInWithEthereumMutation.mutateAsync({ address, signMessageFunction: signMessageAsync })
+				onAuthenticated?.()
 				dialogStore.hide()
 			} catch {
 				setError('Failed to sign in with wallet')
@@ -39,7 +46,7 @@ function WalletSignInButtonInner({ dialogStore, setError, autoStart = false }: W
 		}
 
 		openConnectModal?.()
-	}, [address, dialogStore, openConnectModal, setError, signInWithEthereumMutation, signMessageAsync])
+	}, [address, dialogStore, onAuthenticated, openConnectModal, setError, signInWithEthereumMutation, signMessageAsync])
 
 	useEffect(() => {
 		if (!autoStart || startedRef.current) return
