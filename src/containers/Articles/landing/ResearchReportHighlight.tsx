@@ -2,6 +2,7 @@ import React, { type CSSProperties } from 'react'
 import { DownloadPdfLink } from '~/containers/Articles/landing/DownloadPdfLink'
 import { ReadMoreLink } from '~/containers/Articles/landing/ReadMoreLink'
 import { useSharedHeight } from '~/containers/Articles/landing/ResearchSectionWithSharedHeight'
+import { SponsoredByBadge } from '~/containers/Articles/landing/SponsoredByBadge'
 import { TitleLine } from '~/containers/Articles/landing/TitleLine'
 import { articleHref } from '~/containers/Articles/landing/utils'
 import type { ArticleDocument } from '~/containers/Articles/types'
@@ -33,23 +34,11 @@ export const ResearchReportHighlight: React.FC<ResearchReportHighlightProps> = (
 			</div>
 			<div className="grid grow grid-cols-1 gap-8 lg:grid-cols-[397fr_719fr] lg:gap-12">
 				<div className="flex flex-col gap-6">
-					{sponsorLogoUrl ? (
-						<div className="space-y-2">
-							<div className="text-[9px] tracking-[0.18em] text-primary/60 uppercase dark:text-on-brand/60">
-								Sponsored by
-							</div>
-							<img
-								src={sponsorLogoUrl}
-								alt={highlight.sponsorLogo.alt}
-								className="h-7 w-auto max-w-[120px] object-contain"
-							/>
-						</div>
-					) : null}
 					<h2 className="text-2xl leading-[150%] font-medium text-research-heading dark:text-research-ink">
 						{highlight.title}
 					</h2>
 					{coverUrl ? (
-						<div className="w-full">
+						<div className="relative w-full">
 							<img
 								src={coverUrl}
 								alt={highlight?.coverImage?.alt}
@@ -57,6 +46,7 @@ export const ResearchReportHighlight: React.FC<ResearchReportHighlightProps> = (
 								loading="lazy"
 								decoding="async"
 							/>
+							{sponsorLogoUrl ? <SponsoredByBadge sponsorLogo={highlight.sponsorLogo} /> : null}
 						</div>
 					) : null}
 				</div>

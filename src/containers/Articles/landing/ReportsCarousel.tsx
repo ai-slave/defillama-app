@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DownloadPdfLink } from '~/containers/Articles/landing/DownloadPdfLink'
+import { SponsoredByBadge } from '~/containers/Articles/landing/SponsoredByBadge'
 import { articleHref } from '~/containers/Articles/landing/utils'
 import type { ArticleDocument } from '~/containers/Articles/types'
 import { useMedia } from '~/hooks/useMedia'
@@ -116,12 +117,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 		</div>
 	)
 
-	const sponsorBadge = sponsorLogoUrl ? (
-		<div className="pointer-events-none absolute top-[12px] right-[12px] flex items-center gap-2 rounded-full bg-research-invert/55 px-2 py-1 text-on-brand backdrop-blur-sm">
-			<span className="font-jetbrains text-[8px] tracking-[0.16em] uppercase opacity-80">Sponsored by</span>
-			<img src={sponsorLogoUrl} alt={article.sponsorLogo.alt} className="h-5 w-auto max-w-[80px] object-contain" />
-		</div>
-	) : null
+	const sponsorBadge = sponsorLogoUrl ? <SponsoredByBadge sponsorLogo={article.sponsorLogo} /> : null
 
 	const overlay = (
 		<div
