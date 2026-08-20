@@ -16,6 +16,7 @@ import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv } from '~/components/Table/utils'
+import { TokenLogo } from '~/components/TokenLogo'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
@@ -312,6 +313,9 @@ function createRWAAssetColumns(
 				return (
 					<span className="flex items-center gap-2">
 						<span className="vf-row-index shrink-0" aria-hidden="true" />
+						{info.row.original.logo ? (
+							<TokenLogo src={info.row.original.logo} size={24} alt={`${info.row.original.assetName} logo`} />
+						) : null}
 						<span className="-my-1.5 flex flex-col overflow-hidden">
 							{info.row.original.detailHref ? (
 								<>

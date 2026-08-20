@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import type {} from '~/components/Table/utils'
+import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
 import { formatCompactNumber } from '~/utils/numberFormat'
@@ -24,6 +25,7 @@ import { rwaSlug } from './rwaSlug'
 
 type RWAPlatformsTableRow = {
 	platform: string
+	logo: string | null
 	assetCount: number
 	activeMcap: number
 	onChainMcap: number
@@ -43,6 +45,9 @@ const columns = [
 			return (
 				<span className="flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
+					{info.row.original.logo ? (
+						<TokenLogo src={info.row.original.logo} size={24} alt={`${platform} logo`} />
+					) : null}
 					<BasicLink
 						href={`/rwa/platform/${rwaSlug(platform)}`}
 						className="truncate label-md text-link hover:underline"
@@ -102,7 +107,7 @@ export function RWAPlatforms({
 	platforms,
 	initialChartDataset
 }: {
-	platforms: IRWAPlatformsOverviewRow[]
+	platforms: Array<IRWAPlatformsOverviewRow & { logo: string | null }>
 	initialChartDataset: RWAPositionalChartDataset
 }) {
 	const router = useRouter()
@@ -120,6 +125,7 @@ export function RWAPlatforms({
 
 	const data = platforms.map((row) => ({
 		platform: row.platform,
+		logo: row.logo,
 		...getRWAOverviewTableData(row, inclusion),
 		assetCount: getRWAOverviewAssetCount(row),
 		hasExcludedAssets: hasExcludedRWAOverviewAssets(row, includeStablecoins, includeGovernance)

@@ -3,6 +3,7 @@ import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { getRWAPlatformRoutes } from '~/containers/RWA/platformRoutes'
 import { RWAPlatforms } from '~/containers/RWA/Platforms'
 import { getRWAPlatformsOverview } from '~/containers/RWA/queries'
+import { rwaSlug } from '~/containers/RWA/rwaSlug'
 import { RWATabNav } from '~/containers/RWA/TabNav'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -26,9 +27,14 @@ export const getStaticProps = withPerformanceLogging(`rwa/platforms`, async () =
 		throw new Error('platforms not found in RWA list')
 	}
 
+	const platformsWithLogos = platforms.map((platform) => ({
+		...platform,
+		logo: metadataCache.rwaPlatformsIndex.platforms[rwaSlug(platform.platform)]?.logo ?? null
+	}))
+
 	return {
 		props: {
-			platforms,
+			platforms: platformsWithLogos,
 			initialChartDataset,
 			platformLinks: [{ label: 'All', to: '/rwa/platforms' }, ...platformLinks]
 		},
