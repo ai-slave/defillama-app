@@ -8,6 +8,8 @@ export type ProtocolTaxonomyChartSeries = Omit<MultiSeriesChartSeriesConfig, 'da
 	data?: never
 }
 
+export type ProtocolTaxonomyBreakdownKey = 'protocol' | 'chain' | 'network' | 'custody'
+
 export interface ProtocolTaxonomyCharts {
 	dataset: {
 		source: ProtocolTaxonomyChartRow[]
@@ -65,6 +67,8 @@ export interface IProtocolTaxonomyPageData {
 	chains: Array<{ label: string; to: string }>
 	chain: string
 	charts: ProtocolTaxonomyCharts
+	/** Stacked volume breakdowns keyed by dimension. Only populated for categories that opt in. */
+	breakdownCharts: Partial<Record<ProtocolTaxonomyBreakdownKey, ProtocolTaxonomyCharts>>
 	fees7d: number | null
 	revenue7d: number | null
 	dexVolume7d: number | null

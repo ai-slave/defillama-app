@@ -37,6 +37,8 @@ export const ETF_SERVER_URL =
 	getDirectUrlEnv('ETF_SERVER_URL') ?? (API_KEY ? `${PRO_API_BASE_URL}/${API_KEY}/etfs` : 'https://etfs.llama.fi')
 export const FDV_SERVER_URL =
 	getDirectUrlEnv('FDV_SERVER_URL') ?? (API_KEY ? `${PRO_API_BASE_URL}/${API_KEY}/fdv` : 'https://fdv-server.llama.fi')
+export const CARDS_SERVER_URL =
+	getDirectUrlEnv('CARDS_SERVER_URL') ?? (API_KEY ? `${PRO_API_BASE_URL}/${API_KEY}/cards` : 'https://cards.llama.fi')
 export const NFT_SERVER_URL = 'https://nft.llama.fi'
 export const RWA_SERVER_URL =
 	getDirectUrlEnv('RWA_SERVER_URL') ?? (API_KEY ? `${PRO_API_BASE_URL}/${API_KEY}/rwa` : 'https://api.llama.fi/rwa')

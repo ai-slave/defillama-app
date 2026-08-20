@@ -1,5 +1,6 @@
 export const DIRECT_URL_ENV_NAMES = [
 	'BRIDGES_SERVER_URL',
+	'CARDS_SERVER_URL',
 	'COINS_SERVER_URL',
 	'DATASETS_SERVER_URL',
 	'EQUITIES_SERVER_URL',
@@ -70,6 +71,8 @@ export function getDirectUrlEnv(name: DirectUrlEnvName): string | undefined {
 	switch (name) {
 		case 'BRIDGES_SERVER_URL':
 			return normalizeDirectUrlEnv(process.env.BRIDGES_SERVER_URL)
+		case 'CARDS_SERVER_URL':
+			return normalizeDirectUrlEnv(process.env.CARDS_SERVER_URL)
 		case 'COINS_SERVER_URL':
 			return normalizeDirectUrlEnv(process.env.COINS_SERVER_URL)
 		case 'DATASETS_SERVER_URL':

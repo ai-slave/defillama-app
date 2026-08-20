@@ -190,16 +190,19 @@ export async function fetchAdapterProtocolChartDataByBreakdownType({
 export async function fetchAdapterChainChartDataByProtocolBreakdown({
 	adapterType,
 	chain,
-	dataType
+	dataType,
+	category
 }: {
 	adapterType: `${ADAPTER_TYPES}`
 	chain: string
 	dataType?: `${ADAPTER_DATA_TYPES}`
+	category?: string
 }): Promise<IAdapterBreakdownChartData> {
+	const categorySegment = category ? `/category/${slug(category)}` : ''
 	let totalDataChartUrl =
 		chain && chain !== 'All'
-			? `${V2_SERVER_URL}/chart/${adapterType}/chain/${slug(chain)}/protocol-breakdown`
-			: `${V2_SERVER_URL}/chart/${adapterType}/protocol-breakdown`
+			? `${V2_SERVER_URL}/chart/${adapterType}${categorySegment}/chain/${slug(chain)}/protocol-breakdown`
+			: `${V2_SERVER_URL}/chart/${adapterType}${categorySegment}/protocol-breakdown`
 
 	if (dataType) {
 		totalDataChartUrl += `?dataType=${dataType}`
@@ -208,15 +211,19 @@ export async function fetchAdapterChainChartDataByProtocolBreakdown({
 	return fetchJson<IAdapterBreakdownChartData>(totalDataChartUrl, { timeout: 30_000 })
 }
 
-/** Fetch the complete chain breakdown for an adapter metric. */
+/** Fetch the complete chain breakdown for an adapter metric, optionally narrowed to one category. */
 export async function fetchAdapterChainChartDataByChainBreakdown({
 	adapterType,
-	dataType
+	dataType,
+	category
 }: {
 	adapterType: `${ADAPTER_TYPES}`
 	dataType?: `${ADAPTER_DATA_TYPES}`
+	category?: string
 }): Promise<IAdapterBreakdownChartData> {
-	const totalDataChartUrl = new URL(`${V2_SERVER_URL}/chart/${adapterType}/chain-breakdown`)
+	const totalDataChartUrl = new URL(
+		`${V2_SERVER_URL}/chart/${adapterType}${category ? `/category/${slug(category)}` : ''}/chain-breakdown`
+	)
 	if (dataType) totalDataChartUrl.searchParams.set('dataType', dataType)
 	return fetchJson<IAdapterBreakdownChartData>(totalDataChartUrl.toString(), { timeout: 30_000 })
 }

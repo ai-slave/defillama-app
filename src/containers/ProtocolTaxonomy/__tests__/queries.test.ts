@@ -6,17 +6,23 @@ const {
 	fetchProtocolsMock,
 	fetchAdapterChainMetricsMock,
 	fetchAdapterChainChartDataMock,
+	fetchAdapterChainChartDataByProtocolBreakdownMock,
+	fetchAdapterChainChartDataByChainBreakdownMock,
 	fetchCategoriesSummaryMock,
 	fetchCategoryChartMock,
 	fetchTagChartMock,
+	fetchCardBreakdownChartMock,
 	fetchJsonMock
 } = vi.hoisted(() => ({
 	fetchProtocolsMock: vi.fn(),
 	fetchAdapterChainMetricsMock: vi.fn(),
 	fetchAdapterChainChartDataMock: vi.fn(),
+	fetchAdapterChainChartDataByProtocolBreakdownMock: vi.fn(),
+	fetchAdapterChainChartDataByChainBreakdownMock: vi.fn(),
 	fetchCategoriesSummaryMock: vi.fn(),
 	fetchCategoryChartMock: vi.fn(),
 	fetchTagChartMock: vi.fn(),
+	fetchCardBreakdownChartMock: vi.fn(),
 	fetchJsonMock: vi.fn()
 }))
 
@@ -26,7 +32,9 @@ vi.mock('~/containers/ProtocolLists/api', () => ({
 
 vi.mock('~/containers/AdapterMetrics/api', () => ({
 	fetchAdapterChainMetrics: fetchAdapterChainMetricsMock,
-	fetchAdapterChainChartData: fetchAdapterChainChartDataMock
+	fetchAdapterChainChartData: fetchAdapterChainChartDataMock,
+	fetchAdapterChainChartDataByProtocolBreakdown: fetchAdapterChainChartDataByProtocolBreakdownMock,
+	fetchAdapterChainChartDataByChainBreakdown: fetchAdapterChainChartDataByChainBreakdownMock
 }))
 
 vi.mock('~/utils/async', () => ({
@@ -36,11 +44,13 @@ vi.mock('~/utils/async', () => ({
 vi.mock('../api', () => ({
 	fetchCategoriesSummary: fetchCategoriesSummaryMock,
 	fetchCategoryChart: fetchCategoryChartMock,
-	fetchTagChart: fetchTagChartMock
+	fetchTagChart: fetchTagChartMock,
+	fetchCardBreakdownChart: fetchCardBreakdownChartMock
 }))
 
 import {
 	buildCategoryCharts,
+	buildBreakdownCharts,
 	getProtocolTaxonomyPageData,
 	getProtocolsCategoriesChartData,
 	getProtocolsCategoriesPageData,
@@ -225,6 +235,9 @@ describe('ProtocolTaxonomy queries', () => {
 			tvl: { 1710000000: 100 }
 		})
 		fetchJsonMock.mockResolvedValue({ Interface: ['Ethereum'] })
+		fetchCardBreakdownChartMock.mockResolvedValue([])
+		fetchAdapterChainChartDataByProtocolBreakdownMock.mockResolvedValue([])
+		fetchAdapterChainChartDataByChainBreakdownMock.mockResolvedValue([])
 
 		fetchAdapterChainMetricsMock.mockImplementation(async ({ adapterType, dataType }) => {
 			if (adapterType === 'dexs') {
@@ -354,6 +367,33 @@ describe('ProtocolTaxonomy queries', () => {
 		])
 	})
 
+	it('builds a stacked volume breakdown ordered by all-time total', () => {
+		const chart = buildBreakdownCharts(
+			[
+				[1710000000, { 'Small Card': 5, 'Big Card': 100 }],
+				[1710086400, { 'Small Card': 7, 'Big Card': 200, 'New Card': 50 }]
+			],
+			'protocolBreakdown'
+		)
+
+		expect(chart?.dataset.dimensions).toEqual(['timestamp', 'Big Card', 'New Card', 'Small Card'])
+		expect(chart?.dataset.source).toEqual([
+			[1710000000000, 100, null, 5],
+			[1710086400000, 200, 50, 7]
+		])
+		expect(chart?.charts).toEqual([
+			expect.objectContaining({ type: 'bar', name: 'Big Card', stack: 'protocolBreakdown', valueSymbol: '$' }),
+			expect.objectContaining({ type: 'bar', name: 'New Card', stack: 'protocolBreakdown' }),
+			expect.objectContaining({ type: 'bar', name: 'Small Card', stack: 'protocolBreakdown' })
+		])
+	})
+
+	it('returns no volume breakdown when the response is empty or all-zero', () => {
+		expect(buildBreakdownCharts(null, 'protocolBreakdown')).toBeNull()
+		expect(buildBreakdownCharts([], 'protocolBreakdown')).toBeNull()
+		expect(buildBreakdownCharts([[1710000000, { 'Dead Card': 0 }]], 'protocolBreakdown')).toBeNull()
+	})
+
 	it('leaves a revenue-only chart empty when revenue history is unavailable', () => {
 		const chart = buildCategoryCharts({
 			effectiveCategory: 'Physical TCG',
@@ -411,6 +451,126 @@ describe('ProtocolTaxonomy queries', () => {
 			dimensions: ['timestamp', 'Revenue'],
 			source: [[1710000000000, 25]]
 		})
+	})
+
+	it('fetches the protocol volume breakdown for categories that opt in', async () => {
+		fetchAdapterChainChartDataByProtocolBreakdownMock.mockResolvedValue([[1710000000, { 'Nexo Card': 40 }]])
+
+		const result = await getProtocolTaxonomyPageData({
+			kind: 'category',
+			category: 'Crypto Card Issuer',
+			categoriesAndTags: {
+				categories: ['Crypto Card Issuer'],
+				tags: [],
+				tagCategoryMap: {},
+				configs: {
+					'Crypto Card Issuer': {
+						category: 'Crypto Card Issuer',
+						slug: 'crypto-card-issuer',
+						dexs: true
+					}
+				}
+			},
+			chainMetadata: {}
+		})
+
+		expect(fetchAdapterChainChartDataByProtocolBreakdownMock).toHaveBeenCalledWith({
+			chain: 'All',
+			adapterType: 'dexs',
+			category: 'crypto-card-issuer'
+		})
+		expect(result?.breakdownCharts.protocol?.dataset).toEqual({
+			dimensions: ['timestamp', 'Nexo Card'],
+			source: [[1710000000000, 40]]
+		})
+	})
+
+	it('skips the protocol volume breakdown for categories that do not opt in', async () => {
+		const result = await getProtocolTaxonomyPageData({
+			kind: 'category',
+			category: 'Interface',
+			categoriesAndTags,
+			chainMetadata: {}
+		})
+
+		expect(fetchAdapterChainChartDataByProtocolBreakdownMock).not.toHaveBeenCalled()
+		expect(result?.breakdownCharts.protocol).toBeUndefined()
+	})
+
+	const cardIssuerParams = {
+		kind: 'category' as const,
+		category: 'Crypto Card Issuer',
+		categoriesAndTags: {
+			categories: ['Crypto Card Issuer'],
+			tags: [],
+			tagCategoryMap: {},
+			configs: {
+				'Crypto Card Issuer': { category: 'Crypto Card Issuer', slug: 'crypto-card-issuer', dexs: true }
+			}
+		},
+		chainMetadata: { ethereum: { name: 'Ethereum', id: 'ethereum', dexs: true } }
+	}
+
+	it('builds the card network and custody breakdowns on the all-chains page', async () => {
+		fetchCardBreakdownChartMock.mockImplementation(async (type: string) =>
+			type === 'network'
+				? [[1710000000, { Visa: 60, Mastercard: 40 }]]
+				: [[1710000000, { Custodial: 70, 'Self-custodial': 30 }]]
+		)
+
+		const result = await getProtocolTaxonomyPageData(cardIssuerParams)
+
+		expect(fetchCardBreakdownChartMock).toHaveBeenCalledWith('network')
+		expect(fetchCardBreakdownChartMock).toHaveBeenCalledWith('custody')
+		expect(result?.breakdownCharts.network?.dataset).toEqual({
+			dimensions: ['timestamp', 'Visa', 'Mastercard'],
+			source: [[1710000000000, 60, 40]]
+		})
+		expect(result?.breakdownCharts.custody?.dataset.dimensions).toEqual(['timestamp', 'Custodial', 'Self-custodial'])
+	})
+
+	it('builds the chain breakdown from the category-scoped adapter route', async () => {
+		fetchAdapterChainChartDataByChainBreakdownMock.mockResolvedValue([[1710000000, { Ethereum: 90, Base: 10 }]])
+
+		const result = await getProtocolTaxonomyPageData(cardIssuerParams)
+
+		expect(fetchAdapterChainChartDataByChainBreakdownMock).toHaveBeenCalledWith({
+			adapterType: 'dexs',
+			category: 'crypto-card-issuer'
+		})
+		expect(result?.breakdownCharts.chain?.dataset).toEqual({
+			dimensions: ['timestamp', 'Ethereum', 'Base'],
+			source: [[1710000000000, 90, 10]]
+		})
+	})
+
+	it('omits the chain breakdown on chain pages, where it would be a single bar', async () => {
+		fetchAdapterChainChartDataByChainBreakdownMock.mockResolvedValue([[1710000000, { Ethereum: 90 }]])
+
+		const result = await getProtocolTaxonomyPageData({ ...cardIssuerParams, chain: 'ethereum' })
+
+		expect(fetchAdapterChainChartDataByChainBreakdownMock).not.toHaveBeenCalled()
+		expect(result?.breakdownCharts.chain).toBeUndefined()
+	})
+
+	it('omits the card breakdowns on chain pages because upstream has no chain filter', async () => {
+		const result = await getProtocolTaxonomyPageData({ ...cardIssuerParams, chain: 'ethereum' })
+
+		expect(fetchCardBreakdownChartMock).not.toHaveBeenCalled()
+		expect(result?.breakdownCharts.network).toBeUndefined()
+		expect(result?.breakdownCharts.custody).toBeUndefined()
+	})
+
+	it('drops a card breakdown whose upstream request fails without failing the page', async () => {
+		fetchCardBreakdownChartMock.mockImplementation(async (type: string) => {
+			if (type === 'network') throw new Error('pro api key missing')
+			return [[1710000000, { Custodial: 70 }]]
+		})
+
+		const result = await getProtocolTaxonomyPageData(cardIssuerParams)
+
+		expect(result?.breakdownCharts.network).toBeUndefined()
+		expect(result?.breakdownCharts.custody?.dataset.dimensions).toEqual(['timestamp', 'Custodial'])
 	})
 
 	it('builds protocol categories page data without fetching category chart summary', async () => {

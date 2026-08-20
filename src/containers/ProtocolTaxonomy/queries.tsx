@@ -1,6 +1,11 @@
 import { CHART_COLORS } from '~/constants/colors'
-import { fetchAdapterChainChartData, fetchAdapterChainMetrics } from '~/containers/AdapterMetrics/api'
-import type { IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
+import {
+	fetchAdapterChainChartData,
+	fetchAdapterChainChartDataByChainBreakdown,
+	fetchAdapterChainChartDataByProtocolBreakdown,
+	fetchAdapterChainMetrics
+} from '~/containers/AdapterMetrics/api'
+import type { IAdapterBreakdownChartData, IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
 import {
 	ADAPTER_DATA_TYPE_KEYS,
 	ADAPTER_DATA_TYPES,
@@ -19,9 +24,11 @@ import {
 import { getNDistinctColors, getPercentChange, slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import type { ICategoriesAndTags, ICategoriesAndTagsConfig, IChainMetadata } from '~/utils/metadata/types'
-import { fetchCategoriesSummary, fetchCategoryChart, fetchTagChart } from './api'
-import type { CategoriesSummaryResponse } from './api.types'
+import { fetchCardBreakdownChart, fetchCategoriesSummary, fetchCategoryChart, fetchTagChart } from './api'
+import type { CardBreakdownChartResponse, CategoriesSummaryResponse } from './api.types'
 import {
+	CARD_ISSUER_CATEGORY,
+	PROTOCOL_TAXONOMY_BREAKDOWN_KEYS,
 	getProtocolCategoryChartMetricLabel,
 	getProtocolCategoryChartMetrics,
 	protocolCategoryConfig,
@@ -33,7 +40,10 @@ import type {
 	IProtocolsCategoriesChartData,
 	IProtocolsCategoriesExtraTvlPoint,
 	IProtocolsCategoriesPageData,
-	IProtocolsCategoriesTableRow
+	IProtocolsCategoriesTableRow,
+	ProtocolTaxonomyBreakdownKey,
+	ProtocolTaxonomyChartRow,
+	ProtocolTaxonomyCharts
 } from './types'
 
 type GetProtocolTaxonomyPageDataParams = {
@@ -290,6 +300,79 @@ export const buildCategoryCharts = ({
 	}
 }
 
+/**
+ * Turns a `[timestamp, valueBySeriesName]` breakdown response into one stacked series per name,
+ * ordered by all-time total so the largest contributors sit at the bottom of the stack.
+ * Shared by the protocol, card-network, and custody breakdowns, which all use this shape.
+ */
+export const buildBreakdownCharts = (
+	breakdownChartData: IAdapterBreakdownChartData | CardBreakdownChartResponse | null,
+	stackId: string
+): ProtocolTaxonomyCharts | null => {
+	if (!breakdownChartData || breakdownChartData.length === 0) return null
+
+	const totalByProtocol = new Map<string, number>()
+	for (const [, valueByProtocol] of breakdownChartData) {
+		for (const protocolName in valueByProtocol) {
+			const value = valueByProtocol[protocolName] ?? 0
+			totalByProtocol.set(protocolName, (totalByProtocol.get(protocolName) ?? 0) + value)
+		}
+	}
+
+	const protocolNames: string[] = []
+	for (const [protocolName, total] of Array.from(totalByProtocol.entries()).sort((a, b) => b[1] - a[1])) {
+		if (total > 0) protocolNames.push(protocolName)
+	}
+	if (protocolNames.length === 0) return null
+
+	const columnIndexByProtocol = new Map<string, number>()
+	for (const [index, protocolName] of protocolNames.entries()) columnIndexByProtocol.set(protocolName, index + 1)
+
+	const source: ProtocolTaxonomyChartRow[] = []
+	for (const [timestamp, valueByProtocol] of breakdownChartData) {
+		const row: ProtocolTaxonomyChartRow = [normalizeChartTimestamp(timestamp)]
+		for (let index = 0; index < protocolNames.length; index++) row.push(null)
+		for (const protocolName in valueByProtocol) {
+			const columnIndex = columnIndexByProtocol.get(protocolName)
+			if (columnIndex === undefined) continue
+			row[columnIndex] = (row[columnIndex] ?? 0) + (valueByProtocol[protocolName] ?? 0)
+		}
+		source.push(row)
+	}
+	source.sort((a, b) => a[0] - b[0])
+
+	const colors = getNDistinctColors(protocolNames.length)
+
+	return {
+		dataset: {
+			source,
+			dimensions: ['timestamp', ...protocolNames]
+		},
+		charts: protocolNames.map((protocolName, index) => ({
+			type: 'bar',
+			name: protocolName,
+			encode: { x: 0, y: index + 1 },
+			stack: stackId,
+			color: colors[index] ?? '#999999',
+			valueSymbol: '$'
+		}))
+	}
+}
+
+/** Builds each present breakdown, dropping the keys whose upstream response was empty or unavailable. */
+export const buildBreakdownChartsByKey = (
+	responsesByKey: Partial<
+		Record<ProtocolTaxonomyBreakdownKey, IAdapterBreakdownChartData | CardBreakdownChartResponse | null>
+	>
+): IProtocolTaxonomyPageData['breakdownCharts'] => {
+	const breakdownCharts: IProtocolTaxonomyPageData['breakdownCharts'] = {}
+	for (const key of PROTOCOL_TAXONOMY_BREAKDOWN_KEYS) {
+		const built = buildBreakdownCharts(responsesByKey[key] ?? null, `${key}Breakdown`)
+		if (built) breakdownCharts[key] = built
+	}
+	return breakdownCharts
+}
+
 type ProtocolTableRow = IProtocolTaxonomyPageData['protocols'][number]
 
 type ProtocolMetricTotals = {
@@ -378,6 +461,7 @@ export async function getProtocolTaxonomyPageData(
 	const config = effectiveCategory ? protocolCategoryConfig[effectiveCategory] : null
 	const categoryMetrics: ProtocolCategoryMetrics | undefined = config?.metrics
 	const chartMetrics = getProtocolCategoryChartMetrics(effectiveCategory)
+	const hasCardBreakdowns = effectiveCategory === CARD_ISSUER_CATEGORY && !chain
 	const categoryOrTagConfig = getCategoryOrTagConfig({
 		categoriesAndTags,
 		category,
@@ -478,6 +562,10 @@ export async function getProtocolTaxonomyPageData(
 		openInterestChartData,
 		optionsPremiumVolumeChartData,
 		optionsNotionalVolumeChartData,
+		dexVolumeProtocolBreakdownChartData,
+		dexVolumeChainBreakdownChartData,
+		cardNetworkBreakdownChartData,
+		cardCustodyBreakdownChartData,
 		chainsByCategoriesOrTags
 	] = await Promise.all([
 		fetchProtocols(),
@@ -603,6 +691,23 @@ export async function getProtocolTaxonomyPageData(
 					category: dimensionCategory
 				}).catch(() => null)
 			: null,
+		hasDexVolume && categoryMetrics?.dexVolume && categoryMetrics?.dexVolumeBreakdowns && currentChainMetadata.dexs
+			? fetchAdapterChainChartDataByProtocolBreakdown({
+					chain: chain ?? 'All',
+					adapterType: 'dexs',
+					category: dimensionCategory
+				}).catch(() => null)
+			: null,
+		// A chain split only says something on the all-chains page
+		!chain && hasDexVolume && categoryMetrics?.dexVolume && categoryMetrics?.dexVolumeBreakdowns
+			? fetchAdapterChainChartDataByChainBreakdown({
+					adapterType: 'dexs',
+					category: dimensionCategory
+				}).catch(() => null)
+			: null,
+		// Card network/custody charts are all-chains only upstream, so they are omitted on chain pages
+		hasCardBreakdowns ? fetchCardBreakdownChart('network').catch(() => null) : null,
+		hasCardBreakdowns ? fetchCardBreakdownChart('custody').catch(() => null) : null,
 		tag
 			? fetchJson<Record<string, Array<string>>>('https://api.llama.fi/lite/chains-by-tags').catch(() => null)
 			: fetchJson<Record<string, Array<string>>>('https://api.llama.fi/lite/chains-by-categories').catch(() => null)
@@ -978,6 +1083,12 @@ export async function getProtocolTaxonomyPageData(
 
 	return {
 		charts: categoryCharts,
+		breakdownCharts: buildBreakdownChartsByKey({
+			protocol: dexVolumeProtocolBreakdownChartData,
+			chain: dexVolumeChainBreakdownChartData,
+			network: cardNetworkBreakdownChartData,
+			custody: cardCustodyBreakdownChartData
+		}),
 		chain: currentChainMetadata.name,
 		protocols: (chain
 			? finalProtocols.filter((p) => p.chains.includes(currentChainMetadata.name))

@@ -18,3 +18,6 @@ export type CategoriesSummaryResponse = {
 	chart: Record<string, Record<string, CategoryOrTagChartMetrics>>
 	categories: Record<string, string[]>
 }
+
+/** Ascending `[unixSeconds, valueBySeriesName]` rows, as served by the card issuer breakdown charts. */
+export type CardBreakdownChartResponse = Array<[number, Record<string, number>]>

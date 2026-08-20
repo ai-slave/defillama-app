@@ -1,4 +1,5 @@
 import { type CellContext, createColumnHelper } from '@tanstack/react-table'
+import { useRouter } from 'next/router'
 import { lazy, Suspense, useDeferredValue, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
@@ -10,6 +11,7 @@ import {
 import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { Select } from '~/components/Select/Select'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
@@ -22,6 +24,7 @@ import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { chainIconUrl } from '~/utils/icons'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
+import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import { buildProtocolTaxonomyGroupedCharts } from './chartGrouping'
 import {
 	getProtocolCategoryDexVolumeLabel,
@@ -31,11 +34,32 @@ import {
 	type ProtocolCategoryColumn
 } from './constants'
 import { applyProtocolTaxonomyTvlSettings } from './tvl'
-import type { IProtocolTaxonomyPageData } from './types'
+import type { IProtocolTaxonomyPageData, ProtocolTaxonomyBreakdownKey } from './types'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
+const CHART_BREAKDOWN_OPTIONS: ReadonlyArray<{
+	key: 'combined' | ProtocolTaxonomyBreakdownKey
+	name: string
+	help?: string
+}> = [
+	{ key: 'combined', name: 'Combined' },
+	{ key: 'protocol', name: 'Payment Volume by Protocol' },
+	{ key: 'chain', name: 'Payment Volume by Chain' },
+	{
+		key: 'network',
+		name: 'Payment Volume by Network',
+		help: 'Excludes cards that run on both Visa and Mastercard, and cards whose network is unknown'
+	},
+	{
+		key: 'custody',
+		name: 'Payment Volume by Custody',
+		help: 'Excludes cards whose custody model is unknown'
+	}
+]
+
 export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
+	const router = useRouter()
 	const name = props.category ?? props.tag ?? ''
 	const namePrefix = name ? `${name}-` : ''
 	const [groupBy, setGroupBy] = useState<LowercaseDwmcGrouping>('daily')
@@ -75,9 +99,23 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 		return [{ id: sortId, desc: true }]
 	}, [props.effectiveCategory])
 
+	const chartBreakdownOptions = useMemo(
+		() =>
+			CHART_BREAKDOWN_OPTIONS.filter(
+				(option) => option.key === 'combined' || props.breakdownCharts[option.key] != null
+			),
+		[props.breakdownCharts]
+	)
+	const requestedChartBreakdown = readSingleQueryValue(router.query.chartBreakdown)
+	const chartBreakdown = chartBreakdownOptions.some((option) => option.key === requestedChartBreakdown)
+		? (requestedChartBreakdown as ProtocolTaxonomyBreakdownKey)
+		: 'combined'
+	const chartBreakdownLabel = chartBreakdownOptions.find((option) => option.key === chartBreakdown)?.name ?? 'Combined'
+
 	const groupedChartResult = useMemo(() => {
-		return buildProtocolTaxonomyGroupedCharts({ charts, groupBy })
-	}, [charts, groupBy])
+		const activeCharts = chartBreakdown === 'combined' ? charts : (props.breakdownCharts[chartBreakdown] ?? charts)
+		return buildProtocolTaxonomyGroupedCharts({ charts: activeCharts, groupBy })
+	}, [chartBreakdown, charts, groupBy, props.breakdownCharts])
 	const hasBarCharts = groupedChartResult.hasBarCharts
 	const groupedCharts = groupedChartResult.charts
 	const deferredGroupedCharts = useDeferredValue(groupedCharts)
@@ -185,12 +223,31 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
 					<ChartPanelToolbar className="justify-end">
+						{chartBreakdownOptions.length > 1 ? (
+							<div className="mr-auto">
+								<Select
+									allValues={chartBreakdownOptions}
+									selectedValues={chartBreakdown}
+									setSelectedValues={(value: string) => {
+										const selected = chartBreakdownOptions.find((option) => option.key === value)?.key
+										if (!selected) return
+										void pushShallowQuery(router, {
+											chartBreakdown: selected === 'combined' ? undefined : selected
+										})
+									}}
+									label={chartBreakdownLabel}
+									labelType="none"
+									variant="filter"
+									size="md"
+								/>
+							</div>
+						) : null}
 						{hasBarCharts ? (
 							<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWMC_GROUPING_OPTIONS_LOWERCASE} />
 						) : null}
 						<ChartExportButtons
 							chartInstance={chartInstance}
-							filename={`protocols-${namePrefix}${props.chain || 'all'}`}
+							filename={`protocols-${namePrefix}${props.chain || 'all'}${chartBreakdown === 'combined' ? '' : `-by-${chartBreakdown}`}`}
 							title={
 								props.chain === 'All'
 									? categoryPresentation.headingLabel

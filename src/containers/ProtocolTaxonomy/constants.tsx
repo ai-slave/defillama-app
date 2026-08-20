@@ -1,5 +1,6 @@
 import type { ProtocolChartsQueryParams } from '~/containers/ProtocolOverview/constants'
 import { capitalizeFirstLetter } from '~/utils'
+import type { ProtocolTaxonomyBreakdownKey } from './types'
 
 export type ProtocolCategoryChartMetric =
 	| 'tvl'
@@ -19,6 +20,8 @@ export interface ProtocolCategoryMetrics {
 	fees?: boolean
 	revenue?: boolean
 	dexVolume?: boolean
+	/** Adds per-protocol and per-chain breakdown views of the dex volume chart. Requires `dexVolume`. */
+	dexVolumeBreakdowns?: boolean
 	dexAggregatorsVolume?: boolean
 	perpVolume?: boolean
 	openInterest?: boolean
@@ -106,6 +109,15 @@ const DEX_VOLUME_LABEL_BY_CATEGORY: Record<string, string> = {
 	'Crypto Card Issuer': 'Payment Volume',
 	Interface: 'Spot Volume'
 }
+
+export const CARD_ISSUER_CATEGORY = 'Crypto Card Issuer'
+
+export const PROTOCOL_TAXONOMY_BREAKDOWN_KEYS = [
+	'protocol',
+	'chain',
+	'network',
+	'custody'
+] as const satisfies readonly ProtocolTaxonomyBreakdownKey[]
 
 export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 	Dexs: {
@@ -722,7 +734,7 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 	'Crypto Card Issuer': {
 		description:
 			'Protocols that issue crypto-linked debit or credit cards for spending through traditional payment networks',
-		metrics: { dexVolume: true },
+		metrics: { dexVolume: true, dexVolumeBreakdowns: true },
 		headingLabel: 'Crypto Card Issuers',
 		seoLabel: 'Crypto Card Issuers',
 		seoTitleSuffix: 'Rankings',
