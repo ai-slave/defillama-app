@@ -1,5 +1,6 @@
 import { isHttpNotFoundMessage } from '~/server/api/common'
 import {
+	mapMasterDirectoryOverview,
 	mapMasterDirectory,
 	mapMasterMetadataOnlyProfile,
 	mapMasterMica,
@@ -10,13 +11,16 @@ import { MASTER_CHART_PARTS, type MasterChartPart } from '../master.types'
 import type { MasterExchangeMetadataResponse } from '../master.types'
 import type {
 	ExchangeDirectoryModel,
+	ExchangeOverviewChartModel,
 	ExchangeProfileModel,
 	ExchangeResearchReportModel,
 	MicaVenueModel
 } from '../models'
+import type { ExchangeResearchRange } from '../queryState'
 import {
 	fetchMasterChartFromNetwork,
 	fetchMasterDirectoryFromNetwork,
+	fetchMasterExchangeSeriesFromNetwork,
 	fetchMasterExchangeIndexFromNetwork,
 	fetchMasterExchangeMetadataFromNetwork,
 	fetchMasterMicaFromNetwork
@@ -24,6 +28,10 @@ import {
 
 export async function loadMasterExchangeDirectory(): Promise<ExchangeDirectoryModel> {
 	return mapMasterDirectory(await fetchMasterDirectoryFromNetwork())
+}
+
+export async function loadMasterExchangeOverview(range: ExchangeResearchRange): Promise<ExchangeOverviewChartModel> {
+	return mapMasterDirectoryOverview(await fetchMasterExchangeSeriesFromNetwork(range))
 }
 
 export async function loadMasterMicaVenues(): Promise<MicaVenueModel[]> {

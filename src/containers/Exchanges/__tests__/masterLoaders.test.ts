@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
 	chart: vi.fn(),
+	directoryOverview: vi.fn(),
+	exchangeSeries: vi.fn(),
 	index: vi.fn(),
 	metadata: vi.fn(),
 	mapMetadataOnlyProfile: vi.fn(),
@@ -11,11 +13,13 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('../server/master.upstream', () => ({
 	fetchMasterChartFromNetwork: mocks.chart,
+	fetchMasterExchangeSeriesFromNetwork: mocks.exchangeSeries,
 	fetchMasterExchangeIndexFromNetwork: mocks.index,
 	fetchMasterExchangeMetadataFromNetwork: mocks.metadata
 }))
 
 vi.mock('../master.mappers', () => ({
+	mapMasterDirectoryOverview: mocks.directoryOverview,
 	mapMasterMetadataOnlyProfile: mocks.mapMetadataOnlyProfile,
 	mapMasterProfile: mocks.mapProfile,
 	mapMasterResearchReport: mocks.mapResearch
@@ -24,6 +28,20 @@ vi.mock('../master.mappers', () => ({
 beforeEach(() => vi.clearAllMocks())
 
 describe('master page loaders', () => {
+	it('loads and maps an exchange overview range', async () => {
+		const payload = { days: [1], key: ['cex_spot_volume'], series: [[100]] }
+		mocks.exchangeSeries.mockResolvedValue(payload)
+		mocks.directoryOverview.mockReturnValue({ days: [1], series: { cex_spot_volume: [100] } })
+
+		const { loadMasterExchangeOverview } = await import('../server/master.loaders')
+		await expect(loadMasterExchangeOverview('all')).resolves.toEqual({
+			days: [1],
+			series: { cex_spot_volume: [100] }
+		})
+		expect(mocks.exchangeSeries).toHaveBeenCalledWith('all')
+		expect(mocks.directoryOverview).toHaveBeenCalledWith(payload)
+	})
+
 	it('loads and maps all four research payloads concurrently', async () => {
 		const payloads = new Map([
 			['volume', { built_at: 'volume' }],

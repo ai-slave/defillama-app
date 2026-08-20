@@ -67,6 +67,7 @@ type TPageType =
 
 interface IProps extends IAdapterByChainPageData {
 	type: TPageType
+	children?: ReactNode
 }
 
 const SUPPORTED_OLD_VIEWS: TPageType[] = [
@@ -107,7 +108,7 @@ const pageTypeByDefinition: Partial<Record<TPageType, Record<string, string>>> =
 	Earnings: definitions.earnings.chain
 }
 
-export function AdapterByChain(props: IProps) {
+export function AdapterByChain({ children, ...props }: IProps) {
 	const router = useRouter()
 	const isChain = props.chain !== 'All'
 	const categoryParam = router.query.category
@@ -335,6 +336,7 @@ export function AdapterByChain(props: IProps) {
 					/>
 				</SummaryCardGrid>
 			) : null}
+			{children}
 			{props.chain === 'All' ? <NewsletterSignup layout="strip" /> : null}
 			<Panel padding="none">
 				<TableToolbar className="justify-end">
