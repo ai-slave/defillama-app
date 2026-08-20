@@ -14,7 +14,6 @@ import {
 	type InvestorsProject,
 	type InvestorsProjectId
 } from '~/containers/Investors/config'
-import { UniswapLogo } from '~/containers/Investors/dashboards/uniswap/UniswapLogo'
 import { Logo } from '~/containers/Investors/Logo'
 import { Icon } from '~/ui/Icon'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
@@ -121,10 +120,6 @@ function ThorchainIcon() {
 			className="size-9 shrink-0 rounded-full bg-pro-cards-bg object-contain"
 		/>
 	)
-}
-
-function UniswapIcon() {
-	return <UniswapLogo className="size-9 shrink-0" />
 }
 
 function CalendlyIcon({ className = 'size-5 shrink-0' }: { className?: string }) {
@@ -388,8 +383,7 @@ const PROJECT_CARD_CONTENT = {
 
 const COMING_SOON_ICONS: Partial<Record<InvestorsProjectId, ReactNode>> = {
 	flare: <FlareIcon />,
-	thorchain: <ThorchainIcon />,
-	uniswap: <UniswapIcon />
+	thorchain: <ThorchainIcon />
 }
 
 function ProjectFallbackIcon({ name }: { name: string }) {

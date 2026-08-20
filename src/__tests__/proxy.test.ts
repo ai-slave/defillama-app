@@ -254,11 +254,7 @@ describe('investors landing links', () => {
 	it('keeps coming-soon projects on the investors landing page but not routable as dashboards', async () => {
 		const { proxy, investorsConfig } = await loadProxyWithInvestorsConfig('investors')
 
-		expect(investorsConfig.INVESTORS_COMING_SOON_PROJECTS.map((project) => project.id)).toEqual([
-			'flare',
-			'kpk',
-			'uniswap'
-		])
+		expect(investorsConfig.INVESTORS_COMING_SOON_PROJECTS.map((project) => project.id)).toEqual(['flare', 'kpk'])
 		expect(investorsConfig.INVESTORS_LANDING_PROJECTS.map((project) => project.id)).toEqual([
 			'spark',
 			'sonic',
@@ -273,7 +269,7 @@ describe('investors landing links', () => {
 		}
 	})
 
-	it('keeps preview investor dashboards as coming-soon cards rather than active landing dashboards', async () => {
+	it('keeps preview investor dashboards available while showing only preview ones in coming-soon cards', async () => {
 		const config = await loadInvestorsConfig('investors', 'true')
 
 		expect(config.INVESTORS_PROTOCOL_IDS).toEqual(['spark', 'sonic', 'near', 'thorchain', 'flare', 'kpk', 'uniswap'])
@@ -283,11 +279,13 @@ describe('investors landing links', () => {
 			'near',
 			'thorchain'
 		])
-		expect(config.INVESTORS_COMING_SOON_PROJECTS.map((project) => project.id)).toEqual(['flare', 'kpk', 'uniswap'])
+		expect(config.INVESTORS_COMING_SOON_PROJECTS.map((project) => project.id)).toEqual(['flare', 'kpk'])
 
-		for (const projectId of ['flare', 'kpk', 'uniswap'] as const) {
+		for (const projectId of ['flare', 'kpk'] as const) {
 			expect(config.getInvestorsLandingProjectHref(projectId)).toBe(`/${projectId}`)
 			expect(config.isInvestorsLandingProjectExternal(projectId)).toBe(false)
 		}
+
+		expect(config.INVESTORS_PROTOCOL_IDS).toContain('uniswap')
 	})
 })
