@@ -6,7 +6,7 @@ import { CHART_INSET, CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/c
 import type { IAdapterBreakdownChartData } from '~/containers/AdapterMetrics/api.types'
 import { getGroupedTimestampSec } from '~/containers/ProDashboard/utils'
 import { carryForwardCumulative, parseDateToUnix, type Chart } from './transform'
-import { ChartCard, paletteColor, SegToggle } from './ui'
+import { ChartCard, SegToggle, seriesColor } from './ui'
 
 const MultiSeriesChart: React.FC<IMultiSeriesChartProps> = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -114,7 +114,7 @@ function aggregate(series: TrendSeries[], view: View, stacked: boolean): SparseC
 				points.push([key, val])
 			}
 		}
-		return { name: s.name, color: paletteColor(i), points }
+		return { name: s.name, color: seriesColor(s.name, i), points }
 	})
 	const useArea = stacked || agg.length === 1
 	return (isCumulative ? carryForwardCumulative(agg) : agg).map((s) => ({
@@ -139,6 +139,7 @@ export function SeriesTrendChart({
 	isError,
 	valueSymbol = '$',
 	defaultView = 'month',
+	views,
 	stacked = true,
 	extraControl
 }: {
@@ -149,11 +150,14 @@ export function SeriesTrendChart({
 	isError?: boolean
 	valueSymbol?: string
 	defaultView?: View
+	/** Restrict the view toggle, for series that only exist at one granularity (monthly payloads). */
+	views?: View[]
 	stacked?: boolean
 	/** Additional header-right control (e.g. a Total / By Chain toggle). */
 	extraControl?: React.ReactNode
 }) {
 	const [view, setView] = useState<View>(defaultView)
+	const viewOptions = views ? VIEWS.filter((v) => views.includes(v.value)) : VIEWS
 	const chartSeries = useMemo(() => aggregate(series ?? [], view, stacked), [series, view, stacked])
 	const groupBy = view === 'month' ? 'monthly' : view === 'quarter' ? 'quarterly' : 'daily'
 	const model = useMemo(() => buildSparseCartesianChartModel(chartSeries), [chartSeries])
@@ -171,7 +175,7 @@ export function SeriesTrendChart({
 			control={
 				<>
 					{extraControl}
-					<SegToggle<View> options={VIEWS} value={view} onChange={setView} />
+					<SegToggle<View> options={viewOptions} value={view} onChange={setView} />
 				</>
 			}
 		>

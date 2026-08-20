@@ -93,6 +93,36 @@ export function paletteColor(index: number): string {
 	return color
 }
 
+// Each asset category gets a fixed color, shared by all four category charts (volume by category,
+// protocol fees by category, the TVL-by-segment snapshot and its history). Positional cycling would
+// repaint a category whenever a chart drops an all-zero series (Bonds is empty on the fee chart but
+// not on the volume chart), so the same bucket would read as a different color on each.
+// Hues are semantic where the category has one (BTC amber, commodities gold, DeFi Uniswap pink) and
+// spread far enough apart to stay readable in a 12-series stack, which cycling the 13-entry palette
+// cannot do: it would hand four pairs of categories the same color.
+const CATEGORY_COLORS: Record<string, string> = {
+	Stablecoins: '#0284C7',
+	ETH: '#6366F1',
+	LSTs: '#A855F7',
+	BTC: '#D97706',
+	Majors: '#15803D',
+	DeFi: UNI_PINK,
+	Equities: '#14B8A6',
+	Commodities: '#B45309',
+	Bonds: '#84CC16',
+	'AI/agentic': '#DC2626',
+	Memecoins: '#FACC15'
+}
+
+// Color follows the entity: a known asset category keeps its own color, catch-all buckets are always
+// gray, everything else takes palette hues in series order.
+export function seriesColor(name: string, index: number): string {
+	const category = CATEGORY_COLORS[name]
+	if (category) return category
+	if (/^others?\b/i.test(name) || /^(direct \/ other|non-uniswap routers \/ direct)$/i.test(name)) return OTHERS_GRAY
+	return paletteColor(index)
+}
+
 // ---------------------------------------------------------------- KPI + layout
 
 function KpiCard({ label, value, def }: { label: string; value: string; def?: string | undefined }) {
@@ -316,7 +346,7 @@ export function BarListCard({
 			<HBarChart
 				categories={items.map((item) => item.name)}
 				values={items.map((item) => item.value)}
-				colors={items.map((item, index) => (item.name.startsWith('Other') ? OTHERS_GRAY : paletteColor(index)))}
+				colors={items.map((item, index) => seriesColor(item.name, index))}
 				valueSymbol={valueSymbol}
 				height="360px"
 			/>
@@ -364,7 +394,7 @@ export function TimeAreaCard({
 					type: 'line',
 					name: series.name,
 					encode: { x: 'timestamp', y: series.name },
-					color: paletteColor(index),
+					color: seriesColor(series.name, index),
 					...(stacked ? { stack: 'total' } : { hideAreaStyle: multipleSeries })
 				})
 			),

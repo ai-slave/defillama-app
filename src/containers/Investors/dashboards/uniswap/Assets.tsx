@@ -15,6 +15,28 @@ interface AuctionRow {
 	bidders: number
 }
 
+interface RwaRow {
+	ticker: string
+	name: string
+	sector: string
+	issuer: string
+	chains: string
+	volume: string
+	trades: string
+}
+
+// RWA volume is keyed by contract address upstream, not by symbol: RWA tickers (TSLA, NVDA, GOLD)
+// are trivially squatted, and issuers reuse one deterministic address across chains. Sectors follow
+// DefiLlama's RWA categories with Pre-Stocks split out; RWA Wrappers (sUSDe/sUSDS/sDAI) are excluded
+// because they trade as stablecoins and already count in the Stablecoins category.
+interface RwaData {
+	kpis: Record<string, KpiT | undefined>
+	bySector: Chart
+	byChain: Chart
+	share: Chart | null
+	topTokens: { title?: string; rows: RwaRow[] }
+}
+
 // All served by the ir-server: token breadth and categories from Dune dex.trades (with
 // the DefiLlama DEX blacklist applied), liquidity counts from the yields API, and CCA
 // figures reconstructed from the auction factory contracts.
@@ -24,6 +46,8 @@ interface AssetsData {
 	newTokens: Chart
 	volumeByCategory: Chart
 	pctOutsideMajors: Chart
+	/** Null until the ir-server's rwa-volume monthly partitions have been backfilled. */
+	rwa: RwaData | null
 	cca: {
 		kpis: Record<string, KpiT | undefined>
 		raisedChart: Chart
@@ -32,6 +56,9 @@ interface AssetsData {
 }
 
 const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1)
+// Chain names arrive as Dune's lowercase `blockchain` values ("ethereum", "bnb"), including the
+// comma-joined list in the per-asset table.
+const capitalizeChains = (chains: string) => chains.split(', ').map(capitalize).join(', ')
 
 export default function Assets() {
 	const { data } = useUniswapData<AssetsData>('assets')
@@ -71,11 +98,7 @@ export default function Assets() {
 
 			<section className="flex flex-col gap-6">
 				<SectionHeader>Volume Composition</SectionHeader>
-				<SeriesTrendChart
-					title="Volume by Asset Category"
-					subtitle="Monthly swap volume split by asset category via the maintained token-to-category map; the uncategorized long tail counts as memecoins."
-					series={chartToTrendSeries(data.volumeByCategory)}
-				/>
+				<SeriesTrendChart title="Volume by Asset Category" series={chartToTrendSeries(data.volumeByCategory)} />
 				<TimeAreaCard
 					chart={data.pctOutsideMajors}
 					title="% of Volume Outside the Top-10 Majors"
@@ -86,6 +109,76 @@ export default function Assets() {
 					}
 				/>
 			</section>
+
+			{data.rwa && (
+				<section className="flex flex-col gap-6">
+					<SectionHeader>Real-World Assets</SectionHeader>
+					<KpiGrid
+						kpis={data.rwa.kpis}
+						items={[
+							['rwaVolume', 'RWA Volume (Latest Month)'],
+							['rwaShare', 'Uniswap Share of DEX RWA'],
+							['rwaTopChain', 'Largest RWA Chain'],
+							['rwaAssetsTraded', 'RWA Assets Traded']
+						]}
+					/>
+					<SeriesTrendChart
+						title={data.rwa.bySector.title ?? 'Uniswap RWA Volume by Sector'}
+						subtitle={
+							data.rwa.bySector.note ?? 'Monthly Uniswap volume in tokenized real-world assets, split by sector.'
+						}
+						series={chartToTrendSeries(data.rwa.bySector)}
+						views={['month', 'cumulative']}
+					/>
+					<SeriesTrendChart
+						title={data.rwa.byChain.title ?? 'Uniswap RWA Volume by Chain'}
+						subtitle="Where the tracked RWAs actually trade: issuer-native chains alongside Ethereum, with everything outside the top 8 grouped as Other."
+						series={chartToTrendSeries(data.rwa.byChain).map((series) => ({
+							...series,
+							name: capitalize(series.name)
+						}))}
+						views={['month', 'cumulative']}
+					/>
+					{data.rwa.share && (
+						<TimeAreaCard
+							chart={data.rwa.share}
+							valueSymbol="%"
+							subtitle={
+								data.rwa.share.note ??
+								'Uniswap share of all DEX volume in the tracked RWA tokens, against the next-largest venues.'
+							}
+						/>
+					)}
+					{data.rwa.topTokens.rows.length > 0 && (
+						<ChartCard
+							title={data.rwa.topTokens.title ?? 'Top RWA Assets by Uniswap Volume'}
+							subtitle="Latest complete month, all chains."
+						>
+							<MiniTable
+								grid="minmax(80px,0.8fr) minmax(140px,1.6fr) minmax(120px,1.2fr) minmax(110px,1.1fr) minmax(130px,1.3fr) minmax(90px,0.9fr) minmax(80px,0.8fr)"
+								headers={[
+									['Ticker', 'left'],
+									['Asset', 'left'],
+									['Sector', 'left'],
+									['Issuer', 'left'],
+									['Chains', 'left'],
+									['Volume', 'right'],
+									['Trades', 'right']
+								]}
+								rows={data.rwa.topTokens.rows.map((row) => [
+									row.ticker,
+									row.name,
+									row.sector,
+									row.issuer,
+									capitalizeChains(row.chains),
+									row.volume,
+									row.trades
+								])}
+							/>
+						</ChartCard>
+					)}
+				</section>
+			)}
 
 			<section className="flex flex-col gap-6">
 				<SectionHeader>Token Breadth</SectionHeader>
