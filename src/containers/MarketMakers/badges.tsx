@@ -36,7 +36,15 @@ export function GradeBadge({ grade, className = '' }: { grade: CompositeGrade | 
 	return <span className={`font-medium ${grade.colorClassName} ${className}`}>{grade.label}</span>
 }
 
-export function StatusBadge({ status, label, className = '' }: { status: string; label: string; className?: string }) {
+export function StatusBadge({
+	status,
+	label,
+	className = ''
+}: {
+	status: string
+	label: ReactNode
+	className?: string
+}) {
 	const style = STATUS_STYLES[status as 'full' | 'partial' | 'none'] ?? 'border-subtle text-tertiary'
 	return (
 		<span className={`inline-flex items-center justify-center rounded-full border label-sm ${style} ${className}`}>

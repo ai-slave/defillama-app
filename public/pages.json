@@ -1096,6 +1096,20 @@
       ]
     },
     {
+      "name": "Universal Token Rating",
+      "route": "/universal-token-rating",
+      "icon": "bar-chart-2",
+      "searchKeywords": [
+        "utr",
+        "token rating",
+        "rating",
+        "forgd",
+        "disclosure",
+        "performance"
+      ],
+      "requireForgdPreview": true
+    },
+    {
       "name": "Support",
       "route": "/support",
       "icon": "headset"

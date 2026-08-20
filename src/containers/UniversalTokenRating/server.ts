@@ -1,0 +1,215 @@
+import { fetchJson } from '~/utils/async'
+import { geckoTokenIconUrl } from '~/utils/icons'
+import { getMockUniverse } from './mocks'
+import type {
+	UtrAssetResponse,
+	UtrBatchResponse,
+	UtrCategoryBreakdown,
+	UtrLeaderboardApiRow,
+	UtrLeaderboardResponse,
+	UtrLeaderboardRow,
+	UtrMomResponse,
+	UtrScoringDocs,
+	UtrUniverse,
+	UtrExchangesResponse
+} from './types'
+
+export const UTR_LIVE_ASSETS = ['hyperliquid', 'bittensor', 'celestia']
+
+const FORGD_HOST = process.env.FORGD_API_URL ?? 'https://dev.quant.api.forgd.com'
+
+function forgdUtrHeaders(): Record<string, string> | undefined {
+	const key = process.env.API_KEY_FORGD?.trim()
+	return key ? { Authorization: `Bearer ${key}` } : undefined
+}
+
+export async function fetchUtrBatchMetrics(assets: string[]): Promise<UtrBatchResponse | null> {
+	if (!assets.length) return null
+	try {
+		return await fetchJson<UtrBatchResponse>(
+			`${FORGD_HOST}/api/utr?assets=${encodeURIComponent(assets.slice(0, 100).join(','))}`,
+			{ timeout: 30_000, headers: forgdUtrHeaders() }
+		)
+	} catch {
+		return null
+	}
+}
+
+export function rowFromAssetResponse(asset: UtrAssetResponse): UtrLeaderboardRow {
+	return {
+		asset: asset.coingeckoId ?? asset.arcticId,
+		name: asset.projectName,
+		symbol: asset.symbol.toUpperCase(),
+		sector: asset.sector,
+		listingStatus: asset.tgeStatus === 'post' ? 'listed' : 'pre-tge',
+		disclosureLevel: 'full',
+		claimed: false,
+		fdvUsd: asset.fdvUsd,
+		coingeckoId: asset.coingeckoId,
+		grade: asset.grade,
+		breakdown: {
+			disclosure: asset.disclosure?.categories ?? [],
+			performance: asset.performance?.categories ?? []
+		},
+		scores: {
+			overall: asset.overallScore,
+			overallMomChangePct: asset.momChangePct,
+			disclosure: asset.disclosure?.score ?? null,
+			performance: asset.performance?.score ?? null,
+			rank: asset.rank,
+			disclosureRubrics: [],
+			performanceRubrics: []
+		}
+	}
+}
+
+export async function fetchUtrAssetResponse(asset: string): Promise<UtrAssetResponse | null> {
+	try {
+		return await fetchJson<UtrAssetResponse>(`${FORGD_HOST}/api/utr/asset/${encodeURIComponent(asset)}`, {
+			timeout: 30_000,
+			headers: forgdUtrHeaders()
+		})
+	} catch (error) {
+		if (error instanceof Error && error.message.includes('[404]')) return null
+		throw error
+	}
+}
+
+export async function fetchUtrAssetExchanges(asset: string): Promise<UtrExchangesResponse | null> {
+	try {
+		return await fetchJson<UtrExchangesResponse>(`${FORGD_HOST}/api/utr/asset/${encodeURIComponent(asset)}/exchanges`, {
+			timeout: 30_000,
+			headers: forgdUtrHeaders()
+		})
+	} catch {
+		return null
+	}
+}
+
+export async function fetchUtrScoringDocs(): Promise<UtrScoringDocs | null> {
+	try {
+		const response = await fetchJson<{
+			config: {
+				disclosure: { categories: UtrScoringDocs['disclosure'] }
+				performance: { categories: UtrScoringDocs['performance'] }
+			}
+		}>(`${FORGD_HOST}/api/utr/scoring-config`, { timeout: 30_000, headers: forgdUtrHeaders() })
+		const pick = (categories: UtrScoringDocs['disclosure']) =>
+			categories.map((category) => ({
+				key: category.key,
+				label: category.label,
+				criteria: category.criteria.map((criterion) => ({
+					key: criterion.key,
+					label: criterion.label,
+					definition: criterion.definition ?? null,
+					rubric: criterion.rubric ?? []
+				}))
+			}))
+		return {
+			disclosure: pick(response.config.disclosure.categories),
+			performance: pick(response.config.performance.categories)
+		}
+	} catch {
+		return null
+	}
+}
+
+export async function fetchUtrLeaderboardMom(): Promise<UtrMomResponse | null> {
+	try {
+		return await fetchJson<UtrMomResponse>(`${FORGD_HOST}/api/utr/leaderboard/mom`, {
+			timeout: 30_000,
+			headers: forgdUtrHeaders()
+		})
+	} catch {
+		return null
+	}
+}
+
+export async function fetchUtrLeaderboard(): Promise<UtrLeaderboardResponse | null> {
+	try {
+		return await fetchJson<UtrLeaderboardResponse>(`${FORGD_HOST}/api/utr/leaderboard`, {
+			timeout: 30_000,
+			headers: forgdUtrHeaders()
+		})
+	} catch {
+		return null
+	}
+}
+
+function withEmptyCriteria(categories: UtrCategoryBreakdown[]): UtrCategoryBreakdown[] {
+	return categories.map((category) => ({ ...category, criteria: category.criteria ?? [] }))
+}
+
+export function rowFromLeaderboardApiRow(row: UtrLeaderboardApiRow): UtrLeaderboardRow {
+	return {
+		asset: row.coingeckoId ?? row.arcticId,
+		name: row.projectName,
+		symbol: row.symbol.toUpperCase(),
+		sector: row.sector,
+		listingStatus: row.tgeStatus === 'post' ? 'listed' : 'pre-tge',
+		disclosureLevel: row.gradedCount >= row.criteriaCount ? 'full' : row.gradedCount > 0 ? 'partial' : 'none',
+		claimed: false,
+		fdvUsd: row.fdvUsd,
+		coingeckoId: row.coingeckoId,
+		grade: row.grade,
+		breakdown: {
+			disclosure: withEmptyCriteria(row.disclosureCategories ?? []),
+			performance: withEmptyCriteria(row.performanceCategories ?? [])
+		},
+		scores: {
+			overall: row.overallScore,
+			overallMomChangePct: row.momChangePct,
+			disclosure: row.disclosureScore,
+			performance: row.performanceScore,
+			rank: row.rank,
+			disclosureRubrics: [],
+			performanceRubrics: []
+		}
+	}
+}
+
+export async function fetchIconDataUrl(coingeckoId: string): Promise<string | null> {
+	try {
+		const response = await fetch(geckoTokenIconUrl(coingeckoId))
+		if (!response.ok) return null
+		const buffer = Buffer.from(await response.arrayBuffer())
+		const contentType = response.headers.get('content-type') ?? 'image/png'
+		if (!contentType.startsWith('image/')) return null
+		return `data:${contentType};base64,${buffer.toString('base64')}`
+	} catch {
+		return null
+	}
+}
+
+async function withIconDataUrls(rows: UtrLeaderboardRow[]): Promise<UtrLeaderboardRow[]> {
+	return Promise.all(
+		rows.map(async (row) => (row.coingeckoId ? { ...row, iconDataUrl: await fetchIconDataUrl(row.coingeckoId) } : row))
+	)
+}
+
+export async function fetchUtrUniverseWithLive(): Promise<UtrUniverse> {
+	const leaderboard = await fetchUtrLeaderboard()
+	const postRows = (leaderboard?.postTge.rows ?? []).map(rowFromLeaderboardApiRow)
+	const preRows = (leaderboard?.preTge.rows ?? []).map(rowFromLeaderboardApiRow).map((row) => ({
+		...row,
+		scores: { ...row.scores, rank: row.scores.rank == null ? null : row.scores.rank + postRows.length }
+	}))
+	if (leaderboard && (postRows.length || preRows.length)) {
+		const rows = await withIconDataUrls(
+			[...postRows, ...preRows].sort((a, b) => (a.scores.rank ?? Infinity) - (b.scores.rank ?? Infinity))
+		)
+		return { rows, scoredCount: leaderboard.scoredCount, totalCount: leaderboard.totalCount }
+	}
+	if (process.env.NODE_ENV === 'production') {
+		throw new Error('utr leaderboard unavailable')
+	}
+	const universe = getMockUniverse()
+	const liveResponses = await Promise.all(
+		UTR_LIVE_ASSETS.map((asset) => fetchUtrAssetResponse(asset).catch(() => null))
+	)
+	const liveRows = liveResponses
+		.filter((asset): asset is UtrAssetResponse => asset != null)
+		.map(rowFromAssetResponse)
+		.sort((a, b) => (a.scores.rank ?? Infinity) - (b.scores.rank ?? Infinity))
+	return { ...universe, rows: [...liveRows, ...universe.rows] }
+}

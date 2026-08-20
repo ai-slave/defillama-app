@@ -10,7 +10,8 @@ export function Drawer({
 	title,
 	children,
 	widthClassName = 'sm:max-w-xl',
-	dismissible = true
+	dismissible = true,
+	headerExtra
 }: {
 	open: boolean
 	onClose: () => void
@@ -18,6 +19,7 @@ export function Drawer({
 	children: ReactNode
 	widthClassName?: string
 	dismissible?: boolean
+	headerExtra?: ReactNode
 }) {
 	return (
 		<Ariakit.DialogProvider open={open} setOpen={(value) => !value && onClose()}>
@@ -33,13 +35,16 @@ export function Drawer({
 			>
 				<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 					<DialogHeading>{title}</DialogHeading>
-					<Ariakit.DialogDismiss
-						render={<Button type="button" variant="ghost" size="md" square className="-mr-1" />}
-						aria-label="Close"
-					>
-						<Icon name="x" height={16} width={16} />
-						<span className="sr-only">Close drawer</span>
-					</Ariakit.DialogDismiss>
+					<span className="flex items-center gap-2">
+						{headerExtra}
+						<Ariakit.DialogDismiss
+							render={<Button type="button" variant="ghost" size="md" square className="-mr-1" />}
+							aria-label="Close"
+						>
+							<Icon name="x" height={16} width={16} />
+							<span className="sr-only">Close drawer</span>
+						</Ariakit.DialogDismiss>
+					</span>
 				</div>
 				<div className="flex flex-1 flex-col gap-4 overflow-y-auto">{children}</div>
 			</Ariakit.Dialog>

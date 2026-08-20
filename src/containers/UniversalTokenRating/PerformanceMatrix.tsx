@@ -1,0 +1,240 @@
+import type { EChartsOption } from 'echarts'
+import { ScatterChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent } from 'echarts/components'
+import * as echarts from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { useEffect, useRef, useState } from 'react'
+import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
+import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { useChartResize } from '~/hooks/useChartResize'
+import { Icon } from '~/ui/Icon'
+import { formatNumber } from '~/utils/numberFormat'
+import { resolveUtrGrade, utrGradeColor } from './gradeBands'
+import type { UtrLeaderboardRow } from './types'
+
+echarts.use([ScatterChart, GridComponent, TooltipComponent, CanvasRenderer])
+
+const circularIconCache = new Map<string, Promise<string | null>>()
+
+function circularIcon(url: string): Promise<string | null> {
+	let cached = circularIconCache.get(url)
+	if (!cached) {
+		cached = new Promise<string | null>((resolve) => {
+			const image = new Image()
+			image.crossOrigin = 'anonymous'
+			image.onload = () => {
+				try {
+					const size = 48
+					const canvas = document.createElement('canvas')
+					canvas.width = size
+					canvas.height = size
+					const context = canvas.getContext('2d')
+					if (!context) {
+						resolve(null)
+						return
+					}
+					context.beginPath()
+					context.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2)
+					context.clip()
+					context.drawImage(image, 0, 0, size, size)
+					resolve(canvas.toDataURL())
+				} catch {
+					resolve(null)
+				}
+			}
+			image.onerror = () => resolve(null)
+			image.src = url
+		})
+		circularIconCache.set(url, cached)
+	}
+	return cached
+}
+
+function escapeHtml(value: string): string {
+	return value
+		.replaceAll('&', '&amp;')
+		.replaceAll('<', '&lt;')
+		.replaceAll('>', '&gt;')
+		.replaceAll('"', '&quot;')
+		.replaceAll("'", '&#39;')
+}
+
+function scoreRow(label: string, value: number | null, hex: string, max: number): string {
+	const pct = value == null ? 0 : Math.min(100, (value / max) * 100)
+	return `<div style="display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:4px;">
+		<span>${label}</span>
+		<span style="display:flex;align-items:center;gap:8px;font-family:var(--font-jetbrains,monospace);">
+			${value == null ? 'N/A' : value.toFixed(2)}
+			<span style="display:inline-block;width:44px;height:8px;border-radius:999px;background:rgba(128,128,128,0.25);overflow:hidden;">
+				<span style="display:block;height:100%;border-radius:999px;width:${pct}%;background:${hex};"></span>
+			</span>
+		</span>
+	</div>`
+}
+
+export function buildMatrixOption(
+	rows: UtrLeaderboardRow[],
+	axisColor?: string,
+	icons: Record<string, string> = {},
+	isDark = false
+): EChartsOption {
+	return {
+		grid: { left: 40, right: 20, top: 12, bottom: 26 },
+		tooltip: {
+			trigger: 'item',
+			enterable: true,
+			confine: true,
+			backgroundColor: isDark ? '#181a1c' : '#ffffff',
+			borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.12)',
+			textStyle: { color: isDark ? '#e8e8ea' : '#1f2229' },
+			formatter: (params: any) => {
+				const row = rows[params.dataIndex]
+				if (!row) return ''
+				const overallHex = utrGradeColor(resolveUtrGrade(row.scores.overall)).hex || '#9fb242'
+				const disclosureHex = utrGradeColor(resolveUtrGrade(row.scores.disclosure, 10)).hex || '#9fb242'
+				const performanceHex = utrGradeColor(resolveUtrGrade(row.scores.performance, 10)).hex || '#9fb242'
+				return `<div style="width:272px;">
+					<div style="font-weight:600;">${escapeHtml(row.name)}</div>
+					<div style="display:flex;justify-content:space-between;gap:16px;margin-top:8px;"><span>Rank</span><span>${row.scores.rank ?? '—'}</span></div>
+					${scoreRow('Overall Score', row.scores.overall, overallHex, 100)}
+					${scoreRow('Disclosure Score', row.scores.disclosure, disclosureHex, 10)}
+					${scoreRow('Performance Score', row.scores.performance, performanceHex, 10)}
+					<div style="display:flex;justify-content:space-between;gap:16px;margin-top:4px;"><span>FDV</span><span style="font-family:var(--font-jetbrains,monospace);">${row.fdvUsd == null ? 'N/A' : `$${formatNumber(row.fdvUsd)}`}</span></div>
+					${
+						row.claimed
+							? ''
+							: '<a href="/universal-token-rating/claim" style="display:block;margin-top:10px;border:1px solid rgba(128,128,128,0.5);border-radius:999px;padding:4px 12px;text-align:center;color:inherit;text-decoration:none;">Claim this Token Profile</a>'
+					}
+					<div style="display:flex;gap:8px;margin-top:8px;">
+						<a href="#utr-row-${encodeURIComponent(row.asset)}" style="flex:1;white-space:nowrap;border:1px solid rgba(128,128,128,0.5);border-radius:999px;padding:4px 12px;text-align:center;color:inherit;text-decoration:none;">Show in Table</a>
+						<a href="/universal-token-rating/token/${encodeURIComponent(row.asset)}" style="flex:1;white-space:nowrap;border:1px solid rgba(128,128,128,0.5);border-radius:999px;padding:4px 12px;text-align:center;color:inherit;text-decoration:none;">Details →</a>
+					</div>
+				</div>`
+			}
+		},
+		xAxis: {
+			min: 0,
+			max: 10,
+			axisLabel: {
+				color: axisColor,
+				formatter: (value: number) => (value < 0 || value > 10 ? '' : String(value))
+			},
+			splitLine: { lineStyle: { opacity: 0.3, type: 'dashed' } }
+		},
+		yAxis: {
+			min: 0,
+			max: 10,
+			axisLabel: {
+				color: axisColor,
+				formatter: (value: number) => (value < 0 || value > 10 ? '' : String(value))
+			},
+			splitLine: { lineStyle: { opacity: 0.3, type: 'dashed' } }
+		},
+		series: [
+			{
+				type: 'scatter',
+				symbolSize: 22,
+				data: rows.map((row) => {
+					const iconUrl = icons[row.asset] ?? null
+					return {
+						value: [row.scores.disclosure ?? 0, row.scores.performance ?? 0],
+						symbol: iconUrl ? `image://${iconUrl}` : 'circle',
+						symbolKeepAspect: true,
+						itemStyle: {
+							color: utrGradeColor(resolveUtrGrade(row.scores.overall)).hex || '#8a8a8a',
+							borderColor: '#0b0b12',
+							borderWidth: 2
+						}
+					}
+				})
+			}
+		]
+	}
+}
+
+function AxisArrow({ direction }: { direction: 'right' | 'up' }) {
+	if (direction === 'right') {
+		return (
+			<span className="flex flex-1 items-center opacity-60">
+				<span className="h-px flex-1 bg-current" />
+				<Icon name="arrow-right" height={10} width={10} className="-ml-1 shrink-0" />
+			</span>
+		)
+	}
+	return (
+		<span className="flex flex-1 flex-col items-center opacity-60">
+			<Icon name="arrow-right" height={10} width={10} className="-mb-1 shrink-0 -rotate-90" />
+			<span className="w-px flex-1 bg-current" />
+		</span>
+	)
+}
+
+export function PerformanceMatrix({
+	rows,
+	className = 'h-[380px] w-full'
+}: {
+	rows: UtrLeaderboardRow[]
+	className?: string
+}) {
+	const [isDark] = useDarkModeManager()
+	const axisColor = useChartTheme(isDark).axisLabel
+	const containerRef = useRef<HTMLDivElement>(null)
+	const chartRef = useRef<echarts.ECharts | null>(null)
+	const [icons, setIcons] = useState<Record<string, string>>({})
+
+	useChartResize(chartRef, containerRef)
+
+	useEffect(() => {
+		let cancelled = false
+		const pending = rows.filter((row) => row.iconDataUrl)
+		if (!pending.length) return
+		Promise.all(pending.map(async (row) => [row.asset, await circularIcon(row.iconDataUrl!)] as const)).then(
+			(entries) => {
+				if (cancelled) return
+				const loaded = Object.fromEntries(entries.filter(([, dataUrl]) => dataUrl != null) as [string, string][])
+				setIcons((current) => ({ ...current, ...loaded }))
+			}
+		)
+		return () => {
+			cancelled = true
+		}
+	}, [rows])
+
+	useEffect(() => {
+		const chartDom = containerRef.current
+		if (!chartDom) return
+		const instance = echarts.init(chartDom, null, { renderer: 'canvas' })
+		chartRef.current = instance
+		return () => {
+			chartRef.current = null
+			instance.dispose()
+		}
+	}, [])
+
+	useEffect(() => {
+		const instance = chartRef.current
+		if (!instance) return
+		instance.setOption(buildMatrixOption(rows, axisColor, icons, isDark), { notMerge: true })
+	}, [rows, axisColor, icons, isDark])
+
+	return (
+		<div className={`flex flex-col ${className}`}>
+			<p className="pt-2 text-center label-sm text-secondary">Performance | Disclosures</p>
+			<div className="flex min-h-0 flex-1">
+				<div className="-mr-4 flex flex-col items-center gap-1 pt-3 pb-8 pl-2 text-[10px] text-tertiary">
+					<span className="rotate-180 [writing-mode:vertical-rl]">Best</span>
+					<AxisArrow direction="up" />
+					<span className="rotate-180 [writing-mode:vertical-rl]">Worst</span>
+				</div>
+				<div className="flex min-w-0 flex-1 flex-col">
+					<div ref={containerRef} className="min-h-0 w-full flex-1" />
+					<div className="flex items-center gap-2 pr-5 pb-2 pl-10 text-[10px] text-tertiary">
+						<span>Worst</span>
+						<AxisArrow direction="right" />
+						<span>Best</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	)
+}

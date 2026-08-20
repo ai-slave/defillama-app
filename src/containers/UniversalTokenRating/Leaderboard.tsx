@@ -1,0 +1,403 @@
+import { Fragment, useMemo, useState, type CSSProperties } from 'react'
+import { BasicLink } from '~/components/Link'
+import { SortIcon } from '~/components/Table/SortIcon'
+import { TokenLogo } from '~/components/TokenLogo'
+import { Button } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
+import { formatPercentChangeText } from '~/ui/PercentChange'
+import { SegmentedControl } from '~/ui/SegmentedControl'
+import { geckoTokenIconUrl } from '~/utils/icons'
+import { formatNumber } from '~/utils/numberFormat'
+import { CategoryBreakdownTable, rowBreakdownColumns, type BreakdownColumn } from './CategoryBreakdown'
+import { GradeBadge, ScoreBar } from './grades'
+import { PerformanceMatrix } from './PerformanceMatrix'
+import { ClaimProfileBanner } from './TokenPage'
+import type { UtrLeaderboardRow } from './types'
+
+function ExpandedRow({ row }: { row: UtrLeaderboardRow }) {
+	const columns = rowBreakdownColumns(row)
+	return (
+		<div className="flex flex-col gap-4 p-4">
+			<div className="flex flex-col gap-4 xl:flex-row">
+				<div className="flex min-w-0 flex-1 flex-col gap-4">
+					<CategoryBreakdownTable title="Disclosures: Breakdown by Category" columns={columns.disclosure} />
+					<CategoryBreakdownTable title="Performance: Breakdown by Category" columns={columns.performance} />
+				</div>
+				<div className="flex flex-col gap-3 xl:w-96 xl:shrink-0">
+					<div className="flex flex-1 rounded-lg border border-subtle bg-surface">
+						<PerformanceMatrix rows={[row]} className="min-h-[280px] w-full flex-1" />
+					</div>
+					<div className="flex gap-3">
+						<Button
+							as={BasicLink}
+							href={`/universal-token-rating/compare?token=${row.asset}`}
+							size="md"
+							className="flex-1 justify-center"
+						>
+							Compare
+							<Icon name="repeat" height={14} width={14} />
+						</Button>
+						<Button
+							as={BasicLink}
+							href={`/universal-token-rating/token/${row.asset}`}
+							variant="primary"
+							size="md"
+							className="flex-1 justify-center"
+						>
+							Details
+							<Icon name="arrow-right" height={14} width={14} />
+						</Button>
+					</div>
+				</div>
+			</div>
+			{!row.claimed ? <ClaimProfileBanner /> : null}
+		</div>
+	)
+}
+
+type BreakdownMode = 'grade' | 'score' | 'percentile'
+
+function breakdownValue(column: BreakdownColumn, mode: BreakdownMode) {
+	if (mode === 'grade') return <GradeBadge score={column.score} scale={10} grade={column.grade ?? undefined} />
+	if (mode === 'score')
+		return (
+			<span className="font-jetbrains tabular-nums">
+				{column.score == null ? 'N/A' : column.score.toFixed(1)}
+				<span className="text-tertiary"> /10</span>
+			</span>
+		)
+	return (
+		<span className="font-jetbrains tabular-nums">
+			{column.percentile == null ? 'N/A' : `${column.percentile.toFixed(2)}%`}
+		</span>
+	)
+}
+
+function MobileBreakdownTable({
+	title,
+	columns,
+	mode
+}: {
+	title: string
+	columns: BreakdownColumn[]
+	mode: BreakdownMode
+}) {
+	return (
+		<div className="rounded-lg border border-subtle bg-surface">
+			<p className="border-b border-subtle px-3 py-2.5 label-md">{title}</p>
+			{columns.map((column) => (
+				<div
+					key={column.key}
+					className="flex items-center justify-between gap-3 border-b border-subtle px-3 py-2 last:border-b-0"
+				>
+					<span className="body-sm text-secondary">{column.label}</span>
+					{breakdownValue(column, mode)}
+				</div>
+			))}
+		</div>
+	)
+}
+
+function MobileExpandedRow({ row }: { row: UtrLeaderboardRow }) {
+	const [mode, setMode] = useState<BreakdownMode>('grade')
+	const columns = rowBreakdownColumns(row)
+	return (
+		<div className="flex flex-col gap-3 bg-surface p-3">
+			<SegmentedControl
+				label="Breakdown value"
+				variant="solid-responsive"
+				size="md"
+				value={mode}
+				onValueChange={(value) => setMode(value as BreakdownMode)}
+				options={[
+					{ value: 'grade', label: 'Grade' },
+					{ value: 'score', label: 'Score' },
+					{ value: 'percentile', label: 'Percentile' }
+				]}
+			/>
+			<MobileBreakdownTable title="Disclosures: Breakdown by Category" columns={columns.disclosure} mode={mode} />
+			<MobileBreakdownTable title="Performance: Breakdown by Category" columns={columns.performance} mode={mode} />
+			<div className="rounded-lg border border-subtle bg-surface">
+				<PerformanceMatrix rows={[row]} className="min-h-[260px] w-full" />
+			</div>
+			<div className="flex gap-3">
+				<Button
+					as={BasicLink}
+					href={`/universal-token-rating/compare?token=${row.asset}`}
+					size="md"
+					className="flex-1 justify-center"
+				>
+					Compare
+					<Icon name="repeat" height={14} width={14} />
+				</Button>
+				<Button
+					as={BasicLink}
+					href={`/universal-token-rating/token/${row.asset}`}
+					variant="primary"
+					size="md"
+					className="flex-1 justify-center"
+				>
+					Details
+					<Icon name="arrow-right" height={14} width={14} />
+				</Button>
+			</div>
+			{!row.claimed ? <ClaimProfileBanner /> : null}
+		</div>
+	)
+}
+
+const SORTABLE_COLUMNS = [
+	{ key: 'overall', label: 'Overall Score & MoM Change' },
+	{ key: 'disclosure', label: 'Disclosure Score' },
+	{ key: 'performance', label: 'Performance Score' },
+	{ key: 'fdv', label: 'FDV' }
+] as const
+
+export type UtrSortKey = (typeof SORTABLE_COLUMNS)[number]['key'] | 'rank'
+
+export type UtrSort = { key: UtrSortKey; desc: boolean }
+
+export const UTR_SORT_OPTIONS: { key: UtrSortKey; name: string }[] = [
+	{ key: 'rank', name: 'Rank' },
+	{ key: 'overall', name: 'Overall Score' },
+	{ key: 'disclosure', name: 'Disclosure Score' },
+	{ key: 'performance', name: 'Performance Score' },
+	{ key: 'fdv', name: 'FDV' }
+]
+
+function sortValue(row: UtrLeaderboardRow, key: UtrSortKey): number {
+	switch (key) {
+		case 'rank':
+			return row.scores.rank ?? Number.MAX_SAFE_INTEGER
+		case 'overall':
+			return row.scores.overall ?? -1
+		case 'disclosure':
+			return row.scores.disclosure ?? -1
+		case 'performance':
+			return row.scores.performance ?? -1
+		case 'fdv':
+			return row.fdvUsd ?? -1
+	}
+}
+
+const PAGE_SIZE = 100
+
+const RANK_WIDTH = 48
+const STICKY_CELL_BACKGROUND = 'var(--bg-surface)'
+
+function stickyStyle(index: 0 | 1): CSSProperties {
+	if (index === 0)
+		return {
+			position: 'sticky',
+			left: 0,
+			zIndex: 2,
+			background: STICKY_CELL_BACKGROUND,
+			width: RANK_WIDTH,
+			minWidth: RANK_WIDTH
+		}
+	return {
+		position: 'sticky',
+		left: RANK_WIDTH,
+		zIndex: 2,
+		background: STICKY_CELL_BACKGROUND,
+		minWidth: 150,
+		boxShadow: '-1px 0 0 var(--border-subtle) inset'
+	}
+}
+
+export function Leaderboard({
+	rows,
+	sort,
+	setSort
+}: {
+	rows: UtrLeaderboardRow[]
+	sort: UtrSort
+	setSort: (updater: (prev: UtrSort) => UtrSort) => void
+}) {
+	const [expandedAssets, setExpandedAssets] = useState<Set<string>>(() => new Set())
+	const [page, setPage] = useState(0)
+
+	const toggleExpanded = (asset: string) =>
+		setExpandedAssets((current) => {
+			const next = new Set(current)
+			if (next.has(asset)) next.delete(asset)
+			else next.add(asset)
+			return next
+		})
+
+	const sortedRows = useMemo(() => {
+		const next = [...rows]
+		next.sort((a, b) => {
+			const delta = sortValue(a, sort.key) - sortValue(b, sort.key)
+			return sort.desc ? -delta : delta
+		})
+		return next
+	}, [rows, sort])
+
+	const pageCount = Math.max(1, Math.ceil(sortedRows.length / PAGE_SIZE))
+	const currentPage = Math.min(page, pageCount - 1)
+	const pagedRows = sortedRows.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE)
+
+	const toggleSort = (key: UtrSortKey) =>
+		setSort((prev) => (prev.key === key ? { key, desc: !prev.desc } : { key, desc: key !== 'rank' }))
+
+	return (
+		<>
+			<div className="overflow-x-auto">
+				<table className="w-full body-sm" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+					<thead>
+						<tr>
+							<th className="border-b border-subtle px-3 py-2.5 text-left" style={stickyStyle(0)}>
+								<button
+									type="button"
+									className="flex cursor-pointer items-center gap-1 label-sm text-secondary"
+									onClick={() => toggleSort('rank')}
+								>
+									#
+									<SortIcon dir={sort.key === 'rank' ? (sort.desc ? 'desc' : 'asc') : false} />
+								</button>
+							</th>
+							<th
+								className="border-b border-subtle px-3 py-2.5 text-left label-sm text-secondary"
+								style={stickyStyle(1)}
+							>
+								Protocol
+							</th>
+							{SORTABLE_COLUMNS.map((column) => (
+								<th key={column.key} className="border-b border-subtle px-3 py-2.5 text-left whitespace-nowrap">
+									<button
+										type="button"
+										className="flex cursor-pointer items-center gap-1 label-sm whitespace-nowrap text-secondary"
+										onClick={() => toggleSort(column.key)}
+									>
+										{column.label}
+										<SortIcon dir={sort.key === column.key ? (sort.desc ? 'desc' : 'asc') : false} />
+									</button>
+								</th>
+							))}
+							<th aria-label="Expand row" className="border-b border-subtle" />
+						</tr>
+					</thead>
+					<tbody>
+						{pagedRows.map((row) => {
+							const expanded = expandedAssets.has(row.asset)
+							const momText = formatPercentChangeText(row.scores.overallMomChangePct)
+							return (
+								<Fragment key={row.asset}>
+									<tr
+										id={`utr-row-${row.asset}`}
+										className="cursor-pointer hover:bg-hover-row"
+										onClick={(event) => {
+											if ((event.target as HTMLElement).closest('a, button')) return
+											toggleExpanded(row.asset)
+										}}
+									>
+										<td
+											className="border-b border-subtle px-3 py-2.5 font-jetbrains tabular-nums"
+											style={stickyStyle(0)}
+										>
+											{row.scores.rank}
+										</td>
+										<td className="border-b border-subtle px-3 py-2.5" style={stickyStyle(1)}>
+											<BasicLink
+												href={`/universal-token-rating/token/${row.asset}`}
+												className="flex items-center gap-2 hover:underline"
+											>
+												<TokenLogo src={row.coingeckoId ? geckoTokenIconUrl(row.coingeckoId) : null} size={22} />
+												<span className="flex flex-col">
+													<span className="flex items-center gap-1 text-primary">
+														{row.symbol}
+														{row.claimed ? (
+															<Icon name="check-circle" height={12} width={12} className="text-link" />
+														) : null}
+													</span>
+													<span className="body-xs text-tertiary">{row.name}</span>
+												</span>
+											</BasicLink>
+										</td>
+										<td className="border-b border-subtle px-3 py-2.5 whitespace-nowrap">
+											<span className="flex items-center gap-3">
+												<ScoreBar score={row.scores.overall} />
+												<span
+													className={`font-jetbrains tabular-nums ${
+														(row.scores.overallMomChangePct ?? 0) >= 0 ? 'text-success' : 'text-error'
+													}`}
+												>
+													{momText ?? '—'}
+												</span>
+											</span>
+										</td>
+										<td className="border-b border-subtle px-3 py-2.5 whitespace-nowrap">
+											<ScoreBar score={row.scores.disclosure} scale={10} />
+										</td>
+										<td className="border-b border-subtle px-3 py-2.5 whitespace-nowrap">
+											<ScoreBar score={row.scores.performance} scale={10} />
+										</td>
+										<td className="border-b border-subtle px-3 py-2.5 font-jetbrains whitespace-nowrap tabular-nums">
+											{row.fdvUsd == null ? 'N/A' : `$${formatNumber(row.fdvUsd)}`}
+										</td>
+										<td className="border-b border-subtle px-3 py-2.5">
+											<Button
+												type="button"
+												size="sm"
+												square
+												aria-label={expanded ? 'Collapse row' : 'Expand row'}
+												onClick={() => toggleExpanded(row.asset)}
+											>
+												<Icon name={expanded ? 'chevron-up' : 'chevron-down'} height={14} width={14} />
+											</Button>
+										</td>
+									</tr>
+									{expanded ? (
+										<tr>
+											<td colSpan={7} className="border-b border-subtle bg-surface p-0">
+												<div className="sticky left-0 max-w-[calc(100vw-16px)] lg:max-w-none">
+													<div className="max-lg:hidden">
+														<ExpandedRow row={row} />
+													</div>
+													<div className="lg:hidden">
+														<MobileExpandedRow row={row} />
+													</div>
+												</div>
+											</td>
+										</tr>
+									) : null}
+								</Fragment>
+							)
+						})}
+					</tbody>
+				</table>
+				{pageCount > 1 ? (
+					<div className="flex items-center justify-between gap-2 border-t border-subtle px-4 py-2.5">
+						<span className="flex items-center gap-1.5">
+							<Button
+								type="button"
+								size="sm"
+								square
+								disabled={currentPage === 0}
+								onClick={() => setPage(currentPage - 1)}
+								aria-label="Previous page"
+							>
+								<Icon name="arrow-left" height={14} width={14} />
+							</Button>
+							<Button
+								type="button"
+								size="sm"
+								square
+								disabled={currentPage + 1 >= pageCount}
+								onClick={() => setPage(currentPage + 1)}
+								aria-label="Next page"
+							>
+								<Icon name="arrow-right" height={14} width={14} />
+							</Button>
+							<span className="body-sm text-secondary">
+								Page <strong className="text-primary">{currentPage + 1}</strong> of {pageCount}
+							</span>
+						</span>
+						<span className="body-sm text-secondary">{sortedRows.length} tokens</span>
+					</div>
+				) : null}
+			</div>
+		</>
+	)
+}
