@@ -19,6 +19,8 @@ export interface TableFilters {
 	poolTypes?: string[]
 	mcapMin?: number
 	mcapMax?: number
+	protocolAgeDaysMin?: number
+	protocolAgeDaysMax?: number
 	volumeDex24hMin?: number
 	volumeDex24hMax?: number
 	fees24hMin?: number

@@ -130,6 +130,8 @@ describe('unified table metric totals cache', () => {
 					protocol: 'example--protocol',
 					protocol_category: 'Dexs',
 					chain_slugs: ['ethereum'],
+					holder_revenue_7d: 75,
+					holder_revenue_7d_pct_change: -0.125,
 					holder_revenue_30d: 125,
 					holder_revenue_30d_pct_change: 0.25,
 					exclude_tvl_from_parent: false
@@ -145,6 +147,8 @@ describe('unified table metric totals cache', () => {
 		})
 
 		expect(result.rows).toHaveLength(1)
+		expect(result.rows[0]?.metrics.holderRevenue_7d).toBe(75)
+		expect(result.rows[0]?.metrics.holderRevenueChange7dOver7d).toBe(-12.5)
 		expect(result.rows[0]?.metrics.holdersRevenue30d).toBe(125)
 		expect(result.rows[0]?.metrics.holderRevenueChange30dOver30d).toBe(25)
 		expect(result.rows[0]?.oracles).toEqual(['Chainlink'])

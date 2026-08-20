@@ -199,6 +199,13 @@ const feesColumns: ColumnDictionaryItem[] = [
 		tags: ['distribution']
 	},
 	{
+		id: 'holderRevenueChange7dOver7d',
+		header: '7d over 7d Holder Revenue Change',
+		group: 'fees',
+		render: 'percent',
+		tags: ['change', 'distribution']
+	},
+	{
 		id: 'holderRevenueChange30dOver30d',
 		header: '30d over 30d Holder Revenue Change',
 		group: 'fees',

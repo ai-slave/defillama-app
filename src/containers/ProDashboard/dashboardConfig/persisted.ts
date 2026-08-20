@@ -41,6 +41,8 @@ export interface UnifiedTableV1Filters {
 	poolTypes?: string[]
 	mcapMin?: number
 	mcapMax?: number
+	protocolAgeDaysMin?: number
+	protocolAgeDaysMax?: number
 	volumeDex24hMin?: number
 	volumeDex24hMax?: number
 	fees24hMin?: number
@@ -157,6 +159,8 @@ export interface PersistedUnifiedTableV3Filters {
 	poolTypes?: string[]
 	mcapMin?: number
 	mcapMax?: number
+	protocolAgeDaysMin?: number
+	protocolAgeDaysMax?: number
 	volumeDex24hMin?: number
 	volumeDex24hMax?: number
 	fees24hMin?: number

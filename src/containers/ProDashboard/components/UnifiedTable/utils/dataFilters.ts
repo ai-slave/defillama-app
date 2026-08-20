@@ -13,6 +13,12 @@ import type {
 import type { ProtocolTableRow } from '../types'
 
 const normalize = (value: string | null | undefined) => value?.toLowerCase().trim()
+const DAY_IN_SECONDS = 86_400
+
+interface ProtocolFilterContext {
+	getListedAt?: (protocolId: string) => number | undefined
+	nowSeconds?: number
+}
 
 interface MetricRow {
 	metrics: ProtocolTableMetrics
@@ -242,6 +248,8 @@ export function hasProtocolSubsetFilters(filters?: UnifiedTableFilters): boolean
 		Boolean(filters.categories?.length) ||
 		Boolean(filters.excludedCategories?.length) ||
 		Boolean(filters.oracles?.length) ||
+		filters.protocolAgeDaysMin !== undefined ||
+		filters.protocolAgeDaysMax !== undefined ||
 		hasRequestedRange(filters, SOURCE_RANGE_FILTERS) ||
 		hasRequestedPresence(filters, SOURCE_PRESENCE_FILTERS)
 	)
@@ -251,7 +259,8 @@ export function filterRowsByConfig(
 	rows: ProtocolTableSourceRow[],
 	filters?: UnifiedTableFilters,
 	parentMetrics: Readonly<Record<string, ParentProtocolMetrics>> = {},
-	chainMetrics: Readonly<Record<string, ChainMetrics>> = {}
+	chainMetrics: Readonly<Record<string, ChainMetrics>> = {},
+	context: ProtocolFilterContext = {}
 ): ProtocolTableSourceRow[] {
 	if (!filters) return rows
 
@@ -270,6 +279,9 @@ export function filterRowsByConfig(
 		hasRequestedRange(filters, SOURCE_RANGE_FILTERS) || hasRequestedPresence(filters, SOURCE_PRESENCE_FILTERS)
 	const hasChainMetricFilters =
 		hasRequestedRange(filters, CHAIN_RANGE_FILTERS) || hasRequestedPresence(filters, CHAIN_PRESENCE_FILTERS)
+	const hasProtocolAgeFilter =
+		filters.protocolAgeDaysMin !== undefined || filters.protocolAgeDaysMax !== undefined
+	const nowSeconds = context.nowSeconds ?? Date.now() / 1000
 
 	return rows.filter((row) => {
 		if (protocolSet.size > 0) {
@@ -283,6 +295,14 @@ export function filterRowsByConfig(
 			) {
 				return false
 			}
+		}
+
+		if (hasProtocolAgeFilter) {
+			const listedAt = context.getListedAt?.(row.protocolId)
+			if (listedAt === undefined || !Number.isFinite(listedAt) || listedAt <= 0) return false
+			const ageDays = Math.max(0, (nowSeconds - listedAt) / DAY_IN_SECONDS)
+			if (filters.protocolAgeDaysMin !== undefined && ageDays < filters.protocolAgeDaysMin) return false
+			if (filters.protocolAgeDaysMax !== undefined && ageDays > filters.protocolAgeDaysMax) return false
 		}
 
 		const category = normalize(row.category)

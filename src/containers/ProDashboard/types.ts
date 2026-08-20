@@ -459,6 +459,7 @@ export interface Protocol {
 	slug: string
 	tvl: number
 	chains: string[]
+	listedAt?: number
 	deprecated?: boolean
 	geckoId?: string | null
 	parentProtocol?: string | null

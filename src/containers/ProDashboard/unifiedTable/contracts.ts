@@ -34,6 +34,7 @@ export interface ProtocolTableMetrics {
 	holderRevenue_24h?: number | null
 	holderRevenue_7d?: number | null
 	holdersRevenue30d?: number | null
+	holderRevenueChange7dOver7d?: number | null
 	holderRevenueChange30dOver30d?: number | null
 	feesChange_1d?: number | null
 	fees24h7dAgo?: number | null

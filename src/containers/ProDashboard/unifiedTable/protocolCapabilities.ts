@@ -84,6 +84,7 @@ const BASE_METRIC_FAMILY_BY_COLUMN_ID = {
 	holderRevenue_24h: 'holder-revenue',
 	holderRevenue_7d: 'holder-revenue',
 	holdersRevenue30d: 'holder-revenue',
+	holderRevenueChange7dOver7d: 'holder-revenue',
 	holderRevenueChange30dOver30d: 'holder-revenue',
 	revenue24h: 'revenue',
 	revenue_7d: 'revenue',

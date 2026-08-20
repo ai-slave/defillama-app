@@ -67,6 +67,7 @@ type LensMetricRow = Partial<{
 	fees_30d_pct_change: number | null
 	holder_revenue_1d: number | null
 	holder_revenue_7d: number | null
+	holder_revenue_7d_pct_change: number | null
 	holder_revenue_30d: number | null
 	holder_revenue_30d_pct_change: number | null
 	revenue_1d: number | null
@@ -133,7 +134,13 @@ const LENS_METRIC_COLUMNS_BY_FAMILY: Readonly<
 		'fees_7d_pct_change',
 		'fees_30d_pct_change'
 	],
-	'holder-revenue': ['holder_revenue_1d', 'holder_revenue_7d', 'holder_revenue_30d', 'holder_revenue_30d_pct_change'],
+	'holder-revenue': [
+		'holder_revenue_1d',
+		'holder_revenue_7d',
+		'holder_revenue_7d_pct_change',
+		'holder_revenue_30d',
+		'holder_revenue_30d_pct_change'
+	],
 	revenue: [
 		'revenue_1d',
 		'revenue_7d',
@@ -602,6 +609,7 @@ const baseMetricsMapping = (
 		metrics.holderRevenue_24h = row.holder_revenue_1d ?? null
 		metrics.holderRevenue_7d = row.holder_revenue_7d ?? null
 		metrics.holdersRevenue30d = row.holder_revenue_30d ?? null
+		metrics.holderRevenueChange7dOver7d = toPercent(row.holder_revenue_7d_pct_change)
 		metrics.holderRevenueChange30dOver30d = toPercent(row.holder_revenue_30d_pct_change)
 	}
 

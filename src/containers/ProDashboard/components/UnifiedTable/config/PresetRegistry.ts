@@ -146,7 +146,9 @@ export const UNIFIED_TABLE_PRESETS: UnifiedTablePreset[] = [
 			'category',
 			'chains',
 			'holderRevenue_24h',
+			'holderRevenue_7d',
 			'holdersRevenue30d',
+			'holderRevenueChange7dOver7d',
 			'holderRevenueChange30dOver30d',
 			'revenue_30d',
 			'revenue24hChange30dAgo'
@@ -156,7 +158,9 @@ export const UNIFIED_TABLE_PRESETS: UnifiedTablePreset[] = [
 			'category',
 			'chains',
 			'holderRevenue_24h',
+			'holderRevenue_7d',
 			'holdersRevenue30d',
+			'holderRevenueChange7dOver7d',
 			'holderRevenueChange30dOver30d',
 			'revenue_30d',
 			'revenue24hChange30dAgo'

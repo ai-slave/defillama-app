@@ -21,6 +21,7 @@ import type {
 	ProtocolsUnifiedTableResponse
 } from '~/containers/ProDashboard/unifiedTable/contracts'
 import { fetchJson } from '~/utils/async'
+import { useProDashboardCatalog } from '../../../ProDashboardAPIContext'
 import { StreamDoneContext } from '../../../queries'
 import { PRO_DASHBOARD_METRIC_STALE_TIME } from '../../../queryPolicy'
 import type { UnifiedTableConfig } from '../../../unifiedTable/config/current'
@@ -85,13 +86,14 @@ export function useUnifiedTable({
 }: UseUnifiedTableArgs) {
 	const [expanded, setExpanded] = useState<ExpandedState>({})
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 30 })
+	const { getProtocolInfo } = useProDashboardCatalog()
 
 	const queryIdentity = useMemo(() => getUnifiedTableQueryIdentity(config, rowHeaders), [config, rowHeaders])
 	const { queryKey } = queryIdentity
 	const aggregationPlan = getProtocolAggregationPlan(queryIdentity)
 
 	const streamDone = useContext(StreamDoneContext)
-	const { data, isError, isLoading, refetch } = useQuery({
+	const { data, dataUpdatedAt, isError, isLoading, refetch } = useQuery({
 		queryKey,
 		queryFn: () => fetchUnifiedTableRows(config, rowHeaders),
 		staleTime: PRO_DASHBOARD_METRIC_STALE_TIME,
@@ -104,8 +106,12 @@ export function useUnifiedTable({
 	const parentMetrics = data?.parentMetrics ?? EMPTY_PARENT_METRICS
 	const chainMetrics = data?.chainMetrics ?? EMPTY_CHAIN_METRICS
 	const sourceRows = useMemo(
-		() => filterRowsByConfig(data?.rows ?? EMPTY_ROWS, config.filters, parentMetrics, chainMetrics),
-		[data?.rows, config.filters, parentMetrics, chainMetrics]
+		() =>
+			filterRowsByConfig(data?.rows ?? EMPTY_ROWS, config.filters, parentMetrics, chainMetrics, {
+				getListedAt: (protocolId) => getProtocolInfo(protocolId)?.listedAt,
+				nowSeconds: dataUpdatedAt / 1000
+			}),
+		[data?.rows, dataUpdatedAt, config.filters, parentMetrics, chainMetrics, getProtocolInfo]
 	)
 	const visibleSourceRows = useMemo(
 		() => filterProtocolTableSourceRows(sourceRows, deferredSearchTerm, parentMetrics),

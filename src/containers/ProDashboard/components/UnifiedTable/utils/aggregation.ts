@@ -80,6 +80,12 @@ const PERCENT_CHANGE_DEFINITIONS: readonly PercentChangeDefinition[] = [
 	{ family: 'fees', changeKey: 'feesChange30dOver30d', currentKey: 'fees_30d', broaderPeriodKeys: ['fees_1y'] },
 	{
 		family: 'holder-revenue',
+		changeKey: 'holderRevenueChange7dOver7d',
+		currentKey: 'holderRevenue_7d',
+		broaderPeriodKeys: ['holdersRevenue30d']
+	},
+	{
+		family: 'holder-revenue',
 		changeKey: 'holderRevenueChange30dOver30d',
 		currentKey: 'holdersRevenue30d',
 		broaderPeriodKeys: ['holderRevenue_24h', 'holderRevenue_7d']

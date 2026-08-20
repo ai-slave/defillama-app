@@ -24,6 +24,7 @@ const protocol = (
 	mcap: null,
 	geckoId: null,
 	defillamaId: '1',
+	listedAt: 1_700_000_000,
 	...overrides
 })
 
@@ -115,6 +116,7 @@ describe('buildProDashboardProtocolCatalog', () => {
 				slug: 'child',
 				symbol: 'CHILD',
 				geckoId: 'group-token',
+				listedAt: 1_700_000_000,
 				parentProtocol: 'group',
 				misrepresentedTokens: true
 			}),

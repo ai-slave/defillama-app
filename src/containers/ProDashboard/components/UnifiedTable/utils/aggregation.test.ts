@@ -212,6 +212,16 @@ describe('aggregateMetrics changes', () => {
 		expect(result.holderRevenueChange30dOver30d).toBeCloseTo(100 / 3)
 	})
 
+	it('aggregates 7d holder revenue change from reconstructed comparison totals', () => {
+		const result = aggregateMetrics([
+			protocolRow('one', 'One', { holderRevenue_7d: 100, holderRevenueChange7dOver7d: 100 }),
+			protocolRow('two', 'Two', { holderRevenue_7d: 100, holderRevenueChange7dOver7d: 0 })
+		])
+
+		expect(result.holderRevenue_7d).toBe(200)
+		expect(result.holderRevenueChange7dOver7d).toBeCloseTo(100 / 3)
+	})
+
 	it('keeps a grouped change null when a minus 100 percent row has no reconstructable prior value', () => {
 		const result = aggregateMetrics([protocolRow('one', 'One', { revenue24h: 0, revenueChange_1d: -100 })])
 

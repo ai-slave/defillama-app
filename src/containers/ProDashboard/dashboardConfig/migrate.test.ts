@@ -1163,6 +1163,7 @@ describe('Pro dashboard config migration', () => {
 				treasuryRevenue24hMin: 1,
 				hasTreasuryRevenue: true,
 				holderRevenue24hMin: 2,
+				protocolAgeDaysMax: 90,
 				tokens: ['USDC']
 			},
 			customColumns: [
@@ -1192,7 +1193,7 @@ describe('Pro dashboard config migration', () => {
 			columnOrder: ['name', 'fees24h', 'holderRevenue_24h'],
 			columnVisibility: { name: true, fees24h: true, holderRevenue_24h: true },
 			defaultSorting: [],
-			filters: { holderRevenue24hMin: 2 },
+			filters: { holderRevenue24hMin: 2, protocolAgeDaysMax: 90 },
 			customColumns: []
 		})
 	})

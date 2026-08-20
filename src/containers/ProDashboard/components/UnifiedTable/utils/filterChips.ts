@@ -103,6 +103,7 @@ export const getActiveFilterChips = (filters?: UnifiedTableFilters): ActiveFilte
 
 	addRangeChip(chips, clones, 'tvlMin', 'tvlMax', 'TVL', formatFilterCurrency)
 	addRangeChip(chips, clones, 'mcapMin', 'mcapMax', 'Market Cap', formatFilterCurrency)
+	addRangeChip(chips, clones, 'protocolAgeDaysMin', 'protocolAgeDaysMax', 'Protocol Age (days)', formatFilterNumber)
 	addRangeChip(chips, clones, 'volumeDex24hMin', 'volumeDex24hMax', '24h Volume', formatFilterCurrency)
 	addRangeChip(chips, clones, 'volume7dMin', 'volume7dMax', '7d Volume', formatFilterCurrency)
 	addRangeChip(chips, clones, 'volume30dMin', 'volume30dMax', '30d Volume', formatFilterCurrency)

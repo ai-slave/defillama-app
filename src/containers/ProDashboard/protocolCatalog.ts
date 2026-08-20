@@ -100,6 +100,7 @@ export function buildProDashboardProtocolCatalog(
 			...(metadata?.logo ? { logo: metadata.logo } : {}),
 			...(category ? { category } : {}),
 			chains: metadata?.chains ?? [],
+			...(metadata?.listedAt === undefined ? {} : { listedAt: metadata.listedAt }),
 			...(metadata?.deprecated === undefined ? {} : { deprecated: metadata.deprecated }),
 			tvl: source.tvl ?? 0,
 			geckoId: source.geckoId,

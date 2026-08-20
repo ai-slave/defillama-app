@@ -13,6 +13,8 @@ type ProtocolTableFilterKey =
 	| 'tvlMax'
 	| 'mcapMin'
 	| 'mcapMax'
+	| 'protocolAgeDaysMin'
+	| 'protocolAgeDaysMax'
 	| 'volumeDex24hMin'
 	| 'volumeDex24hMax'
 	| 'fees24hMin'

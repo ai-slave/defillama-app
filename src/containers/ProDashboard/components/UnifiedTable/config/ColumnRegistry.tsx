@@ -281,6 +281,7 @@ export const getUnifiedTableColumns = ({
 		buildUsdMetricColumn('holderRevenue_24h', '24h Holder Revenue'),
 		buildUsdMetricColumn('holderRevenue_7d', '7d Holder Revenue'),
 		buildUsdMetricColumn('holdersRevenue30d', '30d Holder Revenue'),
+		buildPercentChangeColumn('holderRevenueChange7dOver7d', '7d over 7d Holder Revenue Change'),
 		buildPercentChangeColumn('holderRevenueChange30dOver30d', '30d over 30d Holder Revenue Change'),
 		buildPercentChangeColumn('feesChange_1d', '1d Fees Change'),
 		buildPercentChangeColumn('fees24hChange7dAgo', '24h Fees vs 7d Ago'),

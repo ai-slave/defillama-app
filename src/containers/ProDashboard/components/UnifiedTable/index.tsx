@@ -41,6 +41,7 @@ const CSV_PERCENT_COLUMNS = new Set([
 	'fees24hChange30dAgo',
 	'feesChange7dOver7d',
 	'feesChange30dOver30d',
+	'holderRevenueChange7dOver7d',
 	'holderRevenueChange30dOver30d',
 	'revenueChange_1d',
 	'revenue24hChange7dAgo',

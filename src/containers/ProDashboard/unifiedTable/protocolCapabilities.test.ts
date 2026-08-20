@@ -102,6 +102,14 @@ describe('protocol point metric capabilities', () => {
 })
 
 describe('protocol base metric family capabilities', () => {
+	it('requests holder revenue for the 7d over 7d column', () => {
+		expect(
+			getProtocolMetricCapabilities(
+				config({ columnOrder: ['holderRevenueChange7dOver7d'], columnVisibility: { holderRevenueChange7dOver7d: true } })
+			).baseMetricFamilies
+		).toEqual(['holder-revenue'])
+	})
+
 	it('requests the current family for visible, sorted, and filtered point comparisons', () => {
 		expect(
 			getProtocolMetricCapabilities(

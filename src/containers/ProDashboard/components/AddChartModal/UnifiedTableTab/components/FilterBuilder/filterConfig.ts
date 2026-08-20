@@ -81,6 +81,18 @@ export const FILTER_CONFIGS: FilterConfig[] = [
 		maxKey: 'mcapMax'
 	},
 	{
+		id: 'protocolAgeDays',
+		label: 'Protocol Age (days)',
+		description: 'Days since the protocol was added to DefiLlama',
+		type: 'numeric-range',
+		category: 'metrics',
+		strategies: ['protocols'],
+		format: 'number',
+		min: 0,
+		minKey: 'protocolAgeDaysMin',
+		maxKey: 'protocolAgeDaysMax'
+	},
+	{
 		id: 'pfRatio',
 		label: 'P/F Ratio',
 		type: 'numeric-range',
