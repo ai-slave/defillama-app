@@ -1,5 +1,5 @@
 import { fetchCoinPrices } from '~/api/pricing'
-import { SERVER_URL, YIELDS_SERVER_URL } from '~/constants'
+import { SERVER_URL } from '~/constants'
 import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'
 import { fetchJson } from '~/utils/async'
 import type { ILsdRateApiItem, IProtocolDetailApiItem, IYieldPoolApiItem } from './api.types'
@@ -32,9 +32,9 @@ export async function fetchYieldPools(snapshot: YieldsSnapshot): Promise<{ data:
 	}
 }
 
-/** Fetch the legacy LST peg, symbol, and fee metadata. */
+/** Fetch LST peg, symbol, and fee metadata. */
 export async function fetchLsdRates(): Promise<ILsdRateApiItem[]> {
-	return fetchJson<ILsdRateApiItem[]>(`${YIELDS_SERVER_URL}/lsdRates`)
+	return fetchJson<ILsdRateApiItem[]>(`${SERVER_URL}/lstRates`)
 }
 
 /**

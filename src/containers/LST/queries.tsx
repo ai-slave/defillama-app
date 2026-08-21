@@ -314,7 +314,7 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 			...p,
 			marketShare: (p.stakedEth / stakedEthSum) * 100,
 			lsdSymbol: lsd?.symbol ?? null,
-			ethPeg: p.name === 'SharedStake' ? null : (lsd?.ethPeg ?? null),
+			ethPeg: lsd?.ethPeg ?? null,
 			pegInfo,
 			marketRate: lsd?.marketRate ?? null,
 			expectedRate: lsd?.expectedRate ?? null,

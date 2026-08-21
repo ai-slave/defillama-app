@@ -20,7 +20,7 @@ export interface IYieldPoolApiItem {
 	apy: number | null
 }
 
-/** Legacy LST metadata from the yields lsdRates endpoint. */
+/** LST metadata from the lstRates endpoint. */
 export interface ILsdRateApiItem {
 	name: string
 	symbol: string | null

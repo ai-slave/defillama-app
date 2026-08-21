@@ -75,7 +75,8 @@ vi.mock('~/containers/Downloads/datasets', () => ({
 
 vi.mock('~/constants', async (importOriginal) => ({
 	...(await importOriginal<typeof import('~/constants')>()),
-	YIELDS_SERVER_URL: 'https://legacy-yields.example'
+	YIELDS_SERVER_URL: 'https://legacy-yields.example',
+	SERVER_URL: 'https://server.example'
 }))
 
 vi.mock('~/containers/Downloads/yields.server', () => ({
@@ -256,14 +257,14 @@ describe('/api/private/downloads/[dataset]', () => {
 	})
 
 	it.each([
-		['perp-funding', 'perps'],
-		['lsd-rates', 'lsdRates']
-	])('loads the %s legacy feed only inside the API route', async (dataset, upstreamPath) => {
+		['perp-funding', 'https://legacy-yields.example/perps'],
+		['lsd-rates', 'https://server.example/lstRates']
+	])('loads the %s feed only inside the API route', async (dataset, upstreamUrl) => {
 		const res = createMockNextApiResponse()
 
 		await datasetHandler(request({ query: { dataset }, auth: 'Bearer paid' }), res)
 
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith(`https://legacy-yields.example/${upstreamPath}`)
+		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith(upstreamUrl)
 		expect(extractItemsMock).toHaveBeenCalledOnce()
 		expect(res.status).toHaveBeenCalledWith(200)
 	})
