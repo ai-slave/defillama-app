@@ -34,7 +34,7 @@ if [ -s "$staged_files" ]; then
 	fi
 
 	echo "Formatting staged files..."
-	xargs -0 bunx oxfmt --write -- < "$staged_files" || status=$?
+	xargs -0 bunx oxfmt --write --no-error-on-unmatched-pattern -- < "$staged_files" || status=$?
 
 	if [ "$status" -eq 0 ]; then
 		xargs -0 git add -- < "$staged_files" || status=$?

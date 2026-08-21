@@ -977,6 +977,12 @@
       "description": "Recent round-up of the most important news in the ecosystem"
     },
     {
+      "name": "ChainList",
+      "route": "https://chainlist.org/",
+      "category": "Tools",
+      "description": "Find EVM network details and connect wallets or Web3 providers using the correct Chain ID and Network ID"
+    },
+    {
       "name": "LlamaSwap",
       "route": "https://swap.defillama.com",
       "category": "Tools",
