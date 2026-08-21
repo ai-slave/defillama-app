@@ -163,6 +163,8 @@ export default function Overview() {
 					series={volumeByChain.data}
 					isLoading={volumeByChain.isLoading}
 					isError={volumeByChain.isError}
+					defaultView="month"
+					minBucket="week"
 				/>
 				<SeriesTrendChart
 					title="Volume by Version"
@@ -170,6 +172,8 @@ export default function Overview() {
 					series={volumeByVersion.data}
 					isLoading={volumeByVersion.isLoading}
 					isError={volumeByVersion.isError}
+					defaultView="month"
+					minBucket="week"
 				/>
 			</section>
 
@@ -181,6 +185,8 @@ export default function Overview() {
 					series={feesByVersion.data}
 					isLoading={feesByVersion.isLoading}
 					isError={feesByVersion.isError}
+					defaultView="month"
+					minBucket="week"
 				/>
 			</section>
 

@@ -42,8 +42,9 @@ interface RwaData {
 // figures reconstructed from the auction factory contracts.
 interface AssetsData {
 	kpis: Record<string, KpiT | undefined>
-	tradedAssets: Chart
-	newTokens: Chart
+	/** Both null until the ir-server's monthly token-breadth partitions have been backfilled. */
+	tradedAssets: Chart | null
+	newTokens: Chart | null
 	volumeByCategory: Chart
 	pctOutsideMajors: Chart
 	/** Null until the ir-server's rwa-volume monthly partitions have been backfilled. */
@@ -98,7 +99,10 @@ export default function Assets() {
 
 			<section className="flex flex-col gap-6">
 				<SectionHeader>Volume Composition</SectionHeader>
-				<SeriesTrendChart title="Volume by Asset Category" series={chartToTrendSeries(data.volumeByCategory)} />
+				<SeriesTrendChart
+					title={data.volumeByCategory.title ?? 'Volume by Asset Category'}
+					series={chartToTrendSeries(data.volumeByCategory)}
+				/>
 				<TimeAreaCard
 					chart={data.pctOutsideMajors}
 					title="% of Volume Outside the Top-10 Majors"
@@ -128,7 +132,6 @@ export default function Assets() {
 							data.rwa.bySector.note ?? 'Monthly Uniswap volume in tokenized real-world assets, split by sector.'
 						}
 						series={chartToTrendSeries(data.rwa.bySector)}
-						views={['month', 'cumulative']}
 					/>
 					<SeriesTrendChart
 						title={data.rwa.byChain.title ?? 'Uniswap RWA Volume by Chain'}
@@ -137,7 +140,6 @@ export default function Assets() {
 							...series,
 							name: capitalize(series.name)
 						}))}
-						views={['month', 'cumulative']}
 					/>
 					{data.rwa.share && (
 						<TimeAreaCard
@@ -180,22 +182,28 @@ export default function Assets() {
 				</section>
 			)}
 
-			<section className="flex flex-col gap-6">
-				<SectionHeader>Token Breadth</SectionHeader>
-				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-					<TimeAreaCard
-						chart={data.tradedAssets}
-						valueSymbol=""
-						subtitle="Distinct tokens with more than $1k of volume per month, both trade legs, all chains."
-					/>
-					<TimeAreaCard
-						chart={data.newTokens}
-						title="New Tokens First-Traded on Uniswap"
-						valueSymbol=""
-						subtitle="Tokens whose first-ever Uniswap trade happened that month and that cleared $1k of volume (spam excluded)."
-					/>
-				</div>
-			</section>
+			{(data.tradedAssets || data.newTokens) && (
+				<section className="flex flex-col gap-6">
+					<SectionHeader>Token Breadth</SectionHeader>
+					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+						{data.tradedAssets && (
+							<TimeAreaCard
+								chart={data.tradedAssets}
+								valueSymbol=""
+								subtitle="Distinct tokens with more than $1k of volume per month, both trade legs, all chains."
+							/>
+						)}
+						{data.newTokens && (
+							<TimeAreaCard
+								chart={data.newTokens}
+								title="New Tokens First-Traded on Uniswap"
+								valueSymbol=""
+								subtitle="Tokens whose first-ever Uniswap trade happened that month and that cleared $1k of volume (spam excluded)."
+							/>
+						)}
+					</div>
+				</section>
+			)}
 
 			<section className="flex flex-col gap-6">
 				<SectionHeader>Continuous Clearing Auctions</SectionHeader>
@@ -205,6 +213,7 @@ export default function Assets() {
 					title="CCA Auction Proceeds"
 					subtitle="Realized proceeds of graduated auctions on the Uniswap launchpad."
 					series={ccaProceeds}
+					defaultView="month"
 					stacked={false}
 				/>
 				<ChartCard

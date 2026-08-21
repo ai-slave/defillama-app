@@ -10,7 +10,7 @@ import { ChartCard, SegToggle, seriesColor } from './ui'
 
 const MultiSeriesChart: React.FC<IMultiSeriesChartProps> = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
-type View = 'day' | 'month' | 'quarter' | 'cumulative'
+type View = 'day' | 'week' | 'month' | 'quarter' | 'cumulative'
 type Pts = Array<[number, number]>
 
 export interface TrendSeries {
@@ -20,10 +20,44 @@ export interface TrendSeries {
 
 const VIEWS: { value: View; label: string }[] = [
 	{ value: 'day', label: 'Daily' },
+	{ value: 'week', label: 'Weekly' },
 	{ value: 'month', label: 'Monthly' },
 	{ value: 'quarter', label: 'Quarterly' },
 	{ value: 'cumulative', label: 'Cumulative' }
 ]
+
+export type Bucket = Exclude<View, 'cumulative'>
+const BUCKET_DAYS: Record<Bucket, number> = { day: 1, week: 7, month: 28, quarter: 90 }
+
+function measureCadence(series: TrendSeries[]): Bucket {
+	const timestamps = [...new Set(series.flatMap((s) => s.data.map(([timestamp]) => timestamp)))].sort((a, b) => a - b)
+	if (timestamps.length < 2) return 'day'
+	// Median gap, so a single missing period or a partial first/last bucket can't shift the verdict.
+	const gaps = timestamps.slice(1).map((timestamp, index) => (timestamp - timestamps[index]!) / 86400)
+	gaps.sort((a, b) => a - b)
+	const median = gaps[Math.floor(gaps.length / 2)]!
+	if (median > 45) return 'quarter'
+	if (median > 10) return 'month'
+	if (median > 1.5) return 'week'
+	return 'day'
+}
+
+// The finest bucket the payload actually supports, read off its own point spacing: an ir-server
+// series can arrive daily, weekly or monthly, and a coarser bucket than the data is a sum of real
+// periods while a finer one is a relabeled lie ("Daily" over monthly points). `minBucket` raises
+// that floor for series whose finest buckets are too noisy to be worth offering.
+export function detectCadence(series: TrendSeries[], minBucket: Bucket = 'day'): Bucket {
+	const measured = measureCadence(series)
+	return BUCKET_DAYS[minBucket] > BUCKET_DAYS[measured] ? minBucket : measured
+}
+
+// Every bucket the data can honestly be shown at, coarsest-first from its own cadence.
+export function viewOptionsFor(cadence: Bucket, valueSymbol: string): typeof VIEWS {
+	return VIEWS.filter((v) =>
+		// A running total of percentages is not a quantity, so those series get no cumulative view.
+		v.value === 'cumulative' ? valueSymbol !== '%' : BUCKET_DAYS[v.value] >= BUCKET_DAYS[cadence]
+	)
+}
 
 // Scrolling top legend + cleared grid top, so many-series legends never overlap the y-axis.
 const CHART_OPTIONS = {
@@ -94,7 +128,7 @@ export function groupTopN(series: TrendSeries[], n: number): TrendSeries[] {
 	return [...top, { name: 'Others', data: [...others].sort((a, b) => a[0] - b[0]) }]
 }
 
-function aggregate(series: TrendSeries[], view: View, stacked: boolean): SparseCartesianSeries[] {
+export function aggregate(series: TrendSeries[], view: View, stacked: boolean): SparseCartesianSeries[] {
 	if (!series.length) return []
 	const grouping = view === 'cumulative' ? 'day' : view
 	const isCumulative = view === 'cumulative'
@@ -128,9 +162,10 @@ function aggregate(series: TrendSeries[], view: View, stacked: boolean): SparseC
 	}))
 }
 
-// A time series rendered with a Daily / Monthly / Quarterly / Cumulative toggle. `stacked`
-// keeps the series stacked in the daily/monthly/quarterly bar views (e.g. volume by chain
-// or by version).
+// A time series with a granularity toggle derived from the data itself: the buckets offered start at
+// the series' own cadence (weekly data offers Weekly upward, monthly data Monthly upward), and the
+// view opens on that cadence unless the caller wants a coarser default. `stacked` keeps the series
+// stacked in the bar views (e.g. volume by chain or by version).
 export function SeriesTrendChart({
 	title,
 	subtitle,
@@ -138,8 +173,8 @@ export function SeriesTrendChart({
 	isLoading,
 	isError,
 	valueSymbol = '$',
-	defaultView = 'month',
-	views,
+	defaultView,
+	minBucket,
 	stacked = true,
 	extraControl
 }: {
@@ -149,16 +184,24 @@ export function SeriesTrendChart({
 	isLoading?: boolean
 	isError?: boolean
 	valueSymbol?: string
+	/** Opening view; ignored when the data is coarser than it. Defaults to the data's own cadence. */
 	defaultView?: View
-	/** Restrict the view toggle, for series that only exist at one granularity (monthly payloads). */
-	views?: View[]
+	/** Finest bucket to offer, when the data's own cadence is too noisy to be worth reading. */
+	minBucket?: Bucket
 	stacked?: boolean
 	/** Additional header-right control (e.g. a Total / By Chain toggle). */
 	extraControl?: React.ReactNode
 }) {
-	const [view, setView] = useState<View>(defaultView)
-	const viewOptions = views ? VIEWS.filter((v) => views.includes(v.value)) : VIEWS
+	const [picked, setPicked] = useState<View | null>(null)
+	const cadence = useMemo(() => detectCadence(series ?? [], minBucket), [series, minBucket])
+	const viewOptions = useMemo(() => viewOptionsFor(cadence, valueSymbol), [cadence, valueSymbol])
+	// Both the caller's default and a pick made while the data was still loading can name a view the
+	// data doesn't support; fall back to its cadence (the first option) rather than mislabeling it.
+	const wanted = picked ?? defaultView ?? cadence
+	const view = viewOptions.some((v) => v.value === wanted) ? wanted : (viewOptions[0]?.value ?? cadence)
 	const chartSeries = useMemo(() => aggregate(series ?? [], view, stacked), [series, view, stacked])
+	// 'week' keeps the daily tooltip date: these buckets are keyed to the week's first day, while
+	// the shared 'weekly' formatter labels a timestamp as the last day of its week.
 	const groupBy = view === 'month' ? 'monthly' : view === 'quarter' ? 'quarterly' : 'daily'
 	const model = useMemo(() => buildSparseCartesianChartModel(chartSeries), [chartSeries])
 	const chartOptions = useMemo(
@@ -175,7 +218,7 @@ export function SeriesTrendChart({
 			control={
 				<>
 					{extraControl}
-					<SegToggle<View> options={viewOptions} value={view} onChange={setView} />
+					<SegToggle<View> options={viewOptions} value={view} onChange={setPicked} />
 				</>
 			}
 		>

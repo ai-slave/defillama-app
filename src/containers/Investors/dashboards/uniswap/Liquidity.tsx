@@ -24,7 +24,7 @@ interface TopPoolRow {
 // All served by the ir-server: TVL comes from the DefiLlama protocol endpoint (no light
 // public per-protocol TVL chart API to read client-side), active LPs from Dune, and the
 // segment splits from the maintained token-segment map (snapshot on DefiLlama pool TVL,
-// over-time via Allium month-end balances). Slippage/price impact and top-pair market
+// over-time via daily Allium balances). Slippage/price impact and top-pair market
 // share were cut by Uniswap in the methodology review.
 interface LiquidityData {
 	kpis: Record<string, KpiT | undefined>
@@ -192,7 +192,7 @@ export default function Liquidity() {
 							title="TVL by Token Segment Over Time"
 							stacked
 							valueSymbol="$"
-							subtitle="Month-end snapshots of core pools (both tokens segment-mapped) across the top chains; history grows monthly."
+							subtitle="Daily snapshots of core pools (both tokens segment-mapped) across the top chains; history starts at the ir-server's first snapshot."
 						/>
 					)}
 				</div>

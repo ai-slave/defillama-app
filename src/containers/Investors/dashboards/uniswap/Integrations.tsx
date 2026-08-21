@@ -132,13 +132,11 @@ export default function Integrations() {
 					title="Order Flow Routed to Uniswap by Entity"
 					subtitle="Weekly volume by the third-party integrator or aggregator that routed the swap (tx_to labeling); top 12 entities plus Others."
 					series={orderFlowSeries}
-					defaultView="day"
 				/>
 				<SeriesTrendChart
 					title={data.uniswapVsOther.title ?? 'Uniswap Router vs Aggregator Volume'}
 					subtitle="Routed flow only: Uniswap's own routers vs third-party aggregators (direct and MEV/arbitrage flow excluded)."
 					series={chartToTrendSeries(data.uniswapVsOther)}
-					defaultView="day"
 				/>
 				<div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
 					<ChartCard
@@ -200,13 +198,11 @@ export default function Integrations() {
 					subtitle="New hooks deployed per week, split by their primary permission flag (decoded from the hook address)."
 					series={chartToTrendSeries(data.hooks.creationByCapability)}
 					valueSymbol=""
-					defaultView="day"
 				/>
 				<SeriesTrendChart
 					title="Hook Volume"
 					subtitle="Weekly v4 swap volume through hooked vs non-hooked pools (Ethereum)."
 					series={chartToTrendSeries(data.hookVolume)}
-					defaultView="day"
 				/>
 				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 					<BarListCard
