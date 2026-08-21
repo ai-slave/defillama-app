@@ -1,7 +1,16 @@
 import { formatCompactNumber } from '~/utils/numberFormat'
 import type { Chart, Kpi as KpiT } from './transform'
 import { chartToTrendSeries, SeriesTrendChart } from './TrendChart'
-import { ChartCard, KpiGrid, MiniTable, PageLoader, SectionHeader, TimeAreaCard, useUniswapData } from './ui'
+import {
+	ChartCard,
+	KpiGrid,
+	MiniTable,
+	PageLoader,
+	SectionHeader,
+	TimeAreaCard,
+	useUniswapData,
+	useUniswapDefs
+} from './ui'
 
 interface AuctionRow {
 	token: string
@@ -63,6 +72,7 @@ const capitalizeChains = (chains: string) => chains.split(', ').map(capitalize).
 
 export default function Assets() {
 	const { data } = useUniswapData<AssetsData>('assets')
+	const defs = useUniswapDefs()
 	if (!data) return <PageLoader />
 
 	// The proceeds payload ships Daily + Cumulative series; the chart's own view toggle
@@ -79,7 +89,7 @@ export default function Assets() {
 					label="Token Breadth"
 					kpis={data.kpis}
 					items={[
-						['tokensWithLiquidity', 'Tokens with >$10k Liquidity', undefined],
+						['tokensWithLiquidity', 'Tokens in Pools with ≥$10k TVL', undefined],
 						['tradedAssets', 'Tokens Traded (Lifetime)', undefined],
 						['newTokens30d', 'New Tokens (30d)', undefined],
 						['longTailTokens', 'Long-Tail Tokens', undefined],
@@ -101,11 +111,11 @@ export default function Assets() {
 				<SectionHeader>Volume Composition</SectionHeader>
 				<SeriesTrendChart
 					title={data.volumeByCategory.title ?? 'Volume by Asset Category'}
+					subtitle={defs.volumeByCategory}
 					series={chartToTrendSeries(data.volumeByCategory)}
 				/>
 				<TimeAreaCard
 					chart={data.pctOutsideMajors}
-					title="% of Volume Outside the Top-10 Majors"
 					valueSymbol="%"
 					subtitle={
 						data.pctOutsideMajors.note ??

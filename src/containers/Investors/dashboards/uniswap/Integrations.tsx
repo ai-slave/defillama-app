@@ -87,9 +87,9 @@ export default function Integrations() {
 				kpis={{ ...data.kpis, ...data.hooks.kpis }}
 				items={[
 					['uniqueRouters30d', 'Unique Routers (30d)', undefined],
-					['uniRouterShare', 'Uniswap Router Share', undefined],
+					['uniRouterShare', 'Uniswap Router Share of Routed Flow', undefined],
 					['topAggregator', 'Top Aggregator (30d)', undefined],
-					['hooksTotal', 'v4 Hooks Deployed', undefined],
+					['hooksTotal', 'v4 Hooks Deployed (Ethereum)', undefined],
 					['hookedPoolShare', 'v4 Pools Using a Hook', undefined]
 				]}
 			/>

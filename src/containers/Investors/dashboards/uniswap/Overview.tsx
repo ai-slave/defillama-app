@@ -130,7 +130,7 @@ export default function Overview() {
 						['feesAllTime', 'Fees (Lifetime)', defs.fees],
 						['fees30d', 'Fees (30d)', undefined],
 						['fees24h', 'Fees (24h)', undefined],
-						['lpFeesAllTime', 'Fees to Liquidity Providers', defs.lpFees]
+						['lpFeesAllTime', 'Fees to Liquidity Providers (Lifetime)', defs.lpFees]
 					]}
 				/>
 				<KpiGrid
@@ -140,7 +140,7 @@ export default function Overview() {
 					items={[
 						['trades', 'Trades (Lifetime)', undefined],
 						['wallets', 'Wallets (Lifetime)', defs.wallets],
-						['walletShare', 'Wallet Share (30d)', defs.walletShare]
+						['walletShare', 'Share of All DEX Wallets (30d)', defs.walletShare]
 					]}
 				/>
 				<KpiGrid

@@ -220,23 +220,48 @@ export function PlaceholderCard({
 export function ChartCard({
 	title,
 	subtitle,
+	subtitles,
 	value,
 	control,
 	children
 }: {
 	title: string
 	subtitle?: string | undefined
+	/**
+	 * Every subtitle a control on this card can swap in. They share one grid cell, so the box is as
+	 * tall as the longest of them at whatever width the reader has, and switching views cannot move
+	 * the chart underneath. Reserving lines by hand can't do this: which subtitle wraps, and into how
+	 * many lines, changes with the viewport, the title beside it and the next copy edit.
+	 */
+	subtitles?: string[] | undefined
 	value?: string | undefined
 	/** Optional header-right control (e.g. a Daily/Cumulative toggle). */
 	control?: React.ReactNode
 	children: React.ReactNode
 }) {
+	const variants = subtitle && subtitles?.length ? [...new Set([subtitle, ...subtitles])] : null
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<div className="mb-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
 				<div className="min-w-0">
 					<h3 className="text-sm font-semibold text-pro-text-primary">{title}</h3>
-					{subtitle && <p className="mt-0.5 text-xs leading-relaxed text-pro-text-tertiary">{subtitle}</p>}
+					{variants ? (
+						<div className="mt-0.5 grid">
+							{variants.map((text) => (
+								<p
+									key={text}
+									aria-hidden={text === subtitle ? undefined : true}
+									className={`col-start-1 row-start-1 text-xs leading-relaxed text-pro-text-tertiary ${
+										text === subtitle ? '' : 'invisible'
+									}`}
+								>
+									{text}
+								</p>
+							))}
+						</div>
+					) : (
+						subtitle && <p className="mt-0.5 text-xs leading-relaxed text-pro-text-tertiary">{subtitle}</p>
+					)}
 				</div>
 				<div className="flex items-center gap-3">
 					{value && (
@@ -361,9 +386,11 @@ export function TimeAreaCard({
 	chart,
 	title,
 	subtitle,
+	subtitles,
 	value,
 	valueSymbol,
 	stacked,
+	level,
 	control,
 	zoomLastPoints
 }: {
@@ -371,9 +398,17 @@ export function TimeAreaCard({
 	/** Fixed card title; defaults to the chart payload's own title. */
 	title?: string
 	subtitle?: string
+	/** Every subtitle this card's control can swap in; see ChartCard. */
+	subtitles?: string[]
 	value?: string | undefined
 	valueSymbol?: string
 	stacked?: boolean
+	/**
+	 * The series is a level (a stock: open positions, holders), not a flow. Levels sit in a narrow
+	 * band far from zero, so the shared zero-baseline y-axis would flatten them to a straight line;
+	 * scale the axis to the data instead and drop the area fill, which would imply a zero baseline.
+	 */
+	level?: boolean
 	/** Optional header-right control (e.g. a Total / By Chain toggle). */
 	control?: React.ReactNode
 	/** Open zoomed to the last N points (full history stays reachable via the zoom slider). */
@@ -395,7 +430,7 @@ export function TimeAreaCard({
 					name: series.name,
 					encode: { x: 'timestamp', y: series.name },
 					color: seriesColor(series.name, index),
-					...(stacked ? { stack: 'total' } : { hideAreaStyle: multipleSeries })
+					...(stacked ? { stack: 'total' } : { hideAreaStyle: multipleSeries || !!level })
 				})
 			),
 			chartOptions: {
@@ -404,13 +439,20 @@ export function TimeAreaCard({
 				...(multipleSeries
 					? { legend: { type: 'scroll' as const, top: CHART_INSET }, grid: { top: CHART_LEGEND_RESERVE } }
 					: {}),
+				...(level ? { yAxis: { scale: true as const } } : {}),
 				...zoom
 			}
 		}
-	}, [chart, stacked, multipleSeries, resolvedValueSymbol, zoomLastPoints])
+	}, [chart, stacked, level, multipleSeries, resolvedValueSymbol, zoomLastPoints])
 	if (!chart.series.length) return <PlaceholderCard title={chart.title ?? ''} subtitle={subtitle} note="empty series" />
 	return (
-		<ChartCard title={title ?? chart.title ?? ''} subtitle={subtitle ?? chart.subtitle} value={value} control={control}>
+		<ChartCard
+			title={title ?? chart.title ?? ''}
+			subtitle={subtitle ?? chart.subtitle}
+			subtitles={subtitles}
+			value={value}
+			control={control}
+		>
 			<MultiSeriesChart
 				dataset={dataset}
 				charts={charts}

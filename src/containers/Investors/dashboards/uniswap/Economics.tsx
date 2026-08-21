@@ -408,7 +408,7 @@ export default function Economics() {
 			<section className="flex flex-col gap-6">
 				<SectionHeader>Holders Revenue & UNI Burn</SectionHeader>
 				<SeriesTrendChart
-					title="Holders Revenue (UNI Burned via Protocol Fees)"
+					title="Holders Revenue (USD Spent on UNI Buybacks)"
 					subtitle="USD spent buying back and burning UNI, from the fee-switch activation onward."
 					series={burnView === 'total' ? burnUsdSeries.data : burnByChainSeries.data}
 					isLoading={burnView === 'total' ? burnUsdSeries.isLoading : burnByChainSeries.isLoading}

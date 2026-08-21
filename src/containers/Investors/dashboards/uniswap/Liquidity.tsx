@@ -22,7 +22,7 @@ interface TopPoolRow {
 }
 
 // All served by the ir-server: TVL comes from the DefiLlama protocol endpoint (no light
-// public per-protocol TVL chart API to read client-side), active LPs from Dune, and the
+// public per-protocol TVL chart API to read client-side), open LP positions from Dune, and the
 // segment splits from the maintained token-segment map (snapshot on DefiLlama pool TVL,
 // over-time via daily Allium balances). Slippage/price impact and top-pair market
 // share were cut by Uniswap in the methodology review.
@@ -33,8 +33,48 @@ interface LiquidityData {
 	tvlByVersion: Chart
 	topPools: { title?: string; rows: TopPoolRow[] }
 	activeLps: Chart
+	/** Both null until the ir-server serving this deployment ships the LP breakdowns. */
+	activeLpsByVersion: Chart | null
+	activeLpsByChain: Chart | null
 	liquidityBySegment: Chart
 }
+
+type LpView = 'all' | 'chain' | 'version'
+
+// The unique-wallet total and the breakdowns are different quantities, not parts of one chart: a
+// wallet providing liquidity on several chains is counted in each of them, so the chain parts add up
+// to ~116% of unique wallets (~104% for versions). Sharing an axis would put ~1.38M on a chart whose
+// answer is 1.19M, so the total gets its own view and each breakdown stacks on its own terms.
+// Subtitles stay one short line each: a longer one wraps on some views and not others, which moves
+// the chart under it every time the toggle is used. The shared caveat sits above the card instead.
+const LP_VIEWS: Record<LpView, { label: string; title: string; subtitle: string }> = {
+	all: {
+		label: 'All',
+		title: 'LPs with Open Positions',
+		subtitle: 'Wallets holding a position with liquidity remaining, measured weekly.'
+	},
+	chain: {
+		label: 'Chains',
+		title: 'LPs with Open Positions by Chain',
+		subtitle: 'The same wallets stacked by chain, measured weekly.'
+	},
+	version: {
+		label: 'Versions',
+		title: 'LPs with Open Positions by Version',
+		subtitle: 'The same wallets stacked by protocol version, measured weekly.'
+	}
+}
+
+const LP_SUBTITLES = Object.values(LP_VIEWS).map((view) => view.subtitle)
+
+// Index 0 is the Total view, 1 the By Chain view.
+const TVL_SUBTITLES = [
+	'Total value locked across all versions and chains.',
+	'TVL split by chain (top chains plus Other). Click a legend entry to toggle a chain.'
+]
+
+const LP_OVERLAP_NOTE =
+	'A wallet providing liquidity on several chains or versions is counted in each of them, so the Chains and Versions stacks run above the deduplicated All total.'
 
 const POOL_COLUMNS = 'minmax(140px,1.5fr) minmax(110px,1fr) minmax(70px,0.5fr) minmax(110px,1fr) minmax(90px,0.8fr)'
 const POOL_HEADERS: Array<[string, 'left' | 'right']> = [
@@ -95,7 +135,22 @@ export default function Liquidity() {
 	// Kept as its own endpoint upstream so a slow Allium run never blocks the rest of the tab.
 	const { data: segmentsOverTime } = useUniswapData<Chart>('liquiditySegments')
 	const [tvlView, setTvlView] = useState<'total' | 'chain'>('total')
+	// Opens on the chain split: where the LPs are is the finding, and the headline value carries the
+	// deduplicated total on every view anyway.
+	const [lpView, setLpView] = useState<LpView>('chain')
 	if (!data) return <PageLoader />
+
+	// Older ir-server deployments send no breakdowns, so the toggle offers only what arrived and any
+	// view whose chart is missing falls back to the total.
+	const lpCharts: Record<LpView, Chart | null> = {
+		all: data.activeLps,
+		chain: data.activeLpsByChain,
+		version: data.activeLpsByVersion
+	}
+	const lpOptions = (Object.keys(LP_VIEWS) as LpView[])
+		.filter((view) => lpCharts[view])
+		.map((view) => ({ value: view, label: LP_VIEWS[view].label }))
+	const resolvedLpView: LpView = lpCharts[lpView] ? lpView : 'all'
 
 	// Top-10 concentration derived from the pools table itself, so the KPI always agrees with it.
 	const top10Pct = data.topPools.rows.slice(0, 10).reduce((sum, row) => sum + (row.pctOfTvl || 0), 0)
@@ -135,7 +190,7 @@ export default function Liquidity() {
 				cols={3}
 				items={[
 					['totalTvl', 'Total TVL', 'Total value locked across all versions and chains, as measured by DefiLlama.'],
-					['activeLps', 'Active LPs (Weekly)', undefined],
+					['activeLps', 'LPs with Open Positions', undefined],
 					['top10Concentration', 'Top 10 Pools Share of TVL', 'Share of total TVL held by the ten largest pools.']
 				]}
 			/>
@@ -148,11 +203,8 @@ export default function Liquidity() {
 					stacked={tvlView === 'chain'}
 					valueSymbol="$"
 					value={data.kpis.totalTvl?.formatted}
-					subtitle={
-						tvlView === 'chain'
-							? 'TVL split by chain (top chains plus Other). Click a legend entry to toggle a chain.'
-							: 'Total value locked across all versions and chains.'
-					}
+					subtitle={tvlView === 'chain' ? TVL_SUBTITLES[1] : TVL_SUBTITLES[0]}
+					subtitles={TVL_SUBTITLES}
 					control={
 						<SegToggle<'total' | 'chain'>
 							options={[
@@ -169,11 +221,23 @@ export default function Liquidity() {
 
 			<section className="flex flex-col gap-6">
 				<SectionHeader>Liquidity Providers</SectionHeader>
+				{lpOptions.length > 1 && (
+					<p className="-mt-3 text-xs leading-relaxed text-pro-text-tertiary">{LP_OVERLAP_NOTE}</p>
+				)}
 				<TimeAreaCard
-					chart={data.activeLps}
+					chart={lpCharts[resolvedLpView] ?? data.activeLps}
+					title={LP_VIEWS[resolvedLpView].title}
+					subtitle={LP_VIEWS[resolvedLpView].subtitle}
+					subtitles={LP_SUBTITLES}
 					valueSymbol=""
 					value={data.kpis.activeLps?.formatted}
-					subtitle="Distinct wallets adding or removing liquidity per week, from onchain Mint/Burn/ModifyLiquidity events."
+					stacked={resolvedLpView !== 'all'}
+					// The total sits in a band a few percent wide, so only it needs the axis scaled to the
+					// data; a stack has to keep its zero baseline to read as composition.
+					level={resolvedLpView === 'all'}
+					{...(lpOptions.length > 1
+						? { control: <SegToggle<LpView> options={lpOptions} value={resolvedLpView} onChange={setLpView} /> }
+						: {})}
 				/>
 			</section>
 
@@ -192,7 +256,7 @@ export default function Liquidity() {
 							title="TVL by Token Segment Over Time"
 							stacked
 							valueSymbol="$"
-							subtitle="Daily snapshots of core pools (both tokens segment-mapped) across the top chains; history starts at the ir-server's first snapshot."
+							subtitle="Daily snapshots of core pools (both tokens segment-mapped) across the top chains."
 						/>
 					)}
 				</div>
