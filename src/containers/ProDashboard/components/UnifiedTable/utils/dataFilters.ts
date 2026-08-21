@@ -279,8 +279,7 @@ export function filterRowsByConfig(
 		hasRequestedRange(filters, SOURCE_RANGE_FILTERS) || hasRequestedPresence(filters, SOURCE_PRESENCE_FILTERS)
 	const hasChainMetricFilters =
 		hasRequestedRange(filters, CHAIN_RANGE_FILTERS) || hasRequestedPresence(filters, CHAIN_PRESENCE_FILTERS)
-	const hasProtocolAgeFilter =
-		filters.protocolAgeDaysMin !== undefined || filters.protocolAgeDaysMax !== undefined
+	const hasProtocolAgeFilter = filters.protocolAgeDaysMin !== undefined || filters.protocolAgeDaysMax !== undefined
 	const nowSeconds = context.nowSeconds ?? Date.now() / 1000
 
 	return rows.filter((row) => {

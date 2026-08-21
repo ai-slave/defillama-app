@@ -1,6 +1,7 @@
 import type { IFetchedRWAProject } from '~/containers/RWA/api.types'
 import { aggregateRwaMetrics, hasMetricBreakdown } from '~/containers/RWA/overviewAssembly'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
+import type { CsvCell } from '~/utils/csvCell'
 
 export type RWAAssetTableRow = {
 	name: string
@@ -11,6 +12,8 @@ export type RWAAssetTableRow = {
 	defiActiveTvl: number
 	category: string
 	type: string
+	suspicious: boolean
+	suspiciousReason: string
 }
 
 function buildMetricValues(asset: IFetchedRWAProject, chain?: string) {
@@ -53,7 +56,9 @@ function buildBaseRow(asset: IFetchedRWAProject, values: ReturnType<typeof build
 		onChainMcap: values.onChainMcap,
 		defiActiveTvl: values.defiActiveTvl,
 		category: asset.category?.join(', ') ?? '',
-		type: asset.type || ''
+		type: asset.type || '',
+		suspicious: asset.suspicious === true,
+		suspiciousReason: asset.suspiciousReason ?? ''
 	}
 }
 
@@ -76,4 +81,36 @@ export function buildRWAChainAssetTableRows(data: IFetchedRWAProject[], chain: s
 		rows.push(buildBaseRow(asset, values))
 	}
 	return rows
+}
+
+export function buildRWAAssetCsv(rows: RWAAssetTableRow[], includeTicker: boolean): CsvCell[][] {
+	const headers: CsvCell[] = ['Name']
+	if (includeTicker) headers.push('Ticker')
+	headers.push(
+		'Asset Group',
+		'Active Mcap',
+		'Onchain Mcap',
+		'DeFi Active TVL',
+		'Category',
+		'Type',
+		'Suspicious',
+		'Suspicious reason'
+	)
+	const csv: CsvCell[][] = [headers]
+	for (const item of rows) {
+		const row: CsvCell[] = [item.name]
+		if (includeTicker) row.push(item.ticker)
+		row.push(
+			item.assetGroup,
+			item.activeMcap,
+			item.onChainMcap,
+			item.defiActiveTvl,
+			item.category,
+			item.type,
+			item.suspicious,
+			item.suspiciousReason
+		)
+		csv.push(row)
+	}
+	return csv
 }

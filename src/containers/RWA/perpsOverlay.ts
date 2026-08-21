@@ -41,6 +41,8 @@ export function toRWAPerpsContractOverlayRow(market: IRWAPerpsMarket): RWAPerpsC
 		stablecoin: null,
 		governance: null,
 		trueRWA: false,
+		suspicious: market.suspicious,
+		suspiciousReason: null,
 		onChainMcap: null,
 		activeMcap: null,
 		defiActiveTvl: null,

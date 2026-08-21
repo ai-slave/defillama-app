@@ -31,6 +31,7 @@ import {
 	type RWAChartDataset
 } from '~/containers/RWA/chartDataset'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
+import { RWASuspiciousWarning } from '~/containers/RWA/SuspiciousWarning'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
@@ -40,7 +41,6 @@ import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dial
 import { Icon } from '~/ui/Icon'
 import { LoadingDots } from '~/ui/Loaders'
 import { PercentChange } from '~/ui/PercentChange'
-import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { fetchJson } from '~/utils/async'
@@ -271,9 +271,7 @@ const overviewColumns = [
 				>
 					{info.row.original.contract}
 				</BasicLink>
-				{info.row.original.suspicious ? (
-					<QuestionHelper text="This market is marked as suspicious and is excluded from cross-venue totals and charts." />
-				) : null}
+				{info.row.original.suspicious ? <RWASuspiciousWarning entity="market" /> : null}
 			</span>
 		),
 		meta: {

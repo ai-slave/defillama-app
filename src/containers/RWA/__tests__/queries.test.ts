@@ -136,6 +136,52 @@ describe('rwa queries', () => {
 		})
 	})
 
+	it('keeps suspicious assets visible while excluding them from initial totals and charts', async () => {
+		fetchRWAActiveTVLsMock.mockResolvedValue([
+			{
+				id: 'alpha',
+				canonicalMarketId: 'alpha',
+				ticker: 'ALPHA',
+				assetName: 'Alpha',
+				assetGroup: 'Treasuries',
+				category: ['Treasuries'],
+				onChainMcap: { Ethereum: 12 },
+				activeMcap: { Ethereum: 10 },
+				defiActiveTvl: {}
+			},
+			{
+				id: 'beta',
+				canonicalMarketId: 'beta',
+				ticker: 'BETA',
+				assetName: 'Beta',
+				assetGroup: 'Treasuries',
+				category: ['Treasuries'],
+				onChainMcap: { Ethereum: 24 },
+				activeMcap: { Ethereum: 20 },
+				defiActiveTvl: {},
+				suspicious: true,
+				suspiciousReason: 'Unverified valuation source'
+			}
+		])
+		fetchRWAChartMetricDataByAssetMock.mockResolvedValue([{ timestamp: 1_000, alpha: 10, beta: 20 }])
+
+		const result = await getRWAAssetsOverview({
+			rwaList: { chains: ['Ethereum'], categories: ['Treasuries'], platforms: [], assetGroups: ['Treasuries'] } as never
+		})
+
+		expect(result?.assets).toHaveLength(2)
+		expect(result?.assets.find((asset) => asset.assetName === 'Beta')).toMatchObject({
+			assetName: 'Beta',
+			suspicious: true,
+			suspiciousReason: 'Unverified valuation source'
+		})
+		expect(result?.totals).toMatchObject({ onChainMcap: 12, activeMcap: 10 })
+		expect(result?.initialChartDataset?.dataset).toEqual({
+			dimensions: ['timestamp', 'Total Active Mcap', 'Treasuries'],
+			source: [[1_000, 10, 10]]
+		})
+	})
+
 	it('groups the public equities initial chart by platform', async () => {
 		fetchRWAActiveTVLsMock.mockResolvedValue([
 			{

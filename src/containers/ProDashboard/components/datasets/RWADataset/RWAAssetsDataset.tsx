@@ -19,7 +19,7 @@ import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetch
 import { PRO_RWA_ASSETS_TABLE_QUERY_KEY } from '~/containers/ProDashboard/tableQueryKeys'
 import { fetchRWAActiveTVLs } from '~/containers/RWA/api'
 import type { IFetchedRWAProject } from '~/containers/RWA/api.types'
-import type { CsvCell } from '~/utils/csvCell'
+import { RWASuspiciousWarning } from '~/containers/RWA/SuspiciousWarning'
 import { downloadCSV } from '~/utils/download'
 import { formatUsd } from '~/utils/numberFormat'
 import { CSVExportButton } from '../../CSVExportButton'
@@ -28,6 +28,7 @@ import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
 import {
 	buildRWAAllChainsAssetTableRows,
+	buildRWAAssetCsv,
 	buildRWAChainAssetTableRows,
 	type RWAAssetTableRow
 } from './rwaAssetsTableData'
@@ -40,7 +41,12 @@ const columns = [
 	columnHelper.accessor('name', {
 		id: 'name',
 		header: 'Name',
-		cell: (info) => <span className="block truncate text-sm font-medium">{info.getValue()}</span>,
+		cell: (info) => (
+			<span className="flex items-center gap-1 text-sm font-medium">
+				<span className="truncate">{info.getValue()}</span>
+				{info.row.original.suspicious ? <RWASuspiciousWarning reason={info.row.original.suspiciousReason} /> : null}
+			</span>
+		),
 		size: 240,
 		maxSize: 240
 	}),
@@ -133,26 +139,6 @@ function useRWAAssetsTableData(chain?: string) {
 	return { data, isLoading: isLoading || (hasValidChain && !streamDone && data === undefined), error }
 }
 
-function buildAssetCsv(rows: RWAAssetTableRow[], includeTicker: boolean): CsvCell[][] {
-	const csv: CsvCell[][] = [
-		includeTicker
-			? ['Name', 'Ticker', 'Asset Group', 'Active Mcap', 'Onchain Mcap', 'DeFi Active TVL', 'Category', 'Type']
-			: ['Name', 'Asset Group', 'Active Mcap', 'Onchain Mcap', 'DeFi Active TVL', 'Category', 'Type']
-	]
-	for (const item of rows) {
-		const metrics: CsvCell[] = [
-			item.assetGroup,
-			item.activeMcap,
-			item.onChainMcap,
-			item.defiActiveTvl,
-			item.category,
-			item.type
-		]
-		csv.push(includeTicker ? [item.name, item.ticker, ...metrics] : [item.name, ...metrics])
-	}
-	return csv
-}
-
 function RWAAssetsTable({ chain }: { chain?: string }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'activeMcap', desc: true }])
 	const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(DEFAULT_COLUMN_ORDER)
@@ -219,7 +205,7 @@ function RWAAssetsTable({ chain }: { chain?: string }) {
 								const rows = instance.getFilteredRowModel().rows.map((row) => row.original)
 								downloadCSV(
 									chain === undefined ? 'rwa-assets.csv' : `rwa-${chain}.csv`,
-									buildAssetCsv(rows, chain === undefined),
+									buildRWAAssetCsv(rows, chain === undefined),
 									{ addTimestamp: true }
 								)
 							}}

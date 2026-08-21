@@ -23,6 +23,7 @@ import { Tooltip } from '~/ui/Tooltip'
 import { formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { rwaSlug } from '../rwaSlug'
+import { RWASuspiciousWarning } from '../SuspiciousWarning'
 import {
 	buildRWAPerpsContractChartSpec,
 	buildRWAPerpsContractInfoRows,
@@ -100,8 +101,9 @@ function RWAPerpsContractHeader({
 	const link = contract.contract.link
 
 	return (
-		<Tag className="flex min-w-0 items-center justify-between gap-2 heading-xs">
+		<Tag className="flex min-w-0 items-center gap-2 heading-xs">
 			<span className="min-w-0 truncate">{contract.contract.contract}</span>
+			{contract.market.suspicious ? <RWASuspiciousWarning entity="market" /> : null}
 			{link ? (
 				<WebsiteGlobeLink
 					url={link}

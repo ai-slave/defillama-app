@@ -33,6 +33,7 @@ import { formatSignedRWAFlow, getRWAFlowTextClass } from './flows'
 import { useRWAFlowSummary } from './flows.hooks'
 import { getRwaPlatforms, UNKNOWN_PLATFORM } from './grouping'
 import { rwaSlug } from './rwaSlug'
+import { RWASuspiciousWarning } from './SuspiciousWarning'
 
 export function RWAAssetsTable({
 	assets,
@@ -92,29 +93,33 @@ export function RWAAssetsTable({
 
 	const columnsOptions = useMemo(
 		() =>
-			columns.map((column) => {
-				const key = column.id ?? ('accessorKey' in column ? String(column.accessorKey) : '')
-				if (!key) throw new Error('RWA asset table column is missing an id')
-				const headerName = typeof column.header === 'string' ? column.header : key
-				const help = column.meta?.headerHelperText
-				return {
-					name: headerName,
-					key,
-					...(help ? { help } : {})
-				}
-			}),
+			columns
+				.filter((column) => !column.meta?.hidden)
+				.map((column) => {
+					const key = column.id ?? ('accessorKey' in column ? String(column.accessorKey) : '')
+					if (!key) throw new Error('RWA asset table column is missing an id')
+					const headerName = typeof column.header === 'string' ? column.header : key
+					const help = column.meta?.headerHelperText
+					return {
+						name: headerName,
+						key,
+						...(help ? { help } : {})
+					}
+				}),
 		[columns]
 	)
 
 	const selectedColumns = instance
 		.getAllLeafColumns()
-		.filter((col) => col.getIsVisible())
+		.filter((col) => col.getIsVisible() && !col.columnDef.meta?.hidden)
 		.map((col) => col.id)
 
 	const setColumnOptions = (newOptions: string[] | ((prev: string[]) => string[])) => {
 		const resolvedOptions = Array.isArray(newOptions) ? newOptions : newOptions(selectedColumns)
 		const ops = Object.fromEntries(
-			instance.getAllLeafColumns().map((col) => [col.id, resolvedOptions.includes(col.id)])
+			instance
+				.getAllLeafColumns()
+				.map((col) => [col.id, col.columnDef.meta?.csvOnly || resolvedOptions.includes(col.id)])
 		)
 		instance.setColumnVisibility(ops)
 	}
@@ -335,12 +340,28 @@ function createRWAAssetColumns(
 								</>
 							)}
 						</span>
+						{info.row.original.suspicious === true ? (
+							<RWASuspiciousWarning
+								reason={info.row.original.suspiciousReason}
+								entity={info.row.original.kind === 'perps' ? 'market' : 'asset'}
+							/>
+						) : null}
 					</span>
 				)
 			},
 			meta: {
 				headerClassName: 'w-[180px] sm:w-[240px]'
 			}
+		}),
+		columnHelper.accessor((asset) => asset.suspicious === true, {
+			id: 'suspicious',
+			header: 'Suspicious',
+			meta: { hidden: true, csvOnly: true }
+		}),
+		columnHelper.accessor((asset) => asset.suspiciousReason ?? '', {
+			id: 'suspiciousReason',
+			header: 'Suspicious reason',
+			meta: { hidden: true, csvOnly: true }
 		}),
 		columnHelper.accessor((asset) => normalizeRwaAssetGroup(asset.assetGroup), {
 			id: 'assetGroup',

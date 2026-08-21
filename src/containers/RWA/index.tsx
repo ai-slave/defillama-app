@@ -274,6 +274,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 
 	const {
 		filteredAssets,
+		aggregateAssets,
 		totalOnChainMcap,
 		totalActiveMcap,
 		totalOnChainDeFiActiveTvl,
@@ -329,8 +330,8 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		error: flowError
 	} = useRWAFlowAssetBreakdown(flowScope, isFlowMetric || (showFlowRotation && activeFilters))
 	const flowData = useMemo(
-		() => (flowAssetRows ? { series: aggregateRWAFlowRows(flowAssetRows, filteredAssets) } : null),
-		[flowAssetRows, filteredAssets]
+		() => (flowAssetRows ? { series: aggregateRWAFlowRows(flowAssetRows, aggregateAssets) } : null),
+		[flowAssetRows, aggregateAssets]
 	)
 	const {
 		data: routeFlowRotationData,
@@ -345,17 +346,17 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	const flowRotationData = useMemo(() => {
 		if (!showFlowRotation) return null
 		return activeFilters && flowAssetRows
-			? buildRWAFilteredFlowBreakdown(flowAssetRows, filteredAssets, flowRotationSplitBy)
+			? buildRWAFilteredFlowBreakdown(flowAssetRows, aggregateAssets, flowRotationSplitBy)
 			: routeFlowRotationData
-	}, [activeFilters, filteredAssets, flowAssetRows, flowRotationSplitBy, routeFlowRotationData, showFlowRotation])
+	}, [activeFilters, aggregateAssets, flowAssetRows, flowRotationSplitBy, routeFlowRotationData, showFlowRotation])
 	const effectiveFlowRotationError = flowRotationError ?? (activeFilters ? flowError : null)
 	const effectiveFlowRotationLoading = isFlowRotationLoading || (activeFilters && isFlowLoading)
 	const flowTreemapSizeRows = useMemo(
 		() =>
 			showFlowRotation && flowRotationView === 'heatmap'
-				? buildRWAFlowTreemapSizeRowsFromAssets(filteredAssets, flowRotationSplitBy)
+				? buildRWAFlowTreemapSizeRowsFromAssets(aggregateAssets, flowRotationSplitBy)
 				: [],
-		[filteredAssets, flowRotationSplitBy, flowRotationView, showFlowRotation]
+		[aggregateAssets, flowRotationSplitBy, flowRotationView, showFlowRotation]
 	)
 	const flowTreemapFlows = useMemo(
 		() =>
@@ -384,7 +385,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		selectedMetric: chartTypeKey,
 		initialDataset: getInitialMetricDataset(chartTypeKey),
 		initialOpenInterestDataset: props.initialOpenInterestChartDataset,
-		filteredAssets,
+		filteredAssets: aggregateAssets,
 		mode: getRwaChartAggregationMode(timeSeriesBreakdown),
 		target: chartTarget,
 		includeStablecoins,
@@ -405,7 +406,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		selectedMetric: 'onChainMcap',
 		initialDataset: getInitialMetricDataset('onChainMcap'),
 		initialOpenInterestDataset: null,
-		filteredAssets,
+		filteredAssets: aggregateAssets,
 		mode: 'total',
 		target: chartTarget,
 		includeStablecoins,
@@ -418,7 +419,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		selectedMetric: 'activeMcap',
 		initialDataset: getInitialMetricDataset('activeMcap'),
 		initialOpenInterestDataset: null,
-		filteredAssets,
+		filteredAssets: aggregateAssets,
 		mode: 'total',
 		target: chartTarget,
 		includeStablecoins,
@@ -431,7 +432,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		selectedMetric: 'defiActiveTvl',
 		initialDataset: getInitialMetricDataset('defiActiveTvl'),
 		initialOpenInterestDataset: null,
-		filteredAssets,
+		filteredAssets: aggregateAssets,
 		mode: 'total',
 		target: chartTarget,
 		includeStablecoins,
@@ -468,7 +469,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	const { pieChartData: assetCategoryPieChartData, pieChartStackColors: assetCategoryPieChartStackColors } =
 		useRWAAssetCategoryPieChartData({
 			enabled: shouldBuildNonTimeSeriesData && nonTimeSeriesBreakdown === 'category',
-			assets: filteredAssets,
+			assets: aggregateAssets,
 			categories: rankedFilterValues.categories,
 			selectedCategories,
 			metric: chartTypeKey
@@ -477,7 +478,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	const { pieChartData: assetClassPieChartData, pieChartStackColors: assetClassPieChartStackColors } =
 		useRwaCategoryAssetClassPieChartData({
 			enabled: shouldBuildNonTimeSeriesData && nonTimeSeriesBreakdown === 'assetClass',
-			assets: filteredAssets,
+			assets: aggregateAssets,
 			assetClasses: rankedFilterValues.assetClasses,
 			selectedAssetClasses,
 			metric: chartTypeKey
@@ -487,10 +488,10 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	const { pieChartData: assetNamePieChartData, pieChartStackColors: assetNamePieChartStackColors } =
 		useRwaAssetNamePieChartData({
 			enabled: shouldBuildAssetNamePieChartData,
-			assets: filteredAssets,
+			assets: aggregateAssets,
 			selectedAssetNames:
 				isAssetGroupMode && shouldBuildAssetNamePieChartData
-					? filteredAssets.map((asset) => asset.assetName || asset.ticker)
+					? aggregateAssets.map((asset) => asset.assetName || asset.ticker)
 					: selectedAssetNames,
 			metric: chartTypeKey
 		})
@@ -498,20 +499,20 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	const { pieChartData: assetGroupPieChartData, pieChartStackColors: assetGroupPieChartStackColors } =
 		useRwaAssetGroupPieChartData({
 			enabled: shouldBuildNonTimeSeriesData && nonTimeSeriesBreakdown === 'assetGroup',
-			assets: filteredAssets,
+			assets: aggregateAssets,
 			metric: chartTypeKey
 		})
 
 	const { pieChartData: assetPlatformPieChartData, pieChartStackColors: assetPlatformPieChartStackColors } =
 		useRwaAssetPlatformPieChartData({
 			enabled: shouldBuildNonTimeSeriesData && nonTimeSeriesBreakdown === 'platform',
-			assets: filteredAssets,
+			assets: aggregateAssets,
 			metric: chartTypeKey
 		})
 	const { pieChartData: chainPieChartData, pieChartStackColors: chainPieChartStackColors } =
 		useRwaChainBreakdownPieChartData({
 			enabled: shouldBuildNonTimeSeriesData && nonTimeSeriesBreakdown === 'chain' && canBreakdownByChain,
-			assets: filteredAssets,
+			assets: aggregateAssets,
 			metric: chartTypeKey
 		})
 
@@ -670,12 +671,12 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 				? getRWAFlowVsPriceAssetSummaries(
 						flowAssetRows,
 						flowOnChainMcapAssetRows,
-						filteredAssets,
+						aggregateAssets,
 						flowGroupBy,
 						flowVisibleRange
 					)
 				: undefined,
-		[filteredAssets, flowAssetRows, flowGroupBy, flowOnChainMcapAssetRows, flowVisibleRange, isFlowVsPrice]
+		[aggregateAssets, flowAssetRows, flowGroupBy, flowOnChainMcapAssetRows, flowVisibleRange, isFlowVsPrice]
 	)
 	const selectedTimeSeriesDataset = chartDataset
 	const timeSeriesCharts = useMemo<Array<MultiSeriesChartSeriesConfig>>(
@@ -865,7 +866,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		if (chartView !== 'treemap') return []
 		if (!isNestedTreemapSupported) return []
 		return buildRwaNestedTreemapTreeData({
-			assets: filteredAssets,
+			assets: aggregateAssets,
 			metric: chartTypeKey,
 			rootLabel: chartBreakdownLabel,
 			parentGrouping: treemapParentGrouping,
@@ -874,7 +875,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	}, [
 		chartView,
 		chartTypeKey,
-		filteredAssets,
+		aggregateAssets,
 		chartBreakdownLabel,
 		isNestedTreemapSupported,
 		treemapNestedBy,

@@ -33,21 +33,33 @@ describe('protocol age filters', () => {
 			old: NOW_SECONDS - 91 * DAY_IN_SECONDS
 		}
 
-		const result = filterRowsByConfig(rows, { protocolAgeDaysMax: 90 }, {}, {}, {
-			getListedAt: (protocolId) => listedAtById[protocolId],
-			nowSeconds: NOW_SECONDS
-		})
+		const result = filterRowsByConfig(
+			rows,
+			{ protocolAgeDaysMax: 90 },
+			{},
+			{},
+			{
+				getListedAt: (protocolId) => listedAtById[protocolId],
+				nowSeconds: NOW_SECONDS
+			}
+		)
 
 		expect(result.map((row) => row.protocolId)).toEqual(['new', 'boundary'])
 	})
 
 	it('supports a minimum age and clamps future listing timestamps to zero days', () => {
 		const rows = [protocolRow('future'), protocolRow('mature')]
-		const result = filterRowsByConfig(rows, { protocolAgeDaysMin: 10 }, {}, {}, {
-			getListedAt: (protocolId) =>
-				protocolId === 'future' ? NOW_SECONDS + DAY_IN_SECONDS : NOW_SECONDS - 10 * DAY_IN_SECONDS,
-			nowSeconds: NOW_SECONDS
-		})
+		const result = filterRowsByConfig(
+			rows,
+			{ protocolAgeDaysMin: 10 },
+			{},
+			{},
+			{
+				getListedAt: (protocolId) =>
+					protocolId === 'future' ? NOW_SECONDS + DAY_IN_SECONDS : NOW_SECONDS - 10 * DAY_IN_SECONDS,
+				nowSeconds: NOW_SECONDS
+			}
+		)
 
 		expect(result.map((row) => row.protocolId)).toEqual(['mature'])
 	})

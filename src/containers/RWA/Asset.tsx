@@ -49,6 +49,7 @@ import {
 import { useRWAAssetFlows, useRWAFlowSummary } from './flows.hooks'
 import { getRwaPlatforms } from './grouping'
 import { rwaSlug } from './rwaSlug'
+import { RWASuspiciousWarning } from './SuspiciousWarning'
 import { useNativeYieldHistory } from './useNativeYieldChart'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -252,6 +253,7 @@ const AssetHeader = ({
 				{asset.logo ? <TokenLogo src={asset.logo} size={24} /> : null}
 				<span>{displayName}</span>
 				{asset.ticker ? <span className="font-normal text-tertiary">({asset.ticker})</span> : null}
+				{asset.suspicious === true ? <RWASuspiciousWarning reason={asset.suspiciousReason} /> : null}
 			</Tag>
 			<AssetPrimaryValue
 				label={definitions.onChainMcap.label}

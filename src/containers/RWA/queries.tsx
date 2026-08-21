@@ -345,6 +345,8 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 				stablecoin: item.stablecoin,
 				governance: item.governance,
 				trueRWA: isTrueRWA,
+				suspicious: item.suspicious === true,
+				suspiciousReason: item.suspiciousReason ?? null,
 				onChainMcap: onChainMcapBreakdown
 					? {
 							total: effectiveOnChainMcap,
@@ -383,6 +385,7 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 				const isGovernanceOnly = isGovernance && !isStablecoin
 				const isStablecoinAndGovernance = isStablecoin && isGovernance
 				const isBaseAsset = !isStablecoin && !isGovernance
+				const includeInAggregates = selectedPlatform != null || item.suspicious !== true
 
 				assets.push(asset)
 				// Only expose `assetNames` when filtering by platform (used for platform-level UI filters).
@@ -391,21 +394,21 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 				}
 
 				// Track base totals (exclude stablecoin/governance buckets entirely)
-				if (isBaseAsset) {
+				if (includeInAggregates && isBaseAsset) {
 					totalOnChainMcap += effectiveOnChainMcap
 					totalActiveMcap += effectiveActiveMcap
 					totalDeFiActiveTvl += effectiveDeFiActiveTvl
 				}
 
-				if (isStablecoinOnly) {
+				if (includeInAggregates && isStablecoinOnly) {
 					totalOnChainMcapStablecoinsOnly += effectiveOnChainMcap
 					totalActiveMcapStablecoinsOnly += effectiveActiveMcap
 					totalDeFiActiveTvlStablecoinsOnly += effectiveDeFiActiveTvl
-				} else if (isGovernanceOnly) {
+				} else if (includeInAggregates && isGovernanceOnly) {
 					totalOnChainMcapGovernanceOnly += effectiveOnChainMcap
 					totalActiveMcapGovernanceOnly += effectiveActiveMcap
 					totalDeFiActiveTvlGovernanceOnly += effectiveDeFiActiveTvl
-				} else if (isStablecoinAndGovernance) {
+				} else if (includeInAggregates && isStablecoinAndGovernance) {
 					totalOnChainMcapStablecoinsAndGovernance += effectiveOnChainMcap
 					totalActiveMcapStablecoinsAndGovernance += effectiveActiveMcap
 					totalDeFiActiveTvlStablecoinsAndGovernance += effectiveDeFiActiveTvl
@@ -442,13 +445,13 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 				}
 				if (asset.issuer) {
 					// issuerSet is used for *base* issuer count (exclude stablecoin/governance buckets)
-					if (isBaseAsset) {
+					if (includeInAggregates && isBaseAsset) {
 						issuerSet.add(asset.issuer)
-					} else if (isStablecoinOnly) {
+					} else if (includeInAggregates && isStablecoinOnly) {
 						issuerSetStablecoinsOnly.add(asset.issuer)
-					} else if (isGovernanceOnly) {
+					} else if (includeInAggregates && isGovernanceOnly) {
 						issuerSetGovernanceOnly.add(asset.issuer)
-					} else if (isStablecoinAndGovernance) {
+					} else if (includeInAggregates && isStablecoinAndGovernance) {
 						issuerSetStablecoinsAndGovernance.add(asset.issuer)
 					}
 					issuers.set(asset.issuer, (issuers.get(asset.issuer) ?? 0) + effectiveOnChainMcap)
@@ -565,12 +568,14 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 			mode,
 			...(selectedCategory ? { categorySlug: selectedCategory } : {})
 		})
-		const defaultFilteredPerpsRows = defaultFilteredAssets.filter((asset) => asset.kind === 'perps')
+		const defaultAggregateAssets =
+			mode === 'platform' ? defaultFilteredAssets : defaultFilteredAssets.filter((asset) => asset.suspicious !== true)
+		const defaultFilteredPerpsRows = defaultAggregateAssets.filter((asset) => asset.kind === 'perps')
 		const initialChartDataset = chartRows
 			? {
 					metric: 'activeMcap' as const,
 					dataset: buildRwaCanonicalMetricDataset(
-						aggregateRwaMetricData(defaultFilteredAssets, chartRows, aggregationMode),
+						aggregateRwaMetricData(defaultAggregateAssets, chartRows, aggregationMode),
 						'activeMcap',
 						false
 					)

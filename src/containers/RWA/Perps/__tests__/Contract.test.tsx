@@ -101,6 +101,14 @@ describe('Contract helpers', () => {
 		expect(html).toContain('aria-label="Open xyz:META website"')
 	})
 
+	it('warns on suspicious market detail pages', () => {
+		const html = renderToStaticMarkup(
+			<RWAPerpsContractPage contract={{ ...TEST_CONTRACT, market: { ...TEST_CONTRACT.market, suspicious: true } }} />
+		)
+
+		expect(html).toContain('marked as suspicious and is excluded from cross-venue totals and charts')
+	})
+
 	it('normalizes invalid or missing groupBy values back to daily', () => {
 		expect(getRWAPerpsContractChartGroup(null)).toBe('daily')
 		expect(getRWAPerpsContractChartGroup('weekly')).toBe('weekly')

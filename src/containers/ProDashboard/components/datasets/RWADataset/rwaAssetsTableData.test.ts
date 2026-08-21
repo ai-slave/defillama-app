@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { sumRwaMetricBreakdown } from '~/containers/ProDashboard/rwaMetrics'
 import type { IFetchedRWAProject } from '~/containers/RWA/api.types'
-import { buildRWAAllChainsAssetTableRows, buildRWAChainAssetTableRows } from './rwaAssetsTableData'
+import { buildRWAAllChainsAssetTableRows, buildRWAAssetCsv, buildRWAChainAssetTableRows } from './rwaAssetsTableData'
 
 function asset(overrides: Partial<IFetchedRWAProject> = {}): IFetchedRWAProject {
 	return {
@@ -32,6 +32,16 @@ describe('RWA asset table data', () => {
 		expect(buildRWAAllChainsAssetTableRows([asset()])).toMatchObject([
 			{ activeMcap: null, onChainMcap: null, defiActiveTvl: 0 }
 		])
+	})
+
+	it('preserves suspicious metadata for warnings and CSV exports', () => {
+		const rows = buildRWAAllChainsAssetTableRows([
+			asset({ suspicious: true, suspiciousReason: 'Unverified valuation source' })
+		])
+		expect(rows[0]).toMatchObject({ suspicious: true, suspiciousReason: 'Unverified valuation source' })
+		const csv = buildRWAAssetCsv(rows, true)
+		expect(csv[0]?.slice(-2)).toEqual(['Suspicious', 'Suspicious reason'])
+		expect(csv[1]?.slice(-2)).toEqual([true, 'Unverified valuation source'])
 	})
 
 	it('includes selected-chain assets based on source membership even when every value is zero', () => {

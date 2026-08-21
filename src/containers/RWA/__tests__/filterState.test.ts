@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { RWAAssetOverviewRow } from '../api.types'
 import {
 	filterRwaAssetOverviewRows,
+	filterRwaOverviewDisplayRows,
 	hasPerpsOverlayBlockingFiltersFromQuery,
 	parseAttributeFilterStatesParam,
 	type RWAFilterState
@@ -42,6 +43,8 @@ const baseAsset: RWAAssetOverviewRow = {
 	stablecoin: false,
 	governance: false,
 	trueRWA: true,
+	suspicious: false,
+	suspiciousReason: null,
 	onChainMcap: { total: 100, breakdown: [['Ethereum', 100]] },
 	activeMcap: { total: 50, breakdown: [['Ethereum', 50]] },
 	defiActiveTvl: { total: 25, breakdown: [['Aave', 25]] },
@@ -126,5 +129,31 @@ describe('RWA filter state', () => {
 				filterState
 			)
 		).toEqual([])
+	})
+
+	it('keeps suspicious assets visible but excludes them from non-platform totals', () => {
+		const suspiciousAsset = { ...baseAsset, id: 'suspicious', suspicious: true }
+		const result = filterRwaOverviewDisplayRows([baseAsset, suspiciousAsset], baseFilterState)
+
+		expect(result.filteredAssets).toHaveLength(2)
+		expect(result.aggregateAssets.map((asset) => asset.id)).toEqual(['asset-1'])
+		expect(result.totalOnChainMcap).toBe(100)
+		expect(result.totalActiveMcap).toBe(50)
+		expect(result.totalIssuersCount).toBe(1)
+	})
+
+	it('includes suspicious assets in their own platform totals', () => {
+		const suspiciousAsset = { ...baseAsset, id: 'suspicious', suspicious: true, issuer: 'Issuer Two' }
+		const result = filterRwaOverviewDisplayRows([baseAsset, suspiciousAsset], {
+			...baseFilterState,
+			isPlatformMode: true,
+			selectedAssetNames: ['Asset One'],
+			selectedIssuers: ['Issuer One', 'Issuer Two']
+		})
+
+		expect(result.totalOnChainMcap).toBe(200)
+		expect(result.aggregateAssets).toBe(result.filteredAssets)
+		expect(result.totalActiveMcap).toBe(100)
+		expect(result.totalIssuersCount).toBe(2)
 	})
 })

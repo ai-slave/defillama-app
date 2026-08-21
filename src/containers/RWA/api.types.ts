@@ -61,6 +61,8 @@ export interface IFetchedRWAProject {
 	holdersToRemove?: RWAHoldersByChain | null
 	discord?: string | null
 	telegram?: string | null
+	suspicious?: boolean | null
+	suspiciousReason?: string | null
 }
 
 /** One classification slice in segmented RWA stats (base, stablecoins-only, governance, both). */
@@ -148,6 +150,8 @@ export type RWAOverviewDisplayRowBase = {
 	stablecoin: boolean | null
 	governance: boolean | null
 	trueRWA: boolean
+	suspicious: boolean
+	suspiciousReason: string | null
 	onChainMcap: RWAOverviewMetric
 	activeMcap: RWAOverviewMetric
 	defiActiveTvl: RWAOverviewMetric

@@ -33,6 +33,8 @@ const baseAsset: RWAAssetOverviewRow = {
 	stablecoin: false,
 	governance: false,
 	trueRWA: true,
+	suspicious: false,
+	suspiciousReason: null,
 	onChainMcap: {
 		total: 100,
 		breakdown: [['Ethereum', 100]]

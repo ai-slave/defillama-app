@@ -105,7 +105,10 @@ describe('protocol base metric family capabilities', () => {
 	it('requests holder revenue for the 7d over 7d column', () => {
 		expect(
 			getProtocolMetricCapabilities(
-				config({ columnOrder: ['holderRevenueChange7dOver7d'], columnVisibility: { holderRevenueChange7dOver7d: true } })
+				config({
+					columnOrder: ['holderRevenueChange7dOver7d'],
+					columnVisibility: { holderRevenueChange7dOver7d: true }
+				})
 			).baseMetricFamilies
 		).toEqual(['holder-revenue'])
 	})

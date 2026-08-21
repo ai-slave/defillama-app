@@ -61,6 +61,7 @@ export type RWAFilterState = {
 
 export type RWAFilteredRowsResult = {
 	filteredAssets: RWAOverviewDisplayRow[]
+	aggregateAssets: RWAOverviewDisplayRow[]
 	totalOnChainMcap: number
 	totalActiveMcap: number
 	totalOnChainDeFiActiveTvl: number
@@ -208,6 +209,7 @@ export function filterRwaOverviewDisplayRows(
 		}
 	}
 	const filteredAssets: RWAOverviewDisplayRow[] = [...filteredSpotRows, ...filteredPerpsRows]
+	const aggregateAssets = filterState.isPlatformMode ? filteredAssets : []
 
 	let totalOnChainMcap = 0
 	let totalActiveMcap = 0
@@ -216,6 +218,8 @@ export function filterRwaOverviewDisplayRows(
 	const totalIssuersSet = new Set<string>()
 
 	for (const asset of filteredAssets) {
+		if (asset.suspicious === true && !filterState.isPlatformMode) continue
+		if (!filterState.isPlatformMode) aggregateAssets.push(asset)
 		totalOnChainMcap += asset.onChainMcap?.total ?? 0
 		totalActiveMcap += asset.activeMcap?.total ?? 0
 		totalOnChainDeFiActiveTvl += asset.defiActiveTvl?.total ?? 0
@@ -225,6 +229,7 @@ export function filterRwaOverviewDisplayRows(
 
 	return {
 		filteredAssets,
+		aggregateAssets,
 		totalOnChainMcap,
 		totalActiveMcap,
 		totalOnChainDeFiActiveTvl,
@@ -236,6 +241,7 @@ export function filterRwaOverviewDisplayRows(
 export function getEmptyRwaFilteredRowsResult(): RWAFilteredRowsResult {
 	return {
 		filteredAssets: [],
+		aggregateAssets: [],
 		totalOnChainMcap: 0,
 		totalActiveMcap: 0,
 		totalOnChainDeFiActiveTvl: 0,
