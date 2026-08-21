@@ -1,6 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
-import { useCallback, useMemo } from 'react'
+import { useCallback } from 'react'
 import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import type {} from '~/components/Table/utils'
@@ -14,7 +14,14 @@ import type { RWAPositionalChartDataset } from './chartDataset'
 import { definitions } from './definitions'
 import type { RWAFlowTreemapSizeRow } from './flowTreemap'
 import { RWAOverviewBreakdownChart } from './OverviewBreakdownChart'
-import { formatRWAOverviewUsd, getRWAOverviewAssetCount, hasExcludedRWAOverviewAssets } from './overviewTableData'
+import {
+	formatRWAOverviewUsd,
+	getRWAOverviewAssetCount,
+	getRWAOverviewCsvFileName,
+	getRWAOverviewInclusion,
+	getRWAOverviewTableData,
+	hasExcludedRWAOverviewAssets
+} from './overviewTableData'
 import { rwaSlug } from './rwaSlug'
 
 type RWAChainsTableRow = {
@@ -115,9 +122,11 @@ export function RWAChains({
 	const router = useRouter()
 	const stablecoinsQ = router.query.includeStablecoins as string | string[] | undefined
 	const governanceQ = router.query.includeGovernance as string | string[] | undefined
-
+	const bridgeTvlQ = router.query.includeBridgeTvl as string | string[] | undefined
 	const includeStablecoins = stablecoinsQ != null ? isTrueQueryParam(stablecoinsQ) : false
 	const includeGovernance = governanceQ != null ? isTrueQueryParam(governanceQ) : false
+	const includeBridgeTvl = bridgeTvlQ != null ? isTrueQueryParam(bridgeTvlQ) : true
+	const inclusion = getRWAOverviewInclusion(includeStablecoins, includeGovernance, includeBridgeTvl)
 
 	const onToggleStablecoins = useCallback(() => {
 		void pushShallowQuery(router, { includeStablecoins: includeStablecoins ? undefined : 'true' })
@@ -127,75 +136,29 @@ export function RWAChains({
 		void pushShallowQuery(router, { includeGovernance: includeGovernance ? undefined : 'true' })
 	}, [includeGovernance, router])
 
-	const data = useMemo(() => {
-		return chains.map((row) => {
-			let totalOnChainMcap = row.base.onChainMcap
-			if (includeStablecoins) {
-				totalOnChainMcap += row.stablecoinsOnly.onChainMcap
-			}
-			if (includeGovernance) {
-				totalOnChainMcap += row.governanceOnly.onChainMcap
-			}
-			if (includeStablecoins || includeGovernance) {
-				totalOnChainMcap += row.stablecoinsAndGovernance.onChainMcap
-			}
+	const onToggleBridgeTvl = useCallback(() => {
+		void pushShallowQuery(router, { includeBridgeTvl: includeBridgeTvl ? 'false' : undefined })
+	}, [includeBridgeTvl, router])
 
-			let totalActiveMcap = row.base.activeMcap
-			if (includeStablecoins) {
-				totalActiveMcap += row.stablecoinsOnly.activeMcap
-			}
-			if (includeGovernance) {
-				totalActiveMcap += row.governanceOnly.activeMcap
-			}
-			if (includeStablecoins || includeGovernance) {
-				totalActiveMcap += row.stablecoinsAndGovernance.activeMcap
-			}
-
-			let totalDefiActiveTvl = row.base.defiActiveTvl
-			if (includeStablecoins) {
-				totalDefiActiveTvl += row.stablecoinsOnly.defiActiveTvl
-			}
-			if (includeGovernance) {
-				totalDefiActiveTvl += row.governanceOnly.defiActiveTvl
-			}
-			if (includeStablecoins || includeGovernance) {
-				totalDefiActiveTvl += row.stablecoinsAndGovernance.defiActiveTvl
-			}
-
-			let totalAssetIssuers = [...row.base.assetIssuers]
-			if (includeStablecoins) {
-				totalAssetIssuers.push(...row.stablecoinsOnly.assetIssuers)
-			}
-			if (includeGovernance) {
-				totalAssetIssuers.push(...row.governanceOnly.assetIssuers)
-			}
-			if (includeStablecoins || includeGovernance) {
-				totalAssetIssuers.push(...row.stablecoinsAndGovernance.assetIssuers)
-			}
-
-			return {
-				chain: row.chain,
-				totalOnChainMcap,
-				totalActiveMcap,
-				totalDefiActiveTvl,
-				totalAssetIssuers: Array.from(new Set(totalAssetIssuers)).length,
-				totalAssetCount: getRWAOverviewAssetCount(row),
-				hasExcludedAssets: hasExcludedRWAOverviewAssets(row, includeStablecoins, includeGovernance)
-			}
-		})
-	}, [chains, includeGovernance, includeStablecoins])
+	const data = chains.map((row) => {
+		const tableData = getRWAOverviewTableData(row, inclusion)
+		return {
+			chain: row.chain,
+			totalOnChainMcap: tableData.onChainMcap,
+			totalActiveMcap: tableData.activeMcap,
+			totalDefiActiveTvl: tableData.defiActiveTvl,
+			totalAssetIssuers: tableData.assetIssuers,
+			totalAssetCount: getRWAOverviewAssetCount(row),
+			hasExcludedAssets: hasExcludedRWAOverviewAssets(row, includeStablecoins, includeGovernance)
+		}
+	})
 	const treemapSizeRows: RWAFlowTreemapSizeRow[] = data.map((row) => ({
 		name: row.chain,
 		activeMcap: row.totalActiveMcap,
 		onChainMcap: row.totalOnChainMcap,
 		defiActiveTvl: row.totalDefiActiveTvl
 	}))
-	const csvFileName = (() => {
-		const parts = ['rwa-chains']
-		if (includeStablecoins) parts.push('stablecoins')
-		if (includeGovernance) parts.push('governance')
-		return `${parts.join('-')}.csv`
-	})()
+	const csvFileName = getRWAOverviewCsvFileName('rwa-chains', inclusion)
 
 	return (
 		<div className="flex flex-col gap-2">
@@ -210,6 +173,9 @@ export function RWAChains({
 				</Checkbox>
 				<Checkbox variant="filter" value="includeGovernance" checked={includeGovernance} onChange={onToggleGovernance}>
 					<span className="whitespace-nowrap">Governance Tokens</span>
+				</Checkbox>
+				<Checkbox variant="filter" value="includeBridgeTvl" checked={includeBridgeTvl} onChange={onToggleBridgeTvl}>
+					<span className="whitespace-nowrap">Bridge/Interop TVL</span>
 				</Checkbox>
 			</Card>
 			<RWAOverviewBreakdownChart

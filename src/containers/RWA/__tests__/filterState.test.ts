@@ -5,11 +5,24 @@ import {
 	filterRwaOverviewDisplayRows,
 	hasPerpsOverlayBlockingFiltersFromQuery,
 	parseAttributeFilterStatesParam,
+	getRwaDisplayedDefiActiveTvl,
+	getRwaDisplayedDefiActiveTvlByChain,
+	getRwaDisplayedDefiActiveTvlByProtocol,
 	type RWAFilterState
 } from '../filterState'
 
-const DEFAULT_INCLUSION = { includeStablecoins: false, includeGovernance: false, includeRwaPerps: false }
-const DEFAULT_ALL_INCLUSION = { includeStablecoins: true, includeGovernance: true, includeRwaPerps: false }
+const DEFAULT_INCLUSION = {
+	includeStablecoins: false,
+	includeGovernance: false,
+	includeRwaPerps: false,
+	includeBridgeTvl: true
+}
+const DEFAULT_ALL_INCLUSION = {
+	includeStablecoins: true,
+	includeGovernance: true,
+	includeRwaPerps: false,
+	includeBridgeTvl: true
+}
 
 const baseAsset: RWAAssetOverviewRow = {
 	id: 'asset-1',
@@ -72,6 +85,7 @@ const baseFilterState: RWAFilterState = {
 	includeStablecoins: true,
 	includeGovernance: true,
 	includeRwaPerps: true,
+	includeBridgeTvl: true,
 	hasPerpsOverlayBlockingFilters: false,
 	minDefiActiveTvlToOnChainMcapPct: null,
 	maxDefiActiveTvlToOnChainMcapPct: null,
@@ -129,6 +143,40 @@ describe('RWA filter state', () => {
 				filterState
 			)
 		).toEqual([])
+	})
+
+	it('subtracts bridge TVL from display values and ratio filters only when excluded', () => {
+		const asset: RWAAssetOverviewRow = {
+			...baseAsset,
+			bridgeTvl: 10,
+			bridgeTvlByChain: { total: 10, breakdown: [['Ethereum', 10]] },
+			bridgeTvlByProtocol: { total: 10, breakdown: [['Portal', 10]] },
+			defiActiveTvl: {
+				total: 25,
+				breakdown: [
+					['Aave', 15],
+					['Portal', 10]
+				]
+			}
+		}
+		expect(getRwaDisplayedDefiActiveTvl(asset, true)).toBe(25)
+		expect(getRwaDisplayedDefiActiveTvl(asset, false)).toBe(15)
+		expect(getRwaDisplayedDefiActiveTvlByChain(asset, false)).toEqual([['Ethereum', 15]])
+		expect(getRwaDisplayedDefiActiveTvlByProtocol(asset, false)).toEqual([['Aave', 15]])
+		expect(getRwaDisplayedDefiActiveTvlByProtocol({ ...asset, bridgeTvlByProtocol: null }, false)).toBeNull()
+
+		const filteredWithBridge = filterRwaAssetOverviewRows([asset], {
+			...baseFilterState,
+			minDefiActiveTvlToOnChainMcapPct: 20,
+			includeBridgeTvl: true
+		})
+		const filteredWithoutBridge = filterRwaAssetOverviewRows([asset], {
+			...baseFilterState,
+			minDefiActiveTvlToOnChainMcapPct: 20,
+			includeBridgeTvl: false
+		})
+		expect(filteredWithBridge).toHaveLength(1)
+		expect(filteredWithoutBridge).toHaveLength(0)
 	})
 
 	it('keeps suspicious assets visible but excludes them from non-platform totals', () => {

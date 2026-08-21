@@ -129,12 +129,14 @@ export async function fetchRWAChartMetricDataByAsset({
 	target,
 	metric,
 	includeStablecoins,
-	includeGovernance
+	includeGovernance,
+	includeBridgeTvl = true
 }: {
 	target: RWAAssetChartTarget
 	metric: RWAChartMetricKey
 	includeStablecoins: boolean
 	includeGovernance: boolean
+	includeBridgeTvl?: boolean
 }): Promise<IRWAChartMetricRows | null> {
 	let chartUrl = `${RWA_SERVER_URL}/chart/chain/all`
 	switch (target.kind) {
@@ -161,18 +163,48 @@ export async function fetchRWAChartMetricDataByAsset({
 		includeGovernance: String(includeGovernance)
 	})
 	return fetchJson<IRWAChartDataByAsset>(`${chartUrl}/asset-breakdown?${searchParams.toString()}`)
-		.then((data) => normalizeRWAChartMetricRows(data, metric))
+		.then((data) => normalizeRWAChartMetricRows(data, metric, includeBridgeTvl))
 		.catch((error) => {
 			console.error(`Failed to fetch RWA ${metric} chart data by asset:`, error)
 			return null
 		})
 }
 
+/**
+ * Subtract the per-asset bridge/interop portion from defiActiveTvl rows.
+ * Only meaningful for the defiActiveTvl metric; other metrics have no bridge component.
+ */
+export function subtractBridgeFromMetricRows(
+	defiRows: IRWAChartMetricRows,
+	bridgeRows: IRWAChartMetricRows | undefined
+): IRWAChartMetricRows {
+	if (bridgeRows == null) throw new Error('RWA bridge TVL history is unavailable')
+	const bridgeByTimestamp = new Map<number, Record<string, number>>()
+	for (const row of bridgeRows) bridgeByTimestamp.set(row.timestamp, row as Record<string, number>)
+
+	return defiRows.map((row) => {
+		const bridgeRow = bridgeByTimestamp.get(row.timestamp)
+		if (!bridgeRow) throw new Error(`RWA bridge TVL history is missing timestamp ${row.timestamp}`)
+		const out: { timestamp: number } & Record<string, number> = { timestamp: row.timestamp }
+		for (const key in row) {
+			if (key === 'timestamp' || !Object.prototype.hasOwnProperty.call(row, key)) continue
+			const bridgeVal = bridgeRow[key] ?? 0
+			out[key] = row[key] - bridgeVal
+		}
+		return out
+	})
+}
+
 export function normalizeRWAChartMetricRows(
 	data: IRWAChartDataByAsset,
-	metric: RWAChartMetricKey
+	metric: RWAChartMetricKey,
+	includeBridgeTvl: boolean = true
 ): IRWAChartMetricRows {
-	return data[metric].map((row) => ({ ...row, timestamp: rwaUnixSecondsToMilliseconds(row.timestamp) }))
+	const rows =
+		metric === 'defiActiveTvl' && !includeBridgeTvl
+			? subtractBridgeFromMetricRows(data.defiActiveTvl, data.bridgeTvl)
+			: data[metric]
+	return rows.map((row) => ({ ...row, timestamp: rwaUnixSecondsToMilliseconds(row.timestamp) }))
 }
 
 function normalizeRWABreakdownChartRows(rows: IRWABreakdownChartResponse): IRWABreakdownChartResponse {

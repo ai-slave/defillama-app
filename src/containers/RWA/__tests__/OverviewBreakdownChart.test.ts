@@ -131,7 +131,8 @@ describe('getOverviewBreakdownRequestState', () => {
 				breakdown: 'platform',
 				key: 'activeMcap',
 				includeStablecoin: false,
-				includeGovernance: false
+				includeGovernance: false,
+				includeBridgeTvl: true
 			},
 			isDefaultState: true
 		})
@@ -148,7 +149,8 @@ describe('getOverviewBreakdownRequestState', () => {
 				breakdown: 'platform',
 				key: 'activeMcap',
 				includeStablecoin: true,
-				includeGovernance: true
+				includeGovernance: true,
+				includeBridgeTvl: true
 			},
 			isDefaultState: false
 		})
@@ -160,7 +162,8 @@ describe('getOverviewBreakdownRequestState', () => {
 				breakdown: 'category',
 				key: 'activeMcap',
 				includeStablecoin: false,
-				includeGovernance: false
+				includeGovernance: false,
+				includeBridgeTvl: true
 			},
 			isDefaultState: true
 		})
@@ -170,10 +173,26 @@ describe('getOverviewBreakdownRequestState', () => {
 				breakdown: 'assetGroup',
 				key: 'activeMcap',
 				includeStablecoin: false,
-				includeGovernance: false
+				includeGovernance: false,
+				includeBridgeTvl: true
 			},
 			isDefaultState: true
 		})
+	})
+
+	it('uses a non-default DeFi request when bridge TVL is excluded', () => {
+		expect(getOverviewBreakdownRequestState({ kind: 'chain' }, 'defiActiveTvl', { includeBridgeTvl: 'false' })).toEqual(
+			{
+				request: {
+					breakdown: 'chain',
+					key: 'defiActiveTvl',
+					includeStablecoin: false,
+					includeGovernance: false,
+					includeBridgeTvl: false
+				},
+				isDefaultState: false
+			}
+		)
 	})
 
 	it('renders supplied total series with requested aggregate breakdown charts', async () => {

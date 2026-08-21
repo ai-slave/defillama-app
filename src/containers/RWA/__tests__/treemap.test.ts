@@ -163,4 +163,26 @@ describe('buildRwaNestedTreemapTreeData', () => {
 			}
 		])
 	})
+
+	it('subtracts bridge TVL from nested DeFi sizes when excluded', () => {
+		const tree = buildRwaNestedTreemapTreeData({
+			assets: [
+				{
+					...baseAsset,
+					defiActiveTvl: { total: 10, breakdown: [['Aave', 10]] },
+					defiActiveTvlByChain: { total: 10, breakdown: [['Ethereum', 10]] },
+					bridgeTvl: 3,
+					bridgeTvlByChain: { total: 3, breakdown: [['Ethereum', 3]] }
+				}
+			],
+			metric: 'defiActiveTvl',
+			rootLabel: 'Chain',
+			parentGrouping: 'chain',
+			childGrouping: 'assetName',
+			includeBridgeTvl: false
+		})
+
+		expect(tree[0]?.value[0]).toBe(7)
+		expect(tree[0]?.children?.[0]?.value[0]).toBe(7)
+	})
 })

@@ -113,6 +113,7 @@ describe('buildRWAPlatformPageData', () => {
 				governance: false,
 				attestations: true,
 				defiActiveTvl: { Ethereum: { Aave: 100 } },
+				bridgeTvl: { Ethereum: 40 },
 				category: ['Stablecoins', 'Other'],
 				assetClass: ['Cash', 'Cash'],
 				chain: ['Ethereum', 'Ethereum'],
@@ -170,6 +171,7 @@ describe('buildRWAPlatformPageData', () => {
 		expect(result.chainCount).toBe(3)
 		expect(result.attestedAssetCount).toBe(2)
 		expect(result.defiActiveTvl).toBe(175)
+		expect(result.bridgeTvl).toBe(40)
 		expect(result.defiActiveTvlToAumPct).toBe(17.5)
 		expect(result.categoryMix).toEqual([
 			{ name: 'RWA Perps', count: 1 },

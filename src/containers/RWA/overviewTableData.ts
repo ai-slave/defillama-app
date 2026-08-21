@@ -1,13 +1,28 @@
 import { formatUsd } from '~/utils/numberFormat'
 import type { RWAStatsSegmented } from './api.types'
 
-type RWAOverviewInclusion = { kind: 'base' } | { kind: 'stablecoins' } | { kind: 'governance' } | { kind: 'all' }
+type RWAOverviewInclusion = ({ kind: 'base' } | { kind: 'stablecoins' } | { kind: 'governance' } | { kind: 'all' }) & {
+	// Include the bridge/interop portion of defiActiveTvl. Default true = today's numbers.
+	includeBridgeTvl: boolean
+}
 
-export function getRWAOverviewInclusion(includeStablecoins: boolean, includeGovernance: boolean): RWAOverviewInclusion {
-	if (includeStablecoins && includeGovernance) return { kind: 'all' }
-	if (includeStablecoins) return { kind: 'stablecoins' }
-	if (includeGovernance) return { kind: 'governance' }
-	return { kind: 'base' }
+const CSV_SUFFIX = {
+	base: '',
+	stablecoins: '-stablecoins',
+	governance: '-governance',
+	all: '-stablecoins-governance',
+	withoutBridgeTvl: '-without-bridge-tvl'
+} satisfies Record<RWAOverviewInclusion['kind'] | 'withoutBridgeTvl', string>
+
+export function getRWAOverviewInclusion(
+	includeStablecoins: boolean,
+	includeGovernance: boolean,
+	includeBridgeTvl: boolean = true
+): RWAOverviewInclusion {
+	if (includeStablecoins && includeGovernance) return { kind: 'all', includeBridgeTvl }
+	if (includeStablecoins) return { kind: 'stablecoins', includeBridgeTvl }
+	if (includeGovernance) return { kind: 'governance', includeBridgeTvl }
+	return { kind: 'base', includeBridgeTvl }
 }
 
 export function getRWAOverviewTableData(row: RWAStatsSegmented, inclusion: RWAOverviewInclusion) {
@@ -16,12 +31,14 @@ export function getRWAOverviewTableData(row: RWAStatsSegmented, inclusion: RWAOv
 	let activeMcap = 0
 	let onChainMcap = 0
 	let defiActiveTvl = 0
+	let bridgeTvl = 0
 
 	const addSlice = (slice: RWAStatsSegmented[keyof RWAStatsSegmented]) => {
 		assetCount += slice.assetCount
 		activeMcap += slice.activeMcap
 		onChainMcap += slice.onChainMcap
 		defiActiveTvl += slice.defiActiveTvl
+		bridgeTvl += slice.bridgeTvl ?? 0
 
 		for (const issuer of slice.assetIssuers) {
 			issuers.add(issuer)
@@ -54,7 +71,7 @@ export function getRWAOverviewTableData(row: RWAStatsSegmented, inclusion: RWAOv
 		assetCount,
 		activeMcap,
 		onChainMcap,
-		defiActiveTvl,
+		defiActiveTvl: inclusion.includeBridgeTvl ? defiActiveTvl : defiActiveTvl - bridgeTvl,
 		assetIssuers: issuers.size
 	}
 }
@@ -87,14 +104,5 @@ export function formatRWAOverviewUsd(value: number, hasExcludedAssets: boolean) 
 }
 
 export function getRWAOverviewCsvFileName(prefix: string, inclusion: RWAOverviewInclusion) {
-	switch (inclusion.kind) {
-		case 'base':
-			return prefix
-		case 'stablecoins':
-			return `${prefix}-stablecoins`
-		case 'governance':
-			return `${prefix}-governance`
-		case 'all':
-			return `${prefix}-stablecoins-governance`
-	}
+	return `${prefix}${CSV_SUFFIX[inclusion.kind]}${inclusion.includeBridgeTvl ? '' : CSV_SUFFIX.withoutBridgeTvl}`
 }

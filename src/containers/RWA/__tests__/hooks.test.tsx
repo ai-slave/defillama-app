@@ -9,6 +9,7 @@ import {
 	getRwaAssetChartQueryKey,
 	getRwaOpenInterestChartQueryKey,
 	hasActiveChartFilters,
+	hasActiveFlowFilters,
 	resolveRWAOverviewInclusionFlag,
 	useRWAAssetCategoryPieChartData,
 	useFilteredRwaAssets,
@@ -320,14 +321,14 @@ describe('useRwaChartDataset', () => {
 		expect(totalMarkup).toContain('timestamp|Total Onchain Mcap')
 		expect(useQueryMock).toHaveBeenCalledTimes(6)
 		expect(getUseQueryOptions(0)).toMatchObject({
-			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'onChainMcap', false, false)
+			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'onChainMcap', false, false, true)
 		})
 		expect(getUseQueryOptions(1)).toMatchObject({
 			queryKey: getRwaOpenInterestChartQueryKey(),
 			enabled: false
 		})
 		expect(getUseQueryOptions(2)).toMatchObject({
-			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'onChainMcap', false, false)
+			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'onChainMcap', false, false, true)
 		})
 	})
 
@@ -336,14 +337,14 @@ describe('useRwaChartDataset', () => {
 		renderToStaticMarkup(React.createElement(DatasetProbe, { mode: 'category', includeStablecoins: true }))
 
 		expect(getUseQueryOptions(0)).toMatchObject({
-			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'onChainMcap', false, false)
+			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'onChainMcap', false, false, true)
 		})
 		expect(getUseQueryOptions(1)).toMatchObject({
 			queryKey: getRwaOpenInterestChartQueryKey(),
 			enabled: false
 		})
 		expect(getUseQueryOptions(2)).toMatchObject({
-			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'onChainMcap', true, false)
+			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'onChainMcap', true, false, true)
 		})
 	})
 
@@ -394,7 +395,7 @@ describe('useRwaChartDataset', () => {
 		await capturedOptions.queryFn()
 
 		expect(fetchJsonMock).toHaveBeenCalledWith(
-			'/api/public/rwa/asset-breakdown?key=onChainMcap&includeStablecoin=true&includeGovernance=false'
+			'/api/public/rwa/asset-breakdown?key=onChainMcap&includeStablecoin=true&includeGovernance=false&includeBridgeTvl=true'
 		)
 	})
 
@@ -419,7 +420,7 @@ describe('useRwaChartDataset', () => {
 		expect(markup).toContain('timestamp|Total Onchain Mcap|Prerendered')
 		expect(useQueryMock).toHaveBeenCalledTimes(2)
 		expect(getUseQueryOptions(0)).toMatchObject({
-			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'onChainMcap', false, false),
+			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'onChainMcap', false, false, true),
 			enabled: false
 		})
 		expect(getUseQueryOptions(1)).toMatchObject({
@@ -457,7 +458,7 @@ describe('useRwaChartDataset', () => {
 		expect(markup).toContain('timestamp|Total Active Mcap|Treasuries|RWA Perps OI')
 		expect(useQueryMock).toHaveBeenCalledTimes(2)
 		expect(getUseQueryOptions(0)).toMatchObject({
-			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'activeMcap', false, false),
+			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'activeMcap', false, false, true),
 			enabled: false
 		})
 		expect(getUseQueryOptions(1)).toMatchObject({
@@ -552,7 +553,7 @@ describe('useRwaChartDataset', () => {
 		expect(markup).toContain('timestamp|Total Onchain Mcap')
 		expect(useQueryMock).toHaveBeenCalledTimes(2)
 		expect(getUseQueryOptions(0)).toMatchObject({
-			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'onChainMcap', false, false),
+			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'onChainMcap', false, false, true),
 			enabled: false
 		})
 		expect(getUseQueryOptions(1)).toMatchObject({
@@ -580,7 +581,7 @@ describe('useRwaChartDataset', () => {
 
 		expect(markup).toContain('timestamp|Total DeFi Active TVL|Treasuries|RWA Perps OI')
 		expect(getUseQueryOptions(0)).toMatchObject({
-			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'defiActiveTvl', false, false),
+			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'defiActiveTvl', false, false, true),
 			enabled: true
 		})
 		expect(getUseQueryOptions(1)).toMatchObject({
@@ -620,6 +621,12 @@ describe('hasActiveChartFilters', () => {
 
 	it('still treats non-inclusion query filters as active', () => {
 		expect(hasActiveChartFilters({ minActiveMcapToOnChainMcapPct: '10' }, DEFAULT_ALL_INCLUSION)).toBe(true)
+	})
+
+	it('does not refetch flow values for the metric-only bridge toggle', () => {
+		expect(hasActiveChartFilters({ includeBridgeTvl: 'false' }, DEFAULT_INCLUSION)).toBe(true)
+		expect(hasActiveFlowFilters({ includeBridgeTvl: 'false' }, DEFAULT_INCLUSION)).toBe(false)
+		expect(hasActiveFlowFilters({ includeStablecoins: 'true' }, DEFAULT_INCLUSION)).toBe(true)
 	})
 })
 

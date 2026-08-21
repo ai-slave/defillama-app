@@ -69,7 +69,8 @@ const FILTER_QUERY_KEYS = [
 	...DIALOG_FILTER_QUERY_KEYS,
 	'includeStablecoins',
 	'includeGovernance',
-	'includeRwaPerps'
+	'includeRwaPerps',
+	'includeBridgeTvl'
 ] as const
 
 const CHART_QUERY_KEYS = [
@@ -154,6 +155,7 @@ type RWAFilterSelections = {
 	includeStablecoins: boolean
 	includeGovernance: boolean
 	includeRwaPerps: boolean
+	includeBridgeTvl: boolean
 }
 
 type RWAFilterActions = {
@@ -163,6 +165,7 @@ type RWAFilterActions = {
 	setIncludeStablecoins: (value: boolean) => void
 	setIncludeGovernance: (value: boolean) => void
 	setIncludeRwaPerps: (value: boolean) => void
+	setIncludeBridgeTvl: (value: boolean) => void
 	setRedeemableStates: (values: RWAAttributeFilterState[]) => void
 	setAttestationsStates: (values: RWAAttributeFilterState[]) => void
 	setCexListedStates: (values: RWAAttributeFilterState[]) => void
@@ -214,7 +217,7 @@ type RWAActiveFilterPill = {
 }
 
 type RWAInclusionFilterConfig = {
-	id: 'includeStablecoins' | 'includeGovernance' | 'includeRwaPerps'
+	id: 'includeStablecoins' | 'includeGovernance' | 'includeRwaPerps' | 'includeBridgeTvl'
 	label: string
 	value: boolean
 	defaultValue: boolean
@@ -478,6 +481,12 @@ function getRwaInclusionFilters(props: RWAOverviewFiltersProps): RWAInclusionFil
 			label: 'RWA Perps',
 			value: props.selections.includeRwaPerps,
 			defaultValue: defaultInclusion.includeRwaPerps
+		},
+		{
+			id: 'includeBridgeTvl',
+			label: 'Bridge/Interop TVL',
+			value: props.selections.includeBridgeTvl,
+			defaultValue: defaultInclusion.includeBridgeTvl ?? true
 		}
 	]
 }
@@ -716,6 +725,14 @@ function RWAInclusionToggles({ selections, actions }: Pick<RWAOverviewFiltersPro
 				onChange={() => actions.setIncludeRwaPerps(!selections.includeRwaPerps)}
 			>
 				<span className="whitespace-nowrap">RWA Perps</span>
+			</Checkbox>
+			<Checkbox
+				variant="filter"
+				value="includeBridgeTvl"
+				checked={selections.includeBridgeTvl}
+				onChange={() => actions.setIncludeBridgeTvl(!selections.includeBridgeTvl)}
+			>
+				<span className="whitespace-nowrap">Bridge/Interop TVL</span>
 			</Checkbox>
 		</>
 	)

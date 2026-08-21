@@ -34,25 +34,28 @@ describe('parseOverviewBreakdownRequest', () => {
 			breakdown: 'platform',
 			key: 'activeMcap',
 			includeStablecoin: false,
-			includeGovernance: false
+			includeGovernance: false,
+			includeBridgeTvl: true
 		})
 	})
 
-	it('accepts platform requests when both flags are true', () => {
+	it('accepts bridge exclusion with both classification flags enabled', () => {
 		expect(
 			parseOverviewBreakdownRequest({
 				query: {
 					breakdown: 'platform',
 					key: 'activeMcap',
 					includeStablecoin: 'true',
-					includeGovernance: 'true'
+					includeGovernance: 'true',
+					includeBridgeTvl: 'false'
 				}
 			})
 		).toEqual({
 			breakdown: 'platform',
 			key: 'activeMcap',
 			includeStablecoin: true,
-			includeGovernance: true
+			includeGovernance: true,
+			includeBridgeTvl: false
 		})
 	})
 
@@ -70,7 +73,8 @@ describe('parseOverviewBreakdownRequest', () => {
 			breakdown: 'category',
 			key: 'activeMcap',
 			includeStablecoin: true,
-			includeGovernance: false
+			includeGovernance: false,
+			includeBridgeTvl: true
 		})
 
 		expect(
@@ -86,7 +90,8 @@ describe('parseOverviewBreakdownRequest', () => {
 			breakdown: 'assetGroup',
 			key: 'activeMcap',
 			includeStablecoin: false,
-			includeGovernance: true
+			includeGovernance: true,
+			includeBridgeTvl: true
 		})
 	})
 
@@ -152,6 +157,41 @@ describe('rwaOverviewBreakdown', () => {
 		expect(resultBody(result)).toEqual({
 			source: [[timestampMs, 42]],
 			dimensions: ['timestamp', 'Treasuries']
+		})
+	})
+
+	it('subtracts bridge TVL from excluded DeFi breakdown history', async () => {
+		const timestampMs = 1_774_483_200_000
+		mocks.fetchRWACategoryBreakdownChartData
+			.mockResolvedValueOnce([{ timestamp: timestampMs, Treasuries: 42, Credit: 3 }])
+			.mockResolvedValueOnce([{ timestamp: timestampMs, Treasuries: 2, Credit: 1 }])
+
+		const result = await rwaOverviewBreakdown.handle({
+			method: 'GET',
+			url: '',
+			headers: {},
+			query: {
+				breakdown: 'category',
+				key: 'defiActiveTvl',
+				includeStablecoin: 'false',
+				includeGovernance: 'false',
+				includeBridgeTvl: 'false'
+			}
+		})
+
+		expect(mocks.fetchRWACategoryBreakdownChartData).toHaveBeenNthCalledWith(1, {
+			key: 'defiActiveTvl',
+			includeStablecoin: false,
+			includeGovernance: false
+		})
+		expect(mocks.fetchRWACategoryBreakdownChartData).toHaveBeenNthCalledWith(2, {
+			key: 'bridgeTvl',
+			includeStablecoin: false,
+			includeGovernance: false
+		})
+		expect(resultBody(result)).toEqual({
+			source: [[timestampMs, 40, 2]],
+			dimensions: ['timestamp', 'Treasuries', 'Credit']
 		})
 	})
 })

@@ -29,6 +29,8 @@ import {
 import { getDefaultSelectedTypes, type RWAOverviewInclusionDefaults, type RWAOverviewMode } from './constants'
 import {
 	filterRwaOverviewDisplayRows,
+	getRwaDisplayedDefiActiveTvlByChain,
+	getRwaDisplayedMetricValue,
 	getEmptyRwaFilteredRowsResult,
 	hasActiveInclusionOverride,
 	hasPerpsOverlayBlockingFiltersFromQuery,
@@ -145,6 +147,7 @@ export const useRWATableQueryParams = ({
 		includeStablecoins: stablecoinsQ,
 		includeGovernance: governanceQ,
 		includeRwaPerps: rwaPerpsQ,
+		includeBridgeTvl: bridgeTvlQ,
 		redeemableStates: redeemableStatesQ,
 		attestationsStates: attestationsStatesQ,
 		cexListedStates: cexListedStatesQ,
@@ -178,7 +181,8 @@ export const useRWATableQueryParams = ({
 		maxDefiActiveTvlToActiveMcapPct,
 		includeStablecoins,
 		includeGovernance,
-		includeRwaPerps
+		includeRwaPerps,
+		includeBridgeTvl
 	} = useMemo(() => {
 		// If query param is 'None', return empty array. If no param, return all (default). Otherwise parse the array.
 		const parseArrayParam = (
@@ -216,6 +220,7 @@ export const useRWATableQueryParams = ({
 		const includeStablecoins = resolveRWAOverviewInclusionFlag(stablecoinsQ, defaultInclusion.includeStablecoins)
 		const includeGovernance = resolveRWAOverviewInclusionFlag(governanceQ, defaultInclusion.includeGovernance)
 		const includeRwaPerps = resolveRWAOverviewInclusionFlag(rwaPerpsQ, defaultInclusion.includeRwaPerps)
+		const includeBridgeTvl = resolveRWAOverviewInclusionFlag(bridgeTvlQ, defaultInclusion.includeBridgeTvl ?? true)
 
 		// Build selected arrays with correct "exclude" semantics:
 		// - if include param missing but exclude param exists, selection is (all - excluded), NOT "defaults - excluded"
@@ -339,7 +344,8 @@ export const useRWATableQueryParams = ({
 			maxDefiActiveTvlToActiveMcapPct,
 			includeStablecoins,
 			includeGovernance,
-			includeRwaPerps
+			includeRwaPerps,
+			includeBridgeTvl
 		}
 	}, [
 		assetNamesQ,
@@ -376,9 +382,11 @@ export const useRWATableQueryParams = ({
 		stablecoinsQ,
 		governanceQ,
 		rwaPerpsQ,
+		bridgeTvlQ,
 		defaultInclusion.includeStablecoins,
 		defaultInclusion.includeGovernance,
 		defaultInclusion.includeRwaPerps,
+		defaultInclusion.includeBridgeTvl,
 		assetNames,
 		types,
 		categories,
@@ -434,6 +442,12 @@ export const useRWATableQueryParams = ({
 		})
 	}
 
+	const setIncludeBridgeTvl = (value: boolean) => {
+		void pushShallowQuery(router, {
+			includeBridgeTvl: value === (defaultInclusion.includeBridgeTvl ?? true) ? undefined : value ? 'true' : 'false'
+		})
+	}
+
 	const setRedeemableStates = (values: RWAAttributeFilterState[]) =>
 		updateAttributeFilterStatesQuery('redeemableStates', values, router)
 	const setAttestationsStates = (values: RWAAttributeFilterState[]) =>
@@ -475,6 +489,7 @@ export const useRWATableQueryParams = ({
 		includeStablecoins,
 		includeGovernance,
 		includeRwaPerps,
+		includeBridgeTvl,
 		hasPerpsOverlayBlockingFilters,
 		setRedeemableStates,
 		setAttestationsStates,
@@ -488,7 +503,8 @@ export const useRWATableQueryParams = ({
 		setDefiActiveTvlToActiveMcapPctRange,
 		setIncludeStablecoins,
 		setIncludeGovernance,
-		setIncludeRwaPerps
+		setIncludeRwaPerps,
+		setIncludeBridgeTvl
 	}
 }
 
@@ -516,6 +532,7 @@ export const useFilteredRwaAssets = ({
 	includeStablecoins,
 	includeGovernance,
 	includeRwaPerps,
+	includeBridgeTvl = true,
 	hasPerpsOverlayBlockingFilters,
 	minDefiActiveTvlToOnChainMcapPct,
 	maxDefiActiveTvlToOnChainMcapPct,
@@ -545,6 +562,7 @@ export const useFilteredRwaAssets = ({
 	includeStablecoins: boolean
 	includeGovernance: boolean
 	includeRwaPerps: boolean
+	includeBridgeTvl?: boolean
 	hasPerpsOverlayBlockingFilters: boolean
 	minDefiActiveTvlToOnChainMcapPct: number | null
 	maxDefiActiveTvlToOnChainMcapPct: number | null
@@ -580,6 +598,7 @@ export const useFilteredRwaAssets = ({
 			includeStablecoins,
 			includeGovernance,
 			includeRwaPerps,
+			includeBridgeTvl,
 			hasPerpsOverlayBlockingFilters,
 			minDefiActiveTvlToOnChainMcapPct,
 			maxDefiActiveTvlToOnChainMcapPct,
@@ -610,6 +629,7 @@ export const useFilteredRwaAssets = ({
 		includeStablecoins,
 		includeGovernance,
 		includeRwaPerps,
+		includeBridgeTvl,
 		hasPerpsOverlayBlockingFilters,
 		minDefiActiveTvlToOnChainMcapPct,
 		maxDefiActiveTvlToOnChainMcapPct,
@@ -625,13 +645,15 @@ export function useRWAAssetCategoryPieChartData({
 	assets,
 	categories,
 	selectedCategories,
-	metric
+	metric,
+	includeBridgeTvl = true
 }: {
 	enabled: boolean
 	assets: IRWAAssetsOverview['assets']
 	categories: string[]
 	selectedCategories: string[]
 	metric: RWAChartMetricKey
+	includeBridgeTvl?: boolean
 }) {
 	return useMemo(() => {
 		if (!enabled) {
@@ -645,7 +667,10 @@ export function useRWAAssetCategoryPieChartData({
 			const primaryCategory = getPrimaryRwaCategory(asset.category)
 			if (!primaryCategory || !selectedCategoriesSet.has(primaryCategory)) continue
 
-			categoryTotals.set(primaryCategory, (categoryTotals.get(primaryCategory) ?? 0) + (asset[metric]?.total ?? 0))
+			categoryTotals.set(
+				primaryCategory,
+				(categoryTotals.get(primaryCategory) ?? 0) + getRwaDisplayedMetricValue(asset, metric, includeBridgeTvl)
+			)
 		}
 
 		const pieChartData: PieChartDatum[] = []
@@ -658,7 +683,7 @@ export function useRWAAssetCategoryPieChartData({
 			pieChartData,
 			pieChartStackColors
 		}
-	}, [assets, categories, enabled, metric, selectedCategories])
+	}, [assets, categories, enabled, includeBridgeTvl, metric, selectedCategories])
 }
 
 export function useRwaCategoryAssetClassPieChartData({
@@ -666,13 +691,15 @@ export function useRwaCategoryAssetClassPieChartData({
 	assets,
 	assetClasses,
 	selectedAssetClasses,
-	metric
+	metric,
+	includeBridgeTvl = true
 }: {
 	enabled: boolean
 	assets: IRWAAssetsOverview['assets']
 	assetClasses: string[]
 	selectedAssetClasses: string[]
 	metric: RWAChartMetricKey
+	includeBridgeTvl?: boolean
 }) {
 	return useMemo(() => {
 		if (!enabled) {
@@ -687,7 +714,10 @@ export function useRwaCategoryAssetClassPieChartData({
 			for (const { value: assetClass, weight } of computeWeightedGroups(asset.assetClass)) {
 				if (!assetClass || !selectedAssetClassesSet.has(assetClass)) continue
 
-				assetClassTotals.set(assetClass, (assetClassTotals.get(assetClass) ?? 0) + (asset[metric]?.total ?? 0) * weight)
+				assetClassTotals.set(
+					assetClass,
+					(assetClassTotals.get(assetClass) ?? 0) + getRwaDisplayedMetricValue(asset, metric, includeBridgeTvl) * weight
+				)
 			}
 		}
 
@@ -701,19 +731,21 @@ export function useRwaCategoryAssetClassPieChartData({
 			pieChartData,
 			pieChartStackColors
 		}
-	}, [assetClasses, assets, enabled, metric, selectedAssetClasses])
+	}, [assetClasses, assets, enabled, includeBridgeTvl, metric, selectedAssetClasses])
 }
 
 export function useRwaAssetNamePieChartData({
 	enabled,
 	assets,
 	selectedAssetNames,
-	metric
+	metric,
+	includeBridgeTvl = true
 }: {
 	enabled: boolean
 	assets: IRWAAssetsOverview['assets']
 	selectedAssetNames: string[]
 	metric: RWAChartMetricKey
+	includeBridgeTvl?: boolean
 }) {
 	return useMemo(() => {
 		if (!enabled) {
@@ -731,7 +763,7 @@ export function useRwaAssetNamePieChartData({
 			const name = asset.assetName || asset.ticker
 			if (!selectedAssetNamesSet.has(name)) continue
 			discoveredNames.add(name)
-			totals.set(name, (totals.get(name) ?? 0) + (asset[metric]?.total ?? 0))
+			totals.set(name, (totals.get(name) ?? 0) + getRwaDisplayedMetricValue(asset, metric, includeBridgeTvl))
 		}
 
 		const colorOrder = Array.from(discoveredNames)
@@ -749,17 +781,19 @@ export function useRwaAssetNamePieChartData({
 			pieChartData,
 			pieChartStackColors
 		}
-	}, [assets, enabled, metric, selectedAssetNames])
+	}, [assets, enabled, includeBridgeTvl, metric, selectedAssetNames])
 }
 
 export function useRwaAssetGroupPieChartData({
 	enabled,
 	assets,
-	metric
+	metric,
+	includeBridgeTvl = true
 }: {
 	enabled: boolean
 	assets: IRWAAssetsOverview['assets']
 	metric: RWAChartMetricKey
+	includeBridgeTvl?: boolean
 }) {
 	return useMemo(() => {
 		if (!enabled || assets.length === 0) {
@@ -769,7 +803,10 @@ export function useRwaAssetGroupPieChartData({
 		const totalsByGroup = new Map<string, number>()
 		for (const asset of assets) {
 			const assetGroup = normalizeRwaAssetGroup(asset.assetGroup)
-			totalsByGroup.set(assetGroup, (totalsByGroup.get(assetGroup) ?? 0) + (asset[metric]?.total ?? 0))
+			totalsByGroup.set(
+				assetGroup,
+				(totalsByGroup.get(assetGroup) ?? 0) + getRwaDisplayedMetricValue(asset, metric, includeBridgeTvl)
+			)
 		}
 
 		const colorOrder = Array.from(totalsByGroup.keys()).sort()
@@ -785,17 +822,19 @@ export function useRwaAssetGroupPieChartData({
 			pieChartData,
 			pieChartStackColors
 		}
-	}, [assets, enabled, metric])
+	}, [assets, enabled, includeBridgeTvl, metric])
 }
 
 export function useRwaAssetPlatformPieChartData({
 	enabled,
 	assets,
-	metric
+	metric,
+	includeBridgeTvl = true
 }: {
 	enabled: boolean
 	assets: IRWAAssetsOverview['assets']
 	metric: RWAChartMetricKey
+	includeBridgeTvl?: boolean
 }) {
 	return useMemo(() => {
 		const UNKNOWN = 'Unknown'
@@ -814,7 +853,7 @@ export function useRwaAssetPlatformPieChartData({
 			// Prefer a non-Unknown label if we previously only had Unknown.
 			if (prev.label === UNKNOWN && platform !== UNKNOWN) prev.label = platform
 
-			prev.value += asset[metric]?.total ?? 0
+			prev.value += getRwaDisplayedMetricValue(asset, metric, includeBridgeTvl)
 			totalsBySlug.set(key, prev)
 		}
 
@@ -838,17 +877,19 @@ export function useRwaAssetPlatformPieChartData({
 			pieChartData,
 			pieChartStackColors
 		}
-	}, [assets, enabled, metric])
+	}, [assets, enabled, includeBridgeTvl, metric])
 }
 
 export function useRwaChainBreakdownPieChartData({
 	enabled,
 	assets,
-	metric
+	metric,
+	includeBridgeTvl = true
 }: {
 	enabled: boolean
 	assets: IRWAAssetsOverview['assets']
 	metric: RWAChartMetricKey
+	includeBridgeTvl?: boolean
 }) {
 	return useMemo(() => {
 		const UNKNOWN = 'Unknown'
@@ -889,7 +930,8 @@ export function useRwaChainBreakdownPieChartData({
 				upsert(chain, 'activeMcap', value)
 			}
 			// New: chain-level TVL breakdown (fallback: none if missing).
-			for (const [chain, value] of asset.defiActiveTvlByChain?.breakdown ?? []) {
+			const chainBreakdown = asset.kind === 'spot' ? getRwaDisplayedDefiActiveTvlByChain(asset, includeBridgeTvl) : []
+			for (const [chain, value] of chainBreakdown) {
 				upsert(chain, 'defiActiveTvl', value)
 			}
 		}
@@ -914,7 +956,7 @@ export function useRwaChainBreakdownPieChartData({
 			pieChartData,
 			pieChartStackColors
 		}
-	}, [assets, enabled, metric])
+	}, [assets, enabled, includeBridgeTvl, metric])
 }
 
 const CHART_FILTER_QUERY_KEYS = new Set([
@@ -951,12 +993,28 @@ const CHART_FILTER_QUERY_KEYS = new Set([
 	'maxDefiActiveTvlToActiveMcapPct',
 	'includeStablecoins',
 	'includeGovernance',
-	'includeRwaPerps'
+	'includeRwaPerps',
+	'includeBridgeTvl'
 ])
 
 export function hasActiveChartFilters(
 	query: NextRouter['query'],
 	defaultInclusion: RWAOverviewInclusionDefaults
+): boolean {
+	return hasActiveRwaFilters(query, defaultInclusion, true)
+}
+
+export function hasActiveFlowFilters(
+	query: NextRouter['query'],
+	defaultInclusion: RWAOverviewInclusionDefaults
+): boolean {
+	return hasActiveRwaFilters(query, defaultInclusion, false)
+}
+
+function hasActiveRwaFilters(
+	query: NextRouter['query'],
+	defaultInclusion: RWAOverviewInclusionDefaults,
+	bridgeAffectsResult: boolean
 ): boolean {
 	for (const key of CHART_FILTER_QUERY_KEYS) {
 		if (key === 'includeStablecoins') {
@@ -970,6 +1028,14 @@ export function hasActiveChartFilters(
 		if (key === 'includeRwaPerps') {
 			continue
 		}
+		if (key === 'includeBridgeTvl') {
+			if (
+				bridgeAffectsResult &&
+				hasActiveInclusionOverride(query.includeBridgeTvl, defaultInclusion.includeBridgeTvl ?? true)
+			)
+				return true
+			continue
+		}
 		if (key in query) return true
 	}
 	return false
@@ -979,7 +1045,8 @@ export function getRwaAssetChartQueryKey(
 	target: RWAAssetChartTarget,
 	selectedMetric: RWAChartMetricKey,
 	includeStablecoins: boolean,
-	includeGovernance: boolean
+	includeGovernance: boolean,
+	includeBridgeTvl: boolean
 ) {
 	return [
 		'rwa-asset-chart',
@@ -987,7 +1054,8 @@ export function getRwaAssetChartQueryKey(
 		target.kind === 'all' ? 'all' : target.slug,
 		selectedMetric,
 		includeStablecoins,
-		includeGovernance
+		includeGovernance,
+		includeBridgeTvl
 	] as const
 }
 
@@ -1010,10 +1078,12 @@ async function fetchRwaAssetChartData(params: {
 	target: RWAAssetChartTarget
 	includeStablecoins: boolean
 	includeGovernance: boolean
+	includeBridgeTvl: boolean
 }): Promise<IRWAChartMetricRows> {
 	const searchParams = new URLSearchParams({ key: params.key })
 	searchParams.set('includeStablecoin', String(params.includeStablecoins))
 	searchParams.set('includeGovernance', String(params.includeGovernance))
+	searchParams.set('includeBridgeTvl', String(params.includeBridgeTvl))
 
 	switch (params.target.kind) {
 		case 'all':
@@ -1051,6 +1121,7 @@ export function useRwaChartDataset({
 	includeStablecoins,
 	includeGovernance,
 	includeRwaPerps,
+	includeBridgeTvl = true,
 	useInitialDataset,
 	enabled = true
 }: {
@@ -1063,6 +1134,7 @@ export function useRwaChartDataset({
 	includeStablecoins: boolean
 	includeGovernance: boolean
 	includeRwaPerps: boolean
+	includeBridgeTvl?: boolean
 	useInitialDataset: boolean
 	enabled?: boolean
 }): {
@@ -1081,13 +1153,14 @@ export function useRwaChartDataset({
 		isLoading,
 		error
 	} = useQuery({
-		queryKey: getRwaAssetChartQueryKey(target, selectedMetric, includeStablecoins, includeGovernance),
+		queryKey: getRwaAssetChartQueryKey(target, selectedMetric, includeStablecoins, includeGovernance, includeBridgeTvl),
 		queryFn: () =>
 			fetchRwaAssetChartData({
 				key: selectedMetric,
 				target,
 				includeStablecoins,
-				includeGovernance
+				includeGovernance,
+				includeBridgeTvl
 			}),
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,

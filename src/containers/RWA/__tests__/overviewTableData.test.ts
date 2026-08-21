@@ -3,6 +3,7 @@ import type { RWAStatsSegmented } from '../api.types'
 import {
 	formatRWAOverviewUsd,
 	getRWAOverviewAssetCount,
+	getRWAOverviewCsvFileName,
 	getRWAOverviewInclusion,
 	getRWAOverviewTableData,
 	hasExcludedRWAOverviewAssets
@@ -50,6 +51,16 @@ describe('getRWAOverviewTableData', () => {
 		})
 	})
 
+	it('subtracts bridge TVL when excluded', () => {
+		const bridgeRow: RWAStatsSegmented = {
+			...row,
+			base: { ...row.base, bridgeTvl: 20 },
+			stablecoinsOnly: { ...row.stablecoinsOnly, bridgeTvl: 3 }
+		}
+
+		expect(getRWAOverviewTableData(bridgeRow, getRWAOverviewInclusion(true, false, false)).defiActiveTvl).toBe(79)
+	})
+
 	it('includes stablecoins only', () => {
 		expect(getRWAOverviewTableData(row, getRWAOverviewInclusion(true, false))).toEqual({
 			onChainMcap: 160,
@@ -82,6 +93,13 @@ describe('getRWAOverviewTableData', () => {
 })
 
 describe('fixed RWA overview asset counts', () => {
+	it('adds a bridge exclusion suffix to CSV names', () => {
+		expect(getRWAOverviewCsvFileName('rwa-chains', getRWAOverviewInclusion(false, false))).toBe('rwa-chains')
+		expect(getRWAOverviewCsvFileName('rwa-chains', getRWAOverviewInclusion(true, false, false))).toBe(
+			'rwa-chains-stablecoins-without-bridge-tvl'
+		)
+	})
+
 	it('distinguishes a filtered zero from a genuine zero', () => {
 		expect(formatRWAOverviewUsd(0, true)).toBe('-')
 		expect(formatRWAOverviewUsd(0, false)).toBe('$0')

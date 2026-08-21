@@ -6,6 +6,8 @@ export type RWAOverviewInclusionDefaults = {
 	includeStablecoins: boolean
 	includeGovernance: boolean
 	includeRwaPerps: boolean
+	// Include the bridge/interop portion of DeFi Active TVL. Default true = today's numbers. Optional so existing callers/fixtures compile.
+	includeBridgeTvl?: boolean
 }
 
 export type RWAOverviewInclusionContext = {
@@ -82,7 +84,8 @@ export function inferPlatformRWAOverviewInclusion(
 	return {
 		includeStablecoins,
 		includeGovernance,
-		includeRwaPerps: false
+		includeRwaPerps: false,
+		includeBridgeTvl: true
 	}
 }
 
@@ -113,7 +116,8 @@ export function getDefaultRWAOverviewInclusion({
 	return {
 		includeStablecoins: path ? STABLECOINS_DEFAULT_RWA_PATHS.has(path) : false,
 		includeGovernance: path ? GOVERNANCE_DEFAULT_RWA_PATHS.has(path) : false,
-		includeRwaPerps: false
+		includeRwaPerps: false,
+		includeBridgeTvl: true
 	}
 }
 

@@ -312,6 +312,30 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 				? aggregatedMetrics.filteredTotals.defiActiveTvl
 				: aggregatedMetrics.totals.defiActiveTvl
 
+			// Bridge/interop portion of defiActiveTvl (server-provided per chain), chain-filtered to match the row total.
+			const effectiveBridgeTvlByChain: Record<string, number> = {}
+			const effectiveBridgeTvlByProtocol: Record<string, number> = {}
+			let effectiveBridgeTvl = 0
+			if (item.bridgeTvl) {
+				for (const chain in item.bridgeTvl) {
+					if (!selectedChain || rwaSlug(chain) === selectedChain) {
+						const bridgeValue = item.bridgeTvl[chain]
+						if (bridgeValue === 0) continue
+						effectiveBridgeTvlByChain[chain] = bridgeValue
+						effectiveBridgeTvl += bridgeValue
+					}
+				}
+			}
+			if (item.bridgeTvlBreakdown) {
+				for (const chain in item.bridgeTvlBreakdown) {
+					if (selectedChain && rwaSlug(chain) !== selectedChain) continue
+					for (const protocol in item.bridgeTvlBreakdown[chain]) {
+						effectiveBridgeTvlByProtocol[protocol] =
+							(effectiveBridgeTvlByProtocol[protocol] ?? 0) + item.bridgeTvlBreakdown[chain][protocol]
+					}
+				}
+			}
+
 			const isTrueRWA = item.rwaClassification === 'True RWA'
 			const asset: RWASpotOverviewAsset = {
 				id: item.id,
@@ -374,7 +398,19 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 							? aggregatedMetrics.breakdowns.defiActiveTvlByChainFiltered
 							: aggregatedMetrics.breakdowns.defiActiveTvlByChain
 					)
-				}
+				},
+				bridgeTvl: effectiveBridgeTvl,
+				bridgeTvlByChain: {
+					total: effectiveBridgeTvl,
+					breakdown: getSortedBreakdownEntries(effectiveBridgeTvlByChain, selectedChain)
+				},
+				bridgeTvlByProtocol:
+					item.bridgeTvlBreakdown == null
+						? null
+						: {
+								total: effectiveBridgeTvl,
+								breakdown: getSortedBreakdownEntries(effectiveBridgeTvlByProtocol)
+							}
 			}
 
 			// Only include asset if it exists on the selected chain/category (or no route filter)

@@ -46,6 +46,10 @@ export interface IFetchedRWAProject {
 	stablecoin: boolean
 	governance: boolean
 	defiActiveTvl: RWATvlByChain
+	/** Per-chain bridge/interop portion of defiActiveTvl (server /current). Exclude view subtracts this. */
+	bridgeTvl?: RWANumberMap | null
+	/** Bridge/interop portion of defiActiveTvl by chain and protocol. */
+	bridgeTvlBreakdown?: RWATvlByChain | null
 	onChainMcap: RWANumberMap
 	activeMcap?: RWANumberMap
 	price: number | null
@@ -70,6 +74,8 @@ export type RWAStatsSlice = {
 	onChainMcap: number
 	activeMcap: number
 	defiActiveTvl: number
+	/** Portion of defiActiveTvl from bridge/interop-category protocols. Exclude view = defiActiveTvl - bridgeTvl. Absent until server deploy. */
+	bridgeTvl?: number
 	assetCount: number
 	assetIssuers: string[]
 }
@@ -86,6 +92,7 @@ export interface IRWAStatsResponse {
 	totalOnChainMcap: number
 	totalActiveMcap: number
 	totalDefiActiveTvl: number
+	totalBridgeTvl?: number
 	assetCount: number
 	assetIssuers: number
 	byChain: Record<string, RWAStatsSegmented>
@@ -166,6 +173,12 @@ export type RWAAssetOverviewRow = RWAOverviewDisplayRowBase & {
 	governance: boolean
 	defiActiveTvl: Exclude<RWAOverviewMetric, null>
 	defiActiveTvlByChain: Exclude<RWAOverviewMetric, null>
+	// Bridge/interop portion of defiActiveTvl (chain-filtered to match the row total). Subtracted when the toggle is off.
+	bridgeTvl?: number
+	// Per-chain bridge values used to keep chain breakdowns consistent with the total.
+	bridgeTvlByChain?: Exclude<RWAOverviewMetric, null>
+	// Protocol bridge values used to keep the asset table breakdown consistent with the total.
+	bridgeTvlByProtocol?: RWAOverviewMetric
 }
 
 export type RWAPerpsContractOverlayRow = RWAOverviewDisplayRowBase & {
@@ -253,6 +266,8 @@ export interface IRWAChartDataByAsset {
 	onChainMcap: IRWAChartMetricRows
 	activeMcap: IRWAChartMetricRows
 	defiActiveTvl: IRWAChartMetricRows
+	/** Per-asset bridge/interop portion of defiActiveTvl; subtracted when the bridge toggle is off. Absent until server deploy. */
+	bridgeTvl?: IRWAChartMetricRows
 }
 
 export type IRWABreakdownChartRow = { timestamp: number } & Record<string, number>
@@ -260,7 +275,7 @@ export type IRWABreakdownChartRow = { timestamp: number } & Record<string, numbe
 export type IRWABreakdownChartResponse = IRWABreakdownChartRow[]
 
 export type IRWABreakdownChartParams = {
-	key?: RWAChartMetricKey
+	key?: RWAChartMetricKey | 'bridgeTvl'
 	includeStablecoin?: boolean
 	includeGovernance?: boolean
 }
@@ -368,6 +383,10 @@ export type RWAOverviewBreakdownRequest =
 	| { breakdown: 'category'; key: RWAChartMetricKey; includeStablecoin: boolean; includeGovernance: boolean }
 	| { breakdown: 'platform'; key: RWAChartMetricKey; includeStablecoin: boolean; includeGovernance: boolean }
 	| { breakdown: 'assetGroup'; key: RWAChartMetricKey; includeStablecoin: boolean; includeGovernance: boolean }
+
+export type RWAOverviewBreakdownRouteRequest = RWAOverviewBreakdownRequest & {
+	includeBridgeTvl: boolean
+}
 
 export type IRWAChainsOverviewRow = NonNullable<IRWAStatsResponse['byChain']>[string] & { chain: string }
 

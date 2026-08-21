@@ -26,6 +26,7 @@ export type RWAPlatformAssetSummary = {
 	dominantAccessModel: RWAPlatformMixRow | null
 	attestedAssetCount: number
 	defiActiveTvl: number
+	bridgeTvl: number
 }
 
 export type RWAPlatformPageData = RWAPlatformAssetSummary & {

@@ -73,6 +73,7 @@ const data: RWAPlatformPageData = {
 	dominantAccessModel: null,
 	attestedAssetCount: 3,
 	defiActiveTvl: 100,
+	bridgeTvl: 0,
 	defiActiveTvlToAumPct: 10
 }
 

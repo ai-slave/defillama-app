@@ -42,14 +42,16 @@ describe('parseAssetBreakdownRequest', () => {
 					platform: 'ondo',
 					key: 'onChainMcap',
 					includeStablecoin: 'true',
-					includeGovernance: 'false'
+					includeGovernance: 'false',
+					includeBridgeTvl: 'false'
 				}
 			})
 		).toEqual({
 			target: { kind: 'platform', slug: 'ondo' },
 			key: 'onChainMcap',
 			includeStablecoin: true,
-			includeGovernance: false
+			includeGovernance: false,
+			includeBridgeTvl: false
 		})
 	})
 
@@ -66,7 +68,8 @@ describe('parseAssetBreakdownRequest', () => {
 			target: { kind: 'all' },
 			key: 'onChainMcap',
 			includeStablecoin: false,
-			includeGovernance: false
+			includeGovernance: false,
+			includeBridgeTvl: true
 		})
 	})
 
@@ -161,6 +164,27 @@ describe('rwaAssetBreakdown', () => {
 			{ timestamp: 2000, Alpha: 20 }
 		])
 	})
+
+	it('subtracts bridge rows for the excluded DeFi TVL cache variant', async () => {
+		mocks.fetchJson.mockResolvedValue({
+			defiActiveTvl: [{ timestamp: 3, Alpha: 20, Beta: 5 }],
+			bridgeTvl: [{ timestamp: 3, Alpha: 7 }]
+		})
+
+		const result = await rwaAssetBreakdown.handle({
+			method: 'GET',
+			url: '',
+			headers: {},
+			query: {
+				key: 'defiActiveTvl',
+				includeStablecoin: 'false',
+				includeGovernance: 'false',
+				includeBridgeTvl: 'false'
+			}
+		})
+
+		expect(resultBody(result)).toEqual([{ timestamp: 3000, Alpha: 13, Beta: 5 }])
+	})
 })
 
 describe('buildAssetBreakdownUrl', () => {
@@ -170,7 +194,8 @@ describe('buildAssetBreakdownUrl', () => {
 				target: { kind: 'category', slug: 'rwa-yield-wrapper' },
 				key: 'defiActiveTvl',
 				includeStablecoin: false,
-				includeGovernance: true
+				includeGovernance: true,
+				includeBridgeTvl: true
 			})
 		).toContain('/chart/category/rwa-yield-wrapper/asset-breakdown?includeStablecoin=false&includeGovernance=true')
 	})
@@ -181,7 +206,8 @@ describe('buildAssetBreakdownUrl', () => {
 				target: { kind: 'category', slug: 'other-rwas' },
 				key: 'activeMcap',
 				includeStablecoin: true,
-				includeGovernance: true
+				includeGovernance: true,
+				includeBridgeTvl: true
 			})
 		).toContain('/chart/category/other-rwas/asset-breakdown?includeStablecoin=true&includeGovernance=true')
 	})

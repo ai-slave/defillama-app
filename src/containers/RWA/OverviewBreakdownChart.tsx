@@ -20,7 +20,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
 import { isTrueQueryParam, pushShallowQuery, readSingleQueryValue, toNonEmptyArrayParam } from '~/utils/routerQuery'
-import type { RWAChartMetricKey, RWAOverviewBreakdownRequest, RWAOverviewPage } from './api.types'
+import type { RWAChartMetricKey, RWAOverviewBreakdownRouteRequest, RWAOverviewPage } from './api.types'
 import {
 	getRwaChartSeriesColorSlots,
 	getRwaReservedSeriesColorSlot,
@@ -99,6 +99,9 @@ export function getOverviewBreakdownRequestState(
 ) {
 	const includeStablecoin = isTrueQueryParam(query.includeStablecoins)
 	const includeGovernance = isTrueQueryParam(query.includeGovernance)
+	const includeBridgeTvl = query.includeBridgeTvl != null ? isTrueQueryParam(query.includeBridgeTvl) : true
+	const isDefaultState =
+		chartType === DEFAULT_CHART_TYPE && !includeStablecoin && !includeGovernance && includeBridgeTvl
 
 	switch (page.kind) {
 		case 'chain':
@@ -107,9 +110,10 @@ export function getOverviewBreakdownRequestState(
 					breakdown: 'chain',
 					key: chartType,
 					includeStablecoin,
-					includeGovernance
-				} satisfies RWAOverviewBreakdownRequest,
-				isDefaultState: chartType === DEFAULT_CHART_TYPE && !includeStablecoin && !includeGovernance
+					includeGovernance,
+					includeBridgeTvl
+				} satisfies RWAOverviewBreakdownRouteRequest,
+				isDefaultState
 			}
 		case 'platform':
 			return {
@@ -117,9 +121,10 @@ export function getOverviewBreakdownRequestState(
 					breakdown: 'platform',
 					key: chartType,
 					includeStablecoin,
-					includeGovernance
-				} satisfies RWAOverviewBreakdownRequest,
-				isDefaultState: chartType === DEFAULT_CHART_TYPE && !includeStablecoin && !includeGovernance
+					includeGovernance,
+					includeBridgeTvl
+				} satisfies RWAOverviewBreakdownRouteRequest,
+				isDefaultState
 			}
 		case 'category':
 			return {
@@ -127,9 +132,10 @@ export function getOverviewBreakdownRequestState(
 					breakdown: 'category',
 					key: chartType,
 					includeStablecoin,
-					includeGovernance
-				} satisfies RWAOverviewBreakdownRequest,
-				isDefaultState: chartType === DEFAULT_CHART_TYPE && !includeStablecoin && !includeGovernance
+					includeGovernance,
+					includeBridgeTvl
+				} satisfies RWAOverviewBreakdownRouteRequest,
+				isDefaultState
 			}
 		case 'assetGroup':
 			return {
@@ -137,16 +143,17 @@ export function getOverviewBreakdownRequestState(
 					breakdown: 'assetGroup',
 					key: chartType,
 					includeStablecoin,
-					includeGovernance
-				} satisfies RWAOverviewBreakdownRequest,
-				isDefaultState: chartType === DEFAULT_CHART_TYPE && !includeStablecoin && !includeGovernance
+					includeGovernance,
+					includeBridgeTvl
+				} satisfies RWAOverviewBreakdownRouteRequest,
+				isDefaultState
 			}
 		default:
 			return assertNever(page)
 	}
 }
 
-function fetchOverviewBreakdownDataset(request: RWAOverviewBreakdownRequest): Promise<RWAPositionalChartDataset> {
+function fetchOverviewBreakdownDataset(request: RWAOverviewBreakdownRouteRequest): Promise<RWAPositionalChartDataset> {
 	const searchParams = new URLSearchParams({
 		breakdown: request.breakdown,
 		key: request.key
@@ -154,6 +161,7 @@ function fetchOverviewBreakdownDataset(request: RWAOverviewBreakdownRequest): Pr
 
 	if (request.includeStablecoin) searchParams.set('includeStablecoin', 'true')
 	if (request.includeGovernance) searchParams.set('includeGovernance', 'true')
+	searchParams.set('includeBridgeTvl', String(request.includeBridgeTvl))
 
 	return fetchJson<RWAPositionalChartDataset>(`/api/public/rwa/overview-breakdown?${searchParams.toString()}`)
 }
@@ -239,7 +247,8 @@ export function RWAOverviewBreakdownChart({
 			request.breakdown,
 			request.key,
 			request.includeStablecoin,
-			request.includeGovernance
+			request.includeGovernance,
+			request.includeBridgeTvl
 		],
 		queryFn: () => fetchOverviewBreakdownDataset(request),
 		staleTime: 60 * 60 * 1000,

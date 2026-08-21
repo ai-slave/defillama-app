@@ -6,12 +6,13 @@ import {
 	fetchRWAPlatformBreakdownChartData,
 	rwaUnixSecondsToMilliseconds
 } from '~/containers/RWA/api'
+import { subtractBridgeFromMetricRows } from '~/containers/RWA/api'
 import type {
 	IRWAChartDataByAsset,
 	IRWAChartMetricRows,
 	RWAChartMetricKey,
 	RWAAssetChartTarget,
-	RWAOverviewBreakdownRequest
+	RWAOverviewBreakdownRouteRequest
 } from '~/containers/RWA/api.types'
 import { toOverviewBreakdownChartDataset } from '~/containers/RWA/breakdownDataset'
 import {
@@ -49,6 +50,8 @@ type RWAAssetBreakdownRequest = {
 	key: RWAChartMetricKey
 	includeStablecoin: boolean
 	includeGovernance: boolean
+	// Only affects the defiActiveTvl metric; when false the bridge portion is subtracted.
+	includeBridgeTvl: boolean
 }
 
 const RWA_CHART_METRIC_KEYS = ['onChainMcap', 'activeMcap', 'defiActiveTvl'] as const
@@ -117,8 +120,16 @@ export function parseAssetBreakdownRequest(req: { query: ApiQuery }): RWAAssetBr
 	const key = parseChartMetricKey(req.query.key)
 	const includeStablecoin = parseBooleanQueryFlag(req.query.includeStablecoin)
 	const includeGovernance = parseBooleanQueryFlag(req.query.includeGovernance)
+	// Absent param => include bridge TVL (today's default behaviour).
+	const includeBridgeTvl = parseBooleanQueryFlag(req.query.includeBridgeTvl, true)
 
-	if (target == null || key == null || includeStablecoin == null || includeGovernance == null) {
+	if (
+		target == null ||
+		key == null ||
+		includeStablecoin == null ||
+		includeGovernance == null ||
+		includeBridgeTvl == null
+	) {
 		return null
 	}
 
@@ -126,7 +137,8 @@ export function parseAssetBreakdownRequest(req: { query: ApiQuery }): RWAAssetBr
 		target,
 		key,
 		includeStablecoin,
-		includeGovernance
+		includeGovernance,
+		includeBridgeTvl
 	}
 }
 
@@ -157,7 +169,8 @@ function buildAssetBreakdownCacheKey(request: RWAAssetBreakdownRequest): string 
 		target: request.target.kind === 'all' ? 'all' : `${request.target.kind}:${rwaSlug(request.target.slug)}`,
 		key: request.key,
 		includeStablecoin: String(request.includeStablecoin),
-		includeGovernance: String(request.includeGovernance)
+		includeGovernance: String(request.includeGovernance),
+		includeBridgeTvl: String(request.includeBridgeTvl)
 	})
 	return `/api/public/rwa/asset-breakdown?${searchParams.toString()}`
 }
@@ -167,55 +180,66 @@ const RWA_BREAKDOWN_CACHE_CONTROL = 'public, s-maxage=3600, stale-while-revalida
 
 const RWA_OVERVIEW_BREAKDOWNS = ['chain', 'category', 'platform', 'assetGroup'] as const
 
-export function parseRWAOverviewBreakdownRequest(req: { query: ApiQuery }): RWAOverviewBreakdownRequest | null {
+export function parseRWAOverviewBreakdownRequest(req: { query: ApiQuery }): RWAOverviewBreakdownRouteRequest | null {
 	const breakdown = parseEnumQueryValue(req.query.breakdown, RWA_OVERVIEW_BREAKDOWNS)
 	const key = parseChartMetricKey(req.query.key)
 	if (breakdown == null || key == null) return null
 
 	const includeStablecoin = parseBooleanQueryFlag(req.query.includeStablecoin, false)
 	const includeGovernance = parseBooleanQueryFlag(req.query.includeGovernance, false)
-	if (includeStablecoin == null || includeGovernance == null) return null
+	const includeBridgeTvl = parseBooleanQueryFlag(req.query.includeBridgeTvl, true)
+	if (includeStablecoin == null || includeGovernance == null || includeBridgeTvl == null) return null
 
 	if (breakdown === 'chain') {
-		return { breakdown, key, includeStablecoin, includeGovernance }
+		return { breakdown, key, includeStablecoin, includeGovernance, includeBridgeTvl }
 	}
 
 	if (breakdown === 'category') {
-		return { breakdown, key, includeStablecoin, includeGovernance }
+		return { breakdown, key, includeStablecoin, includeGovernance, includeBridgeTvl }
 	}
 
 	if (breakdown === 'platform') {
-		return { breakdown, key, includeStablecoin, includeGovernance }
+		return { breakdown, key, includeStablecoin, includeGovernance, includeBridgeTvl }
 	}
 
 	if (breakdown === 'assetGroup') {
-		return { breakdown, key, includeStablecoin, includeGovernance }
+		return { breakdown, key, includeStablecoin, includeGovernance, includeBridgeTvl }
 	}
 
 	return null
 }
 
-function fetchOverviewBreakdownRows(request: RWAOverviewBreakdownRequest) {
+function fetchOverviewBreakdownRows(
+	request: RWAOverviewBreakdownRouteRequest,
+	key: RWAChartMetricKey | 'bridgeTvl' = request.key
+) {
+	const params = {
+		key,
+		includeStablecoin: request.includeStablecoin,
+		includeGovernance: request.includeGovernance
+	}
+
 	switch (request.breakdown) {
 		case 'chain':
-			return fetchRWAChainBreakdownChartData(request)
+			return fetchRWAChainBreakdownChartData(params)
 		case 'category':
-			return fetchRWACategoryBreakdownChartData(request)
+			return fetchRWACategoryBreakdownChartData(params)
 		case 'platform':
-			return fetchRWAPlatformBreakdownChartData(request)
+			return fetchRWAPlatformBreakdownChartData(params)
 		case 'assetGroup':
-			return fetchRWAAssetGroupBreakdownChartData(request)
+			return fetchRWAAssetGroupBreakdownChartData(params)
 		default:
 			return assertNever(request)
 	}
 }
 
-function buildOverviewBreakdownCacheKey(request: RWAOverviewBreakdownRequest): string {
+function buildOverviewBreakdownCacheKey(request: RWAOverviewBreakdownRouteRequest): string {
 	const searchParams = new URLSearchParams({
 		breakdown: request.breakdown,
 		key: request.key,
 		includeStablecoin: String(request.includeStablecoin),
-		includeGovernance: String(request.includeGovernance)
+		includeGovernance: String(request.includeGovernance),
+		includeBridgeTvl: String(request.includeBridgeTvl)
 	})
 	return `/api/public/rwa/overview-breakdown?${searchParams.toString()}`
 }
@@ -236,6 +260,17 @@ export const rwaOverviewBreakdown = defineApiRoute({
 				buildOverviewBreakdownCacheKey(request),
 				{ ttlMs: RWA_BREAKDOWN_RESULT_TTL_MS, ttlJitter: 0.2 },
 				async () => {
+					if (request.key === 'defiActiveTvl' && !request.includeBridgeTvl) {
+						const [rows, bridgeRows] = await Promise.all([
+							fetchOverviewBreakdownRows(request),
+							fetchOverviewBreakdownRows(request, 'bridgeTvl')
+						])
+						if (rows == null || bridgeRows == null) {
+							throw new Error('RWA overview breakdown upstream returned incomplete bridge data')
+						}
+						return toOverviewBreakdownChartDataset(subtractBridgeFromMetricRows(rows, bridgeRows), request)
+					}
+
 					const rows = await fetchOverviewBreakdownRows(request)
 					if (rows == null) {
 						throw new Error('RWA overview breakdown upstream returned no data')
@@ -464,7 +499,11 @@ export const rwaAssetBreakdown = defineApiRoute({
 					const raw = await fetchJson<IRWAChartDataByAsset>(buildAssetBreakdownUrl(request), {
 						timeout: 30_000
 					})
-					return normalizeAssetBreakdownRows(raw[request.key])
+					const rows =
+						request.key === 'defiActiveTvl' && !request.includeBridgeTvl
+							? subtractBridgeFromMetricRows(raw.defiActiveTvl, raw.bridgeTvl)
+							: raw[request.key]
+					return normalizeAssetBreakdownRows(rows)
 				}
 			)
 			return okSerializedJson(result)

@@ -113,7 +113,9 @@ export function RWAPlatforms({
 	const router = useRouter()
 	const includeStablecoins = isTrueQueryParam(router.query.includeStablecoins)
 	const includeGovernance = isTrueQueryParam(router.query.includeGovernance)
-	const inclusion = getRWAOverviewInclusion(includeStablecoins, includeGovernance)
+	const includeBridgeTvl =
+		router.query.includeBridgeTvl != null ? isTrueQueryParam(router.query.includeBridgeTvl) : true
+	const inclusion = getRWAOverviewInclusion(includeStablecoins, includeGovernance, includeBridgeTvl)
 
 	const onToggleStablecoins = () => {
 		void pushShallowQuery(router, { includeStablecoins: includeStablecoins ? undefined : 'true' })
@@ -121,6 +123,10 @@ export function RWAPlatforms({
 
 	const onToggleGovernance = () => {
 		void pushShallowQuery(router, { includeGovernance: includeGovernance ? undefined : 'true' })
+	}
+
+	const onToggleBridgeTvl = () => {
+		void pushShallowQuery(router, { includeBridgeTvl: includeBridgeTvl ? 'false' : undefined })
 	}
 
 	const data = platforms.map((row) => ({
@@ -151,6 +157,9 @@ export function RWAPlatforms({
 				</Checkbox>
 				<Checkbox variant="filter" value="includeGovernance" checked={includeGovernance} onChange={onToggleGovernance}>
 					<span className="whitespace-nowrap">Governance Tokens</span>
+				</Checkbox>
+				<Checkbox variant="filter" value="includeBridgeTvl" checked={includeBridgeTvl} onChange={onToggleBridgeTvl}>
+					<span className="whitespace-nowrap">Bridge/Interop TVL</span>
 				</Checkbox>
 			</Card>
 			<RWAOverviewBreakdownChart

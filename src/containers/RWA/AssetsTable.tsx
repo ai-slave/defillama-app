@@ -28,6 +28,7 @@ import type { IRWAAssetFlowSummary, IRWAAssetsOverview, IRWAFlowSummaryResponse,
 import { normalizeRwaAssetGroup } from './assetGroup'
 import { BreakdownTooltipContent } from './BreakdownTooltipContent'
 import { definitions } from './definitions'
+import { getRwaDisplayedDefiActiveTvl, getRwaDisplayedDefiActiveTvlByProtocol } from './filterState'
 import { RWAFlowSummaryTooltip, RWAFlowValueShimmer, RWAFlowValueUnavailable } from './FlowPanelParts'
 import { formatSignedRWAFlow, getRWAFlowTextClass } from './flows'
 import { useRWAFlowSummary } from './flows.hooks'
@@ -39,11 +40,13 @@ export function RWAAssetsTable({
 	assets,
 	selectedChain,
 	includeRwaPerps,
+	includeBridgeTvl,
 	headerSlot
 }: {
 	assets: IRWAAssetsOverview['assets']
 	selectedChain: string
 	includeRwaPerps: boolean
+	includeBridgeTvl?: boolean
 	/** Replaces the panel title when the table is one view of a tabbed panel. */
 	headerSlot?: React.ReactNode
 }) {
@@ -67,8 +70,14 @@ export function RWAAssetsTable({
 	}, [assetsWithFlows, deferredSearchValue])
 
 	const columns = useMemo(
-		() => createRWAAssetColumns(includeRwaPerps, isLoadingFlowSummary, isFlowSummaryError && !flowSummary),
-		[flowSummary, includeRwaPerps, isFlowSummaryError, isLoadingFlowSummary]
+		() =>
+			createRWAAssetColumns(
+				includeRwaPerps,
+				isLoadingFlowSummary,
+				isFlowSummaryError && !flowSummary,
+				includeBridgeTvl
+			),
+		[flowSummary, includeBridgeTvl, includeRwaPerps, isFlowSummaryError, isLoadingFlowSummary]
 	)
 
 	const instance = useReactTable<AssetTableRow>({
@@ -113,6 +122,9 @@ export function RWAAssetsTable({
 		.getAllLeafColumns()
 		.filter((col) => col.getIsVisible() && !col.columnDef.meta?.hidden)
 		.map((col) => col.id)
+	const chainSuffix = selectedChain !== 'All' ? `-${selectedChain.toLowerCase()}` : ''
+	const bridgeSuffix = includeBridgeTvl ? '' : '-without-bridge-tvl'
+	const csvFilename = `rwa-assets${chainSuffix}${bridgeSuffix}`
 
 	const setColumnOptions = (newOptions: string[] | ((prev: string[]) => string[])) => {
 		const resolvedOptions = Array.isArray(newOptions) ? newOptions : newOptions(selectedColumns)
@@ -152,7 +164,7 @@ export function RWAAssetsTable({
 						prepareCsv={() =>
 							prepareTableCsv({
 								instance,
-								filename: `rwa-assets${selectedChain !== 'All' ? `-${selectedChain.toLowerCase()}` : ''}`
+								filename: csvFilename
 							})
 						}
 						smol
@@ -228,10 +240,10 @@ export function getOnChainMetricValue(asset: AssetRow): number | null {
 	}
 }
 
-export function getDefiMetricValue(asset: AssetRow): number | null {
+export function getDefiMetricValue(asset: AssetRow, includeBridgeTvl = true): number | null {
 	switch (asset.kind) {
 		case 'spot':
-			return asset.defiActiveTvl?.total ?? null
+			return getRwaDisplayedDefiActiveTvl(asset, includeBridgeTvl)
 		case 'perps':
 			return null
 		default:
@@ -239,8 +251,8 @@ export function getDefiMetricValue(asset: AssetRow): number | null {
 	}
 }
 
-export function getDefiUtilization(asset: AssetRow): number | undefined {
-	const defiTvl = asset.defiActiveTvl?.total
+export function getDefiUtilization(asset: AssetRow, includeBridgeTvl = true): number | undefined {
+	const defiTvl = asset.kind === 'spot' ? getRwaDisplayedDefiActiveTvl(asset, includeBridgeTvl) : null
 	const activeMcap = asset.activeMcap?.total
 	return defiTvl == null || activeMcap == null || activeMcap === 0 ? undefined : (defiTvl / activeMcap) * 100
 }
@@ -286,15 +298,24 @@ function MixedMetricCell({
 	asset,
 	value,
 	breakdown,
+	breakdownUnavailable = false,
 	description
 }: {
 	asset: AssetRow
 	value: number | null | undefined
 	breakdown: Array<[string, number]> | null | undefined
+	breakdownUnavailable?: boolean
 	description: string
 }) {
 	if (asset.kind === 'spot') {
-		return <TVLBreakdownCell value={value} breakdown={breakdown} description={description} />
+		return (
+			<TVLBreakdownCell
+				value={value}
+				breakdown={breakdown}
+				breakdownUnavailable={breakdownUnavailable}
+				description={description}
+			/>
+		)
 	}
 
 	return value != null ? (
@@ -305,7 +326,8 @@ function MixedMetricCell({
 function createRWAAssetColumns(
 	includeRwaPerps: boolean,
 	isLoadingFlowSummary: boolean,
-	isFlowSummaryUnavailable: boolean
+	isFlowSummaryUnavailable: boolean,
+	includeBridgeTvl = true
 ) {
 	const metricHeaders = getMetricColumnHeaders(includeRwaPerps)
 
@@ -424,24 +446,31 @@ function createRWAAssetColumns(
 				align: 'end'
 			}
 		}),
-		columnHelper.accessor((asset) => getDefiMetricValue(asset) ?? undefined, {
+		columnHelper.accessor((asset) => getDefiMetricValue(asset, includeBridgeTvl) ?? undefined, {
 			id: 'defiActiveTvl.total',
 			header: metricHeaders.defi,
-			cell: (info) => (
-				<MixedMetricCell
-					asset={info.row.original}
-					value={info.getValue()}
-					breakdown={info.row.original.defiActiveTvl?.breakdown}
-					description={definitions.defiActiveTvl.description}
-				/>
-			),
+			cell: (info) => {
+				const breakdown =
+					info.row.original.kind === 'spot'
+						? getRwaDisplayedDefiActiveTvlByProtocol(info.row.original, includeBridgeTvl)
+						: undefined
+				return (
+					<MixedMetricCell
+						asset={info.row.original}
+						value={info.getValue()}
+						breakdown={breakdown}
+						breakdownUnavailable={breakdown === null}
+						description={definitions.defiActiveTvl.description}
+					/>
+				)
+			},
 			meta: {
 				headerClassName: 'w-[168px]',
 				headerHelperText: definitions.defiActiveTvl.description,
 				align: 'end'
 			}
 		}),
-		columnHelper.accessor((asset) => getDefiUtilization(asset), {
+		columnHelper.accessor((asset) => getDefiUtilization(asset, includeBridgeTvl), {
 			header: 'DeFi Utilization',
 			cell: (info) => (info.getValue() != null ? formatPercent(info.getValue(), { input: 'percent' }) : null),
 			id: 'utilization',
@@ -829,10 +858,12 @@ function getAssetCategoryLabels(asset: AssetRow): string[] {
 const TVLBreakdownCell = ({
 	value,
 	breakdown,
+	breakdownUnavailable,
 	description
 }: {
 	value: number | null | undefined
 	breakdown: Array<[string, number]> | null | undefined
+	breakdownUnavailable?: boolean
 	description: string
 }) => {
 	if (value == null) {
@@ -840,7 +871,21 @@ const TVLBreakdownCell = ({
 	}
 
 	if (!breakdown || breakdown.length === 0) {
-		return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+		const formattedValue = formatUsd(value, {
+			compact: true,
+			minimumCompactValue: 1_000_000,
+			compactSuffix: 'lowercase'
+		})
+		return breakdownUnavailable ? (
+			<Tooltip
+				content="Protocol breakdown unavailable when bridge TVL is excluded."
+				className="underline decoration-dotted"
+			>
+				{formattedValue}
+			</Tooltip>
+		) : (
+			formattedValue
+		)
 	}
 
 	return (

@@ -10,7 +10,8 @@ describe('getDefaultRWAOverviewInclusion', () => {
 		expect(getDefaultRWAOverviewInclusion({ mode: 'category', categorySlug: 'rwa-yield-wrapper' })).toEqual({
 			includeStablecoins: true,
 			includeGovernance: true,
-			includeRwaPerps: false
+			includeRwaPerps: false,
+			includeBridgeTvl: true
 		})
 	})
 
@@ -19,7 +20,8 @@ describe('getDefaultRWAOverviewInclusion', () => {
 			expect(getDefaultRWAOverviewInclusion({ mode: 'category', categorySlug })).toEqual({
 				includeStablecoins: true,
 				includeGovernance: false,
-				includeRwaPerps: false
+				includeRwaPerps: false,
+				includeBridgeTvl: true
 			})
 		}
 	})
@@ -30,7 +32,8 @@ describe('getDefaultRWAOverviewInclusion', () => {
 		expect(getDefaultRWAOverviewInclusion({ mode: 'category', categorySlug: 'governance-tokens' })).toEqual({
 			includeStablecoins: false,
 			includeGovernance: true,
-			includeRwaPerps: false
+			includeRwaPerps: false,
+			includeBridgeTvl: true
 		})
 	})
 
@@ -38,7 +41,8 @@ describe('getDefaultRWAOverviewInclusion', () => {
 		expect(getDefaultRWAOverviewInclusion({ mode: 'category', categorySlug: 'other-rwas' })).toEqual({
 			includeStablecoins: true,
 			includeGovernance: true,
-			includeRwaPerps: false
+			includeRwaPerps: false,
+			includeBridgeTvl: true
 		})
 	})
 
@@ -46,17 +50,20 @@ describe('getDefaultRWAOverviewInclusion', () => {
 		expect(getDefaultRWAOverviewInclusion({ mode: 'category', categorySlug: 'private-credit' })).toEqual({
 			includeStablecoins: false,
 			includeGovernance: false,
-			includeRwaPerps: false
+			includeRwaPerps: false,
+			includeBridgeTvl: true
 		})
 		expect(getDefaultRWAOverviewInclusion({ mode: 'platform', platformSlug: 'other-platform' })).toEqual({
 			includeStablecoins: false,
 			includeGovernance: false,
-			includeRwaPerps: false
+			includeRwaPerps: false,
+			includeBridgeTvl: true
 		})
 		expect(getDefaultRWAOverviewInclusion({ mode: 'chain' })).toEqual({
 			includeStablecoins: false,
 			includeGovernance: false,
-			includeRwaPerps: false
+			includeRwaPerps: false,
+			includeBridgeTvl: true
 		})
 	})
 })
@@ -68,7 +75,8 @@ describe('inferPlatformRWAOverviewInclusion', () => {
 		).toEqual({
 			includeStablecoins: true,
 			includeGovernance: false,
-			includeRwaPerps: false
+			includeRwaPerps: false,
+			includeBridgeTvl: true
 		})
 	})
 
@@ -101,7 +109,8 @@ describe('inferPlatformRWAOverviewInclusion', () => {
 		).toEqual({
 			includeStablecoins: false,
 			includeGovernance: false,
-			includeRwaPerps: false
+			includeRwaPerps: false,
+			includeBridgeTvl: true
 		})
 	})
 
@@ -114,7 +123,8 @@ describe('inferPlatformRWAOverviewInclusion', () => {
 		).toEqual({
 			includeStablecoins: true,
 			includeGovernance: true,
-			includeRwaPerps: false
+			includeRwaPerps: false,
+			includeBridgeTvl: true
 		})
 	})
 

@@ -48,7 +48,7 @@ function createSpotAsset(
 		onChainMcap: { total: 200, breakdown: [] },
 		activeMcap: { total: 100, breakdown: [] },
 		defiActiveTvl: { total: 25, breakdown: [] },
-		defiActiveTvlByChain: { total: 25, breakdown: [] },
+		defiActiveTvlByChain: { total: 25, breakdown: [['Ethereum', 25]] },
 		...overrides
 	}
 }
@@ -149,6 +149,7 @@ describe('RWAAssetsTable', () => {
 		expect(getActiveMetricValue(createSpotAsset())).toBe(100)
 		expect(getOnChainMetricValue(createSpotAsset())).toBe(200)
 		expect(getDefiMetricValue(createSpotAsset())).toBe(25)
+		expect(getDefiMetricValue(createSpotAsset({ bridgeTvl: 10 }), false)).toBe(15)
 		expect(getActiveMetricValue(createPerpsAsset())).toBe(333)
 		expect(getOnChainMetricValue(createPerpsAsset())).toBeNull()
 		expect(getDefiMetricValue(createPerpsAsset())).toBeNull()
@@ -170,6 +171,7 @@ describe('RWAAssetsTable', () => {
 
 	it('calculates DeFi utilization from nullable typed metrics without coercion', () => {
 		expect(getDefiUtilization(createSpotAsset())).toBe(25)
+		expect(getDefiUtilization(createSpotAsset({ bridgeTvl: 10 }), false)).toBe(15)
 		expect(getDefiUtilization(createSpotAsset({ defiActiveTvl: { total: 0, breakdown: [] } }))).toBe(0)
 		expect(getDefiUtilization(createSpotAsset({ activeMcap: null }))).toBeUndefined()
 		expect(getDefiUtilization(createSpotAsset({ activeMcap: { total: 0, breakdown: [] } }))).toBeUndefined()

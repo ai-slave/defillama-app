@@ -21,6 +21,7 @@ export type RWAPlatformCurrentAsset = Pick<
 	| 'governance'
 	| 'attestations'
 	| 'defiActiveTvl'
+	| 'bridgeTvl'
 	| 'category'
 	| 'assetClass'
 	| 'chain'
@@ -90,6 +91,7 @@ export function buildRWAPlatformAssetSummary(
 	let assetCount = 0
 	let attestedAssetCount = 0
 	let defiActiveTvl = 0
+	let bridgeTvl = 0
 
 	// Current contains spot assets only; use it before the legacy overview category filter.
 	for (const asset of assets) {
@@ -101,6 +103,7 @@ export function buildRWAPlatformAssetSummary(
 			if (!protocols) continue
 			for (const protocol in protocols) defiActiveTvl += protocols[protocol] ?? 0
 		}
+		for (const chain in asset.bridgeTvl ?? {}) bridgeTvl += asset.bridgeTvl![chain]
 
 		const category = getPrimaryRwaCategory(asset.category)
 		if (category) increment(categoryCounts, category)
@@ -122,6 +125,7 @@ export function buildRWAPlatformAssetSummary(
 		chainMix: toSortedMix(chainCounts),
 		dominantAccessModel: accessModels[0] ?? null,
 		attestedAssetCount,
-		defiActiveTvl
+		defiActiveTvl,
+		bridgeTvl
 	}
 }

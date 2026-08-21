@@ -199,13 +199,17 @@ export type RWAPlatformListedTotal = {
 
 export function RWAPlatformHeader({
 	data,
+	includeBridgeTvl,
 	listedTotals
 }: {
 	data: RWAPlatformPageData
+	includeBridgeTvl: boolean
 	/** Filter-dependent aggregates, shown as their own group under Key Metrics. */
 	listedTotals: RWAPlatformListedTotal[]
 }) {
 	const { meta } = data
+	const displayedDefiActiveTvl = includeBridgeTvl ? data.defiActiveTvl : data.defiActiveTvl - data.bridgeTvl
+	const displayedDefiActiveTvlToAumPct = meta.onchainAum > 0 ? (displayedDefiActiveTvl / meta.onchainAum) * 100 : null
 
 	return (
 		<SummaryStatsCard padding="sm">
@@ -239,11 +243,11 @@ export function RWAPlatformHeader({
 				{meta.estAnnualRevenueUsd != null ? (
 					<MetricRow label="Est. annual revenue" value={formatUsd(meta.estAnnualRevenueUsd, compactUsdOptions)} />
 				) : null}
-				<MetricRow label="DeFi TVL" value={formatUsd(data.defiActiveTvl, compactUsdOptions)} />
-				{data.defiActiveTvlToAumPct != null ? (
+				<MetricRow label="DeFi TVL" value={formatUsd(displayedDefiActiveTvl, compactUsdOptions)} />
+				{displayedDefiActiveTvlToAumPct != null ? (
 					<MetricRow
 						label="DeFi TVL / AUM"
-						value={formatPercent(data.defiActiveTvlToAumPct, {
+						value={formatPercent(displayedDefiActiveTvlToAumPct, {
 							input: 'percent'
 						})}
 					/>

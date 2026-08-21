@@ -103,6 +103,7 @@ import {
 	useRwaChainBreakdownPieChartData,
 	useRwaChartDataset,
 	hasActiveChartFilters,
+	hasActiveFlowFilters,
 	limitRwaPieChartData
 } from './hooks'
 import { perpsDefinitions } from './Perps/definitions'
@@ -243,6 +244,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		includeStablecoins,
 		includeGovernance,
 		includeRwaPerps,
+		includeBridgeTvl,
 		hasPerpsOverlayBlockingFilters,
 		setDefiActiveTvlToOnChainMcapPctRange,
 		setActiveMcapToOnChainMcapPctRange,
@@ -250,6 +252,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		setIncludeStablecoins,
 		setIncludeGovernance,
 		setIncludeRwaPerps,
+		setIncludeBridgeTvl,
 		setRedeemableStates,
 		setAttestationsStates,
 		setCexListedStates,
@@ -278,6 +281,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		totalOnChainMcap,
 		totalActiveMcap,
 		totalOnChainDeFiActiveTvl,
+		totalBridgeTvl,
 		totalOpenInterest,
 		totalIssuersCount
 	} = useFilteredRwaAssets({
@@ -302,6 +306,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		includeStablecoins,
 		includeGovernance,
 		includeRwaPerps,
+		includeBridgeTvl,
 		hasPerpsOverlayBlockingFilters,
 		minDefiActiveTvlToOnChainMcapPct,
 		maxDefiActiveTvlToOnChainMcapPct,
@@ -311,7 +316,13 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		maxDefiActiveTvlToActiveMcapPct
 	})
 
+	// Headline DeFi Active TVL mirrors the chart: drop the bridge/interop portion when the toggle is off.
+	const displayedDefiActiveTvl = includeBridgeTvl
+		? totalOnChainDeFiActiveTvl
+		: totalOnChainDeFiActiveTvl - totalBridgeTvl
+
 	const activeFilters = hasActiveChartFilters(router.query, props.defaultInclusion)
+	const activeFlowFilters = hasActiveFlowFilters(router.query, props.defaultInclusion)
 	const initialChartDataset = props.initialChartDataset
 	const getInitialMetricDataset = (metric: RWAChartMetricKey) =>
 		initialChartDataset?.metric === metric ? initialChartDataset.dataset : null
@@ -328,7 +339,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		data: flowAssetRows,
 		isLoading: isFlowLoading,
 		error: flowError
-	} = useRWAFlowAssetBreakdown(flowScope, isFlowMetric || (showFlowRotation && activeFilters))
+	} = useRWAFlowAssetBreakdown(flowScope, isFlowMetric || (showFlowRotation && activeFlowFilters))
 	const flowData = useMemo(
 		() => (flowAssetRows ? { series: aggregateRWAFlowRows(flowAssetRows, aggregateAssets) } : null),
 		[flowAssetRows, aggregateAssets]
@@ -341,22 +352,22 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		flowRotationSplitBy,
 		includeStablecoins,
 		includeGovernance,
-		showFlowRotation && !activeFilters
+		showFlowRotation && !activeFlowFilters
 	)
 	const flowRotationData = useMemo(() => {
 		if (!showFlowRotation) return null
-		return activeFilters && flowAssetRows
+		return activeFlowFilters && flowAssetRows
 			? buildRWAFilteredFlowBreakdown(flowAssetRows, aggregateAssets, flowRotationSplitBy)
 			: routeFlowRotationData
-	}, [activeFilters, aggregateAssets, flowAssetRows, flowRotationSplitBy, routeFlowRotationData, showFlowRotation])
-	const effectiveFlowRotationError = flowRotationError ?? (activeFilters ? flowError : null)
-	const effectiveFlowRotationLoading = isFlowRotationLoading || (activeFilters && isFlowLoading)
+	}, [activeFlowFilters, aggregateAssets, flowAssetRows, flowRotationSplitBy, routeFlowRotationData, showFlowRotation])
+	const effectiveFlowRotationError = flowRotationError ?? (activeFlowFilters ? flowError : null)
+	const effectiveFlowRotationLoading = isFlowRotationLoading || (activeFlowFilters && isFlowLoading)
 	const flowTreemapSizeRows = useMemo(
 		() =>
 			showFlowRotation && flowRotationView === 'heatmap'
-				? buildRWAFlowTreemapSizeRowsFromAssets(aggregateAssets, flowRotationSplitBy)
+				? buildRWAFlowTreemapSizeRowsFromAssets(aggregateAssets, flowRotationSplitBy, includeBridgeTvl)
 				: [],
-		[aggregateAssets, flowRotationSplitBy, flowRotationView, showFlowRotation]
+		[aggregateAssets, flowRotationSplitBy, flowRotationView, showFlowRotation, includeBridgeTvl]
 	)
 	const flowTreemapFlows = useMemo(
 		() =>
@@ -391,6 +402,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		includeStablecoins,
 		includeGovernance,
 		includeRwaPerps,
+		includeBridgeTvl,
 		enabled: !isFlowMetric && chartView === 'timeSeries',
 		useInitialDataset:
 			initialChartDataset?.metric === chartTypeKey &&
@@ -438,6 +450,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		includeStablecoins,
 		includeGovernance,
 		includeRwaPerps: false,
+		includeBridgeTvl,
 		enabled: isFlowMetric && !isFlowVsPrice && selectedFlowOverlayMetrics.includes('defiActiveTvl'),
 		useInitialDataset: initialChartDataset?.metric === 'defiActiveTvl' && !activeFilters
 	})
@@ -472,7 +485,8 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 			assets: aggregateAssets,
 			categories: rankedFilterValues.categories,
 			selectedCategories,
-			metric: chartTypeKey
+			metric: chartTypeKey,
+			includeBridgeTvl
 		})
 
 	const { pieChartData: assetClassPieChartData, pieChartStackColors: assetClassPieChartStackColors } =
@@ -481,7 +495,8 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 			assets: aggregateAssets,
 			assetClasses: rankedFilterValues.assetClasses,
 			selectedAssetClasses,
-			metric: chartTypeKey
+			metric: chartTypeKey,
+			includeBridgeTvl
 		})
 
 	const shouldBuildAssetNamePieChartData = shouldBuildNonTimeSeriesData && nonTimeSeriesBreakdown === 'assetName'
@@ -493,27 +508,31 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 				isAssetGroupMode && shouldBuildAssetNamePieChartData
 					? aggregateAssets.map((asset) => asset.assetName || asset.ticker)
 					: selectedAssetNames,
-			metric: chartTypeKey
+			metric: chartTypeKey,
+			includeBridgeTvl
 		})
 
 	const { pieChartData: assetGroupPieChartData, pieChartStackColors: assetGroupPieChartStackColors } =
 		useRwaAssetGroupPieChartData({
 			enabled: shouldBuildNonTimeSeriesData && nonTimeSeriesBreakdown === 'assetGroup',
 			assets: aggregateAssets,
-			metric: chartTypeKey
+			metric: chartTypeKey,
+			includeBridgeTvl
 		})
 
 	const { pieChartData: assetPlatformPieChartData, pieChartStackColors: assetPlatformPieChartStackColors } =
 		useRwaAssetPlatformPieChartData({
 			enabled: shouldBuildNonTimeSeriesData && nonTimeSeriesBreakdown === 'platform',
 			assets: aggregateAssets,
-			metric: chartTypeKey
+			metric: chartTypeKey,
+			includeBridgeTvl
 		})
 	const { pieChartData: chainPieChartData, pieChartStackColors: chainPieChartStackColors } =
 		useRwaChainBreakdownPieChartData({
 			enabled: shouldBuildNonTimeSeriesData && nonTimeSeriesBreakdown === 'chain' && canBreakdownByChain,
 			assets: aggregateAssets,
-			metric: chartTypeKey
+			metric: chartTypeKey,
+			includeBridgeTvl
 		})
 
 	// Select pie chart breakdown based on route mode (same precedence as nav links).
@@ -870,7 +889,8 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 			metric: chartTypeKey,
 			rootLabel: chartBreakdownLabel,
 			parentGrouping: treemapParentGrouping,
-			childGrouping: treemapNestedBy
+			childGrouping: treemapNestedBy,
+			includeBridgeTvl
 		})
 	}, [
 		chartView,
@@ -879,7 +899,8 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		chartBreakdownLabel,
 		isNestedTreemapSupported,
 		treemapNestedBy,
-		treemapParentGrouping
+		treemapParentGrouping,
+		includeBridgeTvl
 	])
 	const treemapTreeData = useMemo(
 		() =>
@@ -924,7 +945,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 					className="gap-1"
 					label={definitions.totalDefiActiveTvl.label}
 					tooltip={definitions.totalDefiActiveTvl.description}
-					value={formatUsd(totalOnChainDeFiActiveTvl, {
+					value={formatUsd(displayedDefiActiveTvl, {
 						compact: true,
 						minimumCompactValue: 1_000_000,
 						compactSuffix: 'lowercase'
@@ -983,7 +1004,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		{
 			label: definitions.totalDefiActiveTvl.label,
 			tooltip: definitions.totalDefiActiveTvl.description,
-			value: formatUsd(totalOnChainDeFiActiveTvl, {
+			value: formatUsd(displayedDefiActiveTvl, {
 				compact: true,
 				minimumCompactValue: 1_000_000,
 				compactSuffix: 'lowercase'
@@ -1245,7 +1266,8 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 					maxDefiActiveTvlToActiveMcapPct,
 					includeStablecoins,
 					includeGovernance,
-					includeRwaPerps
+					includeRwaPerps,
+					includeBridgeTvl
 				}}
 				actions={{
 					setDefiActiveTvlToOnChainMcapPctRange,
@@ -1254,6 +1276,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 					setIncludeStablecoins,
 					setIncludeGovernance,
 					setIncludeRwaPerps,
+					setIncludeBridgeTvl,
 					setRedeemableStates,
 					setAttestationsStates,
 					setCexListedStates,
@@ -1265,7 +1288,11 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 			/>
 			{props.platformPage ? (
 				<SummaryCardGrid>
-					<RWAPlatformHeader data={props.platformPage} listedTotals={platformListedTotals} />
+					<RWAPlatformHeader
+						data={props.platformPage}
+						includeBridgeTvl={includeBridgeTvl}
+						listedTotals={platformListedTotals}
+					/>
 					{chartSection ? <div className="col-span-2 flex flex-col gap-2">{chartSection}</div> : null}
 				</SummaryCardGrid>
 			) : (
@@ -1421,12 +1448,18 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 							assets={filteredAssets}
 							selectedChain={props.selectedChain}
 							includeRwaPerps={includeRwaPerps}
+							includeBridgeTvl={includeBridgeTvl}
 							headerSlot={viewSwitch}
 						/>
 					)}
 				/>
 			) : (
-				<RWAAssetsTable assets={filteredAssets} selectedChain={props.selectedChain} includeRwaPerps={includeRwaPerps} />
+				<RWAAssetsTable
+					assets={filteredAssets}
+					selectedChain={props.selectedChain}
+					includeRwaPerps={includeRwaPerps}
+					includeBridgeTvl={includeBridgeTvl}
+				/>
 			)}
 		</>
 	)

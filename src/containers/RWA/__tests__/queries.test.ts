@@ -243,7 +243,9 @@ describe('rwa queries', () => {
 				defiActiveTvl: {
 					Solana: { Aave: 100, Spark: 7 },
 					Ethereum: { Morpho: 5, Aave: 20 }
-				}
+				},
+				bridgeTvl: { Solana: 100, Ethereum: 5 },
+				bridgeTvlBreakdown: { Solana: { Aave: 100 }, Ethereum: { Morpho: 5 } }
 			}
 		])
 
@@ -258,16 +260,22 @@ describe('rwa queries', () => {
 		})
 
 		expect(result?.assets).toHaveLength(1)
-		expect(result?.assets[0]?.onChainMcap).toEqual({ total: 100, breakdown: [['Ethereum', 100]] })
-		expect(result?.assets[0]?.activeMcap).toEqual({ total: 90, breakdown: [['Ethereum', 90]] })
-		expect(result?.assets[0]?.defiActiveTvl).toEqual({
+		const asset = result?.assets[0]
+		expect(asset?.kind).toBe('spot')
+		if (!asset || asset.kind !== 'spot') throw new Error('Expected a spot RWA asset')
+		expect(asset.onChainMcap).toEqual({ total: 100, breakdown: [['Ethereum', 100]] })
+		expect(asset.activeMcap).toEqual({ total: 90, breakdown: [['Ethereum', 90]] })
+		expect(asset.defiActiveTvl).toEqual({
 			total: 25,
 			breakdown: [
 				['Aave', 20],
 				['Morpho', 5]
 			]
 		})
-		expect(result?.assets[0]?.defiActiveTvlByChain).toEqual({ total: 25, breakdown: [['Ethereum', 25]] })
+		expect(asset.defiActiveTvlByChain).toEqual({ total: 25, breakdown: [['Ethereum', 25]] })
+		expect(asset.bridgeTvl).toBe(5)
+		expect(asset.bridgeTvlByChain).toEqual({ total: 5, breakdown: [['Ethereum', 5]] })
+		expect(asset.bridgeTvlByProtocol).toEqual({ total: 5, breakdown: [['Morpho', 5]] })
 	})
 
 	it('merges perps contracts into the overview rows', async () => {
@@ -485,7 +493,8 @@ describe('rwa queries', () => {
 		expect(result?.defaultInclusion).toEqual({
 			includeStablecoins: true,
 			includeGovernance: false,
-			includeRwaPerps: false
+			includeRwaPerps: false,
+			includeBridgeTvl: true
 		})
 		expect(fetchRWAChartMetricDataByAssetMock).toHaveBeenCalledWith({
 			target: { kind: 'platform', slug: 'curve' },

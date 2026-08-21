@@ -6,6 +6,7 @@ import type {
 	RWAFlowOverviewSplitBy
 } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
+import { getRwaDisplayedDefiActiveTvlByChain, getRwaDisplayedMetricValue } from './filterState'
 import { sortRWAFlowRotationSeriesNames, type RWAFlowGrouping } from './flows'
 import { getPrimaryRwaCategory } from './grouping'
 
@@ -229,7 +230,8 @@ function addChainSizeValues(
 
 export function buildRWAFlowTreemapSizeRowsFromAssets(
 	assets: IRWAAssetsOverview['assets'],
-	splitBy: RWAFlowOverviewSplitBy
+	splitBy: RWAFlowOverviewSplitBy,
+	includeBridgeTvl = true
 ): RWAFlowTreemapSizeRow[] {
 	const rows = new Map<string, MutableSizeRow>()
 
@@ -238,14 +240,14 @@ export function buildRWAFlowTreemapSizeRowsFromAssets(
 		if (splitBy === 'chain') {
 			addChainSizeValues(rows, asset.activeMcap?.breakdown ?? [], 'activeMcap')
 			addChainSizeValues(rows, asset.onChainMcap?.breakdown ?? [], 'onChainMcap')
-			addChainSizeValues(rows, asset.defiActiveTvlByChain?.breakdown ?? [], 'defiActiveTvl')
+			addChainSizeValues(rows, getRwaDisplayedDefiActiveTvlByChain(asset, includeBridgeTvl), 'defiActiveTvl')
 			continue
 		}
 
 		const values = {
 			activeMcap: asset.activeMcap?.total ?? 0,
 			onChainMcap: asset.onChainMcap?.total ?? 0,
-			defiActiveTvl: asset.defiActiveTvl?.total ?? 0
+			defiActiveTvl: getRwaDisplayedMetricValue(asset, 'defiActiveTvl', includeBridgeTvl)
 		}
 		if (splitBy === 'assetGroup') {
 			addSizeValues(rows, normalizeRwaAssetGroup(asset.assetGroup), values)

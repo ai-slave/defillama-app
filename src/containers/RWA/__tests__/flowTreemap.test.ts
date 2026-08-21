@@ -99,7 +99,9 @@ describe('RWA flow treemap', () => {
 						['Ethereum', 8],
 						['Solana', 2]
 					]
-				}
+				},
+				bridgeTvl: 3,
+				bridgeTvlByChain: { total: 3, breakdown: [['Ethereum', 3]] }
 			}
 		] as IRWAAssetsOverview['assets']
 
@@ -112,6 +114,10 @@ describe('RWA flow treemap', () => {
 		])
 		expect(buildRWAFlowTreemapSizeRowsFromAssets(assets, 'chain')).toEqual([
 			{ name: 'Ethereum', activeMcap: 60, onChainMcap: 70, defiActiveTvl: 8 },
+			{ name: 'Solana', activeMcap: 20, onChainMcap: 30, defiActiveTvl: 2 }
+		])
+		expect(buildRWAFlowTreemapSizeRowsFromAssets(assets, 'chain', false)).toEqual([
+			{ name: 'Ethereum', activeMcap: 60, onChainMcap: 70, defiActiveTvl: 5 },
 			{ name: 'Solana', activeMcap: 20, onChainMcap: 30, defiActiveTvl: 2 }
 		])
 	})

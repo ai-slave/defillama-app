@@ -3,6 +3,7 @@ import { isTrueQueryParam, toNonEmptyArrayParam } from '~/utils/routerQuery'
 import type { RWAAssetOverviewRow, RWAOverviewDisplayRow, RWAPerpsContractOverlayRow } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
 import type { RWAOverviewInclusionDefaults } from './constants'
+import { rwaSlug } from './rwaSlug'
 
 export const RWA_ATTRIBUTE_FILTER_STATES = ['yes', 'no', 'unknown'] as const
 export type RWAAttributeFilterState = (typeof RWA_ATTRIBUTE_FILTER_STATES)[number]
@@ -50,6 +51,7 @@ export type RWAFilterState = {
 	includeStablecoins: boolean
 	includeGovernance: boolean
 	includeRwaPerps: boolean
+	includeBridgeTvl: boolean
 	hasPerpsOverlayBlockingFilters: boolean
 	minDefiActiveTvlToOnChainMcapPct: number | null
 	maxDefiActiveTvlToOnChainMcapPct: number | null
@@ -65,6 +67,8 @@ export type RWAFilteredRowsResult = {
 	totalOnChainMcap: number
 	totalActiveMcap: number
 	totalOnChainDeFiActiveTvl: number
+	// Bridge/interop portion of totalOnChainDeFiActiveTvl; subtracted from the headline when the toggle is off.
+	totalBridgeTvl: number
 	totalOpenInterest: number
 	totalIssuersCount: number
 }
@@ -214,6 +218,7 @@ export function filterRwaOverviewDisplayRows(
 	let totalOnChainMcap = 0
 	let totalActiveMcap = 0
 	let totalOnChainDeFiActiveTvl = 0
+	let totalBridgeTvl = 0
 	let totalOpenInterest = 0
 	const totalIssuersSet = new Set<string>()
 
@@ -223,6 +228,7 @@ export function filterRwaOverviewDisplayRows(
 		totalOnChainMcap += asset.onChainMcap?.total ?? 0
 		totalActiveMcap += asset.activeMcap?.total ?? 0
 		totalOnChainDeFiActiveTvl += asset.defiActiveTvl?.total ?? 0
+		if (asset.kind === 'spot') totalBridgeTvl += asset.bridgeTvl ?? 0
 		totalOpenInterest += asset.openInterest ?? 0
 		if (asset.issuer) totalIssuersSet.add(asset.issuer)
 	}
@@ -233,6 +239,7 @@ export function filterRwaOverviewDisplayRows(
 		totalOnChainMcap,
 		totalActiveMcap,
 		totalOnChainDeFiActiveTvl,
+		totalBridgeTvl,
 		totalOpenInterest,
 		totalIssuersCount: totalIssuersSet.size
 	}
@@ -245,9 +252,62 @@ export function getEmptyRwaFilteredRowsResult(): RWAFilteredRowsResult {
 		totalOnChainMcap: 0,
 		totalActiveMcap: 0,
 		totalOnChainDeFiActiveTvl: 0,
+		totalBridgeTvl: 0,
 		totalOpenInterest: 0,
 		totalIssuersCount: 0
 	}
+}
+
+export function getRwaDisplayedDefiActiveTvl(asset: RWAAssetOverviewRow, includeBridgeTvl = true): number {
+	const total = asset.defiActiveTvl?.total ?? 0
+	if (includeBridgeTvl) return total
+	return total - (asset.bridgeTvl ?? 0)
+}
+
+export function getRwaDisplayedDefiActiveTvlByChain(
+	asset: RWAAssetOverviewRow,
+	includeBridgeTvl = true
+): Array<[string, number]> {
+	const breakdown = asset.defiActiveTvlByChain?.breakdown ?? []
+	if (includeBridgeTvl) return breakdown
+
+	const bridgeByChain = new Map<string, number>()
+	for (const [chain, value] of asset.bridgeTvlByChain?.breakdown ?? []) {
+		const key = rwaSlug(chain)
+		bridgeByChain.set(key, (bridgeByChain.get(key) ?? 0) + value)
+	}
+
+	return breakdown.map(([chain, value]) => {
+		const bridge = bridgeByChain.get(rwaSlug(chain)) ?? 0
+		return [chain, value - bridge]
+	})
+}
+
+export function getRwaDisplayedDefiActiveTvlByProtocol(
+	asset: RWAAssetOverviewRow,
+	includeBridgeTvl = true
+): Array<[string, number]> | null {
+	if (includeBridgeTvl) return asset.defiActiveTvl.breakdown
+	if (asset.bridgeTvlByProtocol == null) return null
+
+	const bridgeByProtocol = new Map(asset.bridgeTvlByProtocol.breakdown)
+	const breakdown: Array<[string, number]> = []
+	for (const [protocol, value] of asset.defiActiveTvl.breakdown) {
+		const displayedValue = value - (bridgeByProtocol.get(protocol) ?? 0)
+		if (displayedValue > 0) breakdown.push([protocol, displayedValue])
+	}
+	return breakdown
+}
+
+export function getRwaDisplayedMetricValue(
+	asset: RWAOverviewDisplayRow,
+	metric: 'onChainMcap' | 'activeMcap' | 'defiActiveTvl',
+	includeBridgeTvl = true
+): number {
+	if (metric === 'defiActiveTvl' && asset.kind === 'spot') {
+		return getRwaDisplayedDefiActiveTvl(asset, includeBridgeTvl)
+	}
+	return asset[metric]?.total ?? 0
 }
 function matchesSharedRwaFilters(asset: RWAOverviewDisplayRow, filters: PreparedRwaFilters): boolean {
 	const assetGroup = normalizeRwaAssetGroup(asset.assetGroup)
@@ -300,7 +360,7 @@ function matchesRwaAssetFilters(
 function matchesAssetRatioFilters(asset: RWAAssetOverviewRow, filterState: RWAFilterState): boolean {
 	const onChainMcap = asset.onChainMcap?.total ?? 0
 	const activeMcap = asset.activeMcap?.total ?? 0
-	const defiActiveTvl = asset.defiActiveTvl?.total ?? 0
+	const defiActiveTvl = getRwaDisplayedDefiActiveTvl(asset, filterState.includeBridgeTvl)
 
 	return (
 		meetsRatioPercent(

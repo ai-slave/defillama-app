@@ -3,6 +3,7 @@ import { roundNumber } from '~/utils/numberFormat'
 import type { IRWAAssetsOverview } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
 import type { RWAChartMetric, RwaTreemapNestedBy, RwaTreemapParentGrouping } from './chartState'
+import { getRwaDisplayedDefiActiveTvlByChain, getRwaDisplayedMetricValue } from './filterState'
 import { computeWeightedGroups } from './grouping'
 import { rwaSlug } from './rwaSlug'
 
@@ -80,20 +81,23 @@ export const canBuildRwaNestedTreemap = ({
 	return true
 }
 
-const getRwaMetricValue = (asset: RWAAsset, metric: RWAChartMetric): number => {
-	if (metric === 'activeMcap') return asset.activeMcap?.total ?? 0
-	if (metric === 'defiActiveTvl') return asset.defiActiveTvl?.total ?? 0
-	return asset.onChainMcap?.total ?? 0
-}
+const getRwaMetricValue = (asset: RWAAsset, metric: RWAChartMetric, includeBridgeTvl: boolean): number =>
+	getRwaDisplayedMetricValue(asset, metric, includeBridgeTvl)
 
 type RwaMetricByChainRow = { label: string; value: number }
 
-const getRwaMetricBreakdownByChain = (asset: RWAAsset, metric: RWAChartMetric): RwaMetricByChainRow[] => {
+const getRwaMetricBreakdownByChain = (
+	asset: RWAAsset,
+	metric: RWAChartMetric,
+	includeBridgeTvl: boolean
+): RwaMetricByChainRow[] => {
 	const breakdown =
 		metric === 'activeMcap'
 			? asset.activeMcap?.breakdown
 			: metric === 'defiActiveTvl'
-				? asset.defiActiveTvlByChain?.breakdown
+				? asset.kind === 'spot'
+					? getRwaDisplayedDefiActiveTvlByChain(asset, includeBridgeTvl)
+					: undefined
 				: asset.onChainMcap?.breakdown
 	if (!breakdown || breakdown.length === 0) return []
 
@@ -299,13 +303,15 @@ export const buildRwaNestedTreemapTreeData = ({
 	metric,
 	rootLabel,
 	parentGrouping,
-	childGrouping
+	childGrouping,
+	includeBridgeTvl = true
 }: {
 	assets: IRWAAssetsOverview['assets']
 	metric: RWAChartMetric
 	rootLabel: string
 	parentGrouping: RwaTreemapParentGrouping
 	childGrouping: RwaTreemapNestedBy
+	includeBridgeTvl?: boolean
 }): RwaTreemapNode[] => {
 	if (childGrouping === 'none') return []
 
@@ -316,7 +322,7 @@ export const buildRwaNestedTreemapTreeData = ({
 		if (childGroups.length === 0) continue
 
 		if (parentGrouping === 'chain') {
-			const metricByChain = getRwaMetricBreakdownByChain(asset, metric)
+			const metricByChain = getRwaMetricBreakdownByChain(asset, metric, includeBridgeTvl)
 			if (metricByChain.length === 0) continue
 
 			for (const { label: parentGroup, value: metricValue } of metricByChain) {
@@ -329,7 +335,7 @@ export const buildRwaNestedTreemapTreeData = ({
 			continue
 		}
 
-		const metricValue = getRwaMetricValue(asset, metric)
+		const metricValue = getRwaMetricValue(asset, metric, includeBridgeTvl)
 		if (metricValue <= 0) continue
 
 		const parentGroups = getWeightedAssetGroupsByGrouping(asset, parentGrouping)
