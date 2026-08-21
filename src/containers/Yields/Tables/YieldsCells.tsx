@@ -152,12 +152,14 @@ export function EarnApyCell({ row, median }: { row: IYieldTableRow; median?: Ear
 		tipRows.push({ label: src ? `Intrinsic · ${src}` : 'Intrinsic', value: intrinsic })
 	}
 
-	const showTooltip = tipRows.length > 0 || median != null
+	const showTooltip = hasComposition || median != null
 
 	const body = (
 		<span className="flex flex-col items-end leading-tight">
 			<span className="flex items-center gap-1 text-sm font-bold text-primary">
-				<span>{formatPercent(total, YIELD_PERCENT_OPTIONS)}</span>
+				<span className={showTooltip ? 'underline decoration-dotted' : undefined}>
+					{formatPercent(total, YIELD_PERCENT_OPTIONS)}
+				</span>
 			</span>
 			{hasComposition ? (
 				<span className="flex gap-1 body-sm">
@@ -281,12 +283,14 @@ export function TotalApyCell({
 	// beyond the cell numeral, so it stays tooltip-less. This mirrors EarnApyCell; the previous
 	// `length > 1` gate wrongly suppressed the tooltip for intrinsic-only supply cells (borrow
 	// collateral whose base leg is null, e.g. wstETH earning only its stETH staking yield).
-	const showTooltip = tipRows.length > 0
+	const showTooltip = hasComposition
 
 	const body = (
 		<span className="flex flex-col items-end leading-tight">
 			<span className="flex items-center justify-end label-md text-primary">
-				{formatPercent(value, YIELD_PERCENT_OPTIONS)}
+				<span className={showTooltip ? 'underline decoration-dotted' : undefined}>
+					{formatPercent(value, YIELD_PERCENT_OPTIONS)}
+				</span>
 			</span>
 			{hasComposition ? (
 				<span className="flex gap-1 body-sm">
@@ -367,16 +371,18 @@ export function SignedApyCell({
 	const tone =
 		value > 0.005 ? 'text-(--yield-positive-text)' : value < -0.005 ? 'text-(--yield-negative-text)' : 'text-secondary'
 
+	const hasBreakdown = !!tooltipRows && tooltipRows.length > 0
+
 	const body = (
 		<span className="flex items-center justify-end">
-			<span className={`label-md ${tone}`}>
+			<span className={`label-md ${tone} ${hasBreakdown ? 'underline decoration-dotted' : ''}`.trim()}>
 				{value >= 0 ? '+' : ''}
 				{formatPercent(value, YIELD_PERCENT_OPTIONS)}
 			</span>
 		</span>
 	)
 
-	if (!tooltipRows || tooltipRows.length === 0) return body
+	if (!hasBreakdown) return body
 
 	return (
 		<Hovercard

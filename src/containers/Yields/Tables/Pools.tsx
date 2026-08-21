@@ -36,13 +36,16 @@ function ApyStabilityIndicator({
 	const scoreStr = score != null ? String(Math.round(score * 100)) : null
 	// The td centers via text-align, so the bare pill must stay inline-flex; inside
 	// the block-level Tooltip anchor, justify-center re-centers it.
+	const hasTooltip = score != null
 	const pill = (
-		<span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 label-sm ${className}`}>
-			{label}
-			{scoreStr != null ? <span className="text-secondary">{scoreStr}</span> : null}
+		<span className={`inline-flex items-center rounded-full px-2 py-0.5 label-sm ${className}`}>
+			<span className={hasTooltip ? 'underline decoration-secondary decoration-dotted' : undefined}>
+				{label}
+				{scoreStr != null ? <span className="text-secondary">{` ${scoreStr}`}</span> : null}
+			</span>
 		</span>
 	)
-	if (score == null) return pill
+	if (!hasTooltip) return pill
 
 	// σ derived from score and avg (score = 1 / (1 + σ/|avg|)), keeping the displayed
 	// numbers mutually consistent.
@@ -332,14 +335,16 @@ function createEarnColumns(
 					)
 				return (
 					<Tooltip content={content} className="justify-end">
-						<span>{formatCompactNumber(count, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</span>
+						<span className={content ? 'underline decoration-dotted' : undefined}>
+							{formatCompactNumber(count, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+						</span>
 					</Tooltip>
 				)
 			},
 			meta: {
 				headerClassName: 'w-[90px] min-w-[90px]',
 				align: 'end',
-				headerHelperText: 'Unique token holders. Hover for top 10 share and avg position.'
+				headerHelperText: 'Unique token holders'
 			}
 		}),
 		columnHelper.accessor((row) => row.volumeUsd1d ?? undefined, {
@@ -384,12 +389,14 @@ function createEarnColumns(
 					<Tooltip content={riskLabel} className="justify-end">
 						<span className="inline-flex items-center gap-1.5">
 							<span className={`size-2 shrink-0 rounded-full ${accentClass}`} />
-							{formatPercent(value, {
-								input: 'percent',
-								minimumFractionDigits: 1,
-								maximumFractionDigits: 1,
-								useGrouping: false
-							})}
+							<span className="underline decoration-dotted">
+								{formatPercent(value, {
+									input: 'percent',
+									minimumFractionDigits: 1,
+									maximumFractionDigits: 1,
+									useGrouping: false
+								})}
+							</span>
 						</span>
 					</Tooltip>
 				)
