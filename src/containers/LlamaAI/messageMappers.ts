@@ -111,6 +111,8 @@ export interface SessionRestoreResult {
 	activeLeafMessageId?: string
 	pagination?: { hasMore?: boolean; cursor?: number | null; hasNewer?: boolean; newerCursor?: number | null }
 	projectId?: string | null
+	queuedMessages?: unknown
+	queueRevision?: number
 }
 
 const mapPersistedTimestamp = (timestamp: PersistedMessage['timestamp']): number | undefined => {

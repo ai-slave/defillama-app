@@ -1,5 +1,6 @@
 import type { RefObject } from 'react'
 import type { AgenticArmEvent, AgenticSSECallbacks, SpawnProgressData } from '~/containers/LlamaAI/fetchAgenticResponse'
+import type { QueueSnapshot } from '~/containers/LlamaAI/queue/protocol'
 import { isActiveRequest } from '~/containers/LlamaAI/requestLifecycle'
 import {
 	buildAssistantMessage,
@@ -51,6 +52,8 @@ export function createAgenticCallbacks({
 	onDuelStart,
 	onDuelReady,
 	onArmEvent,
+	onQueueUpdated,
+	onMessageIdObserved,
 	notify
 }: {
 	requestId: number
@@ -64,7 +67,7 @@ export function createAgenticCallbacks({
 	onTokenLimit?: () => void
 	onDashboardArtifact?: (dashboard: DashboardArtifact) => void
 	appendMessage: (message: Message) => void
-	replaceLocalUserMessageId?: (realId: string) => void
+	replaceLocalUserMessageId?: (realId: string, queueItemId?: string) => void
 	setMessageSiblingInfo?: (messageId: string, siblingInfo: Message['siblingInfo']) => void
 	deferEmptyDone?: boolean
 	onFactCheckStatus?: (status: 'drafting' | 'verifying' | 'finalizing') => void
@@ -72,6 +75,8 @@ export function createAgenticCallbacks({
 	onDuelStart?: (pairId: string) => void
 	onDuelReady?: () => void
 	onArmEvent?: (event: AgenticArmEvent) => void
+	onQueueUpdated?: (snapshot: QueueSnapshot) => void
+	onMessageIdObserved?: (messageId: string) => void
 	notify: () => void
 }): AgenticSSECallbacks {
 	// One guard wraps every callback so late chunks from an aborted or superseded
@@ -186,9 +191,10 @@ export function createAgenticCallbacks({
 		}),
 		onMessageId: guard((messageId) => {
 			currentMessageIdRef.current = messageId
+			onMessageIdObserved?.(messageId)
 		}),
-		onUserMessageId: guard((messageId) => {
-			replaceLocalUserMessageId?.(messageId)
+		onUserMessageId: guard((messageId, queueItemId) => {
+			replaceLocalUserMessageId?.(messageId, queueItemId)
 		}),
 		onSiblingInfo: guard((messageId, siblingInfo) => {
 			setMessageSiblingInfo?.(messageId, siblingInfo)
@@ -221,6 +227,9 @@ export function createAgenticCallbacks({
 		}),
 		onArmEvent: guard((event) => {
 			onArmEvent?.(event)
+		}),
+		onQueueUpdated: guard((snapshot) => {
+			onQueueUpdated?.(snapshot)
 		}),
 		onError: guard((content) => {
 			buffer.error = content

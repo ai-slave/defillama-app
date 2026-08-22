@@ -29,17 +29,20 @@ function revokeImageUrls(images: Array<{ url: string }>) {
 }
 
 interface PromptInputProps {
+	draftScope: string
+	submitMode: { kind: 'direct' } | { kind: 'queue'; atCapacity: boolean; capacityMessage: string | null }
 	handleSubmit: (
 		prompt: string,
 		preResolvedEntities?: Array<{ term: string; slug: string; type?: string }>,
 		images?: Array<{ data: string; mimeType: string; filename?: string; isPasted?: boolean }>,
 		pageContext?: undefined,
 		isSuggestedQuestion?: boolean
-	) => void | Promise<void>
+	) => void | Promise<void> | boolean | QueueSubmitResult | Promise<QueueSubmitResult>
 	promptInputRef: RefObject<HTMLTextAreaElement | null>
 	isPending: boolean
-	handleStopRequest?: () => void
+	handleStopRequest: () => void
 	isStreaming?: boolean
+	isStopping?: boolean
 	placeholder: string
 	restoreRequest?: {
 		key: number
@@ -62,6 +65,11 @@ interface PromptInputProps {
 	walkthroughActive?: boolean
 }
 
+export type QueueSubmitResult =
+	| { status: 'accepted' }
+	| { status: 'cancelled' }
+	| { status: 'rejected'; message: string }
+
 const trackSubmit = () => {
 	trackUmamiEvent('llamaai-prompt-submit')
 }
@@ -73,11 +81,14 @@ interface PendingSelection {
 }
 
 export function PromptInput({
+	draftScope,
+	submitMode,
 	handleSubmit,
 	promptInputRef,
 	isPending,
 	handleStopRequest,
 	isStreaming,
+	isStopping,
 	placeholder,
 	restoreRequest,
 	onRestoreConsumed,
@@ -95,8 +106,9 @@ export function PromptInput({
 	enterToSend,
 	walkthroughActive
 }: PromptInputProps) {
-	const [value, setValue] = usePromptDraft()
+	const [value, setValue] = usePromptDraft(draftScope)
 	const [submitError, setSubmitError] = useState<string | null>(null)
+	const submitInFlightRef = useRef(false)
 	const highlightRef = useRef<HTMLDivElement>(null)
 	const pendingSelectionRef = useRef<PendingSelection | null>(null)
 	const valueRef = useRef(value)
@@ -152,7 +164,10 @@ export function PromptInput({
 	)
 
 	// Image upload handling
-	const imageUpload = useImageUpload({ droppedFiles, clearDroppedFiles })
+	const imageUpload = useImageUpload({ droppedFiles: isStopping ? null : droppedFiles, clearDroppedFiles })
+	useEffect(() => {
+		if (isStopping && droppedFiles?.length) clearDroppedFiles?.()
+	}, [isStopping, droppedFiles, clearDroppedFiles])
 
 	// Entity combobox handling
 	const entityCombobox = useEntityCombobox({
@@ -282,55 +297,98 @@ export function PromptInput({
 
 	const shouldResetSubmittedDraft = useCallback(
 		(promptValue: string, imagesToSend: Array<{ id: string }>) => {
-			const currentValue = valueRef.current
-			const currentIds = imageUpload.getSelectedImageIds()
-			if (currentValue !== promptValue) return false
-
-			if (imagesToSend.length !== currentIds.length) return false
-
-			for (let index = 0; index < imagesToSend.length; index++) {
-				if (imagesToSend[index].id !== currentIds[index]) return false
-			}
-
-			return true
+			if (valueRef.current !== promptValue) return false
+			const currentImageIds = imageUpload.getSelectedImageIds()
+			if (currentImageIds.length !== imagesToSend.length) return false
+			return imagesToSend.every((image, index) => image.id === currentImageIds[index])
 		},
 		[imageUpload]
 	)
 
 	// Submit the prompt plus any selected entities/images, then clear the local composer state.
 	const submitForm = async (promptValue: string) => {
+		if (submitInFlightRef.current) return
+		if (isStopping) return
 		if (!promptValue.trim() && imageUpload.selectedImages.length === 0) return
+		submitInFlightRef.current = true
+		try {
+			const finalEntities = entityCombobox.getFinalEntities()
+			const imagesToSend = [...imageUpload.selectedImages]
+			const isSuggested = isSuggestedRef.current
+			isSuggestedRef.current = false
 
-		trackSubmit()
-		const finalEntities = entityCombobox.getFinalEntities()
-		const imagesToSend = [...imageUpload.selectedImages]
-		const hasImages = imagesToSend.length > 0
-		const isSuggested = isSuggestedRef.current
-		isSuggestedRef.current = false
+			if (submitMode.kind === 'queue') {
+				if (submitMode.atCapacity) {
+					setSubmitError(submitMode.capacityMessage || 'Queue is full. Wait for a message to send first.')
+					return
+				}
 
-		if (hasImages) {
-			try {
-				const images = await prepareImagesForSubmit(imagesToSend)
-				await Promise.resolve(handleSubmit(promptValue, finalEntities, images, undefined, isSuggested || undefined))
+				const restoreDraftIfUntouched = () => {
+					if (!shouldResetSubmittedDraft('', [])) return
+					restoreEntities(finalEntities)
+					applyPromptEdit({
+						nextValue: promptValue,
+						selectionStart: promptValue.length,
+						selectionEnd: promptValue.length
+					})
+					if (imagesToSend.length > 0) {
+						imageUpload.addImages(imagesToSend.map((image) => image.file))
+					}
+				}
+
 				setSubmitError(null)
-				if (shouldResetSubmittedDraft(promptValue, imagesToSend)) {
-					resetInput(imagesToSend)
+				resetInput(imagesToSend)
+				try {
+					const images = await prepareImagesForSubmit(imagesToSend)
+					const result = await handleSubmit(promptValue, finalEntities, images)
+					if (typeof result !== 'object' || result.status !== 'accepted') {
+						const message = typeof result === 'object' && result.status === 'rejected' ? result.message : null
+						setSubmitError(message)
+						restoreDraftIfUntouched()
+					}
+				} catch (error) {
+					console.error('Queue failed', error)
+					setSubmitError('Failed to queue your prompt. Please try again.')
+					restoreDraftIfUntouched()
 				}
 				return
+			}
+
+			trackSubmit()
+			const hasImages = imagesToSend.length > 0
+
+			if (hasImages) {
+				try {
+					const images = await prepareImagesForSubmit(imagesToSend)
+					const accepted = await Promise.resolve(
+						handleSubmit(promptValue, finalEntities, images, undefined, isSuggested || undefined)
+					)
+					if (accepted === false) return
+					setSubmitError(null)
+					if (shouldResetSubmittedDraft(promptValue, imagesToSend)) {
+						resetInput(imagesToSend)
+					}
+					return
+				} catch (error) {
+					console.error('Submission failed', error)
+					setSubmitError('Failed to submit your prompt. Please try again.')
+				}
+				return
+			}
+
+			try {
+				const accepted = await Promise.resolve(
+					handleSubmit(promptValue, finalEntities, undefined, undefined, isSuggested || undefined)
+				)
+				if (accepted === false) return
+				setSubmitError(null)
+				resetInput()
 			} catch (error) {
 				console.error('Submission failed', error)
 				setSubmitError('Failed to submit your prompt. Please try again.')
 			}
-			return
-		}
-
-		try {
-			await Promise.resolve(handleSubmit(promptValue, finalEntities, undefined, undefined, isSuggested || undefined))
-			setSubmitError(null)
-			resetInput()
-		} catch (error) {
-			console.error('Submission failed', error)
-			setSubmitError('Failed to submit your prompt. Please try again.')
+		} finally {
+			submitInFlightRef.current = false
 		}
 	}
 
@@ -356,7 +414,6 @@ export function PromptInput({
 		// Handle enter for submission
 		if (shouldSubmit && !entityCombobox.hasRenderedItems && !event.nativeEvent.isComposing) {
 			event.preventDefault()
-			if (isStreaming) return
 			void submitForm(value)
 		}
 	}
@@ -390,11 +447,13 @@ export function PromptInput({
 	}
 
 	const handleImageRemove = (idx: number) => {
+		if (isStopping) return
 		clearSubmitError()
 		imageUpload.removeImage(idx)
 	}
 
 	const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+		if (isStopping) return
 		clearSubmitError()
 		imageUpload.handleImageSelect(event)
 	}
@@ -419,6 +478,10 @@ export function PromptInput({
 	}
 
 	const handleDrop = (event: React.DragEvent<HTMLFormElement>) => {
+		if (isStopping) {
+			event.preventDefault()
+			return
+		}
 		clearSubmitError()
 		imageUpload.handleDrop(event)
 	}
@@ -426,16 +489,20 @@ export function PromptInput({
 	return (
 		<form
 			className="relative flex w-full flex-col gap-4 rounded-lg border border-ai-line bg-page p-4 has-[textarea:focus]:border-brand"
-			onDragEnter={imageUpload.handleDragEnter}
+			onDragEnter={isStopping ? undefined : imageUpload.handleDragEnter}
 			onDragLeave={imageUpload.handleDragLeave}
 			onDragOver={(e) => e.preventDefault()}
 			onDrop={handleDrop}
 			onSubmit={handleFormSubmit}
 			onPointerDown={handleFormPointerDown}
 		>
-			<DragOverlay isDragging={imageUpload.isDragging} externalDragging={externalDragging} />
+			<DragOverlay
+				isDragging={!isStopping && imageUpload.isDragging}
+				externalDragging={!isStopping && externalDragging}
+			/>
 
 			<ImageUpload
+				disabled={isStopping}
 				selectedImages={imageUpload.selectedImages}
 				previewImage={imageUpload.previewImage}
 				setPreviewImage={imageUpload.setPreviewImage}
@@ -489,8 +556,7 @@ export function PromptInput({
 				value={value}
 				sanitizedHighlightedHtml={sanitizedHighlightedHtml}
 				placeholder={finalPlaceholder}
-				isPending={isPending}
-				isStreaming={isStreaming}
+				disabled={!!isStopping || (isPending && !isStreaming)}
 				onScroll={handleScroll}
 				onChange={handleChange}
 				onKeyDownCapture={handleKeyDownCapture}
@@ -511,7 +577,11 @@ export function PromptInput({
 				onItemClick={entityCombobox.selectEntity}
 			/>
 
-			{submitError ? <p className="text-xs text-ai-error-strong">{submitError}</p> : null}
+			{submitError ? (
+				<p className="text-xs text-ai-error-strong">{submitError}</p>
+			) : submitMode.kind === 'queue' && submitMode.atCapacity && submitMode.capacityMessage ? (
+				<p className="text-xs text-ai-tertiary">{submitMode.capacityMessage}</p>
+			) : null}
 
 			<div className="flex items-center justify-between gap-4 p-0">
 				<div className="hidden items-center gap-2 sm:flex">
@@ -571,17 +641,38 @@ export function PromptInput({
 					onImageUploadClick={imageUpload.openFilePicker}
 					isPending={isPending}
 					isStreaming={isStreaming}
+					isStopping={isStopping}
 					walkthroughActive={walkthroughActive}
 				/>
 				<div className="flex items-center gap-2">
 					<span className="max-sm:hidden" data-walkthrough="image-upload">
-						<ImageUploadButton onClick={imageUpload.openFilePicker} />
+						<ImageUploadButton onClick={imageUpload.openFilePicker} disabled={isStopping} />
 					</span>
 					<SubmitButton
-						isStreaming={isStreaming}
-						isPending={isPending}
-						hasValue={value.trim().length > 0 || imageUpload.selectedImages.length > 0}
-						onStop={handleStopRequest}
+						mode={
+							isStopping
+								? { kind: 'stopping' }
+								: isStreaming
+									? {
+											kind: 'streaming',
+											canQueue:
+												submitMode.kind === 'queue' &&
+												!submitMode.atCapacity &&
+												(value.trim().length > 0 || imageUpload.selectedImages.length > 0),
+											onStop: handleStopRequest
+										}
+									: submitMode.kind === 'queue'
+										? {
+												kind: 'queue',
+												disabled:
+													submitMode.atCapacity ||
+													(value.trim().length === 0 && imageUpload.selectedImages.length === 0)
+											}
+										: {
+												kind: 'send',
+												disabled: isPending || (value.trim().length === 0 && imageUpload.selectedImages.length === 0)
+											}
+						}
 					/>
 				</div>
 			</div>

@@ -21,6 +21,7 @@ const FEATURED_CAPABILITIES = FEATURED_KEYS.map((key) => CAPABILITIES.find((c) =
 )
 
 export interface ChatLandingProps {
+	draftScope: string
 	readOnly: boolean
 	isSharedView?: boolean
 	title: string
@@ -30,10 +31,11 @@ export interface ChatLandingProps {
 		images?: Array<{ data: string; mimeType: string; filename?: string; isPasted?: boolean }>,
 		pageContext?: { entitySlug?: string; entityType?: 'protocol' | 'chain' | 'page'; route: string },
 		isSuggestedQuestion?: boolean
-	) => void | Promise<void>
+	) => void | Promise<void> | boolean
 	promptInputRef: RefObject<HTMLTextAreaElement | null>
 	handleStopRequest: () => void
 	isStreaming: boolean
+	isStopping?: boolean
 	restoreRequest?: { key: number; text: string; entities?: Array<{ term: string; slug: string; type?: string }> } | null
 	onRestoreConsumed?: () => void
 	mode: AgenticAnswerMode
@@ -48,6 +50,7 @@ export interface ChatLandingProps {
 }
 
 export function ChatLanding({
+	draftScope,
 	readOnly,
 	isSharedView = false,
 	title,
@@ -55,6 +58,7 @@ export function ChatLanding({
 	promptInputRef,
 	handleStopRequest,
 	isStreaming,
+	isStopping,
 	restoreRequest = null,
 	onRestoreConsumed,
 	mode,
@@ -155,11 +159,14 @@ export function ChatLanding({
 				<>
 					<div className="relative w-full">
 						<PromptInput
+							draftScope={draftScope}
+							submitMode={{ kind: 'direct' }}
 							handleSubmit={handleSubmit}
 							promptInputRef={promptInputRef}
 							isPending={isStreaming}
 							handleStopRequest={handleStopRequest}
 							isStreaming={isStreaming}
+							isStopping={isStopping}
 							restoreRequest={restoreRequest}
 							onRestoreConsumed={onRestoreConsumed}
 							placeholder="Ask LlamaAI... Type @ to add a protocol, chain or stablecoin, or $ to add a coin"

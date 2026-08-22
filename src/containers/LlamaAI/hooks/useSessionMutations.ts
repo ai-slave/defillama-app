@@ -40,6 +40,8 @@ type SessionRestoreResponse = {
 	streaming?: unknown
 	todos?: unknown
 	projectId?: string | null
+	queuedMessages?: unknown
+	queueRevision?: number
 }
 
 function getSessionRestoreMessages(result: SessionRestoreResponse | null | undefined): unknown[] {
@@ -491,7 +493,9 @@ export function useSessionMutations() {
 					activeLeafMessageId: result?.activeLeafMessageId ?? null,
 					streaming: result?.streaming,
 					todos: result?.todos,
-					projectId: result?.projectId ?? null
+					projectId: result?.projectId ?? null,
+					queuedMessages: result?.queuedMessages,
+					queueRevision: result?.queueRevision
 				}
 			} catch (error) {
 				console.error('[llama-ai] [restoreSession] failed:', getErrorMessage(error))

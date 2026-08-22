@@ -34,10 +34,13 @@ function subscribeToCurrentSecond(listener: () => void) {
 	}
 }
 
-export function useCurrentSecond() {
+const subscribeToNothing = () => () => {}
+const zeroSnapshot = () => 0
+
+export function useCurrentSecond(enabled = true) {
 	return useSyncExternalStore(
-		subscribeToCurrentSecond,
-		() => currentSecondSnapshot,
-		() => currentSecondSnapshot
+		enabled ? subscribeToCurrentSecond : subscribeToNothing,
+		enabled ? () => currentSecondSnapshot : zeroSnapshot,
+		enabled ? () => currentSecondSnapshot : zeroSnapshot
 	)
 }

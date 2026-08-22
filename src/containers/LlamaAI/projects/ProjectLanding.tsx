@@ -6,6 +6,7 @@ import { DragOverlay, ImageUpload } from '~/containers/LlamaAI/components/input/
 import { PastedContentModal } from '~/containers/LlamaAI/components/PastedContentModal'
 import { useClearUnseenCompletion } from '~/containers/LlamaAI/hooks/useClearUnseenCompletion'
 import { fileToBase64, useImageUpload } from '~/containers/LlamaAI/hooks/useImageUpload'
+import { usePromptDraft } from '~/containers/LlamaAI/hooks/usePromptDraft'
 import { useSessionMutations } from '~/containers/LlamaAI/hooks/useSessionMutations'
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { Icon } from '~/ui/Icon'
@@ -32,7 +33,7 @@ interface ProjectLandingProps {
 		prompt: string,
 		preResolvedEntities?: Array<{ term: string; slug: string; type?: string }>,
 		images?: Array<{ data: string; mimeType: string; filename?: string; isPasted?: boolean }>
-	) => void | Promise<void>
+	) => void | Promise<void> | boolean
 	isStreaming: boolean
 	onPickSession: (sessionId: string) => void
 	enterToSend: boolean
@@ -59,7 +60,7 @@ export function ProjectLanding({
 	const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null)
 	const [actingSessionId, setActingSessionId] = useState<string | null>(null)
 	const tab = initialTab
-	const [prompt, setPrompt] = useState('')
+	const [prompt, setPrompt] = usePromptDraft(`project:${projectId}`)
 	const textareaRef = useRef<HTMLTextAreaElement>(null)
 	const imageUpload = useImageUpload()
 	const shiftHeldRef = useRef(false)
@@ -147,7 +148,8 @@ export function ProjectLanding({
 					)
 				)
 			: undefined
-		await Promise.resolve(onSubmit(trimmed, undefined, images))
+		const accepted = await Promise.resolve(onSubmit(trimmed, undefined, images))
+		if (accepted === false) return
 		setPrompt('')
 		imageUpload.clearImages()
 	}

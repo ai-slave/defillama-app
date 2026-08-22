@@ -44,6 +44,7 @@ export interface RecoveryState {
 export type StreamPhase =
 	| { status: 'idle' }
 	| { status: 'streaming' }
+	| { status: 'stopping' }
 	| { status: 'reconnecting'; startedAt: number; attemptCount: number; lastErrorMessage: string | null }
 	| { status: 'failed'; error: string }
 	| { status: 'committed' }
@@ -51,6 +52,7 @@ export type StreamPhase =
 export interface StreamState {
 	phase: StreamPhase
 	isStreaming: boolean
+	pendingQueueItemId: string | null
 	isCompacting: boolean
 	text: string
 	charts: ChartSet[]
@@ -102,7 +104,11 @@ export type StreamBuffer = StreamAccumulator
 
 export type StreamAction =
 	| { type: 'START_STREAM' }
+	| { type: 'START_QUEUED_STREAM'; queueItemId: string }
+	| { type: 'QUEUED_USER_MESSAGE_READY'; queueItemId: string }
 	| { type: 'RESET_STREAM' }
+	| { type: 'STOP_REQUESTED' }
+	| { type: 'STOP_FAILED'; error: string }
 	| { type: 'COMMIT_STREAM' }
 	| { type: 'SET_COMPACTING'; value: boolean }
 	| { type: 'SET_ERROR'; value: string | null }
@@ -136,6 +142,7 @@ export type StreamAction =
 // Reset only the in-flight runtime fields; persistent errors are layered on top separately.
 const createEmptyRuntimeState = () => ({
 	isStreaming: false,
+	pendingQueueItemId: null as string | null,
 	isCompacting: false,
 	text: '',
 	charts: [] as ChartSet[],
@@ -215,21 +222,34 @@ export function hasStreamBufferContent(buffer: StreamBuffer) {
 export function streamReducer(state: StreamState, action: StreamAction): StreamState {
 	switch (action.type) {
 		case 'START_STREAM':
+		case 'START_QUEUED_STREAM':
 			return {
 				...state,
 				...createEmptyRuntimeState(),
 				phase: { status: 'streaming' },
 				isStreaming: true,
+				pendingQueueItemId: action.type === 'START_QUEUED_STREAM' ? action.queueItemId : null,
 				error: null,
 				lastFailedRequest: null,
 				rateLimitDetails: null
 			}
+		case 'QUEUED_USER_MESSAGE_READY':
+			return state.pendingQueueItemId === action.queueItemId ? { ...state, pendingQueueItemId: null } : state
 		case 'RESET_STREAM':
 			// Clear only in-flight runtime fields. Error/rate-limit metadata is managed
 			// by separate actions so callers can reset the draft without hiding failures.
 			return { ...state, ...createEmptyRuntimeState(), phase: { status: 'idle' } }
+		case 'STOP_REQUESTED':
+			return { ...state, phase: { status: 'stopping' }, isStreaming: true, error: null }
+		case 'STOP_FAILED':
+			return { ...state, phase: { status: 'streaming' }, isStreaming: true, error: action.error }
 		case 'COMMIT_STREAM':
-			return { ...state, ...createEmptyRuntimeState(), phase: { status: 'committed' } }
+			return {
+				...state,
+				...createEmptyRuntimeState(),
+				phase: state.phase.status === 'stopping' ? state.phase : { status: 'committed' },
+				isStreaming: state.phase.status === 'stopping'
+			}
 		case 'SET_COMPACTING':
 			return { ...state, isCompacting: action.value }
 		case 'SET_ERROR':

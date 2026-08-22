@@ -8,6 +8,7 @@ import {
 	migrateDashboardItems
 } from '~/containers/LlamaAI/chartPayloads'
 import type { ChartConfiguration, ChartDataByKey } from '~/containers/LlamaAI/chartTypes'
+import { decodeQueueSnapshot, type QueueSnapshot } from '~/containers/LlamaAI/queue/protocol'
 import type {
 	AgenticAnswerMode,
 	AlertProposedData,
@@ -70,13 +71,14 @@ export interface AgenticSSECallbacks {
 	onCompaction?: (data: { status: 'started' | 'completed'; messagesBefore: number; messagesAfter?: number }) => void
 	onTitle?: (title: string) => void
 	onMessageId?: (messageId: string) => void
-	onUserMessageId?: (messageId: string) => void
+	onUserMessageId?: (messageId: string, queueItemId?: string) => void
 	onSiblingInfo?: (messageId: string, siblingInfo: SiblingInfoEvent['siblingInfo']) => void
 	onTokenLimit?: () => void
 	onContextWarning?: (warning: ContextWarningPayload) => void
 	onDuelStart?: (pairId: string) => void
 	onDuelReady?: () => void
 	onArmEvent?: (event: AgenticArmEvent) => void
+	onQueueUpdated?: (snapshot: QueueSnapshot) => void
 	onError: (content: string) => void
 	onDone: () => void
 }
@@ -192,6 +194,7 @@ interface MessageIdEvent {
 interface UserMessageIdEvent {
 	type: 'user_message_id'
 	messageId: string
+	queueItemId?: string
 }
 
 interface SiblingInfoEvent {
@@ -269,6 +272,23 @@ interface MessageMetadataEvent {
 	}
 }
 
+interface QueueUpdatedEvent {
+	type: 'queue_updated'
+	queue?: unknown
+	sessionId?: string
+	revision?: number
+}
+
+export type QueueWaitEndReason = 'timeout' | 'paused' | 'finished'
+
+interface QueueWaitEndedEvent {
+	type: 'queue_wait_ended'
+	reason?: unknown
+	queue?: unknown
+	sessionId?: string
+	revision?: number
+}
+
 export type AgenticSSEEvent =
 	| SessionEvent
 	| ToolCallEvent
@@ -292,6 +312,8 @@ export type AgenticSSEEvent =
 	| UserMessageIdEvent
 	| SiblingInfoEvent
 	| MessageMetadataEvent
+	| QueueUpdatedEvent
+	| QueueWaitEndedEvent
 	| TokenLimitEvent
 	| ContextWarningEvent
 	| ErrorEvent
@@ -473,7 +495,7 @@ interface FetchAgenticResponseParams {
 	shareToken?: string
 	editMessageId?: string
 	projectId?: string | null
-	fetchFn?: typeof fetch
+	fetchFn: typeof fetch
 	eventCounter?: { count: number }
 }
 
@@ -578,6 +600,18 @@ export function dispatchAgenticEvent(data: DispatchableAgenticEvent, callbacks: 
 		case 'fact_check_status':
 			callbacks.onFactCheckStatus?.(data.status)
 			break
+		case 'queue_updated':
+			{
+				const snapshot = decodeQueueSnapshot({
+					sessionId: data.sessionId,
+					revision: data.revision,
+					queue: data.queue
+				})
+				if (snapshot) callbacks.onQueueUpdated?.(snapshot)
+			}
+			break
+		case 'queue_wait_ended':
+			break
 		case 'fact_check_citations':
 			callbacks.onFactCheckCitations?.(
 				data.sources || data.citations || [],
@@ -591,7 +625,7 @@ export function dispatchAgenticEvent(data: DispatchableAgenticEvent, callbacks: 
 			callbacks.onMessageId?.(data.messageId)
 			break
 		case 'user_message_id':
-			callbacks.onUserMessageId?.(data.messageId)
+			callbacks.onUserMessageId?.(data.messageId, data.queueItemId)
 			break
 		case 'sibling_info':
 			callbacks.onSiblingInfo?.(data.messageId, data.siblingInfo)
@@ -617,16 +651,29 @@ export function parseSSEStream(
 	callbacks: AgenticSSECallbacks,
 	abortSignal?: AbortSignal,
 	eventCounter?: { count: number }
-): Promise<{ sawDone: boolean }> {
+): Promise<{ sawDone: boolean; queueWaitEndReason?: QueueWaitEndReason }> {
 	const decoder = new TextDecoder()
 	let lineBuffer = ''
 	let sawDone = false
+	let queueWaitEndReason: QueueWaitEndReason | undefined
 
 	const handleLine = (line: string) => {
 		if (!line.startsWith('data:')) return
 
 		try {
 			const data = JSON.parse(line.slice(5).trimStart()) as AgenticSSEEvent
+			if (data.type === 'queue_wait_ended') {
+				const snapshot = decodeQueueSnapshot({
+					sessionId: data.sessionId,
+					revision: data.revision,
+					queue: data.queue
+				})
+				if (snapshot && (data.reason === 'timeout' || data.reason === 'paused' || data.reason === 'finished')) {
+					queueWaitEndReason = data.reason
+					callbacks.onQueueUpdated?.(snapshot)
+				}
+				return
+			}
 			// Backend replay PRs #32/#33 use event offsets, not UI mutations, so count
 			// every parsed server event, including `done`.
 			if (eventCounter) eventCounter.count++
@@ -698,7 +745,7 @@ export function parseSSEStream(
 					handleLine(line)
 				}
 			}
-			return { sawDone }
+			return { sawDone, ...(queueWaitEndReason ? { queueWaitEndReason } : {}) }
 		} finally {
 			try {
 				reader.releaseLock()
@@ -731,8 +778,6 @@ export async function fetchAgenticResponse({
 	fetchFn,
 	eventCounter
 }: FetchAgenticResponseParams) {
-	const doFetch = fetchFn || fetch
-
 	// Only include optional request fields when they are explicitly enabled for this prompt.
 	const requestBody: {
 		message: string
@@ -822,7 +867,7 @@ export async function fetchAgenticResponse({
 		requestBody.editMessageId = editMessageId
 	}
 
-	const response = await doFetch(`${AI_SERVER}/agentic`, {
+	const response = await fetchFn(`${AI_SERVER}/agentic`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify(requestBody),
@@ -877,19 +922,42 @@ export async function fetchAgenticResponse({
 	}
 }
 
-export async function stopAgenticExecution(sessionId: string, fetchFn?: typeof fetch): Promise<void> {
-	try {
-		await (fetchFn || fetch)(`${AI_SERVER}/agentic/stop/${encodeURIComponent(sessionId)}`, { method: 'POST' })
-	} catch {}
+export async function stopAgenticExecution(
+	sessionId: string,
+	fetchFn: typeof fetch,
+	signal?: AbortSignal
+): Promise<
+	{ stopped: boolean; active: true; snapshot?: never } | { stopped: boolean; active: false; snapshot: QueueSnapshot }
+> {
+	const response = await fetchFn(`${AI_SERVER}/agentic/stop/${encodeURIComponent(sessionId)}`, {
+		method: 'POST',
+		signal
+	})
+	if (!response.ok) throw new Error(`Failed to stop execution (${response.status})`)
+	const value = (await response.json()) as { stopped?: unknown; active?: unknown; snapshot?: unknown }
+	if (typeof value.stopped !== 'boolean') throw new Error('Invalid stop response')
+	if (value.active === true) return { stopped: value.stopped, active: true }
+	if (value.active === false) {
+		const snapshot = decodeQueueSnapshot(value.snapshot)
+		if (snapshot) return { stopped: value.stopped, active: false, snapshot }
+	}
+	throw new Error('Invalid stop response')
 }
 
 // Probe whether a restored session still has a live execution that needs to be resumed client-side.
 export async function checkActiveExecution(
 	sessionId: string,
-	fetchFn?: typeof fetch
-): Promise<{ active: boolean; status?: string; eventCount?: number; messageId?: string; hasResult?: boolean }> {
+	fetchFn: typeof fetch
+): Promise<{
+	active: boolean
+	status?: string
+	eventCount?: number
+	messageId?: string
+	queueItemId?: string
+	hasResult?: boolean
+}> {
 	try {
-		const res = await (fetchFn || fetch)(`${AI_SERVER}/agentic/active/${encodeURIComponent(sessionId)}`)
+		const res = await fetchFn(`${AI_SERVER}/agentic/active/${encodeURIComponent(sessionId)}`)
 		if (!res) {
 			throw new Error('Failed to check active execution: no response received')
 		}
@@ -899,6 +967,7 @@ export async function checkActiveExecution(
 				status?: string
 				eventCount?: number
 				messageId?: string
+				queueItemId?: string
 				hasResult?: boolean
 			} | null
 			return payload?.active === false ? { active: false, ...payload } : { active: false }
@@ -912,6 +981,7 @@ export async function checkActiveExecution(
 			status?: string
 			eventCount?: number
 			messageId?: string
+			queueItemId?: string
 			hasResult?: boolean
 		}
 	} catch (err) {
@@ -940,34 +1010,58 @@ export async function resumeAgenticStream({
 	abortSignal,
 	fetchFn,
 	from,
+	waitMs,
 	eventCounter
 }: {
 	sessionId: string
 	callbacks: AgenticSSECallbacks
 	abortSignal?: AbortSignal
-	fetchFn?: typeof fetch
+	fetchFn: typeof fetch
 	from?: number
+	waitMs?: number
 	eventCounter?: { count: number }
 }) {
-	const url =
-		from != null
-			? `${AI_SERVER}/agentic/stream/${encodeURIComponent(sessionId)}?from=${from}`
-			: `${AI_SERVER}/agentic/stream/${encodeURIComponent(sessionId)}`
-	const res = await (fetchFn || fetch)(url, {
+	const params = new URLSearchParams()
+	if (from != null) params.set('from', String(from))
+	if (waitMs != null) params.set('waitMs', String(waitMs))
+	const query = params.toString()
+	const url = `${AI_SERVER}/agentic/stream/${encodeURIComponent(sessionId)}${query ? `?${query}` : ''}`
+	const res = await fetchFn(url, {
 		...(abortSignal === undefined ? {} : { signal: abortSignal })
 	})
 
 	if (!res.ok) {
 		const statusLabel = `${res.status} ${res.statusText}`.trim()
-		throw new Error(await getResponseErrorMessage(res, `Failed to resume active execution (${statusLabel})`))
+		const message = await getResponseErrorMessage(res, `Failed to resume active execution (${statusLabel})`)
+		const error = new Error(message) as Error & { status?: number }
+		error.status = res.status
+		throw error
 	}
 
 	if (!res.body) {
 		throw new Error('No response body')
 	}
 
-	const { sawDone } = await parseSSEStream(res.body.getReader(), callbacks, abortSignal, eventCounter)
+	const { sawDone, queueWaitEndReason } = await parseSSEStream(
+		res.body.getReader(),
+		callbacks,
+		abortSignal,
+		eventCounter
+	)
+	if (queueWaitEndReason) return queueWaitEndReason
 	if (!sawDone && !abortSignal?.aborted) {
 		throw new Error('Stream ended without done event')
+	}
+	return 'done' as const
+}
+
+export async function attachAgenticStream(
+	params: Omit<Parameters<typeof resumeAgenticStream>[0], 'waitMs'> & { waitMs: number }
+): Promise<'done' | QueueWaitEndReason | 'not_found'> {
+	try {
+		return await resumeAgenticStream(params)
+	} catch (error) {
+		if (error instanceof Error && (error as Error & { status?: number }).status === 404) return 'not_found'
+		throw error
 	}
 }

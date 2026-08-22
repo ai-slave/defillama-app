@@ -11,7 +11,8 @@ import {
 import { useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
 import { ContextWarningBanner } from '~/containers/LlamaAI/components/ContextWarningBanner'
 import { MessageBubble } from '~/containers/LlamaAI/components/messages/MessageBubble'
-import { PromptInput } from '~/containers/LlamaAI/components/PromptInput'
+import { PromptInput, type QueueSubmitResult } from '~/containers/LlamaAI/components/PromptInput'
+import { QueueChips } from '~/containers/LlamaAI/components/QueueChips'
 import { SectionsTOC } from '~/containers/LlamaAI/components/SectionsTOC'
 import {
 	SpawnProgressCard,
@@ -20,6 +21,7 @@ import {
 } from '~/containers/LlamaAI/components/status/StreamingStatus'
 import { TipOrNotifyBanner } from '~/containers/LlamaAI/components/TipOrNotifyBanner'
 import type { ContextWarningPayload } from '~/containers/LlamaAI/fetchAgenticResponse'
+import type { QueueSurface } from '~/containers/LlamaAI/hooks/useChatQueueController'
 import type { RecoveryState } from '~/containers/LlamaAI/streamState'
 import type {
 	AgenticAnswerMode,
@@ -37,12 +39,15 @@ import { Tooltip } from '~/ui/Tooltip'
 import styles from '../LlamaAIChat.module.css'
 
 export interface ConversationViewModel {
+	draftScope: string
 	readOnly: boolean
 	isSharedView?: boolean
 	messages: Message[]
 	sessionId: string | null
 	isLlama: boolean
 	isStreaming: boolean
+	isQueuedUserMessagePending: boolean
+	isStopping?: boolean
 	activeToolCalls: ToolCall[]
 	spawnProgress: Map<string, SpawnAgentStatus>
 	spawnStartTime: number
@@ -80,7 +85,10 @@ export interface ConversationViewModel {
 		images?: Array<{ data: string; mimeType: string; filename?: string; isPasted?: boolean }>,
 		pageContext?: { entitySlug?: string; entityType?: 'protocol' | 'chain' | 'page'; route: string },
 		isSuggestedQuestion?: boolean
-	) => void
+	) => void | Promise<void> | boolean | QueueSubmitResult | Promise<QueueSubmitResult>
+	submitMode: { kind: 'direct' } | { kind: 'queue'; atCapacity: boolean; capacityMessage: string | null }
+	queueSurface?: QueueSurface
+	quotaResetTime?: string | null
 	handleStopRequest: () => void
 	handleActionClick: (message: string) => void
 	onEditMessage?: (messageId: string, newText: string, original: Message) => Promise<void>
@@ -215,7 +223,8 @@ function ConversationLiveStatus({
 	factCheckPhase,
 	renderStreamingDraft = true,
 	duelSlot = null,
-	isScrollAttached = true
+	isScrollAttached = true,
+	hideActivity = false
 }: {
 	isStreaming: boolean
 	activeToolCalls: ToolCall[]
@@ -242,15 +251,18 @@ function ConversationLiveStatus({
 	renderStreamingDraft?: boolean
 	duelSlot?: ReactNode
 	isScrollAttached?: boolean
+	hideActivity?: boolean
 }) {
-	const hasTodos = shouldShowLiveTodoChecklist({
-		todoCount: todos.length,
-		isStreaming,
-		recoveryStatus: recovery.status,
-		activeToolCallCount: activeToolCalls.length,
-		spawnProgressCount: spawnProgress.size,
-		isCompacting
-	})
+	const hasTodos =
+		!hideActivity &&
+		shouldShowLiveTodoChecklist({
+			todoCount: todos.length,
+			isStreaming,
+			recoveryStatus: recovery.status,
+			activeToolCallCount: activeToolCalls.length,
+			spawnProgressCount: spawnProgress.size,
+			isCompacting
+		})
 	return (
 		<>
 			{hasTodos ? (
@@ -258,55 +270,59 @@ function ConversationLiveStatus({
 					<TodoChecklistPanel todos={todos} startTime={todosStartTime} isLive />
 				</div>
 			) : null}
-			<div style={{ overflowAnchor: 'none' }}>
-				{spawnProgress.size > 0 && spawnIsResearchMode ? (
-					<SpawnProgressCard
-						agents={spawnProgress}
-						startTime={spawnStartTime}
-						isResearchMode
-						recovery={recovery}
-						onReconnect={onReconnectNow}
-						indentForActiveTodo={hasTodos && todos.some((t) => t.status === 'in_progress')}
-					/>
-				) : (
-					<ToolProgressIndicator
-						toolCalls={activeToolCalls}
-						thinking={streamingThinking}
-						isCompacting={isCompacting}
-						spawnProgress={spawnProgress.size > 0 ? spawnProgress : undefined}
-						isWaiting={
-							isStreaming &&
-							activeToolCalls.length === 0 &&
-							spawnProgress.size === 0 &&
-							!streamingDraft?.content &&
-							!streamingThinking &&
-							!isCompacting &&
-							!hasStreamingCharts(streamingDraft?.charts)
-						}
-						executionStartedAt={executionStartedAt}
-						indentForActiveTodo={hasTodos && todos.some((t) => t.status === 'in_progress')}
-						factCheckPhase={factCheckPhase}
-					/>
-				)}
-			</div>
-
-			{duelSlot ? (
-				<div style={{ overflowAnchor: isScrollAttached ? 'none' : 'auto' }}>{duelSlot}</div>
-			) : renderStreamingDraft && streamingDraft ? (
+			{!hideActivity ? (
 				<div style={{ overflowAnchor: 'none' }}>
-					<MessageBubble
-						key={streamingDraft.id || 'streaming-draft'}
-						message={streamingDraft}
-						sessionId={sessionId}
-						isDraft
-						readOnly={readOnly}
-						isLlama={isLlama}
-						onTableFullscreenOpen={onTableFullscreenOpen}
-					/>
+					{spawnProgress.size > 0 && spawnIsResearchMode ? (
+						<SpawnProgressCard
+							agents={spawnProgress}
+							startTime={spawnStartTime}
+							isResearchMode
+							recovery={recovery}
+							onReconnect={onReconnectNow}
+							indentForActiveTodo={hasTodos && todos.some((t) => t.status === 'in_progress')}
+						/>
+					) : (
+						<ToolProgressIndicator
+							toolCalls={activeToolCalls}
+							thinking={streamingThinking}
+							isCompacting={isCompacting}
+							spawnProgress={spawnProgress.size > 0 ? spawnProgress : undefined}
+							isWaiting={
+								isStreaming &&
+								activeToolCalls.length === 0 &&
+								spawnProgress.size === 0 &&
+								!streamingDraft?.content &&
+								!streamingThinking &&
+								!isCompacting &&
+								!hasStreamingCharts(streamingDraft?.charts)
+							}
+							executionStartedAt={executionStartedAt}
+							indentForActiveTodo={hasTodos && todos.some((t) => t.status === 'in_progress')}
+							factCheckPhase={factCheckPhase}
+						/>
+					)}
 				</div>
 			) : null}
 
-			{recovery.status === 'reconnecting' && !(spawnProgress.size > 0 && spawnIsResearchMode) ? (
+			{!hideActivity ? (
+				duelSlot ? (
+					<div style={{ overflowAnchor: isScrollAttached ? 'none' : 'auto' }}>{duelSlot}</div>
+				) : renderStreamingDraft && streamingDraft ? (
+					<div style={{ overflowAnchor: 'none' }}>
+						<MessageBubble
+							key={streamingDraft.id || 'streaming-draft'}
+							message={streamingDraft}
+							sessionId={sessionId}
+							isDraft
+							readOnly={readOnly}
+							isLlama={isLlama}
+							onTableFullscreenOpen={onTableFullscreenOpen}
+						/>
+					</div>
+				) : null
+			) : null}
+
+			{recovery.status === 'reconnecting' && (hideActivity || !(spawnProgress.size > 0 && spawnIsResearchMode)) ? (
 				<div className="flex flex-col gap-1 rounded-lg border border-ai-warning-soft bg-ai-warning-soft p-4">
 					<p className="text-sm font-medium text-ai-warning-strong">Reconnecting&hellip;</p>
 					<p className="text-sm text-ai-warning-strong">
@@ -370,12 +386,15 @@ export function shouldShowLiveTodoChecklist({
 
 export function ConversationView({ viewModel, animateActiveExchange }: ConversationViewProps) {
 	const {
+		draftScope,
 		readOnly,
 		isSharedView = false,
 		messages,
 		sessionId,
 		isLlama,
 		isStreaming,
+		isQueuedUserMessagePending,
+		isStopping,
 		activeToolCalls,
 		spawnProgress,
 		spawnStartTime,
@@ -403,6 +422,9 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 		showScrollToBottom,
 		scrollToBottom,
 		handleSubmit,
+		submitMode,
+		queueSurface,
+		quotaResetTime,
 		handleStopRequest,
 		handleActionClick,
 		onEditMessage,
@@ -755,6 +777,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 														onTableFullscreenOpen={onTableFullscreenOpen}
 														renderStreamingDraft={false}
 														factCheckPhase={factCheckPhase}
+														hideActivity={isQueuedUserMessagePending}
 													/>
 												)
 											}
@@ -808,6 +831,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 										isLlama={isLlama}
 										onTableFullscreenOpen={onTableFullscreenOpen}
 										factCheckPhase={factCheckPhase}
+										hideActivity={isQueuedUserMessagePending}
 										duelSlot={duelSlot}
 										isScrollAttached={isScrollAttached}
 									/>
@@ -849,12 +873,18 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 							<TipOrNotifyBanner />
 						</div>
 					) : null}
+					{queueSurface && queueSurface.rows.length > 0 ? (
+						<QueueChips surface={queueSurface} quotaResetTime={quotaResetTime} />
+					) : null}
 					<PromptInput
+						draftScope={draftScope}
+						submitMode={submitMode}
 						handleSubmit={handleSubmit}
 						promptInputRef={promptInputRef}
 						isPending={isStreaming}
 						handleStopRequest={handleStopRequest}
 						isStreaming={isStreaming}
+						isStopping={isStopping}
 						restoreRequest={restoreRequest}
 						onRestoreConsumed={onRestoreConsumed}
 						placeholder="Reply to LlamaAI&hellip; Type @ to add a protocol, chain or stablecoin, or $ to add a coin"

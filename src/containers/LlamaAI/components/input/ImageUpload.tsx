@@ -20,6 +20,7 @@ interface TextPreview {
 }
 
 interface ImageUploadProps {
+	disabled?: boolean
 	selectedImages: SelectedImage[]
 	previewImage: string | null
 	setPreviewImage: (url: string | null) => void
@@ -103,6 +104,7 @@ export function TextChip({
 }
 
 export function ImageUpload({
+	disabled = false,
 	selectedImages,
 	previewImage,
 	setPreviewImage,
@@ -118,6 +120,7 @@ export function ImageUpload({
 				type="file"
 				accept="image/png,image/jpeg,image/gif,image/webp,application/pdf,text/csv,.pdf,.csv,text/markdown,text/plain,.md,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,.docx,.doc,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,.xlsx"
 				multiple
+				disabled={disabled}
 				onChange={handleImageSelect}
 				className="hidden"
 			/>
@@ -151,7 +154,7 @@ export function ImageUpload({
 											isPasted: !!isPasted
 										})
 									}}
-									onRemove={() => removeImage(idx)}
+									onRemove={disabled ? undefined : () => removeImage(idx)}
 								/>
 							)
 						}
@@ -172,14 +175,16 @@ export function ImageUpload({
 										<span className="max-w-[120px] truncate text-xs">{file.name}</span>
 									</div>
 								)}
-								<button
-									type="button"
-									onClick={() => removeImage(idx)}
-									className="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-ai-backdrop text-ai-white hover:bg-ai-black/80"
-								>
-									<Icon name="x" height={12} width={12} />
-									<span className="sr-only">Remove file</span>
-								</button>
+								{disabled ? null : (
+									<button
+										type="button"
+										onClick={() => removeImage(idx)}
+										className="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-ai-backdrop text-ai-white hover:bg-ai-black/80"
+									>
+										<Icon name="x" height={12} width={12} />
+										<span className="sr-only">Remove file</span>
+									</button>
+								)}
 							</div>
 						)
 					})}
@@ -192,9 +197,10 @@ export function ImageUpload({
 
 interface ImageUploadButtonProps {
 	onClick: () => void
+	disabled?: boolean
 }
 
-export function ImageUploadButton({ onClick }: ImageUploadButtonProps) {
+export function ImageUploadButton({ onClick, disabled = false }: ImageUploadButtonProps) {
 	return (
 		<Tooltip
 			content="Attach file (or paste with Ctrl+V)"
@@ -203,6 +209,7 @@ export function ImageUploadButton({ onClick }: ImageUploadButtonProps) {
 					type="button"
 					onClick={onClick}
 					aria-label="Attach file"
+					disabled={disabled}
 					className="group flex size-7 items-center justify-center rounded-lg border border-ai-line hover:bg-brand/10 disabled:opacity-25 dark:hover:bg-brand/15"
 				/>
 			}

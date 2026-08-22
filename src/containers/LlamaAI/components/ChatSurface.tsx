@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { ChatLanding, type ChatLandingProps } from '~/containers/LlamaAI/components/ChatLanding'
 import { ConversationView, type ConversationViewModel } from '~/containers/LlamaAI/components/ConversationView'
 
@@ -15,7 +15,6 @@ interface ChatSurfaceProps {
 	landingProps: ChatLandingProps
 	conversationViewModel: ConversationViewModel
 	conversationKey: string
-	transitionConversationKey: string
 }
 
 function renderLanding(landingOverride: ChatSurfaceProps['landingOverride'], landingProps: ChatLandingProps) {
@@ -33,50 +32,38 @@ export function ChatSurface({
 	landingOverride,
 	landingProps,
 	conversationViewModel,
-	conversationKey,
-	transitionConversationKey
+	conversationKey
 }: ChatSurfaceProps) {
-	const exitingLandingRef = useRef<HTMLDivElement>(null)
+	if (showLanding && !animateLandingTransition) {
+		return renderLanding(landingOverride, landingProps)
+	}
 
-	useEffect(() => {
-		const node = exitingLandingRef.current as (HTMLDivElement & { inert?: boolean }) | null
-		if (!node) return
-		node.inert = true
-		return () => {
-			node.inert = false
-		}
-	}, [animateLandingTransition])
-
-	if (animateLandingTransition) {
-		return (
-			<div className="relative flex flex-1 overflow-hidden">
+	return (
+		<div className="relative flex flex-1 overflow-hidden">
+			{animateLandingTransition ? (
 				<div
-					ref={exitingLandingRef}
+					key="landing-exit"
+					inert
 					aria-hidden="true"
 					className="pointer-events-none absolute inset-0 motion-safe:animate-ai-landing-exit motion-reduce:opacity-0"
 				>
 					{renderLanding(landingOverride, landingProps)}
 				</div>
-				<div className="absolute inset-0 flex flex-col motion-safe:animate-ai-conversation-enter motion-reduce:animate-none">
-					<ConversationView
-						key={transitionConversationKey}
-						viewModel={conversationViewModel}
-						animateActiveExchange={false}
-					/>
-				</div>
+			) : null}
+			<div
+				key="conversation"
+				className={
+					animateLandingTransition
+						? 'absolute inset-0 flex flex-col motion-safe:animate-ai-conversation-enter motion-reduce:animate-none'
+						: 'flex flex-1 flex-col'
+				}
+			>
+				<ConversationView
+					key={conversationKey}
+					viewModel={conversationViewModel}
+					animateActiveExchange={animateLandingTransition ? false : animateConversationTransition}
+				/>
 			</div>
-		)
-	}
-
-	if (showLanding) {
-		return renderLanding(landingOverride, landingProps)
-	}
-
-	return (
-		<ConversationView
-			key={conversationKey}
-			viewModel={conversationViewModel}
-			animateActiveExchange={animateConversationTransition}
-		/>
+		</div>
 	)
 }

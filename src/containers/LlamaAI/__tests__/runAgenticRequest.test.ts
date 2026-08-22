@@ -199,4 +199,72 @@ describe('runAgenticRequest', () => {
 			consoleError.mockRestore()
 		}
 	})
+
+	it('mutes a still-open detached request when a second one starts (queue-attach overlap)', async () => {
+		const state = refs()
+		let releaseFirst!: () => void
+		const firstStream = new Promise<void>((resolve) => {
+			releaseFirst = resolve
+		})
+		let firstStillLive: boolean | null = null
+
+		const first = await runAgenticRequest({
+			mode: 'resume',
+			sessionId: toSessionId('session-1'),
+			requestKind: 'resume',
+			...state,
+			detached: true,
+			createCallbacks: () => ({ onDone: vi.fn() }) as never,
+			execute: async ({ requestId }) => {
+				await firstStream
+				firstStillLive = state.activeRequestIdRef.current === requestId
+			}
+		})
+
+		await runAgenticRequest({
+			mode: 'resume',
+			sessionId: toSessionId('session-1'),
+			requestKind: 'resume',
+			...state,
+			detached: true,
+			createCallbacks: () => ({ onDone: vi.fn() }) as never,
+			execute: async () => {}
+		})
+
+		releaseFirst()
+		await vi.waitFor(() => expect(firstStillLive).not.toBeNull())
+
+		expect(firstStillLive).toBe(false)
+		expect(first.controller.signal.aborted).toBe(false)
+	})
+
+	it('lets an awaited request finish before the next one starts, keeping its callbacks live', async () => {
+		const state = refs()
+		let firstStillLive: boolean | null = null
+
+		await runAgenticRequest({
+			mode: 'resume',
+			sessionId: toSessionId('session-1'),
+			requestKind: 'resume',
+			...state,
+			detached: false,
+			createCallbacks: () => ({ onDone: vi.fn() }) as never,
+			execute: async ({ requestId }) => {
+				await Promise.resolve()
+				firstStillLive = state.activeRequestIdRef.current === requestId
+			}
+		})
+
+		await runAgenticRequest({
+			mode: 'resume',
+			sessionId: toSessionId('session-1'),
+			requestKind: 'resume',
+			...state,
+			detached: false,
+			createCallbacks: () => ({ onDone: vi.fn() }) as never,
+			execute: async () => {}
+		})
+
+		expect(firstStillLive).toBe(true)
+	})
 })

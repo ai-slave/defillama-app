@@ -3,11 +3,39 @@
 import { act, useEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { LLAMA_AI_PROMPT_DRAFT_KEY, usePromptDraft } from '~/containers/LlamaAI/hooks/usePromptDraft'
+import {
+	LLAMA_AI_PROMPT_DRAFT_KEY,
+	movePromptDraft,
+	promptDraftKey,
+	usePromptDraft
+} from '~/containers/LlamaAI/hooks/usePromptDraft'
 import { setStorageItem } from '~/contexts/localStorageStore'
 
-function DraftProbe({ onDraft }: { onDraft: (draft: string, setDraft: (nextDraft: string) => void) => void }) {
-	const [draft, setDraft] = usePromptDraft()
+const SCOPE = 'session:alpha'
+const OTHER_SCOPE = 'session:beta'
+
+function readDraft(scope: string): string | null {
+	const raw = localStorage.getItem(promptDraftKey(scope))
+	if (raw == null) return null
+	try {
+		return (JSON.parse(raw) as { value: string }).value
+	} catch {
+		return raw
+	}
+}
+
+function writeDraft(scope: string, value: string, updatedAt = Date.now()) {
+	localStorage.setItem(promptDraftKey(scope), JSON.stringify({ value, updatedAt }))
+}
+
+function DraftProbe({
+	scope = SCOPE,
+	onDraft
+}: {
+	scope?: string
+	onDraft: (draft: string, setDraft: (nextDraft: string) => void) => void
+}) {
+	const [draft, setDraft] = usePromptDraft(scope)
 
 	useEffect(() => {
 		onDraft(draft, setDraft)
@@ -16,8 +44,8 @@ function DraftProbe({ onDraft }: { onDraft: (draft: string, setDraft: (nextDraft
 	return <span>{draft}</span>
 }
 
-function DraftTextarea() {
-	const [draft, setDraft] = usePromptDraft()
+function DraftTextarea({ scope = SCOPE }: { scope?: string }) {
+	const [draft, setDraft] = usePromptDraft(scope)
 
 	return <textarea value={draft} onChange={(event) => setDraft(event.target.value)} />
 }
@@ -43,13 +71,125 @@ describe('usePromptDraft', () => {
 	})
 
 	it('restores a saved prompt draft when the composer mounts', async () => {
-		localStorage.setItem(LLAMA_AI_PROMPT_DRAFT_KEY, 'Compare ETH and SOL revenue')
+		writeDraft(SCOPE, 'Compare ETH and SOL revenue')
 
 		await act(async () => {
 			root.render(<DraftProbe onDraft={() => undefined} />)
 		})
 
 		expect(container.textContent).toBe('Compare ETH and SOL revenue')
+	})
+
+	it('keeps each chat draft in its own slot', async () => {
+		writeDraft(SCOPE, 'draft for alpha')
+		writeDraft(OTHER_SCOPE, 'draft for beta')
+
+		await act(async () => {
+			root.render(<DraftProbe scope={SCOPE} onDraft={() => undefined} />)
+		})
+		expect(container.textContent).toBe('draft for alpha')
+
+		await act(async () => {
+			root.render(<DraftProbe scope={OTHER_SCOPE} onDraft={() => undefined} />)
+		})
+		expect(container.textContent).toBe('draft for beta')
+	})
+
+	it('shows an empty composer in a chat that has no draft, leaving the other chat untouched', async () => {
+		writeDraft(SCOPE, 'unsent message in alpha')
+
+		await act(async () => {
+			root.render(<DraftProbe scope={OTHER_SCOPE} onDraft={() => undefined} />)
+		})
+
+		expect(container.textContent).toBe('')
+		expect(readDraft(SCOPE)).toBe('unsent message in alpha')
+	})
+
+	it('does not leak a draft written in one scope into another', async () => {
+		let updateDraft: (nextDraft: string) => void = () => undefined
+
+		await act(async () => {
+			root.render(
+				<DraftProbe
+					scope={SCOPE}
+					onDraft={(_draft, setDraft) => {
+						updateDraft = setDraft
+					}}
+				/>
+			)
+		})
+		act(() => updateDraft('typed in alpha'))
+		await act(async () => vi.advanceTimersByTime(300))
+
+		expect(readDraft(SCOPE)).toBe('typed in alpha')
+		expect(readDraft(OTHER_SCOPE)).toBeNull()
+	})
+
+	it('adopts a legacy unscoped draft once, then clears the legacy key', async () => {
+		localStorage.setItem(LLAMA_AI_PROMPT_DRAFT_KEY, 'written before scoping existed')
+
+		await act(async () => {
+			root.render(<DraftProbe onDraft={() => undefined} />)
+		})
+
+		expect(container.textContent).toBe('written before scoping existed')
+		expect(localStorage.getItem(LLAMA_AI_PROMPT_DRAFT_KEY)).toBeNull()
+	})
+
+	it('does not let a legacy draft overwrite an existing scoped draft', async () => {
+		writeDraft(SCOPE, 'current draft')
+		localStorage.setItem(LLAMA_AI_PROMPT_DRAFT_KEY, 'stale legacy draft')
+
+		await act(async () => {
+			root.render(<DraftProbe onDraft={() => undefined} />)
+		})
+
+		expect(container.textContent).toBe('current draft')
+	})
+
+	it('prunes drafts older than the retention window', async () => {
+		const ancient = Date.now() - 8 * 24 * 60 * 60 * 1000
+		writeDraft('session:ancient', 'forgotten', ancient)
+		let updateDraft: (nextDraft: string) => void = () => undefined
+
+		await act(async () => {
+			root.render(
+				<DraftProbe
+					onDraft={(_draft, setDraft) => {
+						updateDraft = setDraft
+					}}
+				/>
+			)
+		})
+		act(() => updateDraft('fresh'))
+		await act(async () => vi.advanceTimersByTime(300))
+
+		expect(readDraft('session:ancient')).toBeNull()
+		expect(readDraft(SCOPE)).toBe('fresh')
+	})
+
+	it('caps how many drafts are retained', async () => {
+		for (let index = 0; index < 40; index++) {
+			writeDraft(`session:old-${index}`, `draft ${index}`, Date.now() - (40 - index) * 1000)
+		}
+		let updateDraft: (nextDraft: string) => void = () => undefined
+
+		await act(async () => {
+			root.render(
+				<DraftProbe
+					onDraft={(_draft, setDraft) => {
+						updateDraft = setDraft
+					}}
+				/>
+			)
+		})
+		act(() => updateDraft('newest'))
+		await act(async () => vi.advanceTimersByTime(300))
+
+		const remaining = Object.keys(localStorage).filter((key) => key.startsWith(`${LLAMA_AI_PROMPT_DRAFT_KEY}:`))
+		expect(remaining.length).toBeLessThanOrEqual(20)
+		expect(readDraft(SCOPE)).toBe('newest')
 	})
 
 	it('debounces persistence until typing pauses', async () => {
@@ -65,26 +205,21 @@ describe('usePromptDraft', () => {
 			)
 		})
 
-		act(() => {
-			updateDraft('Show me stablecoin')
-		})
-
+		act(() => updateDraft('Show me stablecoin'))
 		await act(async () => vi.advanceTimersByTime(299))
-		expect(localStorage.getItem(LLAMA_AI_PROMPT_DRAFT_KEY)).toBeNull()
+		expect(readDraft(SCOPE)).toBeNull()
 
-		act(() => {
-			updateDraft('Show me stablecoin inflows')
-		})
+		act(() => updateDraft('Show me stablecoin inflows'))
 		await act(async () => vi.advanceTimersByTime(299))
-		expect(localStorage.getItem(LLAMA_AI_PROMPT_DRAFT_KEY)).toBeNull()
+		expect(readDraft(SCOPE)).toBeNull()
 
 		await act(async () => vi.advanceTimersByTime(1))
-		expect(localStorage.getItem(LLAMA_AI_PROMPT_DRAFT_KEY)).toBe('Show me stablecoin inflows')
+		expect(readDraft(SCOPE)).toBe('Show me stablecoin inflows')
 		expect(container.textContent).toBe('Show me stablecoin inflows')
 	})
 
 	it('removes a cleared draft immediately and cancels pending persistence', async () => {
-		localStorage.setItem(LLAMA_AI_PROMPT_DRAFT_KEY, 'Existing draft')
+		writeDraft(SCOPE, 'Existing draft')
 		let updateDraft: (nextDraft: string) => void = () => undefined
 
 		await act(async () => {
@@ -102,9 +237,9 @@ describe('usePromptDraft', () => {
 			updateDraft('')
 		})
 
-		expect(localStorage.getItem(LLAMA_AI_PROMPT_DRAFT_KEY)).toBeNull()
+		expect(readDraft(SCOPE)).toBeNull()
 		await act(async () => vi.advanceTimersByTime(300))
-		expect(localStorage.getItem(LLAMA_AI_PROMPT_DRAFT_KEY)).toBeNull()
+		expect(readDraft(SCOPE)).toBeNull()
 		expect(container.textContent).toBe('')
 	})
 
@@ -121,17 +256,15 @@ describe('usePromptDraft', () => {
 			)
 		})
 
-		act(() => {
-			updateDraft('Persist before leaving')
-		})
-		expect(localStorage.getItem(LLAMA_AI_PROMPT_DRAFT_KEY)).toBeNull()
+		act(() => updateDraft('Persist before leaving'))
+		expect(readDraft(SCOPE)).toBeNull()
 
 		await act(async () => root.render(null))
-		expect(localStorage.getItem(LLAMA_AI_PROMPT_DRAFT_KEY)).toBe('Persist before leaving')
+		expect(readDraft(SCOPE)).toBe('Persist before leaving')
 	})
 
 	it('preserves the caret when editing in the middle of the draft', async () => {
-		localStorage.setItem(LLAMA_AI_PROMPT_DRAFT_KEY, 'hello world')
+		writeDraft(SCOPE, 'hello world')
 
 		await act(async () => {
 			root.render(<DraftTextarea />)
@@ -151,16 +284,41 @@ describe('usePromptDraft', () => {
 		expect(textarea.selectionEnd).toBe(6)
 	})
 
-	it('updates when another storage consumer changes the draft', async () => {
+	it('updates when another consumer changes the same scope', async () => {
 		await act(async () => {
 			root.render(<DraftProbe onDraft={() => undefined} />)
 		})
 
 		await act(async () => {
-			setStorageItem(LLAMA_AI_PROMPT_DRAFT_KEY, 'Draft from another composer')
+			setStorageItem(
+				promptDraftKey(SCOPE),
+				JSON.stringify({ value: 'Draft from another composer', updatedAt: Date.now() })
+			)
 			await vi.runAllTimersAsync()
 		})
 
 		expect(container.textContent).toBe('Draft from another composer')
+	})
+
+	it('moves an in-memory draft when a temporary session receives its real id', async () => {
+		let updateDraft: (nextDraft: string) => void = () => undefined
+		await act(async () => {
+			root.render(
+				<DraftProbe
+					scope="session:temporary"
+					onDraft={(_draft, setDraft) => {
+						updateDraft = setDraft
+					}}
+				/>
+			)
+		})
+		act(() => updateDraft('follow up typed during the first response'))
+
+		act(() => movePromptDraft('session:temporary', 'session:real'))
+		await act(async () => root.render(<DraftProbe scope="session:real" onDraft={() => undefined} />))
+
+		expect(container.textContent).toBe('follow up typed during the first response')
+		expect(readDraft('session:temporary')).toBeNull()
+		expect(readDraft('session:real')).toBe('follow up typed during the first response')
 	})
 })

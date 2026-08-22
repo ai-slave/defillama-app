@@ -1,4 +1,7 @@
 import { AI_SERVER } from '~/constants'
+import type { AuthorizedFetch } from '~/containers/LlamaAI/api/transport'
+import { llamaAIRequest } from '~/containers/LlamaAI/api/transport'
+import { decodeQueueSnapshot, type QueueSnapshot } from '~/containers/LlamaAI/queue/protocol'
 import type { EntityQuestionsResponse } from '~/containers/LlamaAI/types'
 import { fetchJson } from '~/utils/async'
 
@@ -29,4 +32,151 @@ export async function fetchEntityQuestions(
 		if (options?.throwOnError) throw error
 		return { questions: [], suggestGlobal: false }
 	}
+}
+
+export interface UploadedImage {
+	id: string
+	url: string
+	mimeType?: string
+	filename?: string
+}
+
+export type { QueuedMessageElement, QueueSnapshot } from '~/containers/LlamaAI/queue/protocol'
+
+interface QueueMutationResponse {
+	snapshot: QueueSnapshot
+}
+
+function decodeQueueMutationResponse(value: unknown): QueueMutationResponse {
+	const snapshot = decodeQueueSnapshot((value as { snapshot?: unknown } | null)?.snapshot)
+	if (!snapshot) throw new Error('Invalid queue mutation response')
+	return { snapshot }
+}
+
+export interface QueueMessagePayload {
+	clientMutationId: string
+	message: string
+	displayMessage?: string
+	entities?: Array<{ term: string; slug: string; type?: string }>
+	images?: Array<{ data: string; mimeType: string; filename?: string; isPasted?: boolean }>
+	researchMode: boolean
+	factCheckMode?: boolean
+	quotedText?: string
+	pageContext?: { entitySlug?: string; entityType?: string; route: string }
+	timezone?: string
+	client: 'web' | 'mobile'
+	projectId?: string
+	customInstructions?: string
+	blockedSkills?: string[]
+}
+
+export async function queueMessage(
+	authorizedFetch: AuthorizedFetch,
+	sessionId: string,
+	payload: QueueMessagePayload,
+	signal?: AbortSignal
+): Promise<QueueMutationResponse & { maxDepth: number }> {
+	const value = await llamaAIRequest<unknown>(authorizedFetch, '/agentic/queue', {
+		method: 'POST',
+		json: { sessionId, ...payload },
+		signal
+	})
+	const response = decodeQueueMutationResponse(value)
+	const maxDepth = (value as { maxDepth?: unknown } | null)?.maxDepth
+	if (typeof maxDepth !== 'number') throw new Error('Invalid queue mutation response')
+	return { ...response, maxDepth }
+}
+
+export async function beginQueuedMessageEdit(
+	authorizedFetch: AuthorizedFetch,
+	sessionId: string,
+	messageId: string,
+	signal?: AbortSignal
+): Promise<QueueMutationResponse> {
+	return decodeQueueMutationResponse(
+		await llamaAIRequest<unknown>(
+			authorizedFetch,
+			`/agentic/queue/${encodeURIComponent(sessionId)}/${encodeURIComponent(messageId)}/edit`,
+			{ method: 'POST', signal }
+		)
+	)
+}
+
+export async function saveQueuedMessageEdit(
+	authorizedFetch: AuthorizedFetch,
+	sessionId: string,
+	messageId: string,
+	editLeaseId: string,
+	patch: Pick<QueueMessagePayload, 'message'> & Partial<Pick<QueueMessagePayload, 'researchMode' | 'factCheckMode'>>,
+	signal?: AbortSignal
+): Promise<QueueMutationResponse> {
+	return decodeQueueMutationResponse(
+		await llamaAIRequest<unknown>(
+			authorizedFetch,
+			`/agentic/queue/${encodeURIComponent(sessionId)}/${encodeURIComponent(messageId)}/edit`,
+			{ method: 'PATCH', json: { editLeaseId, ...patch }, signal }
+		)
+	)
+}
+
+export async function renewQueuedMessageEdit(
+	authorizedFetch: AuthorizedFetch,
+	sessionId: string,
+	messageId: string,
+	editLeaseId: string,
+	signal?: AbortSignal
+): Promise<QueueMutationResponse> {
+	return decodeQueueMutationResponse(
+		await llamaAIRequest<unknown>(
+			authorizedFetch,
+			`/agentic/queue/${encodeURIComponent(sessionId)}/${encodeURIComponent(messageId)}/edit/renew`,
+			{ method: 'POST', json: { editLeaseId }, signal }
+		)
+	)
+}
+
+export async function cancelQueuedMessageEdit(
+	authorizedFetch: AuthorizedFetch,
+	sessionId: string,
+	messageId: string,
+	editLeaseId: string,
+	signal?: AbortSignal
+): Promise<QueueMutationResponse> {
+	return decodeQueueMutationResponse(
+		await llamaAIRequest<unknown>(
+			authorizedFetch,
+			`/agentic/queue/${encodeURIComponent(sessionId)}/${encodeURIComponent(messageId)}/edit`,
+			{ method: 'DELETE', json: { editLeaseId }, signal }
+		)
+	)
+}
+
+export async function cancelQueuedMessage(
+	authorizedFetch: AuthorizedFetch,
+	sessionId: string,
+	messageId: string,
+	signal?: AbortSignal
+): Promise<QueueMutationResponse> {
+	return decodeQueueMutationResponse(
+		await llamaAIRequest<unknown>(
+			authorizedFetch,
+			`/agentic/queue/${encodeURIComponent(sessionId)}/${encodeURIComponent(messageId)}`,
+			{ method: 'DELETE', signal }
+		)
+	)
+}
+
+export async function retryQueuedMessage(
+	authorizedFetch: AuthorizedFetch,
+	sessionId: string,
+	messageId: string,
+	signal?: AbortSignal
+): Promise<QueueMutationResponse> {
+	return decodeQueueMutationResponse(
+		await llamaAIRequest<unknown>(
+			authorizedFetch,
+			`/agentic/queue/${encodeURIComponent(sessionId)}/${encodeURIComponent(messageId)}/retry`,
+			{ method: 'POST', signal }
+		)
+	)
 }

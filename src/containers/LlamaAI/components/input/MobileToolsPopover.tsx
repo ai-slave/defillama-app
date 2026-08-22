@@ -16,6 +16,7 @@ interface MobileToolsPopoverProps {
 	onImageUploadClick: () => void
 	isPending: boolean
 	isStreaming?: boolean
+	isStopping?: boolean
 	walkthroughActive?: boolean
 }
 
@@ -33,9 +34,10 @@ export function MobileToolsPopover({
 	onImageUploadClick,
 	isPending,
 	isStreaming,
+	isStopping,
 	walkthroughActive
 }: MobileToolsPopoverProps) {
-	const disabled = isPending || !!isStreaming
+	const disabled = isPending || !!isStreaming || !!isStopping
 	const menu = Ariakit.useMenuStore({ placement: 'top-start' })
 
 	const handlePromptSelect = (prompt: string, categoryKey?: string) => {

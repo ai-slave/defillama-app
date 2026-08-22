@@ -2,8 +2,10 @@ import { describe, expect, it, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import {
+	attachAgenticStream,
 	fetchAgenticResponse,
 	parseSSEStream,
+	stopAgenticExecution,
 	type AgenticSSECallbacks
 } from '~/containers/LlamaAI/fetchAgenticResponse'
 
@@ -94,6 +96,7 @@ function callbacks(): AgenticSSECallbacks {
 		onTitle: vi.fn(),
 		onMessageId: vi.fn(),
 		onUserMessageId: vi.fn(),
+		onQueueUpdated: vi.fn(),
 		onSiblingInfo: vi.fn(),
 		onTokenLimit: vi.fn(),
 		onContextWarning: vi.fn(),
@@ -147,6 +150,82 @@ describe('parseSSEStream', () => {
 		expect(result).toEqual({ sawDone: false })
 		expect(cb.onToken).toHaveBeenCalledWith('partial')
 		expect(cb.onDone).not.toHaveBeenCalled()
+	})
+
+	it('applies queue wait snapshots without advancing the execution replay cursor', async () => {
+		const cb = callbacks()
+		const eventCounter = { count: 4 }
+
+		const result = await parseSSEStream(
+			sseReader(
+				JSON.stringify({
+					type: 'queue_wait_ended',
+					reason: 'paused',
+					sessionId: 'session-1',
+					revision: 3,
+					queue: []
+				})
+			),
+			cb,
+			undefined,
+			eventCounter
+		)
+
+		expect(result).toEqual({ sawDone: false, queueWaitEndReason: 'paused' })
+		expect(eventCounter.count).toBe(4)
+		expect(cb.onQueueUpdated).toHaveBeenCalledWith({ sessionId: 'session-1', revision: 3, queue: [] })
+	})
+
+	it('passes queue revision and fired-item identity to the coordinator', async () => {
+		const cb = callbacks()
+		const queued = {
+			id: 'queue-1',
+			state: 'firing',
+			message: 'follow up',
+			researchMode: false,
+			client: 'web',
+			queuedAt: 'now'
+		}
+
+		await parseSSEStream(
+			sseReader(
+				JSON.stringify({ type: 'queue_updated', sessionId: 'session-1', revision: 12, queue: [queued] }),
+				JSON.stringify({ type: 'user_message_id', messageId: 'message-1', queueItemId: 'queue-1' })
+			),
+			cb
+		)
+
+		expect(cb.onQueueUpdated).toHaveBeenCalledWith({
+			sessionId: 'session-1',
+			revision: 12,
+			queue: [queued]
+		})
+		expect(cb.onUserMessageId).toHaveBeenCalledWith('message-1', 'queue-1')
+	})
+
+	it('preserves editing queue items from the stream snapshot', async () => {
+		const cb = callbacks()
+		const editing = {
+			id: 'queue-1',
+			state: 'editing',
+			message: 'follow up',
+			researchMode: false,
+			client: 'web',
+			queuedAt: 'now',
+			editLeaseId: 'lease-1',
+			editExpiresAt: 'later'
+		}
+
+		await parseSSEStream(
+			sseReader(JSON.stringify({ type: 'queue_updated', sessionId: 'session-1', revision: 13, queue: [editing] })),
+			cb
+		)
+
+		expect(cb.onQueueUpdated).toHaveBeenCalledWith({
+			sessionId: 'session-1',
+			revision: 13,
+			queue: [editing]
+		})
 	})
 
 	it('preserves nested dashboard chart payloads', async () => {
@@ -535,5 +614,70 @@ describe('fetchAgenticResponse', () => {
 			code: 'USAGE_LIMIT_EXCEEDED',
 			details: { period: 'monthly', limit: 100, resetTime: null }
 		})
+	})
+
+	it('distinguishes a held wait ending from a dropped execution stream', async () => {
+		const expiredFetch = vi.fn<MockFetch>(async () =>
+			sseResponse([
+				JSON.stringify({
+					type: 'queue_wait_ended',
+					reason: 'timeout',
+					sessionId: 'session-1',
+					revision: 1,
+					queue: []
+				})
+			])
+		)
+		const expiredCallbacks = callbacks()
+		await expect(
+			attachAgenticStream({
+				sessionId: 'session-1',
+				callbacks: expiredCallbacks,
+				fetchFn: expiredFetch as unknown as typeof fetch,
+				waitMs: 90_000
+			})
+		).resolves.toBe('timeout')
+		expect(expiredCallbacks.onQueueUpdated).toHaveBeenCalledWith({
+			sessionId: 'session-1',
+			revision: 1,
+			queue: []
+		})
+
+		const droppedFetch = vi.fn<MockFetch>(async () =>
+			sseResponse([JSON.stringify({ type: 'response_chunk', content: 'partial' })])
+		)
+		await expect(
+			attachAgenticStream({
+				sessionId: 'session-1',
+				callbacks: callbacks(),
+				fetchFn: droppedFetch as unknown as typeof fetch,
+				waitMs: 90_000
+			})
+		).rejects.toThrow('Stream ended without done event')
+
+		const missingFetch = vi.fn<MockFetch>(async () => new Response('missing', { status: 404 }))
+		await expect(
+			attachAgenticStream({
+				sessionId: 'session-1',
+				callbacks: callbacks(),
+				fetchFn: missingFetch as unknown as typeof fetch,
+				waitMs: 90_000
+			})
+		).resolves.toBe('not_found')
+	})
+
+	it('requires the terminal queue snapshot before confirming Stop', async () => {
+		const snapshot = { sessionId: 'session-1', revision: 2, queue: [] }
+		const confirmedFetch = vi.fn<MockFetch>(async () => jsonResponse({ stopped: true, active: false, snapshot }))
+		await expect(stopAgenticExecution('session-1', confirmedFetch as unknown as typeof fetch)).resolves.toEqual({
+			stopped: true,
+			active: false,
+			snapshot
+		})
+
+		const incompleteFetch = vi.fn<MockFetch>(async () => jsonResponse({ stopped: true, active: false }))
+		await expect(stopAgenticExecution('session-1', incompleteFetch as unknown as typeof fetch)).rejects.toThrow(
+			'Invalid stop response'
+		)
 	})
 })

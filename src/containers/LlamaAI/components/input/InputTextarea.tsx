@@ -8,8 +8,7 @@ interface InputTextareaProps {
 	value: string
 	sanitizedHighlightedHtml: string
 	placeholder: string
-	isPending: boolean
-	isStreaming?: boolean
+	disabled: boolean
 	onScroll: () => void
 	onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
 	onKeyDownCapture: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void
@@ -26,8 +25,7 @@ export function InputTextarea({
 	value,
 	sanitizedHighlightedHtml,
 	placeholder,
-	isPending,
-	isStreaming,
+	disabled,
 	onScroll,
 	onChange,
 	onKeyDownCapture,
@@ -69,7 +67,7 @@ export function InputTextarea({
 						spellCheck
 					/>
 				}
-				disabled={isPending && !isStreaming}
+				disabled={disabled}
 			/>
 			<div
 				aria-hidden="true"
