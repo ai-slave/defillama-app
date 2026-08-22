@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
+import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 import { sanitizeUrl } from '~/containers/LlamaAI/utils/markdownHelpers'
 import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -14,12 +15,12 @@ interface MarkdownExportArtifactProps {
 	messageId?: string
 }
 
-const FILE_TYPE_LABELS: Record<string, string> = {
+const FILE_TYPE_LABELS = {
 	md: 'Markdown file',
 	xlsx: 'Excel workbook',
 	docx: 'Word document',
 	pptx: 'PowerPoint deck'
-}
+} satisfies Record<string, string>
 
 function fileExtension(filename: string): string {
 	const ext = filename.split('.').pop()?.toLowerCase() ?? ''
@@ -81,7 +82,7 @@ export function MarkdownExportArtifact({ mdExport, sessionId, messageId }: Markd
 				<span className="m-0 text-xs text-(--text3)">
 					{downloadMarkdownMutation.isPending
 						? 'Downloading…'
-						: (FILE_TYPE_LABELS[fileExtension(mdExport.filename)] ?? 'File')}
+						: (getOwnRegistryValue(FILE_TYPE_LABELS, fileExtension(mdExport.filename)) ?? 'File')}
 				</span>
 				{downloadMarkdownMutation.error ? (
 					<span role="alert" className="m-0 text-xs text-error">

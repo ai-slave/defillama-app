@@ -24,6 +24,7 @@ import {
 import type { DashboardArtifact } from '~/containers/LlamaAI/types'
 import type { Message, ToolExecution } from '~/containers/LlamaAI/types'
 import { buildMessageExportRequest } from '~/containers/LlamaAI/utils/articleExport'
+import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 import { wrapLegacyUrlCitations } from '~/containers/LlamaAI/utils/markdownHelpers'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
@@ -694,7 +695,7 @@ export function MessageBubble({
 	)
 }
 
-const KIND_LABELS: Record<string, string> = {
+const KIND_LABELS = {
 	chart: 'chart',
 	multi: 'multi-chart',
 	metric: 'metric',
@@ -711,13 +712,13 @@ const KIND_LABELS: Record<string, string> = {
 	'unlocks-schedule': 'unlock schedule',
 	'unlocks-pie': 'unlock pie',
 	'llamaai-chart': 'AI chart'
-}
+} satisfies Record<string, string>
 
 function DashboardInlineCard({ dashboard }: { dashboard: DashboardArtifact }) {
 	const { toggleDashboardPanel, isDashboardPanelOpen } = useLlamaAIChrome()
 	const kindCounts: Record<string, number> = {}
 	for (const item of dashboard.items) {
-		const label = KIND_LABELS[item.kind] || item.kind
+		const label = getOwnRegistryValue(KIND_LABELS, item.kind) || item.kind
 		kindCounts[label] = (kindCounts[label] || 0) + 1
 	}
 	const summary = Object.entries(kindCounts)

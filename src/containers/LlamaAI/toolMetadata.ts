@@ -1,4 +1,6 @@
-export const TOOL_LABELS: Record<string, string> = {
+import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
+
+export const TOOL_LABELS = {
 	execute_sql: 'Querying database',
 	resolve_entity: 'Resolving entity',
 	load_skill: 'Loading knowledge',
@@ -105,16 +107,16 @@ export const TOOL_LABELS: Record<string, string> = {
 	cat: 'Reading workspace file',
 	grep: 'Searching workspace files',
 	search_messages: 'Searching messages'
-}
+} satisfies Record<string, string>
 
 export const getToolLabel = (name: string | undefined | null): string =>
-	(name ? TOOL_LABELS[name] : undefined) ??
+	(name ? getOwnRegistryValue(TOOL_LABELS, name) : undefined) ??
 	(name ?? 'Tool')
 		.split('_')
-		.map((word) => (word ? word[0].toUpperCase() + word.slice(1) : word))
+		.map((word) => (word ? word.charAt(0).toUpperCase() + word.slice(1) : word))
 		.join(' ')
 
-export const TOOL_ICONS: Record<string, { icon: string; color: string }> = {
+export const TOOL_ICONS = {
 	execute_sql: { icon: 'layers', color: '#6366f1' },
 	resolve_entity: { icon: 'search', color: '#a78bfa' },
 	load_skill: { icon: 'graduation-cap', color: '#34d399' },
@@ -221,4 +223,4 @@ export const TOOL_ICONS: Record<string, { icon: string; color: string }> = {
 	cat: { icon: 'file-text', color: '#94a3b8' },
 	grep: { icon: 'search', color: '#94a3b8' },
 	search_messages: { icon: 'search', color: '#94a3b8' }
-}
+} satisfies Record<string, { icon: string; color: string }>

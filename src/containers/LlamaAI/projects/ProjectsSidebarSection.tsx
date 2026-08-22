@@ -30,8 +30,8 @@ interface ProjectsSidebarSectionProps {
 	updatingTitleSessionId?: string | null
 	onSessionSelect: (sessionId: string) => void
 	onDelete: (sessionId: string, projectId?: string | null) => Promise<void>
-	onUpdateTitle: (args: { sessionId: string; title: string; projectId?: string | null }) => Promise<unknown>
-	onPinSession?: (sessionId: string) => Promise<unknown>
+	onUpdateTitle: (args: { sessionId: string; title: string; projectId?: string | null }) => Promise<void>
+	onPinSession?: (sessionId: string) => Promise<void>
 }
 
 export function ProjectsSidebarSection({

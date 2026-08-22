@@ -14,6 +14,7 @@ import { useHackerMode } from '~/containers/LlamaAI/components/status/useHackerM
 import type { RecoveryState } from '~/containers/LlamaAI/streamState'
 import { getToolLabel, TOOL_ICONS } from '~/containers/LlamaAI/toolMetadata'
 import type { SpawnAgentStatus, ToolCall } from '~/containers/LlamaAI/types'
+import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 import { Icon } from '~/ui/Icon'
 
 export { ThinkingPanel, TodoChecklistPanel, deriveTodosFromToolExecutions, useHackerMode }
@@ -103,7 +104,10 @@ export function ToolProgressIndicator({
 				{toolCalls.length > 0 ? (
 					<ul className="flex flex-col gap-1.5">
 						{toolCalls.map((toolCall) => {
-							const meta = TOOL_ICONS[toolCall.name] || { icon: 'sparkles', color: '#919296' }
+							const meta = getOwnRegistryValue(TOOL_ICONS, toolCall.name) || {
+								icon: 'sparkles',
+								color: '#919296'
+							}
 							return (
 								<li key={toolCall.id} className="flex animate-ai-fade-in items-center gap-2">
 									<Icon

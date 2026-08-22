@@ -102,6 +102,11 @@ export interface StreamAccumulator {
 
 export type StreamBuffer = StreamAccumulator
 
+type ResettableStreamState = Omit<
+	StreamState,
+	'phase' | 'messageMetadata' | 'error' | 'lastFailedRequest' | 'rateLimitDetails' | 'contextWarning'
+>
+
 export type StreamAction =
 	| { type: 'START_STREAM' }
 	| { type: 'START_QUEUED_STREAM'; queueItemId: string }
@@ -140,26 +145,26 @@ export type StreamAction =
 	| { type: 'SET_CITATIONS'; citations: UnifiedCitationReference[]; text?: string }
 
 // Reset only the in-flight runtime fields; persistent errors are layered on top separately.
-const createEmptyRuntimeState = () => ({
+const createEmptyRuntimeState = (): ResettableStreamState => ({
 	isStreaming: false,
-	pendingQueueItemId: null as string | null,
+	pendingQueueItemId: null,
 	isCompacting: false,
 	text: '',
-	charts: [] as ChartSet[],
-	csvExports: [] as CsvExport[],
-	mdExports: [] as MdExport[],
-	alerts: [] as AlertProposedData[],
-	dashboards: [] as DashboardArtifact[],
-	generatedImages: [] as GeneratedImage[],
-	citations: [] as UnifiedCitationReference[],
-	legacyUrlCitations: [] as string[],
-	toolExecutions: [] as ToolExecution[],
+	charts: [],
+	csvExports: [],
+	mdExports: [],
+	alerts: [],
+	dashboards: [],
+	generatedImages: [],
+	citations: [],
+	legacyUrlCitations: [],
+	toolExecutions: [],
 	thinking: '',
-	activeToolCalls: [] as ToolCall[],
+	activeToolCalls: [],
 	spawnProgress: new Map<string, SpawnAgentStatus>(),
 	spawnStartTime: 0,
 	spawnIsResearchMode: false,
-	todos: [] as TodoItem[],
+	todos: [],
 	todosStartTime: 0,
 	executionStartedAt: 0,
 	recovery: {
@@ -167,8 +172,8 @@ const createEmptyRuntimeState = () => ({
 		startedAt: null,
 		attemptCount: 0,
 		lastErrorMessage: null
-	} as RecoveryState,
-	factCheckPhase: null as 'drafting' | 'verifying' | 'finalizing' | null
+	},
+	factCheckPhase: null
 })
 
 // Full stream state starts from the empty runtime snapshot plus error/retry metadata.

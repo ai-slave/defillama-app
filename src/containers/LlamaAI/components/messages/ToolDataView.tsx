@@ -1,10 +1,11 @@
 import { useEffect, useRef, type ReactNode } from 'react'
+import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 import { formatPercent } from '~/utils/numberFormat'
 import { formatCellValue, humanizeColumn, type CitedCell } from './citationPillHelpers'
 
 type ToolDataRenderer = (data: Record<string, any>) => ReactNode | null
 
-const TOOL_DATA_RENDERERS: Record<string, ToolDataRenderer> = {
+const TOOL_DATA_RENDERERS = {
 	resolve_entity: (data) => {
 		const results = data.results || (data.topMatch ? { _single: data } : null)
 		if (!results) return null
@@ -76,10 +77,10 @@ const TOOL_DATA_RENDERERS: Record<string, ToolDataRenderer> = {
 	},
 	web_search: (data) => <span className="mt-1 mb-1 text-[10px] text-ai-muted">{data.citationCount} sources</span>,
 	x_search: (data) => <span className="mt-1 mb-1 text-[10px] text-ai-muted">{data.tweetCount} tweets</span>
-}
+} satisfies Record<string, ToolDataRenderer>
 
 export function ToolDataView({ name, data }: { name: string; data: Record<string, any> }) {
-	return TOOL_DATA_RENDERERS[name]?.(data) ?? null
+	return getOwnRegistryValue(TOOL_DATA_RENDERERS, name)?.(data) ?? null
 }
 
 export function CitationRowsTable({

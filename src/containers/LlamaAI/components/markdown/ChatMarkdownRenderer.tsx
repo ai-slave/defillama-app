@@ -16,6 +16,7 @@ import {
 	isLlamaAIExternalLink,
 	parseLlamaAIExternalAllowlistSnapshot
 } from '~/containers/LlamaAI/utils/externalLinks'
+import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 import {
 	escapeBareOrderedListMarkers,
 	extractLlamaLinks,
@@ -100,14 +101,14 @@ type MarkdownDataCellProps = ComponentPropsWithoutRef<'td'> & { node?: unknown }
 type MarkdownListProps = ComponentPropsWithoutRef<'ul'> & { node?: unknown }
 type MarkdownOrderedListProps = ComponentPropsWithoutRef<'ol'> & { node?: unknown }
 
-const LLAMA_PREVIEW_ENTITY_TYPES: Partial<Record<string, ArticleEntityType>> = {
+const LLAMA_PREVIEW_ENTITY_TYPES = {
 	protocol: 'protocol',
 	subprotocol: 'protocol',
 	chain: 'chain',
 	category: 'category',
 	stablecoin: 'stablecoin',
 	cex: 'cex'
-}
+} satisfies Record<string, ArticleEntityType>
 
 function TableWrapper({
 	children,
@@ -271,12 +272,16 @@ function EntityLinkRenderer({
 	if (href?.startsWith('llama://')) {
 		const [type, slug] = href.replace('llama://', '').split('/')
 
-		if (!['protocol', 'subprotocol', 'chain', 'pool', 'category', 'stablecoin', 'cex', 'equity'].includes(type)) {
+		if (
+			!type ||
+			!slug ||
+			!['protocol', 'subprotocol', 'chain', 'pool', 'category', 'stablecoin', 'cex', 'equity'].includes(type)
+		) {
 			return <span>{children}</span>
 		}
 
 		const entityUrl = getEntityUrl(type, slug)
-		const articleEntityType = LLAMA_PREVIEW_ENTITY_TYPES[type]
+		const articleEntityType = getOwnRegistryValue(LLAMA_PREVIEW_ENTITY_TYPES, type)
 
 		if (articleEntityType) {
 			return (

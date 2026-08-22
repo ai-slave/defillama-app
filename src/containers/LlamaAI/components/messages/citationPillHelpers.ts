@@ -1,22 +1,23 @@
 import { getToolLabel } from '~/containers/LlamaAI/toolMetadata'
 import type { UnifiedCitationReference } from '~/containers/LlamaAI/types'
+import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 import { formatDate } from '~/utils/dateFormat'
 import { formatNumber, formatUsd, formatPercent, roundNumber } from '~/utils/numberFormat'
 
 export const PRIVACY_SENTINEL = '[value omitted — sensitive]'
 
-const BADGE: Record<string, string> = {
+const BADGE = {
 	data: 'DefiLlama',
 	computed: 'Calculated',
 	web: 'Web',
 	x: 'X',
 	file: 'File',
 	tool: 'Tool'
-}
+} satisfies Record<string, string>
 
 export function badgeFor(sourceType?: string): string {
 	if (!sourceType) return 'Source'
-	return BADGE[sourceType] ?? 'Source'
+	return getOwnRegistryValue(BADGE, sourceType) ?? 'Source'
 }
 
 export function iconFor(sourceType?: string): 'layers' | 'earth' | 'sparkles' | 'file-text' | 'twitter' | 'code' {
@@ -28,17 +29,17 @@ export function iconFor(sourceType?: string): 'layers' | 'earth' | 'sparkles' | 
 	return 'sparkles'
 }
 
-const ACCENT: Record<string, string> = {
+const ACCENT = {
 	data: '#1f67d2',
 	computed: '#7c5cff',
 	web: '#0ea5a4',
 	x: '#1d9bf0',
 	tool: '#d97706',
 	file: '#16a34a'
-}
+} satisfies Record<string, string>
 
 export function accentFor(sourceType?: string): string {
-	return (sourceType && ACCENT[sourceType]) || '#1f67d2'
+	return (sourceType && getOwnRegistryValue(ACCENT, sourceType)) || '#1f67d2'
 }
 
 export function shouldFlagMismatch(v: UnifiedCitationReference['verification']): boolean {
@@ -100,22 +101,25 @@ export function formatCellValue(v: unknown): string {
 	return String(v)
 }
 
-const UNIT: Record<string, number> = { t: 1e12, b: 1e9, m: 1e6, k: 1e3, bn: 1e9, '': 1 }
+const UNIT = { t: 1e12, b: 1e9, m: 1e6, k: 1e3, bn: 1e9, '': 1 } satisfies Record<string, number>
 
 export function parseRefParts(str: unknown): { num: number; halfStep: number } | null {
 	if (typeof str === 'number') return Number.isFinite(str) ? { num: str, halfStep: 0 } : null
 	if (typeof str !== 'string') return null
 	const m = str.replace(/,/g, '').match(/^\s*(-?)\s*\$?\s*(-?\d*\.?\d+)(?:e([+-]?\d+))?\s*([a-zA-Z%]*)\s*$/i)
 	if (!m) return null
+	const numericText = m[2]
+	if (!numericText) return null
 	const exp = m[3] ? parseInt(m[3], 10) : 0
 	const suffix = (m[4] || '').toLowerCase()
-	if (suffix && suffix !== '%' && UNIT[suffix] === undefined) return null
-	const mult = suffix === '%' ? 1 : (UNIT[suffix] ?? 1)
-	const parsed = parseFloat(m[2])
+	const unitMultiplier = getOwnRegistryValue(UNIT, suffix)
+	if (suffix && suffix !== '%' && unitMultiplier === undefined) return null
+	const mult = suffix === '%' ? 1 : (unitMultiplier ?? 1)
+	const parsed = parseFloat(numericText)
 	const signed = m[1] === '-' && parsed > 0 ? -parsed : parsed
 	const num = signed * Math.pow(10, exp) * mult
 	if (!Number.isFinite(num)) return null
-	const decimals = (m[2].split('.')[1] || '').length
+	const decimals = (numericText.split('.')[1] || '').length
 	const halfStep = (Math.pow(10, -decimals) * Math.pow(10, exp) * mult) / 2
 	return { num, halfStep }
 }
@@ -265,7 +269,7 @@ export function humanizeColumn(name: string): string {
 	return spaced.replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
-const METRIC_EXACT: Record<string, string> = {
+const METRIC_EXACT = {
 	pf_ratio: 'P/F ratio (market cap ÷ annualized fees)',
 	ps_ratio: 'P/S ratio (market cap ÷ annualized revenue)',
 	price: 'price',
@@ -301,9 +305,9 @@ const METRIC_EXACT: Record<string, string> = {
 	token_volume: 'token trading volume',
 	holder_count: 'number of holders',
 	top10_pct: 'top-10 holder concentration'
-}
+} satisfies Record<string, string>
 
-const METRIC_BASE: Record<string, string> = {
+const METRIC_BASE = {
 	tvl: 'total value locked',
 	tvl_base: 'total value locked',
 	tvl_borrowed: 'borrowed value',
@@ -336,9 +340,9 @@ const METRIC_BASE: Record<string, string> = {
 	fdv: 'fully diluted valuation',
 	fdv_outstanding: 'FDV (outstanding supply)',
 	price: 'price'
-}
+} satisfies Record<string, string>
 
-const METRIC_WINDOW: Record<string, string> = {
+const METRIC_WINDOW = {
 	'1d': '24h',
 	'7d': '7 days',
 	'30d': '30 days',
@@ -349,7 +353,7 @@ const METRIC_WINDOW: Record<string, string> = {
 	alltime: 'all-time',
 	annualised: 'annualized',
 	annualized: 'annualized'
-}
+} satisfies Record<string, string>
 
 const WINDOW_TOKENS = Object.keys(METRIC_WINDOW)
 
@@ -384,11 +388,13 @@ function parseMetricField(field: string): ParsedMetric {
 }
 
 export function metricLabel(field: string): string {
-	if (METRIC_EXACT[field]) return METRIC_EXACT[field]
+	const exactLabel = getOwnRegistryValue(METRIC_EXACT, field)
+	if (exactLabel) return exactLabel
 	const { base: f, isChange, window } = parseMetricField(field)
-	const base = METRIC_BASE[f] ?? humanizeColumn(f)
-	if (isChange) return window ? `${base} change (${METRIC_WINDOW[window]})` : `${base} change`
-	if (window) return `${base} (${METRIC_WINDOW[window]})`
+	const base = getOwnRegistryValue(METRIC_BASE, f) ?? humanizeColumn(f)
+	const windowLabel = window ? getOwnRegistryValue(METRIC_WINDOW, window) : undefined
+	if (isChange) return windowLabel ? `${base} change (${windowLabel})` : `${base} change`
+	if (windowLabel) return `${base} (${windowLabel})`
 	return base
 }
 

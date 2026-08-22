@@ -345,12 +345,10 @@ export function useSessionMutations() {
 	const updateTitleMutation = useMutation({
 		mutationFn: async ({ sessionId, title }: { sessionId: string; title: string; projectId?: string | null }) => {
 			try {
-				const response = await llamaAIRequest(authorizedFetch, `/user/sessions/${sessionId}/title`, {
+				await llamaAIRequest(authorizedFetch, `/user/sessions/${sessionId}/title`, {
 					method: 'PUT',
 					json: { title }
 				})
-
-				return response
 			} catch (error) {
 				throw mutationActionError('Failed to update session title', error)
 			}
@@ -387,11 +385,9 @@ export function useSessionMutations() {
 	const pinSessionMutation = useMutation({
 		mutationFn: async (sessionId: string) => {
 			try {
-				const response = await llamaAIRequest(authorizedFetch, `/user/sessions/${sessionId}/pin`, {
+				await llamaAIRequest(authorizedFetch, `/user/sessions/${sessionId}/pin`, {
 					method: 'PUT'
 				})
-
-				return response
 			} catch (error) {
 				throw mutationActionError('Failed to toggle pin', error)
 			}
@@ -560,13 +556,6 @@ export function useSessionMutations() {
 		[deleteSessionMutation]
 	)
 
-	const updateSessionTitle = useCallback(
-		(args: { sessionId: string; title: string; projectId?: string | null }) => updateTitleMutation.mutateAsync(args),
-		[updateTitleMutation]
-	)
-
-	const pinSession = useCallback((sessionId: string) => pinSessionMutation.mutateAsync(sessionId), [pinSessionMutation])
-
 	return {
 		createSession: createSessionMutation.mutateAsync,
 		createFakeSession,
@@ -577,7 +566,7 @@ export function useSessionMutations() {
 		loadNewerMessages,
 		switchActiveLeaf: switchActiveLeafMutation.mutateAsync,
 		deleteSession,
-		updateSessionTitle,
+		updateSessionTitle: updateTitleMutation.mutateAsync,
 		isCreatingSession: createSessionMutation.isPending,
 		isRestoringSession: restoreSessionMutation.isPending,
 		isSwitchingActiveLeaf: switchActiveLeafMutation.isPending,
@@ -585,7 +574,7 @@ export function useSessionMutations() {
 		isUpdatingTitle: updateTitleMutation.isPending,
 		bulkDeleteSessions: bulkDeleteSessionsMutation.mutateAsync,
 		isBulkDeleting: bulkDeleteSessionsMutation.isPending,
-		pinSession,
+		pinSession: pinSessionMutation.mutateAsync,
 		isPinningSession: pinSessionMutation.isPending
 	}
 }

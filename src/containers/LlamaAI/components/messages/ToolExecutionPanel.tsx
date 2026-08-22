@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { ToolDataView } from '~/containers/LlamaAI/components/messages/ToolDataView'
 import { getToolLabel, TOOL_ICONS } from '~/containers/LlamaAI/toolMetadata'
 import type { ToolExecution } from '~/containers/LlamaAI/types'
+import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 import { Icon } from '~/ui/Icon'
 import { formatUsd, formatFixedNumber } from '~/utils/numberFormat'
 
@@ -99,7 +100,7 @@ export function ToolExecutionPanel({
 
 function ToolExecutionRow({ execution, showDetails = false }: { execution: ToolExecution; showDetails?: boolean }) {
 	const [showPreview, setShowPreview] = useState(false)
-	const meta = TOOL_ICONS[execution.name] || { icon: 'sparkles', color: '#919296' }
+	const meta = getOwnRegistryValue(TOOL_ICONS, execution.name) || { icon: 'sparkles', color: '#919296' }
 	const label = getToolLabel(execution.name)
 	const hasDetails = showDetails && (execution.resultPreview?.length || execution.sqlQuery || execution.toolData)
 	const parsedCost = execution.costUsd ? parseFloat(execution.costUsd) : NaN

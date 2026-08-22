@@ -7,6 +7,7 @@ import type {
 import { formatChartValue } from '~/components/ECharts/shared/formatters'
 import { isChartDataRow, type ChartConfiguration, type ChartDataSeries } from '~/containers/LlamaAI/chartTypes'
 import { buildLogoByCategory, getChartColor, parseStringNumber } from '~/containers/LlamaAI/utils/chartAdapters/shared'
+import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 
 const normalizeHallmarks = (hallmarks?: Array<[number] | [number, string]>): Array<[number, string]> => {
 	if (!hallmarks?.length) return []
@@ -65,7 +66,7 @@ export interface AdaptedLlamaAICartesianChart {
 	seriesMeta: LlamaAICartesianSeriesMeta[]
 }
 
-const MONTH_NAME_TO_INDEX: Record<string, number> = {
+const MONTH_NAME_TO_INDEX = {
 	jan: 0,
 	january: 0,
 	feb: 1,
@@ -90,7 +91,7 @@ const MONTH_NAME_TO_INDEX: Record<string, number> = {
 	november: 10,
 	dec: 11,
 	december: 11
-}
+} satisfies Record<string, number>
 
 const DATE_LIKE_FIELD_RE = /(^|_)(date|day|month|time|timestamp)$/i
 
@@ -149,7 +150,7 @@ const parseStrictDateLabelToMs = (timestamp: unknown): number | null => {
 		const monthName = monthNameMatch[1]
 		const year = monthNameMatch[2]
 		if (monthName === undefined || year === undefined) return null
-		const monthIndex = MONTH_NAME_TO_INDEX[monthName.toLowerCase()]
+		const monthIndex = getOwnRegistryValue(MONTH_NAME_TO_INDEX, monthName.toLowerCase())
 		if (monthIndex == null) return null
 		return Date.UTC(Number(year), monthIndex, 1)
 	}
@@ -246,14 +247,14 @@ function inferTimeSeriesAxis(
 	}
 }
 
-const BASE_TYPE_MAP: Record<string, 'line' | 'area' | 'bar'> = { area: 'area', bar: 'bar', line: 'line' }
+const BASE_TYPE_MAP = { area: 'area', bar: 'bar', line: 'line' } satisfies Record<string, 'line' | 'area' | 'bar'>
 
 const getCartesianBaseType = (
 	config: ChartConfiguration,
 	seriesConfig: ChartConfiguration['series'][number]
 ): 'line' | 'area' | 'bar' => {
 	const type = config.type === 'combo' ? seriesConfig.type : config.type
-	return BASE_TYPE_MAP[type] ?? 'line'
+	return getOwnRegistryValue(BASE_TYPE_MAP, type) ?? 'line'
 }
 
 const isValidCartesianPoint = (

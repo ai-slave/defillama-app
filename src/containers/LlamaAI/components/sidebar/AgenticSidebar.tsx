@@ -41,14 +41,14 @@ interface AgenticSidebarProps {
 	onSessionSelect: (sessionId: string) => void
 	onNewChat: () => void
 	onDelete: (sessionId: string, projectId?: string | null) => Promise<void>
-	onUpdateTitle: (args: { sessionId: string; title: string; projectId?: string | null }) => Promise<unknown>
+	onUpdateTitle: (args: { sessionId: string; title: string; projectId?: string | null }) => Promise<void>
 	isDeletingSession: boolean
 	isUpdatingTitle: boolean
 	shouldAnimate?: boolean
 	onOpenSettings?: () => void
 	hasCustomInstructions?: boolean
 	onBulkDelete?: (sessionIds: string[]) => Promise<void>
-	onPinSession?: (sessionId: string) => Promise<unknown>
+	onPinSession?: (sessionId: string) => Promise<void>
 	onSearchMatchClick?: (sessionId: string, messageId: string) => void
 	hasMoreSessions?: boolean
 	isFetchingMoreSessions?: boolean
@@ -101,11 +101,11 @@ const VirtualizedSidebarItem = memo(function VirtualizedSidebarItem({
 	updatingTitleSessionId: string | null
 	onSessionSelect: (sessionId: string) => void
 	onDelete: (sessionId: string, projectId?: string | null) => Promise<void>
-	onUpdateTitle: (args: { sessionId: string; title: string; projectId?: string | null }) => Promise<unknown>
+	onUpdateTitle: (args: { sessionId: string; title: string; projectId?: string | null }) => Promise<void>
 	selectMode: boolean
 	isSelected: boolean
 	onToggleSelect: (sessionId: string) => void
-	onPinSession?: (sessionId: string) => Promise<unknown>
+	onPinSession?: (sessionId: string) => Promise<void>
 }) {
 	if (item.type === 'header') {
 		return (

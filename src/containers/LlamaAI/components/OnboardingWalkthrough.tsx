@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuthContext } from '~/auth'
 import type { AgenticAnswerMode } from '~/containers/LlamaAI/types'
+import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 import { useMedia } from '~/hooks/useMedia'
 import { Icon } from '~/ui/Icon'
 import { getExperimentVariant } from '~/utils/analytics/experiment'
@@ -71,7 +72,7 @@ interface SpotlightConfig {
 	position: 'above' | 'below'
 }
 
-const SPOTLIGHT_CONFIGS: Partial<Record<Step, SpotlightConfig>> = {
+const SPOTLIGHT_CONFIGS = {
 	explore: {
 		selectors: ['[data-walkthrough="explore-button"]'],
 		title: 'Explore',
@@ -148,7 +149,7 @@ const SPOTLIGHT_CONFIGS: Partial<Record<Step, SpotlightConfig>> = {
 		accentColor: 'rgba(245, 158, 11, 0.25)',
 		position: 'above'
 	}
-}
+} satisfies Partial<Record<Step, SpotlightConfig>>
 
 interface OnboardingWalkthroughProps {
 	mode: AgenticAnswerMode
@@ -189,9 +190,10 @@ export function OnboardingWalkthrough({
 			? DESKTOP_STEPS_SHORT
 			: DESKTOP_STEPS
 	const currentStep = RESEARCH_STEPS.has(step) && isResearchMode ? 'prompts' : step
-	const config = SPOTLIGHT_CONFIGS[currentStep]
+	const config = getOwnRegistryValue<SpotlightConfig>(SPOTLIGHT_CONFIGS, currentStep)
 	const isSpotlightStep = !!config
-	const firstSpotlightStep = steps.find((candidate) => SPOTLIGHT_CONFIGS[candidate] != null) ?? null
+	const firstSpotlightStep =
+		steps.find((candidate) => getOwnRegistryValue(SPOTLIGHT_CONFIGS, candidate) != null) ?? null
 	const isFirstSpotlight = currentStep === firstSpotlightStep
 
 	const tapOrClick = isMobile ? 'Tap' : 'Click'

@@ -108,6 +108,101 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const parseTrueByDefault = (value: string | null) => value !== 'false'
 const parseFalseByDefault = (value: string | null) => value === 'true'
 
+interface StoredSettingDefinition<Value> {
+	storageKey: string
+	fallback: string
+	parse: (value: string | null) => Value
+	write: (value: Value) => void
+}
+
+type LlamaAISettingDefinitions = {
+	[K in LlamaAISettingKey]: StoredSettingDefinition<LlamaAISettings[K]>
+}
+
+const SETTING_DEFINITIONS: LlamaAISettingDefinitions = {
+	customInstructions: {
+		storageKey: LLAMA_AI_CUSTOM_INSTRUCTIONS_KEY,
+		fallback: DEFAULT_SETTINGS.customInstructions,
+		parse: (value) => value ?? DEFAULT_SETTINGS.customInstructions,
+		write: (value) => {
+			const nextValue = value.trim()
+			if (nextValue.length === 0) {
+				removeStorageItem(LLAMA_AI_CUSTOM_INSTRUCTIONS_KEY)
+			} else {
+				setStorageItem(LLAMA_AI_CUSTOM_INSTRUCTIONS_KEY, nextValue)
+			}
+		}
+	},
+	enableMemory: {
+		storageKey: LLAMA_AI_ENABLE_MEMORY_KEY,
+		fallback: String(DEFAULT_SETTINGS.enableMemory),
+		parse: parseTrueByDefault,
+		write: (value) => setStorageItem(LLAMA_AI_ENABLE_MEMORY_KEY, String(value))
+	},
+	enablePremiumTools: {
+		storageKey: LLAMA_AI_ENABLE_PREMIUM_TOOLS_KEY,
+		fallback: String(DEFAULT_SETTINGS.enablePremiumTools),
+		parse: parseTrueByDefault,
+		write: (value) => setStorageItem(LLAMA_AI_ENABLE_PREMIUM_TOOLS_KEY, String(value))
+	},
+	hackerMode: {
+		storageKey: LLAMA_AI_HACKER_MODE_KEY,
+		fallback: String(DEFAULT_SETTINGS.hackerMode),
+		parse: parseFalseByDefault,
+		write: (value) => setStorageItem(LLAMA_AI_HACKER_MODE_KEY, String(value))
+	},
+	model: {
+		storageKey: LLAMA_AI_MODEL_KEY,
+		fallback: DEFAULT_SETTINGS.model,
+		parse: (value) => value ?? DEFAULT_SETTINGS.model,
+		write: (value) => {
+			const nextValue = value.trim()
+			if (nextValue.length === 0) {
+				removeStorageItem(LLAMA_AI_MODEL_KEY)
+			} else {
+				setStorageItem(LLAMA_AI_MODEL_KEY, nextValue)
+			}
+		}
+	},
+	effort: {
+		storageKey: LLAMA_AI_EFFORT_KEY,
+		fallback: DEFAULT_SETTINGS.effort,
+		parse: (value) => value ?? DEFAULT_SETTINGS.effort,
+		write: (value) => {
+			const nextValue = value.trim()
+			if (nextValue.length === 0) {
+				removeStorageItem(LLAMA_AI_EFFORT_KEY)
+			} else {
+				setStorageItem(LLAMA_AI_EFFORT_KEY, nextValue)
+			}
+		}
+	},
+	enableSoundNotifications: {
+		storageKey: LLAMA_AI_ENABLE_SOUND_KEY,
+		fallback: String(DEFAULT_SETTINGS.enableSoundNotifications),
+		parse: parseTrueByDefault,
+		write: (value) => setStorageItem(LLAMA_AI_ENABLE_SOUND_KEY, String(value))
+	},
+	enterToSend: {
+		storageKey: LLAMA_AI_ENTER_TO_SEND_KEY,
+		fallback: String(DEFAULT_SETTINGS.enterToSend),
+		parse: parseTrueByDefault,
+		write: (value) => setStorageItem(LLAMA_AI_ENTER_TO_SEND_KEY, String(value))
+	},
+	advancedProvenance: {
+		storageKey: LLAMA_AI_ADVANCED_PROVENANCE_KEY,
+		fallback: String(DEFAULT_SETTINGS.advancedProvenance),
+		parse: parseFalseByDefault,
+		write: (value) => setStorageItem(LLAMA_AI_ADVANCED_PROVENANCE_KEY, String(value))
+	},
+	spendCapPerMessage: {
+		storageKey: LLAMA_AI_SPEND_CAP_KEY,
+		fallback: String(DEFAULT_SETTINGS.spendCapPerMessage),
+		parse: (value) => normalizeSpendCap(value == null ? NaN : Number(value)),
+		write: (value) => setStorageItem(LLAMA_AI_SPEND_CAP_KEY, String(normalizeSpendCap(value)))
+	}
+}
+
 function isEffortAvailableForModel(effort: string, model: string) {
 	const isClaude = model === '' || model.startsWith('anthropic/')
 	if (isClaude) return effort !== 'minimal'
@@ -115,102 +210,33 @@ function isEffortAvailableForModel(effort: string, model: string) {
 	return true
 }
 
-function readStoredValue<K extends LlamaAISettingKey>(key: K, value: string | null): LlamaAISettings[K] {
-	switch (key) {
-		case 'customInstructions':
-			return (value ?? DEFAULT_SETTINGS.customInstructions) as LlamaAISettings[K]
-		case 'enableMemory':
-			return parseTrueByDefault(value) as LlamaAISettings[K]
-		case 'enablePremiumTools':
-			return parseTrueByDefault(value) as LlamaAISettings[K]
-		case 'hackerMode':
-			return parseFalseByDefault(value) as LlamaAISettings[K]
-		case 'model':
-			return (value ?? DEFAULT_SETTINGS.model) as LlamaAISettings[K]
-		case 'effort':
-			return (value ?? DEFAULT_SETTINGS.effort) as LlamaAISettings[K]
-		case 'enableSoundNotifications':
-			return parseTrueByDefault(value) as LlamaAISettings[K]
-		case 'enterToSend':
-			return parseTrueByDefault(value) as LlamaAISettings[K]
-		case 'advancedProvenance':
-			return parseFalseByDefault(value) as LlamaAISettings[K]
-		case 'spendCapPerMessage': {
-			const parsed = value == null ? NaN : Number(value)
-			return normalizeSpendCap(parsed) as LlamaAISettings[K]
-		}
-	}
-}
-
-function writeStoredValue<K extends LlamaAISettingKey>(key: K, value: LlamaAISettings[K]) {
-	switch (key) {
-		case 'customInstructions': {
-			const nextValue = String(value).trim()
-			if (nextValue.length === 0) {
-				removeStorageItem(LLAMA_AI_CUSTOM_INSTRUCTIONS_KEY)
-			} else {
-				setStorageItem(LLAMA_AI_CUSTOM_INSTRUCTIONS_KEY, nextValue)
-			}
-			return
-		}
-		case 'enableMemory':
-			setStorageItem(LLAMA_AI_ENABLE_MEMORY_KEY, String(value))
-			return
-		case 'enablePremiumTools':
-			setStorageItem(LLAMA_AI_ENABLE_PREMIUM_TOOLS_KEY, String(value))
-			return
-		case 'hackerMode':
-			setStorageItem(LLAMA_AI_HACKER_MODE_KEY, String(value))
-			return
-		case 'model': {
-			const nextModel = String(value).trim()
-			if (nextModel.length === 0) {
-				removeStorageItem(LLAMA_AI_MODEL_KEY)
-			} else {
-				setStorageItem(LLAMA_AI_MODEL_KEY, nextModel)
-			}
-			return
-		}
-		case 'effort': {
-			const nextEffort = String(value).trim()
-			if (nextEffort.length === 0) {
-				removeStorageItem(LLAMA_AI_EFFORT_KEY)
-			} else {
-				setStorageItem(LLAMA_AI_EFFORT_KEY, nextEffort)
-			}
-			return
-		}
-		case 'enableSoundNotifications':
-			setStorageItem(LLAMA_AI_ENABLE_SOUND_KEY, String(value))
-			return
-		case 'enterToSend':
-			setStorageItem(LLAMA_AI_ENTER_TO_SEND_KEY, String(value))
-			return
-		case 'advancedProvenance':
-			setStorageItem(LLAMA_AI_ADVANCED_PROVENANCE_KEY, String(value))
-			return
-		case 'spendCapPerMessage':
-			setStorageItem(LLAMA_AI_SPEND_CAP_KEY, String(normalizeSpendCap(Number(value))))
-			return
-	}
-}
-
 function applyStoredSettings(update: LlamaAISettingsUpdate) {
-	for (const [key, value] of Object.entries(update) as Array<[LlamaAISettingKey, LlamaAISettings[LlamaAISettingKey]]>) {
-		writeStoredValue(key, value)
-	}
+	if (update.customInstructions !== undefined) SETTING_DEFINITIONS.customInstructions.write(update.customInstructions)
+	if (update.enableMemory !== undefined) SETTING_DEFINITIONS.enableMemory.write(update.enableMemory)
+	if (update.enablePremiumTools !== undefined) SETTING_DEFINITIONS.enablePremiumTools.write(update.enablePremiumTools)
+	if (update.hackerMode !== undefined) SETTING_DEFINITIONS.hackerMode.write(update.hackerMode)
+	if (update.model !== undefined) SETTING_DEFINITIONS.model.write(update.model)
+	if (update.effort !== undefined) SETTING_DEFINITIONS.effort.write(update.effort)
+	if (update.enableSoundNotifications !== undefined)
+		SETTING_DEFINITIONS.enableSoundNotifications.write(update.enableSoundNotifications)
+	if (update.enterToSend !== undefined) SETTING_DEFINITIONS.enterToSend.write(update.enterToSend)
+	if (update.advancedProvenance !== undefined) SETTING_DEFINITIONS.advancedProvenance.write(update.advancedProvenance)
+	if (update.spendCapPerMessage !== undefined) SETTING_DEFINITIONS.spendCapPerMessage.write(update.spendCapPerMessage)
 }
 
 function mergeDefinedSettings(base: StoredLlamaAISettings, incoming: LlamaAISettingsUpdate): StoredLlamaAISettings {
-	const merged: Partial<LlamaAISettings> = { ...(base ?? {}) }
-	const target = merged as Record<LlamaAISettingKey, LlamaAISettings[LlamaAISettingKey]>
-	for (const [key, value] of Object.entries(incoming) as Array<
-		[LlamaAISettingKey, LlamaAISettings[LlamaAISettingKey]]
-	>) {
-		if (value !== undefined) {
-			target[key] = value
-		}
-	}
+	const merged: LlamaAISettingsUpdate = { ...(base ?? {}) }
+	if (incoming.customInstructions !== undefined) merged.customInstructions = incoming.customInstructions
+	if (incoming.enableMemory !== undefined) merged.enableMemory = incoming.enableMemory
+	if (incoming.enablePremiumTools !== undefined) merged.enablePremiumTools = incoming.enablePremiumTools
+	if (incoming.hackerMode !== undefined) merged.hackerMode = incoming.hackerMode
+	if (incoming.model !== undefined) merged.model = incoming.model
+	if (incoming.effort !== undefined) merged.effort = incoming.effort
+	if (incoming.enableSoundNotifications !== undefined)
+		merged.enableSoundNotifications = incoming.enableSoundNotifications
+	if (incoming.enterToSend !== undefined) merged.enterToSend = incoming.enterToSend
+	if (incoming.advancedProvenance !== undefined) merged.advancedProvenance = incoming.advancedProvenance
+	if (incoming.spendCapPerMessage !== undefined) merged.spendCapPerMessage = incoming.spendCapPerMessage
 	return merged
 }
 
@@ -255,38 +281,10 @@ function normalizeServerSettings(value: unknown): LlamaAISettingsUpdate {
 	return normalized
 }
 
-function getStorageKey(setting: LlamaAISettingKey) {
-	switch (setting) {
-		case 'customInstructions':
-			return LLAMA_AI_CUSTOM_INSTRUCTIONS_KEY
-		case 'enableMemory':
-			return LLAMA_AI_ENABLE_MEMORY_KEY
-		case 'enablePremiumTools':
-			return LLAMA_AI_ENABLE_PREMIUM_TOOLS_KEY
-		case 'hackerMode':
-			return LLAMA_AI_HACKER_MODE_KEY
-		case 'model':
-			return LLAMA_AI_MODEL_KEY
-		case 'effort':
-			return LLAMA_AI_EFFORT_KEY
-		case 'enableSoundNotifications':
-			return LLAMA_AI_ENABLE_SOUND_KEY
-		case 'enterToSend':
-			return LLAMA_AI_ENTER_TO_SEND_KEY
-		case 'advancedProvenance':
-			return LLAMA_AI_ADVANCED_PROVENANCE_KEY
-		case 'spendCapPerMessage':
-			return LLAMA_AI_SPEND_CAP_KEY
-	}
-}
-
 export function useLlamaAISetting<K extends LlamaAISettingKey>(key: K): LlamaAISettings[K] {
-	const fallback =
-		key === 'customInstructions'
-			? DEFAULT_SETTINGS.customInstructions
-			: String(DEFAULT_SETTINGS[key as Exclude<LlamaAISettingKey, 'customInstructions'>])
-	const rawValue = useStorageItem(getStorageKey(key), fallback)
-	return readStoredValue(key, rawValue)
+	const definition = SETTING_DEFINITIONS[key]
+	const rawValue = useStorageItem(definition.storageKey, definition.fallback)
+	return definition.parse(rawValue)
 }
 
 export function useAdvancedProvenance(): boolean {
