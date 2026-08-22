@@ -6,6 +6,9 @@ export interface ProtocolTableMetrics {
 	change1d?: number | null
 	change7d?: number | null
 	change1m?: number | null
+	stakingTvl?: number | null
+	borrowedTvl?: number | null
+	pool2Tvl?: number | null
 	bridgedTvl?: number | null
 	stablesMcap?: number | null
 	tvlShare?: number | null
@@ -27,15 +30,29 @@ export interface ProtocolTableMetrics {
 	fees24h?: number | null
 	fees_7d?: number | null
 	fees_30d?: number | null
+	fees_90d?: number | null
+	fees_180d?: number | null
 	fees_1y?: number | null
+	fees_ytd?: number | null
 	feesAnnualized1y?: number | null
 	average_1y?: number | null
 	cumulativeFees?: number | null
 	holderRevenue_24h?: number | null
 	holderRevenue_7d?: number | null
 	holdersRevenue30d?: number | null
+	holderRevenue_90d?: number | null
+	holderRevenue_180d?: number | null
+	holderRevenue_1y?: number | null
+	holderRevenue_ytd?: number | null
+	cumulativeHolderRevenue?: number | null
+	holderRevenueAnnualized1y?: number | null
+	holderRevenueChange_1d?: number | null
 	holderRevenueChange7dOver7d?: number | null
 	holderRevenueChange30dOver30d?: number | null
+	holderRevenueChange90dOver90d?: number | null
+	holderRevenueChange180dOver180d?: number | null
+	holderRevenueChange1yOver1y?: number | null
+	holderRevenueChangeYtd?: number | null
 	feesChange_1d?: number | null
 	fees24h7dAgo?: number | null
 	fees24h30dAgo?: number | null
@@ -43,10 +60,17 @@ export interface ProtocolTableMetrics {
 	fees24hChange30dAgo?: number | null
 	feesChange7dOver7d?: number | null
 	feesChange30dOver30d?: number | null
+	feesChange90dOver90d?: number | null
+	feesChange180dOver180d?: number | null
+	feesChange1yOver1y?: number | null
+	feesChangeYtd?: number | null
 	revenue24h?: number | null
 	revenue_7d?: number | null
 	revenue_30d?: number | null
+	revenue_90d?: number | null
+	revenue_180d?: number | null
 	revenue_1y?: number | null
+	revenue_ytd?: number | null
 	revenueAnnualized1y?: number | null
 	average_revenue_1y?: number | null
 	cumulativeRevenue?: number | null
@@ -57,6 +81,10 @@ export interface ProtocolTableMetrics {
 	revenue24hChange30dAgo?: number | null
 	revenueChange7dOver7d?: number | null
 	revenueChange30dOver30d?: number | null
+	revenueChange90dOver90d?: number | null
+	revenueChange180dOver180d?: number | null
+	revenueChange1yOver1y?: number | null
+	revenueChangeYtd?: number | null
 	perpsVolume24h?: number | null
 	perps_volume_7d?: number | null
 	perps_volume_30d?: number | null
@@ -78,6 +106,7 @@ export interface ProtocolTableMetrics {
 	aggregatorVolume24hChange7dAgo?: number | null
 	aggregatorVolume24hChange30dAgo?: number | null
 	aggregatorVolumeChange7dOver7d?: number | null
+	aggregatorVolumeChange30dOver30d?: number | null
 	aggregators_volume_dominance_24h?: number | null
 	aggregators_volume_marketShare7d?: number | null
 	derivatives_aggregators_volume_24h?: number | null
@@ -99,6 +128,7 @@ export interface ProtocolTableMetrics {
 	optionsVolume24hChange7dAgo?: number | null
 	optionsVolume24hChange30dAgo?: number | null
 	optionsVolumeChange7dOver7d?: number | null
+	optionsVolumeChange30dOver30d?: number | null
 	options_volume_dominance_24h?: number | null
 	mcap?: number | null
 	fdv?: number | null
@@ -110,6 +140,10 @@ export interface ProtocolTableMetrics {
 	earnings7d?: number | null
 	earnings30d?: number | null
 	earnings1y?: number | null
+	emissions24h?: number | null
+	emissions7d?: number | null
+	emissions30d?: number | null
+	emissions1y?: number | null
 	bridgeAggregatorVolume24h?: number | null
 	bridgeAggregatorVolume7d?: number | null
 	bridgeAggregatorVolume30d?: number | null
@@ -155,6 +189,9 @@ export const EMPTY_CANONICAL_CHAIN_METRICS = {
 	change1d: null,
 	change7d: null,
 	change1m: null,
+	stakingTvl: null,
+	borrowedTvl: null,
+	pool2Tvl: null,
 	bridgedTvl: null,
 	stablesMcap: null,
 	tvlShare: null,
@@ -176,7 +213,10 @@ export const EMPTY_CANONICAL_CHAIN_METRICS = {
 	fees24h: null,
 	fees_7d: null,
 	fees_30d: null,
+	fees_90d: null,
+	fees_180d: null,
 	fees_1y: null,
+	fees_ytd: null,
 	feesAnnualized1y: null,
 	average_1y: null,
 	cumulativeFees: null,
@@ -187,10 +227,17 @@ export const EMPTY_CANONICAL_CHAIN_METRICS = {
 	fees24hChange30dAgo: null,
 	feesChange7dOver7d: null,
 	feesChange30dOver30d: null,
+	feesChange90dOver90d: null,
+	feesChange180dOver180d: null,
+	feesChange1yOver1y: null,
+	feesChangeYtd: null,
 	revenue24h: null,
 	revenue_7d: null,
 	revenue_30d: null,
+	revenue_90d: null,
+	revenue_180d: null,
 	revenue_1y: null,
+	revenue_ytd: null,
 	revenueAnnualized1y: null,
 	average_revenue_1y: null,
 	cumulativeRevenue: null,
@@ -201,6 +248,10 @@ export const EMPTY_CANONICAL_CHAIN_METRICS = {
 	revenue24hChange30dAgo: null,
 	revenueChange7dOver7d: null,
 	revenueChange30dOver30d: null,
+	revenueChange90dOver90d: null,
+	revenueChange180dOver180d: null,
+	revenueChange1yOver1y: null,
+	revenueChangeYtd: null,
 	perpsVolume24h: null,
 	perps_volume_7d: null,
 	perps_volume_30d: null,
@@ -222,6 +273,7 @@ export const EMPTY_CANONICAL_CHAIN_METRICS = {
 	aggregatorVolume24hChange7dAgo: null,
 	aggregatorVolume24hChange30dAgo: null,
 	aggregatorVolumeChange7dOver7d: null,
+	aggregatorVolumeChange30dOver30d: null,
 	aggregators_volume_dominance_24h: null,
 	aggregators_volume_marketShare7d: null,
 	derivatives_aggregators_volume_24h: null,
@@ -243,7 +295,12 @@ export const EMPTY_CANONICAL_CHAIN_METRICS = {
 	optionsVolume24hChange7dAgo: null,
 	optionsVolume24hChange30dAgo: null,
 	optionsVolumeChange7dOver7d: null,
+	optionsVolumeChange30dOver30d: null,
 	options_volume_dominance_24h: null,
+	emissions24h: null,
+	emissions7d: null,
+	emissions30d: null,
+	emissions1y: null,
 	protocolCount: null
 } satisfies ProtocolTableMetrics
 
@@ -273,6 +330,10 @@ export interface ParentProtocolMetrics {
 				string,
 				Pick<ProtocolTableMetrics, 'earnings24h' | 'earnings7d' | 'earnings30d' | 'earnings1y'>
 			>
+		}
+		incentives?: {
+			childProtocolIds: string[]
+			metrics: Pick<ProtocolTableMetrics, 'emissions24h' | 'emissions7d' | 'emissions30d' | 'emissions1y'>
 		}
 		bridgeAggregatorVolume?: {
 			childProtocolIds: string[]

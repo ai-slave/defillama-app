@@ -102,6 +102,25 @@ describe('protocol point metric capabilities', () => {
 })
 
 describe('protocol base metric family capabilities', () => {
+	it('requests incentives and long-period families from columns and custom expressions', () => {
+		expect(
+			getProtocolMetricCapabilities(
+				config({
+					columnOrder: ['emissions30d', 'fees_90d'],
+					customColumns: [
+						{
+							id: 'holder-profit',
+							name: 'Holder Profit',
+							expression: 'holdersRevenue30d - emissions30d + stakingTvl',
+							format: 'usd',
+							aggregation: 'recalculate'
+						}
+					]
+				})
+			).baseMetricFamilies
+		).toEqual(['tvl', 'fees', 'holder-revenue', 'incentives'])
+	})
+
 	it('requests holder revenue for the 7d over 7d column', () => {
 		expect(
 			getProtocolMetricCapabilities(

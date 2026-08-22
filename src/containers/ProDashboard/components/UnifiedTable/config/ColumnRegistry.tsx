@@ -245,6 +245,9 @@ export const getUnifiedTableColumns = ({
 		buildPercentChangeColumn('change1d', '1d Change'),
 		buildPercentChangeColumn('change7d', '7d Change'),
 		buildPercentChangeColumn('change1m', '30d Change'),
+		buildUsdMetricColumn('stakingTvl', 'Staking TVL'),
+		buildUsdMetricColumn('borrowedTvl', 'Borrowed TVL'),
+		buildUsdMetricColumn('pool2Tvl', 'Pool2 TVL'),
 		buildUsdMetricColumn('bridgedTvl', 'Bridged TVL'),
 		buildUsdMetricColumn('stablesMcap', 'Stables'),
 		buildPercentMetricColumn('tvlShare', 'TVL Share'),
@@ -275,39 +278,68 @@ export const getUnifiedTableColumns = ({
 	const feesColumns: ColumnDef<ProtocolTableRow>[] = [
 		buildUsdMetricColumn('fees_7d', '7d Fees'),
 		buildUsdMetricColumn('fees_30d', '30d Fees'),
+		buildUsdMetricColumn('fees_90d', '90d Fees'),
+		buildUsdMetricColumn('fees_180d', '180d Fees'),
 		buildUsdMetricColumn('fees_1y', '1y Fees'),
+		buildUsdMetricColumn('fees_ytd', 'YTD Fees'),
 		buildUsdMetricColumn('average_1y', '1y Monthly Avg Fees'),
 		buildUsdMetricColumn('cumulativeFees', 'Cumulative Fees'),
 		buildUsdMetricColumn('holderRevenue_24h', '24h Holder Revenue'),
 		buildUsdMetricColumn('holderRevenue_7d', '7d Holder Revenue'),
 		buildUsdMetricColumn('holdersRevenue30d', '30d Holder Revenue'),
+		buildUsdMetricColumn('holderRevenue_90d', '90d Holder Revenue'),
+		buildUsdMetricColumn('holderRevenue_180d', '180d Holder Revenue'),
+		buildUsdMetricColumn('holderRevenue_1y', '1y Holder Revenue'),
+		buildUsdMetricColumn('holderRevenue_ytd', 'YTD Holder Revenue'),
+		buildUsdMetricColumn('cumulativeHolderRevenue', 'Cumulative Holder Revenue'),
+		buildUsdMetricColumn('holderRevenueAnnualized1y', 'Annualized Holder Revenue'),
+		buildPercentChangeColumn('holderRevenueChange_1d', '1d Holder Revenue Change'),
 		buildPercentChangeColumn('holderRevenueChange7dOver7d', '7d over 7d Holder Revenue Change'),
 		buildPercentChangeColumn('holderRevenueChange30dOver30d', '30d over 30d Holder Revenue Change'),
+		buildPercentChangeColumn('holderRevenueChange90dOver90d', '90d over 90d Holder Revenue Change'),
+		buildPercentChangeColumn('holderRevenueChange180dOver180d', '180d over 180d Holder Revenue Change'),
+		buildPercentChangeColumn('holderRevenueChange1yOver1y', '1y over 1y Holder Revenue Change'),
+		buildPercentChangeColumn('holderRevenueChangeYtd', 'YTD Holder Revenue Change'),
 		buildPercentChangeColumn('feesChange_1d', '1d Fees Change'),
 		buildPercentChangeColumn('fees24hChange7dAgo', '24h Fees vs 7d Ago'),
 		buildPercentChangeColumn('fees24hChange30dAgo', '24h Fees vs 30d Ago'),
 		buildPercentChangeColumn('feesChange7dOver7d', '7d over 7d Fees Change'),
-		buildPercentChangeColumn('feesChange30dOver30d', '30d over 30d Fees Change')
+		buildPercentChangeColumn('feesChange30dOver30d', '30d over 30d Fees Change'),
+		buildPercentChangeColumn('feesChange90dOver90d', '90d over 90d Fees Change'),
+		buildPercentChangeColumn('feesChange180dOver180d', '180d over 180d Fees Change'),
+		buildPercentChangeColumn('feesChange1yOver1y', '1y over 1y Fees Change'),
+		buildPercentChangeColumn('feesChangeYtd', 'YTD Fees Change')
 	]
 
 	const revenueColumns: ColumnDef<ProtocolTableRow>[] = [
 		buildUsdMetricColumn('revenue_7d', '7d Revenue'),
 		buildUsdMetricColumn('revenue_30d', '30d Revenue'),
+		buildUsdMetricColumn('revenue_90d', '90d Revenue'),
+		buildUsdMetricColumn('revenue_180d', '180d Revenue'),
 		buildUsdMetricColumn('revenue_1y', '1y Revenue'),
+		buildUsdMetricColumn('revenue_ytd', 'YTD Revenue'),
 		buildUsdMetricColumn('average_revenue_1y', '1y Monthly Avg Revenue'),
 		buildUsdMetricColumn('cumulativeRevenue', 'Cumulative Revenue'),
 		buildPercentChangeColumn('revenueChange_1d', '1d Revenue Change'),
 		buildPercentChangeColumn('revenue24hChange7dAgo', '24h Revenue vs 7d Ago'),
 		buildPercentChangeColumn('revenue24hChange30dAgo', '24h Revenue vs 30d Ago'),
 		buildPercentChangeColumn('revenueChange7dOver7d', '7d over 7d Revenue Change'),
-		buildPercentChangeColumn('revenueChange30dOver30d', '30d over 30d Revenue Change')
+		buildPercentChangeColumn('revenueChange30dOver30d', '30d over 30d Revenue Change'),
+		buildPercentChangeColumn('revenueChange90dOver90d', '90d over 90d Revenue Change'),
+		buildPercentChangeColumn('revenueChange180dOver180d', '180d over 180d Revenue Change'),
+		buildPercentChangeColumn('revenueChange1yOver1y', '1y over 1y Revenue Change'),
+		buildPercentChangeColumn('revenueChangeYtd', 'YTD Revenue Change')
 	]
 
 	const earningsColumns: ColumnDef<ProtocolTableRow>[] = [
 		buildUsdMetricColumn('earnings24h', earningsAreEstimated ? 'Est. 24h Earnings' : '24h Earnings'),
 		buildUsdMetricColumn('earnings7d', earningsAreEstimated ? 'Est. 7d Earnings' : '7d Earnings'),
 		buildUsdMetricColumn('earnings30d', earningsAreEstimated ? 'Est. 30d Earnings' : '30d Earnings'),
-		buildUsdMetricColumn('earnings1y', earningsAreEstimated ? 'Est. 1y Earnings' : '1y Earnings')
+		buildUsdMetricColumn('earnings1y', earningsAreEstimated ? 'Est. 1y Earnings' : '1y Earnings'),
+		buildUsdMetricColumn('emissions24h', '24h Emissions'),
+		buildUsdMetricColumn('emissions7d', '7d Emissions'),
+		buildUsdMetricColumn('emissions30d', '30d Emissions'),
+		buildUsdMetricColumn('emissions1y', '1y Emissions')
 	]
 
 	const perpsColumns: ColumnDef<ProtocolTableRow>[] = [
@@ -329,6 +361,7 @@ export const getUnifiedTableColumns = ({
 		buildPercentChangeColumn('aggregatorVolume24hChange7dAgo', '24h Aggregator Volume vs 7d Ago'),
 		buildPercentChangeColumn('aggregatorVolume24hChange30dAgo', '24h Aggregator Volume vs 30d Ago'),
 		buildPercentChangeColumn('aggregatorVolumeChange7dOver7d', '7d over 7d Aggregator Volume Change'),
+		buildPercentChangeColumn('aggregatorVolumeChange30dOver30d', '30d over 30d Aggregator Volume Change'),
 		buildPercentMetricColumn('aggregators_volume_dominance_24h', '24h Aggregator Volume Share'),
 		buildPercentMetricColumn('aggregators_volume_marketShare7d', '7d Aggregator Volume Share')
 	]
@@ -370,6 +403,7 @@ export const getUnifiedTableColumns = ({
 		buildPercentChangeColumn('optionsVolume24hChange7dAgo', '24h Options Volume vs 7d Ago'),
 		buildPercentChangeColumn('optionsVolume24hChange30dAgo', '24h Options Volume vs 30d Ago'),
 		buildPercentChangeColumn('optionsVolumeChange7dOver7d', '7d over 7d Options Volume Change'),
+		buildPercentChangeColumn('optionsVolumeChange30dOver30d', '30d over 30d Options Volume Change'),
 		buildPercentMetricColumn('options_volume_dominance_24h', '24h Options Volume Share')
 	]
 

@@ -64,6 +64,9 @@ const tvlColumns: ColumnDictionaryItem[] = [
 	{ id: 'change1d', header: '1d Change', group: 'tvl', render: 'percent', tags: ['change'] },
 	{ id: 'change7d', header: '7d Change', group: 'tvl', render: 'percent', tags: ['change'] },
 	{ id: 'change1m', header: '30d Change', group: 'tvl', render: 'percent', tags: ['change'] },
+	{ id: 'stakingTvl', header: 'Staking TVL', group: 'tvl', render: 'usd' },
+	{ id: 'borrowedTvl', header: 'Borrowed TVL', group: 'tvl', render: 'usd' },
+	{ id: 'pool2Tvl', header: 'Pool2 TVL', group: 'tvl', render: 'usd' },
 	{ id: 'bridgedTvl', header: 'Bridged TVL', group: 'tvl', render: 'usd', chainGroupOnly: true },
 	{ id: 'stablesMcap', header: 'Stables', group: 'tvl', render: 'usd', chainGroupOnly: true },
 	{
@@ -162,7 +165,10 @@ const feesColumns: ColumnDictionaryItem[] = [
 	{ id: 'fees24h', header: '24h Fees', group: 'fees', render: 'usd' },
 	{ id: 'fees_7d', header: '7d Fees', group: 'fees', render: 'usd' },
 	{ id: 'fees_30d', header: '30d Fees', group: 'fees', render: 'usd' },
+	{ id: 'fees_90d', header: '90d Fees', group: 'fees', render: 'usd' },
+	{ id: 'fees_180d', header: '180d Fees', group: 'fees', render: 'usd' },
 	{ id: 'fees_1y', header: '1y Fees', group: 'fees', render: 'usd' },
+	{ id: 'fees_ytd', header: 'YTD Fees', group: 'fees', render: 'usd' },
 	{
 		id: 'average_1y',
 		header: '1y Monthly Avg Fees',
@@ -199,6 +205,55 @@ const feesColumns: ColumnDictionaryItem[] = [
 		tags: ['distribution']
 	},
 	{
+		id: 'holderRevenue_90d',
+		header: '90d Holder Revenue',
+		group: 'fees',
+		render: 'usd',
+		tags: ['distribution']
+	},
+	{
+		id: 'holderRevenue_180d',
+		header: '180d Holder Revenue',
+		group: 'fees',
+		render: 'usd',
+		tags: ['distribution']
+	},
+	{
+		id: 'holderRevenue_1y',
+		header: '1y Holder Revenue',
+		group: 'fees',
+		render: 'usd',
+		tags: ['distribution']
+	},
+	{
+		id: 'holderRevenue_ytd',
+		header: 'YTD Holder Revenue',
+		group: 'fees',
+		render: 'usd',
+		tags: ['distribution']
+	},
+	{
+		id: 'cumulativeHolderRevenue',
+		header: 'Cumulative Holder Revenue',
+		group: 'fees',
+		render: 'usd',
+		tags: ['cumulative', 'distribution']
+	},
+	{
+		id: 'holderRevenueAnnualized1y',
+		header: 'Annualized Holder Revenue',
+		group: 'fees',
+		render: 'usd',
+		tags: ['distribution']
+	},
+	{
+		id: 'holderRevenueChange_1d',
+		header: '1d Holder Revenue Change',
+		group: 'fees',
+		render: 'percent',
+		tags: ['change', 'distribution']
+	},
+	{
 		id: 'holderRevenueChange7dOver7d',
 		header: '7d over 7d Holder Revenue Change',
 		group: 'fees',
@@ -208,6 +263,34 @@ const feesColumns: ColumnDictionaryItem[] = [
 	{
 		id: 'holderRevenueChange30dOver30d',
 		header: '30d over 30d Holder Revenue Change',
+		group: 'fees',
+		render: 'percent',
+		tags: ['change', 'distribution']
+	},
+	{
+		id: 'holderRevenueChange90dOver90d',
+		header: '90d over 90d Holder Revenue Change',
+		group: 'fees',
+		render: 'percent',
+		tags: ['change', 'distribution']
+	},
+	{
+		id: 'holderRevenueChange180dOver180d',
+		header: '180d over 180d Holder Revenue Change',
+		group: 'fees',
+		render: 'percent',
+		tags: ['change', 'distribution']
+	},
+	{
+		id: 'holderRevenueChange1yOver1y',
+		header: '1y over 1y Holder Revenue Change',
+		group: 'fees',
+		render: 'percent',
+		tags: ['change', 'distribution']
+	},
+	{
+		id: 'holderRevenueChangeYtd',
+		header: 'YTD Holder Revenue Change',
 		group: 'fees',
 		render: 'percent',
 		tags: ['change', 'distribution']
@@ -246,6 +329,34 @@ const feesColumns: ColumnDictionaryItem[] = [
 		group: 'fees',
 		render: 'percent',
 		tags: ['change']
+	},
+	{
+		id: 'feesChange90dOver90d',
+		header: '90d over 90d Fees Change',
+		group: 'fees',
+		render: 'percent',
+		tags: ['change']
+	},
+	{
+		id: 'feesChange180dOver180d',
+		header: '180d over 180d Fees Change',
+		group: 'fees',
+		render: 'percent',
+		tags: ['change']
+	},
+	{
+		id: 'feesChange1yOver1y',
+		header: '1y over 1y Fees Change',
+		group: 'fees',
+		render: 'percent',
+		tags: ['change']
+	},
+	{
+		id: 'feesChangeYtd',
+		header: 'YTD Fees Change',
+		group: 'fees',
+		render: 'percent',
+		tags: ['change']
 	}
 ]
 
@@ -253,7 +364,10 @@ const revenueColumns: ColumnDictionaryItem[] = [
 	{ id: 'revenue24h', header: '24h Revenue', group: 'revenue', render: 'usd' },
 	{ id: 'revenue_7d', header: '7d Revenue', group: 'revenue', render: 'usd' },
 	{ id: 'revenue_30d', header: '30d Revenue', group: 'revenue', render: 'usd' },
+	{ id: 'revenue_90d', header: '90d Revenue', group: 'revenue', render: 'usd' },
+	{ id: 'revenue_180d', header: '180d Revenue', group: 'revenue', render: 'usd' },
 	{ id: 'revenue_1y', header: '1y Revenue', group: 'revenue', render: 'usd' },
+	{ id: 'revenue_ytd', header: 'YTD Revenue', group: 'revenue', render: 'usd' },
 	{
 		id: 'average_revenue_1y',
 		header: '1y Monthly Avg Revenue',
@@ -302,6 +416,34 @@ const revenueColumns: ColumnDictionaryItem[] = [
 		group: 'revenue',
 		render: 'percent',
 		tags: ['change']
+	},
+	{
+		id: 'revenueChange90dOver90d',
+		header: '90d over 90d Revenue Change',
+		group: 'revenue',
+		render: 'percent',
+		tags: ['change']
+	},
+	{
+		id: 'revenueChange180dOver180d',
+		header: '180d over 180d Revenue Change',
+		group: 'revenue',
+		render: 'percent',
+		tags: ['change']
+	},
+	{
+		id: 'revenueChange1yOver1y',
+		header: '1y over 1y Revenue Change',
+		group: 'revenue',
+		render: 'percent',
+		tags: ['change']
+	},
+	{
+		id: 'revenueChangeYtd',
+		header: 'YTD Revenue Change',
+		group: 'revenue',
+		render: 'percent',
+		tags: ['change']
 	}
 ]
 
@@ -309,7 +451,11 @@ const earningsColumns: ColumnDictionaryItem[] = [
 	{ id: 'earnings24h', header: '24h Earnings', group: 'earnings', render: 'usd' },
 	{ id: 'earnings7d', header: '7d Earnings', group: 'earnings', render: 'usd' },
 	{ id: 'earnings30d', header: '30d Earnings', group: 'earnings', render: 'usd' },
-	{ id: 'earnings1y', header: '1y Earnings', group: 'earnings', render: 'usd' }
+	{ id: 'earnings1y', header: '1y Earnings', group: 'earnings', render: 'usd' },
+	{ id: 'emissions24h', header: '24h Emissions', group: 'earnings', render: 'usd' },
+	{ id: 'emissions7d', header: '7d Emissions', group: 'earnings', render: 'usd' },
+	{ id: 'emissions30d', header: '30d Emissions', group: 'earnings', render: 'usd' },
+	{ id: 'emissions1y', header: '1y Emissions', group: 'earnings', render: 'usd' }
 ]
 
 const perpsColumns: ColumnDictionaryItem[] = [
@@ -409,6 +555,13 @@ const aggregatorsColumns: ColumnDictionaryItem[] = [
 	{
 		id: 'aggregatorVolumeChange7dOver7d',
 		header: '7d over 7d Aggregator Volume Change',
+		group: 'aggregators',
+		render: 'percent',
+		tags: ['change', 'specialized']
+	},
+	{
+		id: 'aggregatorVolumeChange30dOver30d',
+		header: '30d over 30d Aggregator Volume Change',
 		group: 'aggregators',
 		render: 'percent',
 		tags: ['change', 'specialized']
@@ -585,6 +738,13 @@ const optionsColumns: ColumnDictionaryItem[] = [
 	{
 		id: 'optionsVolumeChange7dOver7d',
 		header: '7d over 7d Options Volume Change',
+		group: 'options',
+		render: 'percent',
+		tags: ['change', 'specialized']
+	},
+	{
+		id: 'optionsVolumeChange30dOver30d',
+		header: '30d over 30d Options Volume Change',
 		group: 'options',
 		render: 'percent',
 		tags: ['change', 'specialized']

@@ -222,6 +222,40 @@ describe('aggregateMetrics changes', () => {
 		expect(result.holderRevenueChange7dOver7d).toBeCloseTo(100 / 3)
 	})
 
+	it('keeps grouped 30d holder revenue change null when a longer period proves a missing contributor', () => {
+		const result = aggregateMetrics([
+			protocolRow('measured', 'Measured', { holdersRevenue30d: 100, holderRevenueChange30dOver30d: 0 }),
+			protocolRow('missing', 'Missing', { holderRevenue_90d: 50 })
+		])
+
+		expect(result.holderRevenueChange30dOver30d).toBeNull()
+	})
+
+	it('aggregates long-period activity changes from reconstructed comparison totals', () => {
+		const result = aggregateMetrics([
+			protocolRow('one', 'One', {
+				fees_90d: 100,
+				feesChange90dOver90d: 100,
+				revenue_ytd: 100,
+				revenueChangeYtd: 100,
+				holderRevenue_1y: 100,
+				holderRevenueChange1yOver1y: 100
+			}),
+			protocolRow('two', 'Two', {
+				fees_90d: 100,
+				feesChange90dOver90d: 0,
+				revenue_ytd: 100,
+				revenueChangeYtd: 0,
+				holderRevenue_1y: 100,
+				holderRevenueChange1yOver1y: 0
+			})
+		])
+
+		expect(result.feesChange90dOver90d).toBeCloseTo(100 / 3)
+		expect(result.revenueChangeYtd).toBeCloseTo(100 / 3)
+		expect(result.holderRevenueChange1yOver1y).toBeCloseTo(100 / 3)
+	})
+
 	it('keeps a grouped change null when a minus 100 percent row has no reconstructable prior value', () => {
 		const result = aggregateMetrics([protocolRow('one', 'One', { revenue24h: 0, revenueChange_1d: -100 })])
 
@@ -267,6 +301,16 @@ describe('aggregateMetrics changes', () => {
 		expect(result.tvl).toBe(50)
 		expect(result.tvlPrevDay).toBe(25)
 		expect(result.change1d).toBe(100)
+	})
+
+	it('applies parent TVL exclusion to additive TVL breakdowns', () => {
+		const excluded = protocolRow('excluded', 'Excluded', { stakingTvl: 100, borrowedTvl: 50, pool2Tvl: 25 })
+		excluded.excludeTvlFromParent = true
+		const included = protocolRow('included', 'Included', { stakingTvl: 10, borrowedTvl: 20, pool2Tvl: 30 })
+
+		const result = aggregateMetrics([excluded, included], { excludeParentTvl: true })
+
+		expect(result).toMatchObject({ stakingTvl: 10, borrowedTvl: 20, pool2Tvl: 30 })
 	})
 
 	it('uses canonical parent market metrics instead of an arbitrary child token', () => {
@@ -329,6 +373,34 @@ describe('aggregateMetrics changes', () => {
 		})
 
 		expect(result.openInterest).toBe(100)
+	})
+
+	it('uses canonical parent emissions only for a complete all-chain ecosystem', () => {
+		const first = protocolRow('aave-v2', 'Aave V2', {})
+		first.parentProtocolId = 'aave'
+		const second = protocolRow('aave-v3', 'Aave V3', {})
+		second.parentProtocolId = 'aave'
+		const parentMetrics = {
+			aave: {
+				mcap: null,
+				fdv: null,
+				supplements: {
+					incentives: {
+						childProtocolIds: ['aave-v2', 'aave-v3'],
+						metrics: { emissions24h: 1, emissions7d: 7, emissions30d: 30, emissions1y: 365 }
+					}
+				}
+			}
+		}
+
+		expect(aggregateMetrics([first, second], { excludeParentTvl: false, parentMetrics }).emissions30d).toBe(30)
+		expect(aggregateMetrics([second], { excludeParentTvl: false, parentMetrics }).emissions30d).toBeNull()
+		const chainRows = [first, second].map((row) => ({
+			...row,
+			rowType: 'protocol-chain' as const,
+			chain: 'Ethereum'
+		}))
+		expect(aggregateMetrics(chainRows, { excludeParentTvl: false, parentMetrics }).emissions30d).toBeNull()
 	})
 
 	it('uses the selected-chain parent open interest without replacing a partial ecosystem', () => {

@@ -154,6 +154,69 @@ describe('unified table metric totals cache', () => {
 		expect(result.rows[0]?.oracles).toEqual(['Chainlink'])
 	})
 
+	it('maps the first Lens metric batch while keeping incentives out of unsupported subprotocol projections', async () => {
+		anyMock
+			.mockResolvedValueOnce([
+				{
+					protocol: 'example--protocol',
+					protocol_category: 'Dexs',
+					chain_slugs: ['ethereum'],
+					tvl_staking: 10,
+					tvl_borrowed: 20,
+					tvl_pool2: 30,
+					fees_90d: 90,
+					fees_90d_pct_change: 0.25,
+					revenue_ytd: 120,
+					revenue_ytd_pct_change: -0.1,
+					holder_revenue_365d: 365,
+					holder_revenue_365d_pct_change: 0.5,
+					incentive_1d: 1,
+					incentive_7d: 7,
+					incentive_30d: 30,
+					incentive_365d: 365,
+					volume_aggregators_30d_pct_change: 0.2,
+					volume_options_30d_pct_change: -0.3,
+					exclude_tvl_from_parent: false
+				}
+			])
+			.mockResolvedValueOnce([])
+		const { fetchProtocolsTable } = await import('./protocols')
+
+		const result = await fetchProtocolsTable({
+			...options,
+			baseMetricFamilies: [
+				'tvl',
+				'fees',
+				'holder-revenue',
+				'incentives',
+				'revenue',
+				'aggregator-volume',
+				'options-volume'
+			]
+		})
+		const metrics = result.rows[0]?.metrics
+
+		expect(metrics).toMatchObject({
+			stakingTvl: 10,
+			borrowedTvl: 20,
+			pool2Tvl: 30,
+			fees_90d: 90,
+			feesChange90dOver90d: 25,
+			revenue_ytd: 120,
+			revenueChangeYtd: -10,
+			holderRevenue_1y: 365,
+			holderRevenueChange1yOver1y: 50,
+			emissions24h: 1,
+			emissions7d: 7,
+			emissions30d: 30,
+			emissions1y: 365,
+			aggregatorVolumeChange30dOver30d: 20,
+			optionsVolumeChange30dOver30d: -30
+		})
+		expect(String(anyMock.mock.calls[0]?.[0])).toContain('mp.incentive_30d')
+		expect(String(anyMock.mock.calls[1]?.[0])).not.toContain('msp.incentive_30d')
+	})
+
 	it('uses canonical protocol and chain display names from Lens metadata', async () => {
 		anyMock
 			.mockResolvedValueOnce([
@@ -448,6 +511,31 @@ describe('unified table metric totals cache', () => {
 		expect(ethereum.metrics).not.toHaveProperty('tvl')
 		expect(ethereum.metrics).not.toHaveProperty('tvlShare')
 		expect(ethereum.metrics).not.toHaveProperty('protocolCount')
+	})
+
+	it('maps canonical chain incentives without allocating them to protocol-chain rows', async () => {
+		anyMock
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([
+				{ chain: 'ethereum', incentive_1d: 1, incentive_7d: 7, incentive_30d: 30, incentive_365d: 365 }
+			])
+		const { fetchProtocolsTable } = await import('./protocols')
+
+		const result = await fetchProtocolsTable({
+			...options,
+			rowHeaders: ['chain', 'protocol'],
+			baseMetricFamilies: ['incentives']
+		})
+		const ethereum = result.chainMetrics?.ethereum
+		expect(ethereum?.availability).toBe('available')
+		if (ethereum?.availability !== 'available') throw new Error('Expected canonical Ethereum metrics')
+		expect(ethereum.metrics).toMatchObject({
+			emissions24h: 1,
+			emissions7d: 7,
+			emissions30d: 30,
+			emissions1y: 365
+		})
 	})
 
 	it('shares one request scope between supplemental values and canonical membership', async () => {

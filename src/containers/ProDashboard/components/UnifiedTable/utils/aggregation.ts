@@ -79,6 +79,36 @@ const PERCENT_CHANGE_DEFINITIONS: readonly PercentChangeDefinition[] = [
 	{ family: 'fees', changeKey: 'feesChange7dOver7d', currentKey: 'fees_7d', broaderPeriodKeys: ['fees_30d'] },
 	{ family: 'fees', changeKey: 'feesChange30dOver30d', currentKey: 'fees_30d', broaderPeriodKeys: ['fees_1y'] },
 	{
+		family: 'fees',
+		changeKey: 'feesChange90dOver90d',
+		currentKey: 'fees_90d',
+		broaderPeriodKeys: ['fees_180d', 'fees_1y', 'cumulativeFees']
+	},
+	{
+		family: 'fees',
+		changeKey: 'feesChange180dOver180d',
+		currentKey: 'fees_180d',
+		broaderPeriodKeys: ['fees_1y', 'cumulativeFees']
+	},
+	{
+		family: 'fees',
+		changeKey: 'feesChange1yOver1y',
+		currentKey: 'fees_1y',
+		broaderPeriodKeys: ['cumulativeFees']
+	},
+	{
+		family: 'fees',
+		changeKey: 'feesChangeYtd',
+		currentKey: 'fees_ytd',
+		broaderPeriodKeys: ['cumulativeFees']
+	},
+	{
+		family: 'holder-revenue',
+		changeKey: 'holderRevenueChange_1d',
+		currentKey: 'holderRevenue_24h',
+		broaderPeriodKeys: ['holderRevenue_7d']
+	},
+	{
 		family: 'holder-revenue',
 		changeKey: 'holderRevenueChange7dOver7d',
 		currentKey: 'holderRevenue_7d',
@@ -88,7 +118,39 @@ const PERCENT_CHANGE_DEFINITIONS: readonly PercentChangeDefinition[] = [
 		family: 'holder-revenue',
 		changeKey: 'holderRevenueChange30dOver30d',
 		currentKey: 'holdersRevenue30d',
-		broaderPeriodKeys: ['holderRevenue_24h', 'holderRevenue_7d']
+		broaderPeriodKeys: [
+			'holderRevenue_24h',
+			'holderRevenue_7d',
+			'holderRevenue_90d',
+			'holderRevenue_180d',
+			'holderRevenue_1y',
+			'holderRevenue_ytd',
+			'cumulativeHolderRevenue'
+		]
+	},
+	{
+		family: 'holder-revenue',
+		changeKey: 'holderRevenueChange90dOver90d',
+		currentKey: 'holderRevenue_90d',
+		broaderPeriodKeys: ['holderRevenue_180d', 'holderRevenue_1y', 'cumulativeHolderRevenue']
+	},
+	{
+		family: 'holder-revenue',
+		changeKey: 'holderRevenueChange180dOver180d',
+		currentKey: 'holderRevenue_180d',
+		broaderPeriodKeys: ['holderRevenue_1y', 'cumulativeHolderRevenue']
+	},
+	{
+		family: 'holder-revenue',
+		changeKey: 'holderRevenueChange1yOver1y',
+		currentKey: 'holderRevenue_1y',
+		broaderPeriodKeys: ['cumulativeHolderRevenue']
+	},
+	{
+		family: 'holder-revenue',
+		changeKey: 'holderRevenueChangeYtd',
+		currentKey: 'holderRevenue_ytd',
+		broaderPeriodKeys: ['cumulativeHolderRevenue']
 	},
 	{ family: 'revenue', changeKey: 'revenueChange_1d', currentKey: 'revenue24h', broaderPeriodKeys: ['revenue_7d'] },
 	{
@@ -102,6 +164,30 @@ const PERCENT_CHANGE_DEFINITIONS: readonly PercentChangeDefinition[] = [
 		changeKey: 'revenueChange30dOver30d',
 		currentKey: 'revenue_30d',
 		broaderPeriodKeys: ['revenue_1y']
+	},
+	{
+		family: 'revenue',
+		changeKey: 'revenueChange90dOver90d',
+		currentKey: 'revenue_90d',
+		broaderPeriodKeys: ['revenue_180d', 'revenue_1y', 'cumulativeRevenue']
+	},
+	{
+		family: 'revenue',
+		changeKey: 'revenueChange180dOver180d',
+		currentKey: 'revenue_180d',
+		broaderPeriodKeys: ['revenue_1y', 'cumulativeRevenue']
+	},
+	{
+		family: 'revenue',
+		changeKey: 'revenueChange1yOver1y',
+		currentKey: 'revenue_1y',
+		broaderPeriodKeys: ['cumulativeRevenue']
+	},
+	{
+		family: 'revenue',
+		changeKey: 'revenueChangeYtd',
+		currentKey: 'revenue_ytd',
+		broaderPeriodKeys: ['cumulativeRevenue']
 	},
 	{
 		family: 'perps-volume',
@@ -132,6 +218,12 @@ const PERCENT_CHANGE_DEFINITIONS: readonly PercentChangeDefinition[] = [
 		changeKey: 'aggregatorVolumeChange7dOver7d',
 		currentKey: 'aggregators_volume_7d',
 		broaderPeriodKeys: ['aggregators_volume_30d']
+	},
+	{
+		family: 'aggregator-volume',
+		changeKey: 'aggregatorVolumeChange30dOver30d',
+		currentKey: 'aggregators_volume_30d',
+		broaderPeriodKeys: []
 	},
 	{
 		family: 'derivatives-aggregator-volume',
@@ -168,6 +260,12 @@ const PERCENT_CHANGE_DEFINITIONS: readonly PercentChangeDefinition[] = [
 		changeKey: 'optionsVolumeChange7dOver7d',
 		currentKey: 'options_volume_7d',
 		broaderPeriodKeys: ['options_volume_30d']
+	},
+	{
+		family: 'options-volume',
+		changeKey: 'optionsVolumeChange30dOver30d',
+		currentKey: 'options_volume_30d',
+		broaderPeriodKeys: []
 	}
 ]
 
@@ -468,17 +566,82 @@ function applyCanonicalParentOpenInterest(
 	}
 }
 
-const PARENT_TVL_KEYS = new Set<keyof ProtocolTableMetrics>(['tvl', 'tvlPrevDay', 'tvlPrevWeek', 'tvlPrevMonth'])
+function applyCanonicalParentIncentives(
+	aggregated: ProtocolTableMetrics,
+	rows: ProtocolTableSourceRow[],
+	parentMetrics: Readonly<Record<string, ParentProtocolMetrics>>
+): void {
+	const keys = ['emissions24h', 'emissions7d', 'emissions30d', 'emissions1y'] as const
+	type IncentiveKey = (typeof keys)[number]
+	type ParentIncentiveMembership = { protocolIds: Set<string>; allocated: Record<IncentiveKey, number> }
+	const rowsByParent = new Map<string, ParentIncentiveMembership>()
+
+	for (const row of rows) {
+		if (!row.parentProtocolId || row.chain !== null) continue
+		const membership = rowsByParent.get(row.parentProtocolId) ?? {
+			protocolIds: new Set<string>(),
+			allocated: { emissions24h: 0, emissions7d: 0, emissions30d: 0, emissions1y: 0 }
+		}
+		membership.protocolIds.add(row.protocolId)
+		for (const key of keys) membership.allocated[key] += row.metrics[key] ?? 0
+		rowsByParent.set(row.parentProtocolId, membership)
+	}
+
+	for (const [parentId, membership] of rowsByParent) {
+		const source = parentMetrics[parentId]?.supplements?.incentives
+		if (!source || !source.childProtocolIds.every((protocolId) => membership.protocolIds.has(protocolId))) continue
+		for (const key of keys) {
+			const value = source.metrics[key]
+			if (value == null) continue
+			aggregated[key] = (aggregated[key] ?? 0) - membership.allocated[key] + value
+		}
+	}
+}
+
+const PARENT_TVL_KEYS = new Set<keyof ProtocolTableMetrics>([
+	'tvl',
+	'tvlPrevDay',
+	'tvlPrevWeek',
+	'tvlPrevMonth',
+	'stakingTvl',
+	'borrowedTvl',
+	'pool2Tvl'
+])
 const SUM_METRIC_KEYS_BY_BASE_FAMILY = {
-	tvl: ['tvl', 'tvlPrevDay', 'tvlPrevWeek', 'tvlPrevMonth'],
+	tvl: ['tvl', 'tvlPrevDay', 'tvlPrevWeek', 'tvlPrevMonth', 'stakingTvl', 'borrowedTvl', 'pool2Tvl'],
 	'dex-volume': ['volume24h', 'volume_7d', 'volume_30d', 'cumulativeVolume'],
-	fees: ['fees24h', 'fees_7d', 'fees_30d', 'fees_1y', 'feesAnnualized1y', 'average_1y', 'cumulativeFees'],
-	'holder-revenue': ['holderRevenue_24h', 'holderRevenue_7d', 'holdersRevenue30d'],
+	fees: [
+		'fees24h',
+		'fees_7d',
+		'fees_30d',
+		'fees_90d',
+		'fees_180d',
+		'fees_1y',
+		'fees_ytd',
+		'feesAnnualized1y',
+		'average_1y',
+		'cumulativeFees'
+	],
+	'holder-revenue': [
+		'holderRevenue_24h',
+		'holderRevenue_7d',
+		'holdersRevenue30d',
+		'holderRevenue_90d',
+		'holderRevenue_180d',
+		'holderRevenue_1y',
+		'holderRevenue_ytd',
+		'cumulativeHolderRevenue',
+		'holderRevenueAnnualized1y'
+	],
+	incentives: ['emissions24h', 'emissions7d', 'emissions30d', 'emissions1y'],
 	revenue: [
 		'revenue24h',
 		'revenue_7d',
 		'revenue_30d',
+		'revenue_90d',
+		'revenue_180d',
 		'revenue_1y',
+		'revenue_ytd',
 		'revenueAnnualized1y',
 		'average_revenue_1y',
 		'cumulativeRevenue'
@@ -506,7 +669,10 @@ const FEE_ANNUALIZED_CONTRIBUTOR_KEYS: readonly (keyof ProtocolTableMetrics)[] =
 	'fees24h',
 	'fees_7d',
 	'fees_30d',
+	'fees_90d',
+	'fees_180d',
 	'fees_1y',
+	'fees_ytd',
 	'cumulativeFees',
 	'feesAnnualized1y'
 ]
@@ -514,7 +680,10 @@ const REVENUE_ANNUALIZED_CONTRIBUTOR_KEYS: readonly (keyof ProtocolTableMetrics)
 	'revenue24h',
 	'revenue_7d',
 	'revenue_30d',
+	'revenue_90d',
+	'revenue_180d',
 	'revenue_1y',
+	'revenue_ytd',
 	'cumulativeRevenue',
 	'revenueAnnualized1y'
 ]
@@ -543,6 +712,7 @@ export interface ProtocolAggregationPlan {
 	includePs: boolean
 	includeProtocolCount: boolean
 	includeCanonicalParentOpenInterest: boolean
+	includeCanonicalParentIncentives: boolean
 	includeEarnings: boolean
 	includeBridgeAggregatorVolume: boolean
 }
@@ -585,6 +755,7 @@ export function buildProtocolAggregationPlan(capabilities: ProtocolMetricCapabil
 		includePs: capabilities.requestedRatioDependencies.marketCap && capabilities.requestedRatioDependencies.revenue,
 		includeProtocolCount: baseFamilies.has('protocol-count'),
 		includeCanonicalParentOpenInterest: baseFamilies.has('open-interest'),
+		includeCanonicalParentIncentives: baseFamilies.has('incentives'),
 		includeEarnings: supplementalMetrics.has('earnings'),
 		includeBridgeAggregatorVolume: supplementalMetrics.has('bridge-aggregator-volume')
 	}
@@ -757,6 +928,9 @@ export function aggregateMetrics(
 	}
 	if (options.parentMetrics && plan.includeCanonicalParentOpenInterest) {
 		applyCanonicalParentOpenInterest(aggregated, rows, options.parentMetrics)
+	}
+	if (options.parentMetrics && plan.includeCanonicalParentIncentives) {
+		applyCanonicalParentIncentives(aggregated, rows, options.parentMetrics)
 	}
 
 	if (options.parentMetrics && (plan.includeEarnings || plan.includeBridgeAggregatorVolume)) {
