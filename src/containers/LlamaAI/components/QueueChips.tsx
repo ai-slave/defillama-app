@@ -104,9 +104,10 @@ export const QueueChips = memo(function QueueChips({
 	return (
 		<ul className="flex flex-col gap-1.5">
 			{rows.map((item, index) => {
+				const rowKey = item.clientMutationId ?? item.id
 				if (item.kind === 'creating') {
 					return (
-						<li key={item.id} className="flex items-center gap-2 rounded-lg border border-ai-line bg-surface px-3 py-2">
+						<li key={rowKey} className="flex items-center gap-2 rounded-lg border border-ai-line bg-surface px-3 py-2">
 							<span aria-label="Adding to queue" role="status" className="shrink-0 text-ai-tertiary">
 								<LoadingSpinner size={14} />
 							</span>
@@ -122,7 +123,7 @@ export const QueueChips = memo(function QueueChips({
 				const message = status?.unsavedDraft ?? item.displayMessage ?? item.message
 				if (item.state === 'firing') {
 					return (
-						<li key={item.id} className="flex items-center gap-2 rounded-lg border border-ai-line bg-surface px-3 py-2">
+						<li key={rowKey} className="flex items-center gap-2 rounded-lg border border-ai-line bg-surface px-3 py-2">
 							<span aria-label="Sending" role="status" className="shrink-0 text-ai-tertiary">
 								<LoadingSpinner size={14} />
 							</span>
@@ -133,7 +134,7 @@ export const QueueChips = memo(function QueueChips({
 
 				if (item.state === 'editing') {
 					return (
-						<li key={item.id} className="flex items-start gap-2 rounded-lg border border-ai-line bg-surface px-3 py-2">
+						<li key={rowKey} className="flex items-start gap-2 rounded-lg border border-ai-line bg-surface px-3 py-2">
 							{ownedEditId === item.id ? (
 								<QueueChipEditor
 									id={item.id}
@@ -171,7 +172,7 @@ export const QueueChips = memo(function QueueChips({
 				if (item.state === 'pending') {
 					const busy = status?.action !== null && status?.action !== undefined
 					return (
-						<li key={item.id} className="flex items-center gap-2 rounded-lg border border-ai-line bg-surface px-3 py-2">
+						<li key={rowKey} className="flex items-center gap-2 rounded-lg border border-ai-line bg-surface px-3 py-2">
 							<Icon name="clock" height={14} width={14} className="shrink-0 text-ai-tertiary" />
 							<div className="min-w-0 flex-1">
 								<p className="m-0 truncate text-xs text-ai-secondary sm:text-sm">{message}</p>
@@ -217,7 +218,7 @@ export const QueueChips = memo(function QueueChips({
 				const busy = status?.action !== null && status?.action !== undefined
 				return (
 					<li
-						key={item.id}
+						key={rowKey}
 						className="flex items-start gap-2 rounded-lg border border-ai-error-vivid/30 bg-ai-error-vivid/5 px-3 py-2"
 					>
 						<Icon name="alert-triangle" height={14} width={14} className="mt-0.5 shrink-0 text-ai-error-vivid" />

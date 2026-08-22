@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
 
 interface PaginationState {
 	hasMore: boolean
@@ -94,10 +94,14 @@ export function useChatScroll({
 		setMode('attached')
 	}, [cancelPendingReattach, setMode])
 
-	// The single writer for auto-follow. Content growing pushes the bottom away while leaving
-	// scrollTop untouched, so "distance from bottom" cannot tell content growth apart from a
-	// user scrolling up. Comparing against the position we last set ourselves can: anything
-	// lower than that came from the user, and the user always wins.
+	const pinBottom = useCallback((container: HTMLDivElement) => {
+		container.scrollTop = container.scrollHeight
+		lastAutoScrollTopRef.current = container.scrollTop
+	}, [])
+
+	// Opportunistic follow checks preserve unsignaled scrollbar and keyboard intent.
+	// Known application layout changes use syncAfterLayout because browser clamping
+	// can otherwise look exactly like an upward user scroll.
 	const followBottom = useCallback(
 		(container: HTMLDivElement) => {
 			const lastAutoScrollTop = lastAutoScrollTopRef.current
@@ -106,11 +110,15 @@ export function useChatScroll({
 				setMode('detached', container)
 				return
 			}
-			container.scrollTop = container.scrollHeight
-			lastAutoScrollTopRef.current = container.scrollTop
+			pinBottom(container)
 		},
-		[setMode]
+		[pinBottom, setMode]
 	)
+
+	const syncAfterLayout = useCallback(() => {
+		const container = scrollContainerRef.current
+		if (container && modeRef.current === 'attached') pinBottom(container)
+	}, [pinBottom, scrollContainerRef])
 
 	const scrollToBottom = useCallback(() => {
 		const container = scrollContainerRef.current
@@ -206,30 +214,19 @@ export function useChatScroll({
 		if (!container) return
 
 		const resizeObserver = new ResizeObserver(() => {
-			if (modeRef.current === 'attached') {
-				followBottom(container)
-			}
+			syncAfterLayout()
 			syncScrollToBottomVisibility(container)
 			lastScrollTopRef.current = container.scrollTop
 		})
 		resizeObserver.observe(container)
 		return () => resizeObserver.disconnect()
-	}, [followBottom, scrollContainerRef, syncScrollToBottomVisibility])
+	}, [scrollContainerRef, syncAfterLayout, syncScrollToBottomVisibility])
 
 	// Keyboard open: when the soft keyboard appears and we're attached, snap to bottom
 	// so the latest content stays visible above the input.
-	useEffect(() => {
-		if (keyboardOpen && modeRef.current === 'attached') {
-			const container = scrollContainerRef.current
-			if (container) {
-				requestAnimationFrame(() => {
-					if (scrollContainerRef.current && modeRef.current === 'attached') {
-						scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight
-					}
-				})
-			}
-		}
-	}, [keyboardOpen, scrollContainerRef])
+	useLayoutEffect(() => {
+		if (keyboardOpen) syncAfterLayout()
+	}, [keyboardOpen, syncAfterLayout])
 
 	// Wheel/touch intent: while content streams, the ResizeObserver and the follow interval
 	// rewrite scrollTop (and lastScrollTopRef) between a user's scroll and the scroll event,
@@ -376,6 +373,7 @@ export function useChatScroll({
 	return {
 		attach,
 		scrollToBottom,
+		syncAfterLayout,
 		isAttached,
 		showScrollToBottom
 	}

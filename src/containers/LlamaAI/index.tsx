@@ -763,6 +763,7 @@ export function AgenticChat({
 	const {
 		attach,
 		scrollToBottom,
+		syncAfterLayout: syncScrollAfterLayout,
 		isAttached: isScrollAttached,
 		showScrollToBottom
 	} = useChatScroll({
@@ -2512,6 +2513,7 @@ export function AgenticChat({
 		isScrollAttached,
 		showScrollToBottom,
 		scrollToBottom,
+		syncScrollAfterLayout,
 		handleSubmit: handleComposerSubmit,
 		submitMode: queueOwnsComposer
 			? { kind: 'queue', atCapacity: queueAtCap, capacityMessage: queueCapMessage }

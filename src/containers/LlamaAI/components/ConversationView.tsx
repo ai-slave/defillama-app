@@ -80,6 +80,7 @@ export interface ConversationViewModel {
 	isScrollAttached: boolean
 	showScrollToBottom: boolean
 	scrollToBottom: () => void
+	syncScrollAfterLayout: () => void
 	handleSubmit: (
 		prompt: string,
 		preResolvedEntities?: Array<{ term: string; slug: string; type?: string }>,
@@ -422,6 +423,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 		isScrollAttached,
 		showScrollToBottom,
 		scrollToBottom,
+		syncScrollAfterLayout,
 		handleSubmit,
 		submitMode,
 		queueSurface,
@@ -661,7 +663,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 			if (!activeExchange || !shouldSpaceLastExchange) return
 			const paddingBottom = Number.parseFloat(window.getComputedStyle(container).paddingBottom) || 0
 			activeExchange.style.minHeight = `${Math.max(0, container.clientHeight - paddingBottom - ACTIVE_EXCHANGE_TOP_OFFSET_PX)}px`
-			if (isScrollAttached) container.scrollTop = container.scrollHeight
+			syncScrollAfterLayout()
 		}
 
 		updateActiveExchangeLayout()
@@ -670,7 +672,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 		return () => {
 			resizeObserver.disconnect()
 		}
-	}, [isScrollAttached, scrollContainerRef, shouldSpaceLastExchange])
+	}, [scrollContainerRef, shouldSpaceLastExchange, syncScrollAfterLayout])
 
 	return (
 		<>

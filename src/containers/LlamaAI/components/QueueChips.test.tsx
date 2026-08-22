@@ -63,12 +63,44 @@ describe('QueueChips', () => {
 	it('keeps optimistic rows non-interactive', async () => {
 		await render(
 			surface({
-				rows: [{ kind: 'creating', id: 'temp-1', state: 'pending', message: 'Follow up', researchMode: false }]
+				rows: [
+					{
+						kind: 'creating',
+						id: 'temp-1',
+						clientMutationId: 'mutation-1',
+						state: 'pending',
+						message: 'Follow up',
+						researchMode: false
+					}
+				]
 			})
 		)
 
 		expect(container.textContent).toContain('Adding…')
 		expect(container.querySelector('button')).toBeNull()
+	})
+
+	it('preserves the chip node when the server confirms an optimistic row', async () => {
+		await render(
+			surface({
+				rows: [
+					{
+						kind: 'creating',
+						id: 'temp-1',
+						clientMutationId: 'mutation-1',
+						state: 'pending',
+						message: 'Follow up',
+						researchMode: false
+					}
+				]
+			})
+		)
+		const optimisticNode = container.querySelector('li')
+
+		await render(surface({ rows: [pending({ clientMutationId: 'mutation-1' })] }))
+
+		expect(container.querySelector('li')).toBe(optimisticNode)
+		expect(container.textContent).not.toContain('Adding…')
 	})
 
 	it('waits for the editing snapshot before rendering the editor', async () => {

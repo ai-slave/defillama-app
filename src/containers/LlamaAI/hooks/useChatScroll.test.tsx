@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-import { act, useRef } from 'react'
+import { act, useRef, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useChatScroll } from './useChatScroll'
@@ -19,15 +19,17 @@ function flushFrames() {
 
 function Harness({ isStreaming, onReady }: { isStreaming: boolean; onReady: (api: any) => void }) {
 	const scrollContainerRef = useRef<HTMLDivElement>(null)
+	const [keyboardOpen, setKeyboardOpen] = useState(false)
 	const api = useChatScroll({
 		scrollContainerRef,
 		isStreaming,
 		items: [],
 		hasMessages: true,
 		paginationState: { hasMore: false, isLoadingMore: false },
-		onLoadMoreMessages: () => {}
+		onLoadMoreMessages: () => {},
+		keyboardOpen
 	})
-	onReady(api)
+	onReady({ ...api, setKeyboardOpen })
 	return <div ref={scrollContainerRef} />
 }
 
@@ -68,6 +70,7 @@ describe('useChatScroll lets the user scroll up while content streams in', () =>
 		Object.defineProperty(container, 'scrollHeight', { value: BOTTOM, configurable: true })
 		Object.defineProperty(container, 'clientHeight', { value: VIEWPORT, configurable: true })
 		container.scrollTop = BOTTOM - VIEWPORT
+		await act(async () => flushFrames())
 	})
 
 	afterEach(async () => {
@@ -100,7 +103,7 @@ describe('useChatScroll lets the user scroll up while content streams in', () =>
 		expect(container.scrollTop).toBe(scrolledUpTo)
 	})
 
-	it('detaches on wheel-up even when a resize re-pins scrollTop before the scroll event', async () => {
+	it('keeps wheel-up detachment through later layout updates', async () => {
 		expect(api.isAttached).toBe(true)
 
 		const scrolledUpTo = 1200
@@ -110,13 +113,12 @@ describe('useChatScroll lets the user scroll up while content streams in', () =>
 			wheel.deltaY = -120
 			container.dispatchEvent(wheel)
 		})
-		// Streaming growth re-pins the viewport and rewrites the reference point.
+		// Application layout updates remain passive after explicit user intent.
 		await act(async () => {
 			container.scrollTop = BOTTOM - VIEWPORT
 			resizeCallback?.([], {} as ResizeObserver)
 			flushFrames()
 		})
-		// The scroll event now reports no upward movement at all.
 		await act(async () => {
 			container.dispatchEvent(new Event('scroll'))
 			flushFrames()
@@ -143,6 +145,62 @@ describe('useChatScroll lets the user scroll up while content streams in', () =>
 
 		expect(api.isAttached).toBe(true)
 		expect(container.scrollTop).toBe(BOTTOM)
+	})
+
+	it('stays attached when a known layout change clamps the viewport', async () => {
+		await act(async () => vi.advanceTimersByTime(200))
+		Object.defineProperty(container, 'scrollHeight', { value: 4000, configurable: true })
+		container.scrollTop = 3200
+		await act(async () => api.syncAfterLayout())
+
+		expect(api.isAttached).toBe(true)
+		expect(container.scrollTop).toBe(4000)
+	})
+
+	it('keeps the container resize observer attached after a layout clamp', async () => {
+		await act(async () => vi.advanceTimersByTime(200))
+		Object.defineProperty(container, 'scrollHeight', { value: 4000, configurable: true })
+		container.scrollTop = 3200
+		await act(async () => resizeCallback?.([], {} as ResizeObserver))
+
+		expect(api.isAttached).toBe(true)
+		expect(container.scrollTop).toBe(4000)
+	})
+
+	it('does not follow a layout change after the user detaches', async () => {
+		await act(async () => {
+			const wheel = new Event('wheel') as any
+			wheel.deltaY = -120
+			container.dispatchEvent(wheel)
+		})
+		container.scrollTop = 1200
+		await act(async () => api.syncAfterLayout())
+
+		expect(api.isAttached).toBe(false)
+		expect(container.scrollTop).toBe(1200)
+	})
+
+	it('stays attached when the keyboard opens after a layout clamp', async () => {
+		await act(async () => vi.advanceTimersByTime(200))
+		Object.defineProperty(container, 'scrollHeight', { value: 4000, configurable: true })
+		container.scrollTop = 3200
+		await act(async () => api.setKeyboardOpen(true))
+
+		expect(api.isAttached).toBe(true)
+		expect(container.scrollTop).toBe(4000)
+	})
+
+	it('does not move the viewport when the keyboard opens while detached', async () => {
+		await act(async () => {
+			const wheel = new Event('wheel') as any
+			wheel.deltaY = -120
+			container.dispatchEvent(wheel)
+		})
+		container.scrollTop = 1200
+		await act(async () => api.setKeyboardOpen(true))
+
+		expect(api.isAttached).toBe(false)
+		expect(container.scrollTop).toBe(1200)
 	})
 
 	it('detaches on a downward touch drag, which scrolls content up', async () => {

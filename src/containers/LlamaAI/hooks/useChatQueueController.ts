@@ -22,6 +22,7 @@ export type QueueServerRow = QueuedMessageElement & { kind: 'server' }
 export interface QueueCreatingRow {
 	kind: 'creating'
 	id: string
+	clientMutationId: string
 	state: 'pending'
 	message: string
 	researchMode: boolean
@@ -93,6 +94,9 @@ function queueControllerReducer(state: QueueControllerState, event: QueueControl
 			return initialState(event.sessionId)
 		case 'snapshot': {
 			if (event.snapshot.sessionId !== state.sessionId) return state
+			const creating = event.snapshot.queue.some((item) => item.clientMutationId === state.creating?.clientMutationId)
+				? null
+				: state.creating
 			const rememberedItem = event.rememberedEdit
 				? event.snapshot.queue.find((item) => item.id === event.rememberedEdit?.id)
 				: undefined
@@ -128,6 +132,7 @@ function queueControllerReducer(state: QueueControllerState, event: QueueControl
 			return {
 				...state,
 				queue: event.snapshot.queue,
+				creating,
 				ownedEditId: ownedEdit?.state === 'editing' ? ownedEdit.id : null,
 				rowStatus
 			}
@@ -327,6 +332,7 @@ export function useChatQueueController({
 				row: {
 					kind: 'creating',
 					id: optimisticId,
+					clientMutationId,
 					state: 'pending',
 					message: payload.message,
 					researchMode: payload.researchMode,
@@ -347,6 +353,9 @@ export function useChatQueueController({
 					(error instanceof DOMException && error.name === 'AbortError')
 				) {
 					return 'aborted'
+				}
+				if (latestSnapshotRef.current?.queue.some((item) => item.clientMutationId === clientMutationId)) {
+					return 'queued'
 				}
 				if (errorCode(error) === 'session_idle') return 'session_idle'
 				if (error instanceof LlamaAITransportError) {

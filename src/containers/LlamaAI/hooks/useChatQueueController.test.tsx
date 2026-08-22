@@ -225,6 +225,82 @@ describe('useChatQueueController', () => {
 		expect(controller.atCapacity).toBe(true)
 	})
 
+	it('reconciles an optimistic row when SSE confirms it before the POST resolves', async () => {
+		vi.mocked(queueMessage).mockResolvedValueOnce({ snapshot: snapshot(1, [pending('existing')]), maxDepth: 3 })
+		await act(async () => {
+			await controller.enqueue(payload)
+		})
+
+		let confirm: ((value: Awaited<ReturnType<typeof queueMessage>>) => void) | null = null
+		vi.mocked(queueMessage).mockImplementationOnce(() => new Promise((resolve) => (confirm = resolve)))
+		let enqueue: Promise<'queued' | 'session_idle' | 'busy' | 'aborted'>
+		await act(async () => {
+			enqueue = controller.enqueue(payload)
+			await Promise.resolve()
+		})
+		const creating = controller.rows.find((row) => row.kind === 'creating')
+		expect(creating?.kind).toBe('creating')
+		if (creating?.kind !== 'creating') throw new Error('Expected an optimistic queue row')
+		const confirmed = { ...pending('confirmed'), clientMutationId: creating.clientMutationId }
+
+		await act(async () => {
+			controller.applySnapshot(snapshot(2, [pending('existing'), confirmed]))
+		})
+
+		expect(controller.rows.map((row) => row.id)).toEqual(['existing', 'confirmed'])
+		expect(controller.atCapacity).toBe(false)
+
+		await act(async () => {
+			confirm?.({ snapshot: snapshot(2, [pending('existing'), confirmed]), maxDepth: 3 })
+			await enqueue
+		})
+		expect(controller.rows.map((row) => row.id)).toEqual(['existing', 'confirmed'])
+	})
+
+	it('accepts SSE confirmation when the enqueue response is lost', async () => {
+		let reject: ((error: Error) => void) | null = null
+		vi.mocked(queueMessage).mockImplementationOnce(
+			() => new Promise((_resolve, rejectPromise) => (reject = rejectPromise))
+		)
+		let enqueue: Promise<'queued' | 'session_idle' | 'busy' | 'aborted'>
+		await act(async () => {
+			enqueue = controller.enqueue(payload)
+			await Promise.resolve()
+		})
+		const creating = controller.rows.find((row) => row.kind === 'creating')
+		if (creating?.kind !== 'creating') throw new Error('Expected an optimistic queue row')
+		const confirmed = { ...pending('confirmed'), clientMutationId: creating.clientMutationId }
+
+		await act(async () => {
+			controller.applySnapshot(snapshot(1, [confirmed]))
+			reject?.(new Error('Connection closed before the response arrived'))
+		})
+
+		await expect(enqueue).resolves.toBe('queued')
+		expect(controller.rows.map((row) => row.id)).toEqual(['confirmed'])
+	})
+
+	it('keeps the optimistic row until POST settles when a legacy snapshot has no mutation id', async () => {
+		let confirm: ((value: Awaited<ReturnType<typeof queueMessage>>) => void) | null = null
+		vi.mocked(queueMessage).mockImplementationOnce(() => new Promise((resolve) => (confirm = resolve)))
+		let enqueue: Promise<'queued' | 'session_idle' | 'busy' | 'aborted'>
+		await act(async () => {
+			enqueue = controller.enqueue(payload)
+			await Promise.resolve()
+		})
+
+		await act(async () => {
+			controller.applySnapshot(snapshot(1, [pending('confirmed')]))
+		})
+		expect(controller.rows.map((row) => row.kind)).toEqual(['server', 'creating'])
+
+		await act(async () => {
+			confirm?.({ snapshot: snapshot(1, [pending('confirmed')]), maxDepth: 3 })
+			await enqueue
+		})
+		expect(controller.rows.map((row) => row.kind)).toEqual(['server'])
+	})
+
 	it('aborts an enqueue and hides its optimistic row when the session changes', async () => {
 		vi.mocked(queueMessage).mockImplementation((_fetch, _sessionId, _payload, signal) => {
 			return new Promise((_resolve, reject) => {
