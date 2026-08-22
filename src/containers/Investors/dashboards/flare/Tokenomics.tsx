@@ -50,7 +50,7 @@ const FAQ_ITEMS: { q: string; a: React.ReactNode }[] = [
 	},
 	{
 		q: "What's the difference between gas burns and protocol burns?",
-		a: 'Gas burns happen automatically on every Flare transaction: EVM base fees are burned by the protocol. Protocol burns (tracked via TIP20) are explicit burns triggered by FDC data requests, FAsset minting/redemption fees, and FIRE pool market purchases. Both types are shown in the charts above.'
+		a: 'Gas burns happen automatically on every Flare transaction: EVM base fees are burned by the protocol. The one exception is FTSO/FDC voter submissions, which are refunded above a fixed 0.000525 FLR cap: that refunded portion goes back to the voter and is not burned, and the burn figures here are net of it. Protocol burns (tracked via TIP20) are explicit burns triggered by FDC data requests, FAsset minting/redemption fees, and FIRE pool market purchases. Both types are shown in the charts above.'
 	}
 ]
 
@@ -196,7 +196,7 @@ export default function Tokenomics() {
 				</>
 			)}
 
-			<SectionHeader>FLR Burn</SectionHeader>
+			<SectionHeader>FLR Transaction Burn</SectionHeader>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
 				<KpiCard label="Latest Daily" value={bk.latestDailyBurn} />
 				<KpiCard label="Burn 7d" value={bk.burn7d} />
@@ -210,7 +210,7 @@ export default function Tokenomics() {
 					<div className="min-w-0">
 						<h3 className="text-sm font-semibold text-pro-text-primary">{b.burnTitle}</h3>
 						<p className="mt-0.5 text-xs leading-relaxed text-pro-text-label">
-							FLR removed from supply by gas burns - daily and cumulative.
+							FLR removed from supply by transaction fees, net of the FTSO/FDC voter gas refund. Daily and cumulative.
 						</p>
 					</div>
 					<div className="flex gap-1 rounded-md border border-pro-cards-border p-0.5">

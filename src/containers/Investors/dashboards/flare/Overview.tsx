@@ -35,7 +35,7 @@ export default function Overview() {
 			<SectionHeader>Chain Ecosystem</SectionHeader>
 			<ChartCard
 				title={tvl.title}
-				subtitle="Total value locked across Flare DeFi protocols."
+				subtitle="DefiLlama chain TVL, deduplicated: liquid staking, bridges and vault-on-vault TVL are excluded, so it reads below single-asset views such as FXRP locked in DeFi."
 				value={tvl.currentFormatted}
 			>
 				<MultiSeriesChart
