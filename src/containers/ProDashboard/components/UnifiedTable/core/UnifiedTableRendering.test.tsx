@@ -22,6 +22,7 @@ import type { ProtocolTableLeafRow, ProtocolTableRow } from '../types'
 import { UnifiedVirtualTable } from './UnifiedVirtualTable'
 
 vi.mock('../../../ProDashboardAPIContext', () => ({
+	useProDashboardCatalog: () => ({ getProtocolInfo: () => null }),
 	useProDashboardEditorActions: () => ({ handleEditItem: vi.fn() }),
 	useProDashboardPermissions: () => ({ isReadOnly: true })
 }))

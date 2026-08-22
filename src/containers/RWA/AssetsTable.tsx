@@ -378,12 +378,12 @@ function createRWAAssetColumns(
 		columnHelper.accessor((asset) => asset.suspicious === true, {
 			id: 'suspicious',
 			header: 'Suspicious',
-			meta: { hidden: true, csvOnly: true }
+			meta: { hidden: true, csvOnly: true, headerClassName: 'w-[0px] min-w-[0px]' }
 		}),
 		columnHelper.accessor((asset) => asset.suspiciousReason ?? '', {
 			id: 'suspiciousReason',
 			header: 'Suspicious reason',
-			meta: { hidden: true, csvOnly: true }
+			meta: { hidden: true, csvOnly: true, headerClassName: 'w-[0px] min-w-[0px]' }
 		}),
 		columnHelper.accessor((asset) => normalizeRwaAssetGroup(asset.assetGroup), {
 			id: 'assetGroup',
