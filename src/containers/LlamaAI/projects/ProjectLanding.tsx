@@ -365,7 +365,10 @@ export function ProjectLanding({
 					))}
 				</div>
 
-				<div className="pt-4">
+				<div className={tab === 'sources' ? 'flex flex-col gap-6 pt-4' : 'pt-4'}>
+					<div className={tab === 'sources' ? undefined : 'hidden'}>
+						<ProjectInstructionsEditor key={projectId} projectId={projectId} value={project.data.custom_instructions} />
+					</div>
 					{tab === 'chats' ? (
 						<section>
 							{projectSessions.isLoading ? (
@@ -496,8 +499,7 @@ export function ProjectLanding({
 							)}
 						</section>
 					) : (
-						<section className="flex flex-col gap-6">
-							<ProjectInstructionsEditor projectId={projectId} value={project.data.custom_instructions} />
+						<section>
 							<ProjectFilesPanel
 								projectId={projectId}
 								autoOpenGitHub={connectGithubValue === '1'}

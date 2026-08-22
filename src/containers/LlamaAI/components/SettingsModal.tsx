@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { memo, useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import type { MemoryEntry } from '~/containers/LlamaAI/api/agentHome'
 import type { TelegramStatus } from '~/containers/LlamaAI/api/telegram'
@@ -24,8 +24,6 @@ import { formatFixedNumber } from '~/utils/numberFormat'
 
 const MAX_LENGTH = 500
 
-type ModalStatus = 'closed' | 'open_clean' | 'open_dirty' | 'committing'
-
 type TabId = SettingsTabId
 
 function isEffortAvailableForModel(effort: string, model: string) {
@@ -33,18 +31,6 @@ function isEffortAvailableForModel(effort: string, model: string) {
 	if (isClaude) return effort !== 'minimal'
 	if (model.startsWith('openai/')) return effort !== 'max'
 	return true
-}
-
-type ModalAction =
-	| { type: 'OPEN' }
-	| { type: 'MARK_DIRTY' }
-	| { type: 'MARK_CLEAN' }
-	| { type: 'COMMIT_START' }
-	| { type: 'COMMIT_DONE' }
-	| { type: 'CLOSE' }
-
-interface ModalState {
-	status: ModalStatus
 }
 
 interface SettingsModalProps {
@@ -57,23 +43,6 @@ interface SettingsModalProps {
 	isSettingsLoading?: boolean
 	initialState?: SettingsInitialState | null
 	onInitialStateConsumed?: () => void
-}
-
-function modalReducer(state: ModalState, action: ModalAction): ModalState {
-	switch (action.type) {
-		case 'OPEN':
-			return { status: 'open_clean' }
-		case 'MARK_DIRTY':
-			return state.status === 'open_dirty' ? state : { status: 'open_dirty' }
-		case 'MARK_CLEAN':
-			return state.status === 'open_clean' ? state : { status: 'open_clean' }
-		case 'COMMIT_START':
-			return { status: 'committing' }
-		case 'COMMIT_DONE':
-			return { status: 'open_clean' }
-		case 'CLOSE':
-			return { status: 'closed' }
-	}
 }
 
 export const SettingsModal = memo(function SettingsModal({
@@ -94,28 +63,15 @@ export const SettingsModal = memo(function SettingsModal({
 	const [isRequestingNotif, setIsRequestingNotif] = useState(false)
 	const [activeTab, setActiveTab] = useState<TabId>('persona')
 	const agentHome = useAgentHomeData(isOpen && activeTab === 'memory')
-	const textareaRef = useRef<HTMLTextAreaElement>(null)
-	const baselineRef = useRef(settings.customInstructions.trim())
-	const draftValueRef = useRef(settings.customInstructions)
-	const latestCustomInstructionsRef = useRef(settings.customInstructions)
-	const wasOpenRef = useRef(false)
-	const [modalState, dispatch] = useReducer(modalReducer, { status: 'closed' })
-	const [charCount, setCharCount] = useState(settings.customInstructions.length)
-
-	useEffect(() => {
-		latestCustomInstructionsRef.current = settings.customInstructions
-		if (!isOpen || modalState.status === 'open_dirty') return
-
-		if (textareaRef.current) {
-			textareaRef.current.value = settings.customInstructions
-		}
-		draftValueRef.current = settings.customInstructions
-		baselineRef.current = settings.customInstructions.trim()
-		queueMicrotask(() => {
-			setCharCount(settings.customInstructions.length)
-			dispatch({ type: 'MARK_CLEAN' })
-		})
-	}, [isOpen, modalState.status, settings.customInstructions])
+	const initialInstructions = settings.customInstructions
+	const [instructionsDraft, setInstructionsDraft] = useState(() => ({
+		value: initialInstructions,
+		savedValue: initialInstructions.trim()
+	}))
+	const acceptedInstructionsRef = useRef(initialInstructions.trim())
+	const lastSubmittedInstructionsRef = useRef(initialInstructions.trim())
+	const pendingInstructionsSavesRef = useRef(0)
+	const instructionsDirty = instructionsDraft.value.trim() !== instructionsDraft.savedValue
 
 	useEffect(() => {
 		if (!isOpen) return
@@ -123,64 +79,42 @@ export const SettingsModal = memo(function SettingsModal({
 		if (initialState && !initialState.tgloginToken && onInitialStateConsumed) onInitialStateConsumed()
 	}, [activeTab, isOpen, initialState, onInitialStateConsumed])
 
-	const syncDirtyState = useCallback(() => {
-		draftValueRef.current = textareaRef.current?.value ?? draftValueRef.current
-		setCharCount(draftValueRef.current.length)
-		const nextValue = draftValueRef.current.trim()
-		dispatch({ type: nextValue === baselineRef.current ? 'MARK_CLEAN' : 'MARK_DIRTY' })
-	}, [])
+	const commitDraft = async (value = instructionsDraft.value) => {
+		const nextValue = value.trim()
+		if (nextValue === lastSubmittedInstructionsRef.current) return
 
-	const commitDraft = useCallback(
-		async ({ closeAfterCommit = false }: { closeAfterCommit?: boolean } = {}) => {
-			draftValueRef.current = textareaRef.current?.value ?? draftValueRef.current
-			const nextValue = draftValueRef.current.trim()
-			if (nextValue === baselineRef.current) {
-				if (closeAfterCommit) {
-					dispatch({ type: 'CLOSE' })
-				}
-				return
-			}
-
-			dispatch({ type: 'COMMIT_START' })
-			trackUmamiEvent('llamaai-custom-instructions-save')
-			await actions.setCustomInstructions(nextValue)
-			baselineRef.current = nextValue
-			if (closeAfterCommit) {
-				dispatch({ type: 'CLOSE' })
-			} else {
-				dispatch({ type: 'COMMIT_DONE' })
-			}
-		},
-		[actions]
-	)
+		lastSubmittedInstructionsRef.current = nextValue
+		pendingInstructionsSavesRef.current += 1
+		trackUmamiEvent('llamaai-custom-instructions-save')
+		const accepted = await actions.setCustomInstructions(nextValue).catch(() => false)
+		pendingInstructionsSavesRef.current -= 1
+		if (accepted) {
+			acceptedInstructionsRef.current = nextValue
+			setInstructionsDraft((current) => ({ ...current, savedValue: nextValue }))
+		} else if (lastSubmittedInstructionsRef.current === nextValue) {
+			lastSubmittedInstructionsRef.current = acceptedInstructionsRef.current
+		}
+	}
 
 	useEffect(() => {
-		if (isOpen) {
-			wasOpenRef.current = true
-			trackUmamiEvent('llamaai-settings-open')
-			let cancelled = false
-
-			queueMicrotask(() => {
-				if (cancelled) return
-				const nextValue = latestCustomInstructionsRef.current
-				if (textareaRef.current) {
-					textareaRef.current.value = nextValue
-				}
-				draftValueRef.current = nextValue
-				baselineRef.current = nextValue.trim()
-				setCharCount(nextValue.length)
-				dispatch({ type: 'OPEN' })
-			})
-
-			return () => {
-				cancelled = true
-			}
+		const nextValue = settings.customInstructions
+		const nextSavedValue = nextValue.trim()
+		const previousAcceptedValue = acceptedInstructionsRef.current
+		acceptedInstructionsRef.current = nextSavedValue
+		if (pendingInstructionsSavesRef.current === 0 && lastSubmittedInstructionsRef.current === previousAcceptedValue) {
+			lastSubmittedInstructionsRef.current = nextSavedValue
 		}
+		setInstructionsDraft((current) => {
+			if (current.savedValue === nextSavedValue) return current
+			const wasDirty = current.value.trim() !== current.savedValue
+			const preserveDraft = wasDirty || pendingInstructionsSavesRef.current > 0
+			return { value: preserveDraft ? current.value : nextValue, savedValue: nextSavedValue }
+		})
+	}, [settings.customInstructions])
 
-		if (!wasOpenRef.current) return
-		wasOpenRef.current = false
-		void commitDraft({ closeAfterCommit: true })
-	}, [commitDraft, isOpen])
+	useEffect(() => {
+		if (isOpen) trackUmamiEvent('llamaai-settings-open')
+	}, [isOpen])
 
 	useEffect(() => {
 		if (activeTab === 'lab' && !isDark) {
@@ -188,14 +122,10 @@ export const SettingsModal = memo(function SettingsModal({
 		}
 	}, [activeTab, isDark])
 
-	const handleClear = useCallback(() => {
-		if (textareaRef.current) {
-			textareaRef.current.value = ''
-		}
-		draftValueRef.current = ''
-		syncDirtyState()
-		void commitDraft()
-	}, [commitDraft, syncDirtyState])
+	const handleClear = () => {
+		setInstructionsDraft((current) => ({ ...current, value: '' }))
+		void commitDraft('')
+	}
 
 	const handleMemoryToggle = useCallback(() => {
 		trackUmamiEvent('llamaai-memory-toggle')
@@ -228,27 +158,36 @@ export const SettingsModal = memo(function SettingsModal({
 	}, [actions, settings.advancedProvenance])
 
 	const [spendCapDraft, setSpendCapDraft] = useState<string>(() => formatFixedNumber(settings.spendCapPerMessage, 2))
-	const lastCommittedSpendCapRef = useRef<number>(settings.spendCapPerMessage)
+	const latestSpendCapRef = useRef(settings.spendCapPerMessage)
+	const lastSubmittedSpendCapRef = useRef(settings.spendCapPerMessage)
+	const pendingSpendCapSavesRef = useRef(0)
 
 	useEffect(() => {
-		if (settings.spendCapPerMessage !== lastCommittedSpendCapRef.current) {
-			lastCommittedSpendCapRef.current = settings.spendCapPerMessage
-			setSpendCapDraft(formatFixedNumber(settings.spendCapPerMessage, 2))
-		}
+		latestSpendCapRef.current = settings.spendCapPerMessage
+		if (pendingSpendCapSavesRef.current > 0 && settings.spendCapPerMessage !== lastSubmittedSpendCapRef.current) return
+		lastSubmittedSpendCapRef.current = settings.spendCapPerMessage
+		setSpendCapDraft(formatFixedNumber(settings.spendCapPerMessage, 2))
 	}, [settings.spendCapPerMessage])
 
 	const commitSpendCap = useCallback(
 		(raw: string) => {
 			const parsed = Number(raw)
 			if (!Number.isFinite(parsed) || parsed < 0) {
-				setSpendCapDraft(formatFixedNumber(lastCommittedSpendCapRef.current, 2))
+				setSpendCapDraft(formatFixedNumber(latestSpendCapRef.current, 2))
 				return
 			}
 			setSpendCapDraft(formatFixedNumber(parsed, 2))
-			if (parsed === lastCommittedSpendCapRef.current) return
-			lastCommittedSpendCapRef.current = parsed
+			if (parsed === lastSubmittedSpendCapRef.current) return
+			lastSubmittedSpendCapRef.current = parsed
+			pendingSpendCapSavesRef.current += 1
 			trackUmamiEvent('llamaai-spend-cap-change')
-			void actions.setSpendCapPerMessage(parsed)
+			void actions.setSpendCapPerMessage(parsed).then((accepted) => {
+				pendingSpendCapSavesRef.current -= 1
+				if (!accepted && lastSubmittedSpendCapRef.current === parsed) {
+					lastSubmittedSpendCapRef.current = latestSpendCapRef.current
+					setSpendCapDraft(formatFixedNumber(latestSpendCapRef.current, 2))
+				}
+			})
 		},
 		[actions]
 	)
@@ -317,7 +256,7 @@ export const SettingsModal = memo(function SettingsModal({
 		[actions, settings.model]
 	)
 
-	const showClear = modalState.status === 'open_dirty' || settings.customInstructions.trim().length > 0
+	const showClear = instructionsDirty || instructionsDraft.savedValue.length > 0
 	const notifSupported = notifPermission !== 'unsupported'
 
 	const tabs: Array<{
@@ -336,6 +275,7 @@ export const SettingsModal = memo(function SettingsModal({
 	return (
 		<Ariakit.DialogProvider store={dialogStore}>
 			<Ariakit.Dialog
+				onClose={() => void commitDraft()}
 				className="dialog max-h-[88vh] w-full max-w-[720px] gap-0 overflow-hidden rounded-2xl border border-ai-line-subtle bg-ai-surface-card p-0 shadow-ai-lg"
 				backdrop={<div className="backdrop fixed inset-0 bg-ai-backdrop backdrop-blur-md" />}
 				portal
@@ -396,15 +336,23 @@ export const SettingsModal = memo(function SettingsModal({
 											title="Custom Instructions"
 											subtitle="Tell LlamaAI how to respond. Applied to every conversation."
 										/>
-										<div className="mt-3 space-y-2">
+										<div
+											className="mt-3 space-y-2"
+											onBlur={(event) => {
+												if (event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget)) {
+													return
+												}
+												void commitDraft()
+											}}
+										>
 											<div className="relative">
 												<textarea
-													ref={textareaRef}
 													id="llamaai-custom-instructions"
-													defaultValue={settings.customInstructions}
+													value={instructionsDraft.value}
 													maxLength={MAX_LENGTH}
-													onBlur={() => void commitDraft()}
-													onInput={syncDirtyState}
+													onChange={(event) =>
+														setInstructionsDraft((current) => ({ ...current, value: event.target.value }))
+													}
 													onKeyDown={(e) => {
 														if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
 															e.preventDefault()
@@ -427,7 +375,7 @@ export const SettingsModal = memo(function SettingsModal({
 											</div>
 											<div className="flex items-center justify-between font-mono text-[10.5px] text-ai-muted">
 												<span>
-													{charCount}/{MAX_LENGTH}
+													{instructionsDraft.value.length}/{MAX_LENGTH}
 												</span>
 												<span className="hidden sm:inline">⌘↵ to save & close</span>
 											</div>

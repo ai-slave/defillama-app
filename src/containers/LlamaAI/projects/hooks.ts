@@ -113,6 +113,7 @@ export function useUpdateProject(id: string) {
 	const { authorizedFetch } = useAuthContext()
 	const qc = useQueryClient()
 	return useMutation({
+		scope: { id: `llama-ai-project:${id}` },
 		mutationFn: (body: Partial<Pick<Project, 'name' | 'description' | 'icon' | 'color' | 'custom_instructions'>>) =>
 			updateProject(authorizedFetch, id, body),
 		onSuccess: (project) => {

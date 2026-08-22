@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { useUpdateProject } from './hooks'
@@ -12,30 +12,34 @@ const MAX_LENGTH = 8000
 
 export function ProjectInstructionsEditor({ projectId, value }: ProjectInstructionsEditorProps) {
 	const update = useUpdateProject(projectId)
-	const baselineRef = useRef(value ?? '')
-	const [draft, setDraft] = useState(value ?? '')
-	const [dirty, setDirty] = useState(false)
+	const incomingValue = value ?? ''
+	const [draft, setDraft] = useState(() => ({ value: incomingValue, savedValue: incomingValue, edited: false }))
 
-	useEffect(() => {
-		baselineRef.current = value ?? ''
-		setDraft(value ?? '')
-		setDirty(false)
-	}, [value, projectId])
+	if (incomingValue !== draft.savedValue) {
+		const wasDirty = draft.value.trim() !== draft.savedValue.trim()
+		const preserveDraft = wasDirty || draft.edited || update.isPending
+		setDraft({ value: preserveDraft ? draft.value : incomingValue, savedValue: incomingValue, edited: draft.edited })
+	}
 
-	const onBlur = async () => {
-		const trimmed = draft.trim()
-		if (trimmed === baselineRef.current.trim()) {
-			setDirty(false)
+	const dirty = draft.value.trim() !== draft.savedValue.trim()
+
+	const saveDraft = async (nextDraft: string) => {
+		try {
+			await update.mutateAsync({ custom_instructions: nextDraft || null })
+			toast.success('Instructions saved')
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : 'Failed to save instructions')
+		}
+	}
+
+	const onBlur = () => {
+		const shouldSave = dirty || (draft.edited && update.isPending)
+		if (!shouldSave) {
+			if (draft.edited) setDraft((current) => ({ ...current, edited: false }))
 			return
 		}
-		try {
-			await update.mutateAsync({ custom_instructions: trimmed || null })
-			baselineRef.current = trimmed
-			setDirty(false)
-			toast.success('Instructions saved')
-		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'Failed to save instructions')
-		}
+		setDraft((current) => ({ ...current, edited: false }))
+		void saveDraft(draft.value.trim())
 	}
 
 	return (
@@ -49,10 +53,9 @@ export function ProjectInstructionsEditor({ projectId, value }: ProjectInstructi
 				) : null}
 			</header>
 			<textarea
-				value={draft}
+				value={draft.value}
 				onChange={(e) => {
-					setDraft(e.target.value)
-					setDirty(true)
+					setDraft((current) => ({ ...current, value: e.target.value, edited: true }))
 				}}
 				onBlur={() => void onBlur()}
 				maxLength={MAX_LENGTH}
@@ -61,7 +64,7 @@ export function ProjectInstructionsEditor({ projectId, value }: ProjectInstructi
 				className="resize-y rounded-md border border-ai-line bg-surface px-3 py-2 text-xs leading-5 text-inherit placeholder:text-ai-muted focus:border-brand focus:outline-hidden"
 			/>
 			<p className="text-[11px] text-ai-muted">
-				{draft.length}/{MAX_LENGTH} chars · saved automatically
+				{draft.value.length}/{MAX_LENGTH} chars · saved automatically
 			</p>
 		</section>
 	)

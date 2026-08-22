@@ -34,16 +34,16 @@ export interface LlamaAISettings {
 }
 
 export interface LlamaAISettingsActions {
-	setCustomInstructions: (value: string) => Promise<void>
-	setEnableMemory: (value: boolean) => Promise<void>
-	setEnablePremiumTools: (value: boolean) => Promise<void>
-	setHackerMode: (value: boolean) => Promise<void>
-	setModel: (value: string) => Promise<void>
-	setEffort: (value: string) => Promise<void>
-	setEnableSoundNotifications: (value: boolean) => Promise<void>
-	setEnterToSend: (value: boolean) => Promise<void>
-	setAdvancedProvenance: (value: boolean) => Promise<void>
-	setSpendCapPerMessage: (value: number) => Promise<void>
+	setCustomInstructions: (value: string) => Promise<boolean>
+	setEnableMemory: (value: boolean) => Promise<boolean>
+	setEnablePremiumTools: (value: boolean) => Promise<boolean>
+	setHackerMode: (value: boolean) => Promise<boolean>
+	setModel: (value: string) => Promise<boolean>
+	setEffort: (value: string) => Promise<boolean>
+	setEnableSoundNotifications: (value: boolean) => Promise<boolean>
+	setEnterToSend: (value: boolean) => Promise<boolean>
+	setAdvancedProvenance: (value: boolean) => Promise<boolean>
+	setSpendCapPerMessage: (value: number) => Promise<boolean>
 }
 
 type LlamaAISettingKey = keyof LlamaAISettings
@@ -240,6 +240,34 @@ function mergeDefinedSettings(base: StoredLlamaAISettings, incoming: LlamaAISett
 	return merged
 }
 
+function getFailedSettingsRollback(
+	current: StoredLlamaAISettings,
+	attempted: LlamaAISettingsUpdate,
+	previous: LlamaAISettings
+): LlamaAISettingsUpdate {
+	const rollback: LlamaAISettingsUpdate = {}
+	if (attempted.enableMemory !== undefined && current?.enableMemory === attempted.enableMemory)
+		rollback.enableMemory = previous.enableMemory
+	if (attempted.enablePremiumTools !== undefined && current?.enablePremiumTools === attempted.enablePremiumTools)
+		rollback.enablePremiumTools = previous.enablePremiumTools
+	if (attempted.hackerMode !== undefined && current?.hackerMode === attempted.hackerMode)
+		rollback.hackerMode = previous.hackerMode
+	if (attempted.model !== undefined && current?.model === attempted.model) rollback.model = previous.model
+	if (attempted.effort !== undefined && current?.effort === attempted.effort) rollback.effort = previous.effort
+	if (
+		attempted.enableSoundNotifications !== undefined &&
+		current?.enableSoundNotifications === attempted.enableSoundNotifications
+	)
+		rollback.enableSoundNotifications = previous.enableSoundNotifications
+	if (attempted.enterToSend !== undefined && current?.enterToSend === attempted.enterToSend)
+		rollback.enterToSend = previous.enterToSend
+	if (attempted.advancedProvenance !== undefined && current?.advancedProvenance === attempted.advancedProvenance)
+		rollback.advancedProvenance = previous.advancedProvenance
+	if (attempted.spendCapPerMessage !== undefined && current?.spendCapPerMessage === attempted.spendCapPerMessage)
+		rollback.spendCapPerMessage = previous.spendCapPerMessage
+	return rollback
+}
+
 function normalizeServerSettings(value: unknown): LlamaAISettingsUpdate {
 	if (!isRecord(value)) return {}
 
@@ -310,7 +338,18 @@ export function useLlamaAISettings() {
 	const spendCapPerMessage = useLlamaAISetting('spendCapPerMessage')
 
 	const advancedProvenance = useAdvancedProvenance()
-
+	const storedSettings: LlamaAISettings = {
+		customInstructions,
+		enableMemory,
+		enablePremiumTools,
+		hackerMode,
+		model,
+		effort,
+		enableSoundNotifications,
+		enterToSend,
+		advancedProvenance,
+		spendCapPerMessage
+	}
 	const settingsQuery = useQuery({
 		queryKey: [...LLAMA_AI_SETTINGS_QUERY_KEY, userId],
 		queryFn: async (): Promise<SettingsQueryResult> => {
@@ -361,29 +400,47 @@ export function useLlamaAISettings() {
 		queryClient.removeQueries({ queryKey: [...LLAMA_AI_SETTINGS_QUERY_KEY] })
 	}, [queryClient, userId])
 
+	const applySettingsUpdate = (update: LlamaAISettingsUpdate) => {
+		applyStoredSettings(update)
+		queryClient.setQueryData<SettingsQueryResult>([...LLAMA_AI_SETTINGS_QUERY_KEY, userId], (previous) => ({
+			settings: mergeDefinedSettings(previous?.settings ?? null, update),
+			availableModels: previous?.availableModels ?? EMPTY_MODEL_OPTIONS,
+			availableEfforts: previous?.availableEfforts ?? EMPTY_EFFORT_OPTIONS,
+			telegramStatus: previous?.telegramStatus ?? null,
+			tip: previous?.tip ?? null
+		}))
+	}
+
 	const persistSettingsMutation = useMutation({
+		scope: { id: `llama-ai-settings:${userId ?? 'local'}` },
 		mutationFn: async (update: LlamaAISettingsUpdate) => {
 			if (!authorizedFetch || !isAuthenticated || !userId) return update
-			const response = await authorizedFetch(`${AI_SERVER}/user-settings`, {
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ settings: update })
-			})
-			if (!response?.ok) {
-				throw new Error('Failed to persist LlamaAI settings')
+			const queryKey = [...LLAMA_AI_SETTINGS_QUERY_KEY, userId]
+			await queryClient.cancelQueries({ queryKey })
+			const current = queryClient.getQueryData<SettingsQueryResult>(queryKey)
+			const previousSettings = { ...storedSettings, ...current?.settings }
+			const optimisticUpdate = { ...update }
+			delete optimisticUpdate.customInstructions
+			applySettingsUpdate(optimisticUpdate)
+
+			try {
+				const response = await authorizedFetch(`${AI_SERVER}/user-settings`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ settings: update })
+				})
+				if (!response?.ok) throw new Error('Failed to persist LlamaAI settings')
+			} catch (error) {
+				const latest = queryClient.getQueryData<SettingsQueryResult>(queryKey)
+				applySettingsUpdate(getFailedSettingsRollback(latest?.settings ?? null, optimisticUpdate, previousSettings))
+				throw error
 			}
 			return update
 		},
-		onMutate: async (update) => {
-			await queryClient.cancelQueries({ queryKey: [...LLAMA_AI_SETTINGS_QUERY_KEY, userId] })
-			applyStoredSettings(update)
-			queryClient.setQueryData<SettingsQueryResult>([...LLAMA_AI_SETTINGS_QUERY_KEY, userId], (previous) => ({
-				settings: mergeDefinedSettings(previous?.settings ?? null, update),
-				availableModels: previous?.availableModels ?? EMPTY_MODEL_OPTIONS,
-				availableEfforts: previous?.availableEfforts ?? EMPTY_EFFORT_OPTIONS,
-				telegramStatus: previous?.telegramStatus ?? null,
-				tip: previous?.tip ?? null
-			}))
+		onSuccess: ({ customInstructions: savedCustomInstructions }) => {
+			if (savedCustomInstructions !== undefined) {
+				applySettingsUpdate({ customInstructions: savedCustomInstructions })
+			}
 		},
 		onError: (error) => {
 			console.error('[llama-ai] failed to persist settings:', getErrorMessage(error))
@@ -394,27 +451,30 @@ export function useLlamaAISettings() {
 		async (update: LlamaAISettingsUpdate) => {
 			if (!isAuthenticated || !userId) {
 				applyStoredSettings(update)
-				return
+				return true
 			}
 			try {
 				await persistSettingsMutation.mutateAsync(update)
-			} catch {}
+				return true
+			} catch {
+				return false
+			}
 		},
 		[isAuthenticated, persistSettingsMutation, userId]
 	)
 
 	const actions = useMemo<LlamaAISettingsActions>(
 		() => ({
-			setCustomInstructions: async (value: string) => persistSettings({ customInstructions: value.trim() }),
-			setEnableMemory: async (value: boolean) => persistSettings({ enableMemory: value }),
-			setEnablePremiumTools: async (value: boolean) => persistSettings({ enablePremiumTools: value }),
-			setHackerMode: async (value: boolean) => persistSettings({ hackerMode: value }),
-			setModel: async (value: string) => persistSettings({ model: value }),
-			setEffort: async (value: string) => persistSettings({ effort: value }),
-			setEnableSoundNotifications: async (value: boolean) => persistSettings({ enableSoundNotifications: value }),
-			setEnterToSend: async (value: boolean) => persistSettings({ enterToSend: value }),
-			setAdvancedProvenance: async (value: boolean) => persistSettings({ advancedProvenance: value }),
-			setSpendCapPerMessage: async (value: number) => persistSettings({ spendCapPerMessage: normalizeSpendCap(value) })
+			setCustomInstructions: (value) => persistSettings({ customInstructions: value.trim() }),
+			setEnableMemory: (value) => persistSettings({ enableMemory: value }),
+			setEnablePremiumTools: (value) => persistSettings({ enablePremiumTools: value }),
+			setHackerMode: (value) => persistSettings({ hackerMode: value }),
+			setModel: (value) => persistSettings({ model: value }),
+			setEffort: (value) => persistSettings({ effort: value }),
+			setEnableSoundNotifications: (value) => persistSettings({ enableSoundNotifications: value }),
+			setEnterToSend: (value) => persistSettings({ enterToSend: value }),
+			setAdvancedProvenance: (value) => persistSettings({ advancedProvenance: value }),
+			setSpendCapPerMessage: (value) => persistSettings({ spendCapPerMessage: normalizeSpendCap(value) })
 		}),
 		[persistSettings]
 	)
