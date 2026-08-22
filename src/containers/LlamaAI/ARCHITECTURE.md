@@ -39,10 +39,16 @@ Key boundaries:
 
 ## Request And Stream Lifecycle
 
-All agentic prompt, edit, resume, and replay flows should go through
-`runAgenticRequest`. That module begins request bookkeeping, creates the abort
-controller, tracks event count, invokes the selected transport operation,
-classifies errors, and completes the request.
+All agentic prompt, edit, resume, and replay flows go through
+`runAgenticRequest`. `ExecutionCoordinator` serializes execution intents for a
+session and invalidates stale callbacks before aborting their requests.
+`useChatExecutionOwner` owns discovery, resume, replay, and queue reattachment
+policy. Ancillary latest-wins requests such as restore and pagination use
+separate `AbortScope` instances, so they cannot take stream ownership.
+
+Direct prompt and edit mutations carry a stable `clientMutationId`. Reusing the
+same identifier reattaches to the retained execution or reconciles an already
+persisted mutation instead of starting duplicate work.
 
 Prompt mode is represented by `AgenticAnswerMode`: `quick`, `fact_checked`, or
 `research`. Quick mode is the default and is omitted from the `/agentic` request
@@ -51,6 +57,7 @@ body; fact-checked and research prompts are sent as `mode`.
 ```mermaid
 sequenceDiagram
   participant UI as AgenticChat
+  participant Owner as useChatExecutionOwner
   participant Runner as runAgenticRequest
   participant API as fetchAgenticResponse or resumeAgenticStream
   participant Parser as parseSSEStream
@@ -58,8 +65,9 @@ sequenceDiagram
   participant State as StreamAccumulator plus streamReducer
   participant Messages as Message history
 
-  UI->>Runner: mode, sessionId, execute, createCallbacks
-  Runner->>Runner: beginRequest and create AbortController
+	UI->>Runner: prompt or edit intent
+	UI->>Owner: restore, recovery, reconnect, or queue signal
+	Owner->>Runner: resume or replay with coordinator operation
   Runner->>Callbacks: create guarded SSE callbacks
   Runner->>API: execute with callbacks, signal, eventCounter
   API->>Parser: read SSE response body
@@ -69,7 +77,7 @@ sequenceDiagram
   Callbacks->>Messages: buildAssistantMessage and append
   Callbacks->>State: COMMIT_STREAM
   API-->>Runner: resolve or throw
-  Runner->>Runner: classify error, completeRequest, settle
+  Runner->>Runner: classify error and settle
 ```
 
 The stream has two representations by design:
@@ -112,11 +120,26 @@ flowchart TD
 
 Important invariants:
 
-- `receivedEventCount` is the client's replay cursor.
+- `receivedEventCount` is the backend event-buffer cursor. Preamble and queue
+  control events do not advance it.
+- Streams advertise `cursor=v2` in their content type when cursors come from
+  the server. The transport alone contains the temporary legacy counter
+  fallback used during rolling deployment.
+- Replay pins the stream request to the execution `messageId`. An execution
+  mismatch commits any buffered output, then returns to discovery with a fresh
+  accumulator. This prevents output from two executions sharing one message.
 - Missing `done` is a recovery signal unless the request was aborted.
 - Abort is not shown as a user-facing failure.
+- Restore, queue attachment, visibility recovery, and manual reconnect signal
+  one session-keyed coordinator instead of opening competing streams.
+- A clean queue long-poll timeout preserves both the observed execution id and
+  cursor before rearming the stream.
 - Resume and replay should share the same callback and lifecycle path as prompt
   and edit flows.
+
+The canonical execution API shape is `{ execution: snapshot | null }`.
+`executionProtocol.ts` owns the temporary decoder for legacy flat `/active`
+responses. Domain code only consumes the canonical snapshot.
 
 ## Message And Artifact Model
 
@@ -285,8 +308,8 @@ The current useful test seams are:
 - Fact-check mode and SSE behavior:
   `__tests__/fetchAgenticResponse.test.ts`,
   `__tests__/streamCallbacks.test.ts`, and markdown renderer/helper tests.
-- Route and request helpers: `__tests__/routeTransition.test.ts`,
-  `__tests__/requestLifecycle.test.ts`.
+- Route and operation ownership: `__tests__/routeTransition.test.ts`,
+  `__tests__/executionCoordinator.test.ts`.
 - Integration state helpers:
   `hooks/__tests__/useIntegrationLink.test.ts`.
 

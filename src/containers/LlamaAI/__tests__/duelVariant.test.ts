@@ -64,9 +64,12 @@ describe('duel capability handshake', () => {
 		const fetchFn = vi.fn<MockFetch>(async () => sseResponse([JSON.stringify({ type: 'done' })]))
 
 		await fetchAgenticResponse({
-			message: 'what is defillama?',
-			sessionId: null,
-			enablePremiumTools: true,
+			mutation: {
+				clientMutationId: 'mutation-1',
+				message: 'what is defillama?',
+				sessionId: 'session-1',
+				enablePremiumTools: true
+			},
 			callbacks: callbacks(),
 			fetchFn: fetchFn as unknown as typeof fetch,
 			eventCounter: { count: 0 }

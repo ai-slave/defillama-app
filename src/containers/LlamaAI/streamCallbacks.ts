@@ -1,7 +1,6 @@
 import type { RefObject } from 'react'
 import type { AgenticArmEvent, AgenticSSECallbacks, SpawnProgressData } from '~/containers/LlamaAI/fetchAgenticResponse'
 import type { QueueSnapshot } from '~/containers/LlamaAI/queue/protocol'
-import { isActiveRequest } from '~/containers/LlamaAI/requestLifecycle'
 import {
 	buildAssistantMessage,
 	hasStreamBufferContent,
@@ -33,8 +32,7 @@ export function appendBufferedAssistantMessage(
 }
 
 export function createAgenticCallbacks({
-	requestId,
-	activeRequestIdRef,
+	isCurrent,
 	buffer,
 	dispatch,
 	currentMessageIdRef,
@@ -56,8 +54,7 @@ export function createAgenticCallbacks({
 	onMessageIdObserved,
 	notify
 }: {
-	requestId: number
-	activeRequestIdRef: RefObject<number>
+	isCurrent: () => boolean
 	buffer: StreamBuffer
 	dispatch: StreamDispatch
 	currentMessageIdRef: RefObject<string | null>
@@ -84,7 +81,7 @@ export function createAgenticCallbacks({
 	const guard =
 		<Args extends unknown[]>(fn: (...args: Args) => void) =>
 		(...args: Args) => {
-			if (!isActiveRequest(activeRequestIdRef, requestId)) return
+			if (!isCurrent()) return
 			fn(...args)
 		}
 
@@ -190,6 +187,7 @@ export function createAgenticCallbacks({
 			if (startedAt) dispatch({ type: 'SET_EXECUTION_STARTED_AT', value: startedAt })
 		}),
 		onMessageId: guard((messageId) => {
+			buffer.executionId = messageId
 			currentMessageIdRef.current = messageId
 			onMessageIdObserved?.(messageId)
 		}),

@@ -1,5 +1,6 @@
 import type { Dispatch } from 'react'
 import type { ContextWarningPayload, CsvExport, MdExport } from '~/containers/LlamaAI/fetchAgenticResponse'
+import type { AgenticMutationEnvelope } from '~/containers/LlamaAI/mutationProtocol'
 import type {
 	AlertProposedData,
 	ChartSet,
@@ -22,10 +23,8 @@ export interface ChatPageContext {
 }
 
 export interface FailedRequest {
-	prompt: string
-	entities?: Array<{ term: string; slug: string; type?: string }>
-	images?: Array<{ data: string; mimeType: string; filename?: string; isPasted?: boolean }>
-	pageContext?: ChatPageContext
+	mutation: AgenticMutationEnvelope
+	optimisticMessageId: string
 }
 
 export interface RateLimitDetails {
@@ -82,6 +81,7 @@ export interface StreamState {
 }
 
 export interface StreamAccumulator {
+	executionId: string | null
 	text: string
 	charts: ChartSet[]
 	csvExports: CsvExport[]
@@ -183,6 +183,7 @@ export const createInitialStreamState = (): StreamState => ({
 
 // Keep a mutable buffer while SSE events arrive, then commit it as one assistant message at the end.
 export const createStreamAccumulator = (): StreamAccumulator => ({
+	executionId: null,
 	text: '',
 	charts: [],
 	csvExports: [],

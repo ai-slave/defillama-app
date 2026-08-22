@@ -8,9 +8,18 @@ import {
 	migrateDashboardItems
 } from '~/containers/LlamaAI/chartPayloads'
 import type { ChartConfiguration, ChartDataByKey } from '~/containers/LlamaAI/chartTypes'
+import { waitForAbortableDelay } from '~/containers/LlamaAI/executionCoordinator'
+import {
+	decodeActiveExecutionResponse,
+	decodeExecutionSnapshot,
+	type AgenticExecutionSnapshot
+} from '~/containers/LlamaAI/executionProtocol'
+import {
+	decodeAgenticMutationReconciliation,
+	type AgenticMutationEnvelope
+} from '~/containers/LlamaAI/mutationProtocol'
 import { decodeQueueSnapshot, type QueueSnapshot } from '~/containers/LlamaAI/queue/protocol'
 import type {
-	AgenticAnswerMode,
 	AlertProposedData,
 	ChartArtifactRefs,
 	DashboardArtifact,
@@ -48,6 +57,22 @@ export interface SpawnProgressData {
 	findingsPreview?: string
 	startedAt?: number
 	isResearchMode?: boolean
+}
+
+type AgenticCursorMode = 'legacy' | 'server'
+
+function cursorModeForResponse(response: Response): AgenticCursorMode {
+	return response.headers.get('content-type')?.toLowerCase().includes('cursor=v2') ? 'server' : 'legacy'
+}
+
+export class AgenticExecutionChangedError extends Error {
+	readonly execution: AgenticExecutionSnapshot | null
+
+	constructor(execution: AgenticExecutionSnapshot | null) {
+		super('The active execution changed before the stream attached.')
+		this.name = 'AgenticExecutionChangedError'
+		this.execution = execution
+	}
 }
 
 export interface AgenticSSECallbacks {
@@ -289,7 +314,7 @@ interface QueueWaitEndedEvent {
 	revision?: number
 }
 
-export type AgenticSSEEvent =
+type AgenticSSEPayload =
 	| SessionEvent
 	| ToolCallEvent
 	| ResponseChunkEvent
@@ -322,6 +347,8 @@ export type AgenticSSEEvent =
 	| DuelStartEvent
 	| DuelReadyEvent
 	| ArmMessageIdEvent
+
+export type AgenticSSEEvent = AgenticSSEPayload & { streamCursor?: number }
 
 type DispatchableAgenticEvent = Exclude<
 	AgenticSSEEvent,
@@ -477,24 +504,9 @@ function parseAgenticErrorResponse(value: unknown): AgenticErrorResponse | null 
 }
 
 interface FetchAgenticResponseParams {
-	message: string
-	sessionId?: string | null
+	mutation: AgenticMutationEnvelope
 	callbacks: AgenticSSECallbacks
 	abortSignal?: AbortSignal
-	mode?: AgenticAnswerMode
-	enablePremiumTools: boolean
-	entities?: Array<{ term: string; slug: string; type?: string }>
-	images?: Array<{ data: string; mimeType: string; filename?: string; isPasted?: boolean }>
-	pageContext?: { entitySlug?: string; entityType?: string; route: string }
-	customInstructions?: string
-	quotedText?: string
-	isSuggestedQuestion?: boolean
-	blockedSkills?: string[]
-	model?: string
-	effort?: string
-	shareToken?: string
-	editMessageId?: string
-	projectId?: string | null
 	fetchFn: typeof fetch
 	eventCounter?: { count: number }
 }
@@ -650,7 +662,8 @@ export function parseSSEStream(
 	reader: ReadableStreamDefaultReader<Uint8Array>,
 	callbacks: AgenticSSECallbacks,
 	abortSignal?: AbortSignal,
-	eventCounter?: { count: number }
+	eventCounter?: { count: number },
+	cursorMode: AgenticCursorMode = 'server'
 ): Promise<{ sawDone: boolean; queueWaitEndReason?: QueueWaitEndReason }> {
 	const decoder = new TextDecoder()
 	let lineBuffer = ''
@@ -662,6 +675,8 @@ export function parseSSEStream(
 
 		try {
 			const data = JSON.parse(line.slice(5).trimStart()) as AgenticSSEEvent
+			const streamCursor = data.streamCursor
+			delete data.streamCursor
 			if (data.type === 'queue_wait_ended') {
 				const snapshot = decodeQueueSnapshot({
 					sessionId: data.sessionId,
@@ -674,9 +689,10 @@ export function parseSSEStream(
 				}
 				return
 			}
-			// Backend replay PRs #32/#33 use event offsets, not UI mutations, so count
-			// every parsed server event, including `done`.
-			if (eventCounter) eventCounter.count++
+			if (eventCounter) {
+				if (cursorMode === 'legacy') eventCounter.count += 1
+				else if (streamCursor !== undefined) eventCounter.count = streamCursor
+			}
 			if (data.type === 'done') sawDone = true
 
 			if (data.type === 'duel_start') {
@@ -757,126 +773,36 @@ export function parseSSEStream(
 }
 
 export async function fetchAgenticResponse({
-	message,
-	sessionId,
+	mutation,
 	callbacks,
 	abortSignal,
-	mode,
-	enablePremiumTools,
-	entities,
-	images,
-	pageContext,
-	customInstructions,
-	quotedText,
-	isSuggestedQuestion,
-	blockedSkills,
-	model,
-	effort,
-	shareToken,
-	editMessageId,
-	projectId,
 	fetchFn,
 	eventCounter
 }: FetchAgenticResponseParams) {
-	// Only include optional request fields when they are explicitly enabled for this prompt.
-	const requestBody: {
-		message: string
-		stream: true
-		sessionId?: string
-		mode?: AgenticAnswerMode
-		enablePremiumTools: boolean
-		timezone?: string
-		entities?: Array<{ term: string; slug: string; type?: string }>
-		images?: Array<{ data: string; mimeType: string; filename?: string; isPasted?: boolean }>
-		pageContext?: { entitySlug?: string; entityType?: string; route: string }
-		customInstructions?: string
-		quotedText?: string
-		isSuggestedQuestion?: true
-		blockedSkills?: string[]
-		model?: string
-		effort?: string
-		shareToken?: string
-		editMessageId?: string
-		projectId?: string
-		duelCapable: true
-	} = {
-		message,
-		stream: true,
-		enablePremiumTools,
-		duelCapable: true
-	}
+	const pendingStartedAt = Date.now()
+	const pendingSignal = abortSignal ?? new AbortController().signal
+	let response: Response
+	while (true) {
+		response = await fetchFn(`${AI_SERVER}/agentic`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ ...mutation, stream: true, duelCapable: true }),
+			...(abortSignal === undefined ? {} : { signal: abortSignal })
+		})
+		if (response.ok) break
 
-	if (sessionId) {
-		requestBody.sessionId = sessionId
-	}
-
-	if (mode && mode !== 'quick') {
-		requestBody.mode = mode
-	}
-
-	// Timezone helps the backend answer scheduling/date questions in the user's local context.
-	try {
-		requestBody.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
-	} catch {}
-
-	if (entities && entities.length > 0) {
-		requestBody.entities = entities
-	}
-
-	if (images && images.length > 0) {
-		requestBody.images = images
-	}
-
-	if (pageContext) {
-		requestBody.pageContext = pageContext
-	}
-
-	if (customInstructions) {
-		requestBody.customInstructions = customInstructions
-	}
-
-	if (quotedText) {
-		requestBody.quotedText = quotedText
-	}
-
-	if (isSuggestedQuestion) {
-		requestBody.isSuggestedQuestion = true
-	}
-
-	if (blockedSkills && blockedSkills.length > 0) {
-		requestBody.blockedSkills = blockedSkills
-	}
-
-	if (model) {
-		requestBody.model = model
-	}
-
-	if (effort) {
-		requestBody.effort = effort
-	}
-
-	if (shareToken) {
-		requestBody.shareToken = shareToken
-	}
-
-	if (projectId) {
-		requestBody.projectId = projectId
-	}
-
-	if (editMessageId) {
-		requestBody.editMessageId = editMessageId
-	}
-
-	const response = await fetchFn(`${AI_SERVER}/agentic`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify(requestBody),
-		...(abortSignal === undefined ? {} : { signal: abortSignal })
-	})
-
-	// Map backend usage-limit and concurrency responses into UI-specific error shapes.
-	if (!response.ok) {
+		// Map backend usage-limit and concurrency responses into UI-specific error shapes.
 		const errorPayload: unknown = await response.json().catch(() => null)
+		const mutationReconciliation = response.status === 409 ? decodeAgenticMutationReconciliation(errorPayload) : null
+		if (
+			mutationReconciliation?.status === 'pending' &&
+			Date.now() - pendingStartedAt < 35_000 &&
+			!pendingSignal.aborted
+		) {
+			await waitForAbortableDelay(mutationReconciliation.retryAfterMs ?? 1000, pendingSignal)
+			continue
+		}
+		if (mutationReconciliation) throw mutationReconciliation
 		const errorData = parseAgenticErrorResponse(errorPayload)
 		if (
 			response.status === 403 &&
@@ -913,7 +839,13 @@ export async function fetchAgenticResponse({
 		throw new Error('No response body')
 	}
 
-	const { sawDone } = await parseSSEStream(response.body.getReader(), callbacks, abortSignal, eventCounter)
+	const { sawDone } = await parseSSEStream(
+		response.body.getReader(),
+		callbacks,
+		abortSignal,
+		eventCounter,
+		cursorModeForResponse(response)
+	)
 	if (!sawDone && !abortSignal?.aborted) {
 		// Server stream closed cleanly but never sent a `done` event — likely a
 		// dropped final chunk or upstream restart. Surface it as a connectivity
@@ -947,45 +879,22 @@ export async function stopAgenticExecution(
 // Probe whether a restored session still has a live execution that needs to be resumed client-side.
 export async function checkActiveExecution(
 	sessionId: string,
-	fetchFn: typeof fetch
-): Promise<{
-	active: boolean
-	status?: string
-	eventCount?: number
-	messageId?: string
-	queueItemId?: string
-	hasResult?: boolean
-}> {
+	fetchFn: typeof fetch,
+	abortSignal: AbortSignal
+): Promise<{ active: boolean; execution: AgenticExecutionSnapshot | null }> {
 	try {
-		const res = await fetchFn(`${AI_SERVER}/agentic/active/${encodeURIComponent(sessionId)}`)
+		const res = await fetchFn(`${AI_SERVER}/agentic/active/${encodeURIComponent(sessionId)}`, { signal: abortSignal })
 		if (!res) {
 			throw new Error('Failed to check active execution: no response received')
 		}
-		if (res.status === 404) {
-			const payload = (await res.json().catch(() => null)) as {
-				active?: boolean
-				status?: string
-				eventCount?: number
-				messageId?: string
-				queueItemId?: string
-				hasResult?: boolean
-			} | null
-			return payload?.active === false ? { active: false, ...payload } : { active: false }
-		}
+		if (res.status === 404) return { active: false, execution: null }
 		if (!res.ok) {
 			const statusLabel = `${res.status} ${res.statusText}`.trim()
 			throw new Error(await getResponseErrorMessage(res, `Failed to check active execution (${statusLabel})`))
 		}
-		return (await res.json()) as {
-			active: boolean
-			status?: string
-			eventCount?: number
-			messageId?: string
-			queueItemId?: string
-			hasResult?: boolean
-		}
+		return decodeActiveExecutionResponse(await res.json())
 	} catch (err) {
-		console.error('[llama-ai] [checkActiveExecution] failed:', getErrorMessage(err))
+		if (!abortSignal.aborted) console.error('[llama-ai] [checkActiveExecution] failed:', getErrorMessage(err))
 		const status =
 			typeof err === 'object' && err !== null
 				? 'status' in err && typeof err.status === 'number'
@@ -998,7 +907,7 @@ export async function checkActiveExecution(
 						? err.response.status
 						: null
 				: null
-		if (status === 404) return { active: false }
+		if (status === 404) return { active: false, execution: null }
 		throw err
 	}
 }
@@ -1011,6 +920,7 @@ export async function resumeAgenticStream({
 	fetchFn,
 	from,
 	waitMs,
+	expectedMessageId,
 	eventCounter
 }: {
 	sessionId: string
@@ -1019,11 +929,13 @@ export async function resumeAgenticStream({
 	fetchFn: typeof fetch
 	from?: number
 	waitMs?: number
+	expectedMessageId?: string
 	eventCounter?: { count: number }
 }) {
 	const params = new URLSearchParams()
 	if (from != null) params.set('from', String(from))
 	if (waitMs != null) params.set('waitMs', String(waitMs))
+	if (expectedMessageId) params.set('expectedMessageId', expectedMessageId)
 	const query = params.toString()
 	const url = `${AI_SERVER}/agentic/stream/${encodeURIComponent(sessionId)}${query ? `?${query}` : ''}`
 	const res = await fetchFn(url, {
@@ -1031,6 +943,12 @@ export async function resumeAgenticStream({
 	})
 
 	if (!res.ok) {
+		if (res.status === 409) {
+			const payload = (await res.json().catch(() => null)) as { error?: string; execution?: unknown } | null
+			if (payload?.error === 'execution_changed') {
+				throw new AgenticExecutionChangedError(decodeExecutionSnapshot(payload.execution))
+			}
+		}
 		const statusLabel = `${res.status} ${res.statusText}`.trim()
 		const message = await getResponseErrorMessage(res, `Failed to resume active execution (${statusLabel})`)
 		const error = new Error(message) as Error & { status?: number }
@@ -1046,7 +964,8 @@ export async function resumeAgenticStream({
 		res.body.getReader(),
 		callbacks,
 		abortSignal,
-		eventCounter
+		eventCounter,
+		cursorModeForResponse(res)
 	)
 	if (queueWaitEndReason) return queueWaitEndReason
 	if (!sawDone && !abortSignal?.aborted) {

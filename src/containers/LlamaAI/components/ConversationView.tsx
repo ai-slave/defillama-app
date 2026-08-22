@@ -1,4 +1,5 @@
 import {
+	memo,
 	useEffect,
 	useLayoutEffect,
 	useMemo,
@@ -69,7 +70,7 @@ export interface ConversationViewModel {
 	recovery: RecoveryState
 	error: string | null
 	lastFailedPrompt: string | null
-	onRetryLastFailedPrompt: () => void
+	onReconnectFailedPrompt: () => void
 	onReconnectNow: () => void
 	scrollContainerRef: RefObject<HTMLDivElement | null>
 	messagesEndRef: RefObject<HTMLDivElement | null>
@@ -137,7 +138,7 @@ type ActiveExchangeItem =
 	| { type: 'live-status'; key: string }
 	| { type: 'duel-slot'; key: string }
 
-function ConversationMessageItem({
+const ConversationMessageItem = memo(function ConversationMessageItem({
 	message,
 	nextUserMessage,
 	onShare,
@@ -196,9 +197,9 @@ function ConversationMessageItem({
 			enterToSend={enterToSend}
 		/>
 	)
-}
+})
 
-function ConversationLiveStatus({
+const ConversationLiveStatus = memo(function ConversationLiveStatus({
 	isStreaming,
 	activeToolCalls,
 	spawnProgress,
@@ -213,7 +214,7 @@ function ConversationLiveStatus({
 	recovery,
 	error,
 	lastFailedPrompt,
-	onRetryLastFailedPrompt,
+	onReconnectFailedPrompt,
 	onReconnectNow,
 	isResearchMode,
 	sessionId,
@@ -240,7 +241,7 @@ function ConversationLiveStatus({
 	recovery: RecoveryState
 	error: string | null
 	lastFailedPrompt: string | null
-	onRetryLastFailedPrompt: () => void
+	onReconnectFailedPrompt: () => void
 	onReconnectNow: () => void
 	isResearchMode: boolean
 	sessionId: string | null
@@ -347,7 +348,7 @@ function ConversationLiveStatus({
 					<p className="text-sm text-ai-error-strong">{error}</p>
 					{lastFailedPrompt ? (
 						<button
-							onClick={onRetryLastFailedPrompt}
+							onClick={onReconnectFailedPrompt}
 							className="mt-1 w-fit rounded-md bg-ai-error-bg px-3 py-1 text-sm text-ai-error-strong hover:bg-ai-error-border"
 						>
 							Reconnect
@@ -357,7 +358,7 @@ function ConversationLiveStatus({
 			) : null}
 		</>
 	)
-}
+})
 
 export function shouldShowLiveTodoChecklist({
 	todoCount,
@@ -411,7 +412,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 		recovery,
 		error,
 		lastFailedPrompt,
-		onRetryLastFailedPrompt,
+		onReconnectFailedPrompt,
 		onReconnectNow,
 		scrollContainerRef,
 		messagesEndRef,
@@ -452,7 +453,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 	const handledAnchorIdRef = useRef<string | null>(null)
 	const highlightTimeoutRef = useRef<number | null>(null)
 	const pendingScrollHighlightRef = useRef<(() => void) | null>(null)
-	const [activeExchangeMinHeight, setActiveExchangeMinHeight] = useState<number | null>(null)
+	const activeExchangeRef = useRef<HTMLDivElement>(null)
 	const targetAnchorId = typeof window !== 'undefined' ? getMessageAnchorIdFromHash(window.location.hash) : null
 	const userMessageAnchorIds = useMemo(
 		() =>
@@ -655,28 +656,21 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 		const container = scrollContainerRef.current
 		if (!container) return
 
-		const updateMinHeight = () => {
+		const updateActiveExchangeLayout = () => {
+			const activeExchange = activeExchangeRef.current
+			if (!activeExchange || !shouldSpaceLastExchange) return
 			const paddingBottom = Number.parseFloat(window.getComputedStyle(container).paddingBottom) || 0
-			setActiveExchangeMinHeight(Math.max(0, container.clientHeight - paddingBottom - ACTIVE_EXCHANGE_TOP_OFFSET_PX))
+			activeExchange.style.minHeight = `${Math.max(0, container.clientHeight - paddingBottom - ACTIVE_EXCHANGE_TOP_OFFSET_PX)}px`
+			if (isScrollAttached) container.scrollTop = container.scrollHeight
 		}
 
-		updateMinHeight()
-		const resizeObserver = new ResizeObserver(updateMinHeight)
+		updateActiveExchangeLayout()
+		const resizeObserver = new ResizeObserver(updateActiveExchangeLayout)
 		resizeObserver.observe(container)
-		window.addEventListener('resize', updateMinHeight)
 		return () => {
 			resizeObserver.disconnect()
-			window.removeEventListener('resize', updateMinHeight)
 		}
-	}, [scrollContainerRef])
-
-	useLayoutEffect(() => {
-		if (!shouldSpaceLastExchange || !isScrollAttached || activeExchangeMinHeight == null) return
-		const container = scrollContainerRef.current
-		if (container) {
-			container.scrollTop = container.scrollHeight
-		}
-	}, [activeExchangeMinHeight, isScrollAttached, scrollContainerRef, shouldSpaceLastExchange])
+	}, [isScrollAttached, scrollContainerRef, shouldSpaceLastExchange])
 
 	return (
 		<>
@@ -737,10 +731,10 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 
 								{shouldSpaceLastExchange ? (
 									<div
+										ref={activeExchangeRef}
 										className={`flex flex-col gap-2.5 ${
 											animateActiveExchange && isLiveExchange ? 'motion-safe:animate-ai-exchange-enter' : ''
 										}`}
-										style={activeExchangeMinHeight != null ? { minHeight: activeExchangeMinHeight } : undefined}
 									>
 										{activeExchangeItems.map((item) => {
 											if (item.type === 'duel-slot') {
@@ -768,7 +762,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 														recovery={recovery}
 														error={error}
 														lastFailedPrompt={lastFailedPrompt}
-														onRetryLastFailedPrompt={onRetryLastFailedPrompt}
+														onReconnectFailedPrompt={onReconnectFailedPrompt}
 														onReconnectNow={onReconnectNow}
 														isResearchMode={isResearchMode}
 														sessionId={sessionId}
@@ -823,7 +817,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 										recovery={recovery}
 										error={error}
 										lastFailedPrompt={lastFailedPrompt}
-										onRetryLastFailedPrompt={onRetryLastFailedPrompt}
+										onReconnectFailedPrompt={onReconnectFailedPrompt}
 										onReconnectNow={onReconnectNow}
 										isResearchMode={isResearchMode}
 										sessionId={sessionId}

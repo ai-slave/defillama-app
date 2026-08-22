@@ -2,12 +2,14 @@ import { describe, expect, it, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import {
+	AgenticExecutionChangedError,
 	attachAgenticStream,
 	fetchAgenticResponse,
 	parseSSEStream,
 	stopAgenticExecution,
 	type AgenticSSECallbacks
 } from '~/containers/LlamaAI/fetchAgenticResponse'
+import { createAgenticMutationEnvelope } from '~/containers/LlamaAI/mutationProtocol'
 
 type MockFetch = (input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => Promise<Response>
 type MockFetchSpy = ReturnType<typeof vi.fn<MockFetch>>
@@ -53,7 +55,7 @@ function sseResponse(events: string[], init?: ResponseInit) {
 	return new Response(encodeSseEvents(events), {
 		...init,
 		headers: {
-			'Content-Type': 'text/event-stream',
+			'Content-Type': 'text/event-stream; cursor=v2',
 			...init?.headers
 		}
 	})
@@ -106,23 +108,24 @@ function callbacks(): AgenticSSECallbacks {
 }
 
 describe('parseSSEStream', () => {
-	it('dispatches event sequences and counts parsed events', async () => {
+	it('dispatches event sequences and follows the backend replay cursor', async () => {
 		const cb = callbacks()
 		const eventCounter = { count: 0 }
 
 		const result = await parseSSEStream(
 			sseReader(
-				JSON.stringify({ type: 'session', sessionId: 'session-1', startedAt: 123 }),
-				JSON.stringify({ type: 'response_chunk', content: 'hello<bill />' }),
-				JSON.stringify({ type: 'charts', charts: [], chartData: { rows: [] } }),
-				JSON.stringify({ type: 'citations', citations: ['https://example.com'] }),
-				JSON.stringify({ type: 'tool_execution', name: 'search', success: true }),
+				JSON.stringify({ type: 'session', sessionId: 'session-1', startedAt: 123, streamCursor: 0 }),
+				JSON.stringify({ type: 'response_chunk', content: 'hello<bill />', streamCursor: 1 }),
+				JSON.stringify({ type: 'charts', charts: [], chartData: { rows: [] }, streamCursor: 2 }),
+				JSON.stringify({ type: 'citations', citations: ['https://example.com'], streamCursor: 3 }),
+				JSON.stringify({ type: 'tool_execution', name: 'search', success: true, streamCursor: 4 }),
 				JSON.stringify({
 					type: 'dashboard',
 					dashboard_id: 'dash-1',
-					dashboardConfig: { dashboardName: 'Dash', items: [] }
+					dashboardConfig: { dashboardName: 'Dash', items: [] },
+					streamCursor: 5
 				}),
-				JSON.stringify({ type: 'done' })
+				JSON.stringify({ type: 'done', streamCursor: 6 })
 			),
 			cb,
 			undefined,
@@ -130,7 +133,7 @@ describe('parseSSEStream', () => {
 		)
 
 		expect(result).toEqual({ sawDone: true })
-		expect(eventCounter.count).toBe(7)
+		expect(eventCounter.count).toBe(6)
 		expect(cb.onSessionId).toHaveBeenCalledWith('session-1', 123)
 		expect(cb.onToken).toHaveBeenCalledWith('hello')
 		expect(cb.onCharts).toHaveBeenCalledWith([], { rows: [] })
@@ -174,6 +177,48 @@ describe('parseSSEStream', () => {
 		expect(result).toEqual({ sawDone: false, queueWaitEndReason: 'paused' })
 		expect(eventCounter.count).toBe(4)
 		expect(cb.onQueueUpdated).toHaveBeenCalledWith({ sessionId: 'session-1', revision: 3, queue: [] })
+	})
+
+	it('does not advance the replay cursor for unindexed preamble events', async () => {
+		const cb = callbacks()
+		const eventCounter = { count: 4 }
+
+		await parseSSEStream(
+			sseReader(
+				JSON.stringify({ type: 'session', sessionId: 'session-1', startedAt: 123 }),
+				JSON.stringify({ type: 'message_id', messageId: 'message-1' })
+			),
+			cb,
+			undefined,
+			eventCounter
+		)
+
+		expect(eventCounter.count).toBe(4)
+	})
+
+	it('uses local event counting for legacy streams without authoritative cursors', async () => {
+		const cb = callbacks()
+		const eventCounter = { count: 2 }
+		const fetchFn = vi.fn<MockFetch>(async () =>
+			sseResponse(
+				[JSON.stringify({ type: 'response_chunk', content: 'continued' }), JSON.stringify({ type: 'done' })],
+				{ headers: { 'Content-Type': 'text/event-stream' } }
+			)
+		)
+
+		await fetchAgenticResponse({
+			mutation: {
+				clientMutationId: 'mutation-1',
+				message: 'continue',
+				sessionId: 'session-1',
+				enablePremiumTools: false
+			},
+			callbacks: cb,
+			fetchFn: fetchFn as unknown as typeof fetch,
+			eventCounter
+		})
+
+		expect(eventCounter.count).toBe(4)
 	})
 
 	it('passes queue revision and fired-item identity to the coordinator', async () => {
@@ -388,6 +433,27 @@ describe('parseSSEStream', () => {
 })
 
 describe('fetchAgenticResponse', () => {
+	it('captures a mutation envelope independently from mutable composer inputs', () => {
+		const entities = [{ term: 'Ethereum', slug: 'ethereum', type: 'chain' }]
+		const pageContext = { entitySlug: 'ethereum', entityType: 'chain' as const, route: '/chain/ethereum' }
+		const mutation = createAgenticMutationEnvelope({
+			clientMutationId: 'mutation-1',
+			message: 'Question',
+			sessionId: 'session-1',
+			mode: 'quick',
+			enablePremiumTools: false,
+			entities,
+			pageContext
+		})
+
+		entities[0]!.term = 'Changed'
+		pageContext.route = '/changed'
+
+		expect(mutation.entities?.[0]?.term).toBe('Ethereum')
+		expect(mutation.pageContext?.route).toBe('/chain/ethereum')
+		expect(mutation).not.toHaveProperty('mode')
+	})
+
 	it('preserves safe chart artifact refs from the stream for direct save', async () => {
 		const cb = callbacks()
 		await parseSSEStream(
@@ -429,15 +495,16 @@ describe('fetchAgenticResponse', () => {
 		const eventCounter = { count: 0 }
 		const fetchFn = vi.fn<MockFetch>(async () =>
 			sseResponse([
-				JSON.stringify({ type: 'session', sessionId: 'session-1', startedAt: 123 }),
-				JSON.stringify({ type: 'response_chunk', content: 'hello<bill />' }),
+				JSON.stringify({ type: 'session', sessionId: 'session-1', startedAt: 123, streamCursor: 0 }),
+				JSON.stringify({ type: 'response_chunk', content: 'hello<bill />', streamCursor: 1 }),
 				JSON.stringify({
 					type: 'charts',
 					charts: [chartConfig],
 					chartData: {
 						'chart-1': [{ timestamp: 1, tvl: 100 }],
 						'chart-2': [{ timestamp: 2, tvl: 200 }]
-					}
+					},
+					streamCursor: 2
 				}),
 				JSON.stringify({
 					type: 'dashboard',
@@ -454,30 +521,33 @@ describe('fetchAgenticResponse', () => {
 							data: [{ timestamp: 1, tvl: 100 }],
 							toolChain: [{ name: 'generate_chart' }]
 						}
-					}
+					},
+					streamCursor: 3
 				}),
-				JSON.stringify({ type: 'citations', citations: ['https://example.com'] }),
-				JSON.stringify({ type: 'tool_execution', name: 'search', success: true }),
-				JSON.stringify({ type: 'done' })
+				JSON.stringify({ type: 'citations', citations: ['https://example.com'], streamCursor: 4 }),
+				JSON.stringify({ type: 'tool_execution', name: 'search', success: true, streamCursor: 5 }),
+				JSON.stringify({ type: 'done', streamCursor: 6 })
 			])
 		)
 
 		await fetchAgenticResponse({
-			message: 'Build a chart',
-			sessionId: 'session-1',
+			mutation: {
+				clientMutationId: 'mutation-1',
+				message: 'Build a chart',
+				sessionId: 'session-1',
+				mode: 'research',
+				enablePremiumTools: true,
+				entities: [{ term: 'Ethereum', slug: 'ethereum', type: 'chain' }],
+				pageContext: { entitySlug: 'ethereum', entityType: 'chain', route: '/chain/ethereum' },
+				isSuggestedQuestion: true,
+				model: 'gpt-5',
+				effort: 'high',
+				shareToken: 'share-1',
+				editMessageId: 'message-1',
+				projectId: 'project-1',
+				timezone: 'UTC'
+			},
 			callbacks: cb,
-			mode: 'research',
-			enablePremiumTools: true,
-			entities: [{ term: 'Ethereum', slug: 'ethereum', type: 'chain' }],
-			images: [],
-			pageContext: { entitySlug: 'ethereum', entityType: 'chain', route: '/chain/ethereum' },
-			isSuggestedQuestion: true,
-			blockedSkills: [],
-			model: 'gpt-5',
-			effort: 'high',
-			shareToken: 'share-1',
-			editMessageId: 'message-1',
-			projectId: 'project-1',
 			fetchFn: fetchFn as unknown as typeof fetch,
 			eventCounter
 		})
@@ -489,6 +559,7 @@ describe('fetchAgenticResponse', () => {
 		expect(init.headers).toEqual({ 'Content-Type': 'application/json' })
 		const body = readRequestBody(fetchFn)
 		expect(body).toMatchObject({
+			clientMutationId: 'mutation-1',
 			message: 'Build a chart',
 			stream: true,
 			sessionId: 'session-1',
@@ -507,7 +578,7 @@ describe('fetchAgenticResponse', () => {
 		expect(body).not.toHaveProperty('images')
 		expect(body).not.toHaveProperty('blockedSkills')
 
-		expect(eventCounter.count).toBe(7)
+		expect(eventCounter.count).toBe(6)
 		expect(cb.onSessionId).toHaveBeenCalledWith('session-1', 123)
 		expect(cb.onToken).toHaveBeenCalledWith('hello')
 		expect(cb.onCharts).toHaveBeenCalledWith([chartConfig], {
@@ -541,9 +612,13 @@ describe('fetchAgenticResponse', () => {
 
 		await expect(
 			fetchAgenticResponse({
-				message: 'Continue',
+				mutation: {
+					clientMutationId: 'mutation-1',
+					message: 'Continue',
+					sessionId: 'session-1',
+					enablePremiumTools: false
+				},
 				callbacks: cb,
-				enablePremiumTools: false,
 				fetchFn: fetchFn as unknown as typeof fetch
 			})
 		).rejects.toThrow('Stream ended without done event')
@@ -555,10 +630,14 @@ describe('fetchAgenticResponse', () => {
 		aborted.abort()
 		await expect(
 			fetchAgenticResponse({
-				message: 'Continue',
+				mutation: {
+					clientMutationId: 'mutation-1',
+					message: 'Continue',
+					sessionId: 'session-1',
+					enablePremiumTools: false
+				},
 				callbacks: callbacks(),
 				abortSignal: aborted.signal,
-				enablePremiumTools: false,
 				fetchFn: fetchFn as unknown as typeof fetch
 			})
 		).resolves.toBeUndefined()
@@ -579,9 +658,13 @@ describe('fetchAgenticResponse', () => {
 
 		await expect(
 			fetchAgenticResponse({
-				message: 'Question',
+				mutation: {
+					clientMutationId: 'mutation-1',
+					message: 'Question',
+					sessionId: 'session-1',
+					enablePremiumTools: false
+				},
 				callbacks: callbacks(),
-				enablePremiumTools: false,
 				fetchFn: freeLimitFetch as unknown as typeof fetch
 			})
 		).rejects.toMatchObject({
@@ -604,9 +687,13 @@ describe('fetchAgenticResponse', () => {
 
 		await expect(
 			fetchAgenticResponse({
-				message: 'Question',
+				mutation: {
+					clientMutationId: 'mutation-1',
+					message: 'Question',
+					sessionId: 'session-1',
+					enablePremiumTools: false
+				},
 				callbacks: callbacks(),
-				enablePremiumTools: false,
 				fetchFn: usageLimitFetch as unknown as typeof fetch
 			})
 		).rejects.toMatchObject({
@@ -614,6 +701,109 @@ describe('fetchAgenticResponse', () => {
 			code: 'USAGE_LIMIT_EXCEEDED',
 			details: { period: 'monthly', limit: 100, resetTime: null }
 		})
+	})
+
+	it('returns typed mutation reconciliation details', async () => {
+		const fetchFn = vi.fn<MockFetch>(async () =>
+			jsonResponse(
+				{
+					code: 'MUTATION_RECONCILE',
+					status: 'running',
+					sessionId: 'canonical-session',
+					executionId: 'execution-1'
+				},
+				{ status: 409 }
+			)
+		)
+
+		await expect(
+			fetchAgenticResponse({
+				mutation: {
+					clientMutationId: 'mutation-1',
+					message: 'Question',
+					sessionId: 'optimistic-session',
+					enablePremiumTools: false
+				},
+				callbacks: callbacks(),
+				fetchFn: fetchFn as unknown as typeof fetch
+			})
+		).rejects.toMatchObject({
+			name: 'AgenticMutationReconcileError',
+			status: 'running',
+			sessionId: 'canonical-session',
+			executionId: 'execution-1'
+		})
+	})
+
+	it('automatically retries a pending mutation with the same envelope', async () => {
+		const fetchFn = vi
+			.fn<MockFetch>()
+			.mockResolvedValueOnce(
+				jsonResponse(
+					{
+						code: 'MUTATION_RECONCILE',
+						status: 'pending',
+						sessionId: 'canonical-session',
+						retryAfterMs: 0
+					},
+					{ status: 409 }
+				)
+			)
+			.mockResolvedValueOnce(sseResponse([JSON.stringify({ type: 'done' })]))
+		const mutation = {
+			clientMutationId: 'mutation-1',
+			message: 'Question',
+			sessionId: 'optimistic-session',
+			enablePremiumTools: false
+		}
+
+		await fetchAgenticResponse({
+			mutation,
+			callbacks: callbacks(),
+			fetchFn: fetchFn as unknown as typeof fetch
+		})
+
+		expect(fetchFn).toHaveBeenCalledTimes(2)
+		expect(readRequestBody(fetchFn)).toMatchObject(mutation)
+		expect(fetchFn.mock.calls[1]?.[1]?.body).toBe(fetchFn.mock.calls[0]?.[1]?.body)
+	})
+
+	it('returns pending to the UI when automatic reconciliation reaches its limit', async () => {
+		vi.useFakeTimers()
+		vi.setSystemTime(0)
+		const fetchFn = vi.fn<MockFetch>(async () =>
+			jsonResponse(
+				{
+					code: 'MUTATION_RECONCILE',
+					status: 'pending',
+					sessionId: 'canonical-session',
+					retryAfterMs: 5000
+				},
+				{ status: 409 }
+			)
+		)
+		const request = fetchAgenticResponse({
+			mutation: {
+				clientMutationId: 'mutation-1',
+				message: 'Question',
+				sessionId: 'optimistic-session',
+				enablePremiumTools: false
+			},
+			callbacks: callbacks(),
+			fetchFn: fetchFn as unknown as typeof fetch
+		})
+		const outcome = expect(request).rejects.toMatchObject({
+			name: 'AgenticMutationReconcileError',
+			status: 'pending',
+			sessionId: 'canonical-session'
+		})
+
+		try {
+			await vi.advanceTimersByTimeAsync(35_000)
+			await outcome
+		} finally {
+			vi.useRealTimers()
+		}
 	})
 
 	it('distinguishes a held wait ending from a dropped execution stream', async () => {
@@ -664,6 +854,30 @@ describe('fetchAgenticResponse', () => {
 				waitMs: 90_000
 			})
 		).resolves.toBe('not_found')
+	})
+
+	it('pins replay to the discovered execution identity', async () => {
+		const execution = {
+			cursor: 0,
+			hasResult: false,
+			messageId: 'message-2',
+			startedAt: 123,
+			status: 'running' as const
+		}
+		const fetchFn = vi.fn<MockFetch>(async () =>
+			jsonResponse({ error: 'execution_changed', execution }, { status: 409 })
+		)
+
+		await expect(
+			attachAgenticStream({
+				sessionId: 'session-1',
+				expectedMessageId: 'message-1',
+				callbacks: callbacks(),
+				fetchFn: fetchFn as unknown as typeof fetch,
+				waitMs: 90_000
+			})
+		).rejects.toEqual(new AgenticExecutionChangedError(execution))
+		expect(fetchFn.mock.calls[0]?.[0]).toContain('expectedMessageId=message-1')
 	})
 
 	it('requires the terminal queue snapshot before confirming Stop', async () => {

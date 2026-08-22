@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { useAuthContext } from '~/auth'
 import { llamaAIRequest } from '~/containers/LlamaAI/api/transport'
+import { decodeExecutionSnapshot, type AgenticExecutionSnapshot } from '~/containers/LlamaAI/executionProtocol'
 import {
 	prependSessionToInfiniteData,
 	removeSessionFromInfiniteData,
@@ -42,6 +43,7 @@ type SessionRestoreResponse = {
 	projectId?: string | null
 	queuedMessages?: unknown
 	queueRevision?: number
+	execution?: AgenticExecutionSnapshot | null
 }
 
 function getSessionRestoreMessages(result: SessionRestoreResponse | null | undefined): unknown[] {
@@ -217,48 +219,53 @@ export function useSessionMutations() {
 			limit,
 			cursor,
 			around,
-			afterSequence
+			afterSequence,
+			signal
 		}: {
 			sessionId: string
 			limit?: number
 			cursor?: number
 			around?: string
 			afterSequence?: number
+			signal?: AbortSignal
 		}) => {
-			try {
-				const params = new URLSearchParams()
-				if (limit !== undefined) params.append('limit', limit.toString())
-				if (cursor !== undefined) params.append('cursor', cursor.toString())
-				if (around) params.append('around', around)
-				if (afterSequence !== undefined) params.append('afterSequence', afterSequence.toString())
+			const params = new URLSearchParams()
+			if (limit !== undefined) params.append('limit', limit.toString())
+			if (cursor !== undefined) params.append('cursor', cursor.toString())
+			if (around) params.append('around', around)
+			if (afterSequence !== undefined) params.append('afterSequence', afterSequence.toString())
 
-				const query = params.toString()
-				const response = await llamaAIRequest<SessionRestoreResponse | null>(
-					authorizedFetch,
-					`/user/sessions/${sessionId}/restore${query ? `?${query}` : ''}`
-				)
-
-				return response
-			} catch (error) {
-				console.log('Failed to restore session:', error)
-				throw new Error(`Failed to restore session: ${getErrorMessage(error)}`)
-			}
+			const query = params.toString()
+			return llamaAIRequest<SessionRestoreResponse | null>(
+				authorizedFetch,
+				`/user/sessions/${sessionId}/restore${query ? `?${query}` : ''}`,
+				{ signal }
+			)
 		}
 	})
 
 	const switchActiveLeafMutation = useMutation({
 		mutationKey: ['llamaai', 'switch-active-leaf'],
-		mutationFn: async ({ sessionId, leafMessageId }: { sessionId: string; leafMessageId: string }) => {
+		mutationFn: async ({
+			sessionId,
+			leafMessageId,
+			signal
+		}: {
+			sessionId: string
+			leafMessageId: string
+			signal?: AbortSignal
+		}) => {
 			try {
 				const response: unknown = await llamaAIRequest(authorizedFetch, `/agentic/${sessionId}/active-leaf`, {
 					method: 'POST',
-					json: { leafMessageId }
+					json: { leafMessageId },
+					signal
 				})
 
 				assertSwitchActiveLeafResponse(response)
 				return response
 			} catch (error) {
-				console.error('[llama-ai] [switchActiveLeaf] failed:', getErrorMessage(error))
+				if (!signal?.aborted) console.error('[llama-ai] [switchActiveLeaf] failed:', getErrorMessage(error))
 				throw error instanceof Error ? error : new Error('Failed to switch branch')
 			}
 		}
@@ -472,12 +479,13 @@ export function useSessionMutations() {
 
 	// Normalize the restore API payload into the shape the chat screen consumes.
 	const restoreSession = useCallback(
-		async (sessionId: string, limit: number = 10, around?: string) => {
+		async (sessionId: string, limit: number = 10, around?: string, signal?: AbortSignal) => {
 			try {
 				const result = await restoreSessionMutation.mutateAsync({
 					sessionId,
 					limit: around ? 20 : limit,
-					around
+					around,
+					signal
 				})
 				const messages = getSessionRestoreMessages(result)
 				return {
@@ -495,10 +503,11 @@ export function useSessionMutations() {
 					todos: result?.todos,
 					projectId: result?.projectId ?? null,
 					queuedMessages: result?.queuedMessages,
-					queueRevision: result?.queueRevision
+					queueRevision: result?.queueRevision,
+					execution: decodeExecutionSnapshot(result?.execution)
 				}
 			} catch (error) {
-				console.error('[llama-ai] [restoreSession] failed:', getErrorMessage(error))
+				if (!signal?.aborted) console.error('[llama-ai] [restoreSession] failed:', getErrorMessage(error))
 				throw error instanceof Error ? error : new Error('Failed to restore session')
 			}
 		},
@@ -507,9 +516,9 @@ export function useSessionMutations() {
 
 	// Reuse the restore endpoint to fetch older history pages for infinite scroll.
 	const loadMoreMessages = useCallback(
-		async (sessionId: string, cursor: number) => {
+		async (sessionId: string, cursor: number, signal?: AbortSignal) => {
 			try {
-				const result = await restoreSessionMutation.mutateAsync({ sessionId, limit: 10, cursor })
+				const result = await restoreSessionMutation.mutateAsync({ sessionId, limit: 10, cursor, signal })
 				return {
 					messages: getSessionRestoreMessages(result),
 					pagination: {
@@ -520,7 +529,7 @@ export function useSessionMutations() {
 					}
 				}
 			} catch (error) {
-				console.error('[llama-ai] [loadMoreMessages] failed:', getErrorMessage(error))
+				if (!signal?.aborted) console.error('[llama-ai] [loadMoreMessages] failed:', getErrorMessage(error))
 				throw new Error(`Failed to load older messages: ${getErrorMessage(error)}`)
 			}
 		},
@@ -528,9 +537,9 @@ export function useSessionMutations() {
 	)
 
 	const loadNewerMessages = useCallback(
-		async (sessionId: string, afterSequence: number) => {
+		async (sessionId: string, afterSequence: number, signal?: AbortSignal) => {
 			try {
-				const result = await restoreSessionMutation.mutateAsync({ sessionId, limit: 10, afterSequence })
+				const result = await restoreSessionMutation.mutateAsync({ sessionId, limit: 10, afterSequence, signal })
 				return {
 					messages: getSessionRestoreMessages(result),
 					pagination: {
@@ -539,7 +548,7 @@ export function useSessionMutations() {
 					}
 				}
 			} catch (error) {
-				console.error('[llama-ai] [loadNewerMessages] failed:', getErrorMessage(error))
+				if (!signal?.aborted) console.error('[llama-ai] [loadNewerMessages] failed:', getErrorMessage(error))
 				throw new Error(`Failed to load newer messages: ${getErrorMessage(error)}`)
 			}
 		},

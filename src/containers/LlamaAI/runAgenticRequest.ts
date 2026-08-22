@@ -1,15 +1,6 @@
-import type { RefObject } from 'react'
 import { isTemporaryConnectivityError } from '~/containers/LlamaAI/connectionErrors'
+import type { ExecutionOperation } from '~/containers/LlamaAI/executionCoordinator'
 import type { AgenticSSECallbacks } from '~/containers/LlamaAI/fetchAgenticResponse'
-import type { SessionId } from '~/containers/LlamaAI/ids'
-import {
-	beginRequest,
-	completeRequest,
-	createRequestSettleState,
-	isActiveRequest,
-	type RequestKind,
-	type RequestSettleState
-} from '~/containers/LlamaAI/requestLifecycle'
 import type { RateLimitDetails } from '~/containers/LlamaAI/streamState'
 import type { FreeLimitOffer } from '~/containers/LlamaAI/types'
 
@@ -55,60 +46,39 @@ export function classifyAgenticRequestError(error: unknown, signal: AbortSignal)
 export interface RunAgenticRequestContext {
 	mode: AgenticRequestMode
 	requestId: number
-	controller: AbortController
 	signal: AbortSignal
+	isCurrent: () => boolean
 	callbacks: AgenticSSECallbacks
 	eventCounter: { count: number }
 }
 
 interface RunAgenticRequestParams {
 	mode: AgenticRequestMode
-	sessionId: SessionId | null
-	requestKind: RequestKind
-	activeRequestIdRef: RefObject<number>
-	activeRequestKindRef: RefObject<RequestKind>
-	activeSessionIdRef: RefObject<string | null>
-	abortControllerRef: RefObject<AbortController | null>
-	activeRequestSettleRef: RefObject<RequestSettleState>
+	operation: ExecutionOperation
 	createCallbacks: (context: Omit<RunAgenticRequestContext, 'callbacks'>) => AgenticSSECallbacks
 	execute: (context: RunAgenticRequestContext) => Promise<void>
 	onSuccess?: (context: RunAgenticRequestContext) => Promise<void> | void
 	onError?: (classified: ClassifiedAgenticRequestError, context: RunAgenticRequestContext) => Promise<void> | void
 	onFinally?: (context: RunAgenticRequestContext) => void
-	detached?: boolean
 	initialEventCount?: number
 }
 
 export async function runAgenticRequest({
 	mode,
-	sessionId,
-	requestKind,
-	activeRequestIdRef,
-	activeRequestKindRef,
-	activeSessionIdRef,
-	abortControllerRef,
-	activeRequestSettleRef,
+	operation,
 	createCallbacks,
 	execute,
 	onSuccess,
 	onError,
 	onFinally,
-	detached,
 	initialEventCount = 0
 }: RunAgenticRequestParams): Promise<RunAgenticRequestContext> {
-	const requestId = beginRequest(activeRequestIdRef, activeRequestKindRef, activeSessionIdRef, requestKind, sessionId)
-	const controller = new AbortController()
-	abortControllerRef.current = controller
-	const settleState = createRequestSettleState(requestId)
-	activeRequestSettleRef.current = settleState
 	const eventCounter = { count: initialEventCount }
-	// Callback creation happens after the request id is active so every SSE handler
-	// can share the same stale-request guard.
 	const contextWithoutCallbacks = {
 		mode,
-		requestId,
-		controller,
-		signal: controller.signal,
+		requestId: operation.id,
+		signal: operation.signal,
+		isCurrent: operation.isCurrent,
 		eventCounter
 	}
 	const context: RunAgenticRequestContext = {
@@ -116,43 +86,21 @@ export async function runAgenticRequest({
 		callbacks: createCallbacks(contextWithoutCallbacks)
 	}
 
-	const operation = (async () => {
+	try {
 		try {
-			try {
-				await execute(context)
-			} catch (error) {
-				if (!onError) throw error
-				await onError(classifyAgenticRequestError(error, controller.signal), context)
-				return
-			}
-			try {
-				await onSuccess?.(context)
-			} catch (error) {
-				console.error('[llama-ai] post-success request handler failed:', error)
-			}
-		} finally {
-			// A newer request may have already replaced the active controller; never
-			// clear refs owned by that newer request.
-			if (abortControllerRef.current === controller) {
-				abortControllerRef.current = null
-			}
-			if (isActiveRequest(activeRequestIdRef, requestId)) {
-				completeRequest(activeRequestIdRef, activeRequestKindRef, activeSessionIdRef, requestId)
-			}
-			settleState.resolve()
-			if (activeRequestSettleRef.current?.requestId === requestId) {
-				activeRequestSettleRef.current = null
-			}
-			onFinally?.(context)
+			await execute(context)
+		} catch (error) {
+			if (!onError) throw error
+			await onError(classifyAgenticRequestError(error, operation.signal), context)
+			return context
 		}
-	})()
-
-	if (!detached) {
-		await operation
-	} else {
-		operation.catch((error) => {
-			console.error('[llama-ai] detached request failed:', error)
-		})
+		try {
+			await onSuccess?.(context)
+		} catch (error) {
+			console.error('[llama-ai] post-success request handler failed:', error)
+		}
+	} finally {
+		onFinally?.(context)
 	}
 
 	return context

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { createAgenticCallbacks } from '~/containers/LlamaAI/streamCallbacks'
 import { createStreamBuffer, type StreamDispatch } from '~/containers/LlamaAI/streamState'
 
-function setupCallbacks(activeRequestId = 1, requestId = 1, deferEmptyDone = false) {
+function setupCallbacks(isCurrent = true, deferEmptyDone = false) {
 	const buffer = createStreamBuffer()
 	const dispatch = vi.fn() as unknown as StreamDispatch
 	const appendMessage = vi.fn()
@@ -10,8 +10,7 @@ function setupCallbacks(activeRequestId = 1, requestId = 1, deferEmptyDone = fal
 	const currentMessageIdRef = { current: 'assistant-1' }
 
 	const callbacks = createAgenticCallbacks({
-		requestId,
-		activeRequestIdRef: { current: activeRequestId },
+		isCurrent: () => isCurrent,
 		buffer,
 		dispatch,
 		currentMessageIdRef,
@@ -26,7 +25,7 @@ function setupCallbacks(activeRequestId = 1, requestId = 1, deferEmptyDone = fal
 
 describe('createAgenticCallbacks', () => {
 	it('ignores stale request events', () => {
-		const { appendMessage, buffer, callbacks, dispatch, notify } = setupCallbacks(2, 1)
+		const { appendMessage, buffer, callbacks, dispatch, notify } = setupCallbacks(false)
 
 		callbacks.onToken('hello')
 		callbacks.onDone()
@@ -106,7 +105,7 @@ describe('createAgenticCallbacks', () => {
 	})
 
 	it('defers empty done events when requested', () => {
-		const { appendMessage, callbacks, dispatch, notify } = setupCallbacks(1, 1, true)
+		const { appendMessage, callbacks, dispatch, notify } = setupCallbacks(true, true)
 
 		callbacks.onDone()
 

@@ -27,7 +27,6 @@ function useDuelArm() {
 	const bufferRef = useRef(createStreamBuffer())
 	const currentMessageIdRef = useRef<string | null>(null)
 	const toolCallIdRef = useRef(0)
-	const activeRequestIdRef = useRef(0)
 	const callbacksRef = useRef<AgenticSSECallbacks | null>(null)
 
 	const start = useCallback(() => {
@@ -37,8 +36,7 @@ function useDuelArm() {
 		setPersistedMessageId(null)
 		dispatch({ type: 'START_STREAM' })
 		callbacksRef.current = createAgenticCallbacks({
-			requestId: activeRequestIdRef.current,
-			activeRequestIdRef,
+			isCurrent: () => callbacksRef.current !== null,
 			buffer,
 			dispatch,
 			currentMessageIdRef,

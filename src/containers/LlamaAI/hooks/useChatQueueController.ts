@@ -192,9 +192,11 @@ function actionError(action: QueueAction, error: unknown): string {
 
 export function useChatQueueController({
 	sessionId,
+	enabled,
 	authorizedFetch
 }: {
 	sessionId: string | null
+	enabled: boolean
 	authorizedFetch: AuthorizedFetch
 }) {
 	const [state, dispatch] = useReducer(queueControllerReducer, sessionId, initialState)
@@ -202,6 +204,8 @@ export function useChatQueueController({
 	stateRef.current = state
 	const activeSessionIdRef = useRef(sessionId)
 	activeSessionIdRef.current = sessionId
+	const enabledRef = useRef(enabled)
+	enabledRef.current = enabled
 	const controllersRef = useRef(new Set<AbortController>())
 	const enqueueInFlightRef = useRef(false)
 	const queuedRowsRef = useRef<{ sessionId: string; rows: Map<string, QueuedMessageElement> } | null>(null)
@@ -209,7 +213,17 @@ export function useChatQueueController({
 	const pendingSnapshotRef = useRef<QueueSnapshot | null>(null)
 	const snapshotCursorRef = useRef({ sessionId, revision: -1 })
 	const latestSnapshotRef = useRef<QueueSnapshot | null>(null)
-	const commandControllers = controllersRef.current
+	const renewalTimerRef = useRef<number | null>(null)
+	const renewalControllerRef = useRef<AbortController | null>(null)
+	const abortCommands = useCallback(() => {
+		for (const controller of controllersRef.current) controller.abort()
+		controllersRef.current.clear()
+		if (renewalTimerRef.current !== null) window.clearInterval(renewalTimerRef.current)
+		renewalTimerRef.current = null
+		renewalControllerRef.current?.abort()
+		renewalControllerRef.current = null
+		enqueueInFlightRef.current = false
+	}, [])
 	const snapshotEvent = useCallback((snapshot: QueueSnapshot): QueueControllerEvent => {
 		const rememberedEdit = rememberedEditsRef.current.get(snapshot.sessionId)
 		if (!rememberedEdit) return { type: 'snapshot', snapshot }
@@ -233,14 +247,17 @@ export function useChatQueueController({
 			pendingSnapshotRef.current = null
 		}
 		return () => {
-			enqueueInFlightRef.current = false
-			for (const controller of commandControllers) controller.abort()
-			commandControllers.clear()
+			abortCommands()
 		}
-	}, [commandControllers, sessionId, snapshotEvent])
+	}, [abortCommands, sessionId, snapshotEvent])
+
+	useLayoutEffect(() => {
+		if (!enabled) abortCommands()
+	}, [abortCommands, enabled])
 
 	const applySnapshot = useCallback(
 		(snapshot: QueueSnapshot) => {
+			if (!enabledRef.current) return false
 			if (snapshot.sessionId !== activeSessionIdRef.current) return false
 			const cursor = snapshotCursorRef.current
 			if (cursor.sessionId === snapshot.sessionId && snapshot.revision <= cursor.revision) return false
@@ -277,13 +294,15 @@ export function useChatQueueController({
 			controllersRef.current.add(controller)
 			try {
 				const result = await command(controller.signal)
-				if (activeSessionIdRef.current !== targetSessionId) throw new DOMException('Session changed', 'AbortError')
+				if (!enabledRef.current || activeSessionIdRef.current !== targetSessionId) {
+					throw new DOMException('Session changed', 'AbortError')
+				}
 				if (result.snapshot.sessionId !== targetSessionId) throw new Error('Queue response belongs to another session')
 				applySnapshot(result.snapshot)
 				return result
 			} catch (error) {
 				const snapshot = snapshotFromError(error)
-				if (snapshot) applySnapshot(snapshot)
+				if (enabledRef.current && snapshot) applySnapshot(snapshot)
 				throw error
 			} finally {
 				controllersRef.current.delete(controller)
@@ -296,6 +315,7 @@ export function useChatQueueController({
 		async (
 			payload: Omit<QueueMessagePayload, 'clientMutationId'>
 		): Promise<'queued' | 'session_idle' | 'busy' | 'aborted'> => {
+			if (!enabledRef.current) return 'aborted'
 			const targetSessionId = activeSessionIdRef.current
 			if (!targetSessionId) return 'session_idle'
 			if (enqueueInFlightRef.current) return 'busy'
@@ -349,6 +369,7 @@ export function useChatQueueController({
 			command: (sessionId: string, signal: AbortSignal) => Promise<QueueSnapshot>,
 			unsavedDraft?: string
 		) => {
+			if (!enabledRef.current) return null
 			const targetSessionId = activeSessionIdRef.current
 			if (!targetSessionId) return null
 			dispatch({ type: 'action', id, action })
@@ -488,10 +509,10 @@ export function useChatQueueController({
 	const ownedEditLeaseId = ownedEdit?.state === 'editing' ? ownedEdit.editLeaseId : null
 
 	useEffect(() => {
-		if (!sessionId || !ownedEditId || !ownedEditLeaseId) return
-		let renewalController: AbortController | null = null
+		if (!enabled || !sessionId || !ownedEditId || !ownedEditLeaseId) return
 		const renew = async () => {
-			renewalController = new AbortController()
+			const renewalController = new AbortController()
+			renewalControllerRef.current = renewalController
 			try {
 				const result = await renewQueuedMessageEdit(
 					authorizedFetch,
@@ -505,15 +526,18 @@ export function useChatQueueController({
 				const snapshot = snapshotFromError(error)
 				if (snapshot) applySnapshot(snapshot)
 			} finally {
-				renewalController = null
+				if (renewalControllerRef.current === renewalController) renewalControllerRef.current = null
 			}
 		}
 		const timer = window.setInterval(() => void renew(), 30_000)
+		renewalTimerRef.current = timer
 		return () => {
 			window.clearInterval(timer)
-			renewalController?.abort()
+			if (renewalTimerRef.current === timer) renewalTimerRef.current = null
+			renewalControllerRef.current?.abort()
+			renewalControllerRef.current = null
 		}
-	}, [applySnapshot, authorizedFetch, ownedEditId, ownedEditLeaseId, sessionId])
+	}, [applySnapshot, authorizedFetch, enabled, ownedEditId, ownedEditLeaseId, sessionId])
 
 	return {
 		rows,
@@ -532,6 +556,7 @@ export function useChatQueueController({
 		dismiss,
 		retry,
 		takeStartedItem,
-		getServerQueue
+		getServerQueue,
+		abortCommands
 	}
 }

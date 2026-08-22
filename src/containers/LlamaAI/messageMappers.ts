@@ -1,4 +1,5 @@
 import type { ChartConfiguration, ChartDataByKey } from '~/containers/LlamaAI/chartTypes'
+import type { AgenticExecutionSnapshot } from '~/containers/LlamaAI/executionProtocol'
 import type { CsvExport, MdExport } from '~/containers/LlamaAI/fetchAgenticResponse'
 import type {
 	DashboardArtifact,
@@ -113,6 +114,7 @@ export interface SessionRestoreResult {
 	projectId?: string | null
 	queuedMessages?: unknown
 	queueRevision?: number
+	execution?: AgenticExecutionSnapshot | null
 }
 
 const mapPersistedTimestamp = (timestamp: PersistedMessage['timestamp']): number | undefined => {

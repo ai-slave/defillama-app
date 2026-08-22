@@ -8,6 +8,7 @@ import {
 	useCallback,
 	useEffect,
 	useEffectEvent,
+	useLayoutEffect,
 	useMemo,
 	useReducer,
 	useRef,
@@ -22,6 +23,7 @@ import {
 	consumePendingSuggestedFlag
 } from '~/components/LlamaAIFloatingButton'
 import { AI_SERVER } from '~/constants'
+import { AbortScope } from '~/containers/LlamaAI/abortScope'
 import { LlamaAITransportError } from '~/containers/LlamaAI/api/transport'
 import { authorizedFetchAsFetch } from '~/containers/LlamaAI/authorizedFetchAdapter'
 import { LlamaAIChromeContext, useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
@@ -47,33 +49,26 @@ import { AgenticSidebar } from '~/containers/LlamaAI/components/sidebar/AgenticS
 import { TextSelectionPopup } from '~/containers/LlamaAI/components/TextSelectionPopup'
 import { TipActionProvider } from '~/containers/LlamaAI/components/TipActionContext'
 import { TokenLimitModal } from '~/containers/LlamaAI/components/TokenLimitModal'
-import {
-	isTemporaryConnectivityError,
-	RECOVERY_ATTEMPT_DELAYS_MS,
-	RECOVERY_GRACE_MS,
-	type RecoveryActiveSnapshot,
-	shouldGiveUpRecovery
-} from '~/containers/LlamaAI/connectionErrors'
+import { RECOVERY_MAX_MS } from '~/containers/LlamaAI/connectionErrors'
 import { dashboardPanelReducer, INITIAL_DASHBOARD_PANEL_STATE } from '~/containers/LlamaAI/dashboardPanelState'
 import {
-	attachAgenticStream,
-	checkActiveExecution,
-	fetchAgenticResponse,
-	resumeAgenticStream,
-	stopAgenticExecution
-} from '~/containers/LlamaAI/fetchAgenticResponse'
+	ExecutionCoordinator,
+	waitForAbortableDelay,
+	type ExecutionOperation
+} from '~/containers/LlamaAI/executionCoordinator'
+import type { AgenticExecutionSnapshot } from '~/containers/LlamaAI/executionProtocol'
+import { fetchAgenticResponse, stopAgenticExecution } from '~/containers/LlamaAI/fetchAgenticResponse'
+import { useChatExecutionOwner } from '~/containers/LlamaAI/hooks/useChatExecutionOwner'
 import { useChatQueueController, type QueueSurface } from '~/containers/LlamaAI/hooks/useChatQueueController'
 import { useChatScroll } from '~/containers/LlamaAI/hooks/useChatScroll'
 import { useLlamaAISetting, useLlamaAISettings } from '~/containers/LlamaAI/hooks/useLlamaAISettings'
 import { movePromptDraft } from '~/containers/LlamaAI/hooks/usePromptDraft'
-import { useQueueAttachment } from '~/containers/LlamaAI/hooks/useQueueAttachment'
 import { useSessionList } from '~/containers/LlamaAI/hooks/useSessionList'
 import { useSessionMutations } from '~/containers/LlamaAI/hooks/useSessionMutations'
 import { useSettingsRouteIntent } from '~/containers/LlamaAI/hooks/useSettingsRouteIntent'
 import { useSidebarVisibility } from '~/containers/LlamaAI/hooks/useSidebarVisibility'
 import { useStreamNotification } from '~/containers/LlamaAI/hooks/useStreamNotification'
 import { useVisualViewport } from '~/containers/LlamaAI/hooks/useVisualViewport'
-import { toSessionId } from '~/containers/LlamaAI/ids'
 import {
 	mapPersistedMessage,
 	mapPersistedMessages,
@@ -82,18 +77,11 @@ import {
 	type SessionRestoreResult,
 	type SharedSession
 } from '~/containers/LlamaAI/messageMappers'
+import { AgenticMutationReconcileError, createAgenticMutationEnvelope } from '~/containers/LlamaAI/mutationProtocol'
 import { ProjectLanding } from '~/containers/LlamaAI/projects/ProjectLanding'
 import { ProjectsGrid } from '~/containers/LlamaAI/projects/ProjectsGrid'
 import { getProjectTier } from '~/containers/LlamaAI/projects/tier'
 import { decodeQueueSnapshot } from '~/containers/LlamaAI/queue/protocol'
-import {
-	beginRequest,
-	completeRequest,
-	isActiveRequest,
-	waitForRequestSettle,
-	type RequestKind,
-	type RequestSettleState
-} from '~/containers/LlamaAI/requestLifecycle'
 import { isFreeLimitError, runAgenticRequest, type UsageLimitError } from '~/containers/LlamaAI/runAgenticRequest'
 import { appendBufferedAssistantMessage, createAgenticCallbacks } from '~/containers/LlamaAI/streamCallbacks'
 import {
@@ -110,7 +98,7 @@ import { chartsMapFromGroups } from '~/containers/LlamaAI/utils/articleExport'
 import { shouldFocusComposerOnSessionChange } from '~/containers/LlamaAI/utils/composerFocus'
 import { shouldQueuePrompt } from '~/containers/LlamaAI/utils/composerSubmit'
 import { materializePersistedUserMessage } from '~/containers/LlamaAI/utils/materializeUserMessage'
-import { QUEUE_ATTACH_WAIT_MS } from '~/containers/LlamaAI/utils/queueAttach'
+import { hasClaimableQueueWork } from '~/containers/LlamaAI/utils/queueAttach'
 import type { SettingsInitialState, SettingsTabId } from '~/containers/LlamaAI/utils/settingsIntent'
 import { AI_BALANCE_QUERY_KEY, useAiBalance } from '~/containers/Subscription/useTopup'
 import { useLlamaAINavigate, useProjectHomeSignal } from '~/contexts/LlamaAINavigate'
@@ -142,7 +130,7 @@ const DashboardPanel = lazy(() =>
 
 interface RestoreSessionSnapshotResult {
 	restored: boolean
-	recoveredResponse: boolean
+	execution: AgenticExecutionSnapshot | null
 }
 
 function buildFreeLimitMessage(err: UsageLimitError & { code: FreeLimitOffer['code'] }): Message {
@@ -169,6 +157,12 @@ function buildFreeLimitMessage(err: UsageLimitError & { code: FreeLimitOffer['co
 
 type PromptTransitionMode = 'idle' | 'landing' | 'conversation'
 
+type PreparedPromptSubmission = {
+	currentSessionId: string
+	failedRequest: FailedRequest
+	submitProjectId: string | null
+}
+
 function getPromptDraftScope(sessionId: string | null, projectId: string | null): string {
 	if (sessionId) return `session:${sessionId}`
 	return projectId ? `project:${projectId}` : 'new'
@@ -182,11 +176,15 @@ type RecoveryController = {
 	failedRequest: FailedRequest | null
 	lastErrorMessage: string | null
 	attemptCount: number
-	retryTimerIds: number[]
-	expiryTimerId: number | null
-	attemptInFlight: boolean
-	streamAttached: boolean
-	lastSnapshot: RecoveryActiveSnapshot | null
+	timer: number | null
+}
+
+function scheduleRecoveryAttempt(controller: RecoveryController, delay: number, execute: () => void) {
+	if (controller.timer !== null) window.clearTimeout(controller.timer)
+	controller.timer = window.setTimeout(() => {
+		controller.timer = null
+		execute()
+	}, delay)
 }
 
 function getErrorMessage(error: unknown): string {
@@ -266,6 +264,7 @@ export function AgenticChat({
 		},
 		[sessionAliases]
 	)
+	const routeSessionId = route.kind === 'chat-session' ? resolveSessionAlias(route.sessionId) : null
 	const routeProjectId = route.kind === 'project' ? route.projectId : null
 	const routeInitialPrompt = route.kind === 'chat-session' ? route.initialPrompt : initialPrompt
 	const routeShareToken = route.kind === 'chat-session' ? route.shareToken : undefined
@@ -335,7 +334,11 @@ export function AgenticChat({
 	const [messages, setMessages] = useState<Message[]>([])
 	const [activeLeafMessageId, setActiveLeafMessageId] = useState<string | null>(null)
 	const [sessionId, setSessionId] = useState<string | null>(null)
-	const queueController = useChatQueueController({ sessionId, authorizedFetch })
+	const queueController = useChatQueueController({
+		sessionId,
+		enabled: routeSessionId === null || routeSessionId === sessionId,
+		authorizedFetch
+	})
 	const {
 		serverQueue: queuedMessages,
 		rows: queueRows,
@@ -353,7 +356,8 @@ export function AgenticChat({
 		dismiss: dismissQueueItem,
 		retry: retryQueueItem,
 		takeStartedItem,
-		getServerQueue
+		getServerQueue,
+		abortCommands: abortQueueCommands
 	} = queueController
 	const [sessionTitle, setSessionTitle] = useState<string | null>(null)
 	const [currentSessionProjectId, setCurrentSessionProjectId] = useState<string | null>(null)
@@ -391,19 +395,27 @@ export function AgenticChat({
 	} = useLlamaAISettings()
 	const [shouldAnimateSidebar, setShouldAnimateSidebar] = useState(false)
 	const [restoringSessionId, setRestoringSessionId] = useState<string | null>(null)
+	const [restoreFailure, setRestoreFailure] = useState<{ sessionId: string; message: string } | null>(null)
 	const [viewError, setViewError] = useState<string | null>(null)
 	const [paginationError, setPaginationError] = useState<string | null>(null)
 	const researchModalStore = Ariakit.useDialogStore()
 	const [limitModalFeature, setLimitModalFeature] = useState<'research' | 'fact_checked'>('research')
 	const currentMessageIdRef = useRef<string | null>(null)
-	const activeRequestIdRef = useRef(0)
-	const activeRequestKindRef = useRef<RequestKind>('idle')
-	const activeSessionIdRef = useRef<string | null>(null)
-	const activeRequestSettleRef = useRef<RequestSettleState>(null)
+	const executionCoordinatorRef = useRef<ExecutionCoordinator | null>(null)
+	const restoreCoordinatorRef = useRef<AbortScope | null>(null)
+	const paginationCoordinatorRef = useRef<AbortScope | null>(null)
+	const branchCoordinatorRef = useRef<AbortScope | null>(null)
+	executionCoordinatorRef.current ??= new ExecutionCoordinator()
+	restoreCoordinatorRef.current ??= new AbortScope()
+	paginationCoordinatorRef.current ??= new AbortScope()
+	branchCoordinatorRef.current ??= new AbortScope()
+	const executionCoordinator = executionCoordinatorRef.current
+	const restoreCoordinator = restoreCoordinatorRef.current
+	const paginationCoordinator = paginationCoordinatorRef.current
+	const branchCoordinator = branchCoordinatorRef.current
 	const restoredSessionIdRef = useRef<string | null>(null)
 	const recoveryIdRef = useRef(0)
 	const recoveryControllerRef = useRef<RecoveryController | null>(null)
-	const attemptRecoveryForControllerRef = useRef<(recoveryId: number) => void>(() => {})
 	const [paginationState, setPaginationState] = useState<{
 		hasMore: boolean
 		cursor: number | null
@@ -413,18 +425,20 @@ export function AgenticChat({
 	const [conversationViewResetKey, setConversationViewResetKey] = useState(0)
 	const [promptTransitionMode, setPromptTransitionMode] = useState<PromptTransitionMode>('idle')
 
-	const abortControllerRef = useRef<AbortController | null>(null)
 	const stopSettlementControllerRef = useRef<AbortController | null>(null)
 	const messagesEndRef = useRef<HTMLDivElement>(null)
 	const scrollContainerRef = useRef<HTMLDivElement>(null)
 	const { keyboardOpen, viewportHeight } = useVisualViewport()
 	const promptInputRef = useRef<HTMLTextAreaElement>(null)
 	const toolCallIdRef = useRef(0)
-	const promptSubmissionLockRef = useRef(false)
+	const promptSubmissionLockRef = useRef<number | null>(null)
+	const nextPromptSubmissionIdRef = useRef(0)
 	const isFirstMessageRef = useRef(true)
 	const promptTransitionTimerRef = useRef<number | null>(null)
 	const currentSessionIdRef = useRef(sessionId)
 	currentSessionIdRef.current = sessionId
+	const routeSessionIdRef = useRef(routeSessionId)
+	routeSessionIdRef.current = routeSessionId
 	const currentSessionProjectIdRef = useRef<string | null>(null)
 	const previousRouteTransitionRef = useRef<AgenticRouteTransition | null>(null)
 	const consumedInitialPromptRef = useRef<{ sessionId: string; prompt: string } | null>(null)
@@ -476,16 +490,26 @@ export function AgenticChat({
 	)
 	const forkedFromShared = sharedSession && sessionId
 	const isSharedView = !!sharedSession && !forkedFromShared
-	const effectiveMessages = (forkedFromShared ? null : sharedMessages) ?? messages
+	const isRouteSessionPending = !sharedSession && routeSessionId !== null && routeSessionId !== sessionId
+	const visibleDashboardVersions = isRouteSessionPending ? [] : dashboardVersions
+	const visibleDashboardConfig = isRouteSessionPending ? null : dashboardPanelMountedConfig
+	const effectiveMessages = isRouteSessionPending ? [] : ((forkedFromShared ? null : sharedMessages) ?? messages)
 	const effectiveSessionId = (forkedFromShared ? sessionId : sharedSession?.session.sessionId) ?? sessionId
-	const routeSessionId = route.kind === 'chat-session' ? resolveSessionAlias(route.sessionId) : null
-	const lookupSessionId = sessionId ?? routeSessionId ?? null
+	const lookupSessionId = routeSessionId ?? sessionId ?? null
 	const sessionListEntry = lookupSessionId ? (sessions.find((s) => s.sessionId === lookupSessionId) ?? null) : null
 	const sessionListTitle = sessionListEntry?.title ?? null
-	const effectiveSessionTitle = sharedSession?.session.title ?? sessionTitle ?? sessionListTitle
-	const effectiveSessionProjectId = currentSessionProjectId ?? sessionListEntry?.projectId ?? null
-	const hasMessages = effectiveMessages.length > 0 || isStreaming
-	const visibleError = viewError ?? error
+	const effectiveSessionTitle =
+		sharedSession?.session.title ?? (isRouteSessionPending ? sessionListTitle : (sessionTitle ?? sessionListTitle))
+	const effectiveSessionProjectId = isRouteSessionPending
+		? (sessionListEntry?.projectId ?? null)
+		: (currentSessionProjectId ?? sessionListEntry?.projectId ?? null)
+	const visibleIsStreaming = !isRouteSessionPending && isStreaming
+	const hasMessages = effectiveMessages.length > 0 || visibleIsStreaming
+	const visibleError = isRouteSessionPending
+		? restoreFailure?.sessionId === routeSessionId
+			? restoreFailure.message
+			: null
+		: (viewError ?? error)
 	const shouldShowLanding = !hasMessages && !visibleError && !restoringSessionId
 	const shouldAnimateLandingTransition =
 		promptTransitionMode === 'landing' && hasMessages && !visibleError && !restoringSessionId && !readOnly
@@ -513,7 +537,7 @@ export function AgenticChat({
 			stopSettlementControllerRef.current?.abort()
 			stopSettlementControllerRef.current = null
 		}
-	}, [sessionId])
+	}, [routeSessionId, sessionId])
 
 	// Switching chats should hand the caret back to the composer. Skipped on mobile, where
 	// focusing would pop the on-screen keyboard on every navigation.
@@ -605,7 +629,7 @@ export function AgenticChat({
 	}, [clearPromptTransitionTimer])
 
 	const streamingDraft = useMemo((): Message | null => {
-		if (!isStreaming) return null
+		if (!visibleIsStreaming) return null
 		const hasContent =
 			streamingText ||
 			streamingCharts.length > 0 ||
@@ -633,7 +657,7 @@ export function AgenticChat({
 			generatedImages: streamingGeneratedImages.length > 0 ? streamingGeneratedImages : undefined
 		}
 	}, [
-		isStreaming,
+		visibleIsStreaming,
 		streamingText,
 		streamingCharts,
 		streamingCsvExports,
@@ -647,12 +671,26 @@ export function AgenticChat({
 	])
 
 	const loadMoreMessagesMutation = useMutation({
-		mutationFn: ({ targetSessionId, cursor }: { targetSessionId: string; cursor: number }) =>
-			loadMoreMessages(targetSessionId, cursor)
+		mutationFn: ({
+			targetSessionId,
+			cursor,
+			signal
+		}: {
+			targetSessionId: string
+			cursor: number
+			signal: AbortSignal
+		}) => loadMoreMessages(targetSessionId, cursor, signal)
 	})
 	const loadNewerMessagesMutation = useMutation({
-		mutationFn: ({ targetSessionId, cursor }: { targetSessionId: string; cursor: number }) =>
-			loadNewerMessages(targetSessionId, cursor)
+		mutationFn: ({
+			targetSessionId,
+			cursor,
+			signal
+		}: {
+			targetSessionId: string
+			cursor: number
+			signal: AbortSignal
+		}) => loadNewerMessages(targetSessionId, cursor, signal)
 	})
 	const isLoadingMoreCurrentSession =
 		loadMoreMessagesMutation.isPending && loadMoreMessagesMutation.variables?.targetSessionId === sessionId
@@ -670,80 +708,48 @@ export function AgenticChat({
 	// Load older messages when the user reaches the top, while preserving the current viewport position.
 	const handleLoadMoreMessages = useCallback(async () => {
 		if (!sessionId || !paginationState.hasMore || loadMoreMessagesMutation.isPending || isStreaming) return
-
-		const requestId = beginRequest(
-			activeRequestIdRef,
-			activeRequestKindRef,
-			activeSessionIdRef,
-			'pagination',
-			sessionId
-		)
-		setPaginationError(null)
-		await waitForNextPaint()
-		const scrollSnapshot = getScrollSnapshot(scrollContainerRef.current)
-		const result = await loadMoreMessagesMutation
-			.mutateAsync({ targetSessionId: sessionId, cursor: paginationState.cursor! })
-			.catch(() => {
-				if (isActiveRequest(activeRequestIdRef, requestId) && activeSessionIdRef.current === sessionId) {
-					setPaginationError('Failed to load older messages')
-				}
-				completeRequest(activeRequestIdRef, activeRequestKindRef, activeSessionIdRef, requestId)
-				return null
-			})
-		if (!result) return
-		if (!isActiveRequest(activeRequestIdRef, requestId) || activeSessionIdRef.current !== sessionId) {
-			completeRequest(activeRequestIdRef, activeRequestKindRef, activeSessionIdRef, requestId)
-			return
-		}
-		const older = mapPersistedMessages(result.messages)
-
-		setMessages((prev) => [...older, ...prev])
-
-		requestAnimationFrame(() => {
-			restoreScrollPosition(scrollSnapshot)
+		await paginationCoordinator.run(sessionId, async (operation) => {
+			setPaginationError(null)
+			await waitForNextPaint()
+			if (!operation.isCurrent()) return
+			const scrollSnapshot = getScrollSnapshot(scrollContainerRef.current)
+			const result = await loadMoreMessagesMutation
+				.mutateAsync({ targetSessionId: sessionId, cursor: paginationState.cursor!, signal: operation.signal })
+				.catch(() => null)
+			if (!operation.isCurrent()) return
+			if (!result) {
+				setPaginationError('Failed to load older messages')
+				return
+			}
+			const older = mapPersistedMessages(result.messages)
+			setMessages((prev) => [...older, ...prev])
+			requestAnimationFrame(() => restoreScrollPosition(scrollSnapshot))
+			setPaginationState(normalizePaginationState(result.pagination))
 		})
-
-		setPaginationState(normalizePaginationState(result.pagination))
-		completeRequest(activeRequestIdRef, activeRequestKindRef, activeSessionIdRef, requestId)
-	}, [sessionId, paginationState, loadMoreMessagesMutation, isStreaming])
+	}, [sessionId, paginationState, loadMoreMessagesMutation, isStreaming, paginationCoordinator])
 
 	// Load newer messages when the user reaches the bottom of a mid-conversation restore window.
 	const handleLoadNewerMessages = useCallback(async () => {
 		if (!sessionId || !paginationState.hasNewer || loadNewerMessagesMutation.isPending || isStreaming) return
-
-		const requestId = beginRequest(
-			activeRequestIdRef,
-			activeRequestKindRef,
-			activeSessionIdRef,
-			'pagination',
-			sessionId
-		)
-		setPaginationError(null)
-		const result = await loadNewerMessagesMutation
-			.mutateAsync({ targetSessionId: sessionId, cursor: paginationState.newerCursor! })
-			.catch(() => {
-				if (isActiveRequest(activeRequestIdRef, requestId) && activeSessionIdRef.current === sessionId) {
-					setPaginationError('Failed to load newer messages')
-				}
-				completeRequest(activeRequestIdRef, activeRequestKindRef, activeSessionIdRef, requestId)
-				return null
-			})
-		if (!result) return
-		if (!isActiveRequest(activeRequestIdRef, requestId) || activeSessionIdRef.current !== sessionId) {
-			completeRequest(activeRequestIdRef, activeRequestKindRef, activeSessionIdRef, requestId)
-			return
-		}
-
-		const newer = mapPersistedMessages(result.messages)
-		setMessages((prev) => [...prev, ...newer])
-
-		setPaginationState((prev) => ({
-			...prev,
-			hasNewer: result.pagination?.hasNewer ?? false,
-			newerCursor: result.pagination?.newerCursor ?? null
-		}))
-		completeRequest(activeRequestIdRef, activeRequestKindRef, activeSessionIdRef, requestId)
-	}, [sessionId, paginationState, loadNewerMessagesMutation, isStreaming])
+		await paginationCoordinator.run(sessionId, async (operation) => {
+			setPaginationError(null)
+			const result = await loadNewerMessagesMutation
+				.mutateAsync({ targetSessionId: sessionId, cursor: paginationState.newerCursor!, signal: operation.signal })
+				.catch(() => null)
+			if (!operation.isCurrent()) return
+			if (!result) {
+				setPaginationError('Failed to load newer messages')
+				return
+			}
+			const newer = mapPersistedMessages(result.messages)
+			setMessages((prev) => [...prev, ...newer])
+			setPaginationState((prev) => ({
+				...prev,
+				hasNewer: result.pagination?.hasNewer ?? false,
+				newerCursor: result.pagination?.newerCursor ?? null
+			}))
+		})
+	}, [sessionId, paginationState, loadNewerMessagesMutation, isStreaming, paginationCoordinator])
 
 	// Expose the load-more callback through a stable event wrapper for the scroll listener.
 	const handleLoadMoreMessagesEvent = useStableCallback(() => {
@@ -847,381 +853,99 @@ export function AgenticChat({
 		})
 	}, [])
 
-	const clearRecoveryRetryTimers = useCallback((controller: RecoveryController) => {
-		for (const timerId of controller.retryTimerIds) {
-			window.clearTimeout(timerId)
+	const createChatStreamCallbacks = useStableCallback(
+		({
+			buffer,
+			isCurrent,
+			targetSessionId,
+			deferEmptyDone,
+			onSessionId,
+			onTitle,
+			onDuelStart,
+			replaceUserMessageId
+		}: {
+			buffer: StreamBuffer
+			isCurrent: () => boolean
+			targetSessionId: string
+			deferEmptyDone?: boolean
+			onSessionId?: (sessionId: string) => void
+			onTitle?: (title: string) => void
+			onDuelStart?: (pairId: string) => void
+			replaceUserMessageId?: (messageId: string, queueItemId?: string) => void
+		}) =>
+			createAgenticCallbacks({
+				isCurrent,
+				buffer,
+				dispatch: dispatchStream,
+				currentMessageIdRef,
+				toolCallIdRef,
+				appendMessage,
+				replaceLocalUserMessageId: replaceUserMessageId ?? replaceLocalUserMessageId,
+				setMessageSiblingInfo,
+				deferEmptyDone,
+				notify,
+				onDuelStart: onDuelStart ?? startDuel,
+				onArmEvent: handleDuelArmEvent,
+				onDuelReady: markDuelReady,
+				onDashboardArtifact: (dashboard) => dispatchDashboardPanel({ type: 'APPEND', value: dashboard }),
+				onTokenLimit: () => setShowTokenLimitModal(true),
+				onQueueUpdated: handleQueueUpdated,
+				onSessionId,
+				onTitle:
+					onTitle ??
+					((title) => {
+						if (targetSessionId === currentSessionIdRef.current) setSessionTitle(title)
+						applyServerSessionTitle(targetSessionId, title, currentSessionProjectIdRef.current)
+						moveSessionToTop(targetSessionId, currentSessionProjectIdRef.current)
+					})
+			})
+	)
+
+	const clearRecoveryController = useCallback((resetState: boolean = true) => {
+		const controller = recoveryControllerRef.current
+		if (controller && controller.timer !== null) window.clearTimeout(controller.timer)
+		recoveryControllerRef.current = null
+		if (resetState) {
+			dispatchStream({ type: 'RESET_RECOVERY' })
 		}
-		controller.retryTimerIds = []
 	}, [])
 
-	const clearRecoveryController = useCallback(
-		(resetState: boolean = true) => {
-			const controller = recoveryControllerRef.current
-			if (controller) {
-				clearRecoveryRetryTimers(controller)
-				if (controller.expiryTimerId !== null) {
-					window.clearTimeout(controller.expiryTimerId)
-				}
-			}
-			recoveryControllerRef.current = null
-			if (resetState) {
-				dispatchStream({ type: 'RESET_RECOVERY' })
-			}
+	const { ensureQueueAttached, resumeRunningExecution } = useChatExecutionOwner({
+		appendMessage,
+		authorizedFetch: authorizedFetchCompat,
+		clearRecovery: clearRecoveryController,
+		createCallbacks: createChatStreamCallbacks,
+		currentMessageIdRef,
+		dispatch: dispatchStream,
+		executionCoordinator,
+		getCurrentSessionId: () => currentSessionIdRef.current,
+		getServerQueue,
+		onSettled: (targetSessionId) => {
+			if (recoveryControllerRef.current?.sessionId === targetSessionId) clearRecoveryController()
 		},
-		[clearRecoveryRetryTimers]
-	)
-
-	// Reattach to a server-side execution that is still running for the current session.
-	const resumeRunningExecution = useCallback(
-		async ({
-			targetSessionId,
-			buffer = createStreamBuffer(),
-			resetStream = true,
-			onTemporaryDisconnect
-		}: {
-			targetSessionId: string
-			buffer?: StreamBuffer
-			resetStream?: boolean
-			onTemporaryDisconnect?: (error: Error, streamBuffer: StreamBuffer) => void
-		}) => {
-			{
-				let activeExecution: Awaited<ReturnType<typeof checkActiveExecution>>
-				const recordSnapshot = (snapshot: RecoveryActiveSnapshot | null) => {
-					const rc = recoveryControllerRef.current
-					if (rc && rc.sessionId === targetSessionId) {
-						rc.lastSnapshot = snapshot
-					}
-				}
-				try {
-					activeExecution = await checkActiveExecution(targetSessionId, authorizedFetchCompat)
-					recordSnapshot(activeExecution)
-				} catch (checkActiveExecutionError) {
-					recordSnapshot(null)
-					const checkError =
-						checkActiveExecutionError instanceof Error
-							? checkActiveExecutionError
-							: new Error(getErrorMessage(checkActiveExecutionError))
-					if (onTemporaryDisconnect && isTemporaryConnectivityError(checkError)) {
-						onTemporaryDisconnect(checkError, buffer)
-						return false
-					}
-					dispatchStream({ type: 'SET_ERROR', value: checkError.message })
-					return false
-				}
-				const { active, status, hasResult, eventCount } = activeExecution
-				if (!active) {
-					// Skip replay when the client buffer already has all (or more) events than the
-					// server — the server buffer was pruned after DB save and only contains {done}.
-					const hasNewEvents = eventCount != null && buffer.receivedEventCount < eventCount
-					if (status === 'completed' && hasResult && hasNewEvents) {
-						setViewError(null)
-						dispatchStream({ type: 'SET_ERROR', value: null })
-						dispatchStream({ type: 'SET_LAST_FAILED_REQUEST', value: null })
-						dispatchStream({ type: 'RESET_RECOVERY' })
-						if (resetStream) {
-							dispatchStream({ type: 'START_STREAM' })
-							currentMessageIdRef.current = null
-						}
-						let replaySucceeded = true
-						const replayFrom = buffer.receivedEventCount > 0 ? buffer.receivedEventCount : undefined
-
-						await runAgenticRequest({
-							mode: 'replay',
-							sessionId: toSessionId(targetSessionId),
-							requestKind: 'resume',
-							activeRequestIdRef,
-							activeRequestKindRef,
-							activeSessionIdRef,
-							abortControllerRef,
-							activeRequestSettleRef,
-							initialEventCount: buffer.receivedEventCount,
-							createCallbacks: ({ requestId }) =>
-								createAgenticCallbacks({
-									requestId,
-									activeRequestIdRef,
-									buffer,
-									dispatch: dispatchStream,
-									currentMessageIdRef,
-									toolCallIdRef,
-									appendMessage,
-									replaceLocalUserMessageId,
-									setMessageSiblingInfo,
-									notify,
-									onDuelStart: startDuel,
-									onArmEvent: handleDuelArmEvent,
-									onDuelReady: markDuelReady,
-									onDashboardArtifact: (dashboard) => dispatchDashboardPanel({ type: 'APPEND', value: dashboard }),
-									onTokenLimit: () => setShowTokenLimitModal(true),
-									onQueueUpdated: handleQueueUpdated,
-									onTitle: (title) => {
-										if (targetSessionId === sessionId) setSessionTitle(title)
-										applyServerSessionTitle(targetSessionId, title, currentSessionProjectIdRef.current)
-										moveSessionToTop(targetSessionId, currentSessionProjectIdRef.current)
-									}
-								}),
-							execute: async ({ callbacks, signal, eventCounter }) => {
-								await resumeAgenticStream({
-									sessionId: targetSessionId,
-									callbacks,
-									abortSignal: signal,
-									fetchFn: authorizedFetchCompat,
-									from: replayFrom,
-									eventCounter
-								})
-							},
-							onSuccess: () => {
-								// Clear the recovery controller so that tab-return / visibility-change
-								// handlers don't re-trigger a replay for the already-completed execution.
-								const rc = recoveryControllerRef.current
-								if (rc?.sessionId === targetSessionId) {
-									clearRecoveryController()
-								}
-							},
-							onError: () => {
-								replaySucceeded = false
-								// Buffer expired — reset streaming state so the UI doesn't get stuck.
-								if (resetStream) {
-									dispatchStream({ type: 'RESET_STREAM' })
-								}
-							}
-						})
-						return replaySucceeded
-					}
-					return false
-				}
-			}
-
-			setViewError(null)
-			setPaginationError(null)
-			dispatchStream({ type: 'SET_ERROR', value: null })
-			dispatchStream({ type: 'SET_LAST_FAILED_REQUEST', value: null })
-			dispatchStream({ type: 'RESET_RECOVERY' })
-
-			if (resetStream) {
-				dispatchStream({ type: 'START_STREAM' })
-				currentMessageIdRef.current = null
-			}
-
-			await runAgenticRequest({
-				mode: 'resume',
-				sessionId: toSessionId(targetSessionId),
-				requestKind: 'resume',
-				activeRequestIdRef,
-				activeRequestKindRef,
-				activeSessionIdRef,
-				abortControllerRef,
-				activeRequestSettleRef,
-				initialEventCount: buffer.receivedEventCount,
-				createCallbacks: ({ requestId }) =>
-					createAgenticCallbacks({
-						requestId,
-						activeRequestIdRef,
-						buffer,
-						dispatch: dispatchStream,
-						currentMessageIdRef,
-						toolCallIdRef,
-						appendMessage,
-						replaceLocalUserMessageId,
-						setMessageSiblingInfo,
-						notify,
-						onDuelStart: startDuel,
-						onArmEvent: handleDuelArmEvent,
-						onDuelReady: markDuelReady,
-						onDashboardArtifact: (dashboard) => dispatchDashboardPanel({ type: 'APPEND', value: dashboard }),
-						onTokenLimit: () => setShowTokenLimitModal(true),
-						onQueueUpdated: handleQueueUpdated,
-						onTitle: (title) => {
-							if (targetSessionId === sessionId) setSessionTitle(title)
-							applyServerSessionTitle(targetSessionId, title, currentSessionProjectIdRef.current)
-							moveSessionToTop(targetSessionId, currentSessionProjectIdRef.current)
-						}
-					}),
-				execute: async ({ callbacks, signal, eventCounter }) => {
-					await resumeAgenticStream({
-						sessionId: targetSessionId,
-						callbacks,
-						abortSignal: signal,
-						fetchFn: authorizedFetchCompat,
-						from: buffer.receivedEventCount,
-						eventCounter
-					})
-				},
-				onError: ({ kind, error: resumeError }, { requestId, eventCounter }) => {
-					if (!isActiveRequest(activeRequestIdRef, requestId)) return
-					if (kind === 'abort') {
-						appendBufferedAssistantMessage(buffer, currentMessageIdRef, appendMessage)
-						dispatchStream({ type: 'RESET_STREAM' })
-						return
-					}
-					if (onTemporaryDisconnect && kind === 'temporary-connectivity') {
-						buffer.receivedEventCount = eventCounter.count
-						onTemporaryDisconnect(resumeError, buffer)
-						return
-					}
-					clearRecoveryController()
-					dispatchStream({
-						type: 'SET_ERROR',
-						value: 'Lost connection while waiting for the running execution. Retry to reconnect.'
-					})
-					dispatchStream({ type: 'RESET_STREAM' })
-				},
-				onSuccess: () => {
-					const recoveryController = recoveryControllerRef.current
-					if (recoveryController?.sessionId === targetSessionId && recoveryController.streamAttached) {
-						clearRecoveryController()
-					}
-				}
-			})
-
-			return true
-		},
-		[
-			authorizedFetchCompat,
-			appendMessage,
-			applyServerSessionTitle,
-			clearRecoveryController,
-			handleDuelArmEvent,
-			handleQueueUpdated,
-			markDuelReady,
-			moveSessionToTop,
-			notify,
-			replaceLocalUserMessageId,
-			sessionId,
-			setMessageSiblingInfo,
-			startDuel
-		]
-	)
-
-	const attachQueuedExecution = useCallback(
-		async (targetSessionId: string, buffer: StreamBuffer, resetStream: boolean, queueItemId: string | null) => {
-			const result: {
-				outcome: 'done' | 'timeout' | 'paused' | 'finished' | 'not_found' | 'error'
-			} = { outcome: 'error' }
-			let messageId: string | null = null
-			setViewError(null)
-			setPaginationError(null)
-			dispatchStream({ type: 'SET_ERROR', value: null })
-			if (resetStream) {
-				dispatchStream(queueItemId ? { type: 'START_QUEUED_STREAM', queueItemId } : { type: 'START_STREAM' })
-				currentMessageIdRef.current = null
-			}
-
-			await runAgenticRequest({
-				mode: 'resume',
-				sessionId: toSessionId(targetSessionId),
-				requestKind: 'resume',
-				activeRequestIdRef,
-				activeRequestKindRef,
-				activeSessionIdRef,
-				abortControllerRef,
-				activeRequestSettleRef,
-				initialEventCount: buffer.receivedEventCount,
-				createCallbacks: ({ requestId }) =>
-					createAgenticCallbacks({
-						requestId,
-						activeRequestIdRef,
-						buffer,
-						dispatch: dispatchStream,
-						currentMessageIdRef,
-						toolCallIdRef,
-						appendMessage,
-						replaceLocalUserMessageId: (realId, eventQueueItemId) => {
-							const startedQueueItemId = eventQueueItemId ?? queueItemId
-							replaceLocalUserMessageId(realId, startedQueueItemId ?? undefined)
-							if (startedQueueItemId) {
-								dispatchStream({ type: 'QUEUED_USER_MESSAGE_READY', queueItemId: startedQueueItemId })
-							}
-						},
-						setMessageSiblingInfo,
-						notify,
-						onDuelStart: startDuel,
-						onArmEvent: handleDuelArmEvent,
-						onDuelReady: markDuelReady,
-						onDashboardArtifact: (dashboard) => dispatchDashboardPanel({ type: 'APPEND', value: dashboard }),
-						onTokenLimit: () => setShowTokenLimitModal(true),
-						onQueueUpdated: handleQueueUpdated,
-						onMessageIdObserved: (id) => {
-							messageId = id
-						},
-						onTitle: (title) => {
-							if (targetSessionId === sessionId) setSessionTitle(title)
-							applyServerSessionTitle(targetSessionId, title, currentSessionProjectIdRef.current)
-							moveSessionToTop(targetSessionId, currentSessionProjectIdRef.current)
-						}
-					}),
-				execute: async ({ callbacks, signal, eventCounter }) => {
-					result.outcome = await attachAgenticStream({
-						sessionId: targetSessionId,
-						callbacks,
-						abortSignal: signal,
-						fetchFn: authorizedFetchCompat,
-						from: buffer.receivedEventCount,
-						waitMs: QUEUE_ATTACH_WAIT_MS,
-						eventCounter
-					})
-				},
-				onError: ({ kind }, { eventCounter }) => {
-					result.outcome = 'error'
-					buffer.receivedEventCount = eventCounter.count
-					if (kind !== 'abort') {
-						dispatchStream({
-							type: 'SET_ERROR',
-							value: 'Lost connection while waiting for the queued response. Reconnecting…'
-						})
-					}
-				},
-				onSuccess: () => {
-					if (result.outcome !== 'done' && buffer.receivedEventCount === 0) {
-						dispatchStream({ type: 'RESET_STREAM' })
-					}
-				}
-			})
-
-			return { outcome: result.outcome, messageId }
-		},
-		[
-			appendMessage,
-			applyServerSessionTitle,
-			authorizedFetchCompat,
-			handleDuelArmEvent,
-			handleQueueUpdated,
-			markDuelReady,
-			moveSessionToTop,
-			notify,
-			replaceLocalUserMessageId,
-			sessionId,
-			setMessageSiblingInfo,
-			startDuel
-		]
-	)
-
-	useQueueAttachment({
-		sessionId,
-		isStreaming,
-		queue: queuedMessages,
-		fetchFn: authorizedFetchCompat,
-		getQueue: getServerQueue,
-		applySnapshot: applyQueueSnapshot,
-		restoreQueue: (targetSessionId) => restoreSession(targetSessionId, 1),
-		attachExecution: attachQueuedExecution,
-		abortAttachment: () => abortControllerRef.current?.abort()
+		replaceUserMessageId: replaceLocalUserMessageId,
+		setPaginationError,
+		setViewError
 	})
+	useEffect(() => {
+		if (!sessionId || isRouteSessionPending || isStreaming || !hasClaimableQueueWork(queuedMessages)) return
+		void ensureQueueAttached(sessionId)
+	}, [ensureQueueAttached, isRouteSessionPending, isStreaming, queuedMessages, sessionId])
 
 	const restoreSessionSnapshot = useCallback(
 		async (
 			targetSessionId: string,
-			expectedRequestId: number,
+			operation: ExecutionOperation,
 			options?: { around?: string }
 		): Promise<RestoreSessionSnapshotResult> => {
-			const result = await restoreSession(targetSessionId, 10, options?.around).catch(
+			const result = await restoreSession(targetSessionId, 10, options?.around, operation.signal).catch(
 				() => null as SessionRestoreResult | null
 			)
-			if (!result || activeRequestIdRef.current !== expectedRequestId) {
-				return { restored: false, recoveredResponse: false }
+			if (!result || !operation.isCurrent()) {
+				return { restored: false, execution: null }
 			}
 
 			const restored: Message[] = (result.messages || []).map(mapPersistedMessage)
-			const recoveredResponse = restored[restored.length - 1]?.role === 'assistant'
 
 			if (options?.around) {
 				window.location.hash = `msg-${options.around}`
@@ -1265,7 +989,7 @@ export function AgenticChat({
 			dispatchStream({ type: 'SET_LAST_FAILED_REQUEST', value: null })
 			dispatchStream({ type: 'RESET_RECOVERY' })
 
-			return { restored: true, recoveredResponse }
+			return { restored: true, execution: result.execution ?? null }
 		},
 		[attach, restoreQueueSnapshot, restoreSession, sessions]
 	)
@@ -1278,24 +1002,17 @@ export function AgenticChat({
 			dispatchStream({ type: 'RESET_STREAM' })
 			dispatchStream({
 				type: 'SET_ERROR',
-				value: 'Lost connection and could not reconnect. Refresh to see if your response completed, or retry.'
+				value: 'Lost connection and could not reconnect. The response may still finish on the server.'
 			})
 			dispatchStream({ type: 'SET_LAST_FAILED_REQUEST', value: controller.failedRequest })
 		},
 		[appendMessage, clearRecoveryController]
 	)
 
-	const queueRecoveryAttempt = useCallback((recoveryId: number, delay: number) => {
-		return window.setTimeout(() => {
-			attemptRecoveryForControllerRef.current(recoveryId)
-		}, delay)
-	}, [])
-
-	const attemptRecoveryForController = useStableCallback((recoveryId: number) => {
+	const attemptRecoveryForController = useStableCallback(async (recoveryId: number) => {
 		const controller = recoveryControllerRef.current
-		if (!controller || controller.id !== recoveryId || controller.attemptInFlight) return
+		if (!controller || controller.id !== recoveryId) return
 
-		controller.attemptInFlight = true
 		controller.attemptCount += 1
 		dispatchStream({
 			type: 'UPDATE_RECOVERY',
@@ -1303,80 +1020,46 @@ export function AgenticChat({
 			lastErrorMessage: controller.lastErrorMessage
 		})
 
-		void (async () => {
-			const currentController = recoveryControllerRef.current
-			if (!currentController || currentController.id !== recoveryId) return
-
-			const didResume = await resumeRunningExecution({
-				targetSessionId: currentController.sessionId,
-				buffer: currentController.buffer,
-				resetStream: false,
-				onTemporaryDisconnect: (disconnectError, streamBuffer) => {
-					const latest = recoveryControllerRef.current
-					if (!latest || latest.id !== recoveryId) return
-					latest.streamAttached = false
-					latest.buffer = streamBuffer
-					latest.lastErrorMessage = getErrorMessage(disconnectError)
-					dispatchStream({
-						type: 'UPDATE_RECOVERY',
-						attemptCount: latest.attemptCount,
-						lastErrorMessage: latest.lastErrorMessage
-					})
-					if (shouldGiveUpRecovery(latest.lastSnapshot, Date.now() - latest.startedAt)) {
-						exhaustRecovery(latest)
-						return
-					}
-					const baseMs = Math.min(250 * Math.pow(2, latest.attemptCount - 1), 8000)
-					const backoffMs = Math.round(baseMs * (0.5 + Math.random() * 0.5))
-					queueRecoveryAttempt(recoveryId, backoffMs)
-				}
-			})
-			if (didResume) {
+		const resumeOutcome = await resumeRunningExecution({
+			targetSessionId: controller.sessionId,
+			buffer: controller.buffer,
+			resetStream: false,
+			onTemporaryDisconnect: (disconnectError, streamBuffer) => {
 				const latest = recoveryControllerRef.current
 				if (!latest || latest.id !== recoveryId) return
-				latest.streamAttached = true
-				clearRecoveryRetryTimers(latest)
-				return
+				latest.buffer = streamBuffer
+				latest.lastErrorMessage = getErrorMessage(disconnectError)
+				dispatchStream({
+					type: 'UPDATE_RECOVERY',
+					attemptCount: latest.attemptCount,
+					lastErrorMessage: latest.lastErrorMessage
+				})
 			}
+		})
+		const latest = recoveryControllerRef.current
+		if (!latest || latest.id !== recoveryId) return
+		if (resumeOutcome === 'aborted') return
+		if (resumeOutcome === 'settled') {
+			clearRecoveryController()
+			return
+		}
 
-			const { restored: didRestore, recoveredResponse } = await restoreSessionSnapshot(
-				currentController.sessionId,
-				activeRequestIdRef.current
-			)
-			if (didRestore && recoveredResponse) {
-				dispatchStream({ type: 'RESET_STREAM' })
-				clearRecoveryController()
-				return
-			}
-
-			const latest = recoveryControllerRef.current
-			if (!latest || latest.id !== recoveryId) return
-			if (shouldGiveUpRecovery(latest.lastSnapshot, Date.now() - latest.startedAt)) {
-				exhaustRecovery(latest)
-				return
-			}
-			// Run is still alive (or its result is still landing) server-side: keep polling
-			// instead of stalling, so a long run that outlasts the grace window still recovers.
-			const baseMs = Math.min(1000 * Math.pow(2, latest.attemptCount - 1), 8000)
-			const backoffMs = Math.round(baseMs * (0.5 + Math.random() * 0.5))
-			queueRecoveryAttempt(recoveryId, backoffMs)
-		})().then(
-			() => {
-				const latest = recoveryControllerRef.current
-				if (!latest || latest.id !== recoveryId) return
-				latest.attemptInFlight = false
-			},
-			() => {
-				const latest = recoveryControllerRef.current
-				if (!latest || latest.id !== recoveryId) return
-				latest.attemptInFlight = false
-			}
+		const { restored, execution } = await restoreCoordinator.run(latest.sessionId, (operation) =>
+			restoreSessionSnapshot(latest.sessionId, operation)
 		)
+		if (recoveryControllerRef.current?.id !== recoveryId) return
+		if (restored && execution?.status !== 'running') {
+			dispatchStream({ type: 'RESET_STREAM' })
+			clearRecoveryController()
+			return
+		}
+		if (Date.now() - latest.startedAt >= RECOVERY_MAX_MS) {
+			exhaustRecovery(latest)
+			return
+		}
+		const backoffMs = Math.min(1000 * 2 ** Math.max(0, latest.attemptCount - 1), 8000)
+		scheduleRecoveryAttempt(latest, backoffMs, () => void attemptRecoveryForController(recoveryId))
 	})
-
-	useEffect(() => {
-		attemptRecoveryForControllerRef.current = attemptRecoveryForController
-	}, [attemptRecoveryForController])
 
 	const startRecoveryCycle = useCallback(
 		({
@@ -1392,18 +1075,15 @@ export function AgenticChat({
 		}) => {
 			const existing = recoveryControllerRef.current
 			if (existing?.sessionId === targetSessionId) {
-				// Reuse the controller for repeat drops on the same execution so timers,
-				// event offsets, and the partially accumulated buffer stay in one place.
 				existing.buffer = buffer
 				existing.failedRequest = failedRequest
 				existing.lastErrorMessage = getErrorMessage(recoveryError)
-				existing.attemptInFlight = false
 				dispatchStream({
 					type: 'UPDATE_RECOVERY',
 					attemptCount: existing.attemptCount,
 					lastErrorMessage: existing.lastErrorMessage
 				})
-				queueRecoveryAttempt(existing.id, 0)
+				scheduleRecoveryAttempt(existing, 0, () => void attemptRecoveryForController(existing.id))
 				return true
 			}
 
@@ -1418,11 +1098,7 @@ export function AgenticChat({
 				failedRequest,
 				lastErrorMessage: getErrorMessage(recoveryError),
 				attemptCount: 0,
-				retryTimerIds: [],
-				expiryTimerId: null,
-				attemptInFlight: false,
-				streamAttached: false,
-				lastSnapshot: null
+				timer: null
 			}
 			recoveryIdRef.current = controller.id
 			recoveryControllerRef.current = controller
@@ -1432,41 +1108,19 @@ export function AgenticChat({
 				lastErrorMessage: controller.lastErrorMessage
 			})
 
-			for (const delay of RECOVERY_ATTEMPT_DELAYS_MS) {
-				const timerId = queueRecoveryAttempt(controller.id, delay)
-				controller.retryTimerIds.push(timerId)
-			}
-
-			controller.expiryTimerId = window.setTimeout(() => {
-				const latest = recoveryControllerRef.current
-				if (!latest || latest.id !== controller.id || latest.attemptInFlight || latest.streamAttached) return
-				if (!shouldGiveUpRecovery(latest.lastSnapshot, Date.now() - latest.startedAt)) return
-				exhaustRecovery(latest)
-			}, RECOVERY_GRACE_MS)
+			scheduleRecoveryAttempt(controller, 0, () => void attemptRecoveryForController(controller.id))
 			return true
 		},
-		[clearRecoveryController, exhaustRecovery, queueRecoveryAttempt]
+		[attemptRecoveryForController, clearRecoveryController]
 	)
 
-	// Abort the active request and wait for its cleanup path to finish before starting another one.
-	const abortActiveRequest = useCallback(async () => {
-		const controller = abortControllerRef.current
-		const requestId = activeRequestIdRef.current
-		const settleState = activeRequestSettleRef.current
-
-		if (controller && settleState?.requestId === requestId) {
-			controller.abort()
-			await waitForRequestSettle(settleState)
-		}
-
-		activeRequestIdRef.current += 1
-		activeRequestKindRef.current = 'idle'
-		activeSessionIdRef.current = null
+	// Invalidate callbacks before waiting for transport cleanup. A slow reader must
+	// never delay or remain authoritative during navigation to another session.
+	const abortActiveRequest = useCallback(() => {
+		executionCoordinator.invalidate()
 		currentMessageIdRef.current = null
-		abortControllerRef.current = null
-		activeRequestSettleRef.current = null
 		clearRecoveryController()
-	}, [clearRecoveryController])
+	}, [clearRecoveryController, executionCoordinator])
 
 	// Reset transient streaming and error state without touching the actual message history.
 	const clearConversationRuntimeState = useCallback(() => {
@@ -1481,9 +1135,14 @@ export function AgenticChat({
 		dispatchStream({ type: 'SET_CONTEXT_WARNING', value: null })
 	}, [clearRecoveryController, resetPromptTransition])
 
-	const clearConversationState = useCallback(async () => {
-		await abortActiveRequest()
+	const clearConversationState = useCallback(() => {
+		restoreCoordinator.invalidate()
+		paginationCoordinator.invalidate()
+		branchCoordinator.invalidate()
+		abortActiveRequest()
+		abortQueueCommands()
 		clearConversationRuntimeState()
+		promptSubmissionLockRef.current = null
 		setMessages([])
 		setActiveLeafMessageId(null)
 		setQuotedText(null)
@@ -1497,13 +1156,32 @@ export function AgenticChat({
 		isFirstMessageRef.current = true
 		attach()
 		setPaginationState({ hasMore: false, cursor: null })
-	}, [abortActiveRequest, attach, clearConversationRuntimeState, resetDuel])
+	}, [
+		abortActiveRequest,
+		abortQueueCommands,
+		attach,
+		branchCoordinator,
+		clearConversationRuntimeState,
+		paginationCoordinator,
+		resetDuel,
+		restoreCoordinator
+	])
+
+	useEffect(() => {
+		return () => {
+			executionCoordinator.invalidate()
+			restoreCoordinator.invalidate()
+			paginationCoordinator.invalidate()
+			branchCoordinator.invalidate()
+			abortQueueCommands()
+		}
+	}, [abortQueueCommands, branchCoordinator, executionCoordinator, paginationCoordinator, restoreCoordinator])
 
 	// Start a brand-new chat, keeping project-owned sessions inside their project.
 	const handleNewChat = useCallback(async () => {
 		const projectIdForNewChat = route.kind === 'project' ? route.projectId : currentSessionProjectId
 		if (projectIdForNewChat && !sharedSession) {
-			await clearConversationState()
+			clearConversationState()
 			const nextSessionId = createFakeSession(projectIdForNewChat)
 			setSessionId(nextSessionId)
 			setSessionTitle(null)
@@ -1516,6 +1194,7 @@ export function AgenticChat({
 			})
 			try {
 				await persistSession
+				if (currentSessionIdRef.current !== nextSessionId) return
 				void navigate.toSession(nextSessionId)
 			} catch (createSessionError) {
 				console.error('[llama-ai] [createSession] failed:', getErrorMessage(createSessionError))
@@ -1528,7 +1207,7 @@ export function AgenticChat({
 			void navigate.toNewChat()
 			return
 		}
-		await clearConversationState()
+		clearConversationState()
 		promptInputRef.current?.focus()
 	}, [
 		clearConversationState,
@@ -1549,45 +1228,31 @@ export function AgenticChat({
 				!options?.around
 			)
 				return
+			setRestoreFailure(null)
 			setRestoringSessionId(selectedSessionId)
-			await abortActiveRequest()
+			abortActiveRequest()
+			abortQueueCommands()
+			paginationCoordinator.invalidate()
+			branchCoordinator.invalidate()
 			clearConversationRuntimeState()
 
-			const requestId = beginRequest(
-				activeRequestIdRef,
-				activeRequestKindRef,
-				activeSessionIdRef,
-				'restore',
-				selectedSessionId
-			)
-			const { restored: restoredOk, recoveredResponse } = await restoreSessionSnapshot(
-				selectedSessionId,
-				requestId,
-				options
+			const { restored: restoredOk, execution } = await restoreCoordinator.run(selectedSessionId, (operation) =>
+				restoreSessionSnapshot(selectedSessionId, operation, options)
 			)
 
+			if (routeSessionIdRef.current !== selectedSessionId) return
 			if (!restoredOk) {
-				if (!isActiveRequest(activeRequestIdRef, requestId)) return
-				setViewError('Failed to restore session')
-				completeRequest(activeRequestIdRef, activeRequestKindRef, activeSessionIdRef, requestId)
+				setRestoreFailure({ sessionId: selectedSessionId, message: 'Failed to restore session' })
 				setRestoringSessionId(null)
 				return
 			}
 
-			if (!isActiveRequest(activeRequestIdRef, requestId)) return
+			setRestoreFailure(null)
 			setRestoringSessionId(null)
 
-			if (!isActiveRequest(activeRequestIdRef, requestId)) return
-
-			// Skip resume when the restored snapshot already contains the assistant response —
-			// the session is complete and calling /stream would be a redundant replay.
-			if (recoveredResponse) {
-				completeRequest(activeRequestIdRef, activeRequestKindRef, activeSessionIdRef, requestId)
-				return
-			}
-
-			const didResume = await resumeRunningExecution({
+			await resumeRunningExecution({
 				targetSessionId: selectedSessionId,
+				executionHint: execution,
 				onTemporaryDisconnect: (disconnectError, buffer) => {
 					startRecoveryCycle({
 						targetSessionId: selectedSessionId,
@@ -1597,15 +1262,14 @@ export function AgenticChat({
 					})
 				}
 			})
-			if (!isActiveRequest(activeRequestIdRef, requestId) && !didResume) return
-
-			if (!didResume) {
-				completeRequest(activeRequestIdRef, activeRequestKindRef, activeSessionIdRef, requestId)
-			}
 		},
 		[
 			abortActiveRequest,
+			abortQueueCommands,
+			branchCoordinator,
 			clearConversationRuntimeState,
+			paginationCoordinator,
+			restoreCoordinator,
 			restoreSessionSnapshot,
 			resumeRunningExecution,
 			startRecoveryCycle
@@ -1645,7 +1309,7 @@ export function AgenticChat({
 		void clearConversationState()
 	}, [projectHomeSignal, route.kind, readOnly, sharedSession, clearConversationState])
 
-	useEffect(() => {
+	useLayoutEffect(() => {
 		if (!routeTransition) return
 
 		const previousTransition = previousRouteTransitionRef.current
@@ -1658,7 +1322,7 @@ export function AgenticChat({
 
 		const transition = async () => {
 			if (routeTransition.kind === 'new-chat') {
-				await clearConversationState()
+				clearConversationState()
 				promptInputRef.current?.focus()
 				return
 			}
@@ -1684,7 +1348,7 @@ export function AgenticChat({
 			}
 
 			if (routeTransition.kind === 'project-list') {
-				await clearConversationState()
+				clearConversationState()
 				return
 			}
 
@@ -1692,39 +1356,22 @@ export function AgenticChat({
 				// Always reset to the project landing on navigation. The submit-from-landing flow
 				// keeps the inline chat visible because URL doesn't change (no transition fires);
 				// any actual navigation to /ai/projects/[id] should land you on the project home.
-				await clearConversationState()
+				clearConversationState()
 			}
 		}
 
 		void transition()
 	}, [routeTransition, clearConversationState, handleSessionSelect, resetDuel])
 
-	// Submit a new prompt, create a fake local session for the first message if needed, and stream the response.
-	const handleSubmit = useCallback(
-		(
-			prompt: string,
-			entities?: Array<{ term: string; slug: string; type?: string }>,
-			images?: Array<{ data: string; mimeType: string; filename?: string; isPasted?: boolean }>,
-			pageContext?: ChatPageContext,
-			isSuggestedQuestion?: boolean,
-			modeOverride?: AgenticAnswerMode,
-			quotedTextOverride?: string | null
-		): boolean => {
-			const trimmed = prompt.trim()
-			const hasImages = images && images.length > 0
-			if ((!trimmed && !hasImages) || isStreamingRef.current || promptSubmissionLockRef.current) return false
-
-			// Shared session: fork in-place — seed messages + sessionId, then continue with normal submit flow
-			if (sharedSession && !sessionId) {
-				if (!hasUser) {
-					onForkSubmit?.(trimmed)
-					return true
-				}
-			}
+	const startPromptSubmission = useCallback(
+		(effectiveMode: AgenticAnswerMode, prepare: () => PreparedPromptSubmission): boolean => {
+			if (isStreamingRef.current || promptSubmissionLockRef.current !== null) return false
 			triggerPromptTransition(shouldShowLanding ? 'landing' : 'conversation')
-			promptSubmissionLockRef.current = true
-			const effectiveMode = modeOverride ?? mode
-
+			const submissionId = ++nextPromptSubmissionIdRef.current
+			promptSubmissionLockRef.current = submissionId
+			const releaseSubmission = () => {
+				if (promptSubmissionLockRef.current === submissionId) promptSubmissionLockRef.current = null
+			}
 			if (effectiveMode === 'research') {
 				try {
 					if (!localStorage.getItem('llamaai-research-duration-toast')) {
@@ -1739,128 +1386,94 @@ export function AgenticChat({
 
 			const abandonedDuelSessionId = duelPairId ? sessionId : null
 
-			void abortActiveRequest()
-				.then(async () => {
-					setViewError(null)
-					setPaginationError(null)
-					primeAudio()
-					resetDuel()
-					// Both duel answers only ever lived in the duel panel, never in the message list,
-					// so moving on without choosing would erase that turn from the thread. Reload the
-					// persisted branch instead: the server has already resolved it to the default
-					// answer, and asking for it keeps the client blind to which arm that was.
-					if (abandonedDuelSessionId) {
-						await restoreSessionSnapshot(abandonedDuelSessionId, activeRequestIdRef.current)
+			abortActiveRequest()
+			void (async () => {
+				setViewError(null)
+				setPaginationError(null)
+				primeAudio()
+				resetDuel()
+				// Both duel answers only ever lived in the duel panel, never in the message list,
+				// so moving on without choosing would erase that turn from the thread. Reload the
+				// persisted branch instead: the server has already resolved it to the default
+				// answer, and asking for it keeps the client blind to which arm that was.
+				if (abandonedDuelSessionId) {
+					await restoreCoordinator.run(abandonedDuelSessionId, (operation) =>
+						restoreSessionSnapshot(abandonedDuelSessionId, operation)
+					)
+					if (promptSubmissionLockRef.current !== submissionId) return
+				}
+				dispatchStream({ type: 'START_STREAM' })
+				currentMessageIdRef.current = null
+
+				const prepared = prepare()
+				let { currentSessionId } = prepared
+				const { failedRequest, submitProjectId } = prepared
+				const { mutation } = failedRequest
+				const userImages = mutation.images?.map((image) => ({
+					url: image.data,
+					mimeType: image.mimeType,
+					filename: image.filename
+				}))
+				setMessages((prev) =>
+					prev.some((message) => message.id === failedRequest.optimisticMessageId)
+						? prev
+						: [
+								...prev,
+								{
+									role: 'user',
+									content: mutation.message,
+									images: userImages?.length ? userImages : undefined,
+									quotedText: mutation.quotedText,
+									id: failedRequest.optimisticMessageId
+								}
+							]
+				)
+				attach()
+				moveSessionToTop(currentSessionId, submitProjectId)
+
+				const buffer = createStreamBuffer()
+				const adoptResponseSession = (id: string) => {
+					const previousSessionId = currentSessionId
+					movePromptDraft(getPromptDraftScope(previousSessionId, submitProjectId), `session:${id}`)
+					setSessionId(id)
+					currentSessionId = id
+					if (previousSessionId && previousSessionId !== id) {
+						executionCoordinator.adoptSession(previousSessionId, id)
+						registerSessionAlias(previousSessionId, id)
+						replaceOptimisticSessionId(previousSessionId, id, submitProjectId)
 					}
-					dispatchStream({ type: 'START_STREAM' })
-					currentMessageIdRef.current = null
-
-					let currentSessionId = sessionId
-					const submitProjectId = routeProjectId ?? currentSessionProjectId
-
-					// Fork shared session in-place: seed messages, create session, update URL
-					if (sharedSession && !currentSessionId) {
-						currentSessionId = createFakeSession(submitProjectId)
-						setSessionId(currentSessionId)
-						setCurrentSessionProjectId(submitProjectId)
-						setSessionTitle(sharedSession.session.title)
-						const seeded = sharedSession.messages.map((msg, i) => mapSharedSessionMessage(msg, i))
-						setMessages(seeded)
-						isFirstMessageRef.current = false
-					} else if (isFirstMessageRef.current && !currentSessionId) {
-						currentSessionId = createFakeSession(submitProjectId, trimmed)
-						setSessionId(currentSessionId)
-						setCurrentSessionProjectId(submitProjectId)
-						isFirstMessageRef.current = false
+					if (sharedSession) onSharedSessionFork?.(id)
+					if (previousSessionId !== id && !sessions.some((session) => session.sessionId === id)) {
+						void createSession({
+							sessionId: id,
+							title: sessionTitle ?? undefined,
+							projectId: submitProjectId
+						}).catch((createSessionError) => {
+							console.error('[llama-ai] [createSession] failed:', getErrorMessage(createSessionError))
+						})
 					}
+				}
 
-					const currentQuotedText =
-						quotedTextOverride === undefined ? quotedText || undefined : (quotedTextOverride ?? undefined)
-					if (quotedTextOverride === undefined && currentQuotedText) setQuotedText(null)
-
-					const userImages = images?.map((img) => ({ url: img.data, mimeType: img.mimeType, filename: img.filename }))
-					setMessages((prev) => [
-						...prev,
-						{
-							role: 'user',
-							content: trimmed,
-							images: userImages?.length ? userImages : undefined,
-							quotedText: currentQuotedText || undefined,
-							id: `local-${prev.length}`
-						}
-					])
-					attach()
-					if (currentSessionId) moveSessionToTop(currentSessionId, submitProjectId)
-
-					const buffer = createStreamBuffer()
-					// A share token forks a public snapshot exactly once; later messages
-					// continue against the newly created private session.
-					const currentShareToken = !shareTokenConsumedRef.current ? effectiveShareToken : undefined
-					if (currentShareToken) shareTokenConsumedRef.current = true
-					const failedRequest: FailedRequest = {
-						prompt: trimmed,
-						entities: entities?.length ? entities : undefined,
-						images: images?.length ? images : undefined,
-						pageContext
-					}
-
-					void runAgenticRequest({
+				void executionCoordinator.run(currentSessionId, 'prompt', async (operation) => {
+					await runAgenticRequest({
 						mode: 'prompt',
-						sessionId: currentSessionId ? toSessionId(currentSessionId) : null,
-						requestKind: 'prompt',
-						activeRequestIdRef,
-						activeRequestKindRef,
-						activeSessionIdRef,
-						abortControllerRef,
-						activeRequestSettleRef,
-						createCallbacks: ({ requestId }) =>
-							createAgenticCallbacks({
-								requestId,
-								activeRequestIdRef,
+						operation,
+						createCallbacks: ({ isCurrent }) =>
+							createChatStreamCallbacks({
 								buffer,
-								dispatch: dispatchStream,
-								currentMessageIdRef,
-								toolCallIdRef,
-								appendMessage,
-								replaceLocalUserMessageId,
-								setMessageSiblingInfo,
+								isCurrent,
+								targetSessionId: currentSessionId!,
 								deferEmptyDone: true,
-								notify,
 								onDuelStart: (pairId) => {
 									startDuel(pairId)
 									trackUmamiEvent('llamaai-duel-shown')
 								},
-								onArmEvent: handleDuelArmEvent,
-								onDuelReady: markDuelReady,
-								onDashboardArtifact: (dashboard) => dispatchDashboardPanel({ type: 'APPEND', value: dashboard }),
-								onTokenLimit: () => setShowTokenLimitModal(true),
-								onQueueUpdated: handleQueueUpdated,
 								onSessionId: (id) => {
-									if (!isActiveRequest(activeRequestIdRef, requestId)) return
-									const previousSessionId = currentSessionId
-									movePromptDraft(getPromptDraftScope(previousSessionId, submitProjectId), `session:${id}`)
-									setSessionId(id)
-									currentSessionId = id
-									activeSessionIdRef.current = id
-									if (previousSessionId && previousSessionId !== id) {
-										registerSessionAlias(previousSessionId, id)
-										replaceOptimisticSessionId(previousSessionId, id, submitProjectId)
-									}
-									if (sharedSession) {
-										onSharedSessionFork?.(id)
-									}
-									if (previousSessionId !== id && !sessions.some((session) => session.sessionId === id)) {
-										void createSession({
-											sessionId: id,
-											title: sessionTitle ?? undefined,
-											projectId: submitProjectId
-										}).catch((createSessionError) => {
-											console.error('[llama-ai] [createSession] failed:', getErrorMessage(createSessionError))
-										})
-									}
+									if (!isCurrent()) return
+									adoptResponseSession(id)
 								},
 								onTitle: (title) => {
-									if (!isActiveRequest(activeRequestIdRef, requestId)) return
+									if (!isCurrent()) return
 									setSessionTitle(title)
 									if (currentSessionId) {
 										applyServerSessionTitle(currentSessionId, title, submitProjectId)
@@ -1870,28 +1483,33 @@ export function AgenticChat({
 							}),
 						execute: ({ callbacks, signal, eventCounter }) =>
 							fetchAgenticResponse({
-								message: trimmed,
-								sessionId: currentSessionId,
-								mode: effectiveMode,
-								entities: entities?.length ? entities : undefined,
-								images: images?.length ? images : undefined,
-								pageContext,
-								quotedText: currentQuotedText || undefined,
-								customInstructions: settings.customInstructions || undefined,
-								enablePremiumTools: settings.enablePremiumTools,
-								model: settings.model || undefined,
-								effort: settings.effort || undefined,
-								isSuggestedQuestion,
-								blockedSkills: isMobileChatView ? ['dashboard'] : undefined,
-								shareToken: currentShareToken,
-								projectId: submitProjectId,
+								mutation,
 								abortSignal: signal,
 								fetchFn: authorizedFetchCompat,
 								eventCounter,
 								callbacks
 							}),
-						onError: async ({ kind, error: err }, { requestId, eventCounter }) => {
-							if (!isActiveRequest(activeRequestIdRef, requestId)) return
+						onError: async ({ kind, error: err }, { isCurrent, eventCounter }) => {
+							if (!isCurrent()) return
+							if (err instanceof AgenticMutationReconcileError) {
+								adoptResponseSession(err.sessionId)
+								if (err.status === 'pending') {
+									dispatchStream({
+										type: 'SET_ERROR',
+										value: 'The prompt request is still being processed. Reconnect to check again.'
+									})
+									dispatchStream({ type: 'SET_LAST_FAILED_REQUEST', value: failedRequest })
+									dispatchStream({ type: 'RESET_STREAM' })
+									return
+								}
+								startRecoveryCycle({
+									targetSessionId: err.sessionId,
+									buffer,
+									failedRequest,
+									error: err
+								})
+								return
+							}
 							if (kind === 'abort') {
 								appendBufferedAssistantMessage(buffer, currentMessageIdRef, appendMessage)
 								dispatchStream({ type: 'RESET_STREAM' })
@@ -1951,23 +1569,19 @@ export function AgenticChat({
 							appendBufferedAssistantMessage(buffer, currentMessageIdRef, appendMessage)
 							dispatchStream({ type: 'RESET_STREAM' })
 						},
-						onSuccess: async ({ requestId, eventCounter }) => {
+						onSuccess: async ({ isCurrent, eventCounter }) => {
 							let handedOffToResume = false
 							let recoveryStarted = false
-							if (
-								isActiveRequest(activeRequestIdRef, requestId) &&
-								currentSessionId &&
-								!buffer.error &&
-								!hasStreamBufferContent(buffer)
-							) {
+							if (isCurrent() && currentSessionId && !buffer.error && !hasStreamBufferContent(buffer)) {
 								// The HTTP stream can finish without local content if the result was
 								// persisted server-side first; attach to that execution before clearing UI.
 								buffer.receivedEventCount = eventCounter.count
 								const resumeSessionId = currentSessionId
-								handedOffToResume = await resumeRunningExecution({
+								const resumeOutcome = await resumeRunningExecution({
 									targetSessionId: resumeSessionId,
 									buffer,
 									resetStream: false,
+									operation,
 									onTemporaryDisconnect: (disconnectError, streamBuffer) => {
 										recoveryStarted = startRecoveryCycle({
 											targetSessionId: resumeSessionId,
@@ -1977,72 +1591,154 @@ export function AgenticChat({
 										})
 									}
 								})
-								if (!handedOffToResume && !recoveryStarted && isActiveRequest(activeRequestIdRef, requestId)) {
+								handedOffToResume = resumeOutcome === 'settled'
+								if (!handedOffToResume && !recoveryStarted && isCurrent()) {
 									dispatchStream({ type: 'RESET_STREAM' })
 								}
 							}
 
-							if (!handedOffToResume && isActiveRequest(activeRequestIdRef, requestId)) {
+							if (!handedOffToResume && isCurrent()) {
 								setActiveLeafMessageId(currentMessageIdRef.current)
 							}
 						},
-						onFinally: () => {
-							promptSubmissionLockRef.current = false
-							finishDuel()
+						onFinally: ({ isCurrent }) => {
+							releaseSubmission()
+							if (isCurrent()) finishDuel()
 						}
 					})
 				})
-				.catch(() => {
-					promptSubmissionLockRef.current = false
-				})
+			})().catch(() => {
+				releaseSubmission()
+			})
 
 			return true
 		},
 		[
 			startDuel,
-			handleDuelArmEvent,
-			handleQueueUpdated,
-			markDuelReady,
 			finishDuel,
 			resetDuel,
 			duelPairId,
 			restoreSessionSnapshot,
 			sessionId,
-			mode,
 			authorizedFetchCompat,
 			createSession,
-			createFakeSession,
 			applyServerSessionTitle,
 			moveSessionToTop,
 			researchModalStore,
 			primeAudio,
-			notify,
-			settings.customInstructions,
-			settings.enablePremiumTools,
 			appendMessage,
-			replaceLocalUserMessageId,
 			abortActiveRequest,
+			createChatStreamCallbacks,
+			executionCoordinator,
+			restoreCoordinator,
 			resumeRunningExecution,
 			startRecoveryCycle,
-			setMessageSiblingInfo,
 			sessionTitle,
 			sessions,
 			attach,
 			shouldShowLanding,
 			triggerPromptTransition,
-			quotedText,
-			isMobileChatView,
-			settings.model,
-			settings.effort,
 			sharedSession,
-			effectiveShareToken,
-			routeProjectId,
-			currentSessionProjectId,
 			registerSessionAlias,
 			replaceOptimisticSessionId,
-			onSharedSessionFork,
+			onSharedSessionFork
+		]
+	)
+
+	// Composer state is captured once here. Retries bypass this path and reuse
+	// the immutable request that this submission creates.
+	const handleSubmit = useCallback(
+		(
+			prompt: string,
+			entities?: Array<{ term: string; slug: string; type?: string }>,
+			images?: Array<{ data: string; mimeType: string; filename?: string; isPasted?: boolean }>,
+			pageContext?: ChatPageContext,
+			options?: {
+				isSuggestedQuestion?: boolean
+				modeOverride?: AgenticAnswerMode
+				quotedTextOverride?: string | null
+			}
+		): boolean => {
+			const trimmed = prompt.trim()
+			const hasImages = !!images?.length
+			if ((!trimmed && !hasImages) || isStreamingRef.current || promptSubmissionLockRef.current !== null) return false
+
+			if (sharedSession && !sessionId && !hasUser) {
+				onForkSubmit?.(trimmed)
+				return true
+			}
+
+			const effectiveMode = options?.modeOverride ?? mode
+			return startPromptSubmission(effectiveMode, () => {
+				const submitProjectId = routeProjectId ?? currentSessionProjectId
+				let currentSessionId = sessionId
+
+				if (sharedSession && !currentSessionId) {
+					currentSessionId = createFakeSession(submitProjectId)
+					setSessionId(currentSessionId)
+					setCurrentSessionProjectId(submitProjectId)
+					setSessionTitle(sharedSession.session.title)
+					setMessages(sharedSession.messages.map((message, index) => mapSharedSessionMessage(message, index)))
+					isFirstMessageRef.current = false
+				} else if (isFirstMessageRef.current && !currentSessionId) {
+					currentSessionId = createFakeSession(submitProjectId, trimmed)
+					setSessionId(currentSessionId)
+					setCurrentSessionProjectId(submitProjectId)
+					isFirstMessageRef.current = false
+				}
+
+				const currentQuotedText =
+					options?.quotedTextOverride === undefined
+						? quotedText || undefined
+						: (options.quotedTextOverride ?? undefined)
+				if (options?.quotedTextOverride === undefined && currentQuotedText) setQuotedText(null)
+
+				// A share token forks a public snapshot exactly once. The immutable
+				// request retains it if the network later needs an exact replay.
+				const currentShareToken = !shareTokenConsumedRef.current ? effectiveShareToken : undefined
+				if (currentShareToken) shareTokenConsumedRef.current = true
+
+				const failedRequest: FailedRequest = {
+					mutation: createAgenticMutationEnvelope({
+						clientMutationId: crypto.randomUUID(),
+						message: trimmed,
+						sessionId: currentSessionId!,
+						mode: effectiveMode,
+						entities: entities?.length ? entities : undefined,
+						images: images?.length ? images : undefined,
+						pageContext,
+						quotedText: currentQuotedText,
+						customInstructions: settings.customInstructions || undefined,
+						enablePremiumTools: settings.enablePremiumTools,
+						model: settings.model || undefined,
+						effort: settings.effort || undefined,
+						isSuggestedQuestion: options?.isSuggestedQuestion,
+						blockedSkills: isMobileChatView ? ['dashboard'] : undefined,
+						shareToken: currentShareToken,
+						projectId: submitProjectId
+					}),
+					optimisticMessageId: `local-${crypto.randomUUID()}`
+				}
+				return { currentSessionId: currentSessionId!, failedRequest, submitProjectId }
+			})
+		},
+		[
+			sharedSession,
+			sessionId,
 			hasUser,
-			onForkSubmit
+			onForkSubmit,
+			mode,
+			startPromptSubmission,
+			routeProjectId,
+			currentSessionProjectId,
+			createFakeSession,
+			quotedText,
+			effectiveShareToken,
+			settings.customInstructions,
+			settings.enablePremiumTools,
+			settings.model,
+			settings.effort,
+			isMobileChatView
 		]
 	)
 
@@ -2083,7 +1779,7 @@ export function AgenticChat({
 				if (result === 'busy') return { status: 'cancelled' as const }
 				if (result === 'aborted') return { status: 'cancelled' as const }
 				if (result === 'session_idle') {
-					return handleSubmit(trimmed, entities, images, undefined, undefined, modeOverride, quotedTextOverride)
+					return handleSubmit(trimmed, entities, images, undefined, { modeOverride, quotedTextOverride })
 						? ({ status: 'accepted' } as const)
 						: ({ status: 'rejected', message: 'Failed to submit your prompt. Please try again.' } as const)
 				}
@@ -2152,16 +1848,10 @@ export function AgenticChat({
 			// can only replay from the truncated local history.
 			const isBranchingEdit = !/^(local|persisted|shared)-/.test(messageId)
 
-			// Abort any in-flight submission FIRST — its `.finally` releases the prompt lock,
-			// otherwise the lock check below would always bail during streaming.
-			try {
-				await abortActiveRequest()
-			} catch {
-				return
-			}
+			abortActiveRequest()
 
-			if (promptSubmissionLockRef.current) return
-			promptSubmissionLockRef.current = true
+			const submissionId = ++nextPromptSubmissionIdRef.current
+			promptSubmissionLockRef.current = submissionId
 			triggerPromptTransition('conversation')
 
 			setViewError(null)
@@ -2181,155 +1871,145 @@ export function AgenticChat({
 			attach()
 
 			const buffer = createStreamBuffer()
+			const mutation = createAgenticMutationEnvelope({
+				clientMutationId: crypto.randomUUID(),
+				message: trimmed,
+				sessionId,
+				editMessageId: isBranchingEdit ? messageId : undefined,
+				mode,
+				quotedText: original.quotedText || undefined,
+				customInstructions: settings.customInstructions || undefined,
+				enablePremiumTools: settings.enablePremiumTools,
+				model: settings.model || undefined,
+				effort: settings.effort || undefined,
+				blockedSkills: isMobileChatView ? ['dashboard'] : undefined,
+				projectId: currentSessionProjectId
+			})
 			let shouldThrowEditError: UsageLimitError | null = null
 			let handedOffToResume = false
 
-			await runAgenticRequest({
-				mode: 'edit',
-				sessionId: toSessionId(sessionId),
-				requestKind: 'prompt',
-				activeRequestIdRef,
-				activeRequestKindRef,
-				activeSessionIdRef,
-				abortControllerRef,
-				activeRequestSettleRef,
-				createCallbacks: ({ requestId }) =>
-					createAgenticCallbacks({
-						requestId,
-						activeRequestIdRef,
-						buffer,
-						dispatch: dispatchStream,
-						currentMessageIdRef,
-						toolCallIdRef,
-						appendMessage,
-						replaceLocalUserMessageId,
-						setMessageSiblingInfo,
-						deferEmptyDone: true,
-						notify,
-						onDuelStart: startDuel,
-						onArmEvent: handleDuelArmEvent,
-						onDuelReady: markDuelReady,
-						onDashboardArtifact: (dashboard) => dispatchDashboardPanel({ type: 'APPEND', value: dashboard }),
-						onTokenLimit: () => setShowTokenLimitModal(true),
-						onQueueUpdated: handleQueueUpdated,
-						onTitle: (title) => {
-							setSessionTitle(title)
-							applyServerSessionTitle(sessionId, title, currentSessionProjectId)
-						}
-					}),
-				execute: ({ callbacks, signal, eventCounter }) =>
-					fetchAgenticResponse({
-						message: trimmed,
-						sessionId,
-						editMessageId: isBranchingEdit ? messageId : undefined,
-						mode,
-						quotedText: original.quotedText || undefined,
-						customInstructions: settings.customInstructions || undefined,
-						enablePremiumTools: settings.enablePremiumTools,
-						model: settings.model || undefined,
-						effort: settings.effort || undefined,
-						blockedSkills: isMobileChatView ? ['dashboard'] : undefined,
-						projectId: currentSessionProjectId,
-						abortSignal: signal,
-						fetchFn: authorizedFetchCompat,
-						eventCounter,
-						callbacks
-					}),
-				onSuccess: async ({ requestId, eventCounter }) => {
-					if (isActiveRequest(activeRequestIdRef, requestId) && !buffer.error && !hasStreamBufferContent(buffer)) {
-						buffer.receivedEventCount = eventCounter.count
-						let recoveryStarted = false
-						handedOffToResume = await resumeRunningExecution({
-							targetSessionId: sessionId,
+			await executionCoordinator.run(sessionId, 'edit', async (operation) => {
+				await runAgenticRequest({
+					mode: 'edit',
+					operation,
+					createCallbacks: ({ isCurrent }) =>
+						createChatStreamCallbacks({
 							buffer,
-							resetStream: false,
-							onTemporaryDisconnect: (disconnectError, streamBuffer) => {
-								recoveryStarted = startRecoveryCycle({
-									targetSessionId: sessionId,
-									buffer: streamBuffer,
-									failedRequest: null,
-									error: disconnectError
-								})
+							isCurrent,
+							targetSessionId: sessionId,
+							deferEmptyDone: true,
+							onTitle: (title) => {
+								setSessionTitle(title)
+								applyServerSessionTitle(sessionId, title, currentSessionProjectId)
 							}
-						})
-						if (handedOffToResume || recoveryStarted) return
-						if (isActiveRequest(activeRequestIdRef, requestId)) {
-							dispatchStream({ type: 'RESET_STREAM' })
-						}
-					}
-					if (isActiveRequest(activeRequestIdRef, requestId)) {
-						setActiveLeafMessageId(currentMessageIdRef.current)
-					}
-					// siblingInfo arrives via SSE `sibling_info` mid-stream — no extra restore call needed
-				},
-				onError: ({ kind, error: editError }, { eventCounter }) => {
-					if (kind === 'abort') {
-						appendBufferedAssistantMessage(buffer, currentMessageIdRef, appendMessage)
-						dispatchStream({ type: 'RESET_STREAM' })
-						return
-					}
-					if (kind === 'temporary-connectivity') {
-						buffer.receivedEventCount = eventCounter.count
-						if (
-							startRecoveryCycle({
+						}),
+					execute: ({ callbacks, signal, eventCounter }) =>
+						fetchAgenticResponse({
+							mutation,
+							abortSignal: signal,
+							fetchFn: authorizedFetchCompat,
+							eventCounter,
+							callbacks
+						}),
+					onSuccess: async ({ isCurrent, eventCounter }) => {
+						if (isCurrent() && !buffer.error && !hasStreamBufferContent(buffer)) {
+							buffer.receivedEventCount = eventCounter.count
+							let recoveryStarted = false
+							const resumeOutcome = await resumeRunningExecution({
 								targetSessionId: sessionId,
 								buffer,
-								failedRequest: null,
-								error: editError
+								resetStream: false,
+								operation,
+								onTemporaryDisconnect: (disconnectError, streamBuffer) => {
+									recoveryStarted = startRecoveryCycle({
+										targetSessionId: sessionId,
+										buffer: streamBuffer,
+										failedRequest: null,
+										error: disconnectError
+									})
+								}
 							})
-						) {
+							handedOffToResume = resumeOutcome === 'settled'
+							if (handedOffToResume || recoveryStarted) return
+							if (isCurrent()) {
+								dispatchStream({ type: 'RESET_STREAM' })
+							}
+						}
+						if (isCurrent()) {
+							setActiveLeafMessageId(currentMessageIdRef.current)
+						}
+						// siblingInfo arrives via SSE `sibling_info` mid-stream — no extra restore call needed
+					},
+					onError: ({ kind, error: editError }, { isCurrent, eventCounter }) => {
+						if (!isCurrent()) return
+						if (kind === 'abort') {
+							appendBufferedAssistantMessage(buffer, currentMessageIdRef, appendMessage)
+							dispatchStream({ type: 'RESET_STREAM' })
 							return
 						}
-					}
-					if (kind === 'free-limit' && isFreeLimitError(editError)) {
-						setMessages(messagesSnapshot)
-						setActiveLeafMessageId(activeLeafSnapshot)
-						appendMessage(buildFreeLimitMessage(editError))
-						dispatchStream({ type: 'RESET_STREAM' })
-						return
-					}
-					if (editError.code === 'FACT_CHECKED_REQUIRES_SUBSCRIPTION') {
-						setMessages(messagesSnapshot)
-						setActiveLeafMessageId(activeLeafSnapshot)
-						dispatchStream({
-							type: 'SET_RATE_LIMIT_DETAILS',
-							value: {
-								period: 'blocked',
-								limit: 0,
-								resetTime: null
+						if (kind === 'temporary-connectivity') {
+							buffer.receivedEventCount = eventCounter.count
+							if (
+								startRecoveryCycle({
+									targetSessionId: sessionId,
+									buffer,
+									failedRequest: null,
+									error: editError
+								})
+							) {
+								return
 							}
-						})
-						dispatchStream({ type: 'RESET_STREAM' })
-						setLimitModalFeature('fact_checked')
-						researchModalStore.show()
-						return
-					}
-					if (kind === 'usage-limit') {
+						}
+						if (kind === 'free-limit' && isFreeLimitError(editError)) {
+							setMessages(messagesSnapshot)
+							setActiveLeafMessageId(activeLeafSnapshot)
+							appendMessage(buildFreeLimitMessage(editError))
+							dispatchStream({ type: 'RESET_STREAM' })
+							return
+						}
+						if (editError.code === 'FACT_CHECKED_REQUIRES_SUBSCRIPTION') {
+							setMessages(messagesSnapshot)
+							setActiveLeafMessageId(activeLeafSnapshot)
+							dispatchStream({
+								type: 'SET_RATE_LIMIT_DETAILS',
+								value: {
+									period: 'blocked',
+									limit: 0,
+									resetTime: null
+								}
+							})
+							dispatchStream({ type: 'RESET_STREAM' })
+							setLimitModalFeature('fact_checked')
+							researchModalStore.show()
+							return
+						}
+						if (kind === 'usage-limit') {
+							setMessages(messagesSnapshot)
+							setActiveLeafMessageId(activeLeafSnapshot)
+							dispatchStream({
+								type: 'SET_RATE_LIMIT_DETAILS',
+								value: {
+									period: editError.details?.period || 'lifetime',
+									limit: editError.details?.limit || 0,
+									resetTime: editError.details?.resetTime || null
+								}
+							})
+							dispatchStream({ type: 'RESET_STREAM' })
+							setLimitModalFeature(editError.details?.feature === 'fact_checked' ? 'fact_checked' : 'research')
+							researchModalStore.show()
+							return
+						}
 						setMessages(messagesSnapshot)
 						setActiveLeafMessageId(activeLeafSnapshot)
-						dispatchStream({
-							type: 'SET_RATE_LIMIT_DETAILS',
-							value: {
-								period: editError.details?.period || 'lifetime',
-								limit: editError.details?.limit || 0,
-								resetTime: editError.details?.resetTime || null
-							}
-						})
+						setViewError(getErrorMessage(editError))
 						dispatchStream({ type: 'RESET_STREAM' })
-						setLimitModalFeature(editError.details?.feature === 'fact_checked' ? 'fact_checked' : 'research')
-						researchModalStore.show()
-						return
+						shouldThrowEditError = editError
+					},
+					onFinally: ({ isCurrent }) => {
+						if (promptSubmissionLockRef.current === submissionId) promptSubmissionLockRef.current = null
+						if (isCurrent()) finishDuel()
 					}
-					setMessages(messagesSnapshot)
-					setActiveLeafMessageId(activeLeafSnapshot)
-					setViewError(getErrorMessage(editError))
-					dispatchStream({ type: 'RESET_STREAM' })
-					shouldThrowEditError = editError
-				},
-				onFinally: () => {
-					promptSubmissionLockRef.current = false
-					finishDuel()
-				}
+				})
 			})
 			if (!handedOffToResume && shouldThrowEditError) {
 				const editError = new Error(shouldThrowEditError.message)
@@ -2346,28 +2026,23 @@ export function AgenticChat({
 		[
 			activeLeafMessageId,
 			appendMessage,
-			replaceLocalUserMessageId,
-			handleQueueUpdated,
 			attach,
 			authorizedFetchCompat,
 			abortActiveRequest,
-			handleDuelArmEvent,
-			markDuelReady,
+			createChatStreamCallbacks,
+			executionCoordinator,
 			finishDuel,
 			isMobileChatView,
 			mode,
 			messages,
-			notify,
 			researchModalStore,
 			resumeRunningExecution,
 			sessionId,
-			startDuel,
 			currentSessionProjectId,
 			settings.customInstructions,
 			settings.enablePremiumTools,
 			settings.effort,
 			settings.model,
-			setMessageSiblingInfo,
 			startRecoveryCycle,
 			triggerPromptTransition,
 			applyServerSessionTitle
@@ -2377,35 +2052,34 @@ export function AgenticChat({
 	const handleBranchSwitch = useCallback(
 		async (leafMessageId: string) => {
 			if (!sessionId || isStreaming) return
-			await abortActiveRequest()
-			const requestId = beginRequest(activeRequestIdRef, activeRequestKindRef, activeSessionIdRef, 'branch', sessionId)
-			setViewError(null)
-			setPaginationError(null)
-			try {
-				const result = await switchActiveLeaf({ sessionId, leafMessageId })
-				if (!isActiveRequest(activeRequestIdRef, requestId) || activeSessionIdRef.current !== sessionId) return
-				setActiveLeafMessageId(result.activeLeafMessageId)
-				if (Array.isArray(result.messages)) {
-					const restored = mapPersistedMessages(result.messages as PersistedMessage[])
-					setMessages(restored)
-					setConversationViewResetKey((current) => current + 1)
-					dispatchDashboardPanel({ type: 'RESTORE', value: restored.flatMap((message) => message.dashboards || []) })
-					setPaginationState(normalizePaginationState(result.pagination))
-					dispatchStream({ type: 'SET_ERROR', value: null })
-					dispatchStream({ type: 'SET_LAST_FAILED_REQUEST', value: null })
-					dispatchStream({ type: 'RESET_RECOVERY' })
-				} else {
-					await restoreSessionSnapshot(sessionId, requestId)
+			abortActiveRequest()
+			await branchCoordinator.run(sessionId, async (operation) => {
+				setViewError(null)
+				setPaginationError(null)
+				try {
+					const result = await switchActiveLeaf({ sessionId, leafMessageId, signal: operation.signal })
+					if (!operation.isCurrent() || currentSessionIdRef.current !== sessionId) return
+					setActiveLeafMessageId(result.activeLeafMessageId)
+					if (Array.isArray(result.messages)) {
+						const restored = mapPersistedMessages(result.messages as PersistedMessage[])
+						setMessages(restored)
+						setConversationViewResetKey((current) => current + 1)
+						dispatchDashboardPanel({ type: 'RESTORE', value: restored.flatMap((message) => message.dashboards || []) })
+						setPaginationState(normalizePaginationState(result.pagination))
+						dispatchStream({ type: 'SET_ERROR', value: null })
+						dispatchStream({ type: 'SET_LAST_FAILED_REQUEST', value: null })
+						dispatchStream({ type: 'RESET_RECOVERY' })
+					} else {
+						await restoreSessionSnapshot(sessionId, operation)
+					}
+				} catch (switchError) {
+					if (operation.isCurrent() && currentSessionIdRef.current === sessionId) {
+						setViewError(getErrorMessage(switchError))
+					}
 				}
-			} catch (switchError) {
-				if (isActiveRequest(activeRequestIdRef, requestId) && activeSessionIdRef.current === sessionId) {
-					setViewError(getErrorMessage(switchError))
-				}
-			} finally {
-				completeRequest(activeRequestIdRef, activeRequestKindRef, activeSessionIdRef, requestId)
-			}
+			})
 		},
-		[abortActiveRequest, isStreaming, restoreSessionSnapshot, sessionId, switchActiveLeaf]
+		[abortActiveRequest, branchCoordinator, isStreaming, restoreSessionSnapshot, sessionId, switchActiveLeaf]
 	)
 
 	const submitDuelVote = useCallback(
@@ -2447,22 +2121,30 @@ export function AgenticChat({
 			let acknowledged = false
 			let confirmedInactive = false
 			try {
-				while (!stopController.signal.aborted && currentSessionIdRef.current === targetSessionId) {
+				while (
+					!stopController.signal.aborted &&
+					(routeSessionIdRef.current ?? currentSessionIdRef.current) === targetSessionId
+				) {
 					try {
 						const result = await stopAgenticExecution(targetSessionId, authorizedFetchCompat, stopController.signal)
+						if ((routeSessionIdRef.current ?? currentSessionIdRef.current) !== targetSessionId) return
 						acknowledged = true
-						if (result.active) continue
+						if (result.active) {
+							await waitForAbortableDelay(500, stopController.signal)
+							continue
+						}
 						applyQueueSnapshot(result.snapshot)
 						confirmedInactive = true
 						break
 					} catch (stopError) {
 						if (stopController.signal.aborted) return
 						if (!acknowledged) throw stopError
-						await new Promise((resolve) => setTimeout(resolve, 1000))
+						await waitForAbortableDelay(1000, stopController.signal)
 					}
 				}
 			} catch {
-				if (currentSessionIdRef.current === targetSessionId) {
+				if (stopController.signal.aborted) return
+				if ((routeSessionIdRef.current ?? currentSessionIdRef.current) === targetSessionId) {
 					dispatchStream({ type: 'STOP_FAILED', error: 'Could not stop the response. Try again.' })
 				}
 				return
@@ -2470,9 +2152,9 @@ export function AgenticChat({
 				if (stopSettlementControllerRef.current === stopController) stopSettlementControllerRef.current = null
 			}
 
-			if (!confirmedInactive || currentSessionIdRef.current !== targetSessionId) return
+			if (!confirmedInactive || (routeSessionIdRef.current ?? currentSessionIdRef.current) !== targetSessionId) return
 			await abortActiveRequest()
-			if (currentSessionIdRef.current !== targetSessionId) return
+			if ((routeSessionIdRef.current ?? currentSessionIdRef.current) !== targetSessionId) return
 			resetDuel()
 			dispatchStream({ type: 'RESET_STREAM' })
 		})()
@@ -2486,6 +2168,22 @@ export function AgenticChat({
 		[isStreaming, handleSubmit]
 	)
 
+	const reconcileSessionExecution = useStableCallback(async (targetSessionId: string) => {
+		const ownsTarget = () => (routeSessionIdRef.current ?? currentSessionIdRef.current) === targetSessionId
+		if (!ownsTarget()) return
+		const resumeOutcome = await resumeRunningExecution({ targetSessionId })
+		if (resumeOutcome === 'settled' || resumeOutcome === 'aborted') return
+		if (!ownsTarget()) return
+
+		const restoreResult = await restoreCoordinator.run(targetSessionId, (operation) =>
+			restoreSessionSnapshot(targetSessionId, operation)
+		)
+		if (!ownsTarget() || !restoreResult.restored) return
+		if (restoreResult.execution) {
+			await resumeRunningExecution({ targetSessionId, executionHint: restoreResult.execution })
+		}
+	})
+
 	// Immediately attempt to reconnect to a running or completed server-side execution.
 	// Works during active recovery (doesn't require lastFailedRequest).
 	const handleReconnectNow = useStableCallback(() => {
@@ -2495,30 +2193,23 @@ export function AgenticChat({
 			return
 		}
 		if (sessionId) {
-			void resumeRunningExecution({ targetSessionId: sessionId })
+			void reconcileSessionExecution(sessionId)
 		}
 	})
 
-	// Retry the last failed prompt submission with the same prompt, images, and page context.
-	const handleRetryLastFailedPrompt = useCallback(() => {
+	// Replay only the sealed request. Current composer text, images, settings,
+	// quote, and project state cannot alter a failed prompt.
+	const handleReconnectFailedPrompt = useCallback(() => {
 		if (!lastFailedRequest) return
+		const failedRequest = lastFailedRequest
 		dispatchStream({ type: 'SET_ERROR', value: null })
-		void (async () => {
-			if (sessionId) {
-				await abortActiveRequest()
-				const didResume = await resumeRunningExecution({ targetSessionId: sessionId })
-				if (didResume) return
-				const restoreResult = await restoreSessionSnapshot(sessionId, activeRequestIdRef.current)
-				if (restoreResult.recoveredResponse) return
-			}
-			handleSubmit(
-				lastFailedRequest.prompt,
-				lastFailedRequest.entities,
-				lastFailedRequest.images,
-				lastFailedRequest.pageContext
-			)
-		})()
-	}, [abortActiveRequest, handleSubmit, lastFailedRequest, restoreSessionSnapshot, resumeRunningExecution, sessionId])
+		if (failedRequest.mutation.shareToken) shareTokenConsumedRef.current = true
+		startPromptSubmission(failedRequest.mutation.mode ?? 'quick', () => ({
+			currentSessionId: sessionId ?? failedRequest.mutation.sessionId,
+			failedRequest,
+			submitProjectId: failedRequest.mutation.projectId ?? null
+		}))
+	}, [lastFailedRequest, sessionId, startPromptSubmission])
 
 	// Consume pending prompts injected by the floating button once the base chat page mounts.
 	const submitPendingPromptEvent = useStableCallback(
@@ -2527,7 +2218,7 @@ export function AgenticChat({
 			pageContext?: { entitySlug?: string; entityType?: 'protocol' | 'chain' | 'page'; route: string },
 			isSuggestedQuestion?: boolean
 		) => {
-			handleSubmit(prompt, undefined, undefined, pageContext, isSuggestedQuestion)
+			handleSubmit(prompt, undefined, undefined, pageContext, { isSuggestedQuestion })
 		}
 	)
 
@@ -2609,24 +2300,15 @@ export function AgenticChat({
 	// Resets the recovery grace period so it doesn't immediately exhaust after mobile sleep
 	// (setTimeout timers are frozen during sleep but wall clock advances).
 	const reconnectVisibleExecutionEvent = useEffectEvent(() => {
-		if (readOnly) return
+		if (readOnly || isRouteSessionPending) return
 		const controller = recoveryControllerRef.current
 		if (controller) {
 			controller.startedAt = Date.now()
-			if (controller.expiryTimerId !== null) {
-				window.clearTimeout(controller.expiryTimerId)
-			}
-			controller.expiryTimerId = window.setTimeout(() => {
-				const latest = recoveryControllerRef.current
-				if (!latest || latest.id !== controller.id || latest.attemptInFlight || latest.streamAttached) return
-				if (!shouldGiveUpRecovery(latest.lastSnapshot, Date.now() - latest.startedAt)) return
-				exhaustRecovery(latest)
-			}, RECOVERY_GRACE_MS)
-			attemptRecoveryForController(controller.id)
+			scheduleRecoveryAttempt(controller, 0, () => void attemptRecoveryForController(controller.id))
 			return
 		}
 		if (sessionId && !isStreaming && error) {
-			void resumeRunningExecution({ targetSessionId: sessionId })
+			void reconcileSessionExecution(sessionId)
 		}
 	})
 
@@ -2662,13 +2344,13 @@ export function AgenticChat({
 	// After recovery exhausts, periodically check if the server-side execution completed
 	// so we can restore the result without requiring user interaction.
 	useEffect(() => {
-		if (isStreaming || !error || !sessionId || readOnly) return
+		if (isRouteSessionPending || isStreaming || !error || !sessionId || readOnly) return
 		const intervalId = window.setInterval(() => {
 			if (document.hidden) return
-			void resumeRunningExecution({ targetSessionId: sessionId })
+			void reconcileSessionExecution(sessionId)
 		}, 30_000)
 		return () => window.clearInterval(intervalId)
-	}, [isStreaming, error, sessionId, readOnly, resumeRunningExecution])
+	}, [isRouteSessionPending, isStreaming, error, sessionId, readOnly, reconcileSessionExecution])
 
 	// Shared/public sessions are read-only snapshots, so they should never create a fake local session.
 	useEffect(() => {
@@ -2731,7 +2413,13 @@ export function AgenticChat({
 		isSharedView,
 		draftScope: promptDraftScope,
 		title: readOnly ? effectiveSessionTitle || 'Shared Conversation' : 'What can I help you with?',
-		handleSubmit,
+		handleSubmit: (
+			prompt: string,
+			entities?: Array<{ term: string; slug: string; type?: string }>,
+			images?: Array<{ data: string; mimeType: string; filename?: string; isPasted?: boolean }>,
+			pageContext?: ChatPageContext,
+			isSuggestedQuestion?: boolean
+		) => handleSubmit(prompt, entities, images, pageContext, { isSuggestedQuestion }),
 		promptInputRef,
 		handleStopRequest,
 		isStreaming,
@@ -2813,8 +2501,8 @@ export function AgenticChat({
 		paginationError,
 		recovery,
 		error: visibleError,
-		lastFailedPrompt: viewError ? null : (lastFailedRequest?.prompt ?? null),
-		onRetryLastFailedPrompt: handleRetryLastFailedPrompt,
+		lastFailedPrompt: viewError ? null : (lastFailedRequest?.mutation.message ?? null),
+		onReconnectFailedPrompt: handleReconnectFailedPrompt,
 		onReconnectNow: handleReconnectNow,
 		scrollContainerRef,
 		messagesEndRef,
@@ -2967,12 +2655,18 @@ export function AgenticChat({
 										Share
 									</button>
 								) : null}
-								{restoringSessionId && !hasMessages ? (
+								{(isRouteSessionPending || restoringSessionId) && !hasMessages && !visibleError ? (
 									<LoadingConversationState />
 								) : !hasMessages && visibleError ? (
 									<EmptyConversationErrorState
 										message={visibleError}
-										onRetry={lastFailedRequest ? handleRetryLastFailedPrompt : undefined}
+										onRetry={
+											isRouteSessionPending && routeSessionId
+												? () => void handleSessionSelect(routeSessionId)
+												: lastFailedRequest
+													? handleReconnectFailedPrompt
+													: undefined
+										}
 									/>
 								) : (
 									<ChatSurface
@@ -2986,24 +2680,24 @@ export function AgenticChat({
 									/>
 								)}
 							</div>
-							{rightPanel ? (
+							{!isRouteSessionPending && rightPanel ? (
 								<aside className="hidden w-[340px] shrink-0 flex-col overflow-y-auto rounded-lg border border-ai-line bg-surface lg:ml-2 lg:flex">
 									{rightPanel}
 								</aside>
 							) : null}
-							{citationSheet.isOpen ? (
+							{!isRouteSessionPending && citationSheet.isOpen ? (
 								<CitationDetailPanel
 									advancedProvenance={settings.advancedProvenance}
 									onBackToDashboard={
-										dashboardVersions.length > 0 && dashboardPanelIsOpen ? citationSheet.close : undefined
+										visibleDashboardVersions.length > 0 && dashboardPanelIsOpen ? citationSheet.close : undefined
 									}
 								/>
-							) : dashboardVersions.length > 0 ? (
+							) : visibleDashboardVersions.length > 0 && visibleDashboardConfig ? (
 								<Suspense fallback={null}>
 									<DashboardPanel
-										config={dashboardPanelMountedConfig}
+										config={visibleDashboardConfig}
 										isOpen={dashboardPanelIsOpen}
-										versions={dashboardVersions}
+										versions={visibleDashboardVersions}
 										versionIndex={dashboardVersionIndex}
 										onVersionChange={handleDashboardVersionChange}
 										onClose={handleDashboardClose}

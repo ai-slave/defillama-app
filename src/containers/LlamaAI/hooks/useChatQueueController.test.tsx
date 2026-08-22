@@ -51,8 +51,8 @@ describe('useChatQueueController', () => {
 	let root: Root
 	let controller: Controller
 
-	function Harness({ sessionId }: { sessionId: string | null }) {
-		controller = useChatQueueController({ sessionId, authorizedFetch: vi.fn() })
+	function Harness({ sessionId, enabled = true }: { sessionId: string | null; enabled?: boolean }) {
+		controller = useChatQueueController({ sessionId, enabled, authorizedFetch: vi.fn() })
 		return null
 	}
 
@@ -126,9 +126,16 @@ describe('useChatQueueController', () => {
 			expect.any(AbortSignal)
 		)
 
-		await act(async () => root.render(<Harness sessionId="session-2" />))
+		await act(async () => root.render(<Harness sessionId="session-1" enabled={false} />))
 		await act(async () => vi.advanceTimersByTimeAsync(30_000))
 		expect(renewQueuedMessageEdit).toHaveBeenCalledOnce()
+		await act(async () => root.render(<Harness sessionId="session-1" />))
+		await act(async () => vi.advanceTimersByTimeAsync(30_000))
+		expect(renewQueuedMessageEdit).toHaveBeenCalledTimes(2)
+
+		await act(async () => root.render(<Harness sessionId="session-2" />))
+		await act(async () => vi.advanceTimersByTimeAsync(30_000))
+		expect(renewQueuedMessageEdit).toHaveBeenCalledTimes(2)
 	})
 
 	it('restores this tab edit ownership and draft when returning to a session', async () => {
