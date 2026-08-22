@@ -232,9 +232,92 @@ export interface MasterDirectoryVenue extends MasterVenueCore {
 	rank: {
 		score: number
 		rank: number
+		/** Public tier band (S ≥85, A ≥70, B ≥55, C ≥40, else D); S additionally
+		 * requires measured execution. Optional: absent in files written by the
+		 * pre-tier ranking script. */
+		tier?: string
 		segments: Partial<Record<MasterSegment, number>>
 		components: Record<string, number | null>
 	} | null
+}
+
+/** Measured execution quality (tick-level fills on the shared perp basket) —
+ * `exchanges/execution-quality.json`. Linear perps only today. Minimal cut of the
+ * upstream shape: just what the directory table and profile Execution tab render. */
+export interface MasterExecutionPairMetrics {
+	asset: string
+	hours_covered: number
+	n_trades: number
+	cost_to_trade_bps: number | null
+	effective_spread_bps: number | null
+	quoted_spread_bps: number | null
+	realized_slippage_bps_10k: number | null
+	predicted_slippage_bps_10k: number | null
+	realized_slippage_bps_100k: number | null
+	predicted_slippage_bps_100k: number | null
+	realized_slippage_bps_1m: number | null
+	predicted_slippage_bps_1m: number | null
+	markout_bps_1s: number | null
+	markout_bps_15s: number | null
+	markout_bps_1m: number | null
+	markout_bps_5m: number | null
+}
+
+/** BTC book-feed health for the venue's captured tick feed (latest measured day). A
+ * degraded reading can come from the data pipeline rather than the venue, so it is
+ * disclosed, never scored. */
+export interface MasterExecutionFeedHealth {
+	date: string
+	avg_gap_ms: number
+	median_gap_ms: number
+	p99_gap_ms: number
+	max_gap_ms: number
+	downtime_s: number
+	degraded: boolean
+}
+
+export interface MasterExecutionVenueMetrics {
+	assets: string[]
+	hours_covered: number
+	cost_to_trade_bps: number | null
+	realized_slippage_bps_10k: number | null
+	predicted_slippage_bps_10k: number | null
+	markout_bps_1m: number | null
+	feed?: MasterExecutionFeedHealth
+	pairs?: Record<string, MasterExecutionPairMetrics>
+}
+
+export interface MasterExecutionQualityResponse {
+	basket: string[]
+	venues: Record<string, MasterExecutionVenueMetrics>
+}
+
+/** Committed quality scores — `exchanges/quality-ranks.json`. `rank` is the position
+ * within the venue's own kind; `score` is cross-comparable. */
+export interface MasterQualityRanksResponse {
+	generated_at: string
+	venues: Record<
+		string,
+		{
+			score: number
+			tier?: string
+			rank: number
+			segments: Partial<Record<MasterSegment, number>>
+			components: Record<string, number | null>
+			/** Execution sub-scores (markout/cost/slip, 0–100 peer-relative) behind
+			 * components.E; present only when at least one sub was measured. */
+			exec_subs?: Record<string, number | null>
+		}
+	>
+}
+
+/** Published ranking catalog — `exchanges/rank-methodology.json`: what each pillar
+ * measures and what it weighs, so the profile breakdown can't describe stale math. */
+export interface MasterRankMethodologyResponse {
+	components: Array<{ key: string; label: string; weight: number; what: string; na: string }>
+	/** Catalog for the Execution pillar's sub-metrics; absent in older upstream files. */
+	exec_subs?: Array<{ key: string; label: string; weight: number; what: string }>
+	ranks_generated_at: string | null
 }
 
 export interface MasterDirectoryTotals {

@@ -166,11 +166,25 @@ export interface ExchangeDirectoryRowModel {
 	selectedCountry: string | null
 	selectedCountryStatus: ExchangeRegionStatus | null
 	normalizedVolume: Record<ExchangeSegment, ExchangeNormalizedVolume | null> | null
-	/** Internal quality rank — the directory's default order. Not rendered yet;
-	 * `components` is the breakdown, kept for a later "why this rank" surface. */
+	/** Measured execution quality on the shared perp basket (linear perps only today):
+	 * tick-level fills, not venue claims. Null for uncovered venues — never zero. */
+	execution: {
+		assets: string[]
+		hoursCovered: number
+		costToTradeBps: number | null
+		realizedSlippage10kBps: number | null
+		predictedSlippage10kBps: number | null
+		markout1mBps: number | null
+	} | null
+	/** Internal quality rank — rendered as the tier chip + within-kind position beside
+	 * the venue name, and the directory's default sort. `components` is the breakdown,
+	 * kept for a later "why this rank" surface. */
 	quality: {
 		score: number
 		rank: number
+		/** Public tier band (S–D). Optional: absent until the upstream ranking file
+		 * carries it. */
+		tier?: string
 		segments: Partial<Record<ExchangeSegment, number>>
 		components: Record<string, number | null>
 	} | null
@@ -374,11 +388,84 @@ export interface ExchangeRaiseModel {
 	sourceUrl: string | null
 }
 
+export interface ExchangeExecutionPairModel {
+	asset: string
+	hoursCovered: number
+	fillCount: number
+	costToTradeBps: number | null
+	effectiveSpreadBps: number | null
+	quotedSpreadBps: number | null
+	realizedSlippage10kBps: number | null
+	predictedSlippage10kBps: number | null
+	realizedSlippage100kBps: number | null
+	predictedSlippage100kBps: number | null
+	realizedSlippage1mBps: number | null
+	predictedSlippage1mBps: number | null
+	markout1sBps: number | null
+	markout15sBps: number | null
+	markout1mBps: number | null
+	markout5mBps: number | null
+}
+
+export interface ExchangeExecutionFeedHealth {
+	date: string
+	avgGapMs: number
+	p99GapMs: number
+	maxGapMs: number
+	downtimeS: number
+	degraded: boolean
+}
+
+/** Measured execution quality for the profile's Execution tab: tick-level fills on
+ * the shared perp basket (linear perps only today). Null = venue not covered. */
+export interface ExchangeExecutionModel {
+	assets: string[]
+	hoursCovered: number
+	costToTradeBps: number | null
+	realizedSlippage10kBps: number | null
+	predictedSlippage10kBps: number | null
+	markout1mBps: number | null
+	feed: ExchangeExecutionFeedHealth | null
+	pairs: ExchangeExecutionPairModel[]
+}
+
+/** The venue's quality ranking, joined with the published methodology catalog so the
+ * breakdown can name each pillar and its weight. */
+export interface ExchangeProfileQualityModel {
+	score: number
+	tier: string | null
+	/** Position within the venue's own kind (CEX or DEX). */
+	rankInKind: number
+	/** Position across ALL ranked venues, by score. */
+	overallRank: number
+	overallTotal: number
+	generatedAt: string | null
+	components: Array<{
+		key: string
+		label: string
+		weight: number | null
+		score: number | null
+		what: string | null
+		na: string | null
+	}>
+	/** Sub-scores behind the Execution pillar (markout/cost/slip), joined with their
+	 * published catalog. Empty when the venue has no measured execution. */
+	execSubs: Array<{
+		key: string
+		label: string
+		weight: number | null
+		score: number | null
+		what: string | null
+	}>
+}
+
 export interface ExchangeProfileModel {
 	slug: string
 	name: string
 	kind: ExchangeVenueKind
 	profileMode: ExchangeProfileMode
+	execution: ExchangeExecutionModel | null
+	quality: ExchangeProfileQualityModel | null
 	defillamaUrl: string | null
 	/** DefiLlama cex slug from the venue's links; input for reserve gating, not yet validated against protocol metadata. */
 	defillamaCexSlug: string | null

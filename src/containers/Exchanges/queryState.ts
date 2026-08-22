@@ -8,7 +8,7 @@ export type DirectoryOverviewTab = 'total' | ExchangeSegment
 export type ExchangeResearchPart = 'volume' | 'oi' | 'depth' | 'nvol'
 export type ExchangeResearchRange = '30d' | '90d' | '1y' | '2y' | 'all'
 export type MicaFilter = 'all' | 'spot' | 'perp' | 'fiat'
-export type ProfileTab = 'markets' | 'reserves' | 'information' | 'history'
+export type ProfileTab = 'markets' | 'execution' | 'reserves' | 'information' | 'history'
 export type ProfileReservesView = 'assets' | 'stablecoins'
 export type VenueHistoryMetric = 'volume' | 'oi' | 'depth' | 'nvol' | 'markets'
 export type TokenFinderMode = 'all' | 'any'
@@ -101,7 +101,9 @@ export function getMicaFilter(query: ParsedUrlQuery): MicaFilter {
 
 export function getProfileTab(query: ParsedUrlQuery): ProfileTab {
 	const value = readSingleQueryValue(query[EXCHANGES_QUERY_KEYS.profileTab])
-	return value === 'information' || value === 'reserves' || value === 'history' ? value : DEFAULT_PROFILE_TAB
+	return value === 'information' || value === 'reserves' || value === 'history' || value === 'execution'
+		? value
+		: DEFAULT_PROFILE_TAB
 }
 
 export function getProfileReservesView(query: ParsedUrlQuery): ProfileReservesView {

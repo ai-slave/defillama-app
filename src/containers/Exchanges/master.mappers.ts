@@ -4,6 +4,10 @@ import type {
 	MasterChartPart,
 	MasterColumnarSeriesResponse,
 	MasterDirectoryResponse,
+	MasterExecutionPairMetrics,
+	MasterExecutionQualityResponse,
+	MasterQualityRanksResponse,
+	MasterRankMethodologyResponse,
 	MasterDirectoryVenue,
 	MasterEntityScope,
 	MasterExchangeIndexResponse,
@@ -29,6 +33,9 @@ import {
 	type ExchangeDirectoryModel,
 	type ExchangeDirectoryRowModel,
 	type ExchangeEeaOrderbookOwnership,
+	type ExchangeExecutionModel,
+	type ExchangeExecutionPairModel,
+	type ExchangeProfileQualityModel,
 	type ExchangeFiatFees,
 	type ExchangeMetadataFieldModel,
 	type ExchangeMetadataGroupModel,
@@ -170,8 +177,10 @@ function mapNormalizedVolume(nvol: MasterSegmentNormalizedVolume | null): Exchan
 
 function mapDirectoryVenue(
 	venue: MasterDirectoryVenue,
-	venuesBySlug: Map<string, MasterDirectoryVenue>
+	venuesBySlug: Map<string, MasterDirectoryVenue>,
+	execution?: MasterExecutionQualityResponse | null
 ): ExchangeDirectoryRowModel {
+	const executionMetrics = execution?.venues?.[venue.slug] ?? null
 	const segments: ExchangeDirectoryRowModel['segments'] = {}
 	for (const segment of EXCHANGE_SEGMENTS) {
 		const stats = venue.segments[segment]
@@ -295,16 +304,27 @@ function mapDirectoryVenue(
 					inverse_perp: mapNormalizedVolume(venue.nvol.inverse_perp)
 				}
 			: null,
+		execution: executionMetrics
+			? {
+					assets: executionMetrics.assets,
+					hoursCovered: executionMetrics.hours_covered,
+					costToTradeBps: executionMetrics.cost_to_trade_bps,
+					realizedSlippage10kBps: executionMetrics.realized_slippage_bps_10k,
+					predictedSlippage10kBps: executionMetrics.predicted_slippage_bps_10k,
+					markout1mBps: executionMetrics.markout_bps_1m
+				}
+			: null,
 		quality: venue.rank ?? null
 	}
 }
 
-/** Directory default order: internal quality score descending, tie-broken on rank.
- * Score is comparable across CEX and DEX because the popularity component applies to
- * both — without it DEXes float to the top on a renormalized composite. `rank` stays
- * the position within a venue's own kind, so it only breaks ties here. Unranked venues
- * sort last, by volume. The table ships this order as-is (no default `sortingState`),
- * so any header click still overrides it. */
+/** Base row order: internal quality score descending, tie-broken on rank. Score is
+ * comparable across CEX and DEX; `rank` is the position within a venue's own kind and
+ * only breaks ties here. Unranked venues sort last, by volume — the part a column sort
+ * can't express, which is why this pre-sort stays even though the table now ALSO
+ * carries the ranking as a visible, sortable Rank column with a default sort (see
+ * DirectoryTable sortingFor): the stable pre-order supplies the tie/fallback order
+ * underneath TanStack's stable sort. */
 function byQualityRank(a: ExchangeDirectoryRowModel, b: ExchangeDirectoryRowModel): number {
 	if (a.quality && b.quality) return b.quality.score - a.quality.score || a.quality.rank - b.quality.rank
 	if (a.quality) return -1
@@ -325,9 +345,12 @@ function directoryOpenInterest(venues: MasterDirectoryVenue[], segment: MasterSe
 	return observations.length > 0 ? observations.reduce((total, value) => total + value, 0) : null
 }
 
-export function mapMasterDirectory(response: MasterDirectoryResponse): ExchangeDirectoryModel {
+export function mapMasterDirectory(
+	response: MasterDirectoryResponse,
+	execution?: MasterExecutionQualityResponse | null
+): ExchangeDirectoryModel {
 	const venuesBySlug = new Map(response.venues.map((venue) => [venue.slug, venue]))
-	const rows = response.venues.map((venue) => mapDirectoryVenue(venue, venuesBySlug)).sort(byQualityRank)
+	const rows = response.venues.map((venue) => mapDirectoryVenue(venue, venuesBySlug, execution)).sort(byQualityRank)
 	const volumeSplit = (totals: {
 		spot_volume_24h: number | null
 		linear_perp_volume_24h: number | null
@@ -537,6 +560,8 @@ export function mapMasterMetadataOnlyProfile(metadata: MasterExchangeMetadataRes
 		name: metadata.display_name,
 		kind: metadata.type,
 		profileMode: metadata.profile_mode,
+		execution: null,
+		quality: null,
 		defillamaUrl: metadata.links.defillama?.url ?? null,
 		defillamaCexSlug: mapDefillamaCexSlug(metadata),
 		nativeToken: mapNativeToken(metadata),
@@ -548,9 +573,124 @@ export function mapMasterMetadataOnlyProfile(metadata: MasterExchangeMetadataRes
 	}
 }
 
+const mapExecutionPair = (pair: MasterExecutionPairMetrics): ExchangeExecutionPairModel => ({
+	asset: pair.asset,
+	hoursCovered: pair.hours_covered,
+	fillCount: pair.n_trades ?? 0,
+	costToTradeBps: pair.cost_to_trade_bps,
+	effectiveSpreadBps: pair.effective_spread_bps,
+	quotedSpreadBps: pair.quoted_spread_bps,
+	realizedSlippage10kBps: pair.realized_slippage_bps_10k,
+	predictedSlippage10kBps: pair.predicted_slippage_bps_10k,
+	realizedSlippage100kBps: pair.realized_slippage_bps_100k,
+	predictedSlippage100kBps: pair.predicted_slippage_bps_100k,
+	realizedSlippage1mBps: pair.realized_slippage_bps_1m,
+	predictedSlippage1mBps: pair.predicted_slippage_bps_1m,
+	markout1sBps: pair.markout_bps_1s,
+	markout15sBps: pair.markout_bps_15s,
+	markout1mBps: pair.markout_bps_1m,
+	markout5mBps: pair.markout_bps_5m
+})
+
+function mapProfileExecution(
+	slug: string,
+	execution: MasterExecutionQualityResponse | null | undefined
+): ExchangeExecutionModel | null {
+	const venue = execution?.venues?.[slug]
+	if (!venue) return null
+	const basketOrder = execution?.basket ?? []
+	const pairs = Object.values(venue.pairs ?? {})
+		.map(mapExecutionPair)
+		.sort((a, b) => {
+			const ai = basketOrder.indexOf(a.asset)
+			const bi = basketOrder.indexOf(b.asset)
+			return (ai < 0 ? basketOrder.length : ai) - (bi < 0 ? basketOrder.length : bi)
+		})
+	return {
+		assets: venue.assets,
+		hoursCovered: venue.hours_covered,
+		costToTradeBps: venue.cost_to_trade_bps,
+		realizedSlippage10kBps: venue.realized_slippage_bps_10k,
+		predictedSlippage10kBps: venue.predicted_slippage_bps_10k,
+		markout1mBps: venue.markout_bps_1m,
+		feed: venue.feed
+			? {
+					date: venue.feed.date,
+					avgGapMs: venue.feed.avg_gap_ms,
+					p99GapMs: venue.feed.p99_gap_ms,
+					maxGapMs: venue.feed.max_gap_ms,
+					downtimeS: venue.feed.downtime_s,
+					degraded: venue.feed.degraded
+				}
+			: null,
+		pairs
+	}
+}
+
+function mapProfileQuality(
+	slug: string,
+	ranks: MasterQualityRanksResponse | null | undefined,
+	methodology: MasterRankMethodologyResponse | null | undefined
+): ExchangeProfileQualityModel | null {
+	const entry = ranks?.venues?.[slug]
+	if (!entry) return null
+	const scores = Object.values(ranks.venues).map((venue) => venue.score)
+	const overallRank = 1 + scores.filter((score) => score > entry.score).length
+	const catalog = new Map((methodology?.components ?? []).map((component) => [component.key, component]))
+	const components = Object.entries(entry.components)
+		.map(([key, score]) => {
+			const def = catalog.get(key)
+			return {
+				key,
+				label: def?.label ?? key,
+				weight: def?.weight ?? null,
+				score,
+				what: def?.what ?? null,
+				na: def?.na ?? null
+			}
+		})
+		// Weight order, not the upstream JSON's alphabetical key order.
+		.sort((a, b) => (b.weight ?? -1) - (a.weight ?? -1))
+	// Execution sub-scores, in the published catalog's order; sub keys the catalog
+	// doesn't know yet (older methodology file) fall back to their raw key.
+	const subCatalog = methodology?.exec_subs ?? []
+	const subEntries = entry.exec_subs ?? {}
+	const subKeys = [
+		...subCatalog.map((sub) => sub.key).filter((key) => key in subEntries),
+		...Object.keys(subEntries).filter((key) => !subCatalog.some((sub) => sub.key === key))
+	]
+	const execSubs = subKeys.map((key) => {
+		const def = subCatalog.find((sub) => sub.key === key)
+		return {
+			key,
+			label: def?.label ?? key,
+			weight: def?.weight ?? null,
+			score: subEntries[key],
+			what: def?.what ?? null
+		}
+	})
+	return {
+		score: entry.score,
+		tier: entry.tier ?? null,
+		rankInKind: entry.rank,
+		overallRank,
+		overallTotal: scores.length,
+		generatedAt: ranks.generated_at ?? null,
+		components,
+		execSubs
+	}
+}
+
+export interface MasterProfileExtras {
+	execution?: MasterExecutionQualityResponse | null
+	ranks?: MasterQualityRanksResponse | null
+	methodology?: MasterRankMethodologyResponse | null
+}
+
 export function mapMasterProfile(
 	index: MasterExchangeIndexResponse,
-	metadata: MasterExchangeMetadataResponse
+	metadata: MasterExchangeMetadataResponse,
+	extras: MasterProfileExtras = {}
 ): ExchangeProfileModel {
 	const segments: ExchangeProfileModel['segments'] = {}
 	for (const segment of EXCHANGE_SEGMENTS) {
@@ -581,6 +721,8 @@ export function mapMasterProfile(
 		name: metadata.display_name,
 		kind: index.type,
 		profileMode: metadata.profile_mode,
+		execution: mapProfileExecution(index.slug, extras.execution),
+		quality: mapProfileQuality(index.slug, extras.ranks, extras.methodology),
 		defillamaUrl: metadata.links.defillama?.url ?? null,
 		defillamaCexSlug: mapDefillamaCexSlug(metadata),
 		nativeToken: mapNativeToken(metadata),

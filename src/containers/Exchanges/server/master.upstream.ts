@@ -5,6 +5,9 @@ import type {
 	MasterChartColumnarResponse,
 	MasterChartPart,
 	MasterDirectoryResponse,
+	MasterExecutionQualityResponse,
+	MasterQualityRanksResponse,
+	MasterRankMethodologyResponse,
 	MasterExchangeIndexResponse,
 	MasterExchangeMetadataResponse,
 	MasterExchangeRegionCatalogResponse,
@@ -17,6 +20,18 @@ const exchangePath = (exchange: string) => encodeURIComponent(exchange)
 
 export function fetchMasterDirectoryFromNetwork(): Promise<MasterDirectoryResponse> {
 	return fetchJson<MasterDirectoryResponse>(`${MARKETS_SERVER_URL}/exchanges/directory.json`)
+}
+
+export function fetchMasterExecutionQualityFromNetwork(): Promise<MasterExecutionQualityResponse> {
+	return fetchJson<MasterExecutionQualityResponse>(`${MARKETS_SERVER_URL}/exchanges/execution-quality.json`)
+}
+
+export function fetchMasterQualityRanksFromNetwork(): Promise<MasterQualityRanksResponse> {
+	return fetchJson<MasterQualityRanksResponse>(`${MARKETS_SERVER_URL}/exchanges/quality-ranks.json`)
+}
+
+export function fetchMasterRankMethodologyFromNetwork(): Promise<MasterRankMethodologyResponse> {
+	return fetchJson<MasterRankMethodologyResponse>(`${MARKETS_SERVER_URL}/exchanges/rank-methodology.json`)
 }
 
 export function fetchMasterExchangeSeriesFromNetwork(

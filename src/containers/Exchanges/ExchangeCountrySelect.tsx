@@ -143,7 +143,7 @@ export function ExchangeCountrySelect({
 			/>
 			{catalogFailed ? (
 				<p className="body-sm text-warning" role="status">
-					Country filter unavailable — showing global data
+					Country filter unavailable, showing global data
 				</p>
 			) : null}
 		</>

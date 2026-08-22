@@ -20,14 +20,23 @@ import type { ExchangeResearchRange } from '../queryState'
 import {
 	fetchMasterChartFromNetwork,
 	fetchMasterDirectoryFromNetwork,
+	fetchMasterExecutionQualityFromNetwork,
 	fetchMasterExchangeSeriesFromNetwork,
 	fetchMasterExchangeIndexFromNetwork,
 	fetchMasterExchangeMetadataFromNetwork,
-	fetchMasterMicaFromNetwork
+	fetchMasterMicaFromNetwork,
+	fetchMasterQualityRanksFromNetwork,
+	fetchMasterRankMethodologyFromNetwork
 } from './master.upstream'
 
 export async function loadMasterExchangeDirectory(): Promise<ExchangeDirectoryModel> {
-	return mapMasterDirectory(await fetchMasterDirectoryFromNetwork())
+	// Execution quality is fail-soft: a missing/unreachable file renders the directory
+	// without execution columns rather than failing the whole page build.
+	const [directory, execution] = await Promise.all([
+		fetchMasterDirectoryFromNetwork(),
+		fetchMasterExecutionQualityFromNetwork().catch(() => null)
+	])
+	return mapMasterDirectory(directory, execution)
 }
 
 export async function loadMasterExchangeOverview(range: ExchangeResearchRange): Promise<ExchangeOverviewChartModel> {
@@ -64,5 +73,13 @@ export async function loadMasterExchangeProfile(exchange: string): Promise<Excha
 	}
 	if (metadata.profile_mode === 'metadata-only') return mapMasterMetadataOnlyProfile(metadata)
 
-	return mapMasterProfile(await fetchMasterExchangeIndexFromNetwork(exchange), metadata)
+	// Execution quality and the quality ranking are fail-soft extras: a missing file
+	// renders the profile without its Execution tab / ranking card, never a 500.
+	const [index, execution, ranks, methodology] = await Promise.all([
+		fetchMasterExchangeIndexFromNetwork(exchange),
+		fetchMasterExecutionQualityFromNetwork().catch(() => null),
+		fetchMasterQualityRanksFromNetwork().catch(() => null),
+		fetchMasterRankMethodologyFromNetwork().catch(() => null)
+	])
+	return mapMasterProfile(index, metadata, { execution, ranks, methodology })
 }

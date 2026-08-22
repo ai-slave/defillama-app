@@ -4,8 +4,10 @@ import { ReportIncorrectData } from '~/components/ReportIncorrectData'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
+import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
+import { formatScore, TierBadge } from './directoryColumns'
 import { fractionChange, sumNullable } from './modelHelpers'
 import {
 	EXCHANGE_SEGMENT_LABELS,
@@ -15,6 +17,7 @@ import {
 	type ExchangeSegment
 } from './models'
 import { ProfileIdentity } from './ProfileIdentity'
+import { TierScale } from './ProfileRanking'
 import { SEGMENT_DEFINITIONS } from './segmentPresentation'
 
 const money = (value: number | null) =>
@@ -128,6 +131,27 @@ export function ProfileMetrics({
 		<Card as="section" padding="sm" className="col-span-1 flex flex-col gap-6 xl:min-h-[360px]">
 			<ProfileIdentity profile={profile} />
 
+			{profile.quality ? (
+				<div className="flex flex-col gap-1.5">
+					<Tooltip
+						content="Quality score from measured liquidity, verified volume, reserves, execution quality and stability. Full breakdown on the Information tab."
+						className="w-full"
+					>
+						<span className="flex w-full items-center gap-2">
+							{profile.quality.tier ? <TierBadge tier={profile.quality.tier} /> : null}
+							<span className="font-jetbrains text-xl leading-none font-semibold">
+								{formatScore(profile.quality.score)}
+							</span>
+							<span className="body-sm text-tertiary">/ 100</span>
+							<span className="ml-auto body-sm text-secondary">
+								#{profile.quality.rankInKind} of {profile.kind.toUpperCase()}s · #{profile.quality.overallRank} overall
+							</span>
+						</span>
+					</Tooltip>
+					<TierScale score={profile.quality.score} tier={profile.quality.tier} />
+				</div>
+			) : null}
+
 			<div className="flex flex-col">
 				<span className="body-sm text-secondary">24h Volume{showGlobalLabel ? ' · Global' : ''}</span>
 				<span className="flex flex-wrap items-baseline gap-2">
@@ -159,6 +183,13 @@ export function ProfileMetrics({
 					<BreakdownMetric label="Depth ±2%" total={totalDepth} segments={depthBySegment} render={money} />
 				) : null}
 				<BreakdownMetric label="Markets" total={totalMarkets} segments={marketsBySegment} render={count} />
+				{profile.execution?.costToTradeBps != null ? (
+					<MetricRow
+						label="Cost to trade"
+						tooltip="Measured all-in cost of a $10k market order (base-tier taker fee plus half the effective spread), from tick-level fills on the perp basket. Details on the Execution tab."
+						value={`${formatUsd(profile.execution.costToTradeBps, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} /$10k`}
+					/>
+				) : null}
 				{profile.nativeToken ? (
 					<MetricRow
 						label="Native token"

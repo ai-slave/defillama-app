@@ -6,6 +6,9 @@ const mocks = vi.hoisted(() => ({
 	exchangeSeries: vi.fn(),
 	index: vi.fn(),
 	metadata: vi.fn(),
+	executionQuality: vi.fn(),
+	qualityRanks: vi.fn(),
+	rankMethodology: vi.fn(),
 	mapMetadataOnlyProfile: vi.fn(),
 	mapProfile: vi.fn(),
 	mapResearch: vi.fn()
@@ -15,7 +18,12 @@ vi.mock('../server/master.upstream', () => ({
 	fetchMasterChartFromNetwork: mocks.chart,
 	fetchMasterExchangeSeriesFromNetwork: mocks.exchangeSeries,
 	fetchMasterExchangeIndexFromNetwork: mocks.index,
-	fetchMasterExchangeMetadataFromNetwork: mocks.metadata
+	fetchMasterExchangeMetadataFromNetwork: mocks.metadata,
+	// fail-soft profile extras — resolved to null in these tests so the loader's
+	// core metadata/index behavior stays the thing under test
+	fetchMasterExecutionQualityFromNetwork: mocks.executionQuality,
+	fetchMasterQualityRanksFromNetwork: mocks.qualityRanks,
+	fetchMasterRankMethodologyFromNetwork: mocks.rankMethodology
 }))
 
 vi.mock('../master.mappers', () => ({
@@ -25,7 +33,13 @@ vi.mock('../master.mappers', () => ({
 	mapMasterResearchReport: mocks.mapResearch
 }))
 
-beforeEach(() => vi.clearAllMocks())
+beforeEach(() => {
+	vi.clearAllMocks()
+	// extras default to unavailable — they are fail-soft and must never gate a profile
+	mocks.executionQuality.mockRejectedValue(new Error('unavailable'))
+	mocks.qualityRanks.mockRejectedValue(new Error('unavailable'))
+	mocks.rankMethodology.mockRejectedValue(new Error('unavailable'))
+})
 
 describe('master page loaders', () => {
 	it('loads and maps an exchange overview range', async () => {
@@ -86,7 +100,8 @@ describe('master page loaders', () => {
 		expect(mocks.index).toHaveBeenCalledWith('venue')
 		expect(mocks.mapProfile).toHaveBeenCalledWith(
 			{ exchange: 'venue' },
-			{ display_name: 'Venue', profile_mode: 'markets' }
+			{ display_name: 'Venue', profile_mode: 'markets' },
+			{ execution: null, ranks: null, methodology: null }
 		)
 	})
 

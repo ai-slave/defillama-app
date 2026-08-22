@@ -28,6 +28,8 @@ function profile(slug: string, segments: ExchangeSegment[]): ExchangeProfileMode
 		profileMode: 'markets',
 		defillamaUrl: null,
 		defillamaCexSlug: null,
+		execution: null,
+		quality: null,
 		nativeToken: null,
 		hacks: [],
 		raises: [],

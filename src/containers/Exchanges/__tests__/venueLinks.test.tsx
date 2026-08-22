@@ -17,6 +17,8 @@ function profile(
 		profileMode: 'markets',
 		defillamaUrl: null,
 		defillamaCexSlug: null,
+		execution: null,
+		quality: null,
 		nativeToken: null,
 		hacks: [],
 		raises: [],

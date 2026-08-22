@@ -48,6 +48,7 @@ function row(patch: Partial<ExchangeDirectoryRowModel> = {}): ExchangeDirectoryR
 		selectedCountry: null,
 		selectedCountryStatus: null,
 		normalizedVolume: null,
+		execution: null,
 		quality: null,
 		...patch
 	}

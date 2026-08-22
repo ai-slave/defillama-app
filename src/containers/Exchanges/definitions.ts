@@ -86,6 +86,21 @@ export const exchangeDefinitions = {
 			description:
 				'Venue identity and related links. “Metadata only” means exchange information exists but market activity is not tracked.'
 		},
+		execCostToTrade: {
+			label: 'Cost to trade',
+			description:
+				'Measured all-in cost of a $10k market order, in dollars: base-tier taker fee plus half the effective spread, from tick-level fills on the shared perp basket. VIP fee tiers can lower the fee part. Linear perps only for now; venues without tick coverage show a dash, never a zero.'
+		},
+		execSlippage10k: {
+			label: 'Slippage $10k',
+			description:
+				'Slippage on fills of at least $10k, in dollars for a $10k trade: predicted first (what walking the pre-trade order book for each fill’s own size promised), then what fills actually paid. Actual far above predicted means displayed depth moves before fills land. Fill prices exclude trading fees, which venues charge separately after the fill.'
+		},
+		execMarkout1m: {
+			label: 'Markout 1m',
+			description:
+				'Where the price went one minute after a fill, in dollars per $10k traded. Lower is better: positive (red) means the price kept moving against the taker — a sign of trading against faster, better-informed flow; negative (green) means it came back in their favour.'
+		},
 		kind: {
 			label: 'Type',
 			description: 'CEX means centralized exchange; DEX means decentralized exchange.'

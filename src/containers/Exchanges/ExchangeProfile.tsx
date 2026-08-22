@@ -22,9 +22,11 @@ import {
 	type ExchangeSegment
 } from './models'
 import { PairTable } from './PairTable'
+import { ProfileExecution } from './ProfileExecution'
 import { ProfileHistory } from './ProfileHistory'
 import { ProfileIdentity } from './ProfileIdentity'
 import { ProfileMetrics } from './ProfileMetrics'
+import { ProfileRanking } from './ProfileRanking'
 import { ProfileReserves } from './ProfileReserves'
 import { ProfileSegmentTabs } from './ProfileSegmentTabs'
 import {
@@ -116,9 +118,11 @@ function MarketsExchangeProfile({
 	const router = useRouter()
 	const hasInformation =
 		hasExchangeInformation(profile.metadata.groups) ||
-		hasExchangeInformation(profileInformationMetadata(profile, countryView)?.groups ?? [])
+		hasExchangeInformation(profileInformationMetadata(profile, countryView)?.groups ?? []) ||
+		profile.quality != null
 	const hasReserves = profile.reserves != null
 	const hasHistory = profile.hacks.length > 0 || profile.raises.length > 0
+	const hasExecution = profile.execution != null && profile.execution.pairs.length > 0
 	const defaultSegment = resolveProfileSegment(profile, null)
 	const countrySegments =
 		countryView.status === 'unavailable'
@@ -132,7 +136,8 @@ function MarketsExchangeProfile({
 	const tab: ProfileTab =
 		(requestedTab === 'information' && hasInformation) ||
 		(requestedTab === 'reserves' && hasReserves) ||
-		(requestedTab === 'history' && hasHistory)
+		(requestedTab === 'history' && hasHistory) ||
+		(requestedTab === 'execution' && hasExecution)
 			? requestedTab
 			: DEFAULT_PROFILE_TAB
 
@@ -171,15 +176,21 @@ function MarketsExchangeProfile({
 				hasReserves={hasReserves}
 				hasHistory={hasHistory}
 				hasInformation={hasInformation}
+				hasExecution={hasExecution}
 				onTabChange={setTab}
 				panelId={panelId}
 			>
-				{tab === 'reserves' && profile.reserves ? (
+				{tab === 'execution' && profile.execution ? (
+					<ProfileExecution execution={profile.execution} />
+				) : tab === 'reserves' && profile.reserves ? (
 					<ProfileReserves profile={profile} reserves={profile.reserves} />
 				) : tab === 'history' && hasHistory ? (
 					<ProfileHistory profile={profile} />
 				) : tab === 'information' && hasInformation ? (
-					<ExchangeRegionalInformation profile={profile} asOfDate={asOfDate} view={countryView} />
+					<div className="flex flex-col gap-2">
+						<ProfileRanking profile={profile} />
+						<ExchangeRegionalInformation profile={profile} asOfDate={asOfDate} view={countryView} />
+					</div>
 				) : segment && active ? (
 					<div className="flex flex-col gap-1">
 						{countryView.status !== 'global' ? (
@@ -206,14 +217,21 @@ function MarketsExchangeProfile({
 
 const PROFILE_TAB_LABELS: Record<ProfileTab, string> = {
 	markets: 'Markets',
+	execution: 'Execution',
 	reserves: 'Reserves',
 	information: 'Information',
 	history: 'Hacks & raises'
 }
 
-export function visibleProfileTabs(hasReserves: boolean, hasInformation: boolean, hasHistory: boolean): ProfileTab[] {
+export function visibleProfileTabs(
+	hasReserves: boolean,
+	hasInformation: boolean,
+	hasHistory: boolean,
+	hasExecution = false
+): ProfileTab[] {
 	return [
 		'markets',
+		...(hasExecution ? (['execution'] as const) : []),
 		...(hasReserves ? (['reserves'] as const) : []),
 		...(hasInformation ? (['information'] as const) : []),
 		...(hasHistory ? (['history'] as const) : [])
@@ -225,6 +243,7 @@ export function ProfileSectionTabs({
 	hasReserves,
 	hasHistory,
 	hasInformation,
+	hasExecution,
 	onTabChange,
 	panelId,
 	children
@@ -233,12 +252,13 @@ export function ProfileSectionTabs({
 	hasReserves?: boolean
 	hasHistory?: boolean
 	hasInformation: boolean
+	hasExecution?: boolean
 	onTabChange: (tab: ProfileTab) => void
 	panelId: string
 	children: ReactNode
 }) {
 	const activeTabId = `exchange-profile-tab-${activeTab}`
-	const tabs = visibleProfileTabs(!!hasReserves, hasInformation, !!hasHistory)
+	const tabs = visibleProfileTabs(!!hasReserves, hasInformation, !!hasHistory, !!hasExecution)
 	const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, currentTab: ProfileTab) => {
 		const currentIndex = tabs.indexOf(currentTab)
 		let nextIndex: number | null = null

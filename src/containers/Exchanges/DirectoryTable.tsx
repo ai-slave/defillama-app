@@ -44,9 +44,12 @@ const GROUP_COLUMN_IDS: Record<DirectoryColumnGroup, string[]> = {
 		'depth2Usd',
 		'volume24h',
 		'volumeChange24h',
-		'normalizedVolume',
 		'openInterestUsd',
 		'openInterestChange24h',
+		'execCostToTrade',
+		'execSlippage10k',
+		'execMarkout1m',
+		'normalizedVolume',
 		'volumeToOi',
 		'volumeToDepth',
 		'sparkline',
@@ -76,11 +79,21 @@ const GROUP_COLUMN_IDS: Record<DirectoryColumnGroup, string[]> = {
 const OPTIONAL_COLUMN_IDS = ['licenseCount', 'founded']
 const ALL_COLUMN_IDS = ['kind', ...new Set([...Object.values(GROUP_COLUMN_IDS).flat(), ...OPTIONAL_COLUMN_IDS])]
 
-// Fee columns follow the active segment scope exactly; perp-only metrics don't apply to spot.
+// Fee columns follow the active segment scope exactly; perp-only metrics don't apply to
+// spot. Execution columns are measured on the linear-perp basket only today, so they
+// show in that scope alone.
+const EXECUTION_COLUMN_IDS = ['execCostToTrade', 'execSlippage10k', 'execMarkout1m']
 const SCOPE_HIDDEN_COLUMN_IDS: Record<ExchangeSegment, string[]> = {
-	spot: ['openInterestUsd', 'openInterestChange24h', 'volumeToOi', 'linearPerpFee', 'inversePerpFee'],
+	spot: [
+		'openInterestUsd',
+		'openInterestChange24h',
+		'volumeToOi',
+		'linearPerpFee',
+		'inversePerpFee',
+		...EXECUTION_COLUMN_IDS
+	],
 	linear_perp: ['spotFee', 'inversePerpFee'],
-	inverse_perp: ['spotFee', 'linearPerpFee']
+	inverse_perp: ['spotFee', 'linearPerpFee', ...EXECUTION_COLUMN_IDS]
 }
 
 function directoryColumnVisibility(group: DirectoryColumnGroup, scope: ExchangeSegment): VisibilityState {
@@ -90,9 +103,10 @@ function directoryColumnVisibility(group: DirectoryColumnGroup, scope: ExchangeS
 	return Object.fromEntries(ALL_COLUMN_IDS.map((id) => [id, visible.has(id)]))
 }
 
-// Only transparency gets a default sort — reserves is the one figure that view exists
-// to rank on. Every other view keeps the mapper's quality-rank order (see byQualityRank)
-// so switching views doesn't reshuffle the table. Clicking any header still takes over.
+// The rows arrive pre-sorted by the measured quality ranking (see byQualityRank in
+// master.mappers) and the rank is explained on screen by the tier chip before each
+// name plus the row index. Transparency is the one view that ranks on its own figure
+// (reserves). Clicking any header takes over.
 function sortingFor(group: DirectoryColumnGroup): SortingState {
 	return group === 'transparency' ? [{ id: 'reservesUsd', desc: true }] : []
 }

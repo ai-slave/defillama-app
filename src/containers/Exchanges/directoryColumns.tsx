@@ -7,7 +7,7 @@ import { Icon } from '~/ui/Icon'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Tooltip } from '~/ui/Tooltip'
 import { letterLogoDataUri } from '~/utils/icons'
-import { formatRatio, formatUsd, formatPercent } from '~/utils/numberFormat'
+import { formatNumber, formatRatio, formatUsd, formatPercent, roundNumber } from '~/utils/numberFormat'
 import {
 	EuAvailabilityValue,
 	getEuStatusPresentation,
@@ -71,6 +71,101 @@ function KindBadge({ kind }: { kind: ExchangeVenueKind }) {
 	return <span className="rounded-sm border border-subtle px-1.5 py-0.5 label-sm uppercase">{kind}</span>
 }
 
+export const formatScore = (score: number) =>
+	formatNumber(score, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+
+// 1bp of $10k = $1, so execution bps figures render as dollars at the $10k reference size.
+const execUsd = (bps: number) => formatUsd(bps, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const execUsdSigned = (bps: number) =>
+	formatUsd(bps, { signDisplay: 'always', minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+// Quality tier chip — the public summary of the measured quality score.
+// Fixed bands: S ≥85 (requires measured execution), A ≥70, B ≥55, C ≥40, else D.
+export const TIER_COLORS: Record<string, string> = {
+	S: '#c9a227',
+	A: '#16a34a',
+	B: '#64748b',
+	C: '#c97c27',
+	D: '#dc2626'
+}
+
+export function TierBadge({ tier }: { tier: string }) {
+	const color = TIER_COLORS[tier] ?? 'inherit'
+	return (
+		<span
+			className="rounded-sm border border-current px-1.5 py-0.5 text-center mono-sm-bold"
+			style={{ color, minWidth: '22px' }}
+		>
+			{tier}
+		</span>
+	)
+}
+
+export const RANK_PILLAR_LABELS: Record<string, string> = {
+	E: 'Execution',
+	L: 'Liquidity',
+	O: 'Open interest',
+	V: 'Volume',
+	R: 'Reserves',
+	S: 'Stability',
+	U: 'Reach'
+}
+
+// Pillar weights restated for the hover card only (the Information tab reads them
+// live from rank-methodology.json). Must match upstream lib/rank-components.ts.
+export const RANK_PILLAR_WEIGHTS: Record<string, number> = { E: 33, L: 20, O: 15, V: 10, R: 10, S: 7, U: 5 }
+
+/** Hover card behind the tier chip: score, in-kind rank, and the pillar breakdown. */
+export function QualityHover({
+	quality,
+	kind
+}: {
+	quality: NonNullable<ExchangeDirectoryRowModel['quality']>
+	kind: string
+}) {
+	// Weight order, not the JSON's alphabetical key order.
+	const pillars = Object.entries(quality.components ?? {}).sort(
+		([a], [b]) => (RANK_PILLAR_WEIGHTS[b] ?? 0) - (RANK_PILLAR_WEIGHTS[a] ?? 0)
+	)
+	return (
+		<div className="flex w-72 flex-col gap-2 py-0.5 text-left">
+			<div className="flex items-center gap-2">
+				{quality.tier ? <TierBadge tier={quality.tier} /> : null}
+				<span className="mono-md-bold">{formatScore(quality.score)} / 100</span>
+				<span className="text-tertiary">
+					#{quality.rank} of {kind.toUpperCase()}s
+				</span>
+			</div>
+			<div className="flex flex-col gap-1">
+				{pillars.map(([key, score]) => {
+					const measured = score != null
+					return (
+						<div key={key} className="flex items-center gap-2">
+							<span className="w-28 shrink-0">
+								{RANK_PILLAR_LABELS[key] ?? key}
+								{RANK_PILLAR_WEIGHTS[key] ? <span className="text-tertiary"> {RANK_PILLAR_WEIGHTS[key]}%</span> : null}
+							</span>
+							<span className="h-1 flex-1 overflow-hidden rounded-full bg-surface-elevated-2">
+								<span
+									className="block h-full rounded-full bg-current opacity-70"
+									style={{ width: `${measured ? Math.max(2, Math.min(100, score)) : 0}%` }}
+								/>
+							</span>
+							<span className={`w-8 shrink-0 text-right ${measured ? '' : 'text-tertiary'}`}>
+								{measured ? Math.round(score) : 'n/a'}
+							</span>
+						</div>
+					)
+				})}
+			</div>
+			<span className="text-tertiary">
+				Built only on measured or independently verifiable inputs. n/a never counts as zero; its weight redistributes.
+				Tiers: S 85+ (needs measured execution), A 70+, B 55+, C 40+, else D.
+			</span>
+		</div>
+	)
+}
+
 function linkedMetric(value: React.ReactNode, note: string | undefined) {
 	return note ? (
 		<Tooltip content={note} className="ms-auto w-fit underline decoration-dotted">
@@ -95,6 +190,9 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 				const defillamaPath = venue.secondaryUrl
 				const venueDestination = selectVenueDestination(venue.slug, venue.referralUrl, venue.websiteUrl)
 				const liquidityNote = row.depth > 0 ? describeChildLiquidity(venue) : null
+				// Every row wears its own chip: the brand row its family's best rank,
+				// each child venue its own sub-rank underneath.
+				const quality = venue.quality
 				return (
 					<div className={`relative flex min-w-0 items-center gap-2 ${row.depth > 0 ? 'pl-12' : 'pl-6'}`}>
 						{row.subRows.length > 0 ? (
@@ -113,6 +211,17 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 							</button>
 						) : null}
 						<span className="vf-row-index shrink-0" aria-hidden="true" />
+						{quality?.tier ? (
+							// data-fullwidth lifts the tooltip surface's max-w-56 cap; the hover
+							// card is a ~280px layout, not wrapping prose, and clips without it.
+							<Tooltip
+								content={<QualityHover quality={quality} kind={venue.kind} />}
+								className="shrink-0"
+								data-fullwidth={true}
+							>
+								<TierBadge tier={quality.tier} />
+							</Tooltip>
+						) : null}
 						<TokenLogo
 							name={venue.slug}
 							kind="exchange"
@@ -233,28 +342,6 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 				}
 			}
 		),
-		columnHelper.accessor((row) => normalizedVolumeForScope(row, scope)?.normalized ?? undefined, {
-			id: 'normalizedVolume',
-			header: definitions.normalizedVolume.label,
-			cell: ({ row, getValue }) => {
-				const nvol = normalizedVolumeForScope(row.original, scope)
-				return nvol ? (
-					<Tooltip
-						content={`${percentage(nvol.discountFraction)} below reported · ${percentage(nvol.unverifiedFraction)} unverified${nvol.flag ? ` · ${nvol.flag}` : ''}`}
-						className="ms-auto w-fit"
-					>
-						<span className="underline decoration-dotted">{money(getValue())}</span>
-					</Tooltip>
-				) : (
-					'–'
-				)
-			},
-			meta: {
-				headerClassName: 'w-[130px] min-w-[130px]',
-				align: 'end',
-				headerHelperText: definitions.normalizedVolume.description
-			}
-		}),
 		columnHelper.accessor((row) => activityForScope(row, scope)?.openInterestUsd ?? undefined, {
 			id: 'openInterestUsd',
 			header: definitions.openInterestUsd.label,
@@ -290,6 +377,98 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 				}
 			}
 		),
+		// Measured execution quality — tick-level fills on the shared perp basket, so it
+		// exists for linear-perp scope only today (hidden elsewhere via scope visibility).
+		// 1bp of $10k = $1, so bps figures ARE dollars per $10k trade.
+		columnHelper.accessor((row) => row.execution?.costToTradeBps ?? undefined, {
+			id: 'execCostToTrade',
+			header: definitions.execCostToTrade.label,
+			sortDescFirst: false,
+			cell: ({ row, getValue }) => {
+				const cost = getValue()
+				if (cost == null) return <span className="text-tertiary">n/a</span>
+				const execution = row.original.execution
+				return (
+					<Tooltip
+						content={`${formatNumber(cost, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} bps, median across ${execution?.assets?.join(', ') ?? 'the measured'} perps over ${execution?.hoursCovered ?? 'n/a'}h of tick data. Base-tier taker fee plus half the effective spread; VIP tiers can lower the fee part.`}
+						className="ms-auto w-fit"
+					>
+						<span className="underline decoration-dotted">{`${execUsd(cost)} /$10k`}</span>
+					</Tooltip>
+				)
+			},
+			meta: {
+				headerClassName: 'w-[124px] min-w-[124px]',
+				align: 'end',
+				headerHelperText: definitions.execCostToTrade.description,
+				csvValue: (row) =>
+					row.execution?.costToTradeBps == null ? '' : String(roundNumber(row.execution.costToTradeBps, 2))
+			}
+		}),
+		columnHelper.accessor((row) => row.execution?.realizedSlippage10kBps ?? undefined, {
+			id: 'execSlippage10k',
+			header: definitions.execSlippage10k.label,
+			sortDescFirst: false,
+			cell: ({ row, getValue }) => {
+				const actual = getValue()
+				if (actual == null) return <span className="text-tertiary">n/a</span>
+				const predicted = row.original.execution?.predictedSlippage10kBps
+				return (
+					<span className="flex items-center justify-end gap-1">
+						{predicted == null ? null : <span className="text-tertiary">{`p ${execUsd(predicted)} →`}</span>}
+						<span>{execUsd(actual)}</span>
+					</span>
+				)
+			},
+			meta: {
+				headerClassName: 'w-[139px] min-w-[139px]',
+				align: 'end',
+				headerHelperText: definitions.execSlippage10k.description,
+				csvValue: (row) =>
+					row.execution?.realizedSlippage10kBps == null
+						? ''
+						: String(roundNumber(row.execution.realizedSlippage10kBps, 2))
+			}
+		}),
+		columnHelper.accessor((row) => row.execution?.markout1mBps ?? undefined, {
+			id: 'execMarkout1m',
+			header: definitions.execMarkout1m.label,
+			sortDescFirst: false,
+			cell: ({ getValue }) => {
+				const markout = getValue()
+				if (markout == null) return <span className="text-tertiary">n/a</span>
+				return <span className={markout > 0 ? 'text-data-down' : 'text-data-up'}>{execUsdSigned(markout)}</span>
+			},
+			meta: {
+				headerClassName: 'w-[114px] min-w-[114px]',
+				align: 'end',
+				headerHelperText: definitions.execMarkout1m.description,
+				csvValue: (row) =>
+					row.execution?.markout1mBps == null ? '' : String(roundNumber(row.execution.markout1mBps, 2))
+			}
+		}),
+		columnHelper.accessor((row) => normalizedVolumeForScope(row, scope)?.normalized ?? undefined, {
+			id: 'normalizedVolume',
+			header: definitions.normalizedVolume.label,
+			cell: ({ row, getValue }) => {
+				const nvol = normalizedVolumeForScope(row.original, scope)
+				return nvol ? (
+					<Tooltip
+						content={`${percentage(nvol.discountFraction)} below reported · ${percentage(nvol.unverifiedFraction)} unverified${nvol.flag ? ` · ${nvol.flag}` : ''}`}
+						className="ms-auto w-fit"
+					>
+						<span className="underline decoration-dotted">{money(getValue())}</span>
+					</Tooltip>
+				) : (
+					'–'
+				)
+			},
+			meta: {
+				headerClassName: 'w-[130px] min-w-[130px]',
+				align: 'end',
+				headerHelperText: definitions.normalizedVolume.description
+			}
+		}),
 		columnHelper.accessor((row) => volumeToOpenInterest(activityForScope(row, scope)) ?? undefined, {
 			id: 'volumeToOi',
 			header: definitions.volumeToOi.label,

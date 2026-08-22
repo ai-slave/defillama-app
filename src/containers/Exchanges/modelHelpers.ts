@@ -195,8 +195,16 @@ function brandRow(parent: ExchangeDirectoryRowModel, children: ExchangeDirectory
 	// the parent's own — they are brand-level facts, not sums, and blanking them made the
 	// brand row read as "no data" and sort last in every non-activity view (Binance below
 	// venues a thousandth its size in Transparency). Children keep their own values.
+	//
+	// Quality rank: the brand row wears the family's BEST rank (usually the parent's,
+	// but a family is as strong as its strongest member); each child row keeps its own.
+	const bestQuality = [parent, ...children].reduce<ExchangeDirectoryRowModel['quality']>(
+		(best, row) => (row.quality && (!best || row.quality.score > best.score) ? row.quality : best),
+		null
+	)
 	return {
 		...parent,
+		quality: bestQuality,
 		segments,
 		sparks,
 		normalizedVolume: hasNormalizedVolume ? normalizedVolume : null
