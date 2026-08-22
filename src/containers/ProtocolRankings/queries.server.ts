@@ -34,7 +34,8 @@ type ExtraTvlType = ProtocolListAdditiveTvlKey | ClassificationTvlType | 'exclud
 type StoredChildProtocol = {
 	row: IChildProtocol
 	defillamaId: string
-	contributesTvl: boolean
+	contributesDefaultTvl: boolean
+	contributesExtraTvls: boolean
 	emissionsMatched: boolean
 }
 type FeeMetrics = NonNullable<IChildProtocol['fees']>
@@ -173,9 +174,13 @@ function aggregateParentTvls(children: StoredChildProtocol[]): ProtocolRankingTv
 	const extraTvls: Partial<Record<ExtraTvlType, ProtocolRankingTvlEntry>> = {}
 
 	for (const child of children) {
-		if (!child.contributesTvl || child.row.tvl === null) continue
-		defaultTvl = mergeTvlEntry(defaultTvl, child.row.tvl.default)
+		if (child.row.tvl === null) continue
+		if (child.contributesDefaultTvl) {
+			defaultTvl = mergeTvlEntry(defaultTvl, child.row.tvl.default)
+		}
+		if (!child.contributesExtraTvls) continue
 		for (const tvlType of EXTRA_TVL_TYPES) {
+			if (tvlType === 'excludeParent' && !child.contributesDefaultTvl) continue
 			const childEntry = child.row.tvl[tvlType]
 			if (!childEntry) continue
 			extraTvls[tvlType] = mergeTvlEntry(extraTvls[tvlType], childEntry)
@@ -743,7 +748,8 @@ export const getProtocolsByChain = async ({
 			const childStore: StoredChildProtocol = {
 				row: childRow,
 				defillamaId: protocol.defillamaId,
-				contributesTvl: protocol.category !== 'Bridge' && tvls.default.tvl !== null,
+				contributesDefaultTvl: protocol.category !== 'Bridge' && tvls.default.tvl !== null,
+				contributesExtraTvls: protocol.category !== 'Bridge' && protocol.tvl !== null,
 				emissionsMatched
 			}
 			const siblings = parentStore[protocol.parentProtocol]

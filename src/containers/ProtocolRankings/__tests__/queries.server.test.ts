@@ -681,6 +681,7 @@ describe('getProtocolsByChain parent aggregation', () => {
 		const parent = data?.protocols.find((protocol) => protocol.name === 'Mixed Parent')
 
 		expect(parent?.tvl?.default).toEqual(tvlEntry(100, 90, 80, 70))
+		expect(parent?.tvl?.staking).toEqual(tvlEntry(500, 400, null, null))
 		expect(parent?.tvlChange?.change1d).toBeCloseTo(11.11, 1)
 	})
 
