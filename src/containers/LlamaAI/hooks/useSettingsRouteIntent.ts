@@ -42,11 +42,6 @@ function emitSlackToast(result: SlackResult, teamName: string | null, detail: st
 
 type SettingsDialogStore = { show: () => void }
 
-/** @internal Exported for the route-intent unit test. */
-export function shouldConsumeSlackLoginToken(lastConsumedToken: string | null, nextToken: string | null | undefined) {
-	return !!nextToken && lastConsumedToken !== nextToken
-}
-
 export function useSettingsRouteIntent({
 	router,
 	user,
@@ -76,7 +71,7 @@ export function useSettingsRouteIntent({
 				}
 			}
 			const slackloginToken = initialState.slackloginToken
-			if (shouldConsumeSlackLoginToken(consumedSlackLoginTokenRef.current, slackloginToken)) {
+			if (slackloginToken && consumedSlackLoginTokenRef.current !== slackloginToken) {
 				consumedSlackLoginTokenRef.current = slackloginToken
 				void consumeSlackLogin(authorizedFetch, slackloginToken)
 					.then(() => {

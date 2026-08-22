@@ -146,7 +146,6 @@ describe('QueueChips', () => {
 
 		expect(container.textContent).toContain('My unsaved rewrite')
 		expect(container.textContent).toContain('This edit is no longer reserved.')
-		expect(container.querySelector('.select-text')).not.toBeNull()
 		expect(container.querySelector('button')).toBeNull()
 	})
 

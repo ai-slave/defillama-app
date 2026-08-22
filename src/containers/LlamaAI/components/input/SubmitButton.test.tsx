@@ -31,7 +31,7 @@ describe('SubmitButton streaming affordances', () => {
 		container.remove()
 	})
 
-	it('shows only Stop while streaming with an empty composer', async () => {
+	it('shows only Stop when queueing is unavailable', async () => {
 		await act(async () => {
 			root.render(<SubmitButton mode={{ kind: 'streaming', canQueue: false, onStop: vi.fn() }} />)
 		})
@@ -40,22 +40,13 @@ describe('SubmitButton streaming affordances', () => {
 		expect(container.textContent).not.toContain('Queue message')
 	})
 
-	it('shows Queue beside Stop while streaming with text', async () => {
+	it('shows Queue beside Stop when queueing is available', async () => {
 		await act(async () => {
 			root.render(<SubmitButton mode={{ kind: 'streaming', canQueue: true, onStop: vi.fn() }} />)
 		})
 
 		expect(container.textContent).toContain('Stop')
 		expect(container.textContent).toContain('Queue message')
-	})
-
-	it('hides the Queue affordance once the tier depth cap is reached', async () => {
-		await act(async () => {
-			root.render(<SubmitButton mode={{ kind: 'streaming', canQueue: false, onStop: vi.fn() }} />)
-		})
-
-		expect(container.textContent).toContain('Stop')
-		expect(container.textContent).not.toContain('Queue message')
 	})
 
 	it('blocks queue and duplicate stop actions until stopping is confirmed', async () => {

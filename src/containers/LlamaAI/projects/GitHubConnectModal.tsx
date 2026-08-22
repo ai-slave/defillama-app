@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -50,7 +50,7 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 	const [selectedInstallId, setSelectedInstallId] = useState<number | null>(null)
 	const [selectedRepo, setSelectedRepo] = useState('')
 	const [repoQuery, setRepoQuery] = useState('')
-	const [selectedBranch, setSelectedBranch] = useState('')
+	const [selectedBranch, setSelectedBranch] = useState<string | null>(null)
 	const [branchQuery, setBranchQuery] = useState('')
 	const [installing, setInstalling] = useState(false)
 	const defaultInstallId = installs.data?.[0]?.installation_id ?? null
@@ -75,17 +75,18 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 	const repoOwner = repoMeta ? repoMeta.full_name.split('/')[0] : null
 	const repoName = repoMeta ? repoMeta.name : null
 	const branches = useGithubBranches(effectiveInstallId, repoOwner, repoName)
+	const defaultBranch = branches.data?.find((branch) => branch.is_default) ?? branches.data?.[0]
+	const effectiveBranch =
+		selectedBranch && branches.data?.some((branch) => branch.name === selectedBranch)
+			? selectedBranch
+			: (defaultBranch?.name ?? '')
 
-	useEffect(() => {
-		setSelectedBranch('')
+	const selectRepository = (repository: string) => {
+		setSelectedRepo(repository)
+		setRepoQuery('')
+		setSelectedBranch(null)
 		setBranchQuery('')
-	}, [selectedRepo])
-
-	useEffect(() => {
-		if (selectedBranch || !branches.data || branches.data.length === 0) return
-		const defaultBranch = branches.data.find((b) => b.is_default) ?? branches.data[0]
-		if (defaultBranch) setSelectedBranch(defaultBranch.name)
-	}, [branches.data, selectedBranch])
+	}
 
 	const filteredBranches = useMemo(() => {
 		const all = branches.data ?? []
@@ -95,7 +96,7 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 	}, [branches.data, branchQuery])
 
 	const onConnect = async () => {
-		if (!selectedRepo || !selectedBranch || !effectiveInstallId) {
+		if (!selectedRepo || !effectiveBranch || !effectiveInstallId) {
 			toast.error('Choose a repository and branch before connecting.')
 			return
 		}
@@ -108,7 +109,7 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 			await connect.mutateAsync({
 				owner: repo.full_name.split('/')[0],
 				repo: repo.name,
-				branch: selectedBranch,
+				branch: effectiveBranch,
 				installation_id: effectiveInstallId
 			})
 			toast.success(`Connected ${repo.full_name}`)
@@ -193,8 +194,7 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 								value={effectiveInstallId ?? ''}
 								onChange={(e) => {
 									setSelectedInstallId(Number(e.target.value))
-									setSelectedRepo('')
-									setRepoQuery('')
+									selectRepository('')
 								}}
 								className="rounded-md border border-ai-line bg-surface px-3 py-2 text-sm text-inherit focus:border-brand focus:outline-hidden"
 							>
@@ -229,7 +229,7 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 									setValue={setRepoQuery}
 									selectedValue={selectedRepo}
 									setSelectedValue={(value) => {
-										if (typeof value === 'string') setSelectedRepo(value)
+										if (typeof value === 'string') selectRepository(value)
 									}}
 								>
 									<Ariakit.Combobox
@@ -292,13 +292,13 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 								<Ariakit.ComboboxProvider
 									value={branchQuery}
 									setValue={setBranchQuery}
-									selectedValue={selectedBranch}
+									selectedValue={effectiveBranch}
 									setSelectedValue={(value) => {
-										if (typeof value === 'string') setSelectedBranch(value)
+										if (typeof value === 'string') setSelectedBranch(value || null)
 									}}
 								>
 									<Ariakit.Combobox
-										placeholder={selectedBranch || 'Search branches…'}
+										placeholder={effectiveBranch || 'Search branches…'}
 										className="rounded-md border border-ai-line bg-surface px-3 py-2 text-sm text-inherit placeholder:text-ai-muted focus:border-brand focus:outline-hidden"
 									/>
 									<Ariakit.ComboboxPopover
@@ -355,7 +355,7 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 						<button
 							type="button"
 							onClick={() => void onConnect()}
-							disabled={!repoMeta || !selectedBranch || !effectiveInstallId || connect.isPending}
+							disabled={!repoMeta || !effectiveBranch || !effectiveInstallId || connect.isPending}
 							className="flex items-center gap-1.5 rounded-md border border-brand bg-brand px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							{connect.isPending ? <LoadingSpinner size={12} /> : null}

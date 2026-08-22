@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useEffect, useMemo, useState } from 'react'
+import { useMedia } from '~/hooks/useMedia'
 import { Icon } from '~/ui/Icon'
 import { PillBody } from './CitationPill'
 import {
@@ -16,22 +17,6 @@ import {
 } from './citationPillHelpers'
 import { useCitationSheet } from './CitationSheetContext'
 
-function useIsMobileCitationSheet() {
-	const [isMobile, setIsMobile] = useState(() =>
-		typeof window === 'undefined' ? false : window.matchMedia('(max-width: 1023px)').matches
-	)
-
-	useEffect(() => {
-		const media = window.matchMedia('(max-width: 1023px)')
-		const update = () => setIsMobile(media.matches)
-		update()
-		media.addEventListener('change', update)
-		return () => media.removeEventListener('change', update)
-	}, [])
-
-	return isMobile
-}
-
 export function CitationDetailPanel({
 	onBackToDashboard,
 	advancedProvenance
@@ -40,7 +25,7 @@ export function CitationDetailPanel({
 	advancedProvenance: boolean
 }) {
 	const { activeRef, close } = useCitationSheet()
-	const isMobile = useIsMobileCitationSheet()
+	const isMobile = useMedia('(max-width: 1023px)')
 	const [entered, setEntered] = useState(false)
 
 	useEffect(() => {

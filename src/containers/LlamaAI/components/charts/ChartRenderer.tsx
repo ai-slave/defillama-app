@@ -922,9 +922,6 @@ function ChartRendererImpl({
 	const containerRef = useRef<HTMLDivElement>(null)
 	const [selectedChartId, setSelectedChartId] = useState(charts[0]?.id)
 	const activeChartId = charts.some((chart) => chart.id === selectedChartId) ? selectedChartId : charts[0]?.id
-	useEffect(() => {
-		if (activeChartId !== selectedChartId) setSelectedChartId(activeChartId)
-	}, [activeChartId, selectedChartId])
 
 	useEffect(() => {
 		const el = containerRef.current

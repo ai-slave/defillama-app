@@ -240,7 +240,7 @@ describe('ChartRenderer', () => {
 		vi.unstubAllGlobals()
 	})
 
-	it('keeps the selected chart active across reorder and falls back after removal', async () => {
+	it('preserves selection intent while deriving a fallback for missing charts', async () => {
 		const chartA = makeChart('a')
 		const chartB = makeChart('b')
 		const chartC = makeChart('c')
@@ -260,7 +260,10 @@ describe('ChartRenderer', () => {
 		expect(getActiveChartId()).toBe('a')
 
 		await act(async () => root.render(<ChartRenderer charts={[chartB, chartA]} chartData={[]} />))
-		expect(getActiveChartId()).toBe('a')
+		expect(getActiveChartId()).toBe('b')
+
+		await act(async () => root.render(<ChartRenderer charts={[chartB, chartC, chartA]} chartData={[]} />))
+		expect(getActiveChartId()).toBe('c')
 	})
 
 	it('constructs only the active tab while retaining inactive chart controls', async () => {
