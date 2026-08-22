@@ -642,6 +642,48 @@ describe('getProtocolsByChain parent aggregation', () => {
 		expect(parent?.childProtocols?.find((protocol) => protocol.name === 'Mixed Bridge')?.tvl).toBeNull()
 	})
 
+	it('keeps a parent chain TVL known when a sibling only reports non-default TVL on that chain', async () => {
+		fetchAdapterChainMetricsMock.mockResolvedValue({ protocols: [] })
+		getAdapterChainOverviewMock.mockResolvedValue({ protocols: [] })
+		fetchProtocolsMock.mockResolvedValue(
+			protocolsResponse({
+				chains: ['OP Mainnet'],
+				parentProtocols: [parentProtocol({ id: 'parent#mixed', name: 'Mixed Parent' })],
+				protocols: [
+					liteProtocol({
+						defillamaId: 'mixed-base',
+						name: 'Mixed Base Raw',
+						chains: ['OP Mainnet'],
+						parentProtocol: 'parent#mixed',
+						tvl: 100,
+						tvlPrevDay: 90,
+						tvlPrevWeek: 80,
+						tvlPrevMonth: 70,
+						chainTvls: { 'OP Mainnet': tvlEntry(100, 90, 80, 70) }
+					}),
+					// staking-only on this chain: no plain `OP Mainnet` section to add
+					liteProtocol({
+						defillamaId: 'mixed-zero',
+						name: 'Mixed Staking Only Raw',
+						chains: ['OP Mainnet'],
+						parentProtocol: 'parent#mixed',
+						tvl: 1_000,
+						tvlPrevDay: 900,
+						tvlPrevWeek: 800,
+						tvlPrevMonth: 700,
+						chainTvls: { 'OP Mainnet-staking': tvlEntry(500, 400, null, null) }
+					})
+				]
+			})
+		)
+
+		const data = await getProtocolsByChain({ chain: 'OP Mainnet', chainMetadata, protocolMetadata })
+		const parent = data?.protocols.find((protocol) => protocol.name === 'Mixed Parent')
+
+		expect(parent?.tvl?.default).toEqual(tvlEntry(100, 90, 80, 70))
+		expect(parent?.tvlChange?.change1d).toBeCloseTo(11.11, 1)
+	})
+
 	it('keeps parent extra TVL history unknown when a present zero-current entry has unknown comparisons', async () => {
 		fetchAdapterChainMetricsMock.mockResolvedValue({ protocols: [] })
 		getAdapterChainOverviewMock.mockResolvedValue({ protocols: [] })

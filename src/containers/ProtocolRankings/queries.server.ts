@@ -743,7 +743,7 @@ export const getProtocolsByChain = async ({
 			const childStore: StoredChildProtocol = {
 				row: childRow,
 				defillamaId: protocol.defillamaId,
-				contributesTvl: protocol.category !== 'Bridge' && protocol.tvl !== null,
+				contributesTvl: protocol.category !== 'Bridge' && tvls.default.tvl !== null,
 				emissionsMatched
 			}
 			const siblings = parentStore[protocol.parentProtocol]
