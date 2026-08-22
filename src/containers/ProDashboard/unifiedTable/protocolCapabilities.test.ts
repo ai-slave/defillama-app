@@ -106,7 +106,7 @@ describe('protocol base metric family capabilities', () => {
 		expect(
 			getProtocolMetricCapabilities(
 				config({
-					columnOrder: ['emissions30d', 'fees_90d'],
+					columnOrder: ['emissions30d', 'emissionsYtd', 'fees_90d', 'change1y', 'optionsNotionalVolume30d'],
 					customColumns: [
 						{
 							id: 'holder-profit',
@@ -118,7 +118,7 @@ describe('protocol base metric family capabilities', () => {
 					]
 				})
 			).baseMetricFamilies
-		).toEqual(['tvl', 'fees', 'holder-revenue', 'incentives'])
+		).toEqual(['tvl', 'fees', 'holder-revenue', 'incentives', 'options-volume'])
 	})
 
 	it('requests holder revenue for the 7d over 7d column', () => {

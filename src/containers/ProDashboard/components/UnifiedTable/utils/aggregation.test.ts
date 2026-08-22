@@ -387,13 +387,23 @@ describe('aggregateMetrics changes', () => {
 				supplements: {
 					incentives: {
 						childProtocolIds: ['aave-v2', 'aave-v3'],
-						metrics: { emissions24h: 1, emissions7d: 7, emissions30d: 30, emissions1y: 365 }
+						metrics: {
+							emissions24h: 1,
+							emissions7d: 7,
+							emissions30d: 30,
+							emissions90d: 90,
+							emissions1y: 365,
+							emissionsPrev30d: 15
+						}
 					}
 				}
 			}
 		}
 
-		expect(aggregateMetrics([first, second], { excludeParentTvl: false, parentMetrics }).emissions30d).toBe(30)
+		const complete = aggregateMetrics([first, second], { excludeParentTvl: false, parentMetrics })
+		expect(complete.emissions30d).toBe(30)
+		expect(complete.emissions90d).toBe(90)
+		expect(complete.emissionsChange30dOver30d).toBe(100)
 		expect(aggregateMetrics([second], { excludeParentTvl: false, parentMetrics }).emissions30d).toBeNull()
 		const chainRows = [first, second].map((row) => ({
 			...row,
