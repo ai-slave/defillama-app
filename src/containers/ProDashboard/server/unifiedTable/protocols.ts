@@ -49,12 +49,20 @@ type LensMetricRow = Partial<{
 	tvl_base_1d_pct_change: number | null
 	tvl_base_7d_pct_change: number | null
 	tvl_base_30d_pct_change: number | null
+	tvl_base_90d_pct_change: number | null
+	tvl_base_180d_pct_change: number | null
+	tvl_base_365d_pct_change: number | null
+	tvl_base_ytd_pct_change: number | null
 	tvl_staking: number | null
 	tvl_borrowed: number | null
 	tvl_pool2: number | null
+	tvl_treasury: number | null
+	tvl_vesting: number | null
 	volume_dexs_1d: number | null
 	volume_dexs_7d: number | null
 	volume_dexs_30d: number | null
+	volume_dexs_90d: number | null
+	volume_dexs_365d: number | null
 	volume_dexs_1d_pct_change: number | null
 	volume_dexs_7d_pct_change: number | null
 	volume_dexs_30d_pct_change: number | null
@@ -92,9 +100,17 @@ type LensMetricRow = Partial<{
 	holder_revenue_alltime: number | null
 	holder_revenue_annualised: number | null
 	incentive_1d: number | null
+	incentive_1d_pct_change: number | null
 	incentive_7d: number | null
+	incentive_7d_pct_change: number | null
 	incentive_30d: number | null
+	incentive_30d_pct_change: number | null
+	incentive_90d: number | null
+	incentive_180d: number | null
 	incentive_365d: number | null
+	incentive_ytd: number | null
+	incentive_alltime: number | null
+	incentive_annualised: number | null
 	revenue_1d: number | null
 	revenue_7d: number | null
 	revenue_30d: number | null
@@ -114,12 +130,18 @@ type LensMetricRow = Partial<{
 	volume_derivatives_1d: number | null
 	volume_derivatives_7d: number | null
 	volume_derivatives_30d: number | null
+	volume_derivatives_90d: number | null
+	volume_derivatives_365d: number | null
+	volume_derivatives_alltime: number | null
 	volume_derivatives_1d_pct_change: number | null
 	volume_derivatives_7d_pct_change: number | null
 	volume_derivatives_30d_pct_change: number | null
 	volume_aggregators_1d: number | null
 	volume_aggregators_7d: number | null
 	volume_aggregators_30d: number | null
+	volume_aggregators_90d: number | null
+	volume_aggregators_365d: number | null
+	volume_aggregators_alltime: number | null
 	volume_aggregators_1d_pct_change: number | null
 	volume_aggregators_7d_pct_change: number | null
 	volume_aggregators_30d_pct_change: number | null
@@ -132,6 +154,12 @@ type LensMetricRow = Partial<{
 	volume_options_1d: number | null
 	volume_options_7d: number | null
 	volume_options_30d: number | null
+	volume_options_90d: number | null
+	volume_options_365d: number | null
+	volume_options_alltime: number | null
+	volume_options_notional_1d: number | null
+	volume_options_notional_7d: number | null
+	volume_options_notional_30d: number | null
 	volume_options_1d_pct_change: number | null
 	volume_options_7d_pct_change: number | null
 	volume_options_30d_pct_change: number | null
@@ -150,14 +178,22 @@ const LENS_METRIC_COLUMNS_BY_FAMILY: Readonly<
 		'tvl_base_1d_pct_change',
 		'tvl_base_7d_pct_change',
 		'tvl_base_30d_pct_change',
+		'tvl_base_90d_pct_change',
+		'tvl_base_180d_pct_change',
+		'tvl_base_365d_pct_change',
+		'tvl_base_ytd_pct_change',
 		'tvl_staking',
 		'tvl_borrowed',
-		'tvl_pool2'
+		'tvl_pool2',
+		'tvl_treasury',
+		'tvl_vesting'
 	],
 	'dex-volume': [
 		'volume_dexs_1d',
 		'volume_dexs_7d',
 		'volume_dexs_30d',
+		'volume_dexs_90d',
+		'volume_dexs_365d',
 		'volume_dexs_1d_pct_change',
 		'volume_dexs_7d_pct_change',
 		'volume_dexs_30d_pct_change',
@@ -199,7 +235,20 @@ const LENS_METRIC_COLUMNS_BY_FAMILY: Readonly<
 		'holder_revenue_alltime',
 		'holder_revenue_annualised'
 	],
-	incentives: ['incentive_1d', 'incentive_7d', 'incentive_30d', 'incentive_365d'],
+	incentives: [
+		'incentive_1d',
+		'incentive_1d_pct_change',
+		'incentive_7d',
+		'incentive_7d_pct_change',
+		'incentive_30d',
+		'incentive_30d_pct_change',
+		'incentive_90d',
+		'incentive_180d',
+		'incentive_365d',
+		'incentive_ytd',
+		'incentive_alltime',
+		'incentive_annualised'
+	],
 	revenue: [
 		'revenue_1d',
 		'revenue_7d',
@@ -222,6 +271,9 @@ const LENS_METRIC_COLUMNS_BY_FAMILY: Readonly<
 		'volume_derivatives_1d',
 		'volume_derivatives_7d',
 		'volume_derivatives_30d',
+		'volume_derivatives_90d',
+		'volume_derivatives_365d',
+		'volume_derivatives_alltime',
 		'volume_derivatives_1d_pct_change',
 		'volume_derivatives_7d_pct_change',
 		'volume_derivatives_30d_pct_change'
@@ -230,6 +282,9 @@ const LENS_METRIC_COLUMNS_BY_FAMILY: Readonly<
 		'volume_aggregators_1d',
 		'volume_aggregators_7d',
 		'volume_aggregators_30d',
+		'volume_aggregators_90d',
+		'volume_aggregators_365d',
+		'volume_aggregators_alltime',
 		'volume_aggregators_1d_pct_change',
 		'volume_aggregators_7d_pct_change',
 		'volume_aggregators_30d_pct_change'
@@ -246,6 +301,12 @@ const LENS_METRIC_COLUMNS_BY_FAMILY: Readonly<
 		'volume_options_1d',
 		'volume_options_7d',
 		'volume_options_30d',
+		'volume_options_90d',
+		'volume_options_365d',
+		'volume_options_alltime',
+		'volume_options_notional_1d',
+		'volume_options_notional_7d',
+		'volume_options_notional_30d',
 		'volume_options_1d_pct_change',
 		'volume_options_7d_pct_change',
 		'volume_options_30d_pct_change'
@@ -554,7 +615,21 @@ function buildParentMetrics(
 		openInterestByChain: Record<string, number | null>
 		hasOpenInterest: boolean
 		hasIncentives: boolean
-		incentives: Pick<ProtocolTableMetrics, 'emissions24h' | 'emissions7d' | 'emissions30d' | 'emissions1y'>
+		incentives: Pick<
+			ProtocolTableMetrics,
+			| 'emissions24h'
+			| 'emissions7d'
+			| 'emissions30d'
+			| 'emissions90d'
+			| 'emissions180d'
+			| 'emissions1y'
+			| 'emissionsYtd'
+			| 'cumulativeEmissions'
+			| 'emissionsAnnualized1y'
+			| 'emissionsPrev24h'
+			| 'emissionsPrev7d'
+			| 'emissionsPrev30d'
+		>
 	}
 	const accumulators = new Map<string, ParentMetricAccumulator>()
 	for (const row of parentRows) {
@@ -566,7 +641,20 @@ function buildParentMetrics(
 			openInterestByChain: {},
 			hasOpenInterest: false,
 			hasIncentives: false,
-			incentives: { emissions24h: null, emissions7d: null, emissions30d: null, emissions1y: null }
+			incentives: {
+				emissions24h: null,
+				emissions7d: null,
+				emissions30d: null,
+				emissions90d: null,
+				emissions180d: null,
+				emissions1y: null,
+				emissionsYtd: null,
+				cumulativeEmissions: null,
+				emissionsAnnualized1y: null,
+				emissionsPrev24h: null,
+				emissionsPrev7d: null,
+				emissionsPrev30d: null
+			}
 		}
 		accumulator.mcap ??= row.metrics.mcap ?? null
 		accumulator.fdv ??= row.metrics.fdv ?? null
@@ -582,7 +670,15 @@ function buildParentMetrics(
 				emissions24h: row.metrics.emissions24h ?? null,
 				emissions7d: row.metrics.emissions7d ?? null,
 				emissions30d: row.metrics.emissions30d ?? null,
-				emissions1y: row.metrics.emissions1y ?? null
+				emissions90d: row.metrics.emissions90d ?? null,
+				emissions180d: row.metrics.emissions180d ?? null,
+				emissions1y: row.metrics.emissions1y ?? null,
+				emissionsYtd: row.metrics.emissionsYtd ?? null,
+				cumulativeEmissions: row.metrics.cumulativeEmissions ?? null,
+				emissionsAnnualized1y: row.metrics.emissionsAnnualized1y ?? null,
+				emissionsPrev24h: row.metrics.emissionsPrev24h ?? null,
+				emissionsPrev7d: row.metrics.emissionsPrev7d ?? null,
+				emissionsPrev30d: row.metrics.emissionsPrev30d ?? null
 			}
 		}
 		accumulators.set(row.protocolId, accumulator)
@@ -657,12 +753,32 @@ const baseMetricsMapping = (
 		metrics.tvlPrevDay = derivePreviousValue(tvl, row.tvl_base_1d_pct_change)
 		metrics.tvlPrevWeek = derivePreviousValue(tvl, row.tvl_base_7d_pct_change)
 		metrics.tvlPrevMonth = derivePreviousValue(tvl, row.tvl_base_30d_pct_change)
+		metrics.tvlPrev90d = derivePreviousValue(tvl, row.tvl_base_90d_pct_change)
+		metrics.tvlPrev180d = derivePreviousValue(tvl, row.tvl_base_180d_pct_change)
+		metrics.tvlPrevYear = derivePreviousValue(tvl, row.tvl_base_365d_pct_change)
+		metrics.tvlPrevYtd = derivePreviousValue(tvl, row.tvl_base_ytd_pct_change)
+		metrics.tvlPrev90d = derivePreviousValue(tvl, row.tvl_base_90d_pct_change)
+		metrics.tvlPrev180d = derivePreviousValue(tvl, row.tvl_base_180d_pct_change)
+		metrics.tvlPrevYear = derivePreviousValue(tvl, row.tvl_base_365d_pct_change)
+		metrics.tvlPrevYtd = derivePreviousValue(tvl, row.tvl_base_ytd_pct_change)
 		metrics.change1d = toPercent(row.tvl_base_1d_pct_change)
 		metrics.change7d = toPercent(row.tvl_base_7d_pct_change)
 		metrics.change1m = toPercent(row.tvl_base_30d_pct_change)
+		metrics.change90d = toPercent(row.tvl_base_90d_pct_change)
+		metrics.change180d = toPercent(row.tvl_base_180d_pct_change)
+		metrics.change1y = toPercent(row.tvl_base_365d_pct_change)
+		metrics.changeYtd = toPercent(row.tvl_base_ytd_pct_change)
+		metrics.change90d = toPercent(row.tvl_base_90d_pct_change)
+		metrics.change180d = toPercent(row.tvl_base_180d_pct_change)
+		metrics.change1y = toPercent(row.tvl_base_365d_pct_change)
+		metrics.changeYtd = toPercent(row.tvl_base_ytd_pct_change)
 		metrics.stakingTvl = row.tvl_staking ?? null
 		metrics.borrowedTvl = row.tvl_borrowed ?? null
 		metrics.pool2Tvl = row.tvl_pool2 ?? null
+		metrics.treasuryTvl = row.tvl_treasury ?? null
+		metrics.vestingTvl = row.tvl_vesting ?? null
+		metrics.treasuryTvl = row.tvl_treasury ?? null
+		metrics.vestingTvl = row.tvl_vesting ?? null
 	}
 
 	if (requested.has('dex-volume')) {
@@ -671,6 +787,10 @@ const baseMetricsMapping = (
 		metrics.volume24h = volume24h
 		metrics.volume_7d = volume7d
 		metrics.volume_30d = row.volume_dexs_30d ?? null
+		metrics.volume_90d = row.volume_dexs_90d ?? null
+		metrics.volume_1y = row.volume_dexs_365d ?? null
+		metrics.volume_90d = row.volume_dexs_90d ?? null
+		metrics.volume_1y = row.volume_dexs_365d ?? null
 		metrics.cumulativeVolume = row.volume_dexs_alltime ?? null
 		metrics.volumeChange_1d = toPercent(row.volume_dexs_1d_pct_change)
 		metrics.volumeChange7dOver7d = toPercent(row.volume_dexs_7d_pct_change)
@@ -722,7 +842,18 @@ const baseMetricsMapping = (
 		metrics.emissions24h = row.incentive_1d ?? null
 		metrics.emissions7d = row.incentive_7d ?? null
 		metrics.emissions30d = row.incentive_30d ?? null
+		metrics.emissions90d = row.incentive_90d ?? null
+		metrics.emissions180d = row.incentive_180d ?? null
 		metrics.emissions1y = row.incentive_365d ?? null
+		metrics.emissionsYtd = row.incentive_ytd ?? null
+		metrics.cumulativeEmissions = row.incentive_alltime ?? null
+		metrics.emissionsAnnualized1y = row.incentive_annualised ?? null
+		metrics.emissionsPrev24h = derivePreviousValue(row.incentive_1d ?? null, row.incentive_1d_pct_change)
+		metrics.emissionsPrev7d = derivePreviousValue(row.incentive_7d ?? null, row.incentive_7d_pct_change)
+		metrics.emissionsPrev30d = derivePreviousValue(row.incentive_30d ?? null, row.incentive_30d_pct_change)
+		metrics.emissionsChange1d = toPercent(row.incentive_1d_pct_change)
+		metrics.emissionsChange7dOver7d = toPercent(row.incentive_7d_pct_change)
+		metrics.emissionsChange30dOver30d = toPercent(row.incentive_30d_pct_change)
 	}
 
 	if (requested.has('revenue')) {
@@ -750,6 +881,9 @@ const baseMetricsMapping = (
 		metrics.perpsVolume24h = perps24h
 		metrics.perps_volume_7d = row.volume_derivatives_7d ?? null
 		metrics.perps_volume_30d = row.volume_derivatives_30d ?? null
+		metrics.perps_volume_90d = row.volume_derivatives_90d ?? null
+		metrics.perps_volume_1y = row.volume_derivatives_365d ?? null
+		metrics.cumulativePerpsVolume = row.volume_derivatives_alltime ?? null
 		metrics.perps_volume_change_1d = toPercent(row.volume_derivatives_1d_pct_change)
 		metrics.perpsVolumeChange7dOver7d = toPercent(row.volume_derivatives_7d_pct_change)
 		metrics.perpsVolumeChange30dOver30d = toPercent(row.volume_derivatives_30d_pct_change)
@@ -760,6 +894,9 @@ const baseMetricsMapping = (
 		metrics.aggregators_volume_24h = row.volume_aggregators_1d ?? null
 		metrics.aggregators_volume_7d = row.volume_aggregators_7d ?? null
 		metrics.aggregators_volume_30d = row.volume_aggregators_30d ?? null
+		metrics.aggregators_volume_90d = row.volume_aggregators_90d ?? null
+		metrics.aggregators_volume_1y = row.volume_aggregators_365d ?? null
+		metrics.cumulativeAggregatorVolume = row.volume_aggregators_alltime ?? null
 		metrics.aggregators_volume_change_1d = toPercent(row.volume_aggregators_1d_pct_change)
 		metrics.aggregatorVolumeChange7dOver7d = toPercent(row.volume_aggregators_7d_pct_change)
 		metrics.aggregatorVolumeChange30dOver30d = toPercent(row.volume_aggregators_30d_pct_change)
@@ -780,6 +917,12 @@ const baseMetricsMapping = (
 		metrics.options_volume_24h = row.volume_options_1d ?? null
 		metrics.options_volume_7d = row.volume_options_7d ?? null
 		metrics.options_volume_30d = row.volume_options_30d ?? null
+		metrics.options_volume_90d = row.volume_options_90d ?? null
+		metrics.options_volume_1y = row.volume_options_365d ?? null
+		metrics.cumulativeOptionsVolume = row.volume_options_alltime ?? null
+		metrics.optionsNotionalVolume24h = row.volume_options_notional_1d ?? null
+		metrics.optionsNotionalVolume7d = row.volume_options_notional_7d ?? null
+		metrics.optionsNotionalVolume30d = row.volume_options_notional_30d ?? null
 		metrics.options_volume_change_1d = toPercent(row.volume_options_1d_pct_change)
 		metrics.optionsVolumeChange7dOver7d = toPercent(row.volume_options_7d_pct_change)
 		metrics.optionsVolumeChange30dOver30d = toPercent(row.volume_options_30d_pct_change)
@@ -1291,12 +1434,20 @@ type ChainMetricsRow = { chain: string } & Partial<{
 	tvl_base_1d_pct_change: number | null
 	tvl_base_7d_pct_change: number | null
 	tvl_base_30d_pct_change: number | null
+	tvl_base_90d_pct_change: number | null
+	tvl_base_180d_pct_change: number | null
+	tvl_base_365d_pct_change: number | null
+	tvl_base_ytd_pct_change: number | null
 	tvl_staking: number | null
 	tvl_borrowed: number | null
 	tvl_pool2: number | null
+	tvl_treasury: number | null
+	tvl_vesting: number | null
 	volume_dexs_1d: number | null
 	volume_dexs_7d: number | null
 	volume_dexs_30d: number | null
+	volume_dexs_90d: number | null
+	volume_dexs_365d: number | null
 	volume_dexs_1d_pct_change: number | null
 	volume_dexs_7d_pct_change: number | null
 	volume_dexs_30d_pct_change: number | null
@@ -1334,18 +1485,32 @@ type ChainMetricsRow = { chain: string } & Partial<{
 	app_revenue_365d_pct_change: number | null
 	app_revenue_ytd_pct_change: number | null
 	incentive_1d: number | null
+	incentive_1d_pct_change: number | null
 	incentive_7d: number | null
+	incentive_7d_pct_change: number | null
 	incentive_30d: number | null
+	incentive_30d_pct_change: number | null
+	incentive_90d: number | null
+	incentive_180d: number | null
 	incentive_365d: number | null
+	incentive_ytd: number | null
+	incentive_alltime: number | null
+	incentive_annualised: number | null
 	volume_derivatives_1d: number | null
 	volume_derivatives_7d: number | null
 	volume_derivatives_30d: number | null
+	volume_derivatives_90d: number | null
+	volume_derivatives_365d: number | null
+	volume_derivatives_alltime: number | null
 	volume_derivatives_1d_pct_change: number | null
 	volume_derivatives_7d_pct_change: number | null
 	volume_derivatives_30d_pct_change: number | null
 	volume_aggregators_1d: number | null
 	volume_aggregators_7d: number | null
 	volume_aggregators_30d: number | null
+	volume_aggregators_90d: number | null
+	volume_aggregators_365d: number | null
+	volume_aggregators_alltime: number | null
 	volume_aggregators_1d_pct_change: number | null
 	volume_aggregators_7d_pct_change: number | null
 	volume_aggregators_30d_pct_change: number | null
@@ -1358,6 +1523,12 @@ type ChainMetricsRow = { chain: string } & Partial<{
 	volume_options_1d: number | null
 	volume_options_7d: number | null
 	volume_options_30d: number | null
+	volume_options_90d: number | null
+	volume_options_365d: number | null
+	volume_options_alltime: number | null
+	volume_options_notional_1d: number | null
+	volume_options_notional_7d: number | null
+	volume_options_notional_30d: number | null
 	volume_options_1d_pct_change: number | null
 	volume_options_7d_pct_change: number | null
 	volume_options_30d_pct_change: number | null
@@ -1381,14 +1552,22 @@ const CHAIN_METRIC_COLUMNS_BY_FAMILY: Readonly<
 		'tvl_base_1d_pct_change',
 		'tvl_base_7d_pct_change',
 		'tvl_base_30d_pct_change',
+		'tvl_base_90d_pct_change',
+		'tvl_base_180d_pct_change',
+		'tvl_base_365d_pct_change',
+		'tvl_base_ytd_pct_change',
 		'tvl_staking',
 		'tvl_borrowed',
-		'tvl_pool2'
+		'tvl_pool2',
+		'tvl_treasury',
+		'tvl_vesting'
 	],
 	'dex-volume': [
 		'volume_dexs_1d',
 		'volume_dexs_7d',
 		'volume_dexs_30d',
+		'volume_dexs_90d',
+		'volume_dexs_365d',
 		'volume_dexs_1d_pct_change',
 		'volume_dexs_7d_pct_change',
 		'volume_dexs_30d_pct_change',
@@ -1412,7 +1591,20 @@ const CHAIN_METRIC_COLUMNS_BY_FAMILY: Readonly<
 		'app_fees_365d_pct_change',
 		'app_fees_ytd_pct_change'
 	],
-	incentives: ['incentive_1d', 'incentive_7d', 'incentive_30d', 'incentive_365d'],
+	incentives: [
+		'incentive_1d',
+		'incentive_1d_pct_change',
+		'incentive_7d',
+		'incentive_7d_pct_change',
+		'incentive_30d',
+		'incentive_30d_pct_change',
+		'incentive_90d',
+		'incentive_180d',
+		'incentive_365d',
+		'incentive_ytd',
+		'incentive_alltime',
+		'incentive_annualised'
+	],
 	revenue: [
 		'app_revenue_1d',
 		'app_revenue_7d',
@@ -1435,6 +1627,9 @@ const CHAIN_METRIC_COLUMNS_BY_FAMILY: Readonly<
 		'volume_derivatives_1d',
 		'volume_derivatives_7d',
 		'volume_derivatives_30d',
+		'volume_derivatives_90d',
+		'volume_derivatives_365d',
+		'volume_derivatives_alltime',
 		'volume_derivatives_1d_pct_change',
 		'volume_derivatives_7d_pct_change',
 		'volume_derivatives_30d_pct_change'
@@ -1443,6 +1638,9 @@ const CHAIN_METRIC_COLUMNS_BY_FAMILY: Readonly<
 		'volume_aggregators_1d',
 		'volume_aggregators_7d',
 		'volume_aggregators_30d',
+		'volume_aggregators_90d',
+		'volume_aggregators_365d',
+		'volume_aggregators_alltime',
 		'volume_aggregators_1d_pct_change',
 		'volume_aggregators_7d_pct_change',
 		'volume_aggregators_30d_pct_change'
@@ -1459,6 +1657,12 @@ const CHAIN_METRIC_COLUMNS_BY_FAMILY: Readonly<
 		'volume_options_1d',
 		'volume_options_7d',
 		'volume_options_30d',
+		'volume_options_90d',
+		'volume_options_365d',
+		'volume_options_alltime',
+		'volume_options_notional_1d',
+		'volume_options_notional_7d',
+		'volume_options_notional_30d',
 		'volume_options_1d_pct_change',
 		'volume_options_7d_pct_change',
 		'volume_options_30d_pct_change'
@@ -1538,7 +1742,18 @@ const mapCanonicalChainMetrics = (
 		metrics.emissions24h = row.incentive_1d ?? null
 		metrics.emissions7d = row.incentive_7d ?? null
 		metrics.emissions30d = row.incentive_30d ?? null
+		metrics.emissions90d = row.incentive_90d ?? null
+		metrics.emissions180d = row.incentive_180d ?? null
 		metrics.emissions1y = row.incentive_365d ?? null
+		metrics.emissionsYtd = row.incentive_ytd ?? null
+		metrics.cumulativeEmissions = row.incentive_alltime ?? null
+		metrics.emissionsAnnualized1y = row.incentive_annualised ?? null
+		metrics.emissionsPrev24h = derivePreviousValue(row.incentive_1d ?? null, row.incentive_1d_pct_change)
+		metrics.emissionsPrev7d = derivePreviousValue(row.incentive_7d ?? null, row.incentive_7d_pct_change)
+		metrics.emissionsPrev30d = derivePreviousValue(row.incentive_30d ?? null, row.incentive_30d_pct_change)
+		metrics.emissionsChange1d = toPercent(row.incentive_1d_pct_change)
+		metrics.emissionsChange7dOver7d = toPercent(row.incentive_7d_pct_change)
+		metrics.emissionsChange30dOver30d = toPercent(row.incentive_30d_pct_change)
 	}
 
 	if (requested.has('revenue')) {
@@ -1567,6 +1782,9 @@ const mapCanonicalChainMetrics = (
 		metrics.perpsVolume24h = perpsVolume24h
 		metrics.perps_volume_7d = row.volume_derivatives_7d ?? null
 		metrics.perps_volume_30d = row.volume_derivatives_30d ?? null
+		metrics.perps_volume_90d = row.volume_derivatives_90d ?? null
+		metrics.perps_volume_1y = row.volume_derivatives_365d ?? null
+		metrics.cumulativePerpsVolume = row.volume_derivatives_alltime ?? null
 		metrics.perps_volume_change_1d = toPercent(row.volume_derivatives_1d_pct_change)
 		metrics.perpsVolumeChange7dOver7d = toPercent(row.volume_derivatives_7d_pct_change)
 		metrics.perpsVolumeChange30dOver30d = toPercent(row.volume_derivatives_30d_pct_change)
@@ -1577,6 +1795,9 @@ const mapCanonicalChainMetrics = (
 		metrics.aggregators_volume_24h = row.volume_aggregators_1d ?? null
 		metrics.aggregators_volume_7d = row.volume_aggregators_7d ?? null
 		metrics.aggregators_volume_30d = row.volume_aggregators_30d ?? null
+		metrics.aggregators_volume_90d = row.volume_aggregators_90d ?? null
+		metrics.aggregators_volume_1y = row.volume_aggregators_365d ?? null
+		metrics.cumulativeAggregatorVolume = row.volume_aggregators_alltime ?? null
 		metrics.aggregators_volume_change_1d = toPercent(row.volume_aggregators_1d_pct_change)
 		metrics.aggregatorVolumeChange7dOver7d = toPercent(row.volume_aggregators_7d_pct_change)
 		metrics.aggregatorVolumeChange30dOver30d = toPercent(row.volume_aggregators_30d_pct_change)
@@ -1597,6 +1818,12 @@ const mapCanonicalChainMetrics = (
 		metrics.options_volume_24h = row.volume_options_1d ?? null
 		metrics.options_volume_7d = row.volume_options_7d ?? null
 		metrics.options_volume_30d = row.volume_options_30d ?? null
+		metrics.options_volume_90d = row.volume_options_90d ?? null
+		metrics.options_volume_1y = row.volume_options_365d ?? null
+		metrics.cumulativeOptionsVolume = row.volume_options_alltime ?? null
+		metrics.optionsNotionalVolume24h = row.volume_options_notional_1d ?? null
+		metrics.optionsNotionalVolume7d = row.volume_options_notional_7d ?? null
+		metrics.optionsNotionalVolume30d = row.volume_options_notional_30d ?? null
 		metrics.options_volume_change_1d = toPercent(row.volume_options_1d_pct_change)
 		metrics.optionsVolumeChange7dOver7d = toPercent(row.volume_options_7d_pct_change)
 		metrics.optionsVolumeChange30dOver30d = toPercent(row.volume_options_30d_pct_change)

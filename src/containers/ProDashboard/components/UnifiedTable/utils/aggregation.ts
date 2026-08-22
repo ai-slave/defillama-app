@@ -152,6 +152,24 @@ const PERCENT_CHANGE_DEFINITIONS: readonly PercentChangeDefinition[] = [
 		currentKey: 'holderRevenue_ytd',
 		broaderPeriodKeys: ['cumulativeHolderRevenue']
 	},
+	{
+		family: 'incentives',
+		changeKey: 'emissionsChange1d',
+		currentKey: 'emissions24h',
+		broaderPeriodKeys: ['emissions7d']
+	},
+	{
+		family: 'incentives',
+		changeKey: 'emissionsChange7dOver7d',
+		currentKey: 'emissions7d',
+		broaderPeriodKeys: ['emissions30d']
+	},
+	{
+		family: 'incentives',
+		changeKey: 'emissionsChange30dOver30d',
+		currentKey: 'emissions30d',
+		broaderPeriodKeys: ['emissions90d', 'emissions180d', 'emissions1y', 'cumulativeEmissions']
+	},
 	{ family: 'revenue', changeKey: 'revenueChange_1d', currentKey: 'revenue24h', broaderPeriodKeys: ['revenue_7d'] },
 	{
 		family: 'revenue',
@@ -335,7 +353,11 @@ const POINT_CHANGE_DEFINITIONS: readonly PreviousValueChangeDefinition[] = [
 const TVL_CHANGE_DEFINITIONS: readonly PreviousValueChangeDefinition[] = [
 	{ changeKey: 'change1d', currentKey: 'tvl', previousKey: 'tvlPrevDay' },
 	{ changeKey: 'change7d', currentKey: 'tvl', previousKey: 'tvlPrevWeek' },
-	{ changeKey: 'change1m', currentKey: 'tvl', previousKey: 'tvlPrevMonth' }
+	{ changeKey: 'change1m', currentKey: 'tvl', previousKey: 'tvlPrevMonth' },
+	{ changeKey: 'change90d', currentKey: 'tvl', previousKey: 'tvlPrev90d' },
+	{ changeKey: 'change180d', currentKey: 'tvl', previousKey: 'tvlPrev180d' },
+	{ changeKey: 'change1y', currentKey: 'tvl', previousKey: 'tvlPrevYear' },
+	{ changeKey: 'changeYtd', currentKey: 'tvl', previousKey: 'tvlPrevYtd' }
 ]
 
 function emptyChangeAccumulator(): ChangeAccumulator {
@@ -570,8 +592,21 @@ function applyCanonicalParentIncentives(
 	aggregated: ProtocolTableMetrics,
 	rows: ProtocolTableSourceRow[],
 	parentMetrics: Readonly<Record<string, ParentProtocolMetrics>>
-): void {
-	const keys = ['emissions24h', 'emissions7d', 'emissions30d', 'emissions1y'] as const
+): boolean {
+	const keys = [
+		'emissions24h',
+		'emissions7d',
+		'emissions30d',
+		'emissions90d',
+		'emissions180d',
+		'emissions1y',
+		'emissionsYtd',
+		'cumulativeEmissions',
+		'emissionsAnnualized1y',
+		'emissionsPrev24h',
+		'emissionsPrev7d',
+		'emissionsPrev30d'
+	] as const
 	type IncentiveKey = (typeof keys)[number]
 	type ParentIncentiveMembership = { protocolIds: Set<string>; allocated: Record<IncentiveKey, number> }
 	const rowsByParent = new Map<string, ParentIncentiveMembership>()
@@ -580,13 +615,27 @@ function applyCanonicalParentIncentives(
 		if (!row.parentProtocolId || row.chain !== null) continue
 		const membership = rowsByParent.get(row.parentProtocolId) ?? {
 			protocolIds: new Set<string>(),
-			allocated: { emissions24h: 0, emissions7d: 0, emissions30d: 0, emissions1y: 0 }
+			allocated: {
+				emissions24h: 0,
+				emissions7d: 0,
+				emissions30d: 0,
+				emissions90d: 0,
+				emissions180d: 0,
+				emissions1y: 0,
+				emissionsYtd: 0,
+				cumulativeEmissions: 0,
+				emissionsAnnualized1y: 0,
+				emissionsPrev24h: 0,
+				emissionsPrev7d: 0,
+				emissionsPrev30d: 0
+			}
 		}
 		membership.protocolIds.add(row.protocolId)
 		for (const key of keys) membership.allocated[key] += row.metrics[key] ?? 0
 		rowsByParent.set(row.parentProtocolId, membership)
 	}
 
+	let applied = false
 	for (const [parentId, membership] of rowsByParent) {
 		const source = parentMetrics[parentId]?.supplements?.incentives
 		if (!source || !source.childProtocolIds.every((protocolId) => membership.protocolIds.has(protocolId))) continue
@@ -594,8 +643,10 @@ function applyCanonicalParentIncentives(
 			const value = source.metrics[key]
 			if (value == null) continue
 			aggregated[key] = (aggregated[key] ?? 0) - membership.allocated[key] + value
+			applied = true
 		}
 	}
+	return applied
 }
 
 const PARENT_TVL_KEYS = new Set<keyof ProtocolTableMetrics>([
@@ -603,13 +654,33 @@ const PARENT_TVL_KEYS = new Set<keyof ProtocolTableMetrics>([
 	'tvlPrevDay',
 	'tvlPrevWeek',
 	'tvlPrevMonth',
+	'tvlPrev90d',
+	'tvlPrev180d',
+	'tvlPrevYear',
+	'tvlPrevYtd',
 	'stakingTvl',
 	'borrowedTvl',
-	'pool2Tvl'
+	'pool2Tvl',
+	'treasuryTvl',
+	'vestingTvl'
 ])
 const SUM_METRIC_KEYS_BY_BASE_FAMILY = {
-	tvl: ['tvl', 'tvlPrevDay', 'tvlPrevWeek', 'tvlPrevMonth', 'stakingTvl', 'borrowedTvl', 'pool2Tvl'],
-	'dex-volume': ['volume24h', 'volume_7d', 'volume_30d', 'cumulativeVolume'],
+	tvl: [
+		'tvl',
+		'tvlPrevDay',
+		'tvlPrevWeek',
+		'tvlPrevMonth',
+		'tvlPrev90d',
+		'tvlPrev180d',
+		'tvlPrevYear',
+		'tvlPrevYtd',
+		'stakingTvl',
+		'borrowedTvl',
+		'pool2Tvl',
+		'treasuryTvl',
+		'vestingTvl'
+	],
+	'dex-volume': ['volume24h', 'volume_7d', 'volume_30d', 'volume_90d', 'volume_1y', 'cumulativeVolume'],
 	fees: [
 		'fees24h',
 		'fees_7d',
@@ -633,7 +704,20 @@ const SUM_METRIC_KEYS_BY_BASE_FAMILY = {
 		'cumulativeHolderRevenue',
 		'holderRevenueAnnualized1y'
 	],
-	incentives: ['emissions24h', 'emissions7d', 'emissions30d', 'emissions1y'],
+	incentives: [
+		'emissions24h',
+		'emissions7d',
+		'emissions30d',
+		'emissions90d',
+		'emissions180d',
+		'emissions1y',
+		'emissionsYtd',
+		'cumulativeEmissions',
+		'emissionsAnnualized1y',
+		'emissionsPrev24h',
+		'emissionsPrev7d',
+		'emissionsPrev30d'
+	],
 	revenue: [
 		'revenue24h',
 		'revenue_7d',
@@ -646,14 +730,38 @@ const SUM_METRIC_KEYS_BY_BASE_FAMILY = {
 		'average_revenue_1y',
 		'cumulativeRevenue'
 	],
-	'perps-volume': ['perpsVolume24h', 'perps_volume_7d', 'perps_volume_30d'],
-	'aggregator-volume': ['aggregators_volume_24h', 'aggregators_volume_7d', 'aggregators_volume_30d'],
+	'perps-volume': [
+		'perpsVolume24h',
+		'perps_volume_7d',
+		'perps_volume_30d',
+		'perps_volume_90d',
+		'perps_volume_1y',
+		'cumulativePerpsVolume'
+	],
+	'aggregator-volume': [
+		'aggregators_volume_24h',
+		'aggregators_volume_7d',
+		'aggregators_volume_30d',
+		'aggregators_volume_90d',
+		'aggregators_volume_1y',
+		'cumulativeAggregatorVolume'
+	],
 	'derivatives-aggregator-volume': [
 		'derivatives_aggregators_volume_24h',
 		'derivatives_aggregators_volume_7d',
 		'derivatives_aggregators_volume_30d'
 	],
-	'options-volume': ['options_volume_24h', 'options_volume_7d', 'options_volume_30d'],
+	'options-volume': [
+		'options_volume_24h',
+		'options_volume_7d',
+		'options_volume_30d',
+		'options_volume_90d',
+		'options_volume_1y',
+		'cumulativeOptionsVolume',
+		'optionsNotionalVolume24h',
+		'optionsNotionalVolume7d',
+		'optionsNotionalVolume30d'
+	],
 	'open-interest': ['openInterest'],
 	'market-cap': [],
 	'bridged-tvl': ['bridgedTvl'],
@@ -930,7 +1038,21 @@ export function aggregateMetrics(
 		applyCanonicalParentOpenInterest(aggregated, rows, options.parentMetrics)
 	}
 	if (options.parentMetrics && plan.includeCanonicalParentIncentives) {
-		applyCanonicalParentIncentives(aggregated, rows, options.parentMetrics)
+		const applied = applyCanonicalParentIncentives(aggregated, rows, options.parentMetrics)
+		if (applied) {
+			aggregated.emissionsChange1d =
+				aggregated.emissions24h != null && aggregated.emissionsPrev24h != null
+					? getPercentChange(aggregated.emissions24h, aggregated.emissionsPrev24h)
+					: null
+			aggregated.emissionsChange7dOver7d =
+				aggregated.emissions7d != null && aggregated.emissionsPrev7d != null
+					? getPercentChange(aggregated.emissions7d, aggregated.emissionsPrev7d)
+					: null
+			aggregated.emissionsChange30dOver30d =
+				aggregated.emissions30d != null && aggregated.emissionsPrev30d != null
+					? getPercentChange(aggregated.emissions30d, aggregated.emissionsPrev30d)
+					: null
+		}
 	}
 
 	if (options.parentMetrics && (plan.includeEarnings || plan.includeBridgeAggregatorVolume)) {

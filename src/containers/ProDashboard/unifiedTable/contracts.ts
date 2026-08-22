@@ -3,12 +3,22 @@ export interface ProtocolTableMetrics {
 	tvlPrevDay?: number | null
 	tvlPrevWeek?: number | null
 	tvlPrevMonth?: number | null
+	tvlPrev90d?: number | null
+	tvlPrev180d?: number | null
+	tvlPrevYear?: number | null
+	tvlPrevYtd?: number | null
 	change1d?: number | null
 	change7d?: number | null
 	change1m?: number | null
+	change90d?: number | null
+	change180d?: number | null
+	change1y?: number | null
+	changeYtd?: number | null
 	stakingTvl?: number | null
 	borrowedTvl?: number | null
 	pool2Tvl?: number | null
+	treasuryTvl?: number | null
+	vestingTvl?: number | null
 	bridgedTvl?: number | null
 	stablesMcap?: number | null
 	tvlShare?: number | null
@@ -17,6 +27,8 @@ export interface ProtocolTableMetrics {
 	volume24h?: number | null
 	volume_7d?: number | null
 	volume_30d?: number | null
+	volume_90d?: number | null
+	volume_1y?: number | null
 	cumulativeVolume?: number | null
 	volumeChange_1d?: number | null
 	volume24h7dAgo?: number | null
@@ -88,6 +100,9 @@ export interface ProtocolTableMetrics {
 	perpsVolume24h?: number | null
 	perps_volume_7d?: number | null
 	perps_volume_30d?: number | null
+	perps_volume_90d?: number | null
+	perps_volume_1y?: number | null
+	cumulativePerpsVolume?: number | null
 	perps_volume_change_1d?: number | null
 	perpsVolume24h7dAgo?: number | null
 	perpsVolume24h30dAgo?: number | null
@@ -100,6 +115,9 @@ export interface ProtocolTableMetrics {
 	aggregators_volume_24h?: number | null
 	aggregators_volume_7d?: number | null
 	aggregators_volume_30d?: number | null
+	aggregators_volume_90d?: number | null
+	aggregators_volume_1y?: number | null
+	cumulativeAggregatorVolume?: number | null
 	aggregators_volume_change_1d?: number | null
 	aggregatorVolume24h7dAgo?: number | null
 	aggregatorVolume24h30dAgo?: number | null
@@ -122,6 +140,12 @@ export interface ProtocolTableMetrics {
 	options_volume_24h?: number | null
 	options_volume_7d?: number | null
 	options_volume_30d?: number | null
+	options_volume_90d?: number | null
+	options_volume_1y?: number | null
+	cumulativeOptionsVolume?: number | null
+	optionsNotionalVolume24h?: number | null
+	optionsNotionalVolume7d?: number | null
+	optionsNotionalVolume30d?: number | null
 	options_volume_change_1d?: number | null
 	optionsVolume24h7dAgo?: number | null
 	optionsVolume24h30dAgo?: number | null
@@ -143,7 +167,18 @@ export interface ProtocolTableMetrics {
 	emissions24h?: number | null
 	emissions7d?: number | null
 	emissions30d?: number | null
+	emissions90d?: number | null
+	emissions180d?: number | null
 	emissions1y?: number | null
+	emissionsYtd?: number | null
+	cumulativeEmissions?: number | null
+	emissionsAnnualized1y?: number | null
+	emissionsPrev24h?: number | null
+	emissionsPrev7d?: number | null
+	emissionsPrev30d?: number | null
+	emissionsChange1d?: number | null
+	emissionsChange7dOver7d?: number | null
+	emissionsChange30dOver30d?: number | null
 	bridgeAggregatorVolume24h?: number | null
 	bridgeAggregatorVolume7d?: number | null
 	bridgeAggregatorVolume30d?: number | null
@@ -186,12 +221,22 @@ export const EMPTY_CANONICAL_CHAIN_METRICS = {
 	tvlPrevDay: null,
 	tvlPrevWeek: null,
 	tvlPrevMonth: null,
+	tvlPrev90d: null,
+	tvlPrev180d: null,
+	tvlPrevYear: null,
+	tvlPrevYtd: null,
 	change1d: null,
 	change7d: null,
 	change1m: null,
+	change90d: null,
+	change180d: null,
+	change1y: null,
+	changeYtd: null,
 	stakingTvl: null,
 	borrowedTvl: null,
 	pool2Tvl: null,
+	treasuryTvl: null,
+	vestingTvl: null,
 	bridgedTvl: null,
 	stablesMcap: null,
 	tvlShare: null,
@@ -200,6 +245,8 @@ export const EMPTY_CANONICAL_CHAIN_METRICS = {
 	volume24h: null,
 	volume_7d: null,
 	volume_30d: null,
+	volume_90d: null,
+	volume_1y: null,
 	cumulativeVolume: null,
 	volumeChange_1d: null,
 	volume24h7dAgo: null,
@@ -255,6 +302,9 @@ export const EMPTY_CANONICAL_CHAIN_METRICS = {
 	perpsVolume24h: null,
 	perps_volume_7d: null,
 	perps_volume_30d: null,
+	perps_volume_90d: null,
+	perps_volume_1y: null,
+	cumulativePerpsVolume: null,
 	perps_volume_change_1d: null,
 	perpsVolume24h7dAgo: null,
 	perpsVolume24h30dAgo: null,
@@ -267,6 +317,9 @@ export const EMPTY_CANONICAL_CHAIN_METRICS = {
 	aggregators_volume_24h: null,
 	aggregators_volume_7d: null,
 	aggregators_volume_30d: null,
+	aggregators_volume_90d: null,
+	aggregators_volume_1y: null,
+	cumulativeAggregatorVolume: null,
 	aggregators_volume_change_1d: null,
 	aggregatorVolume24h7dAgo: null,
 	aggregatorVolume24h30dAgo: null,
@@ -289,6 +342,12 @@ export const EMPTY_CANONICAL_CHAIN_METRICS = {
 	options_volume_24h: null,
 	options_volume_7d: null,
 	options_volume_30d: null,
+	options_volume_90d: null,
+	options_volume_1y: null,
+	cumulativeOptionsVolume: null,
+	optionsNotionalVolume24h: null,
+	optionsNotionalVolume7d: null,
+	optionsNotionalVolume30d: null,
 	options_volume_change_1d: null,
 	optionsVolume24h7dAgo: null,
 	optionsVolume24h30dAgo: null,
@@ -300,7 +359,18 @@ export const EMPTY_CANONICAL_CHAIN_METRICS = {
 	emissions24h: null,
 	emissions7d: null,
 	emissions30d: null,
+	emissions90d: null,
+	emissions180d: null,
 	emissions1y: null,
+	emissionsYtd: null,
+	cumulativeEmissions: null,
+	emissionsAnnualized1y: null,
+	emissionsPrev24h: null,
+	emissionsPrev7d: null,
+	emissionsPrev30d: null,
+	emissionsChange1d: null,
+	emissionsChange7dOver7d: null,
+	emissionsChange30dOver30d: null,
 	protocolCount: null
 } satisfies ProtocolTableMetrics
 
@@ -333,7 +403,21 @@ export interface ParentProtocolMetrics {
 		}
 		incentives?: {
 			childProtocolIds: string[]
-			metrics: Pick<ProtocolTableMetrics, 'emissions24h' | 'emissions7d' | 'emissions30d' | 'emissions1y'>
+			metrics: Pick<
+				ProtocolTableMetrics,
+				| 'emissions24h'
+				| 'emissions7d'
+				| 'emissions30d'
+				| 'emissions90d'
+				| 'emissions180d'
+				| 'emissions1y'
+				| 'emissionsYtd'
+				| 'cumulativeEmissions'
+				| 'emissionsAnnualized1y'
+				| 'emissionsPrev24h'
+				| 'emissionsPrev7d'
+				| 'emissionsPrev30d'
+			>
 		}
 		bridgeAggregatorVolume?: {
 			childProtocolIds: string[]

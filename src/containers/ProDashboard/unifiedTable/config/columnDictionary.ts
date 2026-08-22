@@ -64,9 +64,15 @@ const tvlColumns: ColumnDictionaryItem[] = [
 	{ id: 'change1d', header: '1d Change', group: 'tvl', render: 'percent', tags: ['change'] },
 	{ id: 'change7d', header: '7d Change', group: 'tvl', render: 'percent', tags: ['change'] },
 	{ id: 'change1m', header: '30d Change', group: 'tvl', render: 'percent', tags: ['change'] },
+	{ id: 'change90d', header: '90d Change', group: 'tvl', render: 'percent', tags: ['change'] },
+	{ id: 'change180d', header: '180d Change', group: 'tvl', render: 'percent', tags: ['change'] },
+	{ id: 'change1y', header: '1y Change', group: 'tvl', render: 'percent', tags: ['change'] },
+	{ id: 'changeYtd', header: 'YTD Change', group: 'tvl', render: 'percent', tags: ['change'] },
 	{ id: 'stakingTvl', header: 'Staking TVL', group: 'tvl', render: 'usd' },
 	{ id: 'borrowedTvl', header: 'Borrowed TVL', group: 'tvl', render: 'usd' },
 	{ id: 'pool2Tvl', header: 'Pool2 TVL', group: 'tvl', render: 'usd' },
+	{ id: 'treasuryTvl', header: 'Treasury TVL', group: 'tvl', render: 'usd' },
+	{ id: 'vestingTvl', header: 'Vesting TVL', group: 'tvl', render: 'usd' },
 	{ id: 'bridgedTvl', header: 'Bridged TVL', group: 'tvl', render: 'usd', chainGroupOnly: true },
 	{ id: 'stablesMcap', header: 'Stables', group: 'tvl', render: 'usd', chainGroupOnly: true },
 	{
@@ -91,6 +97,8 @@ const volumeColumns: ColumnDictionaryItem[] = [
 	{ id: 'volume24h', header: '24h Volume', group: 'volume', render: 'usd' },
 	{ id: 'volume_7d', header: '7d Volume', group: 'volume', render: 'usd' },
 	{ id: 'volume_30d', header: '30d Volume', group: 'volume', render: 'usd' },
+	{ id: 'volume_90d', header: '90d Volume', group: 'volume', render: 'usd' },
+	{ id: 'volume_1y', header: '1y Volume', group: 'volume', render: 'usd' },
 	{
 		id: 'cumulativeVolume',
 		header: 'Cumulative Volume',
@@ -455,13 +463,42 @@ const earningsColumns: ColumnDictionaryItem[] = [
 	{ id: 'emissions24h', header: '24h Emissions', group: 'earnings', render: 'usd' },
 	{ id: 'emissions7d', header: '7d Emissions', group: 'earnings', render: 'usd' },
 	{ id: 'emissions30d', header: '30d Emissions', group: 'earnings', render: 'usd' },
-	{ id: 'emissions1y', header: '1y Emissions', group: 'earnings', render: 'usd' }
+	{ id: 'emissions90d', header: '90d Emissions', group: 'earnings', render: 'usd' },
+	{ id: 'emissions180d', header: '180d Emissions', group: 'earnings', render: 'usd' },
+	{ id: 'emissions1y', header: '1y Emissions', group: 'earnings', render: 'usd' },
+	{ id: 'emissionsYtd', header: 'YTD Emissions', group: 'earnings', render: 'usd' },
+	{ id: 'cumulativeEmissions', header: 'Cumulative Emissions', group: 'earnings', render: 'usd', tags: ['cumulative'] },
+	{ id: 'emissionsAnnualized1y', header: 'Annualized Emissions', group: 'earnings', render: 'usd', tags: ['derived'] },
+	{ id: 'emissionsChange1d', header: '1d Emissions Change', group: 'earnings', render: 'percent', tags: ['change'] },
+	{
+		id: 'emissionsChange7dOver7d',
+		header: '7d over 7d Emissions Change',
+		group: 'earnings',
+		render: 'percent',
+		tags: ['change']
+	},
+	{
+		id: 'emissionsChange30dOver30d',
+		header: '30d over 30d Emissions Change',
+		group: 'earnings',
+		render: 'percent',
+		tags: ['change']
+	}
 ]
 
 const perpsColumns: ColumnDictionaryItem[] = [
 	{ id: 'perpsVolume24h', header: '24h Perps Volume', group: 'perps', render: 'usd' },
 	{ id: 'perps_volume_7d', header: '7d Perps Volume', group: 'perps', render: 'usd' },
 	{ id: 'perps_volume_30d', header: '30d Perps Volume', group: 'perps', render: 'usd' },
+	{ id: 'perps_volume_90d', header: '90d Perps Volume', group: 'perps', render: 'usd' },
+	{ id: 'perps_volume_1y', header: '1y Perps Volume', group: 'perps', render: 'usd' },
+	{
+		id: 'cumulativePerpsVolume',
+		header: 'Cumulative Perps Volume',
+		group: 'perps',
+		render: 'usd',
+		tags: ['cumulative']
+	},
 	{
 		id: 'perps_volume_change_1d',
 		header: '1d Perps Volume Change',
@@ -530,6 +567,27 @@ const aggregatorsColumns: ColumnDictionaryItem[] = [
 		group: 'aggregators',
 		render: 'usd',
 		tags: ['specialized']
+	},
+	{
+		id: 'aggregators_volume_90d',
+		header: '90d Aggregator Volume',
+		group: 'aggregators',
+		render: 'usd',
+		tags: ['specialized']
+	},
+	{
+		id: 'aggregators_volume_1y',
+		header: '1y Aggregator Volume',
+		group: 'aggregators',
+		render: 'usd',
+		tags: ['specialized']
+	},
+	{
+		id: 'cumulativeAggregatorVolume',
+		header: 'Cumulative Aggregator Volume',
+		group: 'aggregators',
+		render: 'usd',
+		tags: ['cumulative', 'specialized']
 	},
 	{
 		id: 'aggregators_volume_change_1d',
@@ -710,6 +768,48 @@ const optionsColumns: ColumnDictionaryItem[] = [
 	{
 		id: 'options_volume_30d',
 		header: '30d Options Volume',
+		group: 'options',
+		render: 'usd',
+		tags: ['specialized']
+	},
+	{
+		id: 'options_volume_90d',
+		header: '90d Options Volume',
+		group: 'options',
+		render: 'usd',
+		tags: ['specialized']
+	},
+	{
+		id: 'options_volume_1y',
+		header: '1y Options Volume',
+		group: 'options',
+		render: 'usd',
+		tags: ['specialized']
+	},
+	{
+		id: 'cumulativeOptionsVolume',
+		header: 'Cumulative Options Volume',
+		group: 'options',
+		render: 'usd',
+		tags: ['cumulative', 'specialized']
+	},
+	{
+		id: 'optionsNotionalVolume24h',
+		header: '24h Options Notional Volume',
+		group: 'options',
+		render: 'usd',
+		tags: ['specialized']
+	},
+	{
+		id: 'optionsNotionalVolume7d',
+		header: '7d Options Notional Volume',
+		group: 'options',
+		render: 'usd',
+		tags: ['specialized']
+	},
+	{
+		id: 'optionsNotionalVolume30d',
+		header: '30d Options Notional Volume',
 		group: 'options',
 		render: 'usd',
 		tags: ['specialized']
