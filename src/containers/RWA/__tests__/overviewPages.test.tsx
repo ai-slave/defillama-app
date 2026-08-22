@@ -112,7 +112,7 @@ describe('RWA overview pages bridge/interop toggle', () => {
 			],
 			[
 				createElement(RWAPlatforms, {
-					platforms: [{ ...segmented, platform: 'Securitize' }],
+					platforms: [{ ...segmented, platform: 'Securitize', logo: null }],
 					initialChartDataset: emptyChartDataset
 				}),
 				'rwa-platforms-without-bridge-tvl'
