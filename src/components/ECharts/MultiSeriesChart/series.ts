@@ -151,6 +151,9 @@ export function buildMultiSeries({
 		}
 
 		if (series.type === 'line' && chart.hideAreaStyle) delete series.areaStyle
+		if (series.type === 'line' && chart.lineStyle) {
+			series.lineStyle = { ...(series.lineStyle ?? {}), ...chart.lineStyle }
+		}
 		if (chart.markLine != null) {
 			series.markLine = chart.markLine
 		} else if (output.length === 0 && hallmarksMarkLine) {

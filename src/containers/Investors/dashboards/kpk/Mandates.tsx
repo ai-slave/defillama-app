@@ -24,13 +24,6 @@ import {
 	usdFromMillions
 } from './ui'
 
-const BREAKDOWNS = [
-	{ key: 'client', label: 'By client' },
-	{ key: 'denom', label: 'By denomination' },
-	{ key: 'chain', label: 'By chain' },
-	{ key: 'protocol', label: 'By protocol' }
-] as const
-
 /** Sleeve mix with its alpha underneath; an empty sleeve is a dash, not `0%`. */
 function SleeveCell({ sleeve }: { sleeve: KpkMandateSleeve }) {
 	if (!sleeve.mix) return <>—</>
@@ -82,12 +75,7 @@ export default function Mandates() {
 				/>
 			</LedgerStrip>
 
-			<CompositionSection
-				title="Composition of Mandate AUM"
-				comps={data?.comp}
-				options={BREAKDOWNS}
-				initialKey="client"
-			/>
+			<CompositionSection title="Composition of Mandate AUM" comps={data?.comp} initialKey="client" />
 
 			<section className="flex flex-col gap-3">
 				<SectionHeader title="Performance vs benchmark">

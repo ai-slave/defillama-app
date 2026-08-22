@@ -45,6 +45,18 @@ export interface KpkCompositionSegment {
 	share: number
 	/** One point per entry in `months`, $m. */
 	series: number[]
+	/**
+	 * This band's assets are also counted inside another band of the same
+	 * breakdown. `line` nets it out; the table marks it.
+	 */
+	duplicate?: boolean
+}
+
+export interface KpkCompositionLine {
+	name: string
+	note: string
+	value: number
+	series: number[]
 }
 
 /** The stacked-area payload every breakdown on every tab uses. */
@@ -52,9 +64,13 @@ export interface KpkComposition {
 	title: string
 	/** $m */
 	total: number
-	/** Month labels, e.g. `"Sept 25"` — not dates; the chart plots them as categories. */
+	/**
+	 * Period labels — `"Sept 25"` on the monthly breakdowns, `"3 Oct 25"` on the
+	 * daily ones. Not dates; the chart plots them as categories.
+	 */
 	months: string[]
 	segments: KpkCompositionSegment[]
+	line?: KpkCompositionLine
 }
 
 /* ──────────────────────────── metadata ──────────────────────────── */
@@ -171,6 +187,11 @@ export interface KpkVault {
 	 * or absent where there is no source. The three are rendered differently.
 	 */
 	rebalances30d?: number | 'NA'
+	/**
+	 * All-time count of agent-executed derisking rebalances. Absent for the venues
+	 * with no agent-attributed event source, which is not the same as zero.
+	 */
+	deriskingAutomations?: number
 	liq?: number
 	bench?: number
 	benchName?: string
@@ -178,14 +199,17 @@ export interface KpkVault {
 	url?: string
 	spreadBps: number | null
 	belowTarget: boolean
-	health: 'ok' | 'watch' | 'unknown'
+	/** This vault's TVA is also counted inside another vault on the same table. */
+	doubleCounted?: boolean
 }
 
-export type KpkVaultCompKey = 'venue' | 'chain' | 'asset'
+export type KpkVaultCompKey = 'venue' | 'chain' | 'asset' | 'collateral'
 
 export interface KpkVaults {
 	/** $m */
 	tva: number
+	/** $m, net of every `doubleCounted` vault. Absent where nothing is netted out. */
+	tvaAdjusted?: number
 	count: number
 	venues: string[]
 	rebalancingVolume: string
@@ -195,12 +219,13 @@ export interface KpkVaults {
 	/** TVA-weighted, over the vaults that report it. Absent when none do. */
 	liquidityPct?: number
 	liquidityTarget: number
-	comp: Record<KpkVaultCompKey, KpkComposition>
+	comp: Partial<Record<KpkVaultCompKey, KpkComposition>>
 	/** Last day sampled by the composition chart, `YYYY-MM-DD`. */
 	compAsOf: ApiDate
 	compTotal: number
 	list: KpkVault[]
-	totals: { tva: number; interest: number }
+	doubleCountNote?: string
+	totals: { tva: number; interest: number; tvaAdjusted?: number; interestAdjusted?: number }
 	riskDisclaimer: string
 	refs: KpkRef[]
 }

@@ -52,6 +52,8 @@ export type MultiSeriesChartSeriesConfig = {
 	/** Per-series axis and tooltip unit. Falls back to the chart-level value symbol. */
 	valueSymbol?: string
 	hideAreaStyle?: boolean
+	/** Stroke overrides for a line series, e.g. a dashed overlay. Merged over the resolved series colour. */
+	lineStyle?: LineSeriesOption['lineStyle']
 	areaStyle?: LineSeriesOption['areaStyle']
 	markLine?: LineSeriesOption['markLine']
 	markArea?: LineSeriesOption['markArea']

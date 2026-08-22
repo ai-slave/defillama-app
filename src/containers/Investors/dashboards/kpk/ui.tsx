@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { formatNumber, formatPercent, formatUsd, roundNumber } from '~/utils/numberFormat'
 import type { KpkRef } from './api'
-import { KPK_BENCH_BG, KPK_MINT_BG, KPK_MINT_BORDER, KPK_MINT_TEXT } from './chartDefaults'
+import { KPK_BENCH_BG, KPK_MINT_BG, KPK_MINT_TEXT } from './chartDefaults'
 import { MILLION } from './transform'
 
 /* ──────────────────────────── formatting ──────────────────────────── */
@@ -75,6 +75,7 @@ export function LedgerTile({
 	sub,
 	metric,
 	metricLabel,
+	metricTitle,
 	children
 }: {
 	label: string
@@ -84,6 +85,7 @@ export function LedgerTile({
 	sub?: string
 	metric?: string
 	metricLabel?: string
+	metricTitle?: string
 	children?: React.ReactNode
 }) {
 	return (
@@ -99,7 +101,12 @@ export function LedgerTile({
 			)}
 			{sub && <span className="body-sm text-pro-text-secondary">{sub}</span>}
 			{metric && (
-				<span className="mt-auto flex items-baseline gap-1.5 border-t border-pro-cards-border pt-2.5 body-sm text-pro-text-secondary">
+				<span
+					title={metricTitle}
+					className={`mt-auto flex items-baseline gap-1.5 border-t border-pro-cards-border pt-2.5 body-sm text-pro-text-secondary ${
+						metricTitle ? 'cursor-help' : ''
+					}`}
+				>
 					<b className="font-mono text-sm font-medium text-pro-text-primary tabular-nums">{metric}</b>
 					{metricLabel}
 				</span>
@@ -270,7 +277,7 @@ export function MeterBar({
 }: {
 	value: number | null | undefined
 	target?: number
-	/** Full-width value. Withdrawal liquidity uses 30 so a 15% target sits mid-bar. */
+	/** Full-width value. Instant liquidity uses 30 so a 15% target sits mid-bar. */
 	scale?: number
 	tone?: 'accent' | 'warning'
 }) {
@@ -322,17 +329,31 @@ export function CompareBars({
 	)
 }
 
-export function Chip({ tone, children }: { tone: 'ok' | 'watch' | 'muted'; children: React.ReactNode }) {
-	const toneClass =
-		tone === 'ok'
-			? `${KPK_MINT_BORDER} ${KPK_MINT_TEXT}`
-			: tone === 'watch'
-				? 'border-warning/40 text-warning'
-				: 'border-pro-cards-border text-pro-text-tertiary'
+export function DuplicateMark({ note }: { note: string }) {
 	return (
-		<span className={`inline-flex rounded-full border px-2 py-0.5 label-xs whitespace-nowrap ${toneClass}`}>
-			{children}
-		</span>
+		<abbr title={note} className="ml-1 cursor-help text-xs text-warning no-underline">
+			†
+		</abbr>
+	)
+}
+
+export function DashSwatch({ className = '' }: { className?: string }) {
+	return (
+		<span
+			aria-hidden
+			className={`inline-block w-3 shrink-0 border-t border-dashed border-pro-text-primary align-middle ${className}`}
+		/>
+	)
+}
+
+export function ChartFootnote({ title, children }: { title: string; children: React.ReactNode }) {
+	return (
+		<div className="mt-3 flex items-start gap-2 border-t border-pro-cards-border pt-2.5 body-sm text-pro-text-tertiary">
+			<DashSwatch className="mt-2" />
+			<span>
+				<b className="font-medium text-pro-text-secondary">{title}</b> — {children}
+			</span>
+		</div>
 	)
 }
 
@@ -403,6 +424,7 @@ export function ContinuityRule({ years }: { years: number[] | undefined }) {
 export interface Col<Row> {
 	key: string
 	label: string
+	title?: string
 	right?: boolean
 	/**
 	 * Allow the cell to wrap, for prose-ish columns like collateral exposure. Carries a
@@ -421,6 +443,14 @@ function cellValue(value: unknown): React.ReactNode {
 	return String(value)
 }
 
+export type FooterCells = Record<string, React.ReactNode>
+
+export interface FooterRow {
+	cells: FooterCells
+	muted?: boolean
+	title?: string
+}
+
 export function DataTable<Row extends object>({
 	rows,
 	cols,
@@ -429,12 +459,17 @@ export function DataTable<Row extends object>({
 }: {
 	rows: Row[] | undefined
 	cols: Array<Col<Row>>
-	/** Totals row, keyed by column key. Columns without an entry render blank. */
-	footer?: Record<string, React.ReactNode>
+	/**
+	 * Totals row, keyed by column key; columns without an entry render blank. Pass an
+	 * array where a total needs a second reading underneath it.
+	 */
+	footer?: FooterCells | FooterRow[]
 	empty?: string
 }) {
 	if (!rows) return <div className="h-24 animate-pulse rounded-sm bg-tertiary opacity-10" />
 	if (rows.length === 0) return <div className="px-2 py-4 text-xs text-pro-text-secondary">{empty}</div>
+
+	const footerRows: FooterRow[] = footer == null ? [] : Array.isArray(footer) ? footer : [{ cells: footer }]
 
 	return (
 		<div className="overflow-x-auto">
@@ -446,10 +481,11 @@ export function DataTable<Row extends object>({
 						{cols.map((col) => (
 							<th
 								key={col.key}
+								title={col.title}
 								style={col.width ? { width: col.width } : undefined}
 								className={`px-3 py-2.5 label-xs tracking-wider whitespace-nowrap text-pro-text-label uppercase first:pl-0 last:pr-0 ${
 									col.right ? 'text-right' : 'text-left'
-								}`}
+								} ${col.title ? 'cursor-help' : ''}`}
 							>
 								{col.label}
 							</th>
@@ -472,20 +508,30 @@ export function DataTable<Row extends object>({
 						</tr>
 					))}
 				</tbody>
-				{footer && (
+				{footerRows.length > 0 && (
 					<tfoot>
-						<tr className="border-t border-pro-cards-border">
-							{cols.map((col) => (
-								<td
-									key={col.key}
-									className={`px-3 pt-3 font-medium text-pro-text-primary first:pl-0 last:pr-0 ${
-										col.right ? 'text-right font-mono tabular-nums' : ''
-									}`}
-								>
-									{footer[col.key] ?? ''}
-								</td>
-							))}
-						</tr>
+						{footerRows.map((row, rowIndex) => (
+							<tr
+								key={rowIndex}
+								title={row.title}
+								className={
+									row.muted
+										? `text-pro-text-secondary ${row.title ? 'cursor-help' : ''}`
+										: 'border-t border-pro-cards-border'
+								}
+							>
+								{cols.map((col) => (
+									<td
+										key={col.key}
+										className={`px-3 first:pl-0 last:pr-0 ${
+											row.muted ? 'pt-1.5 font-normal' : 'pt-3 font-medium text-pro-text-primary'
+										} ${col.right ? 'text-right font-mono tabular-nums' : ''}`}
+									>
+										{row.cells[col.key] ?? ''}
+									</td>
+								))}
+							</tr>
+						))}
 					</tfoot>
 				)}
 			</table>

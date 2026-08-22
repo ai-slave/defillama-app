@@ -1,14 +1,7 @@
 import { formatNumber } from '~/utils/numberFormat'
-import { useKpkOverview, type KpkOverviewCompKey } from './api'
+import { useKpkOverview } from './api'
 import { CompositionSection } from './CompositionSection'
 import { ContinuityRule, LedgerStrip, LedgerTile, NoticeBanner, QueryError, RefLinks, usdFromMillions } from './ui'
-
-const BREAKDOWNS = [
-	{ key: 'line', label: 'By line' },
-	{ key: 'denom', label: 'By denomination' },
-	{ key: 'chain', label: 'By chain' },
-	{ key: 'protocol', label: 'By protocol' }
-] as const satisfies ReadonlyArray<{ key: KpkOverviewCompKey; label: string }>
 
 export default function Overview() {
 	const { data, isError } = useKpkOverview()
@@ -50,12 +43,7 @@ export default function Overview() {
 				</LedgerTile>
 			</LedgerStrip>
 
-			<CompositionSection
-				title="Composition of Total Value Allocated"
-				comps={data?.comp}
-				options={BREAKDOWNS}
-				initialKey="line"
-			/>
+			<CompositionSection title="Composition of Total Value Allocated" comps={data?.comp} initialKey="line" />
 
 			<RefLinks refs={data?.refs} />
 		</div>

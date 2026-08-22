@@ -7,9 +7,9 @@ import { CompositionSection } from './CompositionSection'
 import { vaultTotals } from './transform'
 import {
 	Card,
-	Chip,
 	DataTable,
 	Disclaimer,
+	DuplicateMark,
 	LedgerStrip,
 	LedgerTile,
 	MeterBar,
@@ -23,24 +23,21 @@ import {
 	signClass,
 	signedBps,
 	usd,
-	usdFromMillions
+	usdFromMillions,
+	type FooterRow
 } from './ui'
-
-const BREAKDOWNS = [
-	{ key: 'venue', label: 'By venue' },
-	{ key: 'chain', label: 'By chain' },
-	{ key: 'asset', label: 'By asset' }
-] as const
 
 const ALL_VENUES = 'all'
 
-const HEALTH_LABELS = { ok: 'Healthy', watch: 'Monitor', unknown: 'Unknown' } as const
-const HEALTH_TONES = { ok: 'ok', watch: 'watch', unknown: 'muted' } as const
+const DOUBLE_COUNT_NOTE = 'Counted inside another vault on this table. Excluded from the adjusted totals.'
 
-/** "and"-joined venue list for the tile subtitle: `Morpho, Gearbox and Euler`. */
-function venueList(venues: string[]): string {
-	if (venues.length < 2) return venues[0] ?? ''
-	return `${venues.slice(0, -1).join(', ')} and ${venues[venues.length - 1]}`
+function andList(names: readonly string[]): string {
+	if (names.length < 2) return names[0] ?? ''
+	return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+}
+
+function count(value: number | undefined) {
+	return value == null ? '—' : formatNumber(value, { maximumFractionDigits: 0 })
 }
 
 /**
@@ -55,8 +52,7 @@ function RebalanceCell({ value }: { value: KpkVault['rebalances30d'] }) {
 			</span>
 		)
 	}
-	if (value == null) return <>—</>
-	return <>{formatNumber(value, { maximumFractionDigits: 0 })}</>
+	return <>{count(value)}</>
 }
 
 export default function Vaults() {
@@ -74,6 +70,31 @@ export default function Vaults() {
 	}, [data, venue])
 
 	const totals = useMemo(() => (rows ? vaultTotals(rows) : null), [rows])
+	const doubleCountNote = data?.doubleCountNote ?? DOUBLE_COUNT_NOTE
+	const adjustedVenues = useMemo(
+		() => [...new Set((data?.list ?? []).filter((vault) => vault.doubleCounted).map((vault) => vault.venue))],
+		[data?.list]
+	)
+	const showAdjustedTva = data?.tvaAdjusted != null && adjustedVenues.length > 0
+
+	const footer = useMemo<FooterRow[] | undefined>(() => {
+		if (!totals) return undefined
+		const footerRows: FooterRow[] = [
+			{ cells: { name: 'Total', tva: usd(totals.tvaUsd), interest: usd(totals.interestUsd) } }
+		]
+		if (totals.duplicateVenues.length) {
+			footerRows.push({
+				muted: true,
+				title: doubleCountNote,
+				cells: {
+					name: `Adjusted, excl. ${andList(totals.duplicateVenues)}`,
+					tva: usd(totals.tvaAdjustedUsd),
+					interest: usd(totals.interestAdjustedUsd)
+				}
+			})
+		}
+		return footerRows
+	}, [totals, doubleCountNote])
 
 	if (isError) return <QueryError label="Vaults" />
 
@@ -83,7 +104,10 @@ export default function Vaults() {
 				<LedgerTile
 					label="Curated Total Value Allocated"
 					value={data ? usdFromMillions(data.tva) : undefined}
-					sub={data ? `Across ${data.count} vaults on ${venueList(data.venues)}` : undefined}
+					sub={data ? `Across ${data.count} vaults on ${andList(data.venues)}` : undefined}
+					metric={showAdjustedTva ? usdFromMillions(data?.tvaAdjusted) : undefined}
+					metricLabel={showAdjustedTva ? `adjusted, excluding ${andList(adjustedVenues)}` : undefined}
+					metricTitle={showAdjustedTva ? doubleCountNote : undefined}
 				/>
 				{/* No `+` suffix: unlike the brief-stated facts on Overview, this is an exact
 				    figure from Dune, so "at least" would understate a number we know. */}
@@ -95,7 +119,7 @@ export default function Vaults() {
 					metricLabel="cumulative rebalancing actions"
 				/>
 				<LedgerTile
-					label="Withdrawal liquidity"
+					label="Instant liquidity"
 					value={data ? pct(data.liquidityPct, 1) : undefined}
 					suffix={data ? 'of TVA' : undefined}
 					sub={
@@ -116,9 +140,8 @@ export default function Vaults() {
 
 			<CompositionSection
 				title="Curated Total Value Allocated"
-				subtitle={data ? `Month-end readings through ${data.compAsOf}` : undefined}
+				subtitle={data ? `Daily readings through ${data.compAsOf}` : undefined}
 				comps={data?.comp}
-				options={BREAKDOWNS}
 				initialKey="venue"
 			/>
 
@@ -136,7 +159,10 @@ export default function Vaults() {
 								label: 'Vault',
 								render: (row) => (
 									<span className="flex flex-col">
-										<span className="text-pro-text-primary">{row.name}</span>
+										<span className="text-pro-text-primary">
+											{row.name}
+											{row.doubleCounted && <DuplicateMark note={doubleCountNote} />}
+										</span>
 										<span className="body-sm text-pro-text-tertiary">
 											{row.venue} · {row.chain}
 										</span>
@@ -175,7 +201,8 @@ export default function Vaults() {
 							},
 							{
 								key: 'liq',
-								label: 'Withdrawal liquidity',
+								label: 'Instant liquidity',
+								title: "Share of the current TVA that's available to withdraw instantly",
 								right: true,
 								render: (row) => (
 									<span className="flex items-center justify-end gap-2">
@@ -194,25 +221,21 @@ export default function Vaults() {
 								render: (row) => <RebalanceCell value={row.rebalances30d} />
 							},
 							{
-								key: 'health',
-								label: 'Health',
-								render: (row) => <Chip tone={HEALTH_TONES[row.health]}>{HEALTH_LABELS[row.health]}</Chip>
+								key: 'deriskingAutomations',
+								label: 'Derisking automations',
+								title:
+									'All-time count of agent-executed derisking rebalances. Only venues with an agent-attributed event source report a figure.',
+								right: true,
+								render: (row) => count(row.deriskingAutomations)
 							},
+							{ key: 'losses', label: 'Incurred losses', render: () => 'None' },
 							{
 								key: 'url',
 								label: '',
 								render: (row) => <RowLink href={row.url} label={row.name} />
 							}
 						]}
-						footer={
-							totals
-								? {
-										name: 'Total',
-										tva: usd(totals.tvaUsd),
-										interest: usd(totals.interestUsd)
-									}
-								: undefined
-						}
+						footer={footer}
 					/>
 				</Card>
 			</section>

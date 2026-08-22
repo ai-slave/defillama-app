@@ -1,7 +1,7 @@
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { formatTooltipValue } from '~/components/ECharts/shared/formatters'
 import { getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
+import { formatUsd } from '~/utils/numberFormat'
 
 /**
  * KPK's palette, from the design mockup: mint, periwinkle, amber, cyan, coral, violet,
@@ -47,6 +47,11 @@ export const KPK_PALETTE_LIGHT = [
 
 export const kpkPalette = (isDark: boolean): readonly string[] => (isDark ? KPK_PALETTE_DARK : KPK_PALETTE_LIGHT)
 
+export const KPK_LINE_STROKE_DARK = '#e9ebf0'
+export const KPK_LINE_STROKE_LIGHT = '#1f2330'
+
+export const kpkLineStroke = (isDark: boolean): string => (isDark ? KPK_LINE_STROKE_DARK : KPK_LINE_STROKE_LIGHT)
+
 /**
  * Brand accents as Tailwind class pairs rather than hex, so they follow `html.dark`
  * without a render-time theme read. Mint carries KPK's own figures, periwinkle the
@@ -58,22 +63,24 @@ export const KPK_MINT_BORDER = 'border-sl-kpk-mint/45'
 export const KPK_BENCH_TEXT = 'text-sl-kpk-benchmark'
 export const KPK_BENCH_BG = 'bg-sl-kpk-benchmark'
 
-/** Compact USD for chart axes and tooltips, matching the page's `$47.27m` house style. */
 function chartUsd(value: number): string {
-	return formatTooltipValue(value, '$')
+	return formatUsd(value, { compact: true, compactSuffix: 'lowercase' }) ?? '—'
 }
+
+const DUST_USD = 0.01
 
 /**
  * The category tooltip with a stacked total, as the mockup has it: one row per segment,
  * then a ruled Total. The renderer's own category formatter omits the total, and its
  * time-series formatter — which does add one — cannot label a month-string axis.
  */
-function categoryTotalTooltipFormatter(params: unknown): string {
+function compositionTooltipFormatter(params: unknown, overlaySeries?: string): string {
 	const items = normalizeTooltipItems(params)
 	if (items.length === 0) return ''
 
 	const heading = items[0]?.axisValue ?? items[0]?.name
 	let out = heading == null ? '' : `<strong>${heading}</strong><br/>`
+	let overlay = ''
 	let total = 0
 	let counted = 0
 
@@ -82,20 +89,34 @@ function categoryTotalTooltipFormatter(params: unknown): string {
 		if (!name) continue
 		const raw = getTooltipRawYValue(item, name)
 		const value = typeof raw === 'number' ? raw : Number(raw)
-		if (!Number.isFinite(value) || value === 0) continue
+		if (!Number.isFinite(value) || Math.abs(value) < DUST_USD) continue
+		const row = `<li style="list-style:none">${item.marker ?? ''}${name}&nbsp;&nbsp;${chartUsd(value)}</li>`
+		if (name === overlaySeries) {
+			overlay = row
+			continue
+		}
 		total += value
 		counted += 1
-		out += `<li style="list-style:none">${item.marker ?? ''}${name}&nbsp;&nbsp;${chartUsd(value)}</li>`
+		out += row
 	}
 
 	if (counted > 1) {
 		out += `<li style="list-style:none;border-top:1px solid currentColor;opacity:0.85;margin-top:6px;padding-top:5px">Total&nbsp;&nbsp;${chartUsd(total)}</li>`
 	}
-	return out
+	return out + overlay
 }
 
-/** Month labels are plotted as categories: the payload carries `"Sept 25"`, not a date. */
-export const KPK_MONTHLY_USD_CHART_OPTIONS: IMultiSeriesChartProps['chartOptions'] = {
-	...createCategoryChartOptions('$'),
-	tooltip: { formatter: categoryTotalTooltipFormatter }
+/**
+ * Period labels are plotted as categories: the payload carries `"Sept 25"` or
+ * `"3 Oct 25"`, not a date. Built per breakdown, because only the breakdowns that
+ * carry an overlay line need one held out of the total.
+ */
+export function kpkCompositionChartOptions(overlaySeries?: string): IMultiSeriesChartProps['chartOptions'] {
+	return {
+		...createCategoryChartOptions('$'),
+		tooltip: { formatter: (params: unknown) => compositionTooltipFormatter(params, overlaySeries) }
+	}
 }
+
+/** The shared instance for every breakdown without an overlay line. */
+export const KPK_COMPOSITION_CHART_OPTIONS = kpkCompositionChartOptions()
