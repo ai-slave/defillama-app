@@ -3,7 +3,6 @@ import { formatDate } from '~/utils/dateFormat'
 import { formatUsd, formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
 import type { IProtocolFaqAnswerPart, IProtocolFaqItem } from './types'
 
-const MAX_FAQ_ITEMS = 10
 const MAX_LINKED_CHAINS = 5
 const MAX_LINKED_CHILDREN = 5
 const MAX_LINKED_PEERS = 10
@@ -49,7 +48,6 @@ interface ProtocolFaqToken {
 
 export interface ProtocolFaqContext {
 	name: string
-	description: string | null
 	tvl: {
 		current: number | null
 		change30d: number | null
@@ -239,7 +237,6 @@ export function buildProtocolFaqRelationship({
 
 export function buildProtocolFaq(context: ProtocolFaqContext): IProtocolFaqItem[] {
 	const candidates = [
-		buildDescriptionQuestion(context),
 		buildTvlQuestion(context),
 		buildChainsQuestion(context),
 		buildFeesQuestion(context),
@@ -251,7 +248,7 @@ export function buildProtocolFaq(context: ProtocolFaqContext): IProtocolFaqItem[
 		buildSecurityQuestion(context)
 	]
 
-	return candidates.filter((item): item is IProtocolFaqItem => item != null).slice(0, MAX_FAQ_ITEMS)
+	return candidates.filter((item): item is IProtocolFaqItem => item != null)
 }
 
 function text(value: string): IProtocolFaqAnswerPart {
@@ -280,17 +277,6 @@ function formatPercentMagnitude(value: number): string {
 		input: 'percent',
 		maximumFractionDigits: 1
 	})
-}
-
-function buildDescriptionQuestion(context: ProtocolFaqContext): IProtocolFaqItem | null {
-	const description = context.description?.trim()
-	if (!description) return null
-
-	return {
-		id: 'description',
-		question: `What is ${context.name}?`,
-		answer: [text(description)]
-	}
 }
 
 function buildTvlQuestion(context: ProtocolFaqContext): IProtocolFaqItem | null {

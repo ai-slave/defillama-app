@@ -4,7 +4,6 @@ import { buildProtocolFaq, buildProtocolFaqRelationship, type ProtocolFaqContext
 function createContext(overrides: Partial<ProtocolFaqContext> = {}): ProtocolFaqContext {
 	return {
 		name: 'Aave',
-		description: 'Aave is a decentralized lending protocol.',
 		tvl: { current: 25_140_000_000, change30d: 3 },
 		chains: [
 			{ name: 'Ethereum', tvl: 20_600_000_000, href: '/chain/ethereum' },
@@ -77,7 +76,6 @@ describe('buildProtocolFaq', () => {
 		const items = buildProtocolFaq(createContext())
 
 		expect(items.map((item) => item.id)).toEqual([
-			'description',
 			'tvl',
 			'chains',
 			'fees-revenue',
@@ -88,7 +86,7 @@ describe('buildProtocolFaq', () => {
 			'treasury',
 			'security'
 		])
-		expect(items).toHaveLength(10)
+		expect(items).toHaveLength(9)
 		expect(items.flatMap((item) => item.answer).filter((part) => part.href)).toEqual(
 			expect.arrayContaining([
 				expect.objectContaining({ text: 'Ethereum', href: '/chain/ethereum' }),
@@ -126,7 +124,7 @@ describe('buildProtocolFaq', () => {
 			})
 		)
 
-		expect(items.map((item) => item.id)).toEqual(['description', 'chains'])
+		expect(items.map((item) => item.id)).toEqual(['chains'])
 	})
 })
 

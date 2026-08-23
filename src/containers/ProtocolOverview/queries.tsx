@@ -1079,7 +1079,6 @@ export const getProtocolOverviewPageData = async ({
 	)
 	pageData.faqItems = buildProtocolFaq({
 		name,
-		description: protocolData.description ?? null,
 		tvl: tvlSummary,
 		chains: resolvedProtocolChains.map((chain) => ({
 			name: chain,
