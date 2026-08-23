@@ -296,6 +296,51 @@ describe('protocol table read model', () => {
 		expect(chain.metrics.fees24hChange7dAgo).toBeNull()
 	})
 
+	it('uses chain economics only for canonical chain groups', () => {
+		const source = protocol('dex', 100)
+		const row: ProtocolChainTableRow = {
+			...source,
+			rowType: 'protocol-chain',
+			id: 'dex-ethereum',
+			chain: 'Ethereum',
+			chains: ['Ethereum']
+		}
+		const model = buildProtocolTableReadModel({
+			rows: [row],
+			rowHeaders: ['chain', 'protocol'],
+			parentMetrics: {},
+			chainMetrics: {
+				ethereum: {
+					availability: 'available',
+					metrics: {
+						chainFees24h: 10,
+						chainFees7d: 70,
+						chainFees30d: 300,
+						chainRevenue24h: 4,
+						chainRevenue7d: 28,
+						chainRevenue30d: 120,
+						chainRev24h: 11,
+						chainRev7d: 77,
+						chainRev30d: 330
+					}
+				}
+			},
+			customColumns: []
+		})
+
+		expect(model.rows[0]?.metrics).toMatchObject({
+			chainFees24h: 10,
+			chainFees7d: 70,
+			chainFees30d: 300,
+			chainRevenue24h: 4,
+			chainRevenue7d: 28,
+			chainRevenue30d: 120,
+			chainRev24h: 11,
+			chainRev7d: 77,
+			chainRev30d: 330
+		})
+	})
+
 	it('rebuilds parent totals and shares from only the source rows matching search', () => {
 		const rows = [
 			protocol('matched-child', 80, { parentId: 'parent' }),

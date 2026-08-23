@@ -178,6 +178,54 @@ const feesColumns: ColumnDictionaryItem[] = [
 	{ id: 'fees_1y', header: '1y Fees', group: 'fees', render: 'usd' },
 	{ id: 'fees_ytd', header: 'YTD Fees', group: 'fees', render: 'usd' },
 	{
+		id: 'chainFees24h',
+		header: '24h Chain Fees',
+		description: 'Total fees paid by users when using the chain.',
+		group: 'fees',
+		render: 'usd',
+		chainGroupOnly: true
+	},
+	{
+		id: 'chainFees7d',
+		header: '7d Chain Fees',
+		description: 'Total fees paid by users when using the chain.',
+		group: 'fees',
+		render: 'usd',
+		chainGroupOnly: true
+	},
+	{
+		id: 'chainFees30d',
+		header: '30d Chain Fees',
+		description: 'Total fees paid by users when using the chain.',
+		group: 'fees',
+		render: 'usd',
+		chainGroupOnly: true
+	},
+	{
+		id: 'chainRev24h',
+		header: '24h Chain REV',
+		description: 'Chain fees plus MEV tips.',
+		group: 'fees',
+		render: 'usd',
+		chainGroupOnly: true
+	},
+	{
+		id: 'chainRev7d',
+		header: '7d Chain REV',
+		description: 'Chain fees plus MEV tips.',
+		group: 'fees',
+		render: 'usd',
+		chainGroupOnly: true
+	},
+	{
+		id: 'chainRev30d',
+		header: '30d Chain REV',
+		description: 'Chain fees plus MEV tips.',
+		group: 'fees',
+		render: 'usd',
+		chainGroupOnly: true
+	},
+	{
 		id: 'average_1y',
 		header: '1y Monthly Avg Fees',
 		group: 'fees',
@@ -376,6 +424,30 @@ const revenueColumns: ColumnDictionaryItem[] = [
 	{ id: 'revenue_180d', header: '180d Revenue', group: 'revenue', render: 'usd' },
 	{ id: 'revenue_1y', header: '1y Revenue', group: 'revenue', render: 'usd' },
 	{ id: 'revenue_ytd', header: 'YTD Revenue', group: 'revenue', render: 'usd' },
+	{
+		id: 'chainRevenue24h',
+		header: '24h Chain Revenue',
+		description: 'Fees retained by the chain.',
+		group: 'revenue',
+		render: 'usd',
+		chainGroupOnly: true
+	},
+	{
+		id: 'chainRevenue7d',
+		header: '7d Chain Revenue',
+		description: 'Fees retained by the chain.',
+		group: 'revenue',
+		render: 'usd',
+		chainGroupOnly: true
+	},
+	{
+		id: 'chainRevenue30d',
+		header: '30d Chain Revenue',
+		description: 'Fees retained by the chain.',
+		group: 'revenue',
+		render: 'usd',
+		chainGroupOnly: true
+	},
 	{
 		id: 'average_revenue_1y',
 		header: '1y Monthly Avg Revenue',

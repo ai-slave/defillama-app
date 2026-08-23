@@ -49,6 +49,12 @@ export interface ProtocolTableMetrics {
 	feesAnnualized1y?: number | null
 	average_1y?: number | null
 	cumulativeFees?: number | null
+	chainFees24h?: number | null
+	chainFees7d?: number | null
+	chainFees30d?: number | null
+	chainRev24h?: number | null
+	chainRev7d?: number | null
+	chainRev30d?: number | null
 	holderRevenue_24h?: number | null
 	holderRevenue_7d?: number | null
 	holdersRevenue30d?: number | null
@@ -86,6 +92,9 @@ export interface ProtocolTableMetrics {
 	revenueAnnualized1y?: number | null
 	average_revenue_1y?: number | null
 	cumulativeRevenue?: number | null
+	chainRevenue24h?: number | null
+	chainRevenue7d?: number | null
+	chainRevenue30d?: number | null
 	revenueChange_1d?: number | null
 	revenue24h7dAgo?: number | null
 	revenue24h30dAgo?: number | null
@@ -267,6 +276,12 @@ export const EMPTY_CANONICAL_CHAIN_METRICS = {
 	feesAnnualized1y: null,
 	average_1y: null,
 	cumulativeFees: null,
+	chainFees24h: null,
+	chainFees7d: null,
+	chainFees30d: null,
+	chainRev24h: null,
+	chainRev7d: null,
+	chainRev30d: null,
 	feesChange_1d: null,
 	fees24h7dAgo: null,
 	fees24h30dAgo: null,
@@ -288,6 +303,9 @@ export const EMPTY_CANONICAL_CHAIN_METRICS = {
 	revenueAnnualized1y: null,
 	average_revenue_1y: null,
 	cumulativeRevenue: null,
+	chainRevenue24h: null,
+	chainRevenue7d: null,
+	chainRevenue30d: null,
 	revenueChange_1d: null,
 	revenue24h7dAgo: null,
 	revenue24h30dAgo: null,

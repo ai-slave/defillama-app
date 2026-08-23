@@ -132,6 +132,16 @@ describe('protocol base metric family capabilities', () => {
 		).toEqual(['holder-revenue'])
 	})
 
+	it('requests fees and revenue for chain economics columns', () => {
+		expect(
+			getProtocolMetricCapabilities(
+				config({
+					columnOrder: ['chainFees24h', 'chainRevenue7d', 'chainRev30d']
+				})
+			).baseMetricFamilies
+		).toEqual(['fees', 'revenue'])
+	})
+
 	it('requests the current family for visible, sorted, and filtered point comparisons', () => {
 		expect(
 			getProtocolMetricCapabilities(

@@ -542,6 +542,15 @@ describe('unified table metric totals cache', () => {
 					chain: 'ethereum',
 					app_fees_1d: 0,
 					app_fees_annualised: 120,
+					chain_fees_1d: 10,
+					chain_fees_7d: 70,
+					chain_fees_30d: 300,
+					chain_revenue_1d: 4,
+					chain_revenue_7d: 28,
+					chain_revenue_30d: 120,
+					chain_rev_1d: 11,
+					chain_rev_7d: 77,
+					chain_rev_30d: 330,
 					tvl_base: 999
 				}
 			])
@@ -550,13 +559,27 @@ describe('unified table metric totals cache', () => {
 		const result = await fetchProtocolsTable({
 			...options,
 			rowHeaders: ['chain', 'protocol'],
-			baseMetricFamilies: ['fees']
+			baseMetricFamilies: ['fees', 'revenue']
 		})
 		const ethereum = result.chainMetrics?.ethereum
 
 		expect(ethereum?.availability).toBe('available')
 		if (ethereum?.availability !== 'available') throw new Error('Expected canonical Ethereum metrics')
-		expect(ethereum.metrics).toMatchObject({ fees24h: 0, fees_7d: null, feesAnnualized1y: 120, average_1y: 10 })
+		expect(ethereum.metrics).toMatchObject({
+			fees24h: 0,
+			fees_7d: null,
+			feesAnnualized1y: 120,
+			average_1y: 10,
+			chainFees24h: 10,
+			chainFees7d: 70,
+			chainFees30d: 300,
+			chainRevenue24h: 4,
+			chainRevenue7d: 28,
+			chainRevenue30d: 120,
+			chainRev24h: 11,
+			chainRev7d: 77,
+			chainRev30d: 330
+		})
 		expect(ethereum.metrics).not.toHaveProperty('tvl')
 		expect(ethereum.metrics).not.toHaveProperty('tvlShare')
 		expect(ethereum.metrics).not.toHaveProperty('protocolCount')
