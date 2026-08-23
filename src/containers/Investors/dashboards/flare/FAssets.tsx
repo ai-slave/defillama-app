@@ -46,10 +46,7 @@ export default function FAssets() {
 			</div>
 
 			{charts.locked && (
-				<ChartCard
-					title={charts.locked.title}
-					subtitle="USD value of FXRP locked in DeFi over time, on Flare."
-				>
+				<ChartCard title={charts.locked.title} subtitle="USD value of FXRP locked in DeFi over time, on Flare.">
 					<MultiSeriesChart
 						dataset={charts.locked.dataset}
 						charts={charts.locked.charts}

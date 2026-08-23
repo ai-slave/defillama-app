@@ -876,7 +876,7 @@ describe('ProtocolTaxonomy queries', () => {
 		expect(result?.protocols[0]?.subRows).toBeUndefined()
 	})
 
-	it('keeps a chain parent unavailable when an on-chain child lacks its exact snapshot', async () => {
+	it('keeps a chain parent base known when a sibling only reports extra TVL', async () => {
 		fetchProtocolsMock.mockResolvedValue(
 			protocolsResponse({
 				protocols: [
@@ -894,7 +894,9 @@ describe('ProtocolTaxonomy queries', () => {
 						name: 'Unmeasured Child',
 						chains: ['Ethereum'],
 						parentProtocol: 'parent#mixed',
-						chainTvls: {}
+						chainTvls: {
+							'Ethereum-staking': { tvl: 50, tvlPrevDay: 40, tvlPrevWeek: 30, tvlPrevMonth: 20 }
+						}
 					}),
 					makeLiteProtocol({
 						defillamaId: 'off-chain-child',
@@ -904,6 +906,22 @@ describe('ProtocolTaxonomy queries', () => {
 						chainTvls: {
 							Aptos: { tvl: 50, tvlPrevDay: 40, tvlPrevWeek: 30, tvlPrevMonth: 20 }
 						}
+					}),
+					makeLiteProtocol({
+						defillamaId: 'extra-only-a',
+						name: 'Extra Only A',
+						parentProtocol: 'parent#extra-only',
+						chainTvls: {
+							'Ethereum-staking': { tvl: 20, tvlPrevDay: 10, tvlPrevWeek: 5, tvlPrevMonth: 0 }
+						}
+					}),
+					makeLiteProtocol({
+						defillamaId: 'extra-only-b',
+						name: 'Extra Only B',
+						parentProtocol: 'parent#extra-only',
+						chainTvls: {
+							'Ethereum-staking': { tvl: 30, tvlPrevDay: 20, tvlPrevWeek: 10, tvlPrevMonth: 0 }
+						}
 					})
 				],
 				parentProtocols: [
@@ -911,6 +929,14 @@ describe('ProtocolTaxonomy queries', () => {
 						id: 'parent#mixed',
 						name: 'Mixed Parent',
 						chains: ['Ethereum', 'Aptos'],
+						logo: '',
+						mcap: null,
+						gecko_id: null
+					},
+					{
+						id: 'parent#extra-only',
+						name: 'Extra Only Parent',
+						chains: ['Ethereum'],
 						logo: '',
 						mcap: null,
 						gecko_id: null
@@ -931,8 +957,13 @@ describe('ProtocolTaxonomy queries', () => {
 		})
 
 		const parent = result?.protocols.find((protocol) => protocol.name === 'Mixed Parent')
-		expect(parent?.tvl).toBeNull()
+		expect(parent?.tvl).toBe(100)
+		expect(parent?.extraTvls.staking).toBe(50)
 		expect(parent?.subRows?.map((row) => row.name)).toEqual(['Measured Child', 'Unmeasured Child'])
+		expect(result?.protocols.find((protocol) => protocol.name === 'Extra Only Parent')).toMatchObject({
+			tvl: null,
+			extraTvls: { staking: 50 }
+		})
 	})
 
 	it('skips a no-TVL deprecated child in its parent while leaving unknown-parent children public', async () => {

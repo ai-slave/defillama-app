@@ -838,7 +838,7 @@ export async function getProtocolTaxonomyPageData(
 	}
 
 	const protocolsStore: Record<string, ProtocolTableRow> = {}
-	type StoredParentChild = { row: ProtocolTableRow; contributesTvl: boolean }
+	type StoredParentChild = { row: ProtocolTableRow; contributesDefaultTvl: boolean }
 	const parentProtocolsStore: Record<string, Array<StoredParentChild>> = {}
 	const canonicalParentIds = new Set<string>()
 	for (const parentProtocol of mergedParentProtocols) canonicalParentIds.add(parentProtocol.id)
@@ -915,7 +915,11 @@ export async function getProtocolTaxonomyPageData(
 
 		if (canonicalParentId) {
 			const siblings = parentProtocolsStore[canonicalParentId]
-			const storedChild = { row: finalData, contributesTvl: protocol.tvl != null }
+			// Chain-specific extras can exist without an exact base entry, so they do not make the parent base unknown.
+			const storedChild = {
+				row: finalData,
+				contributesDefaultTvl: protocol.tvl !== null && tvl !== null
+			}
 			if (siblings) siblings.push(storedChild)
 			else parentProtocolsStore[canonicalParentId] = [storedChild]
 		} else {
@@ -954,11 +958,7 @@ export async function getProtocolTaxonomyPageData(
 
 		let tvl: number | null = null
 		for (const childProtocol of childProtocols) {
-			if (!childProtocol.contributesTvl) continue
-			if (childProtocol.row.tvl == null) {
-				tvl = null
-				break
-			}
+			if (!childProtocol.contributesDefaultTvl || childProtocol.row.tvl === null) continue
 			tvl = (tvl ?? 0) + childProtocol.row.tvl
 		}
 		const extraTvls: Partial<Record<ProtocolListAdditiveTvlKey | 'excludeParent', number | null>> = {}

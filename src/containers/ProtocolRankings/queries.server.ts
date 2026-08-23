@@ -748,6 +748,8 @@ export const getProtocolsByChain = async ({
 			const childStore: StoredChildProtocol = {
 				row: childRow,
 				defillamaId: protocol.defillamaId,
+				// A child can report chain-specific extras without a base entry.
+				// Global TVL distinguishes real contributors from metadata-only rows.
 				contributesDefaultTvl: protocol.category !== 'Bridge' && tvls.default.tvl !== null,
 				contributesExtraTvls: protocol.category !== 'Bridge' && protocol.tvl !== null,
 				emissionsMatched
