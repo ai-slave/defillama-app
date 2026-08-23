@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
-import { queueMessage, renewQueuedMessageEdit } from '~/containers/LlamaAI/api'
+import {
+	cancelAllQueuedMessages,
+	continueQueuedMessages,
+	queueMessage,
+	renewQueuedMessageEdit
+} from '~/containers/LlamaAI/api'
 
 function jsonResponse(value: unknown) {
 	return new Response(JSON.stringify(value), { headers: { 'Content-Type': 'application/json' } })
@@ -31,6 +36,25 @@ describe('queue API', () => {
 		expect(authorizedFetch).toHaveBeenCalledWith(
 			expect.stringContaining('/agentic/queue/session-1/q1/edit/renew'),
 			expect.objectContaining({ method: 'POST', body: JSON.stringify({ editLeaseId: 'lease-1' }) })
+		)
+	})
+
+	it('uses separate acknowledged commands for Continue and Clear', async () => {
+		const snapshot = { sessionId: 'session-1', revision: 2, queue: [] }
+		const authorizedFetch = vi.fn(async () => jsonResponse({ snapshot }))
+
+		await continueQueuedMessages(authorizedFetch, 'session-1')
+		await cancelAllQueuedMessages(authorizedFetch, 'session-1')
+
+		expect(authorizedFetch).toHaveBeenNthCalledWith(
+			1,
+			expect.stringContaining('/agentic/queue/session-1/continue'),
+			expect.objectContaining({ method: 'POST' })
+		)
+		expect(authorizedFetch).toHaveBeenNthCalledWith(
+			2,
+			expect.stringContaining('/agentic/queue/session-1'),
+			expect.objectContaining({ method: 'DELETE' })
 		)
 	})
 })

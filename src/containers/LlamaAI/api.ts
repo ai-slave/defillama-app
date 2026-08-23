@@ -166,6 +166,32 @@ export async function cancelQueuedMessage(
 	)
 }
 
+export async function cancelAllQueuedMessages(
+	authorizedFetch: AuthorizedFetch,
+	sessionId: string,
+	signal?: AbortSignal
+): Promise<QueueMutationResponse> {
+	return decodeQueueMutationResponse(
+		await llamaAIRequest<unknown>(authorizedFetch, `/agentic/queue/${encodeURIComponent(sessionId)}`, {
+			method: 'DELETE',
+			signal
+		})
+	)
+}
+
+export async function continueQueuedMessages(
+	authorizedFetch: AuthorizedFetch,
+	sessionId: string,
+	signal?: AbortSignal
+): Promise<QueueMutationResponse> {
+	return decodeQueueMutationResponse(
+		await llamaAIRequest<unknown>(authorizedFetch, `/agentic/queue/${encodeURIComponent(sessionId)}/continue`, {
+			method: 'POST',
+			signal
+		})
+	)
+}
+
 export async function retryQueuedMessage(
 	authorizedFetch: AuthorizedFetch,
 	sessionId: string,

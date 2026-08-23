@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef } from 'react'
 import {
 	beginQueuedMessageEdit,
+	cancelAllQueuedMessages,
 	cancelQueuedMessage,
 	cancelQueuedMessageEdit,
+	continueQueuedMessages,
 	queueMessage,
 	renewQueuedMessageEdit,
 	retryQueuedMessage,
@@ -15,23 +17,35 @@ import type { AuthorizedFetch } from '~/containers/LlamaAI/api/transport'
 import { LlamaAITransportError } from '~/containers/LlamaAI/api/transport'
 import { decodeQueueSnapshot } from '~/containers/LlamaAI/queue/protocol'
 
-export type QueueAction = 'opening_edit' | 'saving_edit' | 'canceling_edit' | 'dismissing' | 'retrying'
+export type QueueAction =
+	| 'opening_edit'
+	| 'saving_edit'
+	| 'canceling_edit'
+	| 'dismissing'
+	| 'retrying'
+	| 'continuing'
+	| 'clearing'
+
+type QueueWideAction = 'continuing' | 'clearing'
+
+export interface QueueActionError {
+	action: QueueWideAction
+	message: string
+}
 
 export type QueueServerRow = QueuedMessageElement & { kind: 'server' }
 
-export interface QueueCreatingRow {
-	kind: 'creating'
+export interface QueueLocalRow {
+	kind: 'local'
 	id: string
-	clientMutationId: string
-	state: 'pending'
-	message: string
-	researchMode: boolean
-	factCheckMode?: boolean
-	entities?: Array<{ term: string; slug: string; type?: string }>
-	quotedText?: string
+	state: 'adding' | 'waiting' | 'failed'
+	error?: string
+	payload: QueueMessagePayload
 }
 
-export type QueueRow = QueueServerRow | QueueCreatingRow
+export type QueueRow = QueueServerRow | QueueLocalRow
+
+const EMPTY_LOCAL_ROWS: QueueLocalRow[] = []
 
 export interface QueueRowStatus {
 	action: QueueAction | null
@@ -49,15 +63,21 @@ export interface QueueSurface {
 	onEditCancel: (id: string) => void
 	onDismiss: (id: string) => void
 	onRetry: (id: string) => void
+	onContinue: () => void
+	onClear: () => void
+	queueAction: QueueWideAction | null
+	queueActionError: QueueActionError | null
 }
 
 interface QueueControllerState {
 	sessionId: string | null
 	queue: QueuedMessageElement[]
-	creating: QueueCreatingRow | null
+	localBySession: Record<string, QueueLocalRow[]>
 	maxDepth: number | null
 	ownedEditId: string | null
 	rowStatus: Record<string, QueueRowStatus>
+	queueAction: QueueWideAction | null
+	queueActionError: QueueActionError | null
 }
 
 interface RememberedEdit {
@@ -69,34 +89,48 @@ interface RememberedEdit {
 type QueueControllerEvent =
 	| { type: 'reset'; sessionId: string | null }
 	| { type: 'snapshot'; snapshot: QueueSnapshot; rememberedEdit?: RememberedEdit }
-	| { type: 'creating'; row: QueueCreatingRow }
-	| { type: 'creating_done'; id: string }
+	| { type: 'local_add'; sessionId: string; row: QueueLocalRow }
+	| { type: 'local_state'; sessionId: string; id: string; state: QueueLocalRow['state']; error?: string }
+	| { type: 'local_remove'; sessionId: string; id: string }
+	| { type: 'local_clear'; sessionId: string }
+	| { type: 'local_adopt_session'; previousSessionId: string; nextSessionId: string }
 	| { type: 'max_depth'; value: number }
 	| { type: 'action'; id: string; action: QueueAction }
 	| { type: 'action_done'; id: string }
 	| { type: 'action_failed'; id: string; error: string; unsavedDraft?: string }
 	| { type: 'own_edit'; id: string }
+	| { type: 'queue_action'; action: QueueWideAction }
+	| { type: 'queue_action_done' }
+	| { type: 'queue_action_failed'; action: QueueWideAction; message: string }
 
 function initialState(sessionId: string | null): QueueControllerState {
 	return {
 		sessionId,
 		queue: [],
-		creating: null,
+		localBySession: {},
 		maxDepth: null,
 		ownedEditId: null,
-		rowStatus: {}
+		rowStatus: {},
+		queueAction: null,
+		queueActionError: null
 	}
 }
 
 function queueControllerReducer(state: QueueControllerState, event: QueueControllerEvent): QueueControllerState {
 	switch (event.type) {
 		case 'reset':
-			return initialState(event.sessionId)
+			return {
+				...initialState(event.sessionId),
+				localBySession: state.localBySession
+			}
 		case 'snapshot': {
 			if (event.snapshot.sessionId !== state.sessionId) return state
-			const creating = event.snapshot.queue.some((item) => item.clientMutationId === state.creating?.clientMutationId)
-				? null
-				: state.creating
+			const confirmedMutationIds = new Set(
+				event.snapshot.queue.flatMap((item) => (item.clientMutationId ? [item.clientMutationId] : []))
+			)
+			const local = (state.localBySession[event.snapshot.sessionId] ?? []).filter(
+				(item) => !confirmedMutationIds.has(item.payload.clientMutationId)
+			)
 			const rememberedItem = event.rememberedEdit
 				? event.snapshot.queue.find((item) => item.id === event.rememberedEdit?.id)
 				: undefined
@@ -132,15 +166,61 @@ function queueControllerReducer(state: QueueControllerState, event: QueueControl
 			return {
 				...state,
 				queue: event.snapshot.queue,
-				creating,
+				localBySession: { ...state.localBySession, [event.snapshot.sessionId]: local },
 				ownedEditId: ownedEdit?.state === 'editing' ? ownedEdit.id : null,
 				rowStatus
 			}
 		}
-		case 'creating':
-			return { ...state, creating: event.row }
-		case 'creating_done':
-			return state.creating?.id === event.id ? { ...state, creating: null } : state
+		case 'local_add':
+			return {
+				...state,
+				localBySession: {
+					...state.localBySession,
+					[event.sessionId]: [...(state.localBySession[event.sessionId] ?? []), event.row]
+				}
+			}
+		case 'local_state': {
+			const local = state.localBySession[event.sessionId] ?? []
+			const current = local.find((item) => item.id === event.id)
+			if (!current || (current.state === event.state && current.error === event.error)) return state
+			return {
+				...state,
+				localBySession: {
+					...state.localBySession,
+					[event.sessionId]: local.map((item) =>
+						item.id === event.id ? { ...item, state: event.state, error: event.error } : item
+					)
+				}
+			}
+		}
+		case 'local_remove':
+			return {
+				...state,
+				localBySession: {
+					...state.localBySession,
+					[event.sessionId]: (state.localBySession[event.sessionId] ?? []).filter((item) => item.id !== event.id)
+				}
+			}
+		case 'local_clear':
+			return { ...state, localBySession: { ...state.localBySession, [event.sessionId]: [] } }
+		case 'local_adopt_session': {
+			if (event.previousSessionId === event.nextSessionId) return state
+			const previousRows = state.localBySession[event.previousSessionId] ?? []
+			if (previousRows.length === 0) return state
+			const nextRows = state.localBySession[event.nextSessionId] ?? []
+			const nextMutationIds = new Set(nextRows.map((row) => row.payload.clientMutationId))
+			return {
+				...state,
+				localBySession: {
+					...state.localBySession,
+					[event.previousSessionId]: [],
+					[event.nextSessionId]: [
+						...previousRows.filter((row) => !nextMutationIds.has(row.payload.clientMutationId)),
+						...nextRows
+					]
+				}
+			}
+		}
 		case 'max_depth':
 			return { ...state, maxDepth: event.value }
 		case 'action':
@@ -163,6 +243,16 @@ function queueControllerReducer(state: QueueControllerState, event: QueueControl
 			}
 		case 'own_edit':
 			return { ...state, ownedEditId: event.id }
+		case 'queue_action':
+			return { ...state, queueAction: event.action, queueActionError: null }
+		case 'queue_action_done':
+			return { ...state, queueAction: null, queueActionError: null }
+		case 'queue_action_failed':
+			return {
+				...state,
+				queueAction: null,
+				queueActionError: { action: event.action, message: event.message }
+			}
 	}
 }
 
@@ -174,6 +264,12 @@ function errorCode(error: unknown): string | null {
 function snapshotFromError(error: unknown): QueueSnapshot | null {
 	if (!(error instanceof LlamaAITransportError)) return null
 	return decodeQueueSnapshot((error.body as { snapshot?: unknown } | null)?.snapshot)
+}
+
+const PAUSED_QUEUE_REASONS = new Set(['execution_stopped', 'execution_failed', 'quota_exceeded', 'server_restarted'])
+
+function isServerQueuePaused(queue: QueuedMessageElement[]): boolean {
+	return queue.some((item) => item.state === 'not_sent' && PAUSED_QUEUE_REASONS.has(item.reason))
 }
 
 function actionError(action: QueueAction, error: unknown): string {
@@ -198,21 +294,30 @@ function actionError(action: QueueAction, error: unknown): string {
 export function useChatQueueController({
 	sessionId,
 	enabled,
+	admissionPaused,
 	authorizedFetch
 }: {
 	sessionId: string | null
 	enabled: boolean
+	admissionPaused: boolean
 	authorizedFetch: AuthorizedFetch
 }) {
 	const [state, dispatch] = useReducer(queueControllerReducer, sessionId, initialState)
 	const stateRef = useRef(state)
 	stateRef.current = state
+	const send = useCallback((event: QueueControllerEvent) => {
+		stateRef.current = queueControllerReducer(stateRef.current, event)
+		dispatch(event)
+	}, [])
 	const activeSessionIdRef = useRef(sessionId)
 	activeSessionIdRef.current = sessionId
 	const enabledRef = useRef(enabled)
 	enabledRef.current = enabled
+	const admissionPausedRef = useRef(admissionPaused)
+	admissionPausedRef.current = admissionPaused
 	const controllersRef = useRef(new Set<AbortController>())
-	const enqueueInFlightRef = useRef(false)
+	const outboxDrainsRef = useRef(new Set<string>())
+	const drainOutboxRef = useRef<(sessionId: string) => void>(() => {})
 	const queuedRowsRef = useRef<{ sessionId: string; rows: Map<string, QueuedMessageElement> } | null>(null)
 	const rememberedEditsRef = useRef(new Map<string, RememberedEdit>())
 	const pendingSnapshotRef = useRef<QueueSnapshot | null>(null)
@@ -227,7 +332,6 @@ export function useChatQueueController({
 		renewalTimerRef.current = null
 		renewalControllerRef.current?.abort()
 		renewalControllerRef.current = null
-		enqueueInFlightRef.current = false
 	}, [])
 	const snapshotEvent = useCallback((snapshot: QueueSnapshot): QueueControllerEvent => {
 		const rememberedEdit = rememberedEditsRef.current.get(snapshot.sessionId)
@@ -241,20 +345,20 @@ export function useChatQueueController({
 	}, [])
 
 	useLayoutEffect(() => {
-		if (stateRef.current.sessionId !== sessionId) dispatch({ type: 'reset', sessionId })
+		if (stateRef.current.sessionId !== sessionId) send({ type: 'reset', sessionId })
 		snapshotCursorRef.current = { sessionId, revision: -1 }
 		latestSnapshotRef.current = null
 		queuedRowsRef.current = sessionId ? { sessionId, rows: new Map() } : null
 		if (pendingSnapshotRef.current?.sessionId === sessionId) {
 			snapshotCursorRef.current.revision = pendingSnapshotRef.current.revision
 			latestSnapshotRef.current = pendingSnapshotRef.current
-			dispatch(snapshotEvent(pendingSnapshotRef.current))
+			send(snapshotEvent(pendingSnapshotRef.current))
 			pendingSnapshotRef.current = null
 		}
 		return () => {
 			abortCommands()
 		}
-	}, [abortCommands, sessionId, snapshotEvent])
+	}, [abortCommands, send, sessionId, snapshotEvent])
 
 	useLayoutEffect(() => {
 		if (!enabled) abortCommands()
@@ -276,10 +380,11 @@ export function useChatQueueController({
 					if (queuedRows.rows.size > 20) queuedRows.rows.delete(queuedRows.rows.keys().next().value!)
 				}
 			}
-			dispatch(snapshotEvent(snapshot))
+			send(snapshotEvent(snapshot))
+			queueMicrotask(() => drainOutboxRef.current(snapshot.sessionId))
 			return true
 		},
-		[snapshotEvent]
+		[send, snapshotEvent]
 	)
 	const restoreSnapshot = useCallback(
 		(snapshot: QueueSnapshot) => {
@@ -316,59 +421,97 @@ export function useChatQueueController({
 		[applySnapshot]
 	)
 
+	const drainLocalOutbox = useCallback(
+		async (targetSessionId: string) => {
+			if (
+				outboxDrainsRef.current.has(targetSessionId) ||
+				!enabledRef.current ||
+				activeSessionIdRef.current !== targetSessionId
+			)
+				return
+			outboxDrainsRef.current.add(targetSessionId)
+			try {
+				while (enabledRef.current && activeSessionIdRef.current === targetSessionId && !admissionPausedRef.current) {
+					const current = stateRef.current
+					if (current.queueAction === 'clearing' || current.queueActionError) return
+					const head = current.localBySession[targetSessionId]?.[0]
+					if (!head || head.state === 'failed' || isServerQueuePaused(current.queue)) return
+					let activeDepth = 0
+					for (const item of current.queue) {
+						if (item.state !== 'not_sent') activeDepth += 1
+					}
+					if (current.maxDepth !== null && activeDepth >= current.maxDepth) {
+						send({ type: 'local_state', sessionId: targetSessionId, id: head.id, state: 'waiting' })
+						return
+					}
+
+					send({ type: 'local_state', sessionId: targetSessionId, id: head.id, state: 'adding' })
+					try {
+						const result = await runCommand(targetSessionId, (signal) =>
+							queueMessage(authorizedFetch, targetSessionId, head.payload, signal)
+						)
+						send({ type: 'max_depth', value: result.maxDepth })
+						if (stateRef.current.localBySession[targetSessionId]?.some((item) => item.id === head.id)) {
+							send({ type: 'local_remove', sessionId: targetSessionId, id: head.id })
+						}
+					} catch (error) {
+						const stillLocal = stateRef.current.localBySession[targetSessionId]?.some((item) => item.id === head.id)
+						if (!stillLocal) continue
+						if (error instanceof DOMException && error.name === 'AbortError') {
+							send({ type: 'local_state', sessionId: targetSessionId, id: head.id, state: 'waiting' })
+							return
+						}
+						if (error instanceof LlamaAITransportError) {
+							const maxDepth = (error.body as { maxDepth?: number } | null)?.maxDepth
+							if (typeof maxDepth === 'number') send({ type: 'max_depth', value: maxDepth })
+							if (errorCode(error) === 'queue_full') {
+								send({ type: 'local_state', sessionId: targetSessionId, id: head.id, state: 'waiting' })
+								return
+							}
+						}
+						send({
+							type: 'local_state',
+							sessionId: targetSessionId,
+							id: head.id,
+							state: 'failed',
+							error: 'Could not add this prompt. Retry or dismiss it.'
+						})
+						return
+					}
+				}
+			} finally {
+				outboxDrainsRef.current.delete(targetSessionId)
+			}
+		},
+		[authorizedFetch, runCommand, send]
+	)
+	drainOutboxRef.current = (targetSessionId) => void drainLocalOutbox(targetSessionId)
+
+	useEffect(() => {
+		if (enabled && sessionId && !admissionPaused) void drainLocalOutbox(sessionId)
+	}, [admissionPaused, drainLocalOutbox, enabled, sessionId])
+
 	const enqueue = useCallback(
-		async (
-			payload: Omit<QueueMessagePayload, 'clientMutationId'>
-		): Promise<'queued' | 'session_idle' | 'busy' | 'aborted'> => {
+		(payload: Omit<QueueMessagePayload, 'clientMutationId'>): 'queued' | 'session_idle' | 'aborted' => {
 			if (!enabledRef.current) return 'aborted'
 			const targetSessionId = activeSessionIdRef.current
 			if (!targetSessionId) return 'session_idle'
-			if (enqueueInFlightRef.current) return 'busy'
-			enqueueInFlightRef.current = true
 			const clientMutationId = crypto.randomUUID()
-			const optimisticId = `temp-${clientMutationId}`
-			dispatch({
-				type: 'creating',
+			const id = `temp-${clientMutationId}`
+			send({
+				type: 'local_add',
+				sessionId: targetSessionId,
 				row: {
-					kind: 'creating',
-					id: optimisticId,
-					clientMutationId,
-					state: 'pending',
-					message: payload.message,
-					researchMode: payload.researchMode,
-					factCheckMode: payload.factCheckMode,
-					entities: payload.entities,
-					quotedText: payload.quotedText
+					kind: 'local',
+					id,
+					state: 'waiting',
+					payload: { ...payload, clientMutationId }
 				}
 			})
-			try {
-				const result = await runCommand(targetSessionId, (signal) =>
-					queueMessage(authorizedFetch, targetSessionId, { ...payload, clientMutationId }, signal)
-				)
-				dispatch({ type: 'max_depth', value: result.maxDepth })
-				return 'queued'
-			} catch (error) {
-				if (
-					activeSessionIdRef.current !== targetSessionId ||
-					(error instanceof DOMException && error.name === 'AbortError')
-				) {
-					return 'aborted'
-				}
-				if (latestSnapshotRef.current?.queue.some((item) => item.clientMutationId === clientMutationId)) {
-					return 'queued'
-				}
-				if (errorCode(error) === 'session_idle') return 'session_idle'
-				if (error instanceof LlamaAITransportError) {
-					const maxDepth = (error.body as { maxDepth?: number } | null)?.maxDepth
-					if (typeof maxDepth === 'number') dispatch({ type: 'max_depth', value: maxDepth })
-				}
-				throw error
-			} finally {
-				enqueueInFlightRef.current = false
-				dispatch({ type: 'creating_done', id: optimisticId })
-			}
+			queueMicrotask(() => drainOutboxRef.current(targetSessionId))
+			return 'queued'
 		},
-		[authorizedFetch, runCommand]
+		[send]
 	)
 
 	const runRowAction = useCallback(
@@ -381,24 +524,24 @@ export function useChatQueueController({
 			if (!enabledRef.current) return null
 			const targetSessionId = activeSessionIdRef.current
 			if (!targetSessionId) return null
-			dispatch({ type: 'action', id, action })
+			send({ type: 'action', id, action })
 			try {
 				const result = await runCommand(targetSessionId, async (signal) => ({
 					snapshot: await command(targetSessionId, signal)
 				}))
-				dispatch({ type: 'action_done', id })
+				send({ type: 'action_done', id })
 				return result.snapshot
 			} catch (error) {
 				if (
 					activeSessionIdRef.current === targetSessionId &&
 					!(error instanceof DOMException && error.name === 'AbortError')
 				) {
-					dispatch({ type: 'action_failed', id, error: actionError(action, error), unsavedDraft })
+					send({ type: 'action_failed', id, error: actionError(action, error), unsavedDraft })
 				}
 				return null
 			}
 		},
-		[runCommand]
+		[runCommand, send]
 	)
 
 	const beginEdit = useCallback(
@@ -419,10 +562,10 @@ export function useChatQueueController({
 					leaseId: reserved.editLeaseId,
 					draft: reserved.message
 				})
-				dispatch({ type: 'own_edit', id })
+				send({ type: 'own_edit', id })
 			}
 		},
-		[authorizedFetch, runRowAction]
+		[authorizedFetch, runRowAction, send]
 	)
 
 	const updateEditDraft = useCallback((id: string, draft: string) => {
@@ -470,22 +613,89 @@ export function useChatQueueController({
 
 	const dismiss = useCallback(
 		async (id: string) => {
-			await runRowAction(id, 'dismissing', async (targetSessionId, signal) => {
-				const result = await cancelQueuedMessage(authorizedFetch, targetSessionId, id, signal)
+			const targetSessionId = activeSessionIdRef.current
+			if (!targetSessionId) return
+			if (stateRef.current.localBySession[targetSessionId]?.some((item) => item.id === id)) {
+				send({ type: 'local_remove', sessionId: targetSessionId, id })
+				queueMicrotask(() => drainOutboxRef.current(targetSessionId))
+				return
+			}
+			await runRowAction(id, 'dismissing', async (commandSessionId, signal) => {
+				const result = await cancelQueuedMessage(authorizedFetch, commandSessionId, id, signal)
 				return result.snapshot
 			})
 		},
-		[authorizedFetch, runRowAction]
+		[authorizedFetch, runRowAction, send]
 	)
 
 	const retry = useCallback(
 		async (id: string) => {
-			await runRowAction(id, 'retrying', async (targetSessionId, signal) => {
-				const result = await retryQueuedMessage(authorizedFetch, targetSessionId, id, signal)
+			const targetSessionId = activeSessionIdRef.current
+			if (!targetSessionId) return
+			const local = stateRef.current.localBySession[targetSessionId]?.find((item) => item.id === id)
+			if (local) {
+				if (local.state !== 'failed') return
+				send({ type: 'local_state', sessionId: targetSessionId, id, state: 'waiting' })
+				queueMicrotask(() => drainOutboxRef.current(targetSessionId))
+				return
+			}
+			await runRowAction(id, 'retrying', async (commandSessionId, signal) => {
+				const result = await retryQueuedMessage(authorizedFetch, commandSessionId, id, signal)
 				return result.snapshot
 			})
 		},
-		[authorizedFetch, runRowAction]
+		[authorizedFetch, runRowAction, send]
+	)
+
+	const continueQueue = useCallback(async () => {
+		const targetSessionId = activeSessionIdRef.current
+		if (!targetSessionId) return
+		send({ type: 'queue_action', action: 'continuing' })
+		try {
+			await runCommand(targetSessionId, (signal) => continueQueuedMessages(authorizedFetch, targetSessionId, signal))
+			send({ type: 'queue_action_done' })
+			queueMicrotask(() => drainOutboxRef.current(targetSessionId))
+		} catch (error) {
+			if (!(error instanceof DOMException && error.name === 'AbortError')) {
+				send({
+					type: 'queue_action_failed',
+					action: 'continuing',
+					message: 'Could not continue the queue. Try again.'
+				})
+			}
+		}
+	}, [authorizedFetch, runCommand, send])
+
+	const clearQueue = useCallback(async () => {
+		const targetSessionId = activeSessionIdRef.current
+		if (!targetSessionId) return
+		send({ type: 'queue_action', action: 'clearing' })
+		try {
+			await runCommand(targetSessionId, (signal) => cancelAllQueuedMessages(authorizedFetch, targetSessionId, signal))
+			send({ type: 'local_clear', sessionId: targetSessionId })
+			send({ type: 'queue_action_done' })
+		} catch (error) {
+			if (!(error instanceof DOMException && error.name === 'AbortError')) {
+				send({
+					type: 'queue_action_failed',
+					action: 'clearing',
+					message: 'Could not clear the queue. Try again.'
+				})
+			}
+		}
+	}, [authorizedFetch, runCommand, send])
+	const forgetSession = useCallback(
+		(targetSessionId: string) => send({ type: 'local_clear', sessionId: targetSessionId }),
+		[send]
+	)
+	const adoptSession = useCallback(
+		(previousSessionId: string, nextSessionId: string) => {
+			if (previousSessionId === nextSessionId) return
+			activeSessionIdRef.current = nextSessionId
+			abortCommands()
+			send({ type: 'local_adopt_session', previousSessionId, nextSessionId })
+		},
+		[abortCommands, send]
 	)
 
 	const takeStartedItem = useCallback((id: string) => {
@@ -501,18 +711,17 @@ export function useChatQueueController({
 	)
 
 	const visibleState = state.sessionId === sessionId ? state : initialState(sessionId)
+	const localRows = sessionId ? (visibleState.localBySession[sessionId] ?? EMPTY_LOCAL_ROWS) : EMPTY_LOCAL_ROWS
 	const rows = useMemo<QueueRow[]>(
-		() => [
-			...visibleState.queue.map((item): QueueServerRow => ({ ...item, kind: 'server' })),
-			...(visibleState.creating ? [visibleState.creating] : [])
-		],
-		[visibleState.queue, visibleState.creating]
+		() => [...visibleState.queue.map((item): QueueServerRow => ({ ...item, kind: 'server' })), ...localRows],
+		[localRows, visibleState.queue]
 	)
-	let activeDepth = visibleState.creating ? 1 : 0
+	let activeDepth = 0
 	for (const item of visibleState.queue) {
 		if (item.state !== 'not_sent') activeDepth += 1
 	}
 	const atCapacity = visibleState.maxDepth !== null && activeDepth >= visibleState.maxDepth
+	const paused = isServerQueuePaused(visibleState.queue)
 	const ownedEdit = visibleState.queue.find((item) => item.id === visibleState.ownedEditId && item.state === 'editing')
 	const ownedEditId = ownedEdit?.id ?? null
 	const ownedEditLeaseId = ownedEdit?.state === 'editing' ? ownedEdit.editLeaseId : null
@@ -553,8 +762,12 @@ export function useChatQueueController({
 		serverQueue: visibleState.queue,
 		maxDepth: visibleState.maxDepth,
 		atCapacity,
+		hasLocalRows: localRows.length > 0,
+		paused,
 		ownedEditId: visibleState.ownedEditId,
 		rowStatus: visibleState.rowStatus,
+		queueAction: visibleState.queueAction,
+		queueActionError: visibleState.queueActionError,
 		applySnapshot,
 		restoreSnapshot,
 		enqueue,
@@ -564,6 +777,10 @@ export function useChatQueueController({
 		cancelEdit,
 		dismiss,
 		retry,
+		continueQueue,
+		clearQueue,
+		forgetSession,
+		adoptSession,
 		takeStartedItem,
 		getServerQueue,
 		abortCommands

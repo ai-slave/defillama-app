@@ -35,6 +35,10 @@ function surface(overrides: Partial<QueueSurface> = {}): QueueSurface {
 		onEditCancel: vi.fn(),
 		onDismiss: vi.fn(),
 		onRetry: vi.fn(),
+		onContinue: vi.fn(),
+		onClear: vi.fn(),
+		queueAction: null,
+		queueActionError: null,
 		...overrides
 	}
 }
@@ -60,17 +64,15 @@ describe('QueueChips', () => {
 		await act(async () => root.render(<QueueChips surface={queueSurface} quotaResetTime={quotaResetTime} />))
 	}
 
-	it('keeps optimistic rows non-interactive', async () => {
+	it('keeps an in-flight local row non-interactive', async () => {
 		await render(
 			surface({
 				rows: [
 					{
-						kind: 'creating',
+						kind: 'local',
 						id: 'temp-1',
-						clientMutationId: 'mutation-1',
-						state: 'pending',
-						message: 'Follow up',
-						researchMode: false
+						state: 'adding',
+						payload: { clientMutationId: 'mutation-1', message: 'Follow up', researchMode: false, client: 'web' }
 					}
 				]
 			})
@@ -85,12 +87,10 @@ describe('QueueChips', () => {
 			surface({
 				rows: [
 					{
-						kind: 'creating',
+						kind: 'local',
 						id: 'temp-1',
-						clientMutationId: 'mutation-1',
-						state: 'pending',
-						message: 'Follow up',
-						researchMode: false
+						state: 'adding',
+						payload: { clientMutationId: 'mutation-1', message: 'Follow up', researchMode: false, client: 'web' }
 					}
 				]
 			})
@@ -101,6 +101,55 @@ describe('QueueChips', () => {
 
 		expect(container.querySelector('li')).toBe(optimisticNode)
 		expect(container.textContent).not.toContain('Adding…')
+	})
+
+	it('offers one Continue action for a paused queue', async () => {
+		const onContinue = vi.fn()
+		await render(
+			surface({
+				rows: [
+					pending({ state: 'not_sent', reason: 'execution_failed' }),
+					pending({ id: 'q2', state: 'not_sent', reason: 'execution_failed' })
+				],
+				onContinue
+			})
+		)
+
+		expect(container.textContent).toContain('Queue paused')
+		expect(container.querySelector('[aria-label="Retry"]')).toBeNull()
+		const continueButton = [...container.querySelectorAll('button')].find(
+			(button) => button.textContent === 'Continue queue'
+		)
+		await act(async () => continueButton?.click())
+		expect(onContinue).toHaveBeenCalledOnce()
+	})
+
+	it('keeps Retry clear available after an ambiguous Clear failure', async () => {
+		const onClear = vi.fn()
+		await render(
+			surface({
+				rows: [
+					{
+						kind: 'local',
+						id: 'temp-1',
+						state: 'waiting',
+						payload: { clientMutationId: 'mutation-1', message: 'Follow up', researchMode: false, client: 'web' }
+					}
+				],
+				onClear,
+				queueActionError: { action: 'clearing', message: 'Could not clear the queue. Try again.' }
+			})
+		)
+		vi.stubGlobal(
+			'confirm',
+			vi.fn(() => true)
+		)
+
+		const retryClear = [...container.querySelectorAll('button')].find((button) => button.textContent === 'Retry clear')
+		await act(async () => retryClear?.click())
+
+		expect(onClear).toHaveBeenCalledOnce()
+		vi.unstubAllGlobals()
 	})
 
 	it('waits for the editing snapshot before rendering the editor', async () => {
@@ -191,7 +240,7 @@ describe('QueueChips', () => {
 		expect(dismissButtons[1].disabled).toBe(false)
 	})
 
-	it('retries failed image prompts without the old image-loss warning', async () => {
+	it('retries expired image prompts without the old image-loss warning', async () => {
 		const onRetry = vi.fn()
 		await render(
 			surface({
@@ -199,7 +248,7 @@ describe('QueueChips', () => {
 				rows: [
 					pending({
 						state: 'not_sent',
-						reason: 'server_restarted',
+						reason: 'expired',
 						message: '',
 						images: [{ id: 'image-1', url: 'https://example.com/image.png' }]
 					})
@@ -231,18 +280,20 @@ describe('QueueChips', () => {
 		expect((container.querySelector('[aria-label="Retry"]') as HTMLButtonElement).disabled).toBe(true)
 	})
 
-	it('unblocks quota retry when the reset time arrives', async () => {
+	it('unblocks the paused queue when the quota reset time arrives', async () => {
 		vi.useFakeTimers()
 		vi.setSystemTime(new Date('2026-08-21T10:00:00.000Z'))
 		await render(
 			surface({ rows: [pending({ state: 'not_sent', reason: 'quota_exceeded' })] }),
 			'2026-08-21T10:00:01.000Z'
 		)
-		const retry = container.querySelector('[aria-label="Retry"]') as HTMLButtonElement
-		expect(retry.disabled).toBe(true)
+		const continueButton = [...container.querySelectorAll('button')].find((button) =>
+			button.textContent?.startsWith('Continue')
+		) as HTMLButtonElement
+		expect(continueButton.disabled).toBe(true)
 
 		await act(async () => vi.advanceTimersByTime(1_100))
-		expect(retry.disabled).toBe(false)
+		expect(continueButton.disabled).toBe(false)
 	})
 
 	it('marks later pending rows as blocked by an editing head', async () => {

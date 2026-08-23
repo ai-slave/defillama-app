@@ -1,6 +1,5 @@
 import type { Dispatch } from 'react'
 import type { ContextWarningPayload, CsvExport, MdExport } from '~/containers/LlamaAI/fetchAgenticResponse'
-import type { AgenticMutationEnvelope } from '~/containers/LlamaAI/mutationProtocol'
 import type {
 	AlertProposedData,
 	ChartSet,
@@ -20,11 +19,6 @@ export interface ChatPageContext {
 	entitySlug?: string
 	entityType?: 'protocol' | 'chain' | 'page'
 	route: string
-}
-
-export interface FailedRequest {
-	mutation: AgenticMutationEnvelope
-	optimisticMessageId: string
 }
 
 export interface RateLimitDetails {
@@ -74,7 +68,6 @@ export interface StreamState {
 	recovery: RecoveryState
 	messageMetadata?: MessageMetadata
 	error: string | null
-	lastFailedRequest: FailedRequest | null
 	rateLimitDetails: RateLimitDetails | null
 	contextWarning: ContextWarningPayload | null
 	factCheckPhase: 'drafting' | 'verifying' | 'finalizing' | null
@@ -104,7 +97,7 @@ export type StreamBuffer = StreamAccumulator
 
 type ResettableStreamState = Omit<
 	StreamState,
-	'phase' | 'messageMetadata' | 'error' | 'lastFailedRequest' | 'rateLimitDetails' | 'contextWarning'
+	'phase' | 'messageMetadata' | 'error' | 'rateLimitDetails' | 'contextWarning'
 >
 
 export type StreamAction =
@@ -117,7 +110,6 @@ export type StreamAction =
 	| { type: 'COMMIT_STREAM' }
 	| { type: 'SET_COMPACTING'; value: boolean }
 	| { type: 'SET_ERROR'; value: string | null }
-	| { type: 'SET_LAST_FAILED_REQUEST'; value: FailedRequest | null }
 	| { type: 'SET_RATE_LIMIT_DETAILS'; value: RateLimitDetails | null }
 	| { type: 'APPEND_TOKEN'; value: string }
 	| { type: 'APPEND_CHARTS'; value: ChartSet }
@@ -181,7 +173,6 @@ export const createInitialStreamState = (): StreamState => ({
 	phase: { status: 'idle' },
 	...createEmptyRuntimeState(),
 	error: null,
-	lastFailedRequest: null,
 	rateLimitDetails: null,
 	contextWarning: null
 })
@@ -236,7 +227,6 @@ export function streamReducer(state: StreamState, action: StreamAction): StreamS
 				isStreaming: true,
 				pendingQueueItemId: action.type === 'START_QUEUED_STREAM' ? action.queueItemId : null,
 				error: null,
-				lastFailedRequest: null,
 				rateLimitDetails: null
 			}
 		case 'QUEUED_USER_MESSAGE_READY':
@@ -268,8 +258,6 @@ export function streamReducer(state: StreamState, action: StreamAction): StreamS
 						? { status: 'idle' }
 						: state.phase
 			}
-		case 'SET_LAST_FAILED_REQUEST':
-			return { ...state, lastFailedRequest: action.value }
 		case 'SET_RATE_LIMIT_DETAILS':
 			return { ...state, rateLimitDetails: action.value }
 		case 'APPEND_TOKEN': {

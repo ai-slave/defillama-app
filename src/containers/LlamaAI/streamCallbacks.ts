@@ -52,6 +52,7 @@ export function createAgenticCallbacks({
 	onArmEvent,
 	onQueueUpdated,
 	onMessageIdObserved,
+	onUserMessageIdObserved,
 	notify
 }: {
 	isCurrent: () => boolean
@@ -74,6 +75,7 @@ export function createAgenticCallbacks({
 	onArmEvent?: (event: AgenticArmEvent) => void
 	onQueueUpdated?: (snapshot: QueueSnapshot) => void
 	onMessageIdObserved?: (messageId: string) => void
+	onUserMessageIdObserved?: (messageId: string) => void
 	notify: () => void
 }): AgenticSSECallbacks {
 	// One guard wraps every callback so late chunks from an aborted or superseded
@@ -193,6 +195,7 @@ export function createAgenticCallbacks({
 		}),
 		onUserMessageId: guard((messageId, queueItemId) => {
 			replaceLocalUserMessageId?.(messageId, queueItemId)
+			onUserMessageIdObserved?.(messageId)
 		}),
 		onSiblingInfo: guard((messageId, siblingInfo) => {
 			setMessageSiblingInfo?.(messageId, siblingInfo)

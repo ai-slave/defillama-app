@@ -135,7 +135,6 @@ export function useChatExecutionOwner({
 
 						setViewError(null)
 						dispatch({ type: 'SET_ERROR', value: null })
-						dispatch({ type: 'SET_LAST_FAILED_REQUEST', value: null })
 						dispatch({ type: 'RESET_RECOVERY' })
 						if (resetStream) {
 							dispatch({ type: 'START_STREAM' })
@@ -185,7 +184,6 @@ export function useChatExecutionOwner({
 				setViewError(null)
 				setPaginationError(null)
 				dispatch({ type: 'SET_ERROR', value: null })
-				dispatch({ type: 'SET_LAST_FAILED_REQUEST', value: null })
 				dispatch({ type: 'RESET_RECOVERY' })
 				if (resetStream) {
 					dispatch({ type: 'START_STREAM' })

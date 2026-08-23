@@ -5,6 +5,8 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
 	beginQueuedMessageEdit,
+	cancelAllQueuedMessages,
+	continueQueuedMessages,
 	queueMessage,
 	renewQueuedMessageEdit,
 	retryQueuedMessage,
@@ -15,8 +17,10 @@ import { useChatQueueController } from '~/containers/LlamaAI/hooks/useChatQueueC
 vi.mock('~/containers/LlamaAI/api', async (importOriginal) => ({
 	...(await importOriginal<typeof import('~/containers/LlamaAI/api')>()),
 	beginQueuedMessageEdit: vi.fn(),
+	cancelAllQueuedMessages: vi.fn(),
 	cancelQueuedMessage: vi.fn(),
 	cancelQueuedMessageEdit: vi.fn(),
+	continueQueuedMessages: vi.fn(),
 	queueMessage: vi.fn(),
 	renewQueuedMessageEdit: vi.fn(),
 	retryQueuedMessage: vi.fn(),
@@ -51,8 +55,16 @@ describe('useChatQueueController', () => {
 	let root: Root
 	let controller: Controller
 
-	function Harness({ sessionId, enabled = true }: { sessionId: string | null; enabled?: boolean }) {
-		controller = useChatQueueController({ sessionId, enabled, authorizedFetch: vi.fn() })
+	function Harness({
+		sessionId,
+		enabled = true,
+		admissionPaused = false
+	}: {
+		sessionId: string | null
+		enabled?: boolean
+		admissionPaused?: boolean
+	}) {
+		controller = useChatQueueController({ sessionId, enabled, admissionPaused, authorizedFetch: vi.fn() })
 		return null
 	}
 
@@ -199,133 +211,234 @@ describe('useChatQueueController', () => {
 		expect(controller.rowStatus.q1?.unsavedDraft).toBe('my draft')
 	})
 
-	it('deduplicates simultaneous enqueue intents', async () => {
-		let confirm: ((value: Awaited<ReturnType<typeof queueMessage>>) => void) | null = null
-		vi.mocked(queueMessage).mockImplementation(() => new Promise((resolve) => (confirm = resolve)))
+	it('serializes rapid optimistic submissions in order', async () => {
+		const pendingRequests: Array<{
+			payload: Parameters<typeof queueMessage>[2]
+			resolve: (value: Awaited<ReturnType<typeof queueMessage>>) => void
+		}> = []
+		vi.mocked(queueMessage).mockImplementation(
+			(_fetch, _sessionId, request) => new Promise((resolve) => pendingRequests.push({ payload: request, resolve }))
+		)
 
-		let first: Promise<'queued' | 'session_idle' | 'busy' | 'aborted'>
 		await act(async () => {
-			first = controller.enqueue(payload)
+			expect(controller.enqueue({ ...payload, message: 'B' })).toBe('queued')
+			expect(controller.enqueue({ ...payload, message: 'C' })).toBe('queued')
+			expect(controller.enqueue({ ...payload, message: 'D' })).toBe('queued')
 			await Promise.resolve()
 		})
-		await expect(controller.enqueue(payload)).resolves.toBe('busy')
+
 		expect(queueMessage).toHaveBeenCalledOnce()
+		expect(
+			controller.rows.map((row) => [row.kind, row.state, row.kind === 'local' ? row.payload.message : row.message])
+		).toEqual([
+			['local', 'adding', 'B'],
+			['local', 'waiting', 'C'],
+			['local', 'waiting', 'D']
+		])
 
+		const first = pendingRequests[0]
 		await act(async () => {
-			confirm?.({ snapshot: snapshot(1, [pending()]), maxDepth: 3 })
-			await first
-		})
-		expect(controller.rows).toHaveLength(1)
-		expect(controller.rows[0].kind).toBe('server')
-		expect(controller.atCapacity).toBe(false)
-
-		await act(async () => {
-			controller.applySnapshot(snapshot(2, [pending('q1'), pending('q2'), pending('q3')]))
-		})
-		expect(controller.atCapacity).toBe(true)
-	})
-
-	it('reconciles an optimistic row when SSE confirms it before the POST resolves', async () => {
-		vi.mocked(queueMessage).mockResolvedValueOnce({ snapshot: snapshot(1, [pending('existing')]), maxDepth: 3 })
-		await act(async () => {
-			await controller.enqueue(payload)
-		})
-
-		let confirm: ((value: Awaited<ReturnType<typeof queueMessage>>) => void) | null = null
-		vi.mocked(queueMessage).mockImplementationOnce(() => new Promise((resolve) => (confirm = resolve)))
-		let enqueue: Promise<'queued' | 'session_idle' | 'busy' | 'aborted'>
-		await act(async () => {
-			enqueue = controller.enqueue(payload)
+			first.resolve({
+				snapshot: snapshot(1, [{ ...pending('b'), clientMutationId: first.payload.clientMutationId }]),
+				maxDepth: 3
+			})
+			await Promise.resolve()
 			await Promise.resolve()
 		})
-		const creating = controller.rows.find((row) => row.kind === 'creating')
-		expect(creating?.kind).toBe('creating')
-		if (creating?.kind !== 'creating') throw new Error('Expected an optimistic queue row')
-		const confirmed = { ...pending('confirmed'), clientMutationId: creating.clientMutationId }
 
-		await act(async () => {
-			controller.applySnapshot(snapshot(2, [pending('existing'), confirmed]))
-		})
-
-		expect(controller.rows.map((row) => row.id)).toEqual(['existing', 'confirmed'])
-		expect(controller.atCapacity).toBe(false)
-
-		await act(async () => {
-			confirm?.({ snapshot: snapshot(2, [pending('existing'), confirmed]), maxDepth: 3 })
-			await enqueue
-		})
-		expect(controller.rows.map((row) => row.id)).toEqual(['existing', 'confirmed'])
+		expect(queueMessage).toHaveBeenCalledTimes(2)
+		expect(pendingRequests[1].payload.message).toBe('C')
 	})
 
-	it('accepts SSE confirmation when the enqueue response is lost', async () => {
+	it('reconciles SSE confirmation when the POST response is lost', async () => {
 		let reject: ((error: Error) => void) | null = null
 		vi.mocked(queueMessage).mockImplementationOnce(
 			() => new Promise((_resolve, rejectPromise) => (reject = rejectPromise))
 		)
-		let enqueue: Promise<'queued' | 'session_idle' | 'busy' | 'aborted'>
 		await act(async () => {
-			enqueue = controller.enqueue(payload)
+			controller.enqueue(payload)
 			await Promise.resolve()
 		})
-		const creating = controller.rows.find((row) => row.kind === 'creating')
-		if (creating?.kind !== 'creating') throw new Error('Expected an optimistic queue row')
-		const confirmed = { ...pending('confirmed'), clientMutationId: creating.clientMutationId }
+		const local = controller.rows.find((row) => row.kind === 'local')
+		if (local?.kind !== 'local') throw new Error('Expected a local queue row')
 
 		await act(async () => {
-			controller.applySnapshot(snapshot(1, [confirmed]))
+			controller.applySnapshot(
+				snapshot(1, [{ ...pending('confirmed'), clientMutationId: local.payload.clientMutationId }])
+			)
 			reject?.(new Error('Connection closed before the response arrived'))
+			await Promise.resolve()
 		})
 
-		await expect(enqueue).resolves.toBe('queued')
 		expect(controller.rows.map((row) => row.id)).toEqual(['confirmed'])
 	})
 
-	it('keeps the optimistic row until POST settles when a legacy snapshot has no mutation id', async () => {
+	it('keeps later prompts waiting when confirmed rows fill capacity', async () => {
 		let confirm: ((value: Awaited<ReturnType<typeof queueMessage>>) => void) | null = null
 		vi.mocked(queueMessage).mockImplementationOnce(() => new Promise((resolve) => (confirm = resolve)))
-		let enqueue: Promise<'queued' | 'session_idle' | 'busy' | 'aborted'>
+
 		await act(async () => {
-			enqueue = controller.enqueue(payload)
+			controller.enqueue({ ...payload, message: 'B' })
+			controller.enqueue({ ...payload, message: 'C' })
+			await Promise.resolve()
+		})
+		const firstRequest = vi.mocked(queueMessage).mock.calls[0][2]
+		await act(async () => {
+			confirm?.({
+				snapshot: snapshot(1, [{ ...pending('confirmed'), clientMutationId: firstRequest.clientMutationId }]),
+				maxDepth: 1
+			})
 			await Promise.resolve()
 		})
 
-		await act(async () => {
-			controller.applySnapshot(snapshot(1, [pending('confirmed')]))
-		})
-		expect(controller.rows.map((row) => row.kind)).toEqual(['server', 'creating'])
-
-		await act(async () => {
-			confirm?.({ snapshot: snapshot(1, [pending('confirmed')]), maxDepth: 3 })
-			await enqueue
-		})
-		expect(controller.rows.map((row) => row.kind)).toEqual(['server'])
+		expect(queueMessage).toHaveBeenCalledOnce()
+		expect(controller.rows.map((row) => [row.kind, row.state])).toEqual([
+			['server', 'pending'],
+			['local', 'waiting']
+		])
 	})
 
-	it('aborts an enqueue and hides its optimistic row when the session changes', async () => {
+	it('preserves an aborted local intent when switching away and back', async () => {
 		vi.mocked(queueMessage).mockImplementation((_fetch, _sessionId, _payload, signal) => {
 			return new Promise((_resolve, reject) => {
 				signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
 			})
 		})
-		let enqueue: Promise<'queued' | 'session_idle' | 'busy' | 'aborted'>
 		await act(async () => {
-			enqueue = controller.enqueue(payload)
+			controller.enqueue(payload)
 			await Promise.resolve()
 		})
-		expect(controller.rows[0].kind).toBe('creating')
+		expect(controller.rows[0].kind).toBe('local')
 
 		await act(async () => root.render(<Harness sessionId="session-2" />))
-		await expect(enqueue).resolves.toBe('aborted')
+		expect(controller.rows).toEqual([])
+		await act(async () => root.render(<Harness sessionId="session-1" admissionPaused />))
+		expect(controller.rows.map((row) => [row.kind, row.state])).toEqual([['local', 'waiting']])
+	})
+
+	it('moves local intents from a temporary session to the canonical session', async () => {
+		vi.mocked(queueMessage).mockImplementation((_fetch, _sessionId, _payload, signal) => {
+			return new Promise((_resolve, reject) => {
+				signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
+			})
+		})
+		await act(async () => {
+			controller.enqueue(payload)
+			await Promise.resolve()
+		})
+		const clientMutationId = vi.mocked(queueMessage).mock.calls[0][2].clientMutationId
+
+		await act(async () => {
+			controller.adoptSession('session-1', 'canonical-session')
+			root.render(<Harness sessionId="canonical-session" />)
+			await Promise.resolve()
+			await Promise.resolve()
+		})
+
+		expect(queueMessage).toHaveBeenCalledTimes(2)
+		expect(vi.mocked(queueMessage).mock.calls[1][1]).toBe('canonical-session')
+		expect(vi.mocked(queueMessage).mock.calls[1][2].clientMutationId).toBe(clientMutationId)
+		expect(controller.rows.map((row) => [row.kind, row.state])).toEqual([['local', 'adding']])
+	})
+
+	it('keeps later intents behind a failed head and advances after dismiss', async () => {
+		vi.mocked(queueMessage)
+			.mockRejectedValueOnce(new Error('server rejected the prompt'))
+			.mockImplementationOnce(
+				(_fetch, _sessionId, _payload, signal) =>
+					new Promise((_resolve, reject) =>
+						signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
+					)
+			)
+
+		await act(async () => {
+			controller.enqueue({ ...payload, message: 'B' })
+			controller.enqueue({ ...payload, message: 'C' })
+			await Promise.resolve()
+			await Promise.resolve()
+		})
+
+		expect(queueMessage).toHaveBeenCalledOnce()
+		expect(controller.rows.map((row) => [row.state, row.kind === 'local' ? row.payload.message : row.message])).toEqual(
+			[
+				['failed', 'B'],
+				['waiting', 'C']
+			]
+		)
+
+		await act(async () => {
+			controller.dismiss(controller.rows[0].id)
+			await Promise.resolve()
+		})
+		expect(queueMessage).toHaveBeenCalledTimes(2)
+		expect(vi.mocked(queueMessage).mock.calls[1][2].message).toBe('C')
+	})
+
+	it('continues and clears the complete queue through acknowledged snapshots', async () => {
+		const paused = { ...pending(), state: 'not_sent' as const, reason: 'execution_stopped' as const }
+		await act(async () => controller.applySnapshot(snapshot(1, [paused])))
+		vi.mocked(continueQueuedMessages).mockResolvedValue({ snapshot: snapshot(2, [pending()]) })
+		await act(async () => controller.continueQueue())
+
+		expect(continueQueuedMessages).toHaveBeenCalledWith(expect.any(Function), 'session-1', expect.any(AbortSignal))
+		expect(controller.paused).toBe(false)
+
+		vi.mocked(cancelAllQueuedMessages).mockResolvedValue({ snapshot: snapshot(3, []) })
+		await act(async () => controller.clearQueue())
 		expect(controller.rows).toEqual([])
 	})
 
-	it('rejects a mutation response for another session', async () => {
-		vi.mocked(queueMessage).mockResolvedValue({ snapshot: snapshot(1, [], 'session-2'), maxDepth: 3 })
+	it('does not admit local prompts while Clear waits for its response', async () => {
+		const paused = { ...pending(), state: 'not_sent' as const, reason: 'execution_failed' as const }
+		await act(async () => controller.applySnapshot(snapshot(1, [paused])))
+		await act(async () => controller.enqueue(payload))
+		let confirmClear: ((value: Awaited<ReturnType<typeof cancelAllQueuedMessages>>) => void) | null = null
+		vi.mocked(cancelAllQueuedMessages).mockImplementation(() => new Promise((resolve) => (confirmClear = resolve)))
+
+		let clearing: Promise<void>
+		await act(async () => {
+			clearing = controller.clearQueue()
+			await Promise.resolve()
+		})
+		await act(async () => {
+			controller.applySnapshot(snapshot(2, []))
+			await Promise.resolve()
+		})
+
+		expect(queueMessage).not.toHaveBeenCalled()
+		expect(controller.rows.map((row) => row.kind)).toEqual(['local'])
 
 		await act(async () => {
-			await expect(controller.enqueue(payload)).rejects.toThrow('Queue response belongs to another session')
+			confirmClear?.({ snapshot: snapshot(3, []) })
+			await clearing
 		})
 		expect(controller.rows).toEqual([])
+	})
+
+	it('keeps local prompts waiting when the Clear response is lost', async () => {
+		const paused = { ...pending(), state: 'not_sent' as const, reason: 'execution_failed' as const }
+		await act(async () => controller.applySnapshot(snapshot(1, [paused])))
+		await act(async () => controller.enqueue(payload))
+		let rejectClear: ((error: Error) => void) | null = null
+		vi.mocked(cancelAllQueuedMessages).mockImplementation(
+			() => new Promise((_resolve, reject) => (rejectClear = reject))
+		)
+
+		let clearing: Promise<void>
+		await act(async () => {
+			clearing = controller.clearQueue()
+			await Promise.resolve()
+			controller.applySnapshot(snapshot(2, []))
+			rejectClear?.(new Error('Connection closed before the response arrived'))
+			await clearing
+		})
+
+		expect(queueMessage).not.toHaveBeenCalled()
+		expect(controller.rows.map((row) => [row.kind, row.state])).toEqual([['local', 'waiting']])
+		expect(controller.queueActionError).toEqual({
+			action: 'clearing',
+			message: 'Could not clear the queue. Try again.'
+		})
 	})
 
 	it('uses the atomic retry command and applies its snapshot', async () => {

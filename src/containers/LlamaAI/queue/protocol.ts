@@ -1,5 +1,6 @@
 export type QueueNotSentReason =
 	| 'execution_stopped'
+	| 'execution_failed'
 	| 'epoch_changed'
 	| 'quota_exceeded'
 	| 'server_restarted'
@@ -43,6 +44,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 const NOT_SENT_REASONS = new Set<QueueNotSentReason>([
 	'execution_stopped',
+	'execution_failed',
 	'epoch_changed',
 	'quota_exceeded',
 	'server_restarted',

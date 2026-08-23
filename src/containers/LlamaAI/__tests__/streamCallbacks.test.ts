@@ -114,6 +114,27 @@ describe('createAgenticCallbacks', () => {
 		expect(notify).not.toHaveBeenCalled()
 	})
 
+	it('reports the canonical user message id after materializing it', () => {
+		const replaceLocalUserMessageId = vi.fn()
+		const onUserMessageIdObserved = vi.fn()
+		const callbacks = createAgenticCallbacks({
+			isCurrent: () => true,
+			buffer: createStreamBuffer(),
+			dispatch: vi.fn() as unknown as StreamDispatch,
+			currentMessageIdRef: { current: null },
+			toolCallIdRef: { current: 0 },
+			appendMessage: vi.fn(),
+			replaceLocalUserMessageId,
+			onUserMessageIdObserved,
+			notify: vi.fn()
+		})
+
+		callbacks.onUserMessageId?.('user-message-1')
+
+		expect(replaceLocalUserMessageId).toHaveBeenCalledWith('user-message-1', undefined)
+		expect(onUserMessageIdObserved).toHaveBeenCalledWith('user-message-1')
+	})
+
 	it('preserves explicit zero spawn start timestamps', () => {
 		const { callbacks, dispatch } = setupCallbacks()
 

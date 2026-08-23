@@ -12,7 +12,7 @@ import {
 import { useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
 import { ContextWarningBanner } from '~/containers/LlamaAI/components/ContextWarningBanner'
 import { MessageBubble } from '~/containers/LlamaAI/components/messages/MessageBubble'
-import { PromptInput, type QueueSubmitResult } from '~/containers/LlamaAI/components/PromptInput'
+import { PromptInput, type PromptSubmitMode, type QueueSubmitResult } from '~/containers/LlamaAI/components/PromptInput'
 import { QueueChips } from '~/containers/LlamaAI/components/QueueChips'
 import { SectionsTOC } from '~/containers/LlamaAI/components/SectionsTOC'
 import {
@@ -69,8 +69,11 @@ export interface ConversationViewModel {
 	paginationError: string | null
 	recovery: RecoveryState
 	error: string | null
-	lastFailedPrompt: string | null
-	onReconnectFailedPrompt: () => void
+	promptFailureAction: {
+		label: 'Retry' | 'Reconnect'
+		onActivate: () => void
+		onDiscard?: () => void
+	} | null
 	onReconnectNow: () => void
 	scrollContainerRef: RefObject<HTMLDivElement | null>
 	messagesEndRef: RefObject<HTMLDivElement | null>
@@ -88,7 +91,7 @@ export interface ConversationViewModel {
 		pageContext?: { entitySlug?: string; entityType?: 'protocol' | 'chain' | 'page'; route: string },
 		isSuggestedQuestion?: boolean
 	) => void | Promise<void> | boolean | QueueSubmitResult | Promise<QueueSubmitResult>
-	submitMode: { kind: 'direct' } | { kind: 'queue'; atCapacity: boolean; capacityMessage: string | null }
+	submitMode: PromptSubmitMode
 	queueSurface?: QueueSurface
 	quotaResetTime?: string | null
 	handleStopRequest: () => void
@@ -214,8 +217,7 @@ const ConversationLiveStatus = memo(function ConversationLiveStatus({
 	isCompacting,
 	recovery,
 	error,
-	lastFailedPrompt,
-	onReconnectFailedPrompt,
+	promptFailureAction,
 	onReconnectNow,
 	isResearchMode,
 	sessionId,
@@ -241,8 +243,7 @@ const ConversationLiveStatus = memo(function ConversationLiveStatus({
 	isCompacting: boolean
 	recovery: RecoveryState
 	error: string | null
-	lastFailedPrompt: string | null
-	onReconnectFailedPrompt: () => void
+	promptFailureAction: ConversationViewModel['promptFailureAction']
 	onReconnectNow: () => void
 	isResearchMode: boolean
 	sessionId: string | null
@@ -347,13 +348,23 @@ const ConversationLiveStatus = memo(function ConversationLiveStatus({
 			{recovery.status !== 'reconnecting' && error ? (
 				<div className="flex flex-col gap-2 rounded-lg border border-ai-error-border bg-ai-error-bg p-4">
 					<p className="text-sm text-ai-error-strong">{error}</p>
-					{lastFailedPrompt ? (
-						<button
-							onClick={onReconnectFailedPrompt}
-							className="mt-1 w-fit rounded-md bg-ai-error-bg px-3 py-1 text-sm text-ai-error-strong hover:bg-ai-error-border"
-						>
-							Reconnect
-						</button>
+					{promptFailureAction ? (
+						<div className="mt-1 flex items-center gap-2">
+							<button
+								onClick={promptFailureAction.onActivate}
+								className="rounded-md bg-ai-error-bg px-3 py-1 text-sm text-ai-error-strong hover:bg-ai-error-border"
+							>
+								{promptFailureAction.label}
+							</button>
+							{promptFailureAction.onDiscard ? (
+								<button
+									onClick={promptFailureAction.onDiscard}
+									className="rounded-md px-3 py-1 text-sm text-ai-secondary hover:bg-ai-surface-muted"
+								>
+									Discard
+								</button>
+							) : null}
+						</div>
 					) : null}
 				</div>
 			) : null}
@@ -412,8 +423,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 		paginationError,
 		recovery,
 		error,
-		lastFailedPrompt,
-		onReconnectFailedPrompt,
+		promptFailureAction,
 		onReconnectNow,
 		scrollContainerRef,
 		messagesEndRef,
@@ -763,8 +773,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 														isCompacting={isCompacting}
 														recovery={recovery}
 														error={error}
-														lastFailedPrompt={lastFailedPrompt}
-														onReconnectFailedPrompt={onReconnectFailedPrompt}
+														promptFailureAction={promptFailureAction}
 														onReconnectNow={onReconnectNow}
 														isResearchMode={isResearchMode}
 														sessionId={sessionId}
@@ -818,8 +827,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 										isCompacting={isCompacting}
 										recovery={recovery}
 										error={error}
-										lastFailedPrompt={lastFailedPrompt}
-										onReconnectFailedPrompt={onReconnectFailedPrompt}
+										promptFailureAction={promptFailureAction}
 										onReconnectNow={onReconnectNow}
 										isResearchMode={isResearchMode}
 										sessionId={sessionId}

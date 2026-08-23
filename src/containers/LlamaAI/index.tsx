@@ -81,6 +81,18 @@ import { AgenticMutationReconcileError, createAgenticMutationEnvelope } from '~/
 import { ProjectLanding } from '~/containers/LlamaAI/projects/ProjectLanding'
 import { ProjectsGrid } from '~/containers/LlamaAI/projects/ProjectsGrid'
 import { getProjectTier } from '~/containers/LlamaAI/projects/tier'
+import {
+	canProbeSessionAfterEmptyResponse,
+	getForegroundRecoveryIntent,
+	getPromptFailurePolicy,
+	isPromptMutationConfirmed,
+	materializeFailedPrompt,
+	projectPromptFailure,
+	promptFailuresReducer,
+	type FailedRequest,
+	type PromptFailure,
+	type PromptFailureAction
+} from '~/containers/LlamaAI/promptFailures'
 import { decodeQueueSnapshot } from '~/containers/LlamaAI/queue/protocol'
 import { isFreeLimitError, runAgenticRequest, type UsageLimitError } from '~/containers/LlamaAI/runAgenticRequest'
 import { appendBufferedAssistantMessage, createAgenticCallbacks } from '~/containers/LlamaAI/streamCallbacks'
@@ -90,7 +102,6 @@ import {
 	hasStreamBufferContent,
 	streamReducer,
 	type ChatPageContext,
-	type FailedRequest,
 	type StreamBuffer
 } from '~/containers/LlamaAI/streamState'
 import type { AgenticAnswerMode, FreeLimitOffer, Message } from '~/containers/LlamaAI/types'
@@ -128,10 +139,9 @@ const DashboardPanel = lazy(() =>
 	import('~/containers/LlamaAI/components/DashboardPanel').then((m) => ({ default: m.DashboardPanel }))
 )
 
-interface RestoreSessionSnapshotResult {
-	restored: boolean
-	execution: AgenticExecutionSnapshot | null
-}
+type RestoreSessionSnapshotResult =
+	| { status: 'restored'; execution: AgenticExecutionSnapshot | null }
+	| { status: 'failed' | 'aborted'; execution: null }
 
 function buildFreeLimitMessage(err: UsageLimitError & { code: FreeLimitOffer['code'] }): Message {
 	const isDaily = err.code === 'FREE_DAILY_LIMIT'
@@ -334,34 +344,15 @@ export function AgenticChat({
 	const [messages, setMessages] = useState<Message[]>([])
 	const [activeLeafMessageId, setActiveLeafMessageId] = useState<string | null>(null)
 	const [sessionId, setSessionId] = useState<string | null>(null)
-	const queueController = useChatQueueController({
-		sessionId,
-		enabled: routeSessionId === null || routeSessionId === sessionId,
-		authorizedFetch
-	})
-	const {
-		serverQueue: queuedMessages,
-		rows: queueRows,
-		maxDepth: queueMaxDepth,
-		atCapacity: queueAtCap,
-		ownedEditId,
-		rowStatus: queueRowStatus,
-		applySnapshot: applyQueueSnapshot,
-		restoreSnapshot: restoreQueueSnapshot,
-		enqueue: enqueuePrompt,
-		beginEdit: beginQueueEdit,
-		updateEditDraft: updateQueueEditDraft,
-		saveEdit: saveQueueEdit,
-		cancelEdit: cancelQueueEdit,
-		dismiss: dismissQueueItem,
-		retry: retryQueueItem,
-		takeStartedItem,
-		getServerQueue,
-		abortCommands: abortQueueCommands
-	} = queueController
 	const [sessionTitle, setSessionTitle] = useState<string | null>(null)
 	const [currentSessionProjectId, setCurrentSessionProjectId] = useState<string | null>(null)
 	const [streamState, dispatchStream] = useReducer(streamReducer, undefined, createInitialStreamState)
+	const [promptFailures, dispatchPromptFailure] = useReducer(
+		promptFailuresReducer,
+		undefined,
+		() => new Map<string, PromptFailure>()
+	)
+	const promptFailuresRef = useRef(promptFailures)
 	const [mode, setMode] = useState<AgenticAnswerMode>('quick')
 	const [quotedText, setQuotedText] = useState<string | null>(null)
 	const [alertPrefillRequest, setAlertPrefillRequest] = useState<{
@@ -466,11 +457,46 @@ export function AgenticChat({
 		executionStartedAt,
 		recovery,
 		error,
-		lastFailedRequest,
 		rateLimitDetails,
 		contextWarning
 	} = streamState
 	const isStopping = streamPhase.status === 'stopping'
+	const queueAdmissionPaused =
+		isStopping || (!isStreaming && (!!error || (sessionId ? promptFailures.has(sessionId) : false)))
+	const queueController = useChatQueueController({
+		sessionId,
+		enabled: routeSessionId === null || routeSessionId === sessionId,
+		admissionPaused: queueAdmissionPaused,
+		authorizedFetch
+	})
+	const {
+		serverQueue: queuedMessages,
+		rows: queueRows,
+		maxDepth: queueMaxDepth,
+		atCapacity: queueAtCap,
+		hasLocalRows: queueHasLocalRows,
+		paused: queuePaused,
+		ownedEditId,
+		rowStatus: queueRowStatus,
+		queueAction,
+		queueActionError,
+		applySnapshot: applyQueueSnapshot,
+		restoreSnapshot: restoreQueueSnapshot,
+		enqueue: enqueuePrompt,
+		beginEdit: beginQueueEdit,
+		updateEditDraft: updateQueueEditDraft,
+		saveEdit: saveQueueEdit,
+		cancelEdit: cancelQueueEdit,
+		dismiss: dismissQueueItem,
+		retry: retryQueueItem,
+		continueQueue,
+		clearQueue,
+		forgetSession: forgetQueueSession,
+		adoptSession: adoptQueueSession,
+		takeStartedItem,
+		getServerQueue,
+		abortCommands: abortQueueCommands
+	} = queueController
 
 	const queryClient = useQueryClient()
 	const wasStreamingRef = useRef(false)
@@ -483,6 +509,25 @@ export function AgenticChat({
 
 	const isStreamingRef = useRef(isStreaming)
 	isStreamingRef.current = isStreaming
+	// Network callbacks need the latest failure before React commits the queued reducer action.
+	const updatePromptFailures = useCallback((action: PromptFailureAction) => {
+		promptFailuresRef.current = promptFailuresReducer(promptFailuresRef.current, action)
+		dispatchPromptFailure(action)
+	}, [])
+	const rememberPromptFailure = useCallback(
+		(targetSessionId: string, failure: PromptFailure) =>
+			updatePromptFailures({ type: 'remember', sessionId: targetSessionId, failure }),
+		[updatePromptFailures]
+	)
+	const clearPromptFailure = useCallback(
+		(targetSessionId: string, clientMutationId?: string) =>
+			updatePromptFailures({ type: 'clear', sessionId: targetSessionId, clientMutationId }),
+		[updatePromptFailures]
+	)
+	const movePromptFailure = useCallback(
+		(fromSessionId: string, toSessionId: string) => updatePromptFailures({ type: 'move', fromSessionId, toSessionId }),
+		[updatePromptFailures]
+	)
 
 	const sharedMessages = useMemo(
 		() => sharedSession?.messages.map((msg, i) => mapSharedSessionMessage(msg, i)) ?? null,
@@ -493,7 +538,12 @@ export function AgenticChat({
 	const isRouteSessionPending = !sharedSession && routeSessionId !== null && routeSessionId !== sessionId
 	const visibleDashboardVersions = isRouteSessionPending ? [] : dashboardVersions
 	const visibleDashboardConfig = isRouteSessionPending ? null : dashboardPanelMountedConfig
-	const effectiveMessages = isRouteSessionPending ? [] : ((forkedFromShared ? null : sharedMessages) ?? messages)
+	const sessionPromptFailure = !isSharedView && sessionId ? (promptFailures.get(sessionId) ?? null) : null
+	const promptFailurePolicy = sessionPromptFailure ? getPromptFailurePolicy(sessionPromptFailure) : null
+	const baseEffectiveMessages = (forkedFromShared ? null : sharedMessages) ?? messages
+	const effectiveMessages = isRouteSessionPending
+		? []
+		: projectPromptFailure(baseEffectiveMessages, sessionPromptFailure)
 	const effectiveSessionId = (forkedFromShared ? sessionId : sharedSession?.session.sessionId) ?? sessionId
 	const lookupSessionId = routeSessionId ?? sessionId ?? null
 	const sessionListEntry = lookupSessionId ? (sessions.find((s) => s.sessionId === lookupSessionId) ?? null) : null
@@ -509,7 +559,7 @@ export function AgenticChat({
 		? restoreFailure?.sessionId === routeSessionId
 			? restoreFailure.message
 			: null
-		: (viewError ?? error)
+		: ((!isStreaming ? sessionPromptFailure?.error : null) ?? viewError ?? error)
 	const shouldShowLanding = !hasMessages && !visibleError && !restoringSessionId
 	const shouldAnimateLandingTransition =
 		promptTransitionMode === 'landing' && hasMessages && !visibleError && !restoringSessionId && !readOnly
@@ -863,7 +913,8 @@ export function AgenticChat({
 			onSessionId,
 			onTitle,
 			onDuelStart,
-			replaceUserMessageId
+			replaceUserMessageId,
+			onUserMessageId
 		}: {
 			buffer: StreamBuffer
 			isCurrent: () => boolean
@@ -873,6 +924,7 @@ export function AgenticChat({
 			onTitle?: (title: string) => void
 			onDuelStart?: (pairId: string) => void
 			replaceUserMessageId?: (messageId: string, queueItemId?: string) => void
+			onUserMessageId?: (messageId: string) => void
 		}) =>
 			createAgenticCallbacks({
 				isCurrent,
@@ -891,6 +943,7 @@ export function AgenticChat({
 				onDashboardArtifact: (dashboard) => dispatchDashboardPanel({ type: 'APPEND', value: dashboard }),
 				onTokenLimit: () => setShowTokenLimitModal(true),
 				onQueueUpdated: handleQueueUpdated,
+				onUserMessageIdObserved: onUserMessageId,
 				onSessionId,
 				onTitle:
 					onTitle ??
@@ -922,7 +975,12 @@ export function AgenticChat({
 		getCurrentSessionId: () => currentSessionIdRef.current,
 		getServerQueue,
 		onSettled: (targetSessionId) => {
-			if (recoveryControllerRef.current?.sessionId === targetSessionId) clearRecoveryController()
+			const controller = recoveryControllerRef.current
+			if (controller?.sessionId !== targetSessionId) return
+			if (controller.failedRequest && controller.buffer.executionId) {
+				clearPromptFailure(targetSessionId, controller.failedRequest.mutation.clientMutationId)
+			}
+			clearRecoveryController()
 		},
 		replaceUserMessageId: replaceLocalUserMessageId,
 		setPaginationError,
@@ -939,20 +997,27 @@ export function AgenticChat({
 			operation: ExecutionOperation,
 			options?: { around?: string }
 		): Promise<RestoreSessionSnapshotResult> => {
-			const result = await restoreSession(targetSessionId, 10, options?.around, operation.signal).catch(
-				() => null as SessionRestoreResult | null
-			)
-			if (!result || !operation.isCurrent()) {
-				return { restored: false, execution: null }
+			let result: SessionRestoreResult
+			try {
+				result = (await restoreSession(targetSessionId, 10, options?.around, operation.signal)) as SessionRestoreResult
+			} catch {
+				return {
+					status: operation.signal.aborted || !operation.isCurrent() ? 'aborted' : 'failed',
+					execution: null
+				}
 			}
+			if (!operation.isCurrent()) return { status: 'aborted', execution: null }
 
 			const restored: Message[] = (result.messages || []).map(mapPersistedMessage)
+			const projected = options?.around
+				? restored
+				: projectPromptFailure(restored, promptFailuresRef.current.get(targetSessionId) ?? null)
 
 			if (options?.around) {
 				window.location.hash = `msg-${options.around}`
 			}
 
-			setMessages(restored)
+			setMessages(projected)
 			dispatchStream({ type: 'SET_TODOS', value: Array.isArray(result.todos) ? result.todos : [] })
 			const queueSnapshot = decodeQueueSnapshot({
 				sessionId: targetSessionId,
@@ -987,10 +1052,9 @@ export function AgenticChat({
 			setViewError(null)
 			setPaginationError(null)
 			dispatchStream({ type: 'SET_ERROR', value: null })
-			dispatchStream({ type: 'SET_LAST_FAILED_REQUEST', value: null })
 			dispatchStream({ type: 'RESET_RECOVERY' })
 
-			return { restored: true, execution: result.execution ?? null }
+			return { status: 'restored', execution: result.execution ?? null }
 		},
 		[attach, restoreQueueSnapshot, restoreSession, sessions]
 	)
@@ -1001,13 +1065,20 @@ export function AgenticChat({
 			clearRecoveryController()
 			appendBufferedAssistantMessage(controller.buffer, currentMessageIdRef, appendMessage)
 			dispatchStream({ type: 'RESET_STREAM' })
-			dispatchStream({
-				type: 'SET_ERROR',
-				value: 'Lost connection and could not reconnect. The response may still finish on the server.'
-			})
-			dispatchStream({ type: 'SET_LAST_FAILED_REQUEST', value: controller.failedRequest })
+			const recoveryErrorMessage =
+				'Lost connection and could not reconnect. The response may still finish on the server.'
+			if (controller.failedRequest) {
+				rememberPromptFailure(controller.sessionId, {
+					kind: 'reconnect',
+					error: recoveryErrorMessage,
+					request: controller.failedRequest
+				})
+				dispatchStream({ type: 'SET_ERROR', value: null })
+			} else {
+				dispatchStream({ type: 'SET_ERROR', value: recoveryErrorMessage })
+			}
 		},
-		[appendMessage, clearRecoveryController]
+		[appendMessage, clearRecoveryController, rememberPromptFailure]
 	)
 
 	const attemptRecoveryForController = useStableCallback(async (recoveryId: number) => {
@@ -1045,11 +1116,18 @@ export function AgenticChat({
 			return
 		}
 
-		const { restored, execution } = await restoreCoordinator.run(latest.sessionId, (operation) =>
+		const restoreResult = await restoreCoordinator.run(latest.sessionId, (operation) =>
 			restoreSessionSnapshot(latest.sessionId, operation)
 		)
 		if (recoveryControllerRef.current?.id !== recoveryId) return
-		if (restored && execution?.status !== 'running') {
+		if (restoreResult.status === 'restored' && restoreResult.execution?.status !== 'running') {
+			if (
+				latest.failedRequest &&
+				latest.buffer.executionId &&
+				restoreResult.execution?.messageId === latest.buffer.executionId
+			) {
+				clearPromptFailure(latest.sessionId, latest.failedRequest.mutation.clientMutationId)
+			}
 			dispatchStream({ type: 'RESET_STREAM' })
 			clearRecoveryController()
 			return
@@ -1087,6 +1165,13 @@ export function AgenticChat({
 				scheduleRecoveryAttempt(existing, 0, () => void attemptRecoveryForController(existing.id))
 				return true
 			}
+			if (failedRequest) {
+				rememberPromptFailure(targetSessionId, {
+					kind: 'reconnect',
+					error: getErrorMessage(recoveryError),
+					request: failedRequest
+				})
+			}
 
 			clearRecoveryController(false)
 
@@ -1112,7 +1197,7 @@ export function AgenticChat({
 			scheduleRecoveryAttempt(controller, 0, () => void attemptRecoveryForController(controller.id))
 			return true
 		},
-		[attemptRecoveryForController, clearRecoveryController]
+		[attemptRecoveryForController, clearRecoveryController, rememberPromptFailure]
 	)
 
 	// Invalidate callbacks before waiting for transport cleanup. A slow reader must
@@ -1131,7 +1216,6 @@ export function AgenticChat({
 		setPaginationError(null)
 		dispatchStream({ type: 'RESET_STREAM' })
 		dispatchStream({ type: 'SET_ERROR', value: null })
-		dispatchStream({ type: 'SET_LAST_FAILED_REQUEST', value: null })
 		dispatchStream({ type: 'SET_RATE_LIMIT_DETAILS', value: null })
 		dispatchStream({ type: 'SET_CONTEXT_WARNING', value: null })
 	}, [clearRecoveryController, resetPromptTransition])
@@ -1168,8 +1252,31 @@ export function AgenticChat({
 		restoreCoordinator
 	])
 
-	useEffect(() => {
+	const handleDeleteSession = useCallback(
+		async (targetSessionId: string, projectId?: string | null) => {
+			await deleteSession(targetSessionId, projectId)
+			clearPromptFailure(targetSessionId)
+			forgetQueueSession(targetSessionId)
+		},
+		[clearPromptFailure, deleteSession, forgetQueueSession]
+	)
+
+	const handleBulkDeleteSessions = useCallback(
+		async (sessionIds: string[]) => {
+			await bulkDeleteSessions(sessionIds)
+			for (const targetSessionId of sessionIds) {
+				clearPromptFailure(targetSessionId)
+				forgetQueueSession(targetSessionId)
+			}
+		},
+		[bulkDeleteSessions, clearPromptFailure, forgetQueueSession]
+	)
+
+	useLayoutEffect(() => {
 		return () => {
+			// Strict Mode replays effects after cleanup. Let the replacement lifecycle
+			// restore the same route instead of treating the aborted attempt as handled.
+			previousRouteTransitionRef.current = null
 			executionCoordinator.invalidate()
 			restoreCoordinator.invalidate()
 			paginationCoordinator.invalidate()
@@ -1237,12 +1344,13 @@ export function AgenticChat({
 			branchCoordinator.invalidate()
 			clearConversationRuntimeState()
 
-			const { restored: restoredOk, execution } = await restoreCoordinator.run(selectedSessionId, (operation) =>
+			const restoreResult = await restoreCoordinator.run(selectedSessionId, (operation) =>
 				restoreSessionSnapshot(selectedSessionId, operation, options)
 			)
 
 			if (routeSessionIdRef.current !== selectedSessionId) return
-			if (!restoredOk) {
+			if (restoreResult.status === 'aborted') return
+			if (restoreResult.status === 'failed') {
 				setRestoreFailure({ sessionId: selectedSessionId, message: 'Failed to restore session' })
 				setRestoringSessionId(null)
 				return
@@ -1253,7 +1361,7 @@ export function AgenticChat({
 
 			await resumeRunningExecution({
 				targetSessionId: selectedSessionId,
-				executionHint: execution,
+				executionHint: restoreResult.execution,
 				onTemporaryDisconnect: (disconnectError, buffer) => {
 					startRecoveryCycle({
 						targetSessionId: selectedSessionId,
@@ -1408,31 +1516,22 @@ export function AgenticChat({
 
 				const prepared = prepare()
 				let { currentSessionId } = prepared
-				const { failedRequest, submitProjectId } = prepared
+				let { failedRequest } = prepared
+				const { submitProjectId } = prepared
 				const { mutation } = failedRequest
-				const userImages = mutation.images?.map((image) => ({
-					url: image.data,
-					mimeType: image.mimeType,
-					filename: image.filename
-				}))
+				const isPromptFailureReplay =
+					promptFailuresRef.current.get(currentSessionId)?.request.mutation.clientMutationId ===
+					mutation.clientMutationId
 				setMessages((prev) =>
 					prev.some((message) => message.id === failedRequest.optimisticMessageId)
 						? prev
-						: [
-								...prev,
-								{
-									role: 'user',
-									content: mutation.message,
-									images: userImages?.length ? userImages : undefined,
-									quotedText: mutation.quotedText,
-									id: failedRequest.optimisticMessageId
-								}
-							]
+						: [...prev, materializeFailedPrompt(failedRequest)]
 				)
 				attach()
 				moveSessionToTop(currentSessionId, submitProjectId)
 
 				const buffer = createStreamBuffer()
+				let mutationAccepted = false
 				const adoptResponseSession = (id: string) => {
 					const previousSessionId = currentSessionId
 					movePromptDraft(getPromptDraftScope(previousSessionId, submitProjectId), `session:${id}`)
@@ -1440,6 +1539,8 @@ export function AgenticChat({
 					currentSessionId = id
 					if (previousSessionId && previousSessionId !== id) {
 						executionCoordinator.adoptSession(previousSessionId, id)
+						adoptQueueSession(previousSessionId, id)
+						movePromptFailure(previousSessionId, id)
 						registerSessionAlias(previousSessionId, id)
 						replaceOptimisticSessionId(previousSessionId, id, submitProjectId)
 					}
@@ -1473,6 +1574,11 @@ export function AgenticChat({
 									if (!isCurrent()) return
 									adoptResponseSession(id)
 								},
+								onUserMessageId: (messageId) => {
+									mutationAccepted = true
+									failedRequest = { ...failedRequest, optimisticMessageId: messageId }
+									clearPromptFailure(currentSessionId, mutation.clientMutationId)
+								},
 								onTitle: (title) => {
 									if (!isCurrent()) return
 									setSessionTitle(title)
@@ -1494,19 +1600,26 @@ export function AgenticChat({
 							if (!isCurrent()) return
 							if (err instanceof AgenticMutationReconcileError) {
 								adoptResponseSession(err.sessionId)
+								if (err.messageId) {
+									replaceLocalUserMessageId(err.messageId)
+									failedRequest = { ...failedRequest, optimisticMessageId: err.messageId }
+								}
 								if (err.status === 'pending') {
-									dispatchStream({
-										type: 'SET_ERROR',
-										value: 'The prompt request is still being processed. Reconnect to check again.'
+									rememberPromptFailure(err.sessionId, {
+										kind: 'reconnect',
+										error: 'The prompt request is still being processed. Reconnect to check again.',
+										request: failedRequest
 									})
-									dispatchStream({ type: 'SET_LAST_FAILED_REQUEST', value: failedRequest })
+									dispatchStream({ type: 'SET_ERROR', value: null })
 									dispatchStream({ type: 'RESET_STREAM' })
 									return
 								}
+								clearPromptFailure(err.sessionId, mutation.clientMutationId)
+								mutationAccepted = true
 								startRecoveryCycle({
 									targetSessionId: err.sessionId,
 									buffer,
-									failedRequest,
+									failedRequest: null,
 									error: err
 								})
 								return
@@ -1549,7 +1662,7 @@ export function AgenticChat({
 								researchModalStore.show()
 								return
 							}
-							if (kind === 'temporary-connectivity' && currentSessionId) {
+							if (kind === 'temporary-connectivity' && currentSessionId && buffer.executionId) {
 								buffer.receivedEventCount = eventCounter.count
 								if (
 									startRecoveryCycle({
@@ -1562,18 +1675,25 @@ export function AgenticChat({
 									return
 								}
 							}
-							dispatchStream({ type: 'SET_ERROR', value: err.message || 'Failed to get response' })
-							dispatchStream({
-								type: 'SET_LAST_FAILED_REQUEST',
-								value: failedRequest
+							rememberPromptFailure(currentSessionId, {
+								kind: kind === 'temporary-connectivity' ? 'reconnect' : 'retry',
+								error: err.message || 'Failed to get response',
+								request: failedRequest
 							})
+							dispatchStream({ type: 'SET_ERROR', value: null })
 							appendBufferedAssistantMessage(buffer, currentMessageIdRef, appendMessage)
 							dispatchStream({ type: 'RESET_STREAM' })
 						},
 						onSuccess: async ({ isCurrent, eventCounter }) => {
 							let handedOffToResume = false
 							let recoveryStarted = false
-							if (isCurrent() && currentSessionId && !buffer.error && !hasStreamBufferContent(buffer)) {
+							if (
+								isCurrent() &&
+								currentSessionId &&
+								!buffer.error &&
+								!hasStreamBufferContent(buffer) &&
+								canProbeSessionAfterEmptyResponse(isPromptFailureReplay, mutationAccepted)
+							) {
 								// The HTTP stream can finish without local content if the result was
 								// persisted server-side first; attach to that execution before clearing UI.
 								buffer.receivedEventCount = eventCounter.count
@@ -1596,10 +1716,21 @@ export function AgenticChat({
 								if (!handedOffToResume && !recoveryStarted && isCurrent()) {
 									dispatchStream({ type: 'RESET_STREAM' })
 								}
+							} else if (isCurrent() && isPromptFailureReplay && !mutationAccepted) {
+								dispatchStream({ type: 'RESET_STREAM' })
 							}
 
 							if (!handedOffToResume && isCurrent()) {
 								setActiveLeafMessageId(currentMessageIdRef.current)
+							}
+							if (
+								isCurrent() &&
+								currentSessionId &&
+								!buffer.error &&
+								!recoveryStarted &&
+								isPromptMutationConfirmed(mutationAccepted, hasStreamBufferContent(buffer))
+							) {
+								clearPromptFailure(currentSessionId, mutation.clientMutationId)
 							}
 						},
 						onFinally: ({ isCurrent }) => {
@@ -1631,6 +1762,7 @@ export function AgenticChat({
 			abortActiveRequest,
 			createChatStreamCallbacks,
 			executionCoordinator,
+			adoptQueueSession,
 			restoreCoordinator,
 			resumeRunningExecution,
 			startRecoveryCycle,
@@ -1642,6 +1774,10 @@ export function AgenticChat({
 			sharedSession,
 			registerSessionAlias,
 			replaceOptimisticSessionId,
+			replaceLocalUserMessageId,
+			rememberPromptFailure,
+			clearPromptFailure,
+			movePromptFailure,
 			onSharedSessionFork
 		]
 	)
@@ -1663,6 +1799,7 @@ export function AgenticChat({
 			const trimmed = prompt.trim()
 			const hasImages = !!images?.length
 			if ((!trimmed && !hasImages) || isStreamingRef.current || promptSubmissionLockRef.current !== null) return false
+			if (sessionId && promptFailuresRef.current.has(sessionId)) return false
 
 			if (sharedSession && !sessionId && !hasUser) {
 				onForkSubmit?.(trimmed)
@@ -1777,7 +1914,6 @@ export function AgenticChat({
 					customInstructions: settings.customInstructions || undefined,
 					blockedSkills: isMobileChatView ? ['dashboard'] : undefined
 				})
-				if (result === 'busy') return { status: 'cancelled' as const }
 				if (result === 'aborted') return { status: 'cancelled' as const }
 				if (result === 'session_idle') {
 					return handleSubmit(trimmed, entities, images, undefined, { modeOverride, quotedTextOverride })
@@ -1821,24 +1957,28 @@ export function AgenticChat({
 		]
 	)
 
-	const queueOwnsComposer = shouldQueuePrompt(isStreaming, queuedMessages)
+	const queueOwnsComposer =
+		!queueAdmissionPaused && !queuePaused && (queueHasLocalRows || shouldQueuePrompt(isStreaming, queuedMessages))
 	const handleComposerSubmit = useCallback(
 		(
 			prompt: string,
 			entities?: Array<{ term: string; slug: string; type?: string }>,
 			images?: Array<{ data: string; mimeType: string; filename?: string; isPasted?: boolean }>
 		) => {
-			const queueIsActive = shouldQueuePrompt(isStreamingRef.current, getServerQueue())
+			const queueIsActive =
+				!queueAdmissionPaused &&
+				!queuePaused &&
+				(queueHasLocalRows || shouldQueuePrompt(isStreamingRef.current, getServerQueue()))
 			if (queueIsActive) return handleQueue(prompt, entities, images)
 			return handleSubmit(prompt, entities, images)
 		},
-		[getServerQueue, handleQueue, handleSubmit]
+		[getServerQueue, handleQueue, handleSubmit, queueAdmissionPaused, queueHasLocalRows, queuePaused]
 	)
 
 	const handleEditMessage = useCallback(
 		async (messageId: string, newText: string, original: Message): Promise<void> => {
 			const trimmed = newText.trim()
-			if (!sessionId || !trimmed) return
+			if (!sessionId || !trimmed || promptFailuresRef.current.has(sessionId)) return
 			const idx = messages.findIndex((message) => message.id === messageId && message.role === 'user')
 			if (idx < 0) return
 
@@ -2063,12 +2203,11 @@ export function AgenticChat({
 					setActiveLeafMessageId(result.activeLeafMessageId)
 					if (Array.isArray(result.messages)) {
 						const restored = mapPersistedMessages(result.messages as PersistedMessage[])
-						setMessages(restored)
+						setMessages(projectPromptFailure(restored, promptFailuresRef.current.get(sessionId) ?? null))
 						setConversationViewResetKey((current) => current + 1)
 						dispatchDashboardPanel({ type: 'RESTORE', value: restored.flatMap((message) => message.dashboards || []) })
 						setPaginationState(normalizePaginationState(result.pagination))
 						dispatchStream({ type: 'SET_ERROR', value: null })
-						dispatchStream({ type: 'SET_LAST_FAILED_REQUEST', value: null })
 						dispatchStream({ type: 'RESET_RECOVERY' })
 					} else {
 						await restoreSessionSnapshot(sessionId, operation)
@@ -2179,14 +2318,13 @@ export function AgenticChat({
 		const restoreResult = await restoreCoordinator.run(targetSessionId, (operation) =>
 			restoreSessionSnapshot(targetSessionId, operation)
 		)
-		if (!ownsTarget() || !restoreResult.restored) return
+		if (!ownsTarget() || restoreResult.status !== 'restored') return
 		if (restoreResult.execution) {
 			await resumeRunningExecution({ targetSessionId, executionHint: restoreResult.execution })
 		}
 	})
 
 	// Immediately attempt to reconnect to a running or completed server-side execution.
-	// Works during active recovery (doesn't require lastFailedRequest).
 	const handleReconnectNow = useStableCallback(() => {
 		const controller = recoveryControllerRef.current
 		if (controller) {
@@ -2200,17 +2338,24 @@ export function AgenticChat({
 
 	// Replay only the sealed request. Current composer text, images, settings,
 	// quote, and project state cannot alter a failed prompt.
-	const handleReconnectFailedPrompt = useCallback(() => {
-		if (!lastFailedRequest) return
-		const failedRequest = lastFailedRequest
+	const handlePromptFailureAction = useCallback(() => {
+		if (!sessionId || !sessionPromptFailure) return
+		const failedRequest = sessionPromptFailure.request
 		dispatchStream({ type: 'SET_ERROR', value: null })
 		if (failedRequest.mutation.shareToken) shareTokenConsumedRef.current = true
 		startPromptSubmission(failedRequest.mutation.mode ?? 'quick', () => ({
-			currentSessionId: sessionId ?? failedRequest.mutation.sessionId,
+			currentSessionId: sessionId,
 			failedRequest,
 			submitProjectId: failedRequest.mutation.projectId ?? null
 		}))
-	}, [lastFailedRequest, sessionId, startPromptSubmission])
+	}, [sessionId, sessionPromptFailure, startPromptSubmission])
+
+	const handleDiscardPromptFailure = useCallback(() => {
+		if (!sessionId || sessionPromptFailure?.kind !== 'retry') return
+		const { request } = sessionPromptFailure
+		clearPromptFailure(sessionId, request.mutation.clientMutationId)
+		setMessages((current) => current.filter((message) => message.id !== request.optimisticMessageId))
+	}, [clearPromptFailure, sessionId, sessionPromptFailure])
 
 	// Consume pending prompts injected by the floating button once the base chat page mounts.
 	const submitPendingPromptEvent = useStableCallback(
@@ -2303,13 +2448,26 @@ export function AgenticChat({
 	const reconnectVisibleExecutionEvent = useEffectEvent(() => {
 		if (readOnly || isRouteSessionPending) return
 		const controller = recoveryControllerRef.current
-		if (controller) {
-			controller.startedAt = Date.now()
-			scheduleRecoveryAttempt(controller, 0, () => void attemptRecoveryForController(controller.id))
-			return
-		}
-		if (sessionId && !isStreaming && error) {
-			void reconcileSessionExecution(sessionId)
+		switch (
+			getForegroundRecoveryIntent({
+				hasActiveRecovery: controller !== null,
+				promptFailure: sessionPromptFailure,
+				hasGenericError: !!error
+			})
+		) {
+			case 'resume-recovery':
+				if (!controller) return
+				controller.startedAt = Date.now()
+				scheduleRecoveryAttempt(controller, 0, () => void attemptRecoveryForController(controller.id))
+				return
+			case 'replay-prompt':
+				handlePromptFailureAction()
+				return
+			case 'probe-session':
+				if (sessionId && !isStreaming) void reconcileSessionExecution(sessionId)
+				return
+			case 'none':
+				return
 		}
 	})
 
@@ -2345,13 +2503,38 @@ export function AgenticChat({
 	// After recovery exhausts, periodically check if the server-side execution completed
 	// so we can restore the result without requiring user interaction.
 	useEffect(() => {
-		if (isRouteSessionPending || isStreaming || !error || !sessionId || readOnly) return
+		const recoveryIntent = getForegroundRecoveryIntent({
+			hasActiveRecovery: false,
+			promptFailure: sessionPromptFailure,
+			hasGenericError: !!error
+		})
+		if (
+			isRouteSessionPending ||
+			isStreaming ||
+			!sessionId ||
+			readOnly ||
+			(recoveryIntent !== 'replay-prompt' && recoveryIntent !== 'probe-session')
+		)
+			return
 		const intervalId = window.setInterval(() => {
 			if (document.hidden) return
-			void reconcileSessionExecution(sessionId)
+			if (recoveryIntent === 'replay-prompt') {
+				handlePromptFailureAction()
+			} else {
+				void reconcileSessionExecution(sessionId)
+			}
 		}, 30_000)
 		return () => window.clearInterval(intervalId)
-	}, [isRouteSessionPending, isStreaming, error, sessionId, readOnly, reconcileSessionExecution])
+	}, [
+		isRouteSessionPending,
+		isStreaming,
+		error,
+		sessionId,
+		readOnly,
+		sessionPromptFailure,
+		handlePromptFailureAction,
+		reconcileSessionExecution
+	])
 
 	// Shared/public sessions are read-only snapshots, so they should never create a fake local session.
 	useEffect(() => {
@@ -2440,7 +2623,7 @@ export function AgenticChat({
 
 	const queueCapMessage =
 		queueAtCap && queueMaxDepth !== null
-			? `Queue is full (max ${queueMaxDepth}). Wait for a message to send first.`
+			? `Server queue is full (max ${queueMaxDepth}). New prompts wait here until space opens.`
 			: null
 	const queueSurface = useMemo<QueueSurface>(
 		() => ({
@@ -2452,7 +2635,11 @@ export function AgenticChat({
 			onEditSave: saveQueueEdit,
 			onEditCancel: cancelQueueEdit,
 			onDismiss: dismissQueueItem,
-			onRetry: retryQueueItem
+			onRetry: retryQueueItem,
+			onContinue: continueQueue,
+			onClear: clearQueue,
+			queueAction,
+			queueActionError
 		}),
 		[
 			queueRows,
@@ -2463,9 +2650,21 @@ export function AgenticChat({
 			saveQueueEdit,
 			cancelQueueEdit,
 			dismissQueueItem,
-			retryQueueItem
+			retryQueueItem,
+			continueQueue,
+			clearQueue,
+			queueAction,
+			queueActionError
 		]
 	)
+	const promptFailureAction =
+		!isStreaming && sessionPromptFailure && promptFailurePolicy
+			? {
+					label: promptFailurePolicy.label,
+					onActivate: handlePromptFailureAction,
+					...(promptFailurePolicy.canDiscard ? { onDiscard: handleDiscardPromptFailure } : {})
+				}
+			: null
 
 	const conversationViewModel: ConversationViewModel = {
 		readOnly,
@@ -2502,8 +2701,7 @@ export function AgenticChat({
 		paginationError,
 		recovery,
 		error: visibleError,
-		lastFailedPrompt: viewError ? null : (lastFailedRequest?.mutation.message ?? null),
-		onReconnectFailedPrompt: handleReconnectFailedPrompt,
+		promptFailureAction,
 		onReconnectNow: handleReconnectNow,
 		scrollContainerRef,
 		messagesEndRef,
@@ -2517,7 +2715,9 @@ export function AgenticChat({
 		handleSubmit: handleComposerSubmit,
 		submitMode: queueOwnsComposer
 			? { kind: 'queue', atCapacity: queueAtCap, capacityMessage: queueCapMessage }
-			: { kind: 'direct' },
+			: sessionPromptFailure
+				? { kind: 'blocked', message: 'Retry or discard the failed prompt before sending another.' }
+				: { kind: 'direct' },
 		queueSurface,
 		quotaResetTime: rateLimitDetails?.resetTime ?? null,
 		handleStopRequest,
@@ -2610,14 +2810,14 @@ export function AgenticChat({
 											void navigate.toSession(nextSessionId)
 										}}
 										onNewChat={handleNewChat}
-										onDelete={deleteSession}
+										onDelete={handleDeleteSession}
 										onUpdateTitle={updateSessionTitle}
 										isDeletingSession={isDeletingSession}
 										isUpdatingTitle={isUpdatingTitle}
 										shouldAnimate={shouldAnimateSidebar}
 										onOpenSettings={settingsModalStore.show}
 										hasCustomInstructions={settings.customInstructions.trim().length > 0}
-										onBulkDelete={bulkDeleteSessions}
+										onBulkDelete={handleBulkDeleteSessions}
 										onPinSession={pinSession}
 										onSearchMatchClick={handleSearchMatchClick}
 										hasMoreSessions={hasMoreSessions}
@@ -2665,9 +2865,7 @@ export function AgenticChat({
 										onRetry={
 											isRouteSessionPending && routeSessionId
 												? () => void handleSessionSelect(routeSessionId)
-												: lastFailedRequest
-													? handleReconnectFailedPrompt
-													: undefined
+												: undefined
 										}
 									/>
 								) : (

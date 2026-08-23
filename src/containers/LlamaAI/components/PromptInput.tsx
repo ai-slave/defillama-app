@@ -28,9 +28,14 @@ function revokeImageUrls(images: Array<{ url: string }>) {
 	}
 }
 
+export type PromptSubmitMode =
+	| { kind: 'direct' }
+	| { kind: 'blocked'; message: string }
+	| { kind: 'queue'; atCapacity: boolean; capacityMessage: string | null }
+
 interface PromptInputProps {
 	draftScope: string
-	submitMode: { kind: 'direct' } | { kind: 'queue'; atCapacity: boolean; capacityMessage: string | null }
+	submitMode: PromptSubmitMode
 	handleSubmit: (
 		prompt: string,
 		preResolvedEntities?: Array<{ term: string; slug: string; type?: string }>,
@@ -317,12 +322,12 @@ export function PromptInput({
 			const isSuggested = isSuggestedRef.current
 			isSuggestedRef.current = false
 
-			if (submitMode.kind === 'queue') {
-				if (submitMode.atCapacity) {
-					setSubmitError(submitMode.capacityMessage || 'Queue is full. Wait for a message to send first.')
-					return
-				}
+			if (submitMode.kind === 'blocked') {
+				setSubmitError(submitMode.message)
+				return
+			}
 
+			if (submitMode.kind === 'queue') {
 				const restoreDraftIfUntouched = () => {
 					if (!shouldResetSubmittedDraft('', [])) return
 					restoreEntities(finalEntities)
@@ -579,6 +584,8 @@ export function PromptInput({
 
 			{submitError ? (
 				<p className="text-xs text-ai-error-strong">{submitError}</p>
+			) : submitMode.kind === 'blocked' ? (
+				<p className="text-xs text-ai-tertiary">{submitMode.message}</p>
 			) : submitMode.kind === 'queue' && submitMode.atCapacity && submitMode.capacityMessage ? (
 				<p className="text-xs text-ai-tertiary">{submitMode.capacityMessage}</p>
 			) : null}
@@ -657,20 +664,20 @@ export function PromptInput({
 											kind: 'streaming',
 											canQueue:
 												submitMode.kind === 'queue' &&
-												!submitMode.atCapacity &&
 												(value.trim().length > 0 || imageUpload.selectedImages.length > 0),
 											onStop: handleStopRequest
 										}
 									: submitMode.kind === 'queue'
 										? {
 												kind: 'queue',
-												disabled:
-													submitMode.atCapacity ||
-													(value.trim().length === 0 && imageUpload.selectedImages.length === 0)
+												disabled: value.trim().length === 0 && imageUpload.selectedImages.length === 0
 											}
 										: {
 												kind: 'send',
-												disabled: isPending || (value.trim().length === 0 && imageUpload.selectedImages.length === 0)
+												disabled:
+													isPending ||
+													submitMode.kind === 'blocked' ||
+													(value.trim().length === 0 && imageUpload.selectedImages.length === 0)
 											}
 						}
 					/>
