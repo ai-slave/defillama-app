@@ -35,7 +35,7 @@ const FeesOnAllChains = (props: IAdapterByChainPageData) => {
 			canonicalUrl={`/pf`}
 			pageName={pageName}
 		>
-			<AdapterByChain {...props} type={type} />
+			<AdapterByChain {...props} type={type} defaultSorting={[{ id: 'pfOrPs', desc: true }]} />
 		</Layout>
 	)
 }

@@ -83,7 +83,7 @@ const RevenueOnChain = (props: IAdapterByChainPageData) => {
 			canonicalUrl={`/ps/chain/${slug(props.chain)}`}
 			pageName={pageName}
 		>
-			<AdapterByChain {...props} type={type} />
+			<AdapterByChain {...props} type={type} defaultSorting={[{ id: 'pfOrPs', desc: true }]} />
 		</Layout>
 	)
 }

@@ -68,6 +68,7 @@ type TPageType =
 interface IProps extends IAdapterByChainPageData {
 	type: TPageType
 	children?: ReactNode
+	defaultSorting?: SortingState
 }
 
 const SUPPORTED_OLD_VIEWS: TPageType[] = [
@@ -80,11 +81,7 @@ const SUPPORTED_OLD_VIEWS: TPageType[] = [
 ]
 const FEES_CHART_PAGE_TYPES: TPageType[] = ['Fees', 'Revenue', 'Holders Revenue']
 
-const defaultSortingByType: Partial<Record<TPageType, SortingState>> & { default: SortingState } = {
-	'P/F': [{ desc: true, id: 'pfOrPs' }],
-	'P/S': [{ desc: true, id: 'pfOrPs' }],
-	default: [{ desc: true, id: 'total24h' }]
-}
+const DEFAULT_SORTING: SortingState = [{ desc: true, id: 'total24h' }]
 
 const pageSlugByType: Partial<Record<TPageType, string>> = {
 	'Perp Volume': 'perps',
@@ -108,7 +105,7 @@ const pageTypeByDefinition: Partial<Record<TPageType, Record<string, string>>> =
 	Earnings: definitions.earnings.chain
 }
 
-export function AdapterByChain({ children, ...props }: IProps) {
+export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 	const router = useRouter()
 	const isChain = props.chain !== 'All'
 	const categoryParam = router.query.category
@@ -161,7 +158,7 @@ export function AdapterByChain({ children, ...props }: IProps) {
 		}
 	}, [categoryParam, excludeCategoryParam, hasCategoryParam, props.categories, props.protocols])
 
-	const [sorting, setSorting] = useState<SortingState>(defaultSortingByType[props.type] ?? defaultSortingByType.default)
+	const [sorting, setSorting] = useState<SortingState>(defaultSorting ?? DEFAULT_SORTING)
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 	const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([])
 
