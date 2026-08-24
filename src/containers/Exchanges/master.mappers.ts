@@ -60,12 +60,13 @@ function parseColumnarSeries(response: MasterColumnarSeriesResponse): Record<str
 		throw new Error('Series columns do not match the key axis')
 	}
 	const byKey: Record<string, Array<number | null>> = {}
-	response.key.forEach((key, index) => {
+	for (const [index, key] of response.key.entries()) {
 		const values = response.series[index]
-		if (values === null) return
+		if (values === undefined) throw new Error(`Missing series column ${key}`)
+		if (values === null) continue
 		if (values.length !== response.days.length) throw new Error(`Series column ${key} does not match the day axis`)
 		byKey[key] = values
-	})
+	}
 	return byKey
 }
 
@@ -169,6 +170,7 @@ function mapNormalizedVolume(nvol: MasterSegmentNormalizedVolume | null): Exchan
 	return {
 		reported: nvol.reported,
 		normalized: nvol.normalized,
+		activeLiquidity: nvol.active_liquidity,
 		discountFraction: nvol.discount_pct,
 		unverifiedFraction: nvol.unverified_pct,
 		flag: nvol.flag
@@ -178,9 +180,9 @@ function mapNormalizedVolume(nvol: MasterSegmentNormalizedVolume | null): Exchan
 function mapDirectoryVenue(
 	venue: MasterDirectoryVenue,
 	venuesBySlug: Map<string, MasterDirectoryVenue>,
-	execution?: MasterExecutionQualityResponse | null
+	execution: MasterExecutionQualityResponse | null
 ): ExchangeDirectoryRowModel {
-	const executionMetrics = execution?.venues?.[venue.slug] ?? null
+	const executionMetrics = execution?.venues[venue.slug] ?? null
 	const segments: ExchangeDirectoryRowModel['segments'] = {}
 	for (const segment of EXCHANGE_SEGMENTS) {
 		const stats = venue.segments[segment]
@@ -336,21 +338,31 @@ function byQualityRank(a: ExchangeDirectoryRowModel, b: ExchangeDirectoryRowMode
  * exact segment while excluding shared-book segments exactly as the backend's
  * own totals do. Linear and inverse totals are never combined. */
 function directoryOpenInterest(venues: MasterDirectoryVenue[], segment: MasterSegment): number | null {
-	const observations: number[] = []
+	let total = 0
+	let observed = false
 	for (const venue of venues) {
 		if (venue.liquidity[segment]?.mode === 'shared') continue
 		const openInterest = venue.segments[segment]?.oi_usd
-		if (openInterest != null) observations.push(openInterest)
+		if (openInterest == null) continue
+		total += openInterest
+		observed = true
 	}
-	return observations.length > 0 ? observations.reduce((total, value) => total + value, 0) : null
+	return observed ? total : null
 }
 
 export function mapMasterDirectory(
 	response: MasterDirectoryResponse,
-	execution?: MasterExecutionQualityResponse | null
+	execution: MasterExecutionQualityResponse | null
 ): ExchangeDirectoryModel {
-	const venuesBySlug = new Map(response.venues.map((venue) => [venue.slug, venue]))
-	const rows = response.venues.map((venue) => mapDirectoryVenue(venue, venuesBySlug, execution)).sort(byQualityRank)
+	const venuesBySlug = new Map<string, MasterDirectoryVenue>()
+	for (const venue of response.venues) venuesBySlug.set(venue.slug, venue)
+	const rows = new Array<ExchangeDirectoryRowModel>(response.venues.length)
+	for (let index = 0; index < response.venues.length; index++) {
+		const venue = response.venues[index]
+		if (!venue) throw new Error(`Missing directory venue at index ${index}`)
+		rows[index] = mapDirectoryVenue(venue, venuesBySlug, execution)
+	}
+	rows.sort(byQualityRank)
 	const volumeSplit = (totals: {
 		spot_volume_24h: number | null
 		linear_perp_volume_24h: number | null
@@ -379,11 +391,12 @@ export function mapMasterDirectory(
 				dex: volumeSplit(response.totals.dex)
 			}
 		},
-		updatedAt: response.last_updated
+		updatedAt: response.last_updated,
+		executionAvailable: execution !== null
 	}
 }
 
-function depthAt(values: number[] | null, index: number, pair: string): number | null {
+function depthAt(values: Array<number | null> | null, index: number, pair: string): number | null {
 	if (values === null) return null
 	const value = values[index]
 	if (value === undefined) throw new Error(`Depth array for ${pair} does not match depth_bands`)
@@ -440,6 +453,7 @@ export function mapExchangePair(
 				? {
 						reported: pair.nvol.reported,
 						normalized: pair.nvol.normalized,
+						activeLiquidity: pair.nvol.active_liquidity,
 						discountFraction: (pair.nvol.reported - pair.nvol.normalized) / pair.nvol.reported,
 						status: pair.nvol.status
 					}
@@ -576,7 +590,7 @@ export function mapMasterMetadataOnlyProfile(metadata: MasterExchangeMetadataRes
 const mapExecutionPair = (pair: MasterExecutionPairMetrics): ExchangeExecutionPairModel => ({
 	asset: pair.asset,
 	hoursCovered: pair.hours_covered,
-	fillCount: pair.n_trades ?? 0,
+	fillCount: pair.n_trades,
 	costToTradeBps: pair.cost_to_trade_bps,
 	effectiveSpreadBps: pair.effective_spread_bps,
 	quotedSpreadBps: pair.quoted_spread_bps,
@@ -594,18 +608,15 @@ const mapExecutionPair = (pair: MasterExecutionPairMetrics): ExchangeExecutionPa
 
 function mapProfileExecution(
 	slug: string,
-	execution: MasterExecutionQualityResponse | null | undefined
+	execution: MasterExecutionQualityResponse | null
 ): ExchangeExecutionModel | null {
-	const venue = execution?.venues?.[slug]
+	const venue = execution?.venues[slug]
 	if (!venue) return null
-	const basketOrder = execution?.basket ?? []
-	const pairs = Object.values(venue.pairs ?? {})
-		.map(mapExecutionPair)
-		.sort((a, b) => {
-			const ai = basketOrder.indexOf(a.asset)
-			const bi = basketOrder.indexOf(b.asset)
-			return (ai < 0 ? basketOrder.length : ai) - (bi < 0 ? basketOrder.length : bi)
-		})
+	const pairs: ExchangeExecutionPairModel[] = []
+	for (const asset of execution.basket) {
+		const pair = venue.pairs[asset]
+		if (pair) pairs.push(mapExecutionPair(pair))
+	}
 	return {
 		assets: venue.assets,
 		hoursCovered: venue.hours_covered,
@@ -629,68 +640,73 @@ function mapProfileExecution(
 
 function mapProfileQuality(
 	slug: string,
-	ranks: MasterQualityRanksResponse | null | undefined,
-	methodology: MasterRankMethodologyResponse | null | undefined
+	ranks: MasterQualityRanksResponse | null,
+	methodology: MasterRankMethodologyResponse | null
 ): ExchangeProfileQualityModel | null {
-	const entry = ranks?.venues?.[slug]
+	if (ranks === null || methodology === null) return null
+	if (methodology.ranks_generated_at !== ranks.generated_at) return null
+	const entry = ranks.venues[slug]
 	if (!entry) return null
-	const scores = Object.values(ranks.venues).map((venue) => venue.score)
-	const overallRank = 1 + scores.filter((score) => score > entry.score).length
-	const catalog = new Map((methodology?.components ?? []).map((component) => [component.key, component]))
-	const components = Object.entries(entry.components)
-		.map(([key, score]) => {
-			const def = catalog.get(key)
-			return {
-				key,
-				label: def?.label ?? key,
-				weight: def?.weight ?? null,
-				score,
-				what: def?.what ?? null,
-				na: def?.na ?? null
-			}
-		})
-		// Weight order, not the upstream JSON's alphabetical key order.
-		.sort((a, b) => (b.weight ?? -1) - (a.weight ?? -1))
-	// Execution sub-scores, in the published catalog's order; sub keys the catalog
-	// doesn't know yet (older methodology file) fall back to their raw key.
-	const subCatalog = methodology?.exec_subs ?? []
-	const subEntries = entry.exec_subs ?? {}
-	const subKeys = [
-		...subCatalog.map((sub) => sub.key).filter((key) => key in subEntries),
-		...Object.keys(subEntries).filter((key) => !subCatalog.some((sub) => sub.key === key))
-	]
-	const execSubs = subKeys.map((key) => {
-		const def = subCatalog.find((sub) => sub.key === key)
-		return {
+	let overallRank = 1
+	let overallTotal = 0
+	for (const venueSlug in ranks.venues) {
+		const venue = ranks.venues[venueSlug]
+		if (!venue) continue
+		overallTotal++
+		if (venue.score > entry.score) overallRank++
+	}
+	const definitionsByKey = new Map<string, MasterRankMethodologyResponse['components'][number]>()
+	for (const definition of methodology.components) definitionsByKey.set(definition.key, definition)
+	const components: ExchangeProfileQualityModel['components'] = []
+	for (const key in entry.components) {
+		const definition = definitionsByKey.get(key)
+		if (!definition) return null
+		components.push({
 			key,
-			label: def?.label ?? key,
-			weight: def?.weight ?? null,
-			score: subEntries[key],
-			what: def?.what ?? null
+			label: definition.label,
+			weight: definition.weight,
+			score: entry.components[key] ?? null,
+			what: definition.what,
+			na: definition.na
+		})
+	}
+	components.sort((a, b) => b.weight - a.weight)
+	const execSubs: ExchangeProfileQualityModel['execSubs'] = []
+	if (entry.exec_subs) {
+		for (const definition of methodology.exec_subs) {
+			const score = entry.exec_subs[definition.key]
+			if (score === undefined) continue
+			execSubs.push({
+				key: definition.key,
+				label: definition.label,
+				weight: definition.weight,
+				score,
+				what: definition.what
+			})
 		}
-	})
+	}
 	return {
 		score: entry.score,
-		tier: entry.tier ?? null,
+		tier: entry.tier,
 		rankInKind: entry.rank,
 		overallRank,
-		overallTotal: scores.length,
-		generatedAt: ranks.generated_at ?? null,
+		overallTotal,
+		generatedAt: ranks.generated_at,
 		components,
 		execSubs
 	}
 }
 
 export interface MasterProfileExtras {
-	execution?: MasterExecutionQualityResponse | null
-	ranks?: MasterQualityRanksResponse | null
-	methodology?: MasterRankMethodologyResponse | null
+	execution: MasterExecutionQualityResponse | null
+	ranks: MasterQualityRanksResponse | null
+	methodology: MasterRankMethodologyResponse | null
 }
 
 export function mapMasterProfile(
 	index: MasterExchangeIndexResponse,
 	metadata: MasterExchangeMetadataResponse,
-	extras: MasterProfileExtras = {}
+	extras: MasterProfileExtras
 ): ExchangeProfileModel {
 	const segments: ExchangeProfileModel['segments'] = {}
 	for (const segment of EXCHANGE_SEGMENTS) {
@@ -698,7 +714,23 @@ export function mapMasterProfile(
 		if (!stats) continue
 		const capability = index.capabilities[segment]
 		if (!capability) throw new Error(`Missing ${segment} capabilities for ${index.slug}`)
-		const pairs = stats.pairs.map((pair) => mapExchangePair(pair, index.depth_bands, segment))
+		const pairs = new Array<ExchangePairModel>(stats.pairs.length)
+		let depth2Usd = 0
+		let hasDepth = false
+		for (let pairIndex = 0; pairIndex < stats.pairs.length; pairIndex++) {
+			const pair = stats.pairs[pairIndex]
+			if (!pair) throw new Error(`Missing ${segment} pair at index ${pairIndex}`)
+			const mapped = mapExchangePair(pair, index.depth_bands, segment)
+			pairs[pairIndex] = mapped
+			if (mapped.depthBid2Usd !== null) {
+				depth2Usd += mapped.depthBid2Usd
+				hasDepth = true
+			}
+			if (mapped.depthAsk2Usd !== null) {
+				depth2Usd += mapped.depthAsk2Usd
+				hasDepth = true
+			}
+		}
 		segments[segment] = {
 			segment,
 			marketCount: stats.markets,
@@ -706,7 +738,7 @@ export function mapMasterProfile(
 			volumePrevious24h: stats.volume_prev_24h,
 			openInterestUsd: stats.oi_usd ?? null,
 			openInterestPreviousUsd: stats.oi_prev_usd ?? null,
-			depth2Usd: sumNullable(pairs.flatMap((pair) => [pair.depthBid2Usd, pair.depthAsk2Usd])),
+			depth2Usd: hasDepth ? depth2Usd : null,
 			capabilities: {
 				openInterest: capability.oi,
 				funding: capability.funding,
@@ -752,16 +784,17 @@ interface ChartSegmentSpec {
 	label: string
 }
 
-const CHART_SEGMENTS: readonly ChartSegmentSpec[] = [
+const CHART_SEGMENTS = [
 	{ metric: 'spot', reported: 'reported_spot', label: 'Spot' },
 	{ metric: 'linear_perp', reported: 'reported_linear_perp', label: 'Linear Perps' },
 	{ metric: 'inverse_perp', reported: 'reported_inverse_perp', label: 'Inverse Perps' }
-]
+] as const satisfies readonly ChartSegmentSpec[]
 
 const PERP_CHART_SEGMENTS = CHART_SEGMENTS.filter((spec) => spec.metric !== 'spot')
 
 function aggregateResearchSeries(series: NullableSeries[], dayCount: number): Array<number | null> {
-	return Array.from({ length: dayCount }, (_, index) => {
+	const aggregated = new Array<number | null>(dayCount)
+	for (let index = 0; index < dayCount; index++) {
 		let total = 0
 		let observed = false
 		for (const values of series) {
@@ -770,8 +803,9 @@ function aggregateResearchSeries(series: NullableSeries[], dayCount: number): Ar
 			total += value
 			observed = true
 		}
-		return observed ? total : null
-	})
+		aggregated[index] = observed ? total : null
+	}
+	return aggregated
 }
 
 function researchChart(
@@ -815,24 +849,29 @@ export function decodeMasterChart(response: MasterChartColumnarResponse): Decode
 	const exchanges: DecodedChartExchange[] = new Array(response.exchanges.length)
 	for (let exchangeIndex = 0; exchangeIndex < response.exchanges.length; exchangeIndex++) {
 		const metrics: Partial<Record<MasterChartMetric, Array<number | null>>> = {}
+		const exchange = response.exchanges[exchangeIndex]
+		const type = response.types[exchangeIndex]
 		const columns = response.series[exchangeIndex]
+		if (exchange === undefined || type === undefined || columns === undefined) {
+			throw new Error(`Missing chart exchange at index ${exchangeIndex}`)
+		}
 		if (columns.length !== response.key.length) {
-			throw new Error(`Chart columns for ${response.exchanges[exchangeIndex]} do not match the metric axis`)
+			throw new Error(`Chart columns for ${exchange} do not match the metric axis`)
 		}
 		for (let metricIndex = 0; metricIndex < response.key.length; metricIndex++) {
+			const key = response.key[metricIndex]
 			const values = columns[metricIndex]
+			if (key === undefined || values === undefined) throw new Error(`Missing chart metric for ${exchange}`)
 			if (values !== null) {
 				if (values.length !== response.days.length) {
-					throw new Error(
-						`Chart column ${response.key[metricIndex]} for ${response.exchanges[exchangeIndex]} does not match the day axis`
-					)
+					throw new Error(`Chart column ${key} for ${exchange} does not match the day axis`)
 				}
-				metrics[response.key[metricIndex]] = values
+				metrics[key] = values
 			}
 		}
 		exchanges[exchangeIndex] = {
-			exchange: response.exchanges[exchangeIndex],
-			type: response.types[exchangeIndex],
+			exchange,
+			type,
 			metrics
 		}
 	}
@@ -873,11 +912,16 @@ function topExchangeLines<T extends ResearchSeriesItem>(
 		const byLatest = (b.rankValues[lastDay] ?? -Infinity) - (a.rankValues[lastDay] ?? -Infinity)
 		return byLatest || a.exchange.exchange.localeCompare(b.exchange.exchange)
 	})
-	const lines: ExchangeResearchChartModel['lines'] = items.slice(0, TOP_VENUE_COUNT).map((item) => ({
-		id: item.exchange.exchange,
-		label: response.names[item.exchange.exchange],
-		values: item.values
-	}))
+	const lines: ExchangeResearchChartModel['lines'] = []
+	const topCount = Math.min(items.length, TOP_VENUE_COUNT)
+	for (let index = 0; index < topCount; index++) {
+		const item = items[index]
+		if (!item) continue
+		const id = item.exchange.exchange
+		const label = response.names[id]
+		if (label === undefined) throw new Error(`Missing chart name for ${id}`)
+		lines.push({ id, label, values: item.values })
+	}
 	const other = items.slice(TOP_VENUE_COUNT)
 	if (other.length > 0) lines.push({ id: 'other', label: 'Other', values: otherValues(other) })
 	return lines

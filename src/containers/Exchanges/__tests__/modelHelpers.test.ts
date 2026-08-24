@@ -18,6 +18,11 @@ import type { ExchangeDirectoryRowModel, ExchangeSegmentActivity } from '../mode
 
 const VOLUME_UPDATED_AT = '2026-07-14T12:00:00Z'
 
+function required<T>(value: T | undefined): T {
+	if (value === undefined) throw new Error('Expected fixture value')
+	return value
+}
+
 function activity(patch: Partial<ExchangeSegmentActivity> = {}): ExchangeSegmentActivity {
 	return {
 		marketCount: 2,
@@ -127,11 +132,26 @@ describe('spark and normalized-volume aggregation helpers', () => {
 
 	it('combines normalized volume additively with a recomputed discount and weighted unverified share', () => {
 		const combined = combineNormalizedVolume(
-			{ reported: 1_000, normalized: 800, discountFraction: 0.2, unverifiedFraction: 0, flag: null },
-			{ reported: 200, normalized: 100, discountFraction: 0.5, unverifiedFraction: 0.5, flag: 'thin' }
+			{
+				reported: 1_000,
+				normalized: 800,
+				activeLiquidity: 600,
+				discountFraction: 0.2,
+				unverifiedFraction: 0,
+				flag: null
+			},
+			{
+				reported: 200,
+				normalized: 100,
+				activeLiquidity: 50,
+				discountFraction: 0.5,
+				unverifiedFraction: 0.5,
+				flag: 'thin'
+			}
 		)
 		expect(combined.reported).toBe(1_200)
 		expect(combined.normalized).toBe(900)
+		expect(combined.activeLiquidity).toBe(650)
 		expect(combined.discountFraction).toBeCloseTo(1 - 900 / 1_200, 10)
 		expect(combined.unverifiedFraction).toBeCloseTo((0.5 * 200) / 1_200, 10)
 		expect(combined.flag).toBe('thin')
@@ -240,7 +260,7 @@ describe('country-aware directory filtering', () => {
 			catalog
 		})
 		expect(spot.map((venue) => venue.slug)).toEqual(['available', 'restricted'])
-		expect(spot[1].selectedCountryStatus).toBe('restricted')
+		expect(required(spot[1]).selectedCountryStatus).toBe('restricted')
 		expect(
 			filterDirectoryRows([available, restricted], {
 				kind: 'all',
@@ -256,15 +276,16 @@ describe('country-aware directory filtering', () => {
 		const metadataOnly = row({ slug: 'catalog-only', tracked: false })
 
 		for (const catalogState of [null, undefined]) {
-			const rows = filterDirectoryRows([tracked, metadataOnly], {
+			const filters: Parameters<typeof filterDirectoryRows>[1] = {
 				kind: 'all',
 				scope: 'spot',
-				country: 'DE',
-				catalog: catalogState
-			})
+				country: 'DE'
+			}
+			if (catalogState !== undefined) filters.catalog = catalogState
+			const rows = filterDirectoryRows([tracked, metadataOnly], filters)
 			expect(rows.map((venue) => venue.slug)).toEqual(['venue', 'catalog-only'])
 			// Global fallback rows carry no country annotation.
-			expect(rows[0].selectedCountry).toBeNull()
+			expect(required(rows[0]).selectedCountry).toBeNull()
 		}
 	})
 
@@ -302,14 +323,14 @@ describe('parent/child directory nesting', () => {
 		const nested = nestDirectoryRows([parent, child, unrelated])
 
 		expect(nested.map((item) => item.slug)).toEqual(['venue', 'solo'])
-		expect(nested[0].subRows?.map((item) => item.slug)).toEqual(['venue', 'venue-eu'])
-		expect(nested[1].subRows).toBeUndefined()
+		expect(required(nested[0]).subRows?.map((item) => item.slug)).toEqual(['venue', 'venue-eu'])
+		expect(required(nested[1]).subRows).toBeUndefined()
 	})
 
 	it('keeps an orphaned child at the top level when its parent is filtered out', () => {
 		const nested = nestDirectoryRows([child, unrelated])
 		expect(nested.map((item) => item.slug)).toEqual(['venue-eu', 'solo'])
-		expect(nested[0].subRows).toBeUndefined()
+		expect(required(nested[0]).subRows).toBeUndefined()
 	})
 
 	it('aggregates valid Binance brand activity and keeps parent-level facts', () => {
@@ -353,7 +374,14 @@ describe('parent/child directory nesting', () => {
 			funding: { fiatCurrencies: ['USD'], fiatFees: null, hasFiatOnramp: true, rampCost: null },
 			warnings: [{ level: 'caution', text: 'Parent-only warning' }],
 			normalizedVolume: {
-				spot: { reported: 1_000, normalized: 800, discountFraction: 0.2, unverifiedFraction: 0, flag: null },
+				spot: {
+					reported: 1_000,
+					normalized: 800,
+					activeLiquidity: 600,
+					discountFraction: 0.2,
+					unverifiedFraction: 0,
+					flag: null
+				},
 				linear_perp: null,
 				inverse_perp: null
 			}
@@ -377,13 +405,20 @@ describe('parent/child directory nesting', () => {
 			},
 			sparks: { spot: [30, 40] },
 			normalizedVolume: {
-				spot: { reported: 40, normalized: 20, discountFraction: 0.5, unverifiedFraction: 0.5, flag: null },
+				spot: {
+					reported: 40,
+					normalized: 20,
+					activeLiquidity: 10,
+					discountFraction: 0.5,
+					unverifiedFraction: 0.5,
+					flag: null
+				},
 				linear_perp: null,
 				inverse_perp: null
 			}
 		})
 		const nested = nestDirectoryRows([binance, binanceUs])
-		const brand = nested[0]
+		const brand = required(nested[0])
 
 		expect(brand.segments.spot).toMatchObject({
 			marketCount: 12,
@@ -456,13 +491,14 @@ describe('parent/child directory nesting', () => {
 			}
 		})
 		const nested = nestDirectoryRows([okx, okxEu])
+		const brand = required(nested[0])
 
-		expect(nested[0].segments.spot?.volume24h).toBe(1_000)
-		expect(nested[0].segments.linear_perp?.volume24h).toBe(560)
-		expect(nested[0].segments.linear_perp?.openInterestUsd).toBe(110)
-		expect(nested[0].segments.linear_perp?.openInterestPreviousUsd).toBe(98)
-		expect(nested[0].segments.linear_perp?.coinCount).toBeNull()
-		expect(nested[0].subRows?.map((item) => item.slug)).toEqual(['okx', 'okx-eu'])
+		expect(brand.segments.spot?.volume24h).toBe(1_000)
+		expect(brand.segments.linear_perp?.volume24h).toBe(560)
+		expect(brand.segments.linear_perp?.openInterestUsd).toBe(110)
+		expect(brand.segments.linear_perp?.openInterestPreviousUsd).toBe(98)
+		expect(brand.segments.linear_perp?.coinCount).toBeNull()
+		expect(brand.subRows?.map((item) => item.slug)).toEqual(['okx', 'okx-eu'])
 	})
 
 	it('surfaces an own child segment the parent lacks on the brand row', () => {
@@ -473,8 +509,9 @@ describe('parent/child directory nesting', () => {
 			segments: { inverse_perp: activity({ volume24h: 7 }) }
 		})
 		const nested = nestDirectoryRows([parent, inverseChild])
-		expect(nested[0].segments.inverse_perp?.volume24h).toBe(7)
-		expect(nested[0].segments.spot?.volume24h).toBe(1_000)
+		const brand = required(nested[0])
+		expect(brand.segments.inverse_perp?.volume24h).toBe(7)
+		expect(brand.segments.spot?.volume24h).toBe(1_000)
 	})
 })
 
@@ -532,8 +569,22 @@ describe('child liquidity descriptions', () => {
 
 describe('normalized volume and depth semantics', () => {
 	it('exposes each perp class separately and never a combined perp figure', () => {
-		const linear = { reported: 100, normalized: 70, discountFraction: 0.3, unverifiedFraction: 0.1, flag: null }
-		const inverse = { reported: 50, normalized: 30, discountFraction: 0.4, unverifiedFraction: 0.4, flag: 'outlier' }
+		const linear = {
+			reported: 100,
+			normalized: 70,
+			activeLiquidity: 40,
+			discountFraction: 0.3,
+			unverifiedFraction: 0.1,
+			flag: null
+		}
+		const inverse = {
+			reported: 50,
+			normalized: 30,
+			activeLiquidity: 20,
+			discountFraction: 0.4,
+			unverifiedFraction: 0.4,
+			flag: 'outlier'
+		}
 		const venue = row({
 			segments: { linear_perp: activity(), inverse_perp: activity() },
 			normalizedVolume: { spot: null, linear_perp: linear, inverse_perp: inverse }
@@ -545,7 +596,14 @@ describe('normalized volume and depth semantics', () => {
 	})
 
 	it('keeps an uncovered segment unavailable instead of borrowing the other class', () => {
-		const linear = { reported: 100, normalized: 70, discountFraction: 0.3, unverifiedFraction: 0.1, flag: null }
+		const linear = {
+			reported: 100,
+			normalized: 70,
+			activeLiquidity: 40,
+			discountFraction: 0.3,
+			unverifiedFraction: 0.1,
+			flag: null
+		}
 		const venue = row({
 			segments: { linear_perp: activity(), inverse_perp: activity() },
 			normalizedVolume: { spot: null, linear_perp: linear, inverse_perp: null }

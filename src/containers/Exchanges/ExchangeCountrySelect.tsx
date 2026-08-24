@@ -102,10 +102,13 @@ function countryOptions(catalog: MasterExchangeRegionCatalogResponse | null): Se
 	const countries: SelectOption[] = []
 	if (catalog) {
 		for (const country of catalog.countries) {
+			const regionKey = catalog.country_regions[country]
+			const region = regionKey ? catalog.regions[regionKey] : undefined
+			if (!region) throw new Error(`Missing region for ${country}`)
 			countries.push({
 				key: country,
 				name: countryLabel(country),
-				help: catalog.regions[catalog.country_regions[country]].label
+				help: region.label
 			})
 		}
 	}

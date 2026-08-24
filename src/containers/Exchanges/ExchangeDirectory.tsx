@@ -28,6 +28,7 @@ export function ExchangeDirectory({ directory, loadOverview, countryState }: Exc
 				country={countryState.country}
 				catalog={countryState.catalog}
 				catalogFailed={countryState.catalogFailed}
+				executionAvailable={directory.executionAvailable}
 				onCountryChange={countryState.setCountry}
 			/>
 		</div>

@@ -56,41 +56,53 @@ export function buildTokenFinderRows({
 	country: string | null
 	catalog: MasterExchangeRegionCatalogResponse | null
 }): FinderRow[] {
-	const directoryBySlug = new Map(directory.rows.map((venue) => [venue.slug, venue]))
+	const selected = new Set(selectedTokens)
+	const directoryBySlug = new Map<string, ExchangeDirectoryModel['rows'][number]>()
+	for (const venue of directory.rows) directoryBySlug.set(venue.slug, venue)
 	const rows = new Map<
 		string,
 		{ name: string; volume24h: number | null; listings: Map<string, { token: string; segments: Set<ExchangeSegment> }> }
 	>()
 	for (const token of tokens) {
-		if (!selectedTokens.includes(token.coingecko_id)) continue
+		if (!selected.has(token.coingecko_id)) continue
 		for (const listing of token.venues) {
 			const venue = directoryBySlug.get(listing.slug)
 			if (!venue) continue
-			let segments = listing.segments.filter((segment) => SEGMENTS.includes(segment))
+			let availableSegments: ExchangeSegment[] | null = null
 			if (country && catalog) {
 				if (!venue.regional) continue
 				const availability = resolveCountryAvailability(catalog, venue.regional, country)
 				if (availability.availability === 'unavailable') continue
-				segments = segments.filter((segment) => availability.segments.includes(segment))
+				availableSegments = availability.segments
 			}
-			if (segments.length === 0) continue
+			const segments = new Set<ExchangeSegment>()
+			for (const segment of listing.segments) {
+				if (!SEGMENTS.includes(segment)) continue
+				if (availableSegments && !availableSegments.includes(segment)) continue
+				segments.add(segment)
+			}
+			if (segments.size === 0) continue
 			let row = rows.get(listing.slug)
 			if (!row) {
 				row = { name: venue.name, volume24h: venue.totalVolume24h, listings: new Map() }
 				rows.set(listing.slug, row)
 			}
-			row.listings.set(token.coingecko_id, { token: token.symbol, segments: new Set(segments) })
+			row.listings.set(token.coingecko_id, { token: token.symbol, segments })
 		}
 	}
 
 	const result: FinderRow[] = []
 	for (const [slug, row] of rows) {
 		if (mode === 'all' && row.listings.size !== selectedTokens.length) continue
+		const listings: FinderRow['listings'] = []
+		for (const listing of row.listings.values()) {
+			listings.push({ token: listing.token, segments: [...listing.segments] })
+		}
 		result.push({
 			slug,
 			name: row.name,
 			volume24h: row.volume24h,
-			listings: [...row.listings.values()].map(({ token, segments }) => ({ token, segments: [...segments] }))
+			listings
 		})
 	}
 	return result.sort((a, b) => {

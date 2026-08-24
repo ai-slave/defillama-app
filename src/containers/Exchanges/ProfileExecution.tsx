@@ -21,9 +21,9 @@ const NA = <span className="text-tertiary">n/a</span>
 function SlippagePair({ predicted, actual }: { predicted: number | null; actual: number | null }) {
 	if (actual == null) return NA
 	return (
-		<span className="flex items-center justify-end gap-1">
-			{predicted == null ? null : <span className="text-tertiary">{`p ${usd(predicted)} →`}</span>}
-			<span>{usd(actual)}</span>
+		<span className="flex flex-nowrap items-center justify-end gap-1 whitespace-nowrap">
+			{predicted == null ? null : <span className="whitespace-nowrap text-tertiary">{`p ${usd(predicted)} →`}</span>}
+			<span className="whitespace-nowrap">{usd(actual)}</span>
 		</span>
 	)
 }
@@ -125,10 +125,23 @@ function PairRow({ pair }: { pair: ExchangeExecutionPairModel }) {
 	// bps → dollars at the column's own trade size: ×10 for $100k, ×100 for $1M
 	const at = (bps: number | null, sizeUnits: number) => (bps == null ? null : bps * sizeUnits)
 	return (
-		<tr className="border-t border-subtle">
-			<td className="py-2 pr-2 label-sm">{pair.asset}</td>
-			<td className="py-2 pr-2 text-right">{pair.costToTradeBps == null ? NA : `${usd(pair.costToTradeBps)} /$10k`}</td>
-			<td className="py-2 pr-2 text-right">
+		<tr>
+			<th
+				scope="row"
+				className="sticky left-0 z-10 border-t border-subtle bg-surface px-2 py-2 text-left label-sm whitespace-nowrap"
+			>
+				{pair.asset}
+			</th>
+			<td className="border-t border-subtle px-2 py-2 text-right whitespace-nowrap">
+				{pair.costToTradeBps == null ? (
+					NA
+				) : (
+					<>
+						{usd(pair.costToTradeBps)} <span className="text-tertiary">/$10k</span>
+					</>
+				)}
+			</td>
+			<td className="border-t border-subtle px-2 py-2 text-right whitespace-nowrap">
 				{pair.effectiveSpreadBps == null ? (
 					NA
 				) : (
@@ -137,28 +150,28 @@ function PairRow({ pair }: { pair: ExchangeExecutionPairModel }) {
 					</Tooltip>
 				)}
 			</td>
-			<td className="py-2 pr-2 text-right">
+			<td className="border-t border-subtle px-2 py-2 text-right whitespace-nowrap">
 				<SlippagePair predicted={pair.predictedSlippage10kBps} actual={pair.realizedSlippage10kBps} />
 			</td>
-			<td className="py-2 pr-2 text-right">
+			<td className="border-t border-subtle px-2 py-2 text-right whitespace-nowrap">
 				<SlippagePair predicted={at(pair.predictedSlippage100kBps, 10)} actual={at(pair.realizedSlippage100kBps, 10)} />
 			</td>
-			<td className="py-2 pr-2 text-right">
+			<td className="border-t border-subtle px-2 py-2 text-right whitespace-nowrap">
 				<SlippagePair predicted={at(pair.predictedSlippage1mBps, 100)} actual={at(pair.realizedSlippage1mBps, 100)} />
 			</td>
-			<td className="py-2 pr-2 text-right">
+			<td className="border-t border-subtle px-2 py-2 text-right whitespace-nowrap">
 				<Markout value={pair.markout1sBps} />
 			</td>
-			<td className="py-2 pr-2 text-right">
+			<td className="border-t border-subtle px-2 py-2 text-right whitespace-nowrap">
 				<Markout value={pair.markout15sBps} />
 			</td>
-			<td className="py-2 pr-2 text-right">
+			<td className="border-t border-subtle px-2 py-2 text-right whitespace-nowrap">
 				<Markout value={pair.markout1mBps} />
 			</td>
-			<td className="py-2 pr-2 text-right">
+			<td className="border-t border-subtle px-2 py-2 text-right whitespace-nowrap">
 				<Markout value={pair.markout5mBps} />
 			</td>
-			<td className="py-2 text-right text-tertiary">
+			<td className="border-t border-subtle px-2 py-2 text-right whitespace-nowrap text-tertiary">
 				<Tooltip content={`${formatNumber(pair.fillCount)} fills measured`} className="ms-auto w-fit">
 					<span>{`${pair.hoursCovered}h`}</span>
 				</Tooltip>
@@ -204,7 +217,7 @@ function FeedHealth({ feed }: { feed: ExchangeExecutionFeedHealth }) {
 			<div className="flex flex-wrap items-center gap-2">
 				<h3 className="label-md">Order book feed speed</h3>
 				<Tooltip content={`Latest measured day: ${feed.date}.`} className="w-fit">
-					<span className="body-sm text-tertiary underline decoration-dotted">BTC perp book</span>
+					<span className="body-sm text-secondary underline decoration-dotted">BTC perp book</span>
 				</Tooltip>
 				{feed.degraded ? (
 					<Tooltip
@@ -219,9 +232,9 @@ function FeedHealth({ feed }: { feed: ExchangeExecutionFeedHealth }) {
 				{stats.map((stat) => (
 					<div key={stat.label} className="flex flex-col gap-0.5">
 						<Tooltip content={stat.help} className="w-fit">
-							<span className="body-sm text-secondary underline decoration-dotted">{stat.label}</span>
+							<span className="label-md text-secondary underline decoration-dotted">{stat.label}</span>
 						</Tooltip>
-						<span className="font-jetbrains text-xl font-semibold">{stat.value}</span>
+						<span className="mono-xl">{stat.value}</span>
 					</div>
 				))}
 			</div>
@@ -238,32 +251,43 @@ function FeedHealth({ feed }: { feed: ExchangeExecutionFeedHealth }) {
 export function ProfileExecution({ execution }: { execution: ExchangeExecutionModel }) {
 	return (
 		<div className="flex flex-col gap-2">
-			<Card padding="sm" className="body-sm">
-				{summarySentences(execution).join(' ')}
+			<Card padding="sm">
+				<p className="body-md">{summarySentences(execution).join(' ')}</p>
 			</Card>
-			<Card padding="sm" className="overflow-x-auto">
-				<table className="w-full body-sm">
-					<thead>
-						<tr>
-							{HEADER_HELP.map((column) => (
-								<th
-									key={column.label}
-									className={`pb-2 label-sm text-secondary ${column.align === 'end' ? 'text-right' : 'text-left'}`}
-								>
-									<Tooltip content={column.help} className={column.align === 'end' ? 'ms-auto w-fit' : 'w-fit'}>
-										<span className="underline decoration-dotted">{column.label}</span>
-									</Tooltip>
-								</th>
+			<Card padding="none">
+				{/* Eleven columns of paired figures: a deliberate 12px compact recipe (headers and
+				    cells together), and cells that never wrap, so a narrow screen scrolls the table
+				    sideways with the pair column pinned instead of stacking every row three lines high. */}
+				<div className="overflow-x-auto">
+					<table className="w-full body-sm">
+						<thead>
+							<tr>
+								{HEADER_HELP.map((column, index) => (
+									<th
+										key={column.label}
+										className={`px-2 pt-3 pb-2 label-sm whitespace-nowrap text-secondary ${
+											index === 0
+												? 'sticky left-0 z-10 bg-surface text-left'
+												: column.align === 'end'
+													? 'text-right'
+													: 'text-left'
+										}`}
+									>
+										<Tooltip content={column.help} className={column.align === 'end' ? 'ms-auto w-fit' : 'w-fit'}>
+											<span className="whitespace-nowrap underline decoration-dotted">{column.label}</span>
+										</Tooltip>
+									</th>
+								))}
+							</tr>
+						</thead>
+						<tbody>
+							{execution.pairs.map((pair) => (
+								<PairRow key={pair.asset} pair={pair} />
 							))}
-						</tr>
-					</thead>
-					<tbody>
-						{execution.pairs.map((pair) => (
-							<PairRow key={pair.asset} pair={pair} />
-						))}
-					</tbody>
-				</table>
-				<p className="pt-3 body-sm text-tertiary">
+						</tbody>
+					</table>
+				</div>
+				<p className="border-t border-subtle p-3 body-sm text-tertiary">
 					Slippage is in dollars at each trade size: predicted first (the book&rsquo;s promise), then what fills
 					actually cost. Markouts are dollars per $10k traded; lower is better. Fill prices exclude trading fees, which
 					venues charge separately after the fill. n/a means not measured, never zero.

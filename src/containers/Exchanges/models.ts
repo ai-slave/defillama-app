@@ -55,6 +55,7 @@ export interface ExchangeSegmentActivity {
 export interface ExchangeNormalizedVolume {
 	reported: number
 	normalized: number
+	activeLiquidity: number
 	discountFraction: number
 	unverifiedFraction: number
 	flag: string | null
@@ -182,9 +183,8 @@ export interface ExchangeDirectoryRowModel {
 	quality: {
 		score: number
 		rank: number
-		/** Public tier band (S–D). Optional: absent until the upstream ranking file
-		 * carries it. */
-		tier?: string
+		/** Public tier band (S–D). */
+		tier: string
 		segments: Partial<Record<ExchangeSegment, number>>
 		components: Record<string, number | null>
 	} | null
@@ -216,6 +216,7 @@ export interface ExchangeDirectoryModel {
 	rows: ExchangeDirectoryRowModel[]
 	summary: ExchangeDirectorySummaryModel
 	updatedAt: string
+	executionAvailable: boolean
 }
 
 export interface ExchangePairModel {
@@ -250,6 +251,7 @@ export interface ExchangePairModel {
 	normalizedVolume: {
 		reported: number
 		normalized: number
+		activeLiquidity: number
 		discountFraction: number
 		status: string
 	} | null
@@ -433,29 +435,29 @@ export interface ExchangeExecutionModel {
  * breakdown can name each pillar and its weight. */
 export interface ExchangeProfileQualityModel {
 	score: number
-	tier: string | null
+	tier: string
 	/** Position within the venue's own kind (CEX or DEX). */
 	rankInKind: number
 	/** Position across ALL ranked venues, by score. */
 	overallRank: number
 	overallTotal: number
-	generatedAt: string | null
+	generatedAt: string
 	components: Array<{
 		key: string
 		label: string
-		weight: number | null
+		weight: number
 		score: number | null
-		what: string | null
-		na: string | null
+		what: string
+		na: string
 	}>
 	/** Sub-scores behind the Execution pillar (markout/cost/slip), joined with their
 	 * published catalog. Empty when the venue has no measured execution. */
 	execSubs: Array<{
 		key: string
 		label: string
-		weight: number | null
+		weight: number
 		score: number | null
-		what: string | null
+		what: string
 	}>
 }
 

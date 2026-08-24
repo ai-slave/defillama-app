@@ -3,7 +3,7 @@ import { mapMasterDirectoryOverview, mapMasterProfileMetadata, mapMasterResearch
 import type {
 	MasterChartColumnarResponse,
 	MasterChartPart,
-	MasterColumnarSeriesResponse,
+	MasterAggregateSeriesResponse,
 	MasterExchangeRegionCatalogResponse,
 	MasterExchangeRegionalMetadataResponse
 } from './master.types'
@@ -11,7 +11,7 @@ import type { ExchangeOverviewChartModel, ExchangeRegionalMetadataModel, Exchang
 import type { ExchangeResearchRange } from './queryState'
 
 export async function fetchExchangeDirectoryOverview(): Promise<ExchangeOverviewChartModel> {
-	const response = await fetchJson<MasterColumnarSeriesResponse>('/api/public/exchanges/series?range=1y')
+	const response = await fetchJson<MasterAggregateSeriesResponse>('/api/public/exchanges/series?range=1y')
 	return mapMasterDirectoryOverview(response)
 }
 

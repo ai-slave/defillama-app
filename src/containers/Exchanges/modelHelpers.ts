@@ -39,6 +39,7 @@ export function combineNormalizedVolume(
 	return {
 		reported,
 		normalized,
+		activeLiquidity: base.activeLiquidity + add.activeLiquidity,
 		discountFraction: reported > 0 ? 1 - normalized / reported : 0,
 		unverifiedFraction:
 			reported > 0 ? (base.unverifiedFraction * base.reported + add.unverifiedFraction * add.reported) / reported : 0,

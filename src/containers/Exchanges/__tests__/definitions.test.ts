@@ -10,7 +10,7 @@ function columnsById(columns: ColumnDef<ExchangeDirectoryRowModel, any>[]) {
 
 describe('Exchanges definitions', () => {
 	it('keeps every directory column label and header helper tied to its definition', () => {
-		const columns = buildDirectoryColumns('spot')
+		const columns = buildDirectoryColumns('spot', true)
 		const byId = columnsById(columns)
 
 		expect(Object.keys(byId).sort()).toEqual(Object.keys(exchangeDefinitions.directory).sort())

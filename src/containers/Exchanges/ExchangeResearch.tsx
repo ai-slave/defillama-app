@@ -97,7 +97,7 @@ function ResearchChartCard({
 				value={resolvedView}
 				onValueChange={(nextView) => {
 					void pushShallowQuery(router, {
-						[getResearchViewQueryKey(part)]: nextView === viewOptions[0].id ? undefined : nextView
+						[getResearchViewQueryKey(part)]: nextView === viewOptions[0]?.id ? undefined : nextView
 					})
 				}}
 				options={viewOptions.map(({ id, label }) => {

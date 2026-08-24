@@ -135,7 +135,7 @@ export function MetadataFieldValue({
 						<ExternalLinkButton
 							key={`${link.label}-${link.url}`}
 							href={link.url}
-							icon={icon}
+							{...(icon ? { icon } : null)}
 							{...(icon === 'globe' && exchangeName
 								? {
 										'data-umami-event': 'exchange-website-click',
@@ -166,7 +166,9 @@ export function MetadataFieldValue({
 		)
 	}
 	if (field.type === 'link') return <ExternalMetadataLink value={field.value} />
-	if (field.type === 'badge') return <MetadataBadge value={field.value} tone={field.tone} />
+	if (field.type === 'badge') {
+		return <MetadataBadge value={field.value} {...(field.tone ? { tone: field.tone } : null)} />
+	}
 	if (field.type === 'table') return <MetadataTable field={field} />
 	return <>{formatScalar(field.value, field.type)}</>
 }
@@ -230,7 +232,11 @@ function MetadataTable({
 									className={`border-b border-subtle px-3 py-2 ${column.align === 'right' ? 'font-jetbrains' : ''}`}
 									style={{ textAlign: column.align === 'right' ? 'right' : 'left' }}
 								>
-									<MetadataTableCell value={row[column.key]} columnKey={column.key} format={column.format} />
+									<MetadataTableCell
+										value={row[column.key]}
+										columnKey={column.key}
+										{...(column.format ? { format: column.format } : null)}
+									/>
 								</td>
 							))}
 						</tr>
@@ -401,7 +407,11 @@ function MetadataGroup({
 	return (
 		<Card as="section" padding="none" className="overflow-hidden">
 			<MetadataGroupHeader group={group} />
-			<MetadataFields group={group} exchangeName={exchangeName} singleColumn={singleColumn} />
+			<MetadataFields
+				group={group}
+				exchangeName={exchangeName}
+				{...(singleColumn !== undefined ? { singleColumn } : null)}
+			/>
 			{nestedGroup ? (
 				<>
 					<div className="flex flex-wrap items-center gap-2 border-b border-subtle px-3 py-2.5">
@@ -449,20 +459,24 @@ export function MetadataGroups({
 	const rows: ExchangeMetadataGroupModel[][] = []
 	for (const group of rest) {
 		const previous = rows[rows.length - 1]
-		if (previous?.length === 1 && isCompactGroup(previous[0]) && isCompactGroup(group)) previous.push(group)
-		else rows.push([group])
+		const previousGroup = previous?.[0]
+		if (previous?.length === 1 && previousGroup && isCompactGroup(previousGroup) && isCompactGroup(group)) {
+			previous.push(group)
+		} else rows.push([group])
 	}
 
 	return (
 		<section className="flex flex-col gap-2" aria-label="Exchange information">
 			{overview ? (
-				<MetadataGroup group={overview} nestedGroup={links} exchangeName={exchangeName} />
+				<MetadataGroup group={overview} exchangeName={exchangeName} {...(links ? { nestedGroup: links } : null)} />
 			) : links ? (
 				<MetadataGroup group={links} exchangeName={exchangeName} />
 			) : null}
-			{rows.map((row) =>
-				row.length === 2 ? (
-					<div key={row[0].key} className="grid grid-cols-1 gap-2 xl:grid-cols-2">
+			{rows.map((row) => {
+				const first = row[0]
+				if (!first) return null
+				return row.length === 2 ? (
+					<div key={first.key} className="grid grid-cols-1 gap-2 xl:grid-cols-2">
 						{row.map((group) => (
 							<MetadataGroup
 								key={group.key}
@@ -474,13 +488,13 @@ export function MetadataGroups({
 					</div>
 				) : (
 					<MetadataGroup
-						key={row[0].key}
-						group={row[0]}
+						key={first.key}
+						group={first}
 						exchangeName={exchangeName}
-						singleColumn={row[0].fields.length === 1}
+						singleColumn={first.fields.length === 1}
 					/>
 				)
-			)}
+			})}
 		</section>
 	)
 }

@@ -127,7 +127,7 @@ describe('fetchCoreMetadata', () => {
 		expect(payload.tokenDirectory.aave?.symbol).toBe('AAVE')
 		expect(payload.bridgeProtocolSlugs).toContain('stargate')
 		expect(payload.bridgeChainSlugs).toEqual(['ethereum', 'arbitrum'])
-		expect(payload.liquidationsTokenSymbols).toContain('ETH')
+		expect(payload.liquidationsTokenSymbols).toEqual(['WETH'])
 		expect(payload.emissionsProtocolsList).toEqual(['aave'])
 		expect(payload.emissionsSupplyMetrics).toEqual({})
 		expect(payload.emissionsHistoricalPrices).toEqual({})

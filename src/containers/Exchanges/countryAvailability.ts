@@ -8,6 +8,9 @@ export function resolveCountryAvailability(
 	country: string
 ): ExchangeCountryAvailabilityModel {
 	const region = catalog.country_regions[country]
+	if (!region) throw new Error(`Missing region for ${country}`)
+	const regionDefinition = catalog.regions[region]
+	if (!regionDefinition) throw new Error(`Missing region definition for ${region}`)
 	const exact = manifest.variants[region]
 	const variant = exact ?? manifest.variants.global
 
@@ -18,7 +21,7 @@ export function resolveCountryAvailability(
 			: (override?.status ?? variant.status)
 	return {
 		country,
-		region: { key: region, label: catalog.regions[region].label },
+		region: { key: region, label: regionDefinition.label },
 		availability,
 		segments: availability === 'unavailable' ? [] : variant.segments,
 		note: override?.note ?? variant.note ?? null,

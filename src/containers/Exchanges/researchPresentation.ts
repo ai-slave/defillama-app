@@ -244,7 +244,9 @@ export function resolveResearchView(
 	requestedView: ExchangeResearchView | null
 ): ExchangeResearchView {
 	if (requestedView && RESEARCH_VIEWS[part].some((view) => view.id === requestedView)) return requestedView
-	return RESEARCH_VIEWS[part][0].id
+	const firstView = RESEARCH_VIEWS[part][0]
+	if (!firstView) throw new Error(`Missing research views for ${part}`)
+	return firstView.id
 }
 
 export function getResearchPresentation(part: ExchangeResearchPart, view: ExchangeResearchView): ResearchPresentation {

@@ -106,6 +106,7 @@ export interface MasterSegmentStats {
 export interface MasterSegmentNormalizedVolume {
 	reported: number
 	normalized: number
+	active_liquidity: number
 	discount_pct: number
 	unverified_pct: number
 	flag: string | null
@@ -233,34 +234,39 @@ export interface MasterDirectoryVenue extends MasterVenueCore {
 		score: number
 		rank: number
 		/** Public tier band (S ≥85, A ≥70, B ≥55, C ≥40, else D); S additionally
-		 * requires measured execution. Optional: absent in files written by the
-		 * pre-tier ranking script. */
-		tier?: string
+		 * requires measured execution. */
+		tier: string
 		segments: Partial<Record<MasterSegment, number>>
 		components: Record<string, number | null>
 	} | null
 }
 
-/** Measured execution quality (tick-level fills on the shared perp basket) —
- * `exchanges/execution-quality.json`. Linear perps only today. Minimal cut of the
- * upstream shape: just what the directory table and profile Execution tab render. */
-export interface MasterExecutionPairMetrics {
-	asset: string
-	hours_covered: number
-	n_trades: number
+interface MasterExecutionMeasurements {
 	cost_to_trade_bps: number | null
 	effective_spread_bps: number | null
 	quoted_spread_bps: number | null
 	realized_slippage_bps_10k: number | null
-	predicted_slippage_bps_10k: number | null
 	realized_slippage_bps_100k: number | null
-	predicted_slippage_bps_100k: number | null
 	realized_slippage_bps_1m: number | null
+	predicted_slippage_bps_10k: number | null
+	predicted_slippage_bps_100k: number | null
 	predicted_slippage_bps_1m: number | null
+	slip_gap_bps_10k: number | null
+	slip_gap_bps_100k: number | null
 	markout_bps_1s: number | null
 	markout_bps_15s: number | null
 	markout_bps_1m: number | null
 	markout_bps_5m: number | null
+	taker_fee_bps: number | null
+}
+
+/** Measured execution quality (tick-level fills on the shared perp basket) —
+ * `exchanges/execution-quality.json`. Linear perps only today. */
+export interface MasterExecutionPairMetrics extends MasterExecutionMeasurements {
+	asset: string
+	symbol: string
+	hours_covered: number
+	n_trades: number
 }
 
 /** BTC book-feed health for the venue's captured tick feed (latest measured day). A
@@ -276,19 +282,19 @@ export interface MasterExecutionFeedHealth {
 	degraded: boolean
 }
 
-export interface MasterExecutionVenueMetrics {
+export interface MasterExecutionVenueMetrics extends MasterExecutionMeasurements {
 	assets: string[]
+	pair_count: number
 	hours_covered: number
-	cost_to_trade_bps: number | null
-	realized_slippage_bps_10k: number | null
-	predicted_slippage_bps_10k: number | null
-	markout_bps_1m: number | null
+	n_trades: number
 	feed?: MasterExecutionFeedHealth
-	pairs?: Record<string, MasterExecutionPairMetrics>
+	pairs: Record<string, MasterExecutionPairMetrics>
 }
 
 export interface MasterExecutionQualityResponse {
 	basket: string[]
+	unit: string
+	unit_note: string
 	venues: Record<string, MasterExecutionVenueMetrics>
 }
 
@@ -296,11 +302,12 @@ export interface MasterExecutionQualityResponse {
  * within the venue's own kind; `score` is cross-comparable. */
 export interface MasterQualityRanksResponse {
 	generated_at: string
+	last_updated: string
 	venues: Record<
 		string,
 		{
 			score: number
-			tier?: string
+			tier: string
 			rank: number
 			segments: Partial<Record<MasterSegment, number>>
 			components: Record<string, number | null>
@@ -315,9 +322,10 @@ export interface MasterQualityRanksResponse {
  * measures and what it weighs, so the profile breakdown can't describe stale math. */
 export interface MasterRankMethodologyResponse {
 	components: Array<{ key: string; label: string; weight: number; what: string; na: string }>
-	/** Catalog for the Execution pillar's sub-metrics; absent in older upstream files. */
-	exec_subs?: Array<{ key: string; label: string; weight: number; what: string }>
+	exec_subs: Array<{ key: string; label: string; weight: number; what: string }>
+	flags: Array<{ key: string; label: string; what: string }>
 	ranks_generated_at: string | null
+	last_updated: string
 }
 
 export interface MasterDirectoryTotals {
@@ -339,26 +347,70 @@ export interface MasterDirectoryResponse {
 
 // --- Ranged columnar series (exchanges/series/{range}.json and exchanges/{slug}/series/{range}.json) ---
 
-/**
- * Compact columnar series. `series[i]` is aligned to `days` and named by `key[i]`;
- * a null column means the metric is unsupported for the venue, a null cell is a
- * missing observation. The aggregate file uses AGG keys
- * (cex/dex/total × spot/linear_perp/inverse_perp volume + perp OI +
- * total_trading_volume); per-venue files use the 19 exact venue keys.
- */
-export interface MasterColumnarSeriesResponse {
+export const MASTER_AGGREGATE_SERIES_KEYS = [
+	'cex_spot_volume',
+	'cex_linear_perp_volume',
+	'cex_inverse_perp_volume',
+	'cex_linear_perp_oi',
+	'cex_inverse_perp_oi',
+	'dex_spot_volume',
+	'dex_linear_perp_volume',
+	'dex_inverse_perp_volume',
+	'dex_linear_perp_oi',
+	'dex_inverse_perp_oi',
+	'total_spot_volume',
+	'total_linear_perp_volume',
+	'total_inverse_perp_volume',
+	'total_linear_perp_oi',
+	'total_inverse_perp_oi',
+	'total_trading_volume'
+] as const
+
+export const MASTER_VENUE_SERIES_KEYS = [
+	'spot_volume',
+	'linear_perp_volume',
+	'inverse_perp_volume',
+	'linear_perp_oi',
+	'inverse_perp_oi',
+	'linear_perp_oi_delta',
+	'inverse_perp_oi_delta',
+	'spot_depth_2pct',
+	'linear_perp_depth_2pct',
+	'inverse_perp_depth_2pct',
+	'spot_normalized_volume',
+	'linear_perp_normalized_volume',
+	'inverse_perp_normalized_volume',
+	'spot_active_liquidity',
+	'linear_perp_active_liquidity',
+	'inverse_perp_active_liquidity',
+	'spot_reported_volume',
+	'linear_perp_reported_volume',
+	'inverse_perp_reported_volume',
+	'spot_market_count',
+	'linear_perp_market_count',
+	'inverse_perp_market_count'
+] as const
+
+interface MasterColumnarSeriesBase<Key extends readonly string[]> {
 	days: number[]
-	key: string[]
+	key: Key
 	series: Array<Array<number | null> | null>
-	freshness?: {
+	last_updated: string
+}
+
+export type MasterAggregateSeriesResponse = MasterColumnarSeriesBase<typeof MASTER_AGGREGATE_SERIES_KEYS>
+
+export interface MasterVenueSeriesResponse extends MasterColumnarSeriesBase<typeof MASTER_VENUE_SERIES_KEYS> {
+	freshness: {
 		first_day: number | null
 		last_day: number | null
 		expected_last_day: number | null
 		stale: boolean
 		metrics: Record<string, { last_day: number | null; stale: boolean }>
 	}
-	last_updated: string
 }
+
+export type MasterColumnarSeriesResponse = MasterAggregateSeriesResponse | MasterVenueSeriesResponse
 
 // --- exchanges/{slug}/index.json -------------------------------------------------
 
@@ -410,8 +462,8 @@ export interface MasterExchangePair {
 	min_order_cost: number | null
 	best_bid: number | null
 	best_ask: number | null
-	depth_bid_usd: number[] | null
-	depth_ask_usd: number[] | null
+	depth_bid_usd: Array<number | null> | null
+	depth_ask_usd: Array<number | null> | null
 	depth_bid_max_dist: number | null
 	depth_ask_max_dist: number | null
 	nvol: MasterPairNormalizedVolume | null
@@ -660,13 +712,26 @@ export type MasterChartMetric =
 	| 'reported_spot'
 	| 'reported_linear_perp'
 	| 'reported_inverse_perp'
+	| 'active_liquidity_spot'
+	| 'active_liquidity_linear_perp'
+	| 'active_liquidity_inverse_perp'
 
 /** Exact ordered key schema per chart part (lib/chart-contract.ts GLOBAL_CHART_KEYS). */
 export const MASTER_CHART_KEYS = {
 	volume: ['spot', 'linear_perp', 'inverse_perp', 'spot_mkts', 'linear_perp_mkts', 'inverse_perp_mkts'],
 	oi: ['linear_perp', 'inverse_perp'],
 	depth: ['spot', 'linear_perp', 'inverse_perp'],
-	nvol: ['spot', 'linear_perp', 'inverse_perp', 'reported_spot', 'reported_linear_perp', 'reported_inverse_perp']
+	nvol: [
+		'spot',
+		'linear_perp',
+		'inverse_perp',
+		'reported_spot',
+		'reported_linear_perp',
+		'reported_inverse_perp',
+		'active_liquidity_spot',
+		'active_liquidity_linear_perp',
+		'active_liquidity_inverse_perp'
+	]
 } as const satisfies Record<MasterChartPart, readonly MasterChartMetric[]>
 
 /**

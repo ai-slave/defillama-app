@@ -42,7 +42,7 @@ export type ProfileCountryView =
 export function resolveProfileCountryView(
 	country: string | null,
 	query: {
-		data?: ExchangeRegionalMetadataModel
+		data?: ExchangeRegionalMetadataModel | undefined
 		isLoading: boolean
 		isError: boolean
 		refetch: () => unknown

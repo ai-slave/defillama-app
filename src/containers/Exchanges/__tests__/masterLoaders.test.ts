@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
 	chart: vi.fn(),
+	directory: vi.fn(),
 	directoryOverview: vi.fn(),
 	exchangeSeries: vi.fn(),
 	index: vi.fn(),
@@ -10,12 +11,14 @@ const mocks = vi.hoisted(() => ({
 	qualityRanks: vi.fn(),
 	rankMethodology: vi.fn(),
 	mapMetadataOnlyProfile: vi.fn(),
+	mapDirectory: vi.fn(),
 	mapProfile: vi.fn(),
 	mapResearch: vi.fn()
 }))
 
 vi.mock('../server/master.upstream', () => ({
 	fetchMasterChartFromNetwork: mocks.chart,
+	fetchMasterDirectoryFromNetwork: mocks.directory,
 	fetchMasterExchangeSeriesFromNetwork: mocks.exchangeSeries,
 	fetchMasterExchangeIndexFromNetwork: mocks.index,
 	fetchMasterExchangeMetadataFromNetwork: mocks.metadata,
@@ -28,6 +31,7 @@ vi.mock('../server/master.upstream', () => ({
 
 vi.mock('../master.mappers', () => ({
 	mapMasterDirectoryOverview: mocks.directoryOverview,
+	mapMasterDirectory: mocks.mapDirectory,
 	mapMasterMetadataOnlyProfile: mocks.mapMetadataOnlyProfile,
 	mapMasterProfile: mocks.mapProfile,
 	mapMasterResearchReport: mocks.mapResearch
@@ -42,6 +46,28 @@ beforeEach(() => {
 })
 
 describe('master page loaders', () => {
+	it('hides execution data when the optional directory source fails', async () => {
+		const directory = { venues: [] }
+		mocks.directory.mockResolvedValue(directory)
+		mocks.mapDirectory.mockReturnValue({ rows: [], executionAvailable: false })
+
+		const { loadMasterExchangeDirectory } = await import('../server/master.loaders')
+		await expect(loadMasterExchangeDirectory()).resolves.toEqual({ rows: [], executionAvailable: false })
+		expect(mocks.mapDirectory).toHaveBeenCalledWith(directory, null)
+	})
+
+	it('preserves a successful execution source with no measured venues', async () => {
+		const directory = { venues: [] }
+		const execution = { basket: ['BTC'], unit: 'bps', unit_note: 'Basis points.', venues: {} }
+		mocks.directory.mockResolvedValue(directory)
+		mocks.executionQuality.mockResolvedValue(execution)
+		mocks.mapDirectory.mockReturnValue({ rows: [], executionAvailable: true })
+
+		const { loadMasterExchangeDirectory } = await import('../server/master.loaders')
+		await expect(loadMasterExchangeDirectory()).resolves.toEqual({ rows: [], executionAvailable: true })
+		expect(mocks.mapDirectory).toHaveBeenCalledWith(directory, execution)
+	})
+
 	it('loads and maps an exchange overview range', async () => {
 		const payload = { days: [1], key: ['cex_spot_volume'], series: [[100]] }
 		mocks.exchangeSeries.mockResolvedValue(payload)
@@ -103,6 +129,40 @@ describe('master page loaders', () => {
 			{ display_name: 'Venue', profile_mode: 'markets' },
 			{ execution: null, ranks: null, methodology: null }
 		)
+	})
+
+	it('keeps execution available when only ranking methodology fails', async () => {
+		const metadata = { display_name: 'Venue', profile_mode: 'markets' }
+		const index = { exchange: 'venue' }
+		const execution = { basket: ['BTC'], unit: 'bps', unit_note: 'Basis points.', venues: {} }
+		const ranks = { generated_at: '2026-08-24', last_updated: '2026-08-24', venues: {} }
+		mocks.metadata.mockResolvedValue(metadata)
+		mocks.index.mockResolvedValue(index)
+		mocks.executionQuality.mockResolvedValue(execution)
+		mocks.qualityRanks.mockResolvedValue(ranks)
+		mocks.mapProfile.mockReturnValue({ slug: 'venue' })
+
+		const { loadMasterExchangeProfile } = await import('../server/master.loaders')
+		await loadMasterExchangeProfile('venue')
+
+		expect(mocks.mapProfile).toHaveBeenCalledWith(index, metadata, { execution, ranks, methodology: null })
+	})
+
+	it('keeps ranking available when only execution fails', async () => {
+		const metadata = { display_name: 'Venue', profile_mode: 'markets' }
+		const index = { exchange: 'venue' }
+		const ranks = { generated_at: '2026-08-24', last_updated: '2026-08-24', venues: {} }
+		const methodology = { components: [], exec_subs: [], flags: [], ranks_generated_at: '2026-08-24' }
+		mocks.metadata.mockResolvedValue(metadata)
+		mocks.index.mockResolvedValue(index)
+		mocks.qualityRanks.mockResolvedValue(ranks)
+		mocks.rankMethodology.mockResolvedValue(methodology)
+		mocks.mapProfile.mockReturnValue({ slug: 'venue' })
+
+		const { loadMasterExchangeProfile } = await import('../server/master.loaders')
+		await loadMasterExchangeProfile('venue')
+
+		expect(mocks.mapProfile).toHaveBeenCalledWith(index, metadata, { execution: null, ranks, methodology })
 	})
 
 	it('maps a metadata-only profile without requesting its index', async () => {

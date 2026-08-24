@@ -34,17 +34,23 @@ function accessibleValue(value: number, symbol: ExchangeResearchChartModel['valu
 }
 
 export function researchSeriesColor(lineId: string, index: number): string {
-	return lineId === 'other' ? OTHER_COLOR : EXCHANGE_COLORS[index % EXCHANGE_COLORS.length]
+	return lineId === 'other' ? OTHER_COLOR : (EXCHANGE_COLORS[index % EXCHANGE_COLORS.length] ?? OTHER_COLOR)
 }
 
 export function researchChartAriaLabel(chart: ExchangeResearchChartModel): string {
 	const lines = chart.lines.map((line) => {
 		const first = line.values.findIndex((value) => value != null)
 		const last = line.values.findLastIndex((value) => value != null)
-		if (first < 0 || last < 0) return `${line.label}: no observations.`
-		const latest = `${accessibleValue(line.values[last] as number, chart.valueSymbol)} on ${UTC_DAY.format(new Date(chart.days[last] * 1000))}`
+		const firstValue = line.values[first]
+		const lastValue = line.values[last]
+		const firstDay = chart.days[first]
+		const lastDay = chart.days[last]
+		if (firstValue == null || lastValue == null || firstDay === undefined || lastDay === undefined) {
+			return `${line.label}: no observations.`
+		}
+		const latest = `${accessibleValue(lastValue, chart.valueSymbol)} on ${UTC_DAY.format(new Date(lastDay * 1000))}`
 		if (first === last) return `${line.label}: ${latest}.`
-		const earliest = `${accessibleValue(line.values[first] as number, chart.valueSymbol)} on ${UTC_DAY.format(new Date(chart.days[first] * 1000))}`
+		const earliest = `${accessibleValue(firstValue, chart.valueSymbol)} on ${UTC_DAY.format(new Date(firstDay * 1000))}`
 		return `${line.label}: from ${earliest} to ${latest}.`
 	})
 	return `${chart.title}. ${chart.description} ${lines.join(' ')}`
@@ -124,7 +130,7 @@ function ResearchChartFrame({
 	title: string
 	description: string
 	toolbar?: React.ReactNode
-	updatedAt?: string
+	updatedAt?: string | null
 	children: React.ReactNode
 }) {
 	return (

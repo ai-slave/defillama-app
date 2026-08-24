@@ -5,7 +5,7 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { pushShallowQuery } from '~/utils/routerQuery'
-import { buildDirectoryColumns } from './directoryColumns'
+import { buildDirectoryColumns, EXECUTION_COLUMN_IDS } from './directoryColumns'
 import { ExchangeCountrySelect } from './ExchangeCountrySelect'
 import type { MasterExchangeRegionCatalogResponse } from './master.types'
 import { filterDirectoryRows, nestDirectoryRows, type DirectoryKind, type DirectoryTreeRow } from './modelHelpers'
@@ -86,7 +86,6 @@ const ALL_COLUMN_IDS = [
 // Fee columns follow the active segment scope exactly; perp-only metrics don't apply to
 // spot. Execution columns are measured on the linear-perp basket only today, so they
 // show in that scope alone.
-const EXECUTION_COLUMN_IDS = ['execCostToTrade', 'execSlippage10k', 'execMarkout1m']
 const SCOPE_HIDDEN_COLUMN_IDS: Record<ExchangeSegment, string[]> = {
 	spot: [
 		'openInterestUsd',
@@ -120,12 +119,14 @@ export function DirectoryTable({
 	country,
 	catalog,
 	catalogFailed,
+	executionAvailable,
 	onCountryChange
 }: {
 	rows: ExchangeDirectoryRowModel[]
 	country: string | null
 	catalog: MasterExchangeRegionCatalogResponse | null
 	catalogFailed: boolean
+	executionAvailable: boolean
 	onCountryChange: (country: string | null) => void
 }) {
 	const router = useRouter()
@@ -137,7 +138,7 @@ export function DirectoryTable({
 		() => nestDirectoryRows(filterDirectoryRows(rows, { kind, scope, country, catalog })),
 		[rows, kind, scope, country, catalog]
 	)
-	const columns = React.useMemo(() => buildDirectoryColumns(scope), [scope])
+	const columns = React.useMemo(() => buildDirectoryColumns(scope, executionAvailable), [scope, executionAvailable])
 
 	return (
 		<TableWithSearch<DirectoryTreeRow>

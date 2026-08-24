@@ -11,11 +11,12 @@ import { mapMasterDirectoryOverview } from '../master.mappers'
 import {
 	MASTER_CHART_PARTS,
 	type MasterChartPart,
-	type MasterColumnarSeriesResponse,
+	type MasterAggregateSeriesResponse,
 	type MasterExchangeMetadataResponse,
 	type MasterExchangeRegionCatalogResponse,
 	type MasterExchangeRegionManifestResponse,
-	type MasterExchangeRegionalMetadataResponse
+	type MasterExchangeRegionalMetadataResponse,
+	type MasterVenueSeriesResponse
 } from '../master.types'
 import { getResearchRange, type ExchangeResearchRange } from '../queryState'
 import { isCanonicalExchangeSlug } from '../slugs'
@@ -32,7 +33,7 @@ const MASTER_RESPONSE_CACHE_TTL_MS = 5 * 60 * 1000
 const MASTER_CHART_TIMEOUT_MS = 60_000
 
 const getCachedMasterExchangeSeries = (range: ExchangeResearchRange) =>
-	cachedResult<MasterColumnarSeriesResponse>(
+	cachedResult<MasterAggregateSeriesResponse>(
 		`exchanges-master-series-source:${range}`,
 		`${MARKETS_SERVER_URL}/exchanges/series/${range}.json`,
 		{ ttlMs: MASTER_RESPONSE_CACHE_TTL_MS, ttlJitter: 0.2 },
@@ -40,7 +41,7 @@ const getCachedMasterExchangeSeries = (range: ExchangeResearchRange) =>
 	)
 
 const getCachedMasterExchangeHistory = (exchange: string, range: ExchangeResearchRange) =>
-	cachedResult<MasterColumnarSeriesResponse>(
+	cachedResult<MasterVenueSeriesResponse>(
 		`exchanges-master-history-source:${exchange}:${range}`,
 		`${MARKETS_SERVER_URL}/exchanges/${encodeURIComponent(exchange)}/series/${range}.json`,
 		{ ttlMs: MASTER_RESPONSE_CACHE_TTL_MS, ttlJitter: 0.2 },

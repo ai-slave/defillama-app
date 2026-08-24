@@ -36,6 +36,7 @@ import { withCountryParam } from './queryState'
 import { selectVenueDestination } from './venueLinks'
 
 const columnHelper = createColumnHelper<ExchangeDirectoryRowModel>()
+export const EXECUTION_COLUMN_IDS = ['execCostToTrade', 'execSlippage10k', 'execMarkout1m']
 
 function money(value: number | null | undefined): string {
 	return value == null
@@ -176,9 +177,12 @@ function linkedMetric(value: React.ReactNode, note: string | undefined) {
 	)
 }
 
-export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<ExchangeDirectoryRowModel, any>[] {
+export function buildDirectoryColumns(
+	scope: ExchangeSegment,
+	executionAvailable: boolean
+): ColumnDef<ExchangeDirectoryRowModel, any>[] {
 	const definitions = exchangeDefinitions.directory
-	return [
+	const columns: ColumnDef<ExchangeDirectoryRowModel, any>[] = [
 		columnHelper.accessor((row) => `${row.name} ${row.slug} ${row.profile?.nativeToken ?? ''}`, {
 			id: 'name',
 			header: definitions.name.label,
@@ -826,4 +830,5 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 			}
 		})
 	]
+	return executionAvailable ? columns : columns.filter((column) => !EXECUTION_COLUMN_IDS.includes(column.id ?? ''))
 }

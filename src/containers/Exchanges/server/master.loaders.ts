@@ -7,7 +7,7 @@ import {
 	mapMasterProfile,
 	mapMasterResearchReport
 } from '../master.mappers'
-import { MASTER_CHART_PARTS, type MasterChartPart } from '../master.types'
+import type { MasterChartPart } from '../master.types'
 import type { MasterExchangeMetadataResponse } from '../master.types'
 import type {
 	ExchangeDirectoryModel,
@@ -50,9 +50,12 @@ export async function loadMasterMicaVenues(): Promise<MicaVenueModel[]> {
 type ExchangeResearchReports = Record<MasterChartPart, ExchangeResearchReportModel>
 
 export async function loadMasterResearchReports(): Promise<ExchangeResearchReports> {
-	const [volume, oi, depth, nvol] = await Promise.all(
-		MASTER_CHART_PARTS.map((part) => fetchMasterChartFromNetwork(part, '1y'))
-	)
+	const [volume, oi, depth, nvol] = await Promise.all([
+		fetchMasterChartFromNetwork('volume', '1y'),
+		fetchMasterChartFromNetwork('oi', '1y'),
+		fetchMasterChartFromNetwork('depth', '1y'),
+		fetchMasterChartFromNetwork('nvol', '1y')
+	])
 	return {
 		volume: mapMasterResearchReport('volume', volume),
 		oi: mapMasterResearchReport('oi', oi),

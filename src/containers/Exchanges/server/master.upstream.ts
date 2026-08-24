@@ -1,7 +1,7 @@
 import { MARKETS_SERVER_URL } from '~/constants'
 import { fetchJson } from '~/utils/async'
 import type {
-	MasterColumnarSeriesResponse,
+	MasterAggregateSeriesResponse,
 	MasterChartColumnarResponse,
 	MasterChartPart,
 	MasterDirectoryResponse,
@@ -12,7 +12,8 @@ import type {
 	MasterExchangeMetadataResponse,
 	MasterExchangeRegionCatalogResponse,
 	MasterExchangeRegionManifestResponse,
-	MasterMicaResponse
+	MasterMicaResponse,
+	MasterVenueSeriesResponse
 } from '../master.types'
 import type { ExchangeResearchRange } from '../queryState'
 
@@ -36,15 +37,15 @@ export function fetchMasterRankMethodologyFromNetwork(): Promise<MasterRankMetho
 
 export function fetchMasterExchangeSeriesFromNetwork(
 	range: ExchangeResearchRange
-): Promise<MasterColumnarSeriesResponse> {
-	return fetchJson<MasterColumnarSeriesResponse>(`${MARKETS_SERVER_URL}/exchanges/series/${range}.json`)
+): Promise<MasterAggregateSeriesResponse> {
+	return fetchJson<MasterAggregateSeriesResponse>(`${MARKETS_SERVER_URL}/exchanges/series/${range}.json`)
 }
 
 export function fetchMasterExchangeHistoryFromNetwork(
 	exchange: string,
 	range: ExchangeResearchRange
-): Promise<MasterColumnarSeriesResponse> {
-	return fetchJson<MasterColumnarSeriesResponse>(
+): Promise<MasterVenueSeriesResponse> {
+	return fetchJson<MasterVenueSeriesResponse>(
 		`${MARKETS_SERVER_URL}/exchanges/${exchangePath(exchange)}/series/${range}.json`
 	)
 }
@@ -84,9 +85,9 @@ export function fetchMasterMicaFromNetwork(): Promise<MasterMicaResponse> {
 	return fetchJson<MasterMicaResponse>(`${MARKETS_SERVER_URL}/exchanges/mica.json`)
 }
 
-export function fetchMasterChartFromNetwork(
-	part: MasterChartPart,
+export function fetchMasterChartFromNetwork<Part extends MasterChartPart>(
+	part: Part,
 	range: ExchangeResearchRange
-): Promise<MasterChartColumnarResponse> {
-	return fetchJson<MasterChartColumnarResponse>(`${MARKETS_SERVER_URL}/charts/${part}/${range}.json`)
+): Promise<MasterChartColumnarResponse<Part>> {
+	return fetchJson<MasterChartColumnarResponse<Part>>(`${MARKETS_SERVER_URL}/charts/${part}/${range}.json`)
 }

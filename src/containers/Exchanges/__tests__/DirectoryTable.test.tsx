@@ -55,14 +55,29 @@ function row(patch: Partial<ExchangeDirectoryRowModel> = {}): ExchangeDirectoryR
 }
 
 function volumeAccessor(scope: 'spot' | 'linear_perp' | 'inverse_perp') {
-	const column = buildDirectoryColumns(scope).find((item) => item.id === 'volume24h')!
+	const column = buildDirectoryColumns(scope, true).find((item) => item.id === 'volume24h')!
 	return (venue: ExchangeDirectoryRowModel) => (column as any).accessorFn(venue, 0)
 }
 
 describe('exact segment scopes in directory columns', () => {
+	it('hides execution columns only when the execution source is unavailable', () => {
+		const availableIds = buildDirectoryColumns('linear_perp', true).map((column) => column.id)
+		const unavailableIds = buildDirectoryColumns('linear_perp', false).map((column) => column.id)
+
+		expect(availableIds).toEqual(expect.arrayContaining(['execCostToTrade', 'execSlippage10k', 'execMarkout1m']))
+		expect(unavailableIds).not.toEqual(expect.arrayContaining(['execCostToTrade', 'execSlippage10k', 'execMarkout1m']))
+	})
+
+	it('keeps an unmeasured venue in the available execution population', () => {
+		const column = buildDirectoryColumns('linear_perp', true).find((item) => item.id === 'execCostToTrade')
+		if (!column) throw new Error('Expected execution column')
+
+		expect(column.meta?.csvValue?.(row())).toBe('')
+	})
+
 	it('keeps selected-country status out of the exchange name cell', () => {
 		const venue = row({ selectedCountry: 'DE', selectedCountryStatus: 'restricted' })
-		const nameColumn = buildDirectoryColumns('spot').find((item) => item.id === 'name')!
+		const nameColumn = buildDirectoryColumns('spot', true).find((item) => item.id === 'name')!
 		const html = renderToStaticMarkup(
 			(nameColumn as any).cell({
 				row: {

@@ -50,32 +50,33 @@ export function TierScale({ score, tier }: { score: number; tier: string | null 
 }
 
 function PillarRow({ pillar }: { pillar: ExchangeProfileQualityModel['components'][number] }) {
-	const measured = pillar.score != null
+	const score = pillar.score
+	const measured = score !== null
 	return (
 		<div className="flex items-center gap-3">
 			<Tooltip
-				content={measured ? (pillar.what ?? pillar.label) : `Not measured, never counted as zero. ${pillar.na ?? ''}`}
+				content={measured ? pillar.what : `Not measured, never counted as zero. ${pillar.na}`}
 				className="w-40 shrink-0"
 			>
 				<span className="flex items-baseline gap-1.5 underline decoration-dotted">
 					<span className="label-sm">{pillar.label}</span>
-					{pillar.weight ? <span className="body-sm text-tertiary">{pillar.weight}%</span> : null}
+					<span className="body-sm text-tertiary">{pillar.weight}%</span>
 				</span>
 			</Tooltip>
 			<div className="h-2 flex-1 overflow-hidden rounded-full bg-surface-elevated-2">
 				<div
 					className="h-full rounded-full"
 					style={{
-						width: `${measured ? Math.max(2, Math.min(100, pillar.score!)) : 0}%`,
-						backgroundColor: measured ? scoreColor(pillar.score!) : undefined
+						width: `${measured ? Math.max(2, Math.min(100, score)) : 0}%`,
+						backgroundColor: measured ? scoreColor(score) : undefined
 					}}
 				/>
 			</div>
 			<span
 				className={`w-24 shrink-0 text-right label-sm ${measured ? 'font-semibold' : 'text-tertiary'}`}
-				style={measured ? { color: scoreColor(pillar.score!) } : undefined}
+				style={measured ? { color: scoreColor(score) } : undefined}
 			>
-				{measured ? Math.round(pillar.score!) : 'not measured'}
+				{measured ? Math.round(score) : 'not measured'}
 			</span>
 		</div>
 	)
@@ -108,10 +109,11 @@ function ExecSubRow({
 	share: number | null
 	figure: string | null
 }) {
-	const measured = sub.score != null
+	const score = sub.score
+	const measured = score !== null
 	return (
 		<div className="flex items-center gap-3 pl-6">
-			<Tooltip content={sub.what ?? sub.label} className="w-[8.5rem] shrink-0">
+			<Tooltip content={sub.what} className="w-[8.5rem] shrink-0">
 				<span className="flex items-baseline gap-1.5 underline decoration-dotted">
 					<span className="body-sm">{sub.label}</span>
 					{share ? <span className="body-sm text-tertiary">{share}%</span> : null}
@@ -121,13 +123,13 @@ function ExecSubRow({
 				<div
 					className="h-full rounded-full opacity-70"
 					style={{
-						width: `${measured ? Math.max(2, Math.min(100, sub.score!)) : 0}%`,
-						backgroundColor: measured ? scoreColor(sub.score!) : undefined
+						width: `${measured ? Math.max(2, Math.min(100, score)) : 0}%`,
+						backgroundColor: measured ? scoreColor(score) : undefined
 					}}
 				/>
 			</div>
 			<span className={`w-10 shrink-0 text-right body-sm ${measured ? '' : 'text-tertiary'}`}>
-				{measured ? Math.round(sub.score!) : 'n/a'}
+				{measured ? Math.round(score) : 'n/a'}
 			</span>
 			<span className="w-44 shrink-0 truncate text-right body-sm text-tertiary">{figure ?? ''}</span>
 		</div>
@@ -140,7 +142,8 @@ function ExecSubRow({
 export function ProfileRanking({ profile }: { profile: ExchangeProfileModel }) {
 	const quality = profile.quality
 	if (!quality) return null
-	const subWeightTotal = quality.execSubs.reduce((sum, sub) => sum + (sub.weight ?? 0), 0)
+	let subWeightTotal = 0
+	for (const sub of quality.execSubs) subWeightTotal += sub.weight
 	return (
 		<Card padding="sm" className="flex flex-col gap-5">
 			<div className="flex flex-col gap-6 md:flex-row md:items-start">
@@ -150,7 +153,7 @@ export function ProfileRanking({ profile }: { profile: ExchangeProfileModel }) {
 						className="w-fit"
 					>
 						<span className="flex items-end gap-3">
-							{quality.tier ? <TierBadge tier={quality.tier} /> : null}
+							<TierBadge tier={quality.tier} />
 							<span className="font-jetbrains text-4xl leading-none font-semibold">{formatScore(quality.score)}</span>
 							<span className="pb-0.5 body-sm text-secondary">/ 100</span>
 						</span>
@@ -170,7 +173,9 @@ export function ProfileRanking({ profile }: { profile: ExchangeProfileModel }) {
 									<ExecSubRow
 										key={`E:${sub.key}`}
 										sub={sub}
-										share={sub.weight && subWeightTotal ? Math.round((sub.weight / subWeightTotal) * 100) : null}
+										share={
+											sub.weight > 0 && subWeightTotal > 0 ? Math.round((sub.weight / subWeightTotal) * 100) : null
+										}
 										figure={execSubFigure(sub.key, profile.execution)}
 									/>
 								))}

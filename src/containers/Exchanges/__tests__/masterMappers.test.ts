@@ -2,28 +2,34 @@ import { isSerializableProps } from 'next/dist/lib/is-serializable-props'
 import { describe, expect, it } from 'vitest'
 import {
 	decodeMasterChart,
-	mapMasterDirectory,
+	mapMasterDirectory as mapMasterDirectoryContract,
 	mapMasterDirectoryOverview,
 	mapMasterMetadataOnlyProfile,
 	mapMasterMica,
-	mapMasterProfile,
-	mapMasterResearchReport
+	mapMasterProfile as mapMasterProfileContract,
+	mapMasterResearchReport,
+	type MasterProfileExtras
 } from '../master.mappers'
 import type {
 	MasterChartColumnarResponse,
+	MasterAggregateSeriesResponse,
 	MasterDirectoryResponse,
 	MasterDirectoryTotals,
 	MasterDirectoryVenue,
 	MasterEntityScope,
+	MasterExecutionQualityResponse,
 	MasterExchangeIndexResponse,
 	MasterExchangeMetadataResponse,
 	MasterExchangePair,
 	MasterFreshness,
 	MasterLiquidityBySegment,
 	MasterMicaVenue,
+	MasterQualityRanksResponse,
+	MasterRankMethodologyResponse,
 	MasterRampCost,
 	MasterVenueCore
 } from '../master.types'
+import { MASTER_AGGREGATE_SERIES_KEYS } from '../master.types'
 
 const FRESHNESS: MasterFreshness = {
 	volume: '2026-07-14T12:00:00Z',
@@ -33,6 +39,53 @@ const FRESHNESS: MasterFreshness = {
 }
 
 const OWN = { mode: 'own' } as const
+const NO_PROFILE_EXTRAS: MasterProfileExtras = { execution: null, ranks: null, methodology: null }
+
+function qualityRanks(generatedAt = '2026-08-24'): MasterQualityRanksResponse {
+	return {
+		generated_at: generatedAt,
+		last_updated: '2026-08-24T00:00:00Z',
+		venues: {
+			venue: {
+				score: 80,
+				tier: 'A',
+				rank: 1,
+				segments: { linear_perp: 1 },
+				components: { E: 75 }
+			}
+		}
+	}
+}
+
+function rankMethodology(ranksGeneratedAt: string | null = '2026-08-24'): MasterRankMethodologyResponse {
+	return {
+		components: [{ key: 'E', label: 'Execution', weight: 33, what: 'Execution quality.', na: 'Not measured.' }],
+		exec_subs: [],
+		flags: [],
+		ranks_generated_at: ranksGeneratedAt,
+		last_updated: '2026-08-24T00:00:00Z'
+	}
+}
+
+function mapMasterDirectory(
+	response: MasterDirectoryResponse,
+	execution: Parameters<typeof mapMasterDirectoryContract>[1] = null
+) {
+	return mapMasterDirectoryContract(response, execution)
+}
+
+function mapMasterProfile(
+	index: MasterExchangeIndexResponse,
+	metadata: MasterExchangeMetadataResponse,
+	extras: MasterProfileExtras = NO_PROFILE_EXTRAS
+) {
+	return mapMasterProfileContract(index, metadata, extras)
+}
+
+function required<T>(value: T | undefined): T {
+	if (value === undefined) throw new Error('Expected fixture value')
+	return value
+}
 
 function sharedWith(slug: string, coverage: 'full' | 'subset') {
 	return {
@@ -228,6 +281,50 @@ function directoryResponse(venues: MasterDirectoryVenue[]): MasterDirectoryRespo
 	}
 }
 
+function executionResponse(): MasterExecutionQualityResponse {
+	const measurements = {
+		cost_to_trade_bps: 4,
+		effective_spread_bps: 2,
+		quoted_spread_bps: 3,
+		realized_slippage_bps_10k: 1,
+		realized_slippage_bps_100k: 2,
+		realized_slippage_bps_1m: 3,
+		predicted_slippage_bps_10k: 1.5,
+		predicted_slippage_bps_100k: 2.5,
+		predicted_slippage_bps_1m: 3.5,
+		slip_gap_bps_10k: -0.5,
+		slip_gap_bps_100k: -0.5,
+		markout_bps_1s: 0.1,
+		markout_bps_15s: 0.2,
+		markout_bps_1m: 0.3,
+		markout_bps_5m: 0.4,
+		taker_fee_bps: 2
+	}
+	return {
+		basket: ['BTC'],
+		unit: 'bps',
+		unit_note: 'Basis points of trade notional.',
+		venues: {
+			venue: {
+				...measurements,
+				assets: ['BTC'],
+				pair_count: 1,
+				hours_covered: 24,
+				n_trades: 10,
+				pairs: {
+					BTC: {
+						...measurements,
+						asset: 'BTC',
+						symbol: 'BTC/USDT',
+						hours_covered: 24,
+						n_trades: 10
+					}
+				}
+			}
+		}
+	}
+}
+
 function pair(patch: Partial<MasterExchangePair> = {}): MasterExchangePair {
 	return {
 		market_type: 'perpetual',
@@ -402,7 +499,7 @@ describe('master directory mapper', () => {
 		}
 		const withQuality = (slug: string, score: number, rank: number, totalTradingVolume: number) => ({
 			...withVolume(slug, totalTradingVolume),
-			rank: { score, rank, segments: {}, components: {} }
+			rank: { score, rank, tier: 'A', segments: {}, components: {} }
 		})
 
 		const rows = mapMasterDirectory(
@@ -422,7 +519,7 @@ describe('master directory mapper', () => {
 			'unranked-larger',
 			'unranked-smaller'
 		])
-		expect(rows[0].quality).toMatchObject({ score: 90, rank: 1 })
+		expect(required(rows[0]).quality).toMatchObject({ score: 90, rank: 1 })
 	})
 
 	it('uses canonical totals and preserves nullable segment observations and enriched metadata', () => {
@@ -526,17 +623,19 @@ describe('master directory mapper', () => {
 	})
 
 	it('splits the single backend website destination into referral and official actions', () => {
-		const [row] = mapMasterDirectory(
-			directoryResponse([
-				directoryVenue({
-					links: {
-						profile: '/exchange/venue',
-						website: { url: 'https://example.com/ref', kind: 'referral' },
-						defillama: null
-					}
-				})
-			])
-		).rows
+		const row = required(
+			mapMasterDirectory(
+				directoryResponse([
+					directoryVenue({
+						links: {
+							profile: '/exchange/venue',
+							website: { url: 'https://example.com/ref', kind: 'referral' },
+							defillama: null
+						}
+					})
+				])
+			).rows[0]
+		)
 
 		expect(row.referralUrl).toBe('https://example.com/ref')
 		expect(row.websiteUrl).toBeNull()
@@ -544,7 +643,7 @@ describe('master directory mapper', () => {
 	})
 
 	it('uses the canonical profile route for a listed metadata-only venue', () => {
-		const [row] = mapMasterDirectory(directoryResponse([directoryVenue({ tracked: false })])).rows
+		const row = required(mapMasterDirectory(directoryResponse([directoryVenue({ tracked: false })])).rows[0])
 		expect(row.profileHref).toBe('/exchange/venue')
 		expect(row.secondaryUrl).toBeNull()
 		expect(row.reservesHref).toBe('/exchange/venue?section=reserves')
@@ -597,9 +696,10 @@ describe('master directory mapper', () => {
 			scope: { kind: 'regional', regions: ['eea'] } as MasterEntityScope,
 			profile_url: '/exchange/legal-eu'
 		}
-		const [venue] = mapMasterDirectory(
-			directoryResponse([directoryVenue({ slug: 'venue', related_entities: [legalEntity] })])
-		).rows
+		const venue = required(
+			mapMasterDirectory(directoryResponse([directoryVenue({ slug: 'venue', related_entities: [legalEntity] })]))
+				.rows[0]
+		)
 
 		expect(venue.related.euEntity).toBeNull()
 	})
@@ -655,21 +755,66 @@ describe('master directory mapper', () => {
 		expect(summary.volumeByKind.dex).toEqual({ spot: null, linearPerp: null, inversePerp: null, total: null })
 	})
 
+	it('distinguishes an unavailable execution source from an unmeasured venue', () => {
+		const unavailable = mapMasterDirectory(directoryResponse([directoryVenue()]), null)
+		const successfulEmpty: MasterExecutionQualityResponse = {
+			basket: ['BTC'],
+			unit: 'bps',
+			unit_note: 'Basis points of trade notional.',
+			venues: {}
+		}
+		const unmeasured = mapMasterDirectory(directoryResponse([directoryVenue()]), successfulEmpty)
+
+		expect(unavailable.executionAvailable).toBe(false)
+		expect(unmeasured.executionAvailable).toBe(true)
+		expect(required(unmeasured.rows[0]).execution).toBeNull()
+	})
+
+	it('maps the exact execution measurement without transport defaults', () => {
+		const measured = mapMasterDirectory(directoryResponse([directoryVenue()]), executionResponse())
+
+		expect(measured.executionAvailable).toBe(true)
+		expect(required(measured.rows[0]).execution).toEqual({
+			assets: ['BTC'],
+			hoursCovered: 24,
+			costToTradeBps: 4,
+			realizedSlippage10kBps: 1,
+			predictedSlippage10kBps: 1.5,
+			markout1mBps: 0.3
+		})
+	})
+
 	it('maps per-segment normalized volume without inventing an aggregate perp column', () => {
-		const [row] = mapMasterDirectory(
-			directoryResponse([
-				directoryVenue({
-					nvol: {
-						spot: { reported: 100, normalized: 70, discount_pct: 0.3, unverified_pct: 0.1, flag: null },
-						linear_perp: null,
-						inverse_perp: null
-					}
-				})
-			])
-		).rows
+		const row = required(
+			mapMasterDirectory(
+				directoryResponse([
+					directoryVenue({
+						nvol: {
+							spot: {
+								reported: 100,
+								normalized: 70,
+								active_liquidity: 40,
+								discount_pct: 0.3,
+								unverified_pct: 0.1,
+								flag: null
+							},
+							linear_perp: null,
+							inverse_perp: null
+						}
+					})
+				])
+			).rows[0]
+		)
 
 		expect(row.normalizedVolume).toEqual({
-			spot: { reported: 100, normalized: 70, discountFraction: 0.3, unverifiedFraction: 0.1, flag: null },
+			spot: {
+				reported: 100,
+				normalized: 70,
+				activeLiquidity: 40,
+				discountFraction: 0.3,
+				unverifiedFraction: 0.1,
+				flag: null
+			},
 			linear_perp: null,
 			inverse_perp: null
 		})
@@ -685,7 +830,7 @@ describe('master directory mapper', () => {
 				kyc: null
 			}
 		})
-		const [row] = mapMasterDirectory(directoryResponse([venue])).rows
+		const row = required(mapMasterDirectory(directoryResponse([venue])).rows[0])
 
 		expect(row.reserves?.sourceUrl).toBeNull()
 		expect(row.fees?.spot).toBeNull()
@@ -727,10 +872,27 @@ describe('master directory mapper', () => {
 	})
 
 	it('indexes columnar history, skips unsupported null columns, and fails on misalignment', () => {
-		const payload = {
+		const payload: MasterAggregateSeriesResponse = {
 			days: [1, 2],
-			key: ['total_spot_volume', 'total_linear_perp_volume', 'total_inverse_perp_volume'],
-			series: [[100, 110], [200, 210], null],
+			key: MASTER_AGGREGATE_SERIES_KEYS,
+			series: [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null,
+				null,
+				null,
+				null,
+				null,
+				[100, 110],
+				[200, 210],
+				null,
+				null,
+				null,
+				null
+			],
 			last_updated: '2026-07-14T00:00:00Z'
 		}
 		const mapped = mapMasterDirectoryOverview(payload)
@@ -742,7 +904,7 @@ describe('master directory mapper', () => {
 		expect(() =>
 			mapMasterDirectoryOverview({
 				...payload,
-				series: [[100, 110], [200], null]
+				series: payload.series.map((column, index) => (index === 11 ? [200] : column))
 			})
 		).toThrow('Series column total_linear_perp_volume does not match the day axis')
 	})
@@ -753,7 +915,7 @@ describe('master profile mapper', () => {
 		const profile = mapMasterProfile(indexResponse(), metadataResponse())
 		const linear = profile.segments.linear_perp!
 		const inverse = profile.segments.inverse_perp!
-		const mappedPair = linear.pairs[0]
+		const mappedPair = required(linear.pairs[0])
 
 		expect(profile.name).toBe('Venue Display')
 		expect(profile.slug).toBe('venue')
@@ -785,9 +947,110 @@ describe('master profile mapper', () => {
 			nextFundingAt: 1_721_000_000,
 			volumeUpdatedAt: FRESHNESS.volume,
 			depthBid2Usd: 20,
-			normalizedVolume: { discountFraction: 0.3 }
+			normalizedVolume: { activeLiquidity: 350, discountFraction: 0.3 }
 		})
 		expect(mappedPair.basis).toBeCloseTo(0.005)
+	})
+
+	it('omits optional profile sections for source failure and unmeasured venues', () => {
+		const execution: MasterExecutionQualityResponse = {
+			basket: ['BTC'],
+			unit: 'bps',
+			unit_note: 'Basis points of trade notional.',
+			venues: {}
+		}
+		const unavailable = mapMasterProfile(indexResponse(), metadataResponse())
+		const unmeasured = mapMasterProfile(indexResponse(), metadataResponse(), {
+			execution,
+			ranks: {
+				generated_at: '2026-07-14T00:00:00Z',
+				last_updated: '2026-07-14T00:00:00Z',
+				venues: {}
+			},
+			methodology: {
+				components: [],
+				exec_subs: [],
+				flags: [],
+				ranks_generated_at: '2026-07-14T00:00:00Z',
+				last_updated: '2026-07-14T00:00:00Z'
+			}
+		})
+
+		expect(unavailable.execution).toBeNull()
+		expect(unavailable.quality).toBeNull()
+		expect(unmeasured.execution).toBeNull()
+		expect(unmeasured.quality).toBeNull()
+	})
+
+	it('maps exact profile execution pairs in the producer basket order', () => {
+		const profile = mapMasterProfile(indexResponse(), metadataResponse(), {
+			execution: executionResponse(),
+			ranks: null,
+			methodology: null
+		})
+
+		expect(profile.execution?.pairs).toEqual([
+			{
+				asset: 'BTC',
+				hoursCovered: 24,
+				fillCount: 10,
+				costToTradeBps: 4,
+				effectiveSpreadBps: 2,
+				quotedSpreadBps: 3,
+				realizedSlippage10kBps: 1,
+				predictedSlippage10kBps: 1.5,
+				realizedSlippage100kBps: 2,
+				predictedSlippage100kBps: 2.5,
+				realizedSlippage1mBps: 3,
+				predictedSlippage1mBps: 3.5,
+				markout1sBps: 0.1,
+				markout15sBps: 0.2,
+				markout1mBps: 0.3,
+				markout5mBps: 0.4
+			}
+		])
+	})
+
+	it('maps profile ranking when ranks and methodology describe the same generation', () => {
+		const profile = mapMasterProfile(indexResponse(), metadataResponse(), {
+			execution: null,
+			ranks: qualityRanks(),
+			methodology: rankMethodology()
+		})
+
+		expect(profile.quality).toMatchObject({
+			score: 80,
+			tier: 'A',
+			generatedAt: '2026-08-24',
+			components: [{ key: 'E', label: 'Execution', score: 75 }]
+		})
+		expect(profile.segments.linear_perp).toBeDefined()
+	})
+
+	it('omits ranking when methodology describes a different rank generation', () => {
+		const profile = mapMasterProfile(indexResponse(), metadataResponse(), {
+			execution: null,
+			ranks: qualityRanks('2026-08-24'),
+			methodology: rankMethodology('2026-08-23')
+		})
+
+		expect(profile.quality).toBeNull()
+		expect(profile.segments.linear_perp).toBeDefined()
+	})
+
+	it('omits ranking when a scored component is absent from matching methodology', () => {
+		const ranks = qualityRanks()
+		const venue = ranks.venues.venue
+		if (!venue) throw new Error('Expected ranked venue fixture')
+		venue.components = { E: 75, Q: 60 }
+		const profile = mapMasterProfile(indexResponse(), metadataResponse(), {
+			execution: null,
+			ranks,
+			methodology: rankMethodology()
+		})
+
+		expect(profile.quality).toBeNull()
+		expect(profile.segments.linear_perp).toBeDefined()
 	})
 
 	it('surfaces a backend referral destination as the profile referral action', () => {
@@ -848,7 +1111,7 @@ describe('master profile mapper', () => {
 	] as const)('leaves basis unavailable for %s', (_label, patch) => {
 		const index = indexResponse()
 		index.segments.linear_perp!.pairs = [pair(patch)]
-		expect(mapMasterProfile(index, metadataResponse()).segments.linear_perp!.pairs[0].basis).toBeNull()
+		expect(required(mapMasterProfile(index, metadataResponse()).segments.linear_perp!.pairs[0]).basis).toBeNull()
 	})
 
 	it('requires metadata and keeps metadata-backed props serializable', () => {
@@ -1003,12 +1266,22 @@ describe('canonical research charts', () => {
 	it('groups normalized volume by exact segment without losing observed zero', () => {
 		const response: MasterChartColumnarResponse<'nvol'> = {
 			days: [1, 2],
-			key: ['spot', 'linear_perp', 'inverse_perp', 'reported_spot', 'reported_linear_perp', 'reported_inverse_perp'],
+			key: [
+				'spot',
+				'linear_perp',
+				'inverse_perp',
+				'reported_spot',
+				'reported_linear_perp',
+				'reported_inverse_perp',
+				'active_liquidity_spot',
+				'active_liquidity_linear_perp',
+				'active_liquidity_inverse_perp'
+			],
 			exchanges: ['one', 'two'],
 			types: ['cex', 'dex'],
 			series: [
-				[[30, 0], [20, 10], null, [60, 1], [40, 20], null],
-				[null, [5, 0], null, null, [10, 1], null]
+				[[30, 0], [20, 10], null, [60, 1], [40, 20], null, null, null, null],
+				[null, [5, 0], null, null, [10, 1], null, null, null, null]
 			],
 			names: { one: 'one', two: 'two' },
 			last_updated: '2026-07-14T00:00:00Z',
@@ -1058,12 +1331,22 @@ describe('canonical research charts', () => {
 	it('computes survival ratios per exchange and leaves non-positive or absent denominators unavailable', () => {
 		const response: MasterChartColumnarResponse<'nvol'> = {
 			days: [1, 2, 3],
-			key: ['spot', 'linear_perp', 'inverse_perp', 'reported_spot', 'reported_linear_perp', 'reported_inverse_perp'],
+			key: [
+				'spot',
+				'linear_perp',
+				'inverse_perp',
+				'reported_spot',
+				'reported_linear_perp',
+				'reported_inverse_perp',
+				'active_liquidity_spot',
+				'active_liquidity_linear_perp',
+				'active_liquidity_inverse_perp'
+			],
 			exchanges: ['covered', 'missing-reported'],
 			types: ['cex', 'dex'],
 			series: [
-				[[30, 20, 10], [20, 10, 0], null, [60, 0, 0], [40, 0, 0], null],
-				[[5, 5, 5], null, null, null, null, null]
+				[[30, 20, 10], [20, 10, 0], null, [60, 0, 0], [40, 0, 0], null, null, null, null],
+				[[5, 5, 5], null, null, null, null, null, null, null, null]
 			],
 			names: { covered: 'covered', 'missing-reported': 'missing-reported' },
 			last_updated: '2026-07-14T00:00:00Z',
@@ -1084,13 +1367,23 @@ describe('canonical research charts', () => {
 		const exchanges = Array.from({ length: 10 }, (_, index) => `venue-${index + 1}`)
 		const response: MasterChartColumnarResponse<'nvol'> = {
 			days: [1],
-			key: ['spot', 'linear_perp', 'inverse_perp', 'reported_spot', 'reported_linear_perp', 'reported_inverse_perp'],
+			key: [
+				'spot',
+				'linear_perp',
+				'inverse_perp',
+				'reported_spot',
+				'reported_linear_perp',
+				'reported_inverse_perp',
+				'active_liquidity_spot',
+				'active_liquidity_linear_perp',
+				'active_liquidity_inverse_perp'
+			],
 			exchanges,
 			types: exchanges.map(() => 'cex'),
 			series: exchanges.map((_, index) => {
 				const reported = 100 - index * 10
 				const normalized = index === 8 ? 8 : index === 9 ? 7 : reported / 2
-				return [[normalized], null, null, [reported], null, null]
+				return [[normalized], null, null, [reported], null, null, null, null, null]
 			}),
 			names: Object.fromEntries(exchanges.map((exchange) => [exchange, exchange])),
 			last_updated: '2026-07-14T00:00:00Z',
@@ -1118,36 +1411,38 @@ describe('MiCA contract', () => {
 	})
 
 	it('maps per-segment fees, metrics, products, and the backend destination link', () => {
-		const [row] = mapMasterMica({
-			last_updated: '2026-07-14T00:00:00Z',
-			exchanges: [
-				micaVenue({
-					display_name: 'Venue EU',
-					parent_entity: {
-						slug: 'venue',
-						name: 'Venue',
-						profile_url: '/exchange/venue',
-						scope: { kind: 'global' }
-					},
-					products: ['spot', 'margin', 'linear_perp', 'inverse_perp', 'futures', 'options'],
-					fees: {
-						spot: { maker: 0.001, taker: 0.002 },
-						linear_perp: { maker: 0.0002, taker: 0.0005 },
-						inverse_perp: { maker: null, taker: null }
-					},
-					metrics: {
-						spot: { volume_24h_usd: 100, oi_usd: null, market_count: 2 },
-						linear_perp: { volume_24h_usd: 200, oi_usd: 50, market_count: 3 },
-						inverse_perp: null
-					},
-					links: {
-						profile: '/exchange/venue',
-						website: { url: 'https://example.com/ref', kind: 'referral' },
-						defillama: null
-					}
-				})
-			]
-		})
+		const row = required(
+			mapMasterMica({
+				last_updated: '2026-07-14T00:00:00Z',
+				exchanges: [
+					micaVenue({
+						display_name: 'Venue EU',
+						parent_entity: {
+							slug: 'venue',
+							name: 'Venue',
+							profile_url: '/exchange/venue',
+							scope: { kind: 'global' }
+						},
+						products: ['spot', 'margin', 'linear_perp', 'inverse_perp', 'futures', 'options'],
+						fees: {
+							spot: { maker: 0.001, taker: 0.002 },
+							linear_perp: { maker: 0.0002, taker: 0.0005 },
+							inverse_perp: { maker: null, taker: null }
+						},
+						metrics: {
+							spot: { volume_24h_usd: 100, oi_usd: null, market_count: 2 },
+							linear_perp: { volume_24h_usd: 200, oi_usd: 50, market_count: 3 },
+							inverse_perp: null
+						},
+						links: {
+							profile: '/exchange/venue',
+							website: { url: 'https://example.com/ref', kind: 'referral' },
+							defillama: null
+						}
+					})
+				]
+			})[0]
+		)
 
 		expect(row).toMatchObject({
 			exchange: 'venue',
@@ -1201,17 +1496,19 @@ describe('MiCA contract', () => {
 	})
 
 	it('preserves nullable KYC and fee facts', () => {
-		const [row] = mapMasterMica({
-			last_updated: '2026-07-14T00:00:00Z',
-			exchanges: [
-				micaVenue({
-					kyc_required: null,
-					kyc_short: null,
-					kyc_summary: null,
-					fees: { spot: null, linear_perp: null, inverse_perp: null }
-				})
-			]
-		})
+		const row = required(
+			mapMasterMica({
+				last_updated: '2026-07-14T00:00:00Z',
+				exchanges: [
+					micaVenue({
+						kyc_required: null,
+						kyc_short: null,
+						kyc_summary: null,
+						fees: { spot: null, linear_perp: null, inverse_perp: null }
+					})
+				]
+			})[0]
+		)
 
 		expect(row.kyc).toBeNull()
 		expect(row.spotFee).toBeNull()
@@ -1219,35 +1516,43 @@ describe('MiCA contract', () => {
 	})
 
 	it('preserves segment-specific depth coverage and authored ramp costs', () => {
-		const [row] = mapMasterMica({
-			last_updated: '2026-07-14T00:00:00Z',
-			exchanges: [
-				micaVenue({
-					promotions: [
-						{
-							title: 'Fee campaign',
-							label: '20% off',
-							type: 'fee_discount',
-							url: 'https://example.com/campaign',
-							terms_url: 'https://example.com/terms',
-							priority: 5,
-							source: { url: 'https://example.com/source' }
-						},
-						{
-							title: 'Standard campaign',
-							label: 'Standard',
-							type: 'other',
-							source: { url: 'https://example.com/standard-source' }
+		const row = required(
+			mapMasterMica({
+				last_updated: '2026-07-14T00:00:00Z',
+				exchanges: [
+					micaVenue({
+						promotions: [
+							{
+								title: 'Fee campaign',
+								label: '20% off',
+								type: 'fee_discount',
+								url: 'https://example.com/campaign',
+								terms_url: 'https://example.com/terms',
+								priority: 5,
+								source: { url: 'https://example.com/source' }
+							},
+							{
+								title: 'Standard campaign',
+								label: 'Standard',
+								type: 'other',
+								source: { url: 'https://example.com/standard-source' }
+							}
+						],
+						depth_summary: {
+							spot: null,
+							linear_perp: {
+								bid_2pct_usd: 0,
+								ask_2pct_usd: 9,
+								bid_05pct_usd: null,
+								ask_05pct_usd: null,
+								partial: true
+							},
+							inverse_perp: null
 						}
-					],
-					depth_summary: {
-						spot: null,
-						linear_perp: { bid_2pct_usd: 0, ask_2pct_usd: 9, bid_05pct_usd: null, ask_05pct_usd: null, partial: true },
-						inverse_perp: null
-					}
-				})
-			]
-		})
+					})
+				]
+			})[0]
+		)
 
 		expect(row.depth).toMatchObject({
 			spotBid2Usd: null,
@@ -1258,13 +1563,13 @@ describe('MiCA contract', () => {
 			perpPartialCoverage: true
 		})
 		expect(row).toMatchObject({ micaStatus: 'active', micaLicensed: true, licenseCount: 1 })
-		expect(row.promotions[0]).toMatchObject({
+		expect(required(row.promotions[0])).toMatchObject({
 			label: '20% off',
 			url: 'https://example.com/campaign',
 			termsUrl: 'https://example.com/terms',
 			priority: 5
 		})
-		expect(row.promotions[1].priority).toBeNull()
+		expect(required(row.promotions[1]).priority).toBeNull()
 		expect(row.rampCost).toMatchObject({
 			onRamp: { totalUsd: 10, totalFraction: 0.01 },
 			offRamp: { totalUsd: 14, totalFraction: 0.014 }

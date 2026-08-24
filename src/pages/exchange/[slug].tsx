@@ -1,7 +1,7 @@
 import type { GetStaticPropsContext } from 'next'
 import { fetchCoinsChart } from '~/api'
 import { fetchCoinPrices } from '~/api/pricing'
-import type { CoinsChartResponse } from '~/api/types'
+import type { CoinsChartResponse, PriceObject } from '~/api/types'
 import { ExchangeAccessGate } from '~/containers/Exchanges/ExchangeAccessGate'
 import { ExchangeProfile } from '~/containers/Exchanges/ExchangeProfile'
 import { fetchExchangeVenueSeries } from '~/containers/Exchanges/master.api'
@@ -19,6 +19,8 @@ interface ExchangePageProps {
 	profile: ExchangeProfileModel
 	asOfDate: string
 }
+
+const EMPTY_PRICES: Record<string, PriceObject> = {}
 
 export const getStaticProps = withPerformanceLogging(
 	'exchange/[slug]',
@@ -66,7 +68,7 @@ async function enrichExchangeProfile(profile: ExchangeProfileModel): Promise<Exc
 	const priceKey = profile.nativeToken?.coinId ? `coingecko:${profile.nativeToken.coinId}` : null
 	const oneDayAgo = Math.floor(Date.now() / 1000) - 86_400
 	const [prices, priceHistory, hacks, raises] = await Promise.all([
-		priceKey ? fetchCoinPrices([priceKey]).catch(() => ({})) : {},
+		priceKey ? fetchCoinPrices([priceKey]).catch(() => EMPTY_PRICES) : EMPTY_PRICES,
 		priceKey
 			? fetchCoinsChart({ coin: priceKey, start: oneDayAgo, span: 24, searchWidth: '600' }).catch(() => ({ coins: {} }))
 			: { coins: {} },

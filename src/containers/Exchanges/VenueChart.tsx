@@ -20,6 +20,7 @@ import { useLazyVisible } from './useLazyVisible'
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const STALE_TIME = 60 * 60 * 1000
+const DEFAULT_VENUE_METRIC: VenueHistoryMetric = 'volume'
 const UTC_TIMESTAMP = new Intl.DateTimeFormat('en', {
 	year: 'numeric',
 	month: 'short',
@@ -134,7 +135,7 @@ export function VenueChart({
 		refetchOnWindowFocus: false
 	})
 	const requestedMetric = getVenueHistoryMetric(router.query)
-	const fallbackMetric = requestedMetric ?? VENUE_TABS[0].id
+	const fallbackMetric = requestedMetric ?? DEFAULT_VENUE_METRIC
 
 	return (
 		<div ref={ref}>
@@ -192,7 +193,7 @@ function VenueChartView({
 					name: spec.label,
 					type: active?.type ?? 'line',
 					color: spec.color,
-					stack: active?.type === 'bar' ? active.stack : undefined,
+					...(active?.type === 'bar' && active.stack ? { stack: active.stack } : null),
 					values
 				}))
 			),
@@ -203,7 +204,7 @@ function VenueChartView({
 		return (
 			<VenueChartFrame
 				tabs={[]}
-				activeId={VENUE_TABS[0].id}
+				activeId={DEFAULT_VENUE_METRIC}
 				updatedAt={chart.lastUpdated}
 				showGlobalDataNotice={showGlobalDataNotice}
 			>
@@ -270,7 +271,7 @@ function VenueChartFrame({
 						value={activeId}
 						onValueChange={(nextMetric) => {
 							void pushShallowQuery(router, {
-								[EXCHANGES_QUERY_KEYS.venueHistory]: nextMetric === tabs[0].id ? undefined : nextMetric
+								[EXCHANGES_QUERY_KEYS.venueHistory]: nextMetric === tabs[0]?.id ? undefined : nextMetric
 							})
 						}}
 						options={tabs.map((tab) => ({ value: tab.id, label: tab.label }))}

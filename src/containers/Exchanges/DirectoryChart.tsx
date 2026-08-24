@@ -94,8 +94,10 @@ interface ResolvedSeries {
 function overviewAriaLabel(chart: ExchangeOverviewChartModel, resolved: ResolvedSeries[]): string {
 	const parts = resolved.map(({ spec, values }) => {
 		const last = values.findLastIndex((value) => value != null)
-		if (last < 0) return `${spec.label}: no data.`
-		return `${spec.label}: ${formatUsd(values[last] as number, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} on ${UTC_DAY.format(new Date(chart.days[last] * 1000))}.`
+		const value = values[last]
+		const day = chart.days[last]
+		if (value == null || day === undefined) return `${spec.label}: no data.`
+		return `${spec.label}: ${formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} on ${UTC_DAY.format(new Date(day * 1000))}.`
 	})
 	return `Exchange trading activity. ${parts.join(' ')}`
 }
@@ -126,7 +128,7 @@ export function DirectoryChart({ chart, status, showGlobalDataNotice }: Director
 							name: spec.label,
 							type: spec.type,
 							color: spec.color,
-							stack: spec.type === 'bar' ? spec.stack : undefined,
+							...(spec.type === 'bar' && spec.stack ? { stack: spec.stack } : null),
 							yAxisIndex: spec.right ? 1 : 0,
 							values
 						}))

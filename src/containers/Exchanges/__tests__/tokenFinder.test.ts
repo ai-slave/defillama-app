@@ -43,7 +43,9 @@ describe('exchange token finder', () => {
 		const common = { selectedTokens: ['bitcoin', 'ethereum'], tokens, directory, country: null, catalog: null }
 		const allRows = buildTokenFinderRows({ ...common, mode: 'all' })
 		expect(allRows.map((row) => row.slug)).toEqual(['both'])
-		expect(allRows[0].listings).toEqual([
+		const firstRow = allRows[0]
+		if (!firstRow) throw new Error('Expected token finder row')
+		expect(firstRow.listings).toEqual([
 			{ token: 'btc', segments: ['spot'] },
 			{ token: 'eth', segments: ['linear_perp'] }
 		])

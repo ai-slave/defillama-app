@@ -453,17 +453,16 @@ export function PairTable({
 	leadingControls?: React.ReactNode
 }) {
 	const { openInterest, funding, depth: supportsDepth } = capabilities
-	const columns = React.useMemo(
-		() =>
-			resolvePairColumns({
-				segment,
-				capabilities: { openInterest, funding, depth: supportsDepth },
-				showVenue,
-				omitColumns,
-				columnOrder
-			}),
-		[segment, openInterest, funding, supportsDepth, showVenue, omitColumns, columnOrder]
-	)
+	const columns = React.useMemo(() => {
+		const options: Parameters<typeof resolvePairColumns>[0] = {
+			segment,
+			capabilities: { openInterest, funding, depth: supportsDepth },
+			showVenue
+		}
+		if (omitColumns !== undefined) options.omitColumns = omitColumns
+		if (columnOrder !== undefined) options.columnOrder = columnOrder
+		return resolvePairColumns(options)
+	}, [segment, openInterest, funding, supportsDepth, showVenue, omitColumns, columnOrder])
 	const columnVisibility = React.useMemo(
 		() => resolvePairColumnVisibility(columns, initialVisibleColumns),
 		[columns, initialVisibleColumns]

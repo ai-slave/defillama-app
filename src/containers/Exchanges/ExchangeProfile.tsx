@@ -270,6 +270,7 @@ export function ProfileSectionTabs({
 
 		event.preventDefault()
 		const nextTab = tabs[nextIndex]
+		if (!nextTab) return
 		onTabChange(nextTab)
 		document.getElementById(`exchange-profile-tab-${nextTab}`)?.focus()
 	}
