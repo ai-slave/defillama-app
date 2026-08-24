@@ -185,6 +185,42 @@ export const ProtocolInfo = (props: IProtocolOverviewPageData) => {
 				{props.isCEX ? 'Exchange Information' : 'Protocol Information'}
 			</SectionHeader>
 			{props.description ? <p>{props.description}</p> : null}
+			<div className="flex flex-wrap gap-3">
+				{props.website ? (
+					<ExternalLinkButton
+						href={props.website}
+						icon="globe"
+						data-umami-event="protocol-website-click"
+						data-umami-event-protocol={props.name}
+						data-umami-event-referral={props.isWebsiteReferral ? 'true' : 'false'}
+						data-umami-event-placement="info"
+						data-umami-event-url={props.website}
+					>
+						Website
+					</ExternalLinkButton>
+				) : null}
+				{props.github?.length
+					? props.github.map((github) => (
+							<ExternalLinkButton
+								href={`https://github.com/${github}`}
+								icon="github"
+								key={`${props.name}-github-${github}`}
+							>
+								{props.github?.length === 1 ? 'GitHub' : github}
+							</ExternalLinkButton>
+						))
+					: null}
+				{props.twitter ? (
+					<ExternalLinkButton href={`https://x.com/${props.twitter}`} icon="twitter">
+						Twitter
+					</ExternalLinkButton>
+				) : null}
+				{props.safeHarbor ? (
+					<ExternalLinkButton href={`https://safeharbor.securityalliance.org/database/${slug(props.name)}`}>
+						Safe Harbor Agreement
+					</ExternalLinkButton>
+				) : null}
+			</div>
 			{categories.length ? (
 				<div className="flex flex-wrap items-center gap-2">
 					<span className="label-md text-secondary">{categories.length > 1 ? 'Categories' : 'Category'}:</span>
@@ -229,42 +265,6 @@ export const ProtocolInfo = (props: IProtocolOverviewPageData) => {
 					{props.audits.note ? <p>Audit Note: {props.audits.note}</p> : null}
 				</>
 			) : null}
-			<div className="flex flex-wrap gap-3">
-				{props.website ? (
-					<ExternalLinkButton
-						href={props.website}
-						icon="globe"
-						data-umami-event="protocol-website-click"
-						data-umami-event-protocol={props.name}
-						data-umami-event-referral={props.isWebsiteReferral ? 'true' : 'false'}
-						data-umami-event-placement="info"
-						data-umami-event-url={props.website}
-					>
-						Website
-					</ExternalLinkButton>
-				) : null}
-				{props.github?.length
-					? props.github.map((github) => (
-							<ExternalLinkButton
-								href={`https://github.com/${github}`}
-								icon="github"
-								key={`${props.name}-github-${github}`}
-							>
-								{props.github?.length === 1 ? 'GitHub' : github}
-							</ExternalLinkButton>
-						))
-					: null}
-				{props.twitter ? (
-					<ExternalLinkButton href={`https://x.com/${props.twitter}`} icon="twitter">
-						Twitter
-					</ExternalLinkButton>
-				) : null}
-				{props.safeHarbor ? (
-					<ExternalLinkButton href={`https://safeharbor.securityalliance.org/database/${slug(props.name)}`}>
-						Safe Harbor Agreement
-					</ExternalLinkButton>
-				) : null}
-			</div>
 		</Card>
 	)
 }

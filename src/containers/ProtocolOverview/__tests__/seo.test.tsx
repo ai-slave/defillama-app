@@ -668,7 +668,7 @@ describe('ProtocolInfo category links', () => {
 				],
 				tags: null,
 				audits: null,
-				website: null,
+				website: 'https://rho.xyz',
 				github: null,
 				twitter: null,
 				safeHarbor: false,
@@ -683,5 +683,7 @@ describe('ProtocolInfo category links', () => {
 		expect(parentMarkup).toContain('href="/protocols/yield"')
 		expect(parentMarkup).toContain('href="/dexs"')
 		expect(parentMarkup).toContain('data-chain-icons="Ethereum,Arbitrum"')
+		expect(parentMarkup.indexOf('href="https://rho.xyz"')).toBeLessThan(parentMarkup.indexOf('Categories:'))
+		expect(parentMarkup.indexOf('href="https://rho.xyz"')).toBeLessThan(parentMarkup.indexOf('Products:'))
 	})
 })
