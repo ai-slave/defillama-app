@@ -8,18 +8,16 @@ import { CHART_COLORS } from '~/constants/colors'
 import { fetchAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api'
 import { getSponsoredResearchReports } from '~/containers/Articles/api'
 import { fetchBridgeVolumeBySlug } from '~/containers/Bridges/api'
-import type { BridgeVolumePoint } from '~/containers/Bridges/api.types'
 import { governanceIdsToApis } from '~/containers/Governance/api'
 import { getProtocolIncentivesFromAggregatedEmissions } from '~/containers/Incentives/queries'
 import { fetchOracleMetrics, fetchOracleProtocolChart } from '~/containers/Oracles/api'
-import type { IOracleProtocolChart } from '~/containers/Oracles/api.types'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import type { ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
 import type { TokenMarketSummary } from '~/containers/Tokens/types'
 import { fetchTreasuries } from '~/containers/Treasuries/api'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
 import { readYieldsMeta, type YieldsSnapshot } from '~/containers/Yields/data/snapshot'
-import type { EntityEarnRow, YieldsMeta } from '~/containers/Yields/data/types'
+import type { YieldsMeta } from '~/containers/Yields/data/types'
 import { TVL_SETTINGS_KEYS_SET } from '~/contexts/LocalStorage'
 import { capitalizeFirstLetter, slug } from '~/utils'
 import { fetchJson, getFastJsonTimeoutMs } from '~/utils/async'
@@ -39,7 +37,6 @@ import type {
 	IncomeStatementMetric,
 	IncomeStatementPeriod,
 	IncomeStatementPeriods,
-	IProtocolExpenses,
 	IProtocolMetricsV2,
 	IProtocolValueChart
 } from './api.types'
@@ -124,7 +121,6 @@ export const getProtocolMetricFlags = ({
 	}
 }
 
-type IBridgeVolumeResult = BridgeVolumePoint[] | null
 type IProtocolTvlChartSeedResult = {
 	data: IProtocolValueChart
 	failed: boolean
@@ -252,42 +248,6 @@ export const getProtocolOverviewPageData = async ({
 		oracleTvs,
 		blockExplorersData,
 		tokenMarketSummary
-	]: [
-		IProtocolDataExtended,
-		IProtocolTvlChartSeedResult,
-		Awaited<ReturnType<typeof formatAdapterData>>,
-		Awaited<ReturnType<typeof formatAdapterData>>,
-		Awaited<ReturnType<typeof formatAdapterData>>,
-		Awaited<ReturnType<typeof formatAdapterData>>,
-		Awaited<ReturnType<typeof formatAdapterData>>,
-		Awaited<ReturnType<typeof formatAdapterData>>,
-		Awaited<ReturnType<typeof formatAdapterData>>,
-		Awaited<ReturnType<typeof formatAdapterData>>,
-		Awaited<ReturnType<typeof formatAdapterData>>,
-		Awaited<ReturnType<typeof formatAdapterData>>,
-		Awaited<ReturnType<typeof formatAdapterData>>,
-		Awaited<ReturnType<typeof formatAdapterData>>,
-		Awaited<ReturnType<typeof formatAdapterData>>,
-		Awaited<ReturnType<typeof formatAdapterData>>,
-		IProtocolOverviewPageData['treasury'],
-		EntityEarnRow[] | null,
-		NonNullable<IProtocolOverviewPageData['incentives']> | null,
-		number | null,
-		number | null,
-		number | null,
-		number | null,
-		number | null,
-		number | null,
-		IProtocolExpenses | null,
-		YieldsMeta | null,
-		ProtocolLiquidityTokensResponse,
-		ProtocolsResponse,
-		IBridgeVolumeResult,
-		NonNullable<IProtocolOverviewPageData['incomeStatement']> | null,
-		IOracleProtocolChart | null,
-		IProtocolOverviewPageData['oracleTvs'],
-		BlockExplorersResponse,
-		TokenMarketSummary | null
 	] = await Promise.all([
 		protocolDataPromise,
 		currentProtocolMetadata.tvl && !isOracleProtocol
@@ -525,7 +485,7 @@ export const getProtocolOverviewPageData = async ({
 				)
 			: Promise.resolve(null),
 		currentProtocolMetadata.liquidity && yieldsSnapshot
-			? optionalProtocolData('liquidity_yields_config', () => readYieldsMeta(yieldsSnapshot), null)
+			? optionalProtocolData<YieldsMeta | null>('liquidity_yields_config', () => readYieldsMeta(yieldsSnapshot), null)
 			: Promise.resolve(null),
 		currentProtocolMetadata?.liquidity
 			? optionalProtocolData('liquidity_tokens', () => fetchLiquidityTokensDataset(), [])
@@ -631,13 +591,17 @@ export const getProtocolOverviewPageData = async ({
 		{} as Record<string, Record<string, number>>
 	)
 
-	const protocolNameBySlug = new Map((yieldsConfig?.protocols ?? []).map((protocol) => [protocol.slug, protocol.name]))
+	const protocolNameBySlug = new Map<string, string>()
+	if (yieldsConfig) {
+		for (const protocol of yieldsConfig.protocols) protocolNameBySlug.set(protocol.slug, protocol.name)
+	}
 	const tokenLiquidity = yieldsConfig
 		? (() => {
 				const rows: Array<[string, string, number]> = []
 				for (const protocolSlug in liquidityAggregated) {
 					const protocolName = protocolNameBySlug.get(protocolSlug) ?? protocolSlug
 					const chainValues = liquidityAggregated[protocolSlug]
+					if (!chainValues) continue
 					for (const chainName in chainValues) {
 						const value = chainValues[chainName]
 						if (value !== undefined) rows.push([protocolName, chainName, value])
@@ -1359,6 +1323,7 @@ async function getIncomeStatement(source: IncomeStatementSource) {
 		}
 
 		const cumulativeMetrics: Record<string, NormalizedIncomeStatementMetric> = {}
+		let hasCumulativeMetrics = false
 		let latestMonthlyTimestamp = 0
 
 		const monthlyPeriods = aggregates.monthly
@@ -1375,6 +1340,7 @@ async function getIncomeStatement(source: IncomeStatementSource) {
 				if (cumulativeEntry === undefined) {
 					cumulativeEntry = { value: 0 }
 					cumulativeMetrics[label] = cumulativeEntry
+					hasCumulativeMetrics = true
 				}
 
 				cumulativeEntry.value += entry.value
@@ -1390,15 +1356,13 @@ async function getIncomeStatement(source: IncomeStatementSource) {
 			}
 		}
 
-		const cumulative =
-			Object.keys(cumulativeMetrics).length > 0
-				? {
-						cumulative: {
-							timestamp: latestMonthlyTimestamp,
-							values: cumulativeMetrics
-						}
-					}
-				: {}
+		const cumulative: NormalizedIncomeStatementPeriods = {}
+		if (hasCumulativeMetrics) {
+			cumulative.cumulative = {
+				timestamp: latestMonthlyTimestamp,
+				values: cumulativeMetrics
+			}
+		}
 
 		const finalLabelsByType: Record<string, Array<string>> = {}
 		for (const label in labelsByType) {
@@ -1417,7 +1381,7 @@ async function getIncomeStatement(source: IncomeStatementSource) {
 			breakdownMethodology: breakdownMethodology,
 			hasOtherTokenHolderFlows: metricTypes.has('Others Token Holder Flows'),
 			hasTokenHolderNetIncome: metricTypes.has('Token Holder Net Income'),
-			components: incomeStatement.components
+			...(incomeStatement.components === undefined ? {} : { components: incomeStatement.components })
 		}
 	} catch (err) {
 		if (typeof window === 'undefined') {

@@ -47,7 +47,35 @@ export async function getLiquidationsProtocolsList(): Promise<RawProtocolsRespon
 
 export async function getLiquidationsProtocolChainIds(protocolId: string): Promise<string[]> {
 	const allResponse = await readAllLiquidations(await acquireLiquidationsSnapshot())
-	return Object.keys(allResponse.data[protocolId] ?? {})
+	const protocolData = allResponse.data[protocolId]
+	if (!protocolData) return []
+
+	const chainIds: string[] = []
+	for (const chainId in protocolData) chainIds.push(chainId)
+	return chainIds
+}
+
+export type LiquidationsSitemapProtocolChains = Array<{
+	protocolId: string
+	chainIds: string[]
+}>
+
+export async function getLiquidationsSitemapProtocolChains(): Promise<LiquidationsSitemapProtocolChains> {
+	const snapshot = await acquireLiquidationsSnapshot()
+	const [protocolsResponse, allResponse] = await Promise.all([readProtocols(snapshot), readAllLiquidations(snapshot)])
+	const result = new Array<LiquidationsSitemapProtocolChains[number]>(protocolsResponse.protocols.length)
+
+	for (let protocolIndex = 0; protocolIndex < protocolsResponse.protocols.length; protocolIndex += 1) {
+		const protocolId = protocolsResponse.protocols[protocolIndex]!
+		const chainIds: string[] = []
+		const protocolData = allResponse.data[protocolId]
+		if (protocolData) {
+			for (const chainId in protocolData) chainIds.push(chainId)
+		}
+		result[protocolIndex] = { protocolId, chainIds }
+	}
+
+	return result
 }
 
 export async function getLiquidationsOverviewPageData(
@@ -128,7 +156,9 @@ export async function getLiquidationsChainPageData(
 	const protocolData = allResponse.data[protocolId]
 	if (!protocolData) return null
 
-	const chainId = resolveChainId(chainParam, Object.keys(protocolData), metadataCache.chainMetadata)
+	const chainIds: string[] = []
+	for (const currentChainId in protocolData) chainIds.push(currentChainId)
+	const chainId = resolveChainId(chainParam, chainIds, metadataCache.chainMetadata)
 	if (!chainId) return null
 
 	return buildLiquidationsChainPageData(

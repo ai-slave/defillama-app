@@ -35,24 +35,18 @@ export const getStaticProps = withPerformanceLogging(
 			return { notFound: true }
 		}
 
-		const { resolveLiquidationsProtocolParam } = await import('~/containers/LiquidationsV2/server/routes')
-		const protocolParam = await resolveLiquidationsProtocolParam(params.protocol)
-		if (!protocolParam) {
+		const { resolveLiquidationsProtocolRoute } = await import('~/containers/LiquidationsV2/server/routes')
+		const route = await resolveLiquidationsProtocolRoute(params.protocol)
+		if (!route) {
 			return { notFound: true }
 		}
 
-		const [{ getLiquidationsProtocolsList }, metadataModule] = await Promise.all([
-			import('~/containers/LiquidationsV2/server/dataset.server'),
-			import('~/utils/metadata')
-		])
-		const [protocolsResponse, protocolMetadataLookup] = [
-			await getLiquidationsProtocolsList(),
-			createProtocolMetadataLookup(metadataModule.default.protocolMetadata)
-		]
+		const { protocolId: protocolParam, protocolIds, metadataCache } = route
+		const protocolMetadataLookup = createProtocolMetadataLookup(metadataCache.protocolMetadata)
 
 		const protocolLinks = [
 			{ label: 'Overview', to: '/liquidations' },
-			...protocolsResponse.protocols.map((protocolId) => {
+			...protocolIds.map((protocolId) => {
 				const protocolName = protocolMetadataLookup.get(protocolId)?.displayName ?? protocolId
 
 				return {

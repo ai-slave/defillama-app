@@ -10,10 +10,9 @@ const position: LiquidationPosition = {
 	chainName: 'Ethereum',
 	chainSlug: 'ethereum',
 	owner: '0x1234567890abcdef',
-	ownerName: 'Treasury Wallet',
-	ownerUrlOverride: 'https://example.com/owner',
 	liqPrice: 1234,
 	collateral: 'WBTC',
+	collateralId: '0xwbtc',
 	collateralAmount: 1.25,
 	collateralAmountUsd: 110000
 }
@@ -21,10 +20,9 @@ const position: LiquidationPosition = {
 describe('filterLiquidationPositions', () => {
 	const searchIndex = createLiquidationPositionSearchIndex([position])
 
-	it('matches protocol, chain, owner, token, and raw owner fields', () => {
+	it('matches protocol, chain, token, and owner fields', () => {
 		expect(filterLiquidationPositions([position], searchIndex, 'aave')).toEqual([position])
 		expect(filterLiquidationPositions([position], searchIndex, 'ethereum')).toEqual([position])
-		expect(filterLiquidationPositions([position], searchIndex, 'treasury')).toEqual([position])
 		expect(filterLiquidationPositions([position], searchIndex, 'wbtc')).toEqual([position])
 		expect(filterLiquidationPositions([position], searchIndex, '0x123456')).toEqual([position])
 	})
@@ -40,7 +38,7 @@ describe('filterLiquidationPositions', () => {
 	})
 
 	it('preserves input order because the table applies its own value sort', () => {
-		const secondPosition = { ...position, owner: '0xabcdef', ownerName: 'Aave Treasury' }
+		const secondPosition = { ...position, owner: '0xabcdef' }
 		const rows = [position, secondPosition]
 		expect(filterLiquidationPositions(rows, createLiquidationPositionSearchIndex(rows), 'aave')).toEqual(rows)
 	})

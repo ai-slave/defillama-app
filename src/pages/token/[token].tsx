@@ -28,7 +28,6 @@ import { getTokensCacheControl } from '~/containers/Tokens/cache.server'
 import { getTokenOverviewCurrentSnapshot } from '~/containers/Tokens/queries.server'
 import Layout from '~/layout'
 import { slug } from '~/utils'
-import { normalizeLiquidationsTokenSymbol } from '~/utils/metadata/liquidations'
 import type { ITokenListEntry } from '~/utils/metadata/types'
 import { canonicalRouteRedirect, safeDecodeURIComponent } from '~/utils/route'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
@@ -102,7 +101,6 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 		}) ?? null
 	const llamaswapChains = geckoId ? (metadataCache.protocolLlamaswapDataset?.[geckoId] ?? null) : null
 	const displayName = slug(record.symbol) === normalizedToken ? record.symbol : record.name
-	const normalizedLiquidationsSymbol = normalizeLiquidationsTokenSymbol(record.symbol)
 	const chainDefiLlamaId = record.chainId ? `chain#${record.chainId.toLowerCase()}` : null
 	const protocolDefiLlamaId = record.protocolId ?? protocolMetadata?.name ?? null
 	const currentSnapshotPromise = geckoId ? getTokenOverviewCurrentSnapshot(geckoId) : Promise.resolve(null)
@@ -138,9 +136,8 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 			)
 		: Promise.resolve(false)
 	let liquidationsPromise: Promise<boolean> = Promise.resolve(false)
-	if (normalizedLiquidationsSymbol && metadataCache.liquidationsTokenSymbolsSet.has(normalizedLiquidationsSymbol)) {
-		const liquidationsSymbol = normalizedLiquidationsSymbol
-		liquidationsPromise = hasTokenLiquidationsData(liquidationsSymbol).catch((error) =>
+	if (metadataCache.liquidationsTokenSymbolsSet.has(record.symbol)) {
+		liquidationsPromise = hasTokenLiquidationsData(record.symbol).catch((error) =>
 			downgradeTokenPageError(error, `Failed to load token liquidations data for ${record.symbol}`, false)
 		)
 	}

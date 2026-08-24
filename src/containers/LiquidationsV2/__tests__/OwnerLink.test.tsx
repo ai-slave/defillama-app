@@ -12,35 +12,14 @@ const basePosition: LiquidationPosition = {
 	chainName: 'Arbitrum One',
 	chainSlug: 'arbitrum-one',
 	owner: '0x1234567890abcdef1234567890abcdef12345678',
-	ownerName: 'Treasury Wallet',
-	ownerUrlOverride: null,
 	liqPrice: 1234,
 	collateral: 'WBTC',
+	collateralId: '0xwbtc',
 	collateralAmount: 1.25,
 	collateralAmountUsd: 110000
 }
 
 describe('LiquidationsOwnerLink', () => {
-	it('prefers the explicit override url', () => {
-		const html = renderToStaticMarkup(
-			<LiquidationsExplorerProvider
-				blockExplorers={[
-					{
-						displayName: 'Arbitrum',
-						llamaChainId: 'arbitrum',
-						evmChainId: 42161,
-						blockExplorers: [{ name: 'Arbiscan', url: 'https://arbiscan.io' }]
-					}
-				]}
-			>
-				<LiquidationsOwnerLink position={{ ...basePosition, ownerUrlOverride: 'https://example.com/override' }} />
-			</LiquidationsExplorerProvider>
-		)
-
-		expect(html).toContain('href="https://example.com/override"')
-		expect(html).not.toContain('href="https://arbiscan.io/address/')
-	})
-
 	it('derives a block explorer url for supported chains', () => {
 		const html = renderToStaticMarkup(
 			<LiquidationsExplorerProvider
@@ -67,7 +46,7 @@ describe('LiquidationsOwnerLink', () => {
 			</LiquidationsExplorerProvider>
 		)
 
-		expect(html).toContain('Treasury Wallet')
+		expect(html).toContain('0x123456...345678')
 		expect(html).not.toContain('href=')
 	})
 })

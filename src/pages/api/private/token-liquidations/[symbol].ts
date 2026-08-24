@@ -1,5 +1,4 @@
 import { withSubscriptionJsonRoute } from '~/server/api/withSubscriptionJsonRoute'
-import { normalizeLiquidationsTokenSymbol } from '~/utils/metadata/liquidations'
 
 export const config = {
 	api: {
@@ -20,9 +19,8 @@ export default withSubscriptionJsonRoute<{ symbol: string }>({
 	},
 	async handler(_req, res, { symbol }) {
 		const metadataModule = await import('~/utils/metadata')
-		const normalizedSymbol = normalizeLiquidationsTokenSymbol(symbol)
 
-		if (!normalizedSymbol || !metadataModule.default.liquidationsTokenSymbolsSet.has(normalizedSymbol)) {
+		if (!metadataModule.default.liquidationsTokenSymbolsSet.has(symbol)) {
 			return res.status(404).json({ error: 'Token liquidations not found' })
 		}
 
@@ -31,7 +29,7 @@ export default withSubscriptionJsonRoute<{ symbol: string }>({
 			protocolMetadata: metadataModule.default.protocolMetadata
 		}
 		const { getTokenLiquidationsSectionData } = await import('~/containers/LiquidationsV2/server/dataset.server')
-		const data = await getTokenLiquidationsSectionData(normalizedSymbol, metadataCache)
+		const data = await getTokenLiquidationsSectionData(symbol, metadataCache)
 
 		if (!data) {
 			return res.status(404).json({ error: 'Token liquidations not found' })

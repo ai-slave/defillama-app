@@ -29,8 +29,15 @@ function LiquidationsShellChrome({
 }: LiquidationsShellChromeProps) {
 	return (
 		<>
-			{protocolLinks?.length ? <RowLinksWithDropdown links={protocolLinks} activeLink={activeProtocolLink} /> : null}
-			{(chainLinks?.length ?? 0) > 2 ? <RowLinksWithDropdown links={chainLinks} activeLink={activeChainLink} /> : null}
+			{protocolLinks?.length ? (
+				<RowLinksWithDropdown
+					links={protocolLinks}
+					{...(activeProtocolLink ? { activeLink: activeProtocolLink } : {})}
+				/>
+			) : null}
+			{chainLinks && chainLinks.length > 2 ? (
+				<RowLinksWithDropdown links={chainLinks} {...(activeChainLink ? { activeLink: activeChainLink } : {})} />
+			) : null}
 		</>
 	)
 }
@@ -47,10 +54,10 @@ function LiquidationsShellCard({
 	return (
 		<>
 			<LiquidationsShellChrome
-				protocolLinks={protocolLinks}
-				chainLinks={chainLinks}
-				activeProtocolLink={activeProtocolLink}
-				activeChainLink={activeChainLink}
+				{...(protocolLinks ? { protocolLinks } : {})}
+				{...(chainLinks ? { chainLinks } : {})}
+				{...(activeProtocolLink ? { activeProtocolLink } : {})}
+				{...(activeChainLink ? { activeChainLink } : {})}
 			/>
 
 			<Panel padding="none" className="w-full flex-1">

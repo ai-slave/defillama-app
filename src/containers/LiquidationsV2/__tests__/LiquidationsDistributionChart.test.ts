@@ -1,6 +1,9 @@
+import React from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import type { LiquidationsDistributionChartData } from '../api.types'
 import {
+	buildLiquidationsChartExportDataset,
 	buildCumulativeLiquidationsChartView,
 	getLiquidationsChartBreakdownMode,
 	getLiquidationsChartBreakdownQueryPatch,
@@ -10,6 +13,7 @@ import {
 	getLiquidationsChartModeQueryPatch,
 	getLiquidationsChartTokenQueryPatch,
 	getLiquidationsChartView,
+	LiquidationsDistributionChartFooter,
 	resolveLiquidationsChartTokenKey
 } from '../LiquidationsDistributionChart'
 
@@ -105,6 +109,14 @@ const chart: LiquidationsDistributionChartData = {
 }
 
 describe('LiquidationsDistributionChart helpers', () => {
+	it('keeps the population note left of the snapshot below the chart', () => {
+		const html = renderToStaticMarkup(React.createElement(LiquidationsDistributionChartFooter, { timestamp: 1 }))
+
+		expect(html).toContain('justify-between')
+		expect(html).toContain('class="ml-auto"')
+		expect(html.indexOf('Positions with at least $100k collateral.')).toBeLessThan(html.indexOf('Snapshot Thu'))
+	})
+
 	it('defaults to the top collateral token when no query param is present', () => {
 		expect(resolveLiquidationsChartTokenKey(chart, undefined)).toBe('WBTC')
 	})
@@ -121,7 +133,7 @@ describe('LiquidationsDistributionChart helpers', () => {
 	it('filters the chart down to the selected token', () => {
 		expect(getLiquidationsChartView(chart, 'ethereum:eth', 'total')).toEqual({
 			bins: [0, 10, 20],
-			series: [chart.tokens[1].breakdowns.total.series[0]]
+			series: [chart.tokens[1]!.breakdowns.total.series[0]]
 		})
 	})
 
@@ -171,7 +183,7 @@ describe('LiquidationsDistributionChart helpers', () => {
 	})
 
 	it('returns the selected breakdown for a token', () => {
-		expect(getLiquidationsChartView(chart, 'WBTC', 'protocol')).toEqual(chart.tokens[0].breakdowns.protocol)
+		expect(getLiquidationsChartView(chart, 'WBTC', 'protocol')).toEqual(chart.tokens[0]!.breakdowns.protocol)
 	})
 
 	it('builds cumulative liquidation totals from right to left across price buckets', () => {
@@ -213,6 +225,22 @@ describe('LiquidationsDistributionChart helpers', () => {
 					totalUsd: 20
 				}
 			]
+		})
+	})
+
+	it('exports only visible series with the selected metric', () => {
+		const view = chart.tokens[0]!.breakdowns.protocol
+		expect(buildLiquidationsChartExportDataset(view, 'amount', new Set(['Aave']))).toEqual({
+			dimensions: ['liqPrice', 'Aave'],
+			source: [
+				[0, 1],
+				[10, 2],
+				[20, 3]
+			]
+		})
+		expect(buildLiquidationsChartExportDataset(view, 'usd', new Set())).toEqual({
+			dimensions: ['liqPrice'],
+			source: [[0], [10], [20]]
 		})
 	})
 

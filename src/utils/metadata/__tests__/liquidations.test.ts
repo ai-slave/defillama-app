@@ -1,27 +1,21 @@
 import { describe, expect, it } from 'vitest'
-import { extractLiquidationsTokenSymbols, normalizeLiquidationsTokenSymbol } from '../liquidations'
+import { extractLiquidationsTokenSymbols } from '../liquidations'
 
 describe('liquidations metadata helpers', () => {
-	it('normalizes token symbols case-insensitively', () => {
-		expect(normalizeLiquidationsTokenSymbol(' wstETH ')).toBe('WSTETH')
-		expect(normalizeLiquidationsTokenSymbol('btc')).toBe('BTC')
-		expect(normalizeLiquidationsTokenSymbol('')).toBeNull()
-	})
-
-	it('extracts a deduped sorted list of liquidation token symbols', () => {
+	it('extracts exact producer symbols from populated positions', () => {
 		expect(
 			extractLiquidationsTokenSymbols({
 				timestamp: 1,
-				validThresholds: ['all'],
+				validThresholds: ['100k', '10k', 'all'],
 				tokens: {
 					ethereum: {
-						'ethereum:wsteth': { symbol: 'wstETH', decimals: 18 },
-						'ethereum:eth': { symbol: 'ETH', decimals: 18 },
-						'ethereum:ldo': { symbol: 'LDO', decimals: 18 }
+						wstETH: { symbol: 'wstETH', decimals: 18, price: 1 },
+						ETH: { symbol: 'ETH', decimals: 18, price: 1 },
+						LDO: { symbol: 'LDO', decimals: 18, price: 1 }
 					},
 					base: {
-						'base:wsteth': { symbol: 'WSTETH', decimals: 18 },
-						'base:cbbtc': { symbol: 'cbbtc', decimals: 8 }
+						WSTETH: { symbol: 'WSTETH', decimals: 18, price: 1 },
+						cbbtc: { symbol: 'cbbtc', decimals: 8, price: 1 }
 					}
 				},
 				data: {
@@ -30,14 +24,16 @@ describe('liquidations metadata helpers', () => {
 							{
 								owner: '0x1',
 								liqPrice: 1,
-								collateral: 'ethereum:wsteth',
+								collateral: 'wstETH',
+								collateralId: 'ethereum:wsteth',
 								collateralAmount: 1,
 								collateralAmountUsd: 100
 							},
 							{
 								owner: '0x2',
 								liqPrice: 1,
-								collateral: 'ethereum:eth',
+								collateral: 'ETH',
+								collateralId: 'ethereum:eth',
 								collateralAmount: 1,
 								collateralAmountUsd: 100
 							}
@@ -46,7 +42,8 @@ describe('liquidations metadata helpers', () => {
 							{
 								owner: '0x3',
 								liqPrice: 1,
-								collateral: 'base:cbbtc',
+								collateral: 'cbbtc',
+								collateralId: 'base:cbbtc',
 								collateralAmount: 1,
 								collateralAmountUsd: 100
 							}
@@ -57,7 +54,8 @@ describe('liquidations metadata helpers', () => {
 							{
 								owner: '0x4',
 								liqPrice: 1,
-								collateral: 'base:wsteth',
+								collateral: 'WSTETH',
+								collateralId: 'base:wsteth',
 								collateralAmount: 1,
 								collateralAmountUsd: 100
 							}
@@ -65,6 +63,6 @@ describe('liquidations metadata helpers', () => {
 					}
 				}
 			})
-		).toEqual(['CBBTC', 'ETH', 'WSTETH'])
+		).toEqual(['cbbtc', 'ETH', 'wstETH', 'WSTETH'])
 	})
 })

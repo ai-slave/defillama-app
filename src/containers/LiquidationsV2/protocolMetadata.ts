@@ -7,7 +7,8 @@ export function createProtocolMetadataLookup(
 ): Map<string, LiquidationsProtocolMetadata> {
 	const lookup = new Map<string, LiquidationsProtocolMetadata>()
 
-	for (const metadata of Object.values(protocolMetadata) as LiquidationsProtocolMetadata[]) {
+	for (const metadataId in protocolMetadata) {
+		const metadata: LiquidationsProtocolMetadata | undefined = protocolMetadata[metadataId]
 		if (metadata?.name) {
 			lookup.set(metadata.name, metadata)
 		}

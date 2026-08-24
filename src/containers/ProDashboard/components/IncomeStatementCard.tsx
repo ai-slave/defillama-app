@@ -97,7 +97,7 @@ export function IncomeStatementCard({ config }: IncomeStatementCardProps) {
 						<Icon name="alert-triangle" height={24} width={24} className="text-sub-orange" />
 						<p className="text-sm text-pro-text-form">Error loading income statement</p>
 					</div>
-				) : !hasData ? (
+				) : !incomeStatement || !hasData ? (
 					<div className="flex flex-1 items-center justify-center text-pro-text-form">
 						No income statement data available
 					</div>

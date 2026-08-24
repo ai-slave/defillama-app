@@ -40,15 +40,17 @@ function getLiquidationsTooltipValue(param: EChartsTooltipItem): number {
 }
 
 export function getLiquidationsTooltipHtml(params: unknown, metric: LiquidationsMetric, tokenLabel: string): string {
-	const paramList = normalizeTooltipItems(params).filter((param) => getLiquidationsTooltipValue(param) > 0)
-	const axisValue = getTooltipAxisValue(paramList[0])
-	const axisLabel = Number.isFinite(axisValue) ? formatLiquidationPrice(axisValue) : ''
-	const total = paramList.reduce((sum, param) => sum + getLiquidationsTooltipValue(param), 0)
-	const totalLabel = formatLiquidationMetricValue(total, metric, tokenLabel)
+	const paramsList = normalizeTooltipItems(params)
 	const rows: string[] = []
+	let firstVisibleParam: EChartsTooltipItem | undefined
+	let total = 0
 
-	for (const param of paramList) {
-		const rowValue = formatLiquidationMetricValue(getLiquidationsTooltipValue(param), metric, tokenLabel)
+	for (const param of paramsList) {
+		const value = getLiquidationsTooltipValue(param)
+		if (value <= 0) continue
+		firstVisibleParam ??= param
+		total += value
+		const rowValue = formatLiquidationMetricValue(value, metric, tokenLabel)
 		rows.push(`<div style="display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:12px;">
 								<span style="display:inline-flex; align-items:center; gap:6px; min-width:0;">
 									${param.marker ?? ''}
@@ -57,6 +59,10 @@ export function getLiquidationsTooltipHtml(params: unknown, metric: Liquidations
 								<span style="color:var(--text-primary); text-align:right;">${rowValue}</span>
 							</div>`)
 	}
+
+	const axisValue = getTooltipAxisValue(firstVisibleParam)
+	const axisLabel = Number.isFinite(axisValue) ? formatLiquidationPrice(axisValue) : ''
+	const totalLabel = formatLiquidationMetricValue(total, metric, tokenLabel)
 
 	return `<div style="min-width:220px; background:var(--bg-surface); border:1px solid var(--border-medium); box-shadow:0 18px 48px var(--tooltip-shadow, rgba(0, 0, 0, 0.24)); backdrop-filter:blur(10px); color:var(--text-primary); border-radius:10px; padding:12px 14px; font-size:12px; line-height:1.45;">
 						<div style="margin-bottom:8px;">

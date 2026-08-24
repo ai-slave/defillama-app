@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fetchTokenLiquidationsForAliases } from '../api'
+import { fetchTokenLiquidationsClient } from '../api'
 import type { TokenLiquidationsSectionData } from '../api.types'
 
 function makeTokenLiquidationsPart(symbol: string, firstUsd: number, secondUsd: number): TokenLiquidationsSectionData {
@@ -60,44 +60,25 @@ function makeTokenLiquidationsPart(symbol: string, firstUsd: number, secondUsd: 
 	}
 }
 
-describe('fetchTokenLiquidationsForAliases', () => {
-	it('uses the canonical alias symbol and merges duplicate chart tokens', async () => {
-		const parts = new Map([
-			['BTC', makeTokenLiquidationsPart('BTC', 10, 20)],
-			['WBTC', makeTokenLiquidationsPart('WBTC', 30, 40)]
-		])
-		const fetchFn = async (url: string) => {
-			const symbol = decodeURIComponent(url.slice(url.lastIndexOf('/') + 1))
-			const part = parts.get(symbol)
-			if (!part) throw new Error(`No fixture for ${symbol}`)
-			return new Response(JSON.stringify(part), { status: 200 })
-		}
-
-		const result = await fetchTokenLiquidationsForAliases('wbtc', fetchFn)
-
-		expect(result?.tokenSymbol).toBe('BTC')
-		expect(result?.distributionChart.tokens).toHaveLength(1)
-		expect(result?.distributionChart.tokens[0]).toMatchObject({
-			key: 'WBTC',
-			label: 'WBTC',
-			totalUsd: 100
+describe('fetchTokenLiquidationsClient', () => {
+	it('preserves the Token-page symbol in its private route', async () => {
+		const urls: string[] = []
+		const result = await fetchTokenLiquidationsClient('wstETH', async (url: string) => {
+			urls.push(url)
+			return new Response(JSON.stringify(makeTokenLiquidationsPart('BTC', 10, 20)), { status: 200 })
 		})
-		expect(result?.distributionChart.tokens[0]?.breakdowns.total.series[0]).toMatchObject({
-			key: 'WBTC',
-			usd: [40, 60],
-			amount: [2, 4],
-			totalUsd: 100
-		})
-		expect(result?.totalCollateralUsd).toBe(100)
+
+		expect(urls).toEqual(['/api/private/token-liquidations/wstETH'])
+		expect(result.tokenSymbol).toBe('BTC')
+		expect(result.totalCollateralUsd).toBe(30)
 	})
 
-	it('throws when every alias request fails', async () => {
-		const fetchFn = async () => {
-			throw new Error('upstream unavailable')
-		}
-
-		await expect(fetchTokenLiquidationsForAliases('wbtc', fetchFn)).rejects.toThrow(
-			/Failed to fetch token liquidations for BTC: upstream unavailable/
-		)
+	it('keeps a failed family route unavailable', async () => {
+		await expect(
+			fetchTokenLiquidationsClient(
+				'wbtc',
+				async () => new Response(JSON.stringify({ error: 'upstream unavailable' }), { status: 500 })
+			)
+		).rejects.toThrow('upstream unavailable')
 	})
 })

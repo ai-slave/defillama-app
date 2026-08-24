@@ -18,17 +18,11 @@ export default withSubscriptionJsonRoute<{ protocol: string }>({
 		return { protocol }
 	},
 	async handler(_req, res, { protocol }) {
-		const { resolveLiquidationsProtocolParam } = await import('~/containers/LiquidationsV2/server/routes')
-		const protocolId = await resolveLiquidationsProtocolParam(protocol)
-		if (!protocolId) {
-			return res.status(404).json({ error: 'Liquidations protocol not found' })
-		}
-
 		const [{ getLiquidationsProtocolPageData }, { default: metadataCache }] = await Promise.all([
 			import('~/containers/LiquidationsV2/server/dataset.server'),
 			import('~/utils/metadata')
 		])
-		const data = await getLiquidationsProtocolPageData(protocolId, {
+		const data = await getLiquidationsProtocolPageData(protocol, {
 			chainMetadata: metadataCache.chainMetadata,
 			protocolMetadata: metadataCache.protocolMetadata
 		})

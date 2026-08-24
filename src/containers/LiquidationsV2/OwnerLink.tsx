@@ -34,8 +34,8 @@ export function LiquidationsOwnerLink({ position }: { position: LiquidationPosit
 			}),
 		[blockExplorers, position.chainId, position.chainName, position.owner]
 	)
-	const ownerUrl = position.ownerUrlOverride ?? derivedExplorer?.url ?? null
-	const label = shorten(position.ownerName)
+	const ownerUrl = derivedExplorer?.url ?? null
+	const label = shorten(position.owner)
 
 	if (!ownerUrl) {
 		return <span>{label}</span>

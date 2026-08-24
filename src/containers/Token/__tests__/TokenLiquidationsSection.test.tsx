@@ -155,7 +155,7 @@ describe('TokenLiquidationsSection', () => {
 	it('renders token liquidations rows for subscribers', () => {
 		queryState = {
 			data: {
-				tokenSymbol: 'WSTETH',
+				tokenSymbol: 'wstETH',
 				timestamp: 1,
 				positionCount: 2,
 				protocolCount: 2,
@@ -180,7 +180,7 @@ describe('TokenLiquidationsSection', () => {
 			isLoading: false
 		}
 
-		const html = renderToStaticMarkup(<TokenLiquidationsSection tokenSymbol="wsteth" />)
+		const html = renderToStaticMarkup(<TokenLiquidationsSection tokenSymbol="wstETH" />)
 
 		expect(html).toContain('Liquidations')
 		expect(liquidationsSummaryCalls[0]?.items).toEqual(
@@ -189,10 +189,10 @@ describe('TokenLiquidationsSection', () => {
 		expect(liquidationsDistributionChartCalls[0]).toMatchObject({
 			defaultBreakdownMode: 'protocol',
 			hideTokenSelector: true,
-			title: 'WSTETH Liquidation Distribution'
+			title: 'wstETH Liquidation Distribution'
 		})
 		expect(tableWithSearchCalls[0]).toMatchObject({
-			csvFileName: 'token-liquidations-protocols-wsteth',
+			csvFileName: 'token-liquidations-100k-protocols-wstETH',
 			dataLength: 1,
 			placeholder: 'Search protocols...'
 		})
@@ -206,7 +206,7 @@ describe('TokenLiquidationsSection', () => {
 			loaders: { userLoading: false }
 		}
 
-		const html = renderToStaticMarkup(<TokenLiquidationsSection tokenSymbol="wsteth" />)
+		const html = renderToStaticMarkup(<TokenLiquidationsSection tokenSymbol="wstETH" />)
 
 		expect(html).toContain('active subscription')
 	})
@@ -218,7 +218,7 @@ describe('TokenLiquidationsSection', () => {
 			isLoading: false
 		}
 
-		const html = renderToStaticMarkup(<TokenLiquidationsSection tokenSymbol="wsteth" />)
+		const html = renderToStaticMarkup(<TokenLiquidationsSection tokenSymbol="wstETH" />)
 
 		expect(html).toContain('Failed to fetch token liquidations data')
 	})
@@ -240,7 +240,7 @@ describe('TokenLiquidationsSection', () => {
 			isLoading: false
 		}
 
-		const html = renderToStaticMarkup(<TokenLiquidationsSection tokenSymbol="wsteth" />)
+		const html = renderToStaticMarkup(<TokenLiquidationsSection tokenSymbol="wstETH" />)
 
 		expect(html).toBe('')
 	})

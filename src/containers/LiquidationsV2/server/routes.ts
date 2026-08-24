@@ -3,7 +3,7 @@ import { resolveChainId, resolveProtocolId } from '~/containers/LiquidationsV2/q
 import { getMetadataCache, type StaticParamPath } from '~/server/routeRegistry/common'
 import { slug } from '~/utils'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
-import { getLiquidationsProtocolChainIds, getLiquidationsProtocolsList } from './dataset.server'
+import { getLiquidationsProtocolsList } from './dataset.server'
 import { getLiquidationsSitemapProtocolChainsFromSnapshot } from './routeData'
 
 export async function getLiquidationsProtocolStaticPaths(): Promise<Array<StaticParamPath<'protocol'>>> {
@@ -11,11 +11,15 @@ export async function getLiquidationsProtocolStaticPaths(): Promise<Array<Static
 	return protocolsResponse.protocols.map((protocol) => ({ params: { protocol } }))
 }
 
-export async function resolveLiquidationsProtocolParam(protocol: string): Promise<string | null> {
-	const metadataCache = await getMetadataCache()
-	const protocolsResponse = await getLiquidationsProtocolsList()
+export async function resolveLiquidationsProtocolRoute(protocol: string): Promise<{
+	protocolId: string
+	protocolIds: string[]
+	metadataCache: MetadataCache
+} | null> {
+	const [metadataCache, protocolsResponse] = await Promise.all([getMetadataCache(), getLiquidationsProtocolsList()])
 	const lookup = createProtocolMetadataLookup(metadataCache.protocolMetadata)
-	return resolveProtocolId(protocol, protocolsResponse.protocols, lookup)
+	const protocolId = resolveProtocolId(protocol, protocolsResponse.protocols, lookup)
+	return protocolId ? { protocolId, protocolIds: protocolsResponse.protocols, metadataCache } : null
 }
 
 export async function resolveLiquidationsChainParams(
@@ -24,22 +28,35 @@ export async function resolveLiquidationsChainParams(
 ): Promise<{
 	protocolId: string
 	chainId: string
+	protocolIds: string[]
 	metadataCache: MetadataCache
 } | null> {
-	const metadataCache = await getMetadataCache()
-	const protocolsResponse = await getLiquidationsProtocolsList()
+	const [metadataCache, protocolChains] = await Promise.all([
+		getMetadataCache(),
+		getLiquidationsSitemapProtocolChainsFromSnapshot()
+	])
+	const protocolIds = new Array<string>(protocolChains.length)
+	for (let index = 0; index < protocolChains.length; index += 1) {
+		protocolIds[index] = protocolChains[index]!.protocolId
+	}
 	const protocolId = resolveProtocolId(
 		protocol,
-		protocolsResponse.protocols,
+		protocolIds,
 		createProtocolMetadataLookup(metadataCache.protocolMetadata)
 	)
 	if (!protocolId) return null
 
-	const chainIds = await getLiquidationsProtocolChainIds(protocolId)
+	let chainIds: string[] | undefined
+	for (const protocolChain of protocolChains) {
+		if (protocolChain.protocolId !== protocolId) continue
+		chainIds = protocolChain.chainIds
+		break
+	}
+	if (!chainIds) return null
 	const chainId = resolveChainId(chain, chainIds, metadataCache.chainMetadata)
 	if (!chainId) return null
 
-	return { protocolId, chainId, metadataCache }
+	return { protocolId, chainId, protocolIds, metadataCache }
 }
 
 export async function getLiquidationsSitemapRoutes(metadataCache: MetadataCache): Promise<string[]> {

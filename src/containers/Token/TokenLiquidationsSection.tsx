@@ -7,7 +7,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { LiquidationsTableTabs } from '~/containers/LiquidationsV2/TableTabs'
 import { Panel } from '~/ui/Panel'
 import { formatUsd } from '~/utils/numberFormat'
-import { fetchTokenLiquidationsForAliases } from '../LiquidationsV2/api'
+import { fetchTokenLiquidationsClient } from '../LiquidationsV2/api'
 import type { OverviewChainRow, OverviewProtocolRow, TokenLiquidationsSectionData } from '../LiquidationsV2/api.types'
 import { DeferredTableWithSearch } from './deferred/DeferredTableWithSearch'
 import { TokenPrivateSectionGate, useTokenPrivateSectionAccess } from './TokenPrivateSectionGate'
@@ -138,7 +138,7 @@ async function fetchTokenLiquidationsRows(
 	tokenSymbol: string,
 	authorizedFetch: (url: string) => Promise<Response | null>
 ): Promise<TokenLiquidationsSectionData | null> {
-	return fetchTokenLiquidationsForAliases(tokenSymbol, authorizedFetch)
+	return fetchTokenLiquidationsClient(tokenSymbol, authorizedFetch)
 }
 
 export function TokenLiquidationsSection({ tokenSymbol }: { tokenSymbol: string }) {
@@ -207,7 +207,7 @@ export function TokenLiquidationsSection({ tokenSymbol }: { tokenSymbol: string 
 									leadingControls={tabs}
 									columnToSearch="name"
 									placeholder="Search protocols..."
-									csvFileName={`token-liquidations-protocols-${tokenSymbol}`}
+									csvFileName={`token-liquidations-100k-protocols-${tokenSymbol}`}
 									embedded
 									sortingState={[{ id: 'totalCollateralUsd', desc: true }]}
 								/>
@@ -218,7 +218,7 @@ export function TokenLiquidationsSection({ tokenSymbol }: { tokenSymbol: string 
 									leadingControls={tabs}
 									columnToSearch="name"
 									placeholder="Search chains..."
-									csvFileName={`token-liquidations-chains-${tokenSymbol}`}
+									csvFileName={`token-liquidations-100k-chains-${tokenSymbol}`}
 									embedded
 									sortingState={[{ id: 'totalCollateralUsd', desc: true }]}
 								/>

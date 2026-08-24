@@ -17,39 +17,41 @@ vi.mock('~/containers/LiquidationsV2/RouteContent', () => ({
 
 vi.mock('~/containers/LiquidationsV2/server/dataset.server', () => ({
 	getLiquidationsProtocolsList: vi.fn(),
-	getLiquidationsProtocolChainIds: vi.fn()
+	getLiquidationsSitemapProtocolChains: vi.fn()
 }))
 
 vi.mock('~/utils/metadata', () => ({
 	__esModule: true,
 	default: {
 		chainMetadata: {
-			'arbitrum-one': { id: 'arbitrum', name: 'Arbitrum One' }
+			arbitrum: { id: 'arbitrum', name: 'Arbitrum One' }
 		},
 		protocolMetadata: {
-			makerdao: { name: 'sky', displayName: 'Sky' }
+			makerdao: { name: 'makerdao', displayName: 'Sky' }
 		}
 	},
 	refreshMetadataIfStale: vi.fn().mockResolvedValue(undefined)
 }))
 
 import {
-	getLiquidationsProtocolChainIds,
-	getLiquidationsProtocolsList
+	getLiquidationsProtocolsList,
+	getLiquidationsSitemapProtocolChains
 } from '~/containers/LiquidationsV2/server/dataset.server'
 import * as chainPage from '~/pages/liquidations/[protocol]/[chain]'
 import * as protocolPage from '~/pages/liquidations/[protocol]/index'
 import * as overviewPage from '~/pages/liquidations/index'
 
 const mockedGetLiquidationsProtocolsList = getLiquidationsProtocolsList as unknown as ReturnType<typeof vi.fn>
-const mockedGetLiquidationsProtocolChainIds = getLiquidationsProtocolChainIds as unknown as ReturnType<typeof vi.fn>
+const mockedGetLiquidationsSitemapProtocolChains = getLiquidationsSitemapProtocolChains as unknown as ReturnType<
+	typeof vi.fn
+>
 
 beforeEach(() => {
 	vi.clearAllMocks()
 	mockedGetLiquidationsProtocolsList.mockResolvedValue({
-		protocols: ['sky']
+		protocols: ['makerdao']
 	})
-	mockedGetLiquidationsProtocolChainIds.mockResolvedValue(['Arbitrum One'])
+	mockedGetLiquidationsSitemapProtocolChains.mockResolvedValue([{ protocolId: 'makerdao', chainIds: ['arbitrum'] }])
 })
 
 describe('liquidations SSG routes', () => {
@@ -59,7 +61,7 @@ describe('liquidations SSG routes', () => {
 				props: expect.objectContaining({
 					protocolLinks: [
 						{ label: 'Overview', to: '/liquidations' },
-						{ label: 'Sky', to: '/liquidations/sky' }
+						{ label: 'Sky', to: '/liquidations/makerdao' }
 					]
 				})
 			})
@@ -71,15 +73,16 @@ describe('liquidations SSG routes', () => {
 			expect.objectContaining({
 				props: {
 					protocolName: 'Sky',
-					protocolSlug: 'sky',
+					protocolSlug: 'makerdao',
 					protocolLinks: [
 						{ label: 'Overview', to: '/liquidations' },
-						{ label: 'Sky', to: '/liquidations/sky' }
+						{ label: 'Sky', to: '/liquidations/makerdao' }
 					],
-					chainLinks: [{ label: 'All Chains', to: '/liquidations/sky' }]
+					chainLinks: [{ label: 'All Chains', to: '/liquidations/makerdao' }]
 				}
 			})
 		)
+		expect(mockedGetLiquidationsProtocolsList).toHaveBeenCalledOnce()
 	})
 
 	it('returns notFound for an invalid protocol slug', async () => {
@@ -90,7 +93,7 @@ describe('liquidations SSG routes', () => {
 
 	it('returns all protocol paths and enables blocking fallback', async () => {
 		await expect(protocolPage.getStaticPaths()).resolves.toEqual({
-			paths: [{ params: { protocol: 'sky' } }],
+			paths: [{ params: { protocol: 'makerdao' } }],
 			fallback: 'blocking'
 		})
 	})
@@ -102,20 +105,22 @@ describe('liquidations SSG routes', () => {
 			expect.objectContaining({
 				props: {
 					protocolName: 'Sky',
-					protocolSlug: 'sky',
+					protocolSlug: 'makerdao',
 					chainName: 'Arbitrum One',
-					chainSlug: 'arbitrum-one',
+					chainSlug: 'arbitrum',
 					protocolLinks: [
 						{ label: 'Overview', to: '/liquidations' },
-						{ label: 'Sky', to: '/liquidations/sky' }
+						{ label: 'Sky', to: '/liquidations/makerdao' }
 					],
 					chainLinks: [
-						{ label: 'All Chains', to: '/liquidations/sky' },
-						{ label: 'Arbitrum One', to: '/liquidations/sky/arbitrum-one' }
+						{ label: 'All Chains', to: '/liquidations/makerdao' },
+						{ label: 'Arbitrum One', to: '/liquidations/makerdao/arbitrum' }
 					]
 				}
 			})
 		)
+		expect(mockedGetLiquidationsSitemapProtocolChains).toHaveBeenCalledOnce()
+		expect(mockedGetLiquidationsProtocolsList).not.toHaveBeenCalled()
 	})
 
 	it('returns notFound for an invalid chain slug', async () => {

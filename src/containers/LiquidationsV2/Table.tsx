@@ -34,7 +34,7 @@ export function createLiquidationPositionSearchIndex(rows: LiquidationPosition[]
 		index.set(
 			row,
 			normalizeSearchValue(
-				`${row.protocolName}\0${row.protocolSlug}\0${row.chainName}\0${row.chainSlug}\0${row.ownerName}\0${row.owner}\0${row.collateral}`
+				`${row.protocolName}\0${row.protocolSlug}\0${row.chainName}\0${row.chainSlug}\0${row.owner}\0${row.collateral}`
 			)
 		)
 	}
@@ -49,7 +49,11 @@ export function filterLiquidationPositions(
 	const searchTerm = normalizeSearchValue(searchValue.trim())
 	if (!searchTerm) return rows
 
-	return rows.filter((row) => searchIndex.get(row)!.includes(searchTerm))
+	const filtered: LiquidationPosition[] = []
+	for (const row of rows) {
+		if (searchIndex.get(row)!.includes(searchTerm)) filtered.push(row)
+	}
+	return filtered
 }
 
 const protocolColumns = [
@@ -255,8 +259,8 @@ const positionColumns = [
 			headerClassName: 'w-[140px]'
 		}
 	}),
-	positionColumnHelper.accessor('ownerName', {
-		id: 'ownerName',
+	positionColumnHelper.accessor('owner', {
+		id: 'owner',
 		header: 'Owner',
 		enableSorting: false,
 		cell: ({ row }) => <LiquidationsOwnerLink position={row.original} />,
@@ -318,7 +322,7 @@ export function LiquidationsProtocolsTable({
 			leadingControls={leadingControls}
 			columnToSearch="name"
 			placeholder="Search protocols..."
-			csvFileName="liquidations-v2-protocols"
+			csvFileName="liquidations-v2-100k-protocols"
 			embedded={embedded}
 			sortingState={[{ id: 'totalCollateralUsd', desc: true }]}
 		/>
@@ -338,7 +342,7 @@ export function LiquidationsOverviewChainsTable({
 			leadingControls={leadingControls}
 			columnToSearch="name"
 			placeholder="Search chains..."
-			csvFileName="liquidations-v2-chains"
+			csvFileName="liquidations-v2-100k-chains"
 			embedded={embedded}
 			sortingState={[{ id: 'totalCollateralUsd', desc: true }]}
 		/>
@@ -358,7 +362,7 @@ export function LiquidationsProtocolChainsTable({
 			leadingControls={leadingControls}
 			columnToSearch="name"
 			placeholder="Search chains..."
-			csvFileName="liquidations-v2-protocol-chains"
+			csvFileName="liquidations-v2-100k-protocol-chains"
 			embedded={embedded}
 			sortingState={[{ id: 'totalCollateralUsd', desc: true }]}
 		/>
@@ -402,7 +406,7 @@ export function LiquidationsPositionsTable({
 						/>
 					</label>
 				}
-				csvFileName="liquidations-v2-positions"
+				csvFileName="liquidations-v2-100k-positions"
 				embedded={embedded}
 				sortingState={[{ id: 'collateralAmountUsd', desc: true }]}
 			/>

@@ -829,6 +829,26 @@ describe('token page', () => {
 		expect(tokenPageSectionIds(result.props.sections)).toContain('token-liquidations')
 	})
 
+	it('uses the canonical Token record symbol for liquidations availability', async () => {
+		state.tokensJson = {
+			wsteth: { name: 'Wrapped stETH', symbol: 'wstETH', route: '/token/wstETH' }
+		}
+		state.liquidationsTokenSymbols = ['wstETH']
+		state.liquidationsTokenSymbolsSet = new Set(['wstETH'])
+		state.hasTokenLiquidationsData = true
+
+		const result = await runTokenPageRequest({ params: { token: 'wstETH' } } as never)
+
+		expect('props' in result).toBe(true)
+		if (!('props' in result)) throw new Error('expected props')
+		expect(hasTokenLiquidationsData).toHaveBeenCalledWith('wstETH')
+		expect(result.props.sections).toContainEqual({
+			id: 'token-liquidations',
+			label: 'Liquidations',
+			tokenSymbol: 'wstETH'
+		})
+	})
+
 	it('runTokenPageRequest skips the liquidations section when metadata has the token but no rows', async () => {
 		state.liquidationsTokenSymbols = ['BTC']
 		state.liquidationsTokenSymbolsSet = new Set(['BTC'])

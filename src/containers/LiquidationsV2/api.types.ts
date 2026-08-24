@@ -1,17 +1,12 @@
 import type { BlockExplorersResponse } from '~/api/types'
 
-interface RawLiquidationOwnerExtra {
-	displayName?: string
-	url?: string
-}
-
 export interface RawLiquidationPosition {
 	owner: string
 	liqPrice: number
 	collateral: string
+	collateralId: string
 	collateralAmount: number
 	collateralAmountUsd: number
-	extra?: RawLiquidationOwnerExtra
 }
 
 export interface RawProtocolsResponse {
@@ -21,10 +16,8 @@ export interface RawProtocolsResponse {
 export interface RawToken {
 	symbol: string
 	decimals: number
-	price?: number | null
+	price: number
 }
-
-export type RawValidThreshold = '100k' | '10k' | 'all'
 
 export type RawTokenMap = Record<string, RawToken>
 
@@ -33,19 +26,16 @@ export type RawMultiChainTokenMap = Record<string, RawTokenMap>
 interface RawLiquidationsResponseBase<TData, TTokens> {
 	data: TData
 	tokens: TTokens
-	validThresholds: RawValidThreshold[]
+	validThresholds: ['100k', '10k', 'all']
 	timestamp: number
 }
 
 export type RawAllLiquidationsResponse = RawLiquidationsResponseBase<
-	Record<string, Record<string, RawLiquidationPosition[]>>,
+	Partial<Record<string, Record<string, RawLiquidationPosition[]>>>,
 	RawMultiChainTokenMap
 >
 
-export type RawProtocolLiquidationsResponse = RawLiquidationsResponseBase<
-	Record<string, RawLiquidationPosition[]>,
-	RawMultiChainTokenMap
->
+export type RawLiquidationsProtocolData = Record<string, RawLiquidationPosition[]>
 
 export interface NavLink {
 	label: string
@@ -72,10 +62,9 @@ export interface LiquidationPosition {
 	chainName: string
 	chainSlug: string
 	owner: string
-	ownerName: string
-	ownerUrlOverride: string | null
 	liqPrice: number
 	collateral: string
+	collateralId: string
 	collateralAmount: number
 	collateralAmountUsd: number
 }

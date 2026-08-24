@@ -104,7 +104,7 @@ export function IncomeStatementChartTab({
 							<div className="flex h-[360px] items-center justify-center">
 								<LocalLoader />
 							</div>
-						) : !hasData ? (
+						) : !incomeStatement || !hasData ? (
 							<div className="flex h-[360px] items-center justify-center text-center text-pro-text-tertiary">
 								No income statement data available.
 							</div>

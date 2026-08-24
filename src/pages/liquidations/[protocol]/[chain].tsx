@@ -39,23 +39,21 @@ export const getStaticProps = withPerformanceLogging(
 			return { notFound: true }
 		}
 
-		const { protocolId: protocolParam, chainId, metadataCache } = route
-		const { getLiquidationsProtocolsList } = await import('~/containers/LiquidationsV2/server/dataset.server')
-		const protocolsResponse = await getLiquidationsProtocolsList()
+		const { protocolId: protocolParam, chainId, protocolIds, metadataCache } = route
 		const protocolMetadataLookup = createProtocolMetadataLookup(metadataCache.protocolMetadata)
 
 		const chainMetadata = metadataCache.chainMetadata[slug(chainId)]
 		const chainName = chainMetadata?.name ?? chainId
-		const chainParam = slug(chainName)
+		const chainParam = slug(chainId)
 
 		const protocolLinks = [
 			{ label: 'Overview', to: '/liquidations' },
-			...protocolsResponse.protocols.map((protocolId) => {
+			...protocolIds.map((protocolId) => {
 				const protocolName = protocolMetadataLookup.get(protocolId)?.displayName ?? protocolId
 
 				return {
 					label: protocolName,
-					to: `/liquidations/${slug(protocolName)}`
+					to: `/liquidations/${slug(protocolId)}`
 				}
 			})
 		]

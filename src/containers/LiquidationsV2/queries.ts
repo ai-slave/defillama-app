@@ -1,7 +1,7 @@
 import type { BlockExplorersResponse } from '~/api/types'
+import { getAliasGroup } from '~/constants/tokenAliases'
 import { slug } from '~/utils'
 import { findBlockExplorerChain } from '~/utils/blockExplorers'
-import { normalizeLiquidationsTokenSymbol } from '~/utils/metadata/liquidations'
 import type { IChainMetadata, IProtocolMetadata } from '~/utils/metadata/types'
 import type {
 	LiquidationsDistributionChartData,
@@ -18,7 +18,7 @@ import type {
 	ProtocolChainRow,
 	RawAllLiquidationsResponse,
 	RawLiquidationPosition,
-	RawProtocolLiquidationsResponse,
+	RawLiquidationsProtocolData,
 	RawProtocolsResponse,
 	TokenLiquidationsSectionData
 } from './api.types'
@@ -49,7 +49,7 @@ function getProtocolRef(
 	return {
 		id: protocolId,
 		name,
-		slug: slug(name)
+		slug: slug(protocolId)
 	}
 }
 
@@ -59,7 +59,7 @@ function getChainRef(chainId: string, chainMetadata: Record<string, IChainMetada
 	return {
 		id: chainId,
 		name,
-		slug: slug(name)
+		slug: slug(chainId)
 	}
 }
 
@@ -75,18 +75,6 @@ function getProtocolLinks(
 	]
 }
 
-function getChainLinks(
-	protocol: LiquidationsProtocolRef,
-	chainIds: string[],
-	chainMetadata: Record<string, IChainMetadata>
-): NavLink[] {
-	const chainRefs = chainIds
-		.map((chainId) => getChainRef(chainId, chainMetadata))
-		.sort((a, b) => a.name.localeCompare(b.name))
-
-	return getChainLinksFromRefs(protocol, chainRefs)
-}
-
 function getChainLinksFromRefs(protocol: LiquidationsProtocolRef, chainRefs: LiquidationsChainRef[]): NavLink[] {
 	return [
 		{ label: 'All Chains', to: `/liquidations/${protocol.slug}` },
@@ -94,12 +82,12 @@ function getChainLinksFromRefs(protocol: LiquidationsProtocolRef, chainRefs: Liq
 	]
 }
 
-function normalizePositions(
+function normalizePosition(
 	protocol: LiquidationsProtocolRef,
 	chain: LiquidationsChainRef,
-	rawPositions: RawLiquidationPosition[]
-): LiquidationPosition[] {
-	return rawPositions.map((position) => ({
+	position: RawLiquidationPosition
+): LiquidationPosition {
+	return {
 		protocolId: protocol.id,
 		protocolName: protocol.name,
 		protocolSlug: protocol.slug,
@@ -107,30 +95,24 @@ function normalizePositions(
 		chainName: chain.name,
 		chainSlug: chain.slug,
 		owner: position.owner,
-		ownerName: position.extra?.displayName ?? position.owner,
-		ownerUrlOverride: position.extra?.url ?? null,
 		liqPrice: position.liqPrice,
 		collateral: position.collateral,
+		collateralId: position.collateralId,
 		collateralAmount: position.collateralAmount,
 		collateralAmountUsd: position.collateralAmountUsd
-	}))
-}
-
-function getCollateralCount(positions: Array<{ collateral: string }>): number {
-	const collaterals = new Set<string>()
-	for (const position of positions) {
-		collaterals.add(position.collateral)
 	}
-	return collaterals.size
-}
-
-function sumCollateralUsd(positions: RawLiquidationPosition[]): number {
-	return positions.reduce((total, position) => total + position.collateralAmountUsd, 0)
 }
 
 type LiquidationsChartPosition = Pick<
 	LiquidationPosition,
-	'liqPrice' | 'collateral' | 'collateralAmount' | 'collateralAmountUsd' | 'protocolName' | 'chainName'
+	| 'liqPrice'
+	| 'collateral'
+	| 'collateralAmount'
+	| 'collateralAmountUsd'
+	| 'protocolId'
+	| 'protocolName'
+	| 'chainId'
+	| 'chainName'
 >
 
 interface LiquidationsTokenGroup {
@@ -149,32 +131,21 @@ const sortLiquidationsSeries = (series: LiquidationsDistributionChartSeries[]) =
 export function buildLiquidationsDistributionChart(
 	positions: LiquidationsChartPosition[],
 	totalBins = LIQUIDATIONS_V2_TOTAL_BINS,
-	getTokenIdentity: (position: Pick<LiquidationPosition, 'collateral'>) => { key: string; label: string } = (
-		position
-	) => ({ key: position.collateral, label: position.collateral })
+	tokenIdentity?: { key: string; label: string }
 ): LiquidationsDistributionChartData {
 	const tokenGroups = new Map<string, LiquidationsTokenGroup>()
 	for (const position of positions) {
-		if (
-			!Number.isFinite(position.liqPrice) ||
-			position.liqPrice < 0 ||
-			!Number.isFinite(position.collateralAmount) ||
-			!Number.isFinite(position.collateralAmountUsd) ||
-			(position.collateralAmount <= 0 && position.collateralAmountUsd <= 0)
-		) {
-			continue
-		}
-
-		const token = getTokenIdentity(position)
-		const group = tokenGroups.get(token.key)
+		const tokenKey = tokenIdentity?.key ?? position.collateral
+		const tokenLabel = tokenIdentity?.label ?? position.collateral
+		const group = tokenGroups.get(tokenKey)
 		if (group) {
-			group.label = token.label
+			group.label = tokenLabel
 			group.totalUsd += position.collateralAmountUsd
 			if (position.liqPrice > group.maxPrice) group.maxPrice = position.liqPrice
 			group.positions.push(position)
 		} else {
-			tokenGroups.set(token.key, {
-				label: token.label,
+			tokenGroups.set(tokenKey, {
+				label: tokenLabel,
 				maxPrice: position.liqPrice,
 				totalUsd: position.collateralAmountUsd,
 				positions: [position]
@@ -182,75 +153,74 @@ export function buildLiquidationsDistributionChart(
 		}
 	}
 
-	const tokens = Array.from(tokenGroups.entries())
-		.map(([tokenKey, group]) => {
-			const binCount = Math.max(1, totalBins)
-			const priceCeiling = group.maxPrice > 0 ? group.maxPrice : 1
-			const binSize = priceCeiling / binCount
-			const bins = Array.from({ length: binCount }, (_, index) => index * binSize)
-			const totalSeries: LiquidationsDistributionChartSeries = {
-				key: tokenKey,
-				label: group.label,
-				usd: new Array(binCount).fill(0),
-				amount: new Array(binCount).fill(0),
-				totalUsd: 0
-			}
-			const protocolSeries = new Map<string, LiquidationsDistributionChartSeries>()
-			const chainSeries = new Map<string, LiquidationsDistributionChartSeries>()
+	// The mapper materializes the final token array directly; raw positions still use one direct scan per group.
+	const tokens = Array.from(tokenGroups, ([tokenKey, group]) => {
+		const binCount = Math.max(1, totalBins)
+		const priceCeiling = group.maxPrice > 0 ? group.maxPrice : 1
+		const binSize = priceCeiling / binCount
+		const bins = Array.from({ length: binCount }, (_, index) => index * binSize)
+		const totalSeries: LiquidationsDistributionChartSeries = {
+			key: tokenKey,
+			label: group.label,
+			usd: new Array(binCount).fill(0),
+			amount: new Array(binCount).fill(0),
+			totalUsd: 0
+		}
+		const protocolSeries = new Map<string, LiquidationsDistributionChartSeries>()
+		const chainSeries = new Map<string, LiquidationsDistributionChartSeries>()
 
-			// Bins depend on the first-stage max price, so all three views are populated together in this second scan.
-			for (const position of group.positions) {
-				const binIndex = Math.min(binCount - 1, Math.floor(position.liqPrice / binSize))
-				totalSeries.usd[binIndex] += position.collateralAmountUsd
-				totalSeries.amount[binIndex] += position.collateralAmount
-				totalSeries.totalUsd += position.collateralAmountUsd
+		// Bins depend on the first-stage max price, so all three views are populated together in this second scan.
+		for (const position of group.positions) {
+			const binIndex = Math.min(binCount - 1, Math.floor(position.liqPrice / binSize))
+			totalSeries.usd[binIndex]! += position.collateralAmountUsd
+			totalSeries.amount[binIndex]! += position.collateralAmount
+			totalSeries.totalUsd += position.collateralAmountUsd
 
-				let protocol = protocolSeries.get(position.protocolName)
-				if (!protocol) {
-					protocol = {
-						key: position.protocolName,
-						label: position.protocolName,
-						usd: new Array(binCount).fill(0),
-						amount: new Array(binCount).fill(0),
-						totalUsd: 0
-					}
-					protocolSeries.set(position.protocolName, protocol)
+			let protocol = protocolSeries.get(position.protocolId)
+			if (!protocol) {
+				protocol = {
+					key: position.protocolId,
+					label: position.protocolName,
+					usd: new Array(binCount).fill(0),
+					amount: new Array(binCount).fill(0),
+					totalUsd: 0
 				}
-				protocol.usd[binIndex] += position.collateralAmountUsd
-				protocol.amount[binIndex] += position.collateralAmount
-				protocol.totalUsd += position.collateralAmountUsd
-
-				let chain = chainSeries.get(position.chainName)
-				if (!chain) {
-					chain = {
-						key: position.chainName,
-						label: position.chainName,
-						usd: new Array(binCount).fill(0),
-						amount: new Array(binCount).fill(0),
-						totalUsd: 0
-					}
-					chainSeries.set(position.chainName, chain)
-				}
-				chain.usd[binIndex] += position.collateralAmountUsd
-				chain.amount[binIndex] += position.collateralAmount
-				chain.totalUsd += position.collateralAmountUsd
+				protocolSeries.set(position.protocolId, protocol)
 			}
+			protocol.usd[binIndex]! += position.collateralAmountUsd
+			protocol.amount[binIndex]! += position.collateralAmount
+			protocol.totalUsd += position.collateralAmountUsd
 
-			return {
-				key: tokenKey,
-				label: group.label,
-				totalUsd: group.totalUsd,
-				breakdowns: {
-					total: { bins, series: [totalSeries] },
-					protocol: { bins, series: sortLiquidationsSeries(Array.from(protocolSeries.values())) },
-					chain: { bins, series: sortLiquidationsSeries(Array.from(chainSeries.values())) }
+			let chain = chainSeries.get(position.chainId)
+			if (!chain) {
+				chain = {
+					key: position.chainId,
+					label: position.chainName,
+					usd: new Array(binCount).fill(0),
+					amount: new Array(binCount).fill(0),
+					totalUsd: 0
 				}
+				chainSeries.set(position.chainId, chain)
 			}
-		})
-		.sort((a, b) => {
-			if (b.totalUsd !== a.totalUsd) return b.totalUsd - a.totalUsd
-			return a.label.localeCompare(b.label)
-		})
+			chain.usd[binIndex]! += position.collateralAmountUsd
+			chain.amount[binIndex]! += position.collateralAmount
+			chain.totalUsd += position.collateralAmountUsd
+		}
+
+		return {
+			key: tokenKey,
+			label: group.label,
+			totalUsd: group.totalUsd,
+			breakdowns: {
+				total: { bins, series: [totalSeries] },
+				protocol: { bins, series: sortLiquidationsSeries(Array.from(protocolSeries.values())) },
+				chain: { bins, series: sortLiquidationsSeries(Array.from(chainSeries.values())) }
+			}
+		}
+	}).sort((a, b) => {
+		if (b.totalUsd !== a.totalUsd) return b.totalUsd - a.totalUsd
+		return a.label.localeCompare(b.label)
+	})
 
 	return {
 		tokens
@@ -264,6 +234,64 @@ function sortByCountAndName<T extends { positionCount: number; name: string }>(r
 	})
 }
 
+type FamilyRowCounts = Map<string, Map<string, number>>
+
+function incrementFamilyRowCount(counts: FamilyRowCounts, symbol: string, id: string): void {
+	let symbolCounts = counts.get(symbol)
+	if (!symbolCounts) {
+		symbolCounts = new Map<string, number>()
+		counts.set(symbol, symbolCounts)
+	}
+	symbolCounts.set(id, (symbolCounts.get(id) ?? 0) + 1)
+}
+
+function orderFamilyRows<T extends { id: string; name: string }>(
+	rows: T[],
+	familySymbolOrder: string[],
+	counts: FamilyRowCounts
+): T[] {
+	const rowsById = new Map<string, T>()
+	for (const row of rows) rowsById.set(row.id, row)
+	const ordered: T[] = []
+	const seen = new Set<string>()
+
+	for (const symbol of familySymbolOrder) {
+		const symbolCounts = counts.get(symbol)
+		if (!symbolCounts) continue
+		const ids = Array.from(symbolCounts, ([id, positionCount]) => ({ id, positionCount }))
+		ids.sort((a, b) => {
+			if (b.positionCount !== a.positionCount) return b.positionCount - a.positionCount
+			const aName = rowsById.get(a.id)?.name ?? a.id
+			const bName = rowsById.get(b.id)?.name ?? b.id
+			return aName.localeCompare(bName)
+		})
+		for (const { id } of ids) {
+			if (seen.has(id)) continue
+			const row = rowsById.get(id)
+			if (!row) continue
+			seen.add(id)
+			ordered.push(row)
+		}
+	}
+
+	return ordered
+}
+
+function buildOverviewChainRows(chainAggregates: ChainAggregate[]): OverviewChainRow[] {
+	const rows = new Array<OverviewChainRow>(chainAggregates.length)
+	for (let index = 0; index < chainAggregates.length; index += 1) {
+		const aggregate = chainAggregates[index]!
+		rows[index] = {
+			...aggregate.chain,
+			positionCount: aggregate.positionCount,
+			protocolCount: aggregate.protocolIds.size,
+			collateralCount: aggregate.collaterals.size,
+			totalCollateralUsd: aggregate.totalCollateralUsd
+		}
+	}
+	return sortByCountAndName(rows)
+}
+
 export function resolveProtocolId(
 	protocolParam: string,
 	availableProtocolIds: string[],
@@ -273,7 +301,7 @@ export function resolveProtocolId(
 
 	for (const protocolId of availableProtocolIds) {
 		const protocol = getProtocolRef(protocolId, protocolMetadataLookup)
-		if (protocol.slug === normalizedProtocolParam || slug(protocolId) === normalizedProtocolParam) {
+		if (protocol.slug === normalizedProtocolParam || slug(protocol.name) === normalizedProtocolParam) {
 			return protocolId
 		}
 	}
@@ -290,7 +318,7 @@ export function resolveChainId(
 
 	for (const chainId of availableChainIds) {
 		const chain = getChainRef(chainId, chainMetadata)
-		if (chain.slug === normalizedChainParam || slug(chainId) === normalizedChainParam) {
+		if (chain.slug === normalizedChainParam || slug(chain.name) === normalizedChainParam) {
 			return chainId
 		}
 	}
@@ -328,6 +356,7 @@ export function buildLiquidationsOverviewPageData(
 	const protocolLinks = getProtocolLinks(protocolIds, protocolMetadataLookup)
 	const protocolRows: OverviewProtocolRow[] = []
 	const chainMap = new Map<string, ChainAggregate>()
+	const chainAggregates: ChainAggregate[] = []
 	const chartPositions: LiquidationPosition[] = []
 	let positionCount = 0
 	let totalCollateralUsd = 0
@@ -338,18 +367,15 @@ export function buildLiquidationsOverviewPageData(
 		let protocolPositionCount = 0
 		let protocolTotalCollateralUsd = 0
 		const protocolCollaterals = new Set<string>()
-		const protocolChainIds = Object.keys(protocolData)
+		let protocolChainCount = 0
 
-		for (const chainId of protocolChainIds) {
-			const chain = getChainRef(chainId, metadataCache.chainMetadata)
+		for (const chainId in protocolData) {
 			const positions = protocolData[chainId]
-			const normalizedChainPositions = normalizePositions(protocol, chain, positions)
-			const chainCollateralUsd = sumCollateralUsd(positions)
-			chartPositions.push(...normalizedChainPositions)
+			if (!positions) continue
+			protocolChainCount += 1
+			const chain = getChainRef(chainId, metadataCache.chainMetadata)
 			protocolPositionCount += positions.length
 			positionCount += positions.length
-			protocolTotalCollateralUsd += chainCollateralUsd
-			totalCollateralUsd += chainCollateralUsd
 
 			let chainAggregate = chainMap.get(chain.id)
 			if (!chainAggregate) {
@@ -361,22 +387,29 @@ export function buildLiquidationsOverviewPageData(
 					totalCollateralUsd: 0
 				}
 				chainMap.set(chain.id, chainAggregate)
+				chainAggregates.push(chainAggregate)
 			}
 
 			chainAggregate.positionCount += positions.length
 			chainAggregate.protocolIds.add(protocol.id)
-			chainAggregate.totalCollateralUsd += chainCollateralUsd
 
+			let chainCollateralUsd = 0
 			for (const position of positions) {
-				protocolCollaterals.add(position.collateral)
-				chainAggregate.collaterals.add(position.collateral)
+				const normalizedPosition = normalizePosition(protocol, chain, position)
+				chartPositions.push(normalizedPosition)
+				chainCollateralUsd += position.collateralAmountUsd
+				protocolCollaterals.add(normalizedPosition.collateral)
+				chainAggregate.collaterals.add(normalizedPosition.collateral)
 			}
+			protocolTotalCollateralUsd += chainCollateralUsd
+			totalCollateralUsd += chainCollateralUsd
+			chainAggregate.totalCollateralUsd += chainCollateralUsd
 		}
 
 		protocolRows.push({
 			...protocol,
 			positionCount: protocolPositionCount,
-			chainCount: protocolChainIds.length,
+			chainCount: protocolChainCount,
 			collateralCount: protocolCollaterals.size,
 			totalCollateralUsd: protocolTotalCollateralUsd
 		})
@@ -391,17 +424,7 @@ export function buildLiquidationsOverviewPageData(
 		totalCollateralUsd,
 		distributionChart: buildLiquidationsDistributionChart(chartPositions),
 		protocolRows: sortByCountAndName(protocolRows),
-		chainRows: sortByCountAndName(
-			Array.from(chainMap.values()).map(
-				(chainAggregate): OverviewChainRow => ({
-					...chainAggregate.chain,
-					positionCount: chainAggregate.positionCount,
-					protocolCount: chainAggregate.protocolIds.size,
-					collateralCount: chainAggregate.collaterals.size,
-					totalCollateralUsd: chainAggregate.totalCollateralUsd
-				})
-			)
-		)
+		chainRows: buildOverviewChainRows(chainAggregates)
 	}
 }
 
@@ -411,15 +434,23 @@ export function buildTokenLiquidationsSectionData(
 	allResponse: RawAllLiquidationsResponse,
 	metadataCache: LiquidationsMetadataCache
 ): TokenLiquidationsSectionData | null {
-	const normalizedTokenSymbol = normalizeLiquidationsTokenSymbol(tokenSymbol)
-	if (!normalizedTokenSymbol) {
-		return null
-	}
+	if (!tokenSymbol) return null
+	const aliases = getAliasGroup(tokenSymbol)
+	const hasAliasFamily = aliases.length > 1
+	const familySymbols = hasAliasFamily ? new Set(aliases) : null
+	const familySymbolOrder = hasAliasFamily ? aliases : [tokenSymbol]
+	const familySymbolByProducerSymbol = new Map<string, string | null>()
 
 	const protocolMetadataLookup = createProtocolMetadataLookup(metadataCache.protocolMetadata)
 	const protocolRows: OverviewProtocolRow[] = []
 	const chainMap = new Map<string, ChainAggregate>()
-	const chartPositions: LiquidationPosition[] = []
+	const chainAggregates: ChainAggregate[] = []
+	const chartPositionsBySymbol = new Map<string, LiquidationPosition[]>()
+	const protocolCountsBySymbol: FamilyRowCounts = new Map()
+	const chainCountsBySymbol: FamilyRowCounts = new Map()
+	const chainProtocolIdsBySymbol = new Map<string, Map<string, Set<string>>>()
+	const chainMaxProtocolCount = new Map<string, number>()
+	let hasExactToken = false
 	let positionCount = 0
 	let totalCollateralUsd = 0
 
@@ -428,88 +459,136 @@ export function buildTokenLiquidationsSectionData(
 		const protocolData = allResponse.data[protocolId] ?? {}
 		let protocolPositionCount = 0
 		let protocolTotalCollateralUsd = 0
-		const protocolChains = new Set<string>()
+		const protocolChainIdsBySymbol = new Map<string, Set<string>>()
 		const protocolCollaterals = new Set<string>()
 
-		for (const [chainId, rawPositions] of Object.entries(protocolData)) {
-			const chainTokenMap = allResponse.tokens[chainId] ?? {}
-			const matchedPositions = rawPositions.filter((position) => {
-				const token = chainTokenMap[position.collateral]
-				return normalizeLiquidationsTokenSymbol(token?.symbol) === normalizedTokenSymbol
-			})
+		for (const chainId in protocolData) {
+			const rawPositions = protocolData[chainId]
+			if (!rawPositions) continue
+			let chainPositionCount = 0
+			let chainCollateralUsd = 0
+			let chainAggregate = chainMap.get(chainId)
+			const matchedSymbols = new Set<string>()
 
-			if (matchedPositions.length === 0) {
-				continue
-			}
-
-			const chain = getChainRef(chainId, metadataCache.chainMetadata)
-			const normalizedPositions = normalizePositions(protocol, chain, matchedPositions)
-			const chainCollateralUsd = sumCollateralUsd(matchedPositions)
-
-			protocolPositionCount += matchedPositions.length
-			protocolTotalCollateralUsd += chainCollateralUsd
-			positionCount += matchedPositions.length
-			totalCollateralUsd += chainCollateralUsd
-			protocolChains.add(chain.id)
-			chartPositions.push(...normalizedPositions)
-
-			let chainAggregate = chainMap.get(chain.id)
-			if (!chainAggregate) {
-				chainAggregate = {
-					chain,
-					positionCount: 0,
-					protocolIds: new Set<string>(),
-					collaterals: new Set<string>(),
-					totalCollateralUsd: 0
+			for (const position of rawPositions) {
+				let familySymbol = familySymbolByProducerSymbol.get(position.collateral)
+				if (familySymbol === undefined) {
+					if (position.collateral === tokenSymbol) {
+						familySymbol = hasAliasFamily ? position.collateral.toLowerCase() : position.collateral
+					} else if (familySymbols) {
+						const alias = position.collateral.toLowerCase()
+						familySymbol = familySymbols.has(alias) ? alias : null
+					} else {
+						familySymbol = null
+					}
+					familySymbolByProducerSymbol.set(position.collateral, familySymbol)
 				}
-				chainMap.set(chain.id, chainAggregate)
+				if (!familySymbol) continue
+				if (position.collateral === tokenSymbol) hasExactToken = true
+
+				if (!chainAggregate) {
+					const chain = getChainRef(chainId, metadataCache.chainMetadata)
+					chainAggregate = {
+						chain,
+						positionCount: 0,
+						protocolIds: new Set<string>(),
+						collaterals: new Set<string>(),
+						totalCollateralUsd: 0
+					}
+					chainMap.set(chain.id, chainAggregate)
+					chainAggregates.push(chainAggregate)
+				}
+
+				const normalizedPosition = normalizePosition(protocol, chainAggregate.chain, position)
+				const symbolPositions = chartPositionsBySymbol.get(position.collateral)
+				if (symbolPositions) {
+					symbolPositions.push(normalizedPosition)
+				} else {
+					chartPositionsBySymbol.set(position.collateral, [normalizedPosition])
+				}
+				chainPositionCount += 1
+				chainCollateralUsd += position.collateralAmountUsd
+				chainAggregate.collaterals.add(position.collateral)
+				protocolCollaterals.add(position.collateral)
+				matchedSymbols.add(familySymbol)
+				incrementFamilyRowCount(protocolCountsBySymbol, familySymbol, protocol.id)
+				incrementFamilyRowCount(chainCountsBySymbol, familySymbol, chainAggregate.chain.id)
 			}
 
-			chainAggregate.positionCount += matchedPositions.length
+			if (chainPositionCount === 0 || !chainAggregate) continue
+
+			protocolPositionCount += chainPositionCount
+			protocolTotalCollateralUsd += chainCollateralUsd
+			positionCount += chainPositionCount
+			totalCollateralUsd += chainCollateralUsd
+			chainAggregate.positionCount += chainPositionCount
 			chainAggregate.protocolIds.add(protocol.id)
 			chainAggregate.totalCollateralUsd += chainCollateralUsd
-			chainAggregate.collaterals.add(normalizedTokenSymbol)
-			protocolCollaterals.add(normalizedTokenSymbol)
+			for (const symbol of matchedSymbols) {
+				let protocolChainIds = protocolChainIdsBySymbol.get(symbol)
+				if (!protocolChainIds) {
+					protocolChainIds = new Set<string>()
+					protocolChainIdsBySymbol.set(symbol, protocolChainIds)
+				}
+				protocolChainIds.add(chainAggregate.chain.id)
+
+				let protocolIdsBySymbol = chainProtocolIdsBySymbol.get(chainAggregate.chain.id)
+				if (!protocolIdsBySymbol) {
+					protocolIdsBySymbol = new Map<string, Set<string>>()
+					chainProtocolIdsBySymbol.set(chainAggregate.chain.id, protocolIdsBySymbol)
+				}
+				let protocolIds = protocolIdsBySymbol.get(symbol)
+				if (!protocolIds) {
+					protocolIds = new Set<string>()
+					protocolIdsBySymbol.set(symbol, protocolIds)
+				}
+				protocolIds.add(protocol.id)
+				const previousMax = chainMaxProtocolCount.get(chainAggregate.chain.id) ?? 0
+				if (protocolIds.size > previousMax) chainMaxProtocolCount.set(chainAggregate.chain.id, protocolIds.size)
+			}
 		}
 
 		if (protocolPositionCount > 0) {
+			let chainCount = 0
+			for (const chainIds of protocolChainIdsBySymbol.values()) {
+				if (chainIds.size > chainCount) chainCount = chainIds.size
+			}
 			protocolRows.push({
 				...protocol,
 				positionCount: protocolPositionCount,
-				chainCount: protocolChains.size,
+				chainCount,
 				collateralCount: protocolCollaterals.size,
 				totalCollateralUsd: protocolTotalCollateralUsd
 			})
 		}
 	}
 
-	if (positionCount === 0) {
-		return null
+	if (!hasExactToken) return null
+	const distributionTokens: LiquidationsDistributionChartData['tokens'] = []
+	for (const [symbol, symbolPositions] of chartPositionsBySymbol) {
+		const chart = buildLiquidationsDistributionChart(symbolPositions, LIQUIDATIONS_V2_TOTAL_BINS, {
+			key: symbol,
+			label: symbol
+		})
+		for (const token of chart.tokens) distributionTokens.push(token)
 	}
+	distributionTokens.sort((a, b) => {
+		if (b.totalUsd !== a.totalUsd) return b.totalUsd - a.totalUsd
+		return a.label.localeCompare(b.label)
+	})
+	const chainRows = buildOverviewChainRows(chainAggregates)
+	for (const row of chainRows) row.protocolCount = chainMaxProtocolCount.get(row.id)!
 
 	return {
-		tokenSymbol: normalizedTokenSymbol,
+		tokenSymbol,
 		timestamp: allResponse.timestamp,
 		positionCount,
 		protocolCount: protocolRows.length,
 		chainCount: chainMap.size,
 		totalCollateralUsd,
-		distributionChart: buildLiquidationsDistributionChart(chartPositions, LIQUIDATIONS_V2_TOTAL_BINS, () => ({
-			key: normalizedTokenSymbol,
-			label: normalizedTokenSymbol
-		})),
-		protocolRows: sortByCountAndName(protocolRows),
-		chainRows: sortByCountAndName(
-			Array.from(chainMap.values()).map(
-				(chainAggregate): OverviewChainRow => ({
-					...chainAggregate.chain,
-					positionCount: chainAggregate.positionCount,
-					protocolCount: chainAggregate.protocolIds.size,
-					collateralCount: chainAggregate.collaterals.size,
-					totalCollateralUsd: chainAggregate.totalCollateralUsd
-				})
-			)
-		)
+		distributionChart: { tokens: distributionTokens },
+		protocolRows: orderFamilyRows(protocolRows, familySymbolOrder, protocolCountsBySymbol),
+		chainRows: orderFamilyRows(chainRows, familySymbolOrder, chainCountsBySymbol)
 	}
 }
 
@@ -518,10 +597,7 @@ export function hasTokenLiquidationsData(
 	protocolsResponse: RawProtocolsResponse,
 	allResponse: RawAllLiquidationsResponse
 ): boolean {
-	const normalizedTokenSymbol = normalizeLiquidationsTokenSymbol(tokenSymbol)
-	if (!normalizedTokenSymbol) {
-		return false
-	}
+	if (!tokenSymbol) return false
 
 	for (const protocolId of protocolsResponse.protocols) {
 		const protocolData = allResponse.data[protocolId]
@@ -530,16 +606,11 @@ export function hasTokenLiquidationsData(
 		}
 
 		for (const chainId in protocolData) {
-			const chainTokenMap = allResponse.tokens[chainId]
-			if (!chainTokenMap) {
-				continue
-			}
+			const positions = protocolData[chainId]
+			if (!positions) continue
 
-			for (const position of protocolData[chainId]) {
-				const token = chainTokenMap[position.collateral]
-				if (normalizeLiquidationsTokenSymbol(token?.symbol) === normalizedTokenSymbol) {
-					return true
-				}
+			for (const position of positions) {
+				if (position.collateral === tokenSymbol) return true
 			}
 		}
 	}
@@ -550,7 +621,7 @@ export function hasTokenLiquidationsData(
 export function buildLiquidationsProtocolPageData(
 	protocolId: string,
 	protocolIds: string[],
-	protocolData: RawProtocolLiquidationsResponse['data'],
+	protocolData: RawLiquidationsProtocolData,
 	timestamp: number,
 	blockExplorers: BlockExplorersResponse,
 	metadataCache: LiquidationsMetadataCache
@@ -558,33 +629,51 @@ export function buildLiquidationsProtocolPageData(
 	const protocolMetadataLookup = createProtocolMetadataLookup(metadataCache.protocolMetadata)
 	const protocol = getProtocolRef(protocolId, protocolMetadataLookup)
 	const protocolLinks = getProtocolLinks(protocolIds, protocolMetadataLookup)
-	const chainIds = Object.keys(protocolData)
-	const chainRefs = chainIds
-		.map((chainId) => getChainRef(chainId, metadataCache.chainMetadata))
-		.sort((a, b) => a.name.localeCompare(b.name))
+	const chainIds: string[] = []
+	const chainRefs: LiquidationsChainRef[] = []
+	for (const chainId in protocolData) {
+		chainIds.push(chainId)
+		chainRefs.push(getChainRef(chainId, metadataCache.chainMetadata))
+	}
+	chainRefs.sort((a, b) => a.name.localeCompare(b.name))
 	const chainLinks = getChainLinksFromRefs(protocol, chainRefs)
 	const ownerBlockExplorers = filterBlockExplorersForChains({
 		blockExplorers,
 		chainIds,
 		chainMetadata: metadataCache.chainMetadata
 	})
-	const positions: LiquidationPosition[] = []
+	let totalPositionCount = 0
+	for (const chainId in protocolData) {
+		const chainPositions = protocolData[chainId]
+		if (chainPositions) totalPositionCount += chainPositions.length
+	}
+	const positions = new Array<LiquidationPosition>(totalPositionCount)
+	let positionIndex = 0
 	const chainRows: ProtocolChainRow[] = []
+	const allCollaterals = new Set<string>()
 	let totalCollateralUsd = 0
 
 	for (const chain of chainRefs) {
 		const rawPositions = protocolData[chain.id]
-		const chainPositions = normalizePositions(protocol, chain, rawPositions)
-		const chainCollateralUsd = sumCollateralUsd(rawPositions)
-		positions.push(...chainPositions)
+		if (!rawPositions) continue
+		const chainCollaterals = new Set<string>()
+		let chainCollateralUsd = 0
+		for (const rawPosition of rawPositions) {
+			const position = normalizePosition(protocol, chain, rawPosition)
+			positions[positionIndex] = position
+			positionIndex += 1
+			chainCollateralUsd += position.collateralAmountUsd
+			chainCollaterals.add(position.collateral)
+			allCollaterals.add(position.collateral)
+		}
 		totalCollateralUsd += chainCollateralUsd
 		chainRows.push({
 			...chain,
 			protocolId: protocol.id,
 			protocolName: protocol.name,
 			protocolSlug: protocol.slug,
-			positionCount: chainPositions.length,
-			collateralCount: getCollateralCount(chainPositions),
+			positionCount: rawPositions.length,
+			collateralCount: chainCollaterals.size,
 			totalCollateralUsd: chainCollateralUsd
 		})
 	}
@@ -598,7 +687,7 @@ export function buildLiquidationsProtocolPageData(
 		timestamp,
 		chainCount: chainIds.length,
 		positionCount: positions.length,
-		collateralCount: getCollateralCount(positions),
+		collateralCount: allCollaterals.size,
 		totalCollateralUsd,
 		distributionChart: buildLiquidationsDistributionChart(positions),
 		chainRows: sortByCountAndName(chainRows),
@@ -611,40 +700,61 @@ export function buildLiquidationsChainPageData(
 	protocolId: string,
 	chainId: string,
 	protocolIds: string[],
-	protocolData: RawProtocolLiquidationsResponse['data'],
+	protocolData: RawLiquidationsProtocolData,
 	timestamp: number,
 	blockExplorers: BlockExplorersResponse,
 	metadataCache: LiquidationsMetadataCache
 ): LiquidationsChainPageProps {
 	const protocolMetadataLookup = createProtocolMetadataLookup(metadataCache.protocolMetadata)
 	const protocol = getProtocolRef(protocolId, protocolMetadataLookup)
-	const chainIds = Object.keys(protocolData)
+	const chainIds: string[] = []
+	const sortedChainRefs: LiquidationsChainRef[] = []
+	for (const currentChainId in protocolData) {
+		chainIds.push(currentChainId)
+		sortedChainRefs.push(getChainRef(currentChainId, metadataCache.chainMetadata))
+	}
+	sortedChainRefs.sort((a, b) => a.name.localeCompare(b.name))
 	const chain = getChainRef(chainId, metadataCache.chainMetadata)
 	const protocolLinks = getProtocolLinks(protocolIds, protocolMetadataLookup)
-	const chainLinks = getChainLinks(protocol, chainIds, metadataCache.chainMetadata)
+	const chainLinks = getChainLinksFromRefs(protocol, sortedChainRefs)
 	const ownerBlockExplorers = filterBlockExplorersForChains({
 		blockExplorers,
 		chainIds: [chainId],
 		chainMetadata: metadataCache.chainMetadata
 	})
 	const chainPositions = protocolData[chainId] ?? []
-	const positions = normalizePositions(protocol, chain, chainPositions)
+	const positions = new Array<LiquidationPosition>(chainPositions.length)
 	const chainRows: ProtocolChainRow[] = []
-
-	const sortedChainRefs = chainIds
-		.map((id) => getChainRef(id, metadataCache.chainMetadata))
-		.sort((a, b) => a.name.localeCompare(b.name))
+	const selectedCollaterals = new Set<string>()
+	let selectedCollateralUsd = 0
+	let selectedPositionIndex = 0
 
 	for (const currentChain of sortedChainRefs) {
 		const currentChainPositions = protocolData[currentChain.id]
+		if (!currentChainPositions) continue
+		const currentCollaterals = new Set<string>()
+		let currentCollateralUsd = 0
+		for (const rawPosition of currentChainPositions) {
+			currentCollateralUsd += rawPosition.collateralAmountUsd
+			if (currentChain.id === chainId) {
+				const position = normalizePosition(protocol, chain, rawPosition)
+				positions[selectedPositionIndex] = position
+				selectedPositionIndex += 1
+				selectedCollaterals.add(position.collateral)
+				currentCollaterals.add(position.collateral)
+			} else {
+				currentCollaterals.add(rawPosition.collateral)
+			}
+		}
+		if (currentChain.id === chainId) selectedCollateralUsd = currentCollateralUsd
 		chainRows.push({
 			...currentChain,
 			protocolId: protocol.id,
 			protocolName: protocol.name,
 			protocolSlug: protocol.slug,
 			positionCount: currentChainPositions.length,
-			collateralCount: getCollateralCount(currentChainPositions),
-			totalCollateralUsd: sumCollateralUsd(currentChainPositions)
+			collateralCount: currentCollaterals.size,
+			totalCollateralUsd: currentCollateralUsd
 		})
 	}
 
@@ -659,8 +769,8 @@ export function buildLiquidationsChainPageData(
 		chainSlug: chain.slug,
 		timestamp,
 		positionCount: positions.length,
-		collateralCount: getCollateralCount(positions),
-		totalCollateralUsd: sumCollateralUsd(chainPositions),
+		collateralCount: selectedCollaterals.size,
+		totalCollateralUsd: selectedCollateralUsd,
 		distributionChart: buildLiquidationsDistributionChart(positions),
 		chainRows: sortByCountAndName(chainRows),
 		ownerBlockExplorers,

@@ -6,25 +6,19 @@ const {
 	getLiquidationsOverviewPageDataMock,
 	getLiquidationsProtocolPageDataMock,
 	getLiquidationsChainPageDataMock,
-	getTokenLiquidationsSectionDataMock,
-	getLiquidationsProtocolsListMock,
-	getLiquidationsProtocolChainIdsMock
+	getTokenLiquidationsSectionDataMock
 } = vi.hoisted(() => ({
 	getLiquidationsOverviewPageDataMock: vi.fn(),
 	getLiquidationsProtocolPageDataMock: vi.fn(),
 	getLiquidationsChainPageDataMock: vi.fn(),
-	getTokenLiquidationsSectionDataMock: vi.fn(),
-	getLiquidationsProtocolsListMock: vi.fn(),
-	getLiquidationsProtocolChainIdsMock: vi.fn()
+	getTokenLiquidationsSectionDataMock: vi.fn()
 }))
 
 vi.mock('~/containers/LiquidationsV2/server/dataset.server', () => ({
 	getLiquidationsOverviewPageData: getLiquidationsOverviewPageDataMock,
 	getLiquidationsProtocolPageData: getLiquidationsProtocolPageDataMock,
 	getLiquidationsChainPageData: getLiquidationsChainPageDataMock,
-	getTokenLiquidationsSectionData: getTokenLiquidationsSectionDataMock,
-	getLiquidationsProtocolsList: getLiquidationsProtocolsListMock,
-	getLiquidationsProtocolChainIds: getLiquidationsProtocolChainIdsMock
+	getTokenLiquidationsSectionData: getTokenLiquidationsSectionDataMock
 }))
 
 vi.mock('~/utils/apiAuth', () => ({
@@ -36,7 +30,7 @@ vi.mock('~/utils/metadata', () => ({
 	default: {
 		chainMetadata: { arbitrum: { name: 'Arbitrum One', id: 'arbitrum' } },
 		protocolMetadata: { sky: { displayName: 'Sky', name: 'sky' } },
-		liquidationsTokenSymbolsSet: new Set(['WSTETH'])
+		liquidationsTokenSymbolsSet: new Set(['wstETH'])
 	},
 	refreshMetadataIfStale: vi.fn().mockResolvedValue(undefined)
 }))
@@ -56,8 +50,6 @@ const mockedGetTokenLiquidationsSectionData = vi.mocked(getTokenLiquidationsSect
 beforeEach(() => {
 	vi.clearAllMocks()
 	mockedValidateSubscription.mockResolvedValue({ valid: true, isTrial: false })
-	getLiquidationsProtocolsListMock.mockResolvedValue({ protocols: ['sky'] })
-	getLiquidationsProtocolChainIdsMock.mockResolvedValue(['arbitrum'])
 })
 
 describe('liquidations api routes', () => {
@@ -133,20 +125,24 @@ describe('liquidations api routes', () => {
 		expect(mockedGetLiquidationsProtocolPageData).not.toHaveBeenCalled()
 	})
 
-	it('returns 404 for unknown protocol requests after auth and before data fetch', async () => {
+	it('lets one snapshot-backed builder resolve protocol routes', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
 			query: { protocol: 'unknown' }
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
+		mockedGetLiquidationsProtocolPageData.mockResolvedValue(null)
 
 		await protocolHandler(req, res)
 
 		expect(res.status).toHaveBeenCalledWith(404)
 		expect(res.json).toHaveBeenCalledWith({ error: 'Liquidations protocol not found' })
 		expect(mockedValidateSubscription).toHaveBeenCalledWith('Bearer ok')
-		expect(mockedGetLiquidationsProtocolPageData).not.toHaveBeenCalled()
+		expect(mockedGetLiquidationsProtocolPageData).toHaveBeenCalledWith('unknown', {
+			chainMetadata: { arbitrum: { name: 'Arbitrum One', id: 'arbitrum' } },
+			protocolMetadata: { sky: { displayName: 'Sky', name: 'sky' } }
+		})
 	})
 
 	it('returns overview data for authorized requests', async () => {
@@ -205,6 +201,10 @@ describe('liquidations api routes', () => {
 		await chainHandler(req, res)
 
 		expect(mockedValidateSubscription).toHaveBeenCalledWith('Bearer ok')
+		expect(mockedGetLiquidationsChainPageData).toHaveBeenCalledWith('sky', 'arbitrum-one', {
+			chainMetadata: { arbitrum: { name: 'Arbitrum One', id: 'arbitrum' } },
+			protocolMetadata: { sky: { displayName: 'Sky', name: 'sky' } }
+		})
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -218,11 +218,11 @@ describe('liquidations api routes', () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
-			query: { symbol: 'wsteth' }
+			query: { symbol: 'wstETH' }
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 		mockedGetTokenLiquidationsSectionData.mockResolvedValue({
-			tokenSymbol: 'WSTETH',
+			tokenSymbol: 'wstETH',
 			timestamp: 1,
 			positionCount: 2,
 			protocolCount: 2,
@@ -236,10 +236,14 @@ describe('liquidations api routes', () => {
 		await tokenHandler(req, res)
 
 		expect(mockedValidateSubscription).toHaveBeenCalledWith('Bearer ok')
+		expect(mockedGetTokenLiquidationsSectionData).toHaveBeenCalledWith('wstETH', {
+			chainMetadata: { arbitrum: { name: 'Arbitrum One', id: 'arbitrum' } },
+			protocolMetadata: { sky: { displayName: 'Sky', name: 'sky' } }
+		})
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith(
 			expect.objectContaining({
-				tokenSymbol: 'WSTETH',
+				tokenSymbol: 'wstETH',
 				totalCollateralUsd: 100
 			})
 		)
@@ -258,6 +262,21 @@ describe('liquidations api routes', () => {
 
 		expect(res.status).toHaveBeenCalledWith(404)
 		expect(res.json).toHaveBeenCalledWith({ error: 'Token liquidations not found' })
+	})
+
+	it('does not substitute a differently cased token symbol', async () => {
+		const req = {
+			method: 'GET',
+			headers: { authorization: 'Bearer ok' },
+			query: { symbol: 'wsteth' }
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await tokenHandler(req, res)
+
+		expect(res.status).toHaveBeenCalledWith(404)
+		expect(res.json).toHaveBeenCalledWith({ error: 'Token liquidations not found' })
+		expect(mockedGetTokenLiquidationsSectionData).not.toHaveBeenCalled()
 	})
 
 	it('returns a 500 json error when overview auth validation throws', async () => {

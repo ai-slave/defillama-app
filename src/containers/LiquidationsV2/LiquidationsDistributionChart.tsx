@@ -60,12 +60,22 @@ const CHART_MODE_OPTIONS: ReadonlyArray<{ key: ChartMode; name: string }> = [
 ]
 const DEFAULT_BREAKDOWN_MODES = BREAKDOWN_OPTIONS.map((option) => option.key)
 
+export function LiquidationsDistributionChartFooter({ timestamp }: { timestamp: number }) {
+	return (
+		<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 pb-3 body-sm text-tertiary italic">
+			<span>Positions with at least $100k collateral.</span>
+			<span className="ml-auto">Snapshot {new Date(timestamp * 1000).toUTCString()}</span>
+		</div>
+	)
+}
+
 function LiquidationsDistributionChartCard({
 	availableSeries,
 	breakdownOptions,
 	chartOptions,
 	chartState,
 	deferredChartModel,
+	exportDataset,
 	displayOptions,
 	onChartReady,
 	setBreakdownMode,
@@ -83,9 +93,10 @@ function LiquidationsDistributionChartCard({
 }: {
 	availableSeries: string[]
 	breakdownOptions: Array<{ key: BreakdownMode; name: string }>
-	chartOptions: IMultiSeriesChartProps['chartOptions']
+	chartOptions: NonNullable<IMultiSeriesChartProps['chartOptions']>
 	chartState: LiquidationsChartState
-	deferredChartModel: { dataset: MultiSeriesChartDataset; charts: IMultiSeriesChartProps['charts'] }
+	deferredChartModel: { dataset: MultiSeriesChartDataset; charts: NonNullable<IMultiSeriesChartProps['charts']> }
+	exportDataset: MultiSeriesChartDataset
 	displayOptions: {
 		hideTokenSelector: boolean
 		shouldHideDataZoom: boolean
@@ -102,12 +113,12 @@ function LiquidationsDistributionChartCard({
 	setSelectedSeries: React.Dispatch<React.SetStateAction<string[]>>
 	timestamp: number
 	title: string | undefined
-	iconUrl?: string
+	iconUrl: string | undefined
 	tokenOptions: Array<{ key: string; name: string }>
 	chartInstanceRef: React.MutableRefObject<ECharts | null>
 }) {
 	const exportFilename = slug(
-		[title ?? 'liquidation-distribution', chartState.token, chartState.modeLabel, chartState.breakdownLabel]
+		[title ?? 'liquidation-distribution', '100k', chartState.token, chartState.modeLabel, chartState.breakdownLabel]
 			.filter(Boolean)
 			.join('-')
 	)
@@ -203,7 +214,7 @@ function LiquidationsDistributionChartCard({
 						.filter(Boolean)
 						.join(' - ')}
 					iconUrl={iconUrl}
-					csvSource={{ type: 'dataset', dataset: deferredChartModel.dataset }}
+					csvSource={{ type: 'dataset', dataset: exportDataset }}
 					smol
 				/>
 			</ChartPanelToolbar>
@@ -220,9 +231,7 @@ function LiquidationsDistributionChartCard({
 					valueSymbol={chartState.metric === 'usd' ? '$' : ''}
 				/>
 			</React.Suspense>
-			<div className="flex items-center justify-end gap-1 px-4 pb-3 body-sm text-tertiary italic">
-				<span>Snapshot {new Date(timestamp * 1000).toUTCString()}</span>
-			</div>
+			<LiquidationsDistributionChartFooter timestamp={timestamp} />
 		</ChartPanel>
 	)
 }
@@ -327,7 +336,7 @@ function trimLiquidationsChartView(view: LiquidationsDistributionChartView): Liq
 	if (view.series.length === 0 || view.bins.length === 0) return view
 
 	const hasValueAtIndex = (index: number) =>
-		view.series.some((series) => series.usd[index] > 0 || (series.amount[index] ?? 0) > 0)
+		view.series.some((series) => series.usd[index]! > 0 || series.amount[index]! > 0)
 
 	const firstNonZeroIndex = view.bins.findIndex((_, index) => hasValueAtIndex(index))
 	if (firstNonZeroIndex === -1) return view
@@ -361,8 +370,8 @@ export function buildCumulativeLiquidationsChartView(
 			const amount = [...series.amount]
 
 			for (let index = usd.length - 2; index >= 0; index -= 1) {
-				usd[index] += usd[index + 1] ?? 0
-				amount[index] += amount[index + 1] ?? 0
+				usd[index]! += usd[index + 1]!
+				amount[index]! += amount[index + 1]!
 			}
 
 			return {
@@ -372,6 +381,33 @@ export function buildCumulativeLiquidationsChartView(
 			}
 		})
 	}
+}
+
+export function buildLiquidationsChartExportDataset(
+	view: LiquidationsDistributionChartView,
+	metric: Metric,
+	selectedSeries: ReadonlySet<string>
+): MultiSeriesChartDataset {
+	const series: LiquidationsDistributionChartView['series'] = []
+	const dimensions = ['liqPrice']
+	for (const entry of view.series) {
+		if (!selectedSeries.has(entry.label)) continue
+		series.push(entry)
+		dimensions.push(entry.key)
+	}
+	const source = new Array<Array<number>>(view.bins.length)
+
+	for (let binIndex = 0; binIndex < view.bins.length; binIndex += 1) {
+		const row = new Array<number>(dimensions.length)
+		row[0] = view.bins[binIndex]!
+		for (let seriesIndex = 0; seriesIndex < series.length; seriesIndex += 1) {
+			const entry = series[seriesIndex]!
+			row[seriesIndex + 1] = metric === 'usd' ? entry.usd[binIndex]! : entry.amount[binIndex]!
+		}
+		source[binIndex] = row
+	}
+
+	return { dimensions, source }
 }
 
 export function LiquidationsDistributionChart({
@@ -498,10 +534,16 @@ export function LiquidationsDistributionChart({
 		const baseView = getLiquidationsChartView(chart, chartState.token, chartState.breakdownMode)
 		return chartState.mode === 'cumulative' ? buildCumulativeLiquidationsChartView(baseView) : baseView
 	}, [chart, chartState.breakdownMode, chartState.mode, chartState.token])
-	const availableSeries = React.useMemo(
-		() => Array.from(new Set(selectedChartView.series.map((series) => series.label))),
-		[selectedChartView.series]
-	)
+	const availableSeries = React.useMemo(() => {
+		const labels: string[] = []
+		const seen = new Set<string>()
+		for (const series of selectedChartView.series) {
+			if (seen.has(series.label)) continue
+			seen.add(series.label)
+			labels.push(series.label)
+		}
+		return labels
+	}, [selectedChartView.series])
 	const {
 		activeSeries: selectedSeries,
 		selectedCharts,
@@ -511,44 +553,58 @@ export function LiquidationsDistributionChart({
 		selectionKey: `${chartState.token ?? 'none'}:${chartState.breakdownMode}`
 	})
 	const visibleDataPointCount = React.useMemo(() => {
-		return selectedChartView.bins.reduce((count, _, index) => {
-			const hasValueAtIndex = selectedChartView.series.some(
-				(series) => series.usd[index] > 0 || (series.amount[index] ?? 0) > 0
-			)
-			return hasValueAtIndex ? count + 1 : count
-		}, 0)
+		let count = 0
+		for (let index = 0; index < selectedChartView.bins.length; index += 1) {
+			for (const series of selectedChartView.series) {
+				if (series.usd[index]! <= 0 && series.amount[index]! <= 0) continue
+				count += 1
+				break
+			}
+		}
+		return count
 	}, [selectedChartView.bins, selectedChartView.series])
 	const shouldHideDataZoom = visibleDataPointCount <= 2
 	const showBreakdownLegend = chartState.breakdownMode !== 'total'
 	const showBreakdownSelector = breakdownOptions.length > 1
 
 	const chartModel = React.useMemo(() => {
-		const dimensions = ['liqPrice', ...selectedChartView.series.map((entry) => entry.key)]
-		const source = selectedChartView.bins.map((liqPrice, index) => {
+		const dimensions = new Array<string>(selectedChartView.series.length + 1)
+		dimensions[0] = 'liqPrice'
+		const charts: NonNullable<IMultiSeriesChartProps['charts']> = new Array(selectedChartView.series.length)
+		for (let index = 0; index < selectedChartView.series.length; index += 1) {
+			const entry = selectedChartView.series[index]!
+			dimensions[index + 1] = entry.key
+			charts[index] = {
+				type: 'bar',
+				name: entry.label,
+				encode: { x: 0, y: index + 1 },
+				stack: 'liquidations',
+				color: CHART_COLORS[index % CHART_COLORS.length]!,
+				large: false
+			}
+		}
+
+		const source = new Array<Array<number>>(selectedChartView.bins.length)
+		for (let index = 0; index < selectedChartView.bins.length; index += 1) {
 			const row = new Array<number>(dimensions.length)
-			row[0] = liqPrice
+			row[0] = selectedChartView.bins[index]!
 			for (let seriesIndex = 0; seriesIndex < selectedChartView.series.length; seriesIndex++) {
-				const entry = selectedChartView.series[seriesIndex]
-				const value = chartState.metric === 'usd' ? (entry.usd[index] ?? 0) : (entry.amount[index] ?? 0)
+				const entry = selectedChartView.series[seriesIndex]!
+				const value = chartState.metric === 'usd' ? entry.usd[index]! : entry.amount[index]!
 				row[seriesIndex + 1] = value
 			}
-			return row
-		})
-
-		const charts = selectedChartView.series.map((entry, index) => ({
-			type: 'bar' as const,
-			name: entry.label,
-			encode: { x: 0, y: index + 1 },
-			stack: 'liquidations',
-			color: CHART_COLORS[index % CHART_COLORS.length],
-			large: false
-		}))
+			source[index] = row
+		}
 
 		return {
 			dataset: { source, dimensions } satisfies MultiSeriesChartDataset,
 			charts
 		}
 	}, [chartState.metric, selectedChartView.bins, selectedChartView.series])
+	const exportDataset = React.useMemo(
+		() => buildLiquidationsChartExportDataset(selectedChartView, chartState.metric, selectedCharts),
+		[chartState.metric, selectedChartView, selectedCharts]
+	)
 
 	const chartOptions = React.useMemo(() => {
 		const options: MultiSeriesChartOptions = {
@@ -636,6 +692,7 @@ export function LiquidationsDistributionChart({
 			chartOptions={chartOptions}
 			chartState={chartState}
 			deferredChartModel={deferredChartModel}
+			exportDataset={exportDataset}
 			displayOptions={{ hideTokenSelector, shouldHideDataZoom, showBreakdownLegend, showBreakdownSelector }}
 			onChartReady={onChartReady}
 			setBreakdownMode={setBreakdownMode}
