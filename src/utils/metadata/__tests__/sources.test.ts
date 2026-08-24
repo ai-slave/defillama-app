@@ -9,7 +9,8 @@ vi.mock('~/utils/http-client', () => ({
 	fetchWithPoolingOnServer: fetchWithPoolingOnServerMock
 }))
 
-vi.mock('~/containers/Unlocks/api', () => ({
+vi.mock('~/containers/Unlocks/api', async (importOriginal) => ({
+	...(await importOriginal<typeof import('~/containers/Unlocks/api')>()),
 	fetchEmissionsProtocolsList: fetchEmissionsProtocolsListMock
 }))
 
@@ -158,6 +159,19 @@ describe('metadata source adapters', () => {
 
 		await expect(fetchCoreMetadataSources()).rejects.toThrow('Metadata request failed')
 		expect(warn).toHaveBeenCalledWith(expect.stringContaining('[dev:prepare] Metadata cache: CEX metadata API failed:'))
+
+		warn.mockRestore()
+	})
+
+	it('rejects instead of seeding an empty emissions directory when the protocol list fails', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+		fetchEmissionsProtocolsListMock.mockRejectedValue(new Error('emissions list unavailable'))
+		const { fetchCoreMetadataSources } = await import('../sources')
+
+		await expect(fetchCoreMetadataSources()).rejects.toThrow('emissions list unavailable')
+		expect(warn).toHaveBeenCalledWith(
+			expect.stringContaining('[dev:prepare] Metadata cache: emissions protocols API failed:')
+		)
 
 		warn.mockRestore()
 	})

@@ -26,18 +26,7 @@ export const calendarIcs = defineApiRoute({
 			'calendar-ics',
 			JSON.stringify([token, timestamp, value ?? null, name]),
 			{ ttlMs: CALENDAR_RESULT_TTL_MS, ttlJitter: 0.2 },
-			async () =>
-				generateICSContent(
-					{
-						timestamp: Number(timestamp),
-						noOfTokens: [Number(value || 0)],
-						symbol: String(token),
-						description: '',
-						name: String(name)
-					},
-					String(name),
-					String(value)
-				)
+			async () => generateICSContent({ timestamp: Number(timestamp) }, String(name), String(value))
 		)
 
 		const safeName = String(name)

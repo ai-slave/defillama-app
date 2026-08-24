@@ -24,7 +24,13 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({ dayInfo, unloc
 
 	const dateStr = dayInfo.date.format('YYYY-MM-DD')
 	const dayData = unlocksData[dateStr]
-	const hasUnlocks = dayData && dayData.totalValue > 0
+	const hasUnlocks = dayData !== undefined && dayData.events.length > 0
+	let weeklyRateValue = 0
+	if (dayData) {
+		for (const event of dayData.events) {
+			if (event.unit === 'week') weeklyRateValue += event.value
+		}
+	}
 	const isToday = dayInfo.date.isSame(dayjs(), 'day')
 
 	let intensityFactor = 0
@@ -59,12 +65,13 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({ dayInfo, unloc
 				<span className={`text-sm font-medium ${isToday ? 'font-bold text-link' : ''}`}>{dayInfo.date.date()}</span>
 				{hasUnlocks && dayInfo.isCurrentMonth ? (
 					<div className="mt-auto hidden truncate text-xs sm:block">
-						Total:{' '}
-						{formatUsd(dayData.totalValue, {
+						{dayData.totalValue > 0 ? 'Cliff: ' : 'Rate: '}
+						{formatUsd(dayData.totalValue > 0 ? dayData.totalValue : weeklyRateValue, {
 							compact: true,
 							minimumCompactValue: 1_000_000,
 							compactSuffix: 'lowercase'
 						})}
+						{dayData.totalValue > 0 ? '' : ' / week'}
 					</div>
 				) : null}
 			</div>
@@ -79,14 +86,27 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({ dayInfo, unloc
 		<Tooltip
 			content={
 				<div className="flex max-w-xs flex-col gap-2 p-2">
-					<div className="text-sm font-semibold">
-						Total Unlock Value:{' '}
-						{formatUsd(dayData.totalValue, {
-							compact: true,
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})}
-					</div>
+					{dayData.totalValue > 0 ? (
+						<div className="text-sm font-semibold">
+							Cliff Unlock Value:{' '}
+							{formatUsd(dayData.totalValue, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
+						</div>
+					) : null}
+					{weeklyRateValue > 0 ? (
+						<div className="text-sm font-semibold">
+							Weekly Rate Value:{' '}
+							{formatUsd(weeklyRateValue, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}{' '}
+							/ week
+						</div>
+					) : null}
 					{dayData.events.length > 0 ? (
 						<>
 							<div className="-mx-2 border-t border-medium"></div>
@@ -116,6 +136,7 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({ dayInfo, unloc
 												minimumCompactValue: 1_000_000,
 												compactSuffix: 'lowercase'
 											})}
+											{event.unit === 'week' ? ' / week' : ''}
 										</span>
 									</div>
 								))}

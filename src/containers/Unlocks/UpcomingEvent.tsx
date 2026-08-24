@@ -15,13 +15,15 @@ import { Tooltip } from '~/ui/Tooltip'
 import { generateGoogleCalendarUrl } from '~/utils/calendar'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
-
-const EMPTY_TOKENS: number[][] = []
+import type { EmissionEvent } from './api.types'
+import { getEmissionEventAmount, isUnknownEmissionEvent } from './eventAmount'
 
 interface CalendarButtonProps {
-	event: { timestamp: number; noOfTokens: number[][]; symbol: string; description: string }
+	event: {
+		timestamp: number
+	}
 	tokenName: string
-	tokenValue: string | null
+	tokenValue: string
 	isProtocolPage: boolean
 }
 
@@ -65,11 +67,7 @@ const CalendarButton = ({ event, tokenName, tokenValue, isProtocolPage }: Calend
 				<Ariakit.MenuItem
 					render={
 						<a
-							href={generateGoogleCalendarUrl(
-								{ ...event, name: tokenName, noOfTokens: event.noOfTokens.flat() },
-								tokenName,
-								tokenValue ? parseFloat(tokenValue.replace(/[^0-9.-]+/g, '')) || 0 : 0
-							)}
+							href={generateGoogleCalendarUrl(event, tokenName, tokenValue)}
 							target="_blank"
 							rel="noopener noreferrer"
 						/>
@@ -83,7 +81,11 @@ const CalendarButton = ({ event, tokenName, tokenValue, isProtocolPage }: Calend
 				<Ariakit.MenuItem
 					render={
 						<a
-							href={`/api/dynamic/calendar/${tokenName}?timestamp=${event.timestamp}&value=${tokenValue ?? ''}&name=${tokenName}`}
+							href={`/api/dynamic/calendar/${encodeURIComponent(tokenName)}?${new URLSearchParams({
+								timestamp: String(event.timestamp),
+								value: tokenValue,
+								name: tokenName
+							})}`}
 						/>
 					}
 					className={popoverMenuItemStyles}
@@ -97,15 +99,8 @@ const CalendarButton = ({ event, tokenName, tokenValue, isProtocolPage }: Calend
 }
 
 interface UpcomingEventProps {
-	noOfTokens?: number[][]
 	timestamp: number
-	event: Array<{
-		description: string
-		noOfTokens: number[]
-		timestamp: number
-		unlockType?: string
-		rateDurationDays?: number
-	}>
+	event: EmissionEvent[]
 	price: number | null | undefined
 	symbol: string | null | undefined
 	mcap: number | null | undefined
@@ -117,12 +112,20 @@ interface UpcomingEventProps {
 
 interface UnlockBreakdown {
 	name: string
-	perDayAmount: number
-	totalAmount: number
-	displayUnit: string
+	amount: number
+	displayUnit: '' | 'per week'
 	timestamp: number
 	unlockType: string
 	endTime: number | null
+	usdValue: number | null
+	percentage: number | null
+	percentageFloat: number | null
+}
+
+interface EventSummary {
+	label: 'Cliff Unlock' | 'Weekly Unlock Rate'
+	amount: number
+	displayUnit: '' | 'per week'
 	usdValue: number | null
 	percentage: number | null
 	percentageFloat: number | null
@@ -158,20 +161,6 @@ const formatTimeAgo = (timestamp: number) => {
 	return 'just now'
 }
 
-const formatDuration = (days: number) => {
-	if (days >= 365) {
-		const years = Math.floor(days / 365)
-		const remainingMonths = Math.floor((days % 365) / 30)
-		if (remainingMonths > 0) return `${years}y ${remainingMonths}m`
-		return `${years}y`
-	}
-	if (days >= 30) {
-		const months = Math.floor(days / 30)
-		return `${months}m`
-	}
-	return `${days}d`
-}
-
 const formatCountdownBadge = (days: number, hours: number, minutes: number, seconds: number) => {
 	if (days < 365) {
 		return `${days}D ${hours}H ${minutes}M ${seconds}S`
@@ -189,7 +178,6 @@ const countdownTileStyles =
 	'inline-flex min-h-8 w-16 items-center justify-center rounded-lg bg-surface-elevated-2 px-2 py-1.5 label-md text-primary tabular-nums'
 
 export const UpcomingEvent = ({
-	noOfTokens = EMPTY_TOKENS,
 	timestamp,
 	event,
 	price,
@@ -201,85 +189,99 @@ export const UpcomingEvent = ({
 	isProtocolPage = false
 }: UpcomingEventProps) => {
 	const tokenSymbol = symbol ? symbol.toUpperCase() : ''
-	const {
-		currentUnlockBreakdown,
-		totalAmount,
-		tokenValue,
-		unlockPercent,
-		unlockPercentFloat,
-		hasLinear,
-		dailyValue,
-		dailyTokenAmount,
-		linearDurationDays
-	} = useMemo(() => {
-		const breakdown: UnlockBreakdown[] = event
-			.map(({ description, noOfTokens: eventNoOfTokens, timestamp: eventTimestamp, unlockType, rateDurationDays }) => {
-				const regex =
-					/(?:of (.+?) tokens (?:will be|were) unlocked)|(?:will (?:increase|decrease) from \{tokens\[0\]\} to \{tokens\[1\]\} tokens per week from (.+?) on {timestamp})|(?:from (.+?) on {timestamp})|(?:was (?:increased|decreased) from \{tokens\[0\]\} to \{tokens\[1\]\} tokens per week from (.+?) on {timestamp})/
-				const matches = (description || '').match(regex)
-				const eventName = matches?.[1] || matches?.[2] || matches?.[3] || matches?.[4] || ''
+	const { currentUnlockBreakdown, eventSummaries, calendarTokenValue } = useMemo(() => {
+		const breakdown: UnlockBreakdown[] = []
+		let hasCliff = false
+		let hasLinear = false
+		let cliffAmount = 0
+		let linearWeeklyAmount = 0
+		for (const emissionEvent of event) {
+			if (isUnknownEmissionEvent(emissionEvent)) continue
+			const { description, timestamp: eventTimestamp, unlockType } = emissionEvent
+			const regex =
+				/(?:of (.+?) tokens (?:will be|were) unlocked)|(?:will (?:increase|decrease) from \{tokens\[0\]\} to \{tokens\[1\]\} tokens per week from (.+?) on {timestamp})|(?:from (.+?) on {timestamp})|(?:was (?:increased|decreased) from \{tokens\[0\]\} to \{tokens\[1\]\} tokens per week from (.+?) on {timestamp})/
+			const matches = description.match(regex)
+			const eventName = matches?.[1] || matches?.[2] || matches?.[3] || matches?.[4] || ''
 
-				let perDayAmount: number, totalAmount: number, displayUnit: string
-				if (unlockType === 'linear') {
-					const isIncrease = (description || '').toLowerCase().includes('increase')
-					perDayAmount = (isIncrease ? eventNoOfTokens[1] : eventNoOfTokens[0]) / 7
-					totalAmount = perDayAmount * (rateDurationDays || 1)
-					displayUnit = 'per day'
-				} else {
-					perDayAmount = totalAmount = eventNoOfTokens.reduce((sum: number, amount: number) => sum + amount, 0)
-					displayUnit = ''
-				}
-				const isLinearPerDay = unlockType === 'linear' && displayUnit === 'per day'
-				const usdValue = price ? (isLinearPerDay ? perDayAmount * price : totalAmount * price) : null
-				const totalUsdValue = price ? totalAmount * price : null
-				const percentage = maxSupply ? (totalAmount / maxSupply) * 100 : null
-				const percentageFloat = totalUsdValue && mcap ? (totalUsdValue / mcap) * 100 : null
-				const endTime = unlockType === 'linear' ? eventTimestamp + (rateDurationDays || 0) * 86400 : null
+			const amount = getEmissionEventAmount(emissionEvent)
+			if (amount === null) continue
+			let displayUnit: UnlockBreakdown['displayUnit']
+			if (unlockType === 'linear') {
+				hasLinear = true
+				linearWeeklyAmount += amount
+				displayUnit = 'per week'
+			} else {
+				hasCliff = true
+				cliffAmount += amount
+				displayUnit = ''
+			}
+			const usdValue = price != null && price > 0 ? amount * price : null
+			const percentage = maxSupply != null && maxSupply > 0 ? (amount / maxSupply) * 100 : null
+			const percentageFloat = usdValue !== null && mcap != null && mcap > 0 ? (usdValue / mcap) * 100 : null
+			const endTime = unlockType === 'linear' ? eventTimestamp + emissionEvent.rateDurationDays * 86400 : null
 
-				return {
-					name: eventName,
-					perDayAmount,
-					totalAmount,
-					displayUnit,
-					timestamp: eventTimestamp,
-					unlockType: unlockType || 'cliff',
-					endTime,
-					usdValue,
-					percentage,
-					percentageFloat
-				}
+			breakdown.push({
+				name: eventName,
+				amount,
+				displayUnit,
+				timestamp: eventTimestamp,
+				unlockType,
+				endTime,
+				usdValue,
+				percentage,
+				percentageFloat
 			})
-			.sort((a: UnlockBreakdown, b: UnlockBreakdown) => b.totalAmount - a.totalAmount)
+		}
 
-		const totalAmount = breakdown.reduce((sum: number, item: UnlockBreakdown) => sum + item.totalAmount, 0)
-		const tokenValue = price ? totalAmount * price : null
-		const unlockPercent = maxSupply ? (totalAmount / maxSupply) * 100 : null
-		const unlockPercentFloat = tokenValue && mcap ? (tokenValue / mcap) * 100 : null
-
-		const hasLinear = breakdown.some((item) => item.unlockType === 'linear')
-		const dailyTokenAmount = breakdown.reduce(
-			(sum, item) => sum + (item.unlockType === 'linear' ? item.perDayAmount : 0),
-			0
-		)
-		const dailyValue = price ? dailyTokenAmount * price : null
-		const linearItems = breakdown.filter((item) => item.endTime != null)
-		const linearDurationDays =
-			linearItems.length > 0
-				? Math.max(...linearItems.map((item) => Math.round((item.endTime! - item.timestamp) / 86400)))
-				: 0
+		const eventSummaries: EventSummary[] = []
+		if (hasCliff) {
+			const usdValue = price != null && price > 0 ? cliffAmount * price : null
+			eventSummaries.push({
+				label: 'Cliff Unlock',
+				amount: cliffAmount,
+				displayUnit: '',
+				usdValue,
+				percentage: maxSupply != null && maxSupply > 0 ? (cliffAmount / maxSupply) * 100 : null,
+				percentageFloat: usdValue !== null && mcap != null && mcap > 0 ? (usdValue / mcap) * 100 : null
+			})
+		}
+		if (hasLinear) {
+			const usdValue = price != null && price > 0 ? linearWeeklyAmount * price : null
+			eventSummaries.push({
+				label: 'Weekly Unlock Rate',
+				amount: linearWeeklyAmount,
+				displayUnit: 'per week',
+				usdValue,
+				percentage: maxSupply != null && maxSupply > 0 ? (linearWeeklyAmount / maxSupply) * 100 : null,
+				percentageFloat: usdValue !== null && mcap != null && mcap > 0 ? (usdValue / mcap) * 100 : null
+			})
+		}
+		const calendarTokenValue =
+			eventSummaries.length === 0
+				? 'Unavailable'
+				: eventSummaries
+						.map((summary) => {
+							const value =
+								summary.usdValue !== null
+									? formatUsd(summary.usdValue, {
+											compact: true,
+											minimumCompactValue: 1_000_000,
+											compactSuffix: 'lowercase'
+										})
+									: `${formatCompactNumber(summary.amount, {
+											minimumCompactValue: 1_000_000,
+											compactSuffix: 'lowercase'
+										})} ${tokenSymbol}`
+							return `${summary.label}: ${value}${summary.displayUnit ? ' / week' : ''}`
+						})
+						.join('; ')
 
 		return {
 			currentUnlockBreakdown: breakdown,
-			totalAmount,
-			tokenValue,
-			unlockPercent,
-			unlockPercentFloat,
-			hasLinear,
-			dailyValue,
-			dailyTokenAmount,
-			linearDurationDays
+			eventSummaries,
+			calendarTokenValue
 		}
-	}, [event, price, maxSupply, mcap])
+	}, [event, price, maxSupply, mcap, tokenSymbol])
 
 	const [nowMs, setNowMs] = useState(() => Date.now())
 	const nowSec = nowMs / 1e3
@@ -302,11 +304,10 @@ export const UpcomingEvent = ({
 		const subLineClass = variant === 'protocol' ? 'body-sm text-secondary' : 'text-xs text-secondary'
 		const suffixClass = variant === 'protocol' ? 'body-sm text-tertiary' : 'text-xs text-tertiary'
 		const valueClass = variant === 'protocol' ? '' : 'font-medium'
-		const isLinearPerDay = item.unlockType === 'linear' && item.displayUnit === 'per day'
 		const isOngoing = item.endTime != null && nowSec >= item.timestamp && nowSec <= item.endTime
 
 		return (
-			<RowTag className={rowClass} key={`${item.name}-${item.totalAmount}-${index}`}>
+			<RowTag className={rowClass} key={`${item.name}-${item.amount}-${index}`}>
 				<LineTag className={`flex items-center justify-between gap-2 ${lineClass}`}>
 					<span className="flex items-center gap-1.5">
 						{item.name}
@@ -321,10 +322,14 @@ export const UpcomingEvent = ({
 						</Tooltip>
 					</span>
 					<span className={`inline-flex items-baseline gap-1 ${valueClass}`.trim()}>
-						{item.usdValue
-							? formatUsd(item.usdValue, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						{item.usdValue !== null
+							? formatUsd(item.usdValue, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})
 							: '-'}
-						{isLinearPerDay ? <span className={suffixClass}>/ day</span> : null}
+						{item.displayUnit ? <span className={suffixClass}>/ week</span> : null}
 					</span>
 				</LineTag>
 				<LineTag className={`flex items-center justify-between gap-2 ${subLineClass}`}>
@@ -332,7 +337,7 @@ export const UpcomingEvent = ({
 						{item.percentage != null
 							? `${formatPercent(item.percentage, { input: 'percent', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
 							: '-'}{' '}
-						{item.percentageFloat ? (
+						{item.percentageFloat !== null ? (
 							<>
 								(
 								{formatCompactNumber(item.percentageFloat, {
@@ -344,12 +349,12 @@ export const UpcomingEvent = ({
 						) : null}
 					</span>
 					<span className="inline-flex items-baseline gap-1">
-						{formatCompactNumber(isLinearPerDay ? item.perDayAmount : item.totalAmount, {
+						{formatCompactNumber(item.amount, {
 							minimumCompactValue: 1_000_000,
 							compactSuffix: 'lowercase'
 						})}{' '}
 						{tokenSymbol}
-						{isLinearPerDay ? <span className={suffixClass}>/ day</span> : null}
+						{item.displayUnit ? <span className={suffixClass}>/ week</span> : null}
 					</span>
 				</LineTag>
 			</RowTag>
@@ -370,83 +375,44 @@ export const UpcomingEvent = ({
 		return (
 			<Card as="article" padding="md" radius="large" className="flex flex-col gap-2.5">
 				<div className="flex items-start justify-between gap-3">
-					<div className="flex min-w-0 flex-col">
-						<span className="body-md text-primary">{hasLinear ? 'Daily Unlock Rate' : 'Unlock Value'}</span>
-						<span className="body-md text-primary">
-							{hasLinear ? (
-								dailyValue ? (
-									<>
-										{formatUsd(dailyValue, {
-											compact: true,
-											minimumCompactValue: 1_000_000,
-											compactSuffix: 'lowercase'
-										})}{' '}
-										<span className="body-sm text-secondary">/ day</span>
-									</>
-								) : (
-									<span>
-										{formatCompactNumber(unlockPercent, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
-										%
+					<div className="flex min-w-0 flex-col gap-1">
+						{eventSummaries.length === 0 ? (
+							<span className="body-md text-secondary">Amount unavailable</span>
+						) : (
+							eventSummaries.map((summary) => (
+								<div key={summary.label} className="flex flex-col">
+									<span className="body-md text-primary">{summary.label}</span>
+									<span className="inline-flex items-baseline gap-1 body-md text-primary">
+										{summary.usdValue !== null
+											? formatUsd(summary.usdValue, {
+													compact: true,
+													minimumCompactValue: 1_000_000,
+													compactSuffix: 'lowercase'
+												})
+											: `${formatCompactNumber(summary.amount, {
+													minimumCompactValue: 1_000_000,
+													compactSuffix: 'lowercase'
+												})} ${tokenSymbol}`}
+										{summary.displayUnit ? <span className="body-sm text-secondary">/ week</span> : null}
 									</span>
-								)
-							) : tokenValue ? (
-								formatUsd(tokenValue, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-							) : (
-								<span>
-									{formatPercent(unlockPercent, {
-										input: 'percent',
-										compact: true,
-										minimumCompactValue: 1_000_000,
-										compactSuffix: 'lowercase'
-									})}
-								</span>
-							)}
-						</span>
-						{hasLinear && linearDurationDays > 0 ? (
-							<span className="body-sm text-secondary">
-								Linear over {formatDuration(linearDurationDays)}
-								{tokenValue ? (
-									<>
-										{' '}
-										· Total:{' '}
-										{formatUsd(tokenValue, {
-											compact: true,
-											minimumCompactValue: 1_000_000,
-											compactSuffix: 'lowercase'
-										})}
-									</>
-								) : null}
-							</span>
-						) : unlockPercent ? (
-							<span className="body-sm text-secondary">
-								{tokenValue
-									? formatPercent(unlockPercent, {
-											input: 'percent',
-											compact: true,
-											minimumCompactValue: 1_000_000,
-											compactSuffix: 'lowercase'
-										})
-									: null}
-								{unlockPercentFloat ? (
-									<>
-										{' '}
-										(
-										{formatCompactNumber(unlockPercentFloat, {
-											minimumCompactValue: 1_000_000,
-											compactSuffix: 'lowercase'
-										})}
-										% of float)
-									</>
-								) : null}
-							</span>
-						) : null}
+									{summary.percentage !== null || summary.percentageFloat !== null ? (
+										<span className="body-sm text-secondary">
+											{summary.percentage !== null
+												? formatPercent(summary.percentage, { input: 'percent', compact: true })
+												: null}
+											{summary.percentageFloat !== null
+												? ` (${formatPercent(summary.percentageFloat, { input: 'percent', compact: true })} of float)`
+												: null}
+										</span>
+									) : null}
+								</div>
+							))
+						)}
 					</div>
 					<div className="flex shrink-0 flex-col items-end">
-						<span className="body-md text-primary">
-							{timestamp ? dayjs(timestamp * 1e3).format('MMM D, YYYY') : null}
-						</span>
+						<span className="body-md text-primary">{dayjs(timestamp * 1e3).format('MMM D, YYYY')}</span>
 						<span className="body-sm text-secondary">
-							{timestamp ? `${dayjs(timestamp * 1e3).format('h:mm A')} GMT${dayjs(timestamp * 1e3).format('Z')}` : ''}
+							{`${dayjs(timestamp * 1e3).format('h:mm A')} GMT${dayjs(timestamp * 1e3).format('Z')}`}
 						</span>
 						{timeLeft > 0 ? (
 							<span
@@ -468,13 +434,9 @@ export const UpcomingEvent = ({
 				</div>
 				{timeLeft > 0 ? (
 					<CalendarButton
-						event={{ timestamp, noOfTokens, symbol: symbol || '', description: '' }}
+						event={{ timestamp }}
 						tokenName={name}
-						tokenValue={
-							tokenValue
-								? formatUsd(tokenValue, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-								: null
-						}
+						tokenValue={calendarTokenValue}
 						isProtocolPage={isProtocolPage}
 					/>
 				) : null}
@@ -488,38 +450,39 @@ export const UpcomingEvent = ({
 				<Ariakit.HovercardAnchor>
 					{timeLeft > 0 ? (
 						<div className="flex min-w-0 items-center gap-3">
-							<div className="flex min-w-[150px] items-center justify-between gap-4">
-								<div className="flex flex-col items-start">
-									<span className="mono-sm-bold text-primary">
-										{hasLinear && dailyValue ? (
-											<>
-												{formatUsd(dailyValue, {
-													compact: true,
-													minimumCompactValue: 1_000_000,
-													compactSuffix: 'lowercase'
-												})}{' '}
-												<span className="label-sm text-tertiary">/ day</span>
-											</>
-										) : (
-											formatUsd(tokenValue, {
-												compact: true,
-												minimumCompactValue: 1_000_000,
-												compactSuffix: 'lowercase'
-											})
-										)}
-									</span>
-									<span className="label-sm text-tertiary">{hasLinear ? 'Linear Unlock' : 'Unlock Value'}</span>
-								</div>
-								<div className="flex flex-col items-end">
-									<span className="mono-sm-bold text-primary">
-										{formatCompactNumber(unlockPercentFloat, {
-											minimumCompactValue: 1_000_000,
-											compactSuffix: 'lowercase'
-										})}
-										%
-									</span>
-									<span className="label-sm text-tertiary">of float</span>
-								</div>
+							<div className="flex items-center gap-4">
+								{eventSummaries.length === 0 ? (
+									<span className="min-w-[150px] label-sm text-tertiary">Amount unavailable</span>
+								) : (
+									eventSummaries.map((summary) => (
+										<div key={summary.label} className="flex min-w-[150px] items-center justify-between gap-4">
+											<div className="flex flex-col items-start">
+												<span className="inline-flex items-baseline gap-1 mono-sm-bold text-primary">
+													{summary.usdValue !== null
+														? formatUsd(summary.usdValue, {
+																compact: true,
+																minimumCompactValue: 1_000_000,
+																compactSuffix: 'lowercase'
+															})
+														: `${formatCompactNumber(summary.amount, {
+																minimumCompactValue: 1_000_000,
+																compactSuffix: 'lowercase'
+															})} ${tokenSymbol}`}
+													{summary.displayUnit ? <span className="label-sm text-tertiary">/ week</span> : null}
+												</span>
+												<span className="label-sm text-tertiary">{summary.label}</span>
+											</div>
+											{summary.percentageFloat !== null ? (
+												<div className="flex flex-col items-end">
+													<span className="mono-sm-bold text-primary">
+														{formatPercent(summary.percentageFloat, { input: 'percent', compact: true })}
+													</span>
+													<span className="label-sm text-tertiary">of float</span>
+												</div>
+											) : null}
+										</div>
+									))
+								)}
 							</div>
 
 							<div className="flex items-center gap-1.5" suppressHydrationWarning>
@@ -555,11 +518,9 @@ export const UpcomingEvent = ({
 							{tokenSymbol}
 						</span>
 						<span className="flex flex-col items-end">
-							<span className="font-medium">{timestamp ? dayjs(timestamp * 1e3).format('MMM D, YYYY') : null}</span>
+							<span className="font-medium">{dayjs(timestamp * 1e3).format('MMM D, YYYY')}</span>
 							<span className="text-xs text-tertiary">
-								{timestamp
-									? `${dayjs(timestamp * 1e3).format('HH:mm')} GMT${dayjs(timestamp * 1e3).format('Z')}`
-									: null}
+								{`${dayjs(timestamp * 1e3).format('HH:mm')} GMT${dayjs(timestamp * 1e3).format('Z')}`}
 							</span>
 						</span>
 					</span>
@@ -569,60 +530,54 @@ export const UpcomingEvent = ({
 					</div>
 					<hr className="border-medium" />
 
-					<span className="flex flex-col gap-1">
-						<span className="flex items-center justify-between gap-2 font-semibold">
-							<span>Total</span>
-							<span className="inline-flex items-baseline gap-1">
-								{hasLinear && dailyValue
-									? formatUsd(dailyValue, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-									: tokenValue
-										? formatUsd(tokenValue, {
-												compact: true,
+					<span className="flex flex-col gap-2">
+						{eventSummaries.length === 0 ? (
+							<span className="text-xs text-tertiary">Amount unavailable</span>
+						) : (
+							eventSummaries.map((summary) => (
+								<span key={summary.label} className="flex flex-col gap-1">
+									<span className="flex items-center justify-between gap-2 font-semibold">
+										<span>{summary.label}</span>
+										<span className="inline-flex items-baseline gap-1">
+											{summary.usdValue !== null
+												? formatUsd(summary.usdValue, {
+														compact: true,
+														minimumCompactValue: 1_000_000,
+														compactSuffix: 'lowercase'
+													})
+												: '-'}
+											{summary.displayUnit ? <span className="text-xs font-normal text-tertiary">/ week</span> : null}
+										</span>
+									</span>
+									<span className="flex items-center justify-between gap-2 text-xs text-tertiary">
+										<span>
+											{summary.percentage !== null
+												? formatPercent(summary.percentage, { input: 'percent', compact: true })
+												: null}
+											{summary.percentageFloat !== null
+												? ` (${formatPercent(summary.percentageFloat, { input: 'percent', compact: true })} of float)`
+												: null}
+										</span>
+										<span>
+											{formatCompactNumber(summary.amount, {
 												minimumCompactValue: 1_000_000,
 												compactSuffix: 'lowercase'
-											})
-										: '-'}
-								{hasLinear ? <span className="text-xs font-normal text-tertiary">/ day</span> : null}
-							</span>
-						</span>
-						{hasLinear && linearDurationDays > 0 ? (
-							<span className="flex items-center justify-between gap-2 text-xs text-tertiary">
-								<span>Linear over {formatDuration(linearDurationDays)}</span>
-								<span>
-									{formatCompactNumber(dailyTokenAmount, {
-										minimumCompactValue: 1_000_000,
-										compactSuffix: 'lowercase'
-									})}{' '}
-									{tokenSymbol} / day
+											})}{' '}
+											{tokenSymbol}
+											{summary.displayUnit ? ' / week' : ''}
+										</span>
+									</span>
 								</span>
-							</span>
-						) : null}
-						<span className="flex items-center justify-between gap-2 text-xs text-tertiary">
-							<span>
-								{unlockPercent
-									? `${formatPercent(unlockPercent, { input: 'percent', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
-									: null}
-								{unlockPercentFloat
-									? ` (${formatPercent(unlockPercentFloat, { input: 'percent', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} of float)`
-									: null}
-							</span>
-							<span>
-								{formatCompactNumber(totalAmount, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}{' '}
-								{tokenSymbol}
-							</span>
-						</span>
+							))
+						)}
 					</span>
 				</Ariakit.Hovercard>
 			</Ariakit.HovercardProvider>
 			{timeLeft > 0 ? (
 				<CalendarButton
-					event={{ timestamp, noOfTokens, symbol: symbol || '', description: '' }}
+					event={{ timestamp }}
 					tokenName={name}
-					tokenValue={
-						tokenValue
-							? formatUsd(tokenValue, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-							: null
-					}
+					tokenValue={calendarTokenValue}
 					isProtocolPage={isProtocolPage}
 				/>
 			) : null}

@@ -1,11 +1,79 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { IResponseCGTokenRankingsDatasetItem } from '~/api/coingecko.types'
 import type { IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
 import type { MarketSegmentSummary, TokenMarketsListResponse } from '~/containers/Markets/api.types'
 import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
+import type { EnrichedProtocolEmission } from '~/containers/Unlocks/queries'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
-import { buildTokenMarketSummary, buildTokensChartDataset, buildTokensSourceRows } from '../queries.server'
+import {
+	buildTokenMarketSummary,
+	buildTokensChartDataset,
+	buildTokensSourceRows,
+	fetchTokensSourceRows
+} from '../queries.server'
 import { buildTokenOverviewCurrentMetricsById } from '../readModel'
+
+const sourceMocks = vi.hoisted(() => ({
+	fetchAdapterChainMetrics: vi.fn(() => Promise.resolve({ protocols: [] })),
+	fetchStablecoinAssetsApi: vi.fn(() => Promise.resolve({ peggedAssets: [] })),
+	fetchTokenRightsEntries: vi.fn(() => Promise.resolve([])),
+	getAllProtocolEmissions: vi.fn(() => Promise.resolve([])),
+	refreshMetadataInBackgroundIfStale: vi.fn()
+}))
+
+vi.mock('~/containers/AdapterMetrics/api', () => ({
+	fetchAdapterChainMetrics: sourceMocks.fetchAdapterChainMetrics
+}))
+
+vi.mock('~/containers/Stablecoins/api', () => ({
+	fetchStablecoinAssetsApi: sourceMocks.fetchStablecoinAssetsApi
+}))
+
+vi.mock('~/containers/TokenRights/server/dataset.server', () => ({
+	fetchTokenRightsEntries: sourceMocks.fetchTokenRightsEntries
+}))
+
+vi.mock('~/containers/Unlocks/queries', () => ({
+	getAllProtocolEmissions: sourceMocks.getAllProtocolEmissions
+}))
+
+vi.mock('~/utils/metadata', () => ({
+	default: {
+		tokenlist: {},
+		tokenDirectory: {},
+		protocolMetadata: {},
+		emissionsSupplyMetrics: {}
+	},
+	refreshMetadataInBackgroundIfStale: sourceMocks.refreshMetadataInBackgroundIfStale
+}))
+
+afterEach(() => {
+	vi.useRealTimers()
+	sourceMocks.getAllProtocolEmissions.mockClear()
+})
+
+describe('fetchTokensSourceRows', () => {
+	it('retains future emissions while bounding the historical unlock window', async () => {
+		vi.useFakeTimers()
+		vi.setSystemTime(new Date('2026-08-23T12:00:00Z'))
+		const nowSec = Math.floor(Date.now() / 1000)
+
+		await fetchTokensSourceRows({
+			tokens: [],
+			markets: { last_updated: '', tokens: [] },
+			currentMetricsById: {},
+			tokenIndexById: new Map(),
+			version: 'test',
+			generatedAt: nowSec
+		})
+
+		expect(sourceMocks.getAllProtocolEmissions).toHaveBeenCalledWith({
+			startDate: nowSec - 30 * 24 * 60 * 60,
+			getHistoricalPrices: false,
+			tokenlist: {}
+		})
+	})
+})
 
 function marketSegment(overrides: Partial<MarketSegmentSummary>): MarketSegmentSummary {
 	return {
@@ -243,31 +311,83 @@ describe('buildTokensSourceRows', () => {
 				{
 					name: 'Ethena',
 					token: 'ENA',
+					sources: [],
+					protocolId: null,
 					gecko_id: 'ethena',
+					circSupply: 600,
+					circSupply30d: 590,
 					maxSupply: 1000,
 					totalLocked: 400,
+					unlocksPerDay: null,
+					unlockEvents: null,
 					tPrice: 2,
+					tSymbol: 'ENA',
+					historicalPrice: [],
+					lastEvent: [],
 					events: [
 						{
+							description: 'Weekly emissions',
+							category: 'farming',
+							unlockType: 'linear',
 							timestamp: nowSec - 10,
-							noOfTokens: [5, 5]
+							noOfTokens: [5, 10],
+							rateDurationDays: 7
 						},
 						{
+							description: 'Unknown amount',
+							category: 'insiders',
+							unlockType: 'cliff',
+							timestamp: nowSec - 9,
+							noOfTokens: [],
+							hasUnknownTokenAmount: true
+						},
+						{
+							description: 'Negative correction',
+							category: 'insiders',
+							unlockType: 'cliff',
+							timestamp: nowSec - 8,
+							noOfTokens: [-50]
+						},
+						{
+							description: 'Recent cliff',
+							category: 'insiders',
+							unlockType: 'cliff',
+							timestamp: nowSec - 7,
+							noOfTokens: [10]
+						},
+						{
+							description: 'Future cliff',
+							category: 'insiders',
+							unlockType: 'cliff',
 							timestamp: nowSec + 20,
 							noOfTokens: [100]
 						},
 						{
+							description: 'Old cliff',
+							category: 'insiders',
+							unlockType: 'cliff',
 							timestamp: nowSec - 30 * 24 * 60 * 60 - 1,
 							noOfTokens: [100]
 						}
 					],
 					upcomingEvent: [
 						{
+							description: 'Upcoming weekly emissions',
+							category: 'farming',
+							unlockType: 'linear',
 							timestamp: nowSec + 10,
-							noOfTokens: [12]
+							noOfTokens: [6, 12],
+							rateDurationDays: 7
+						},
+						{
+							description: 'Upcoming zero',
+							category: 'insiders',
+							unlockType: 'cliff',
+							timestamp: nowSec + 10,
+							noOfTokens: [0]
 						}
 					]
-				}
+				} satisfies EnrichedProtocolEmission
 			],
 			metadata,
 			nowSec
@@ -281,7 +401,7 @@ describe('buildTokensSourceRows', () => {
 			perpsVolume24h: 250,
 			openInterest24h: 325,
 			unlock30dUsd: 20,
-			upcomingUnlockUsd: 24
+			upcomingUnlockUsd: 200
 		})
 
 		const ethena = result.rows[0]
@@ -303,7 +423,7 @@ describe('buildTokensSourceRows', () => {
 			holdersRevenue24h: 5.5,
 			trsPercent: 25,
 			unlock30dUsd: 20,
-			upcomingUnlockUsd: 24
+			upcomingUnlockUsd: 200
 		})
 		expect(ethena.rights).toMatchObject({
 			protocolName: 'Ethena',

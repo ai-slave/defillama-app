@@ -68,6 +68,7 @@ export const UnlocksListView: React.FC<UnlocksListViewProps> = ({ events }) => {
 											minimumCompactValue: 1_000_000,
 											compactSuffix: 'lowercase'
 										})}
+										{event.unit === 'week' ? ' / week' : ''}
 									</span>
 								</div>
 							</BasicLink>

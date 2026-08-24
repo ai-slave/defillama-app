@@ -1,32 +1,52 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { PriceObject } from '~/api/types'
+import type {
+	EmissionEvent,
+	EmissionSeries,
+	ProtocolEmission,
+	ProtocolEmissionChartData,
+	ProtocolEmissionComponentData,
+	ProtocolEmissionDetail,
+	TokenAllocationSplit
+} from '../api.types'
 
-const fetchProtocolEmissionMock = vi.fn<(...args: unknown[]) => Promise<any>>()
-const fetchAllProtocolEmissionsMock = vi.fn<(...args: unknown[]) => Promise<any[]>>(() => Promise.resolve([]))
-const fetchCoinPricesMock = vi.fn<(...args: unknown[]) => Promise<Record<string, unknown>>>(() => Promise.resolve({}))
-const fetchJsonMock = vi.fn<(...args: unknown[]) => Promise<unknown>>(() => Promise.resolve([]))
-const batchFetchHistoricalPricesMock = vi.fn<(...args: unknown[]) => Promise<{ results: Record<string, unknown> }>>(
-	() => Promise.resolve({ results: {} })
-)
+const fetchProtocolEmissionMock = vi.fn<(protocolName: string) => Promise<ProtocolEmissionDetail | null>>()
+const fetchAllProtocolEmissionsMock = vi.fn<() => Promise<ProtocolEmission[]>>(() => Promise.resolve([]))
+const fetchCoinPricesMock = vi.fn<
+	(coins: string[], options?: { searchWidth?: string }) => Promise<Record<string, PriceObject>>
+>(() => Promise.resolve({}))
+const fetchJsonMock = vi.fn<(url: string, options?: object) => Promise<unknown>>(() => Promise.resolve([]))
+const batchFetchHistoricalPricesMock = vi.fn<
+	(
+		priceRequests: Record<string, number | number[]>,
+		batchSize?: number
+	) => Promise<{ results: Record<string, { prices?: Array<{ timestamp: number; price: number }> }> }>
+>(() => Promise.resolve({ results: {} }))
 
 vi.mock('~/api/pricing', () => ({
-	fetchCoinPrices: (...args: unknown[]) => fetchCoinPricesMock(...args)
+	fetchCoinPrices: (coins: string[], options?: { searchWidth?: string }) =>
+		options === undefined ? fetchCoinPricesMock(coins) : fetchCoinPricesMock(coins, options)
 }))
 
 vi.mock('~/utils', () => ({
-	batchFetchHistoricalPrices: (...args: unknown[]) => batchFetchHistoricalPricesMock(...args),
+	batchFetchHistoricalPrices: (priceRequests: Record<string, number | number[]>, batchSize?: number) =>
+		batchSize === undefined
+			? batchFetchHistoricalPricesMock(priceRequests)
+			: batchFetchHistoricalPricesMock(priceRequests, batchSize),
 	capitalizeFirstLetter: (value: string) => value.charAt(0).toUpperCase() + value.slice(1),
 	getNDistinctColors: (count: number) => Array.from({ length: count }, (_, index) => `#${index}`),
 	roundToNearestHalfHour: (timestamp: number) => timestamp
 }))
 
 vi.mock('~/utils/async', () => ({
-	fetchJson: (...args: unknown[]) => fetchJsonMock(...args),
+	fetchJson: (url: string, options?: object) =>
+		options === undefined ? fetchJsonMock(url) : fetchJsonMock(url, options),
 	getSlowJsonTimeoutMs: () => 1000
 }))
 
 vi.mock('../api', () => ({
-	fetchProtocolEmission: (...args: unknown[]) => fetchProtocolEmissionMock(...args),
-	fetchAllProtocolEmissions: (...args: unknown[]) => fetchAllProtocolEmissionsMock(...args)
+	fetchProtocolEmission: (protocolName: string) => fetchProtocolEmissionMock(protocolName),
+	fetchAllProtocolEmissions: () => fetchAllProtocolEmissionsMock()
 }))
 
 import { buildUnlocksHistoricalPriceRequests } from '~/utils/unlocks/historicalPriceRequests'
@@ -35,8 +55,133 @@ import {
 	getAllProtocolEmissions,
 	getProtocolEmissionsPieData,
 	getProtocolEmissons,
+	getUnlocksCalendarStaticPropsData,
 	isEmptyProtocolEmissionResult
 } from '../queries'
+
+const EMPTY_TOKEN_ALLOCATION: TokenAllocationSplit = {
+	current: {},
+	final: {},
+	progress: {},
+	bySection: { current: {}, final: {}, progress: {} }
+}
+
+function chartPoint(timestamp: number, unlocked: number, isForecast?: boolean): EmissionSeries['data'][number] {
+	return {
+		timestamp,
+		unlocked,
+		rawEmission: unlocked,
+		burned: 0,
+		...(isForecast === undefined ? {} : { isForecast })
+	}
+}
+
+function chartData(data: EmissionSeries[] = [], tokenAllocation = EMPTY_TOKEN_ALLOCATION): ProtocolEmissionChartData {
+	return { data, tokenAllocation }
+}
+
+interface ProtocolDetailFixture {
+	name: string
+	geckoId?: string | null
+	token?: string
+	events?: EmissionEvent[]
+	notes?: string[]
+	documentedData?: ProtocolEmissionChartData
+	realTimeData?: ProtocolEmissionChartData
+	categories?: Record<string, string[]>
+}
+
+function protocolDetail({
+	name,
+	geckoId = null,
+	token = 'coingecko:test',
+	events = [],
+	notes = [],
+	documentedData = chartData(),
+	realTimeData,
+	categories = {}
+}: ProtocolDetailFixture): ProtocolEmissionDetail {
+	return {
+		name,
+		gecko_id: geckoId,
+		pId: null,
+		defillamaIds: [],
+		chainName: 'Ethereum',
+		metadata: { token, protocolIds: [], events, unlockEvents: [], notes },
+		documentedData,
+		...(realTimeData === undefined ? {} : { realTimeData }),
+		unlockUsdChart: [],
+		categories
+	}
+}
+
+function protocolDetailV2(
+	fixture: ProtocolDetailFixture,
+	componentData: ProtocolEmissionComponentData
+): ProtocolEmissionDetail {
+	return { ...protocolDetail(fixture), version: 2, componentData }
+}
+
+function componentSection(
+	displayName: string,
+	projection: { isTBD?: boolean; isForecast?: boolean; colorFrom?: string } = {}
+): ProtocolEmissionComponentData['sections'][string] {
+	return {
+		displayName,
+		emission24h: 0,
+		emission7d: 0,
+		emission30d: 0,
+		components: {},
+		...projection
+	}
+}
+
+function cliff(timestamp: number, amount: number, category = 'team'): EmissionEvent {
+	return { description: 'Cliff', category, unlockType: 'cliff', timestamp, noOfTokens: [amount] }
+}
+
+function unknownLinear(timestamp: number): EmissionEvent {
+	return {
+		description: 'Unknown linear rate',
+		category: 'farming',
+		unlockType: 'linear',
+		timestamp,
+		noOfTokens: [],
+		rateDurationDays: 7,
+		hasUnknownTokenAmount: true
+	}
+}
+
+function protocolEmission({
+	name,
+	token,
+	events = [],
+	geckoId = null,
+	totalLocked = 0,
+	maxSupply = 0
+}: {
+	name: string
+	token: string
+	events?: EmissionEvent[]
+	geckoId?: string | null
+	totalLocked?: number
+	maxSupply?: number
+}): ProtocolEmission {
+	return {
+		name,
+		token,
+		sources: [],
+		protocolId: null,
+		gecko_id: geckoId,
+		circSupply: 0,
+		circSupply30d: 0,
+		totalLocked,
+		maxSupply,
+		unlocksPerDay: null,
+		unlockEvents: [],
+		events
+	}
+}
 
 describe('buildUnlockTypesByTimestamp', () => {
 	it('classifies an ascending event stream in one pass without mutating it', () => {
@@ -44,11 +189,11 @@ describe('buildUnlockTypesByTimestamp', () => {
 		const nowSec = 1_700_000_000
 		vi.spyOn(Date, 'now').mockReturnValue(nowSec * 1000)
 		const events = [
-			{ timestamp: nowSec - day, noOfTokens: [1] },
-			{ timestamp: nowSec + day, noOfTokens: [1] },
-			{ timestamp: nowSec + 8 * day, noOfTokens: [1] },
-			{ timestamp: nowSec + 38 * day, noOfTokens: [1] },
-			{ timestamp: nowSec + 128 * day, noOfTokens: [1] }
+			cliff(nowSec - day, 1),
+			cliff(nowSec + day, 1),
+			cliff(nowSec + 8 * day, 1),
+			cliff(nowSec + 38 * day, 1),
+			cliff(nowSec + 128 * day, 1)
 		]
 		const timestamps = events.map((event) => event.timestamp)
 		const result = buildUnlockTypesByTimestamp(events)
@@ -71,29 +216,27 @@ describe('getProtocolEmissionsPieData', () => {
 		fetchAllProtocolEmissionsMock.mockReset()
 	})
 
-	const protocolDetail = {
+	const detail = protocolDetail({
 		name: 'Curve Finance',
-		metadata: { token: 'CRV', events: [] },
-		documentedData: {
-			data: [{ label: 'team', data: [{ timestamp: 1, unlocked: 10 }] }]
-		},
-		realTimeData: { data: [] }
-	}
+		token: 'CRV',
+		documentedData: chartData([{ label: 'team', data: [chartPoint(1, 10)] }]),
+		realTimeData: chartData()
+	})
 
 	it('builds allocation data without fetching global supply metadata', async () => {
-		fetchProtocolEmissionMock.mockResolvedValue(protocolDetail)
+		fetchProtocolEmissionMock.mockResolvedValue(detail)
 
 		const result = await getProtocolEmissionsPieData('curve-finance', false)
 
 		expect(result.pieChartData.documented).toEqual([{ name: 'Team', value: 10 }])
-		expect(result.meta).toEqual({})
+		expect(result.meta).toBeNull()
 		expect(fetchAllProtocolEmissionsMock).not.toHaveBeenCalled()
 	})
 
 	it('fetches supply metadata for the locked/unlocked chart', async () => {
-		fetchProtocolEmissionMock.mockResolvedValue(protocolDetail)
+		fetchProtocolEmissionMock.mockResolvedValue(detail)
 		fetchAllProtocolEmissionsMock.mockResolvedValue([
-			{ name: 'Curve Finance', token: 'CRV', totalLocked: 25, maxSupply: 100 }
+			protocolEmission({ name: 'Curve Finance', token: 'CRV', totalLocked: 25, maxSupply: 100 })
 		])
 
 		const result = await getProtocolEmissionsPieData('curve-finance', true)
@@ -123,32 +266,60 @@ describe('getProtocolEmissons', () => {
 		expect(fetchAllProtocolEmissionsMock).not.toHaveBeenCalled()
 	})
 
-	it('skips the availability check when explicitly told the slug is already valid', async () => {
-		fetchProtocolEmissionMock.mockResolvedValue({
-			name: 'Chainlink',
-			gecko_id: 'chainlink',
-			metadata: {
-				events: [],
-				token: 'coingecko:chainlink',
-				notes: []
-			},
-			documentedData: {
-				data: [
-					{
-						label: 'team',
-						data: [{ timestamp: 1, unlocked: 10 }]
-					}
-				],
-				tokenAllocation: {
-					current: { Team: 10 },
-					final: { Team: 10 }
-				}
-			},
-			realTimeData: {
-				data: [],
-				tokenAllocation: { current: {}, final: {} }
-			}
+	it('preserves a detail-source failure instead of returning an empty protocol result', async () => {
+		const error = new Error('detail unavailable')
+		fetchProtocolEmissionMock.mockRejectedValue(error)
+
+		await expect(
+			getProtocolEmissons('chainlink', {
+				skipAvailabilityCheck: true,
+				tokenlist: {}
+			})
+		).rejects.toBe(error)
+	})
+
+	it('returns the empty result for an explicit missing detail', async () => {
+		fetchProtocolEmissionMock.mockResolvedValue(null)
+
+		const result = await getProtocolEmissons('missing', {
+			skipAvailabilityCheck: true,
+			tokenlist: {}
 		})
+
+		expect(isEmptyProtocolEmissionResult(result)).toBe(true)
+	})
+
+	it('keeps a successful detail with an empty schedule distinct from not-found', async () => {
+		fetchProtocolEmissionMock.mockResolvedValue(
+			protocolDetail({ name: 'Empty Schedule', token: 'coingecko:empty-schedule' })
+		)
+
+		const result = await getProtocolEmissons('empty-schedule', {
+			skipAvailabilityCheck: true,
+			tokenlist: {}
+		})
+
+		expect(isEmptyProtocolEmissionResult(result)).toBe(false)
+		expect(result.name).toBe('Empty Schedule')
+		expect(result.events).toEqual([])
+		expect(result.chartData.documented).toEqual([])
+	})
+
+	it('skips the availability check when explicitly told the slug is already valid', async () => {
+		fetchProtocolEmissionMock.mockResolvedValue(
+			protocolDetail({
+				name: 'Chainlink',
+				geckoId: 'chainlink',
+				token: 'coingecko:chainlink',
+				documentedData: chartData([{ label: 'team', data: [chartPoint(1, 10)] }], {
+					current: { Team: 10 },
+					final: { Team: 10 },
+					progress: {},
+					bySection: { current: {}, final: {}, progress: {} }
+				}),
+				realTimeData: chartData()
+			})
+		)
 
 		const result = await getProtocolEmissons('chainlink', {
 			skipAvailabilityCheck: true
@@ -157,8 +328,13 @@ describe('getProtocolEmissons', () => {
 		expect(fetchProtocolEmissionMock).toHaveBeenCalledWith('chainlink')
 		expect(isEmptyProtocolEmissionResult(result)).toBe(false)
 		expect(result.categories.documented).toEqual(['Team'])
-		expect(result.tokenAllocation.documented).toEqual({ current: { Team: 10 }, final: { Team: 10 } })
-		expect(result.tokenAllocation.realtime).toEqual({ current: {}, final: {} })
+		expect(result.tokenAllocation.documented).toEqual({
+			current: { Team: 10 },
+			final: { Team: 10 },
+			progress: {},
+			bySection: { current: {}, final: {}, progress: {} }
+		})
+		expect(result.tokenAllocation.realtime).toEqual(EMPTY_TOKEN_ALLOCATION)
 	})
 
 	it('preserves the documented allocation split nested under bySection', async () => {
@@ -172,56 +348,61 @@ describe('getProtocolEmissons', () => {
 				progress: { Public: 80, Private: 40 }
 			}
 		}
-		fetchProtocolEmissionMock.mockResolvedValue({
-			name: 'Aave',
-			metadata: { events: [], token: 'coingecko:aave', notes: [] },
-			documentedData: { data: [], tokenAllocation: allocation },
-			realTimeData: { data: [], tokenAllocation: { current: {}, final: {} } }
-		})
+		fetchProtocolEmissionMock.mockResolvedValue(
+			protocolDetail({
+				name: 'Aave',
+				token: 'coingecko:aave',
+				documentedData: chartData([], allocation),
+				realTimeData: chartData()
+			})
+		)
 
-		const result = await getProtocolEmissons('aave', { skipAvailabilityCheck: true, tokenlist: {} })
+		const result = await getProtocolEmissons('aave', {
+			skipAvailabilityCheck: true,
+			tokenlist: {}
+		})
 
 		expect(result.tokenAllocation.documented).toEqual(allocation)
 	})
 
-	it('preserves the legacy flat allocation as both current and final allocation', async () => {
-		const allocation = { Team: 20, Ecosystem: 80 }
-		fetchProtocolEmissionMock.mockResolvedValue({
-			name: 'Legacy',
-			metadata: { events: [], notes: [] },
-			documentedData: { data: [], tokenAllocation: allocation },
-			realTimeData: { data: [], tokenAllocation: null }
+	it('uses an empty comparison allocation when the canonical detail omits realtime data', async () => {
+		const allocation = {
+			current: { Team: 20, Ecosystem: 80 },
+			final: { Team: 20, Ecosystem: 80 },
+			progress: { Team: 100, Ecosystem: 100 },
+			bySection: {
+				current: { Team: 20, Ecosystem: 80 },
+				final: { Team: 20, Ecosystem: 80 },
+				progress: { Team: 100, Ecosystem: 100 }
+			}
+		}
+		fetchProtocolEmissionMock.mockResolvedValue(
+			protocolDetail({
+				name: 'Documented only',
+				token: 'coingecko:documented-only',
+				documentedData: chartData([], allocation)
+			})
+		)
+
+		const result = await getProtocolEmissons('documented-only', {
+			skipAvailabilityCheck: true,
+			tokenlist: {}
 		})
 
-		const result = await getProtocolEmissons('legacy', { skipAvailabilityCheck: true, tokenlist: {} })
-
-		expect(result.tokenAllocation.documented).toEqual({ current: allocation, final: allocation })
-		expect(result.tokenAllocation.realtime).toEqual({ current: {}, final: {} })
+		expect(result.tokenAllocation.documented).toEqual(allocation)
+		expect(result.tokenAllocation.realtime).toEqual(EMPTY_TOKEN_ALLOCATION)
 	})
 
 	it('uses tokenlist prices for protocol emissions without fetching current coin prices', async () => {
-		fetchProtocolEmissionMock.mockResolvedValue({
-			name: 'Chainlink',
-			gecko_id: 'chainlink',
-			metadata: {
-				events: [],
+		fetchProtocolEmissionMock.mockResolvedValue(
+			protocolDetail({
+				name: 'Chainlink',
+				geckoId: 'chainlink',
 				token: 'coingecko:chainlink',
-				notes: []
-			},
-			documentedData: {
-				data: [
-					{
-						label: 'team',
-						data: [{ timestamp: 1, unlocked: 10 }]
-					}
-				],
-				tokenAllocation: { current: {}, final: {} }
-			},
-			realTimeData: {
-				data: [],
-				tokenAllocation: { current: {}, final: {} }
-			}
-		})
+				documentedData: chartData([{ label: 'team', data: [chartPoint(1, 10)] }]),
+				realTimeData: chartData()
+			})
+		)
 
 		const result = await getProtocolEmissons('chainlink', {
 			skipAvailabilityCheck: true,
@@ -237,91 +418,46 @@ describe('getProtocolEmissons', () => {
 		expect(result.tokenPrice).toEqual({ price: 12.34, symbol: 'LINK' })
 	})
 
-	it('reuses colors across chained colorFrom remaps', async () => {
-		fetchProtocolEmissionMock.mockResolvedValue({
-			name: 'Chainlink',
-			metadata: {
-				events: [],
-				token: 'coingecko:chainlink',
-				notes: []
-			},
-			documentedData: {
-				data: [
-					{
-						label: 'alpha',
-						data: [{ timestamp: 1, unlocked: 10 }]
-					},
-					{
-						label: 'charlie',
-						data: [{ timestamp: 1, unlocked: 20 }]
-					},
-					{
-						label: 'bravo',
-						data: [{ timestamp: 1, unlocked: 30 }]
+	it('returns renderable raw and grouped forecast sections without exposing metadata-only TBD sections', async () => {
+		fetchProtocolEmissionMock.mockResolvedValue(
+			protocolDetailV2(
+				{
+					name: 'Canton',
+					token: 'coingecko:canton',
+					documentedData: chartData([
+						{ label: 'app rewards', data: [chartPoint(1, 10)] },
+						{ label: 'projected rewards', data: [chartPoint(1, 4, true)] }
+					]),
+					realTimeData: chartData(),
+					categories: {
+						farming: ['App Rewards'],
+						noncirculating: ['Unscheduled Reserve (TBD)']
 					}
-				],
-				tokenAllocation: {
-					current: { Alpha: 10, Bravo: 30, Charlie: 20 },
-					final: { Alpha: 10, Bravo: 30, Charlie: 20 }
+				},
+				{
+					sections: {
+						'App Rewards': componentSection('App Rewards'),
+						'Projected Rewards': componentSection('Projected Rewards', {
+							isForecast: true,
+							colorFrom: 'App Rewards'
+						}),
+						'Unscheduled Reserve (TBD)': componentSection('Unscheduled Reserve (TBD)', { isTBD: true })
+					}
 				}
-			},
-			realTimeData: {
-				data: [],
-				tokenAllocation: { current: {}, final: {} }
-			},
-			componentData: {
-				sections: {
-					Alpha: {},
-					Bravo: { colorFrom: 'Alpha' },
-					Charlie: { colorFrom: 'Bravo' }
-				}
-			}
-		})
+			)
+		)
 
-		const result = await getProtocolEmissons('chainlink', {
+		const result = await getProtocolEmissons('canton', {
 			skipAvailabilityCheck: true
 		})
 
-		expect(result.stackColors.documented).toMatchObject({
-			Alpha: '#0',
-			Bravo: '#0',
-			Charlie: '#0'
-		})
-	})
-
-	it('returns renderable raw and grouped forecast sections without exposing metadata-only TBD sections', async () => {
-		fetchProtocolEmissionMock.mockResolvedValue({
-			name: 'Canton',
-			metadata: { events: [], notes: [] },
-			documentedData: {
-				data: [
-					{ label: 'app rewards', data: [{ timestamp: 1, unlocked: 10 }] },
-					{ label: 'app rewards (forecast)', data: [{ timestamp: 1, unlocked: 4, isForecast: true }] }
-				],
-				tokenAllocation: { current: {}, final: {} }
-			},
-			realTimeData: { data: [], tokenAllocation: { current: {}, final: {} } },
-			categories: {
-				farming: ['App Rewards'],
-				noncirculating: ['Unscheduled Reserve (TBD)']
-			},
-			componentData: {
-				sections: {
-					'App Rewards': {},
-					'App Rewards (forecast)': { colorFrom: 'App Rewards' },
-					'Unscheduled Reserve (TBD)': { isTBD: true }
-				}
-			}
-		})
-
-		const result = await getProtocolEmissons('canton', { skipAvailabilityCheck: true })
-
 		expect(result.categoriesBreakdown).toEqual({
 			farming: ['App Rewards'],
-			'farming (forecast)': ['App Rewards (forecast)']
+			'farming (forecast)': ['Projected Rewards']
 		})
-		expect(result.forecastSections).toEqual(['App Rewards (forecast)', 'farming (forecast)'])
+		expect(result.forecastSections).toEqual(['Projected Rewards', 'farming (forecast)'])
 		expect(result.tbdSections).toEqual([])
+		expect(result.stackColors.documented['Projected Rewards']).toBe(result.stackColors.documented['App Rewards'])
 	})
 })
 
@@ -335,6 +471,13 @@ describe('getAllProtocolEmissions', () => {
 		batchFetchHistoricalPricesMock.mockClear()
 	})
 
+	it('preserves an aggregate source failure instead of returning an empty list', async () => {
+		const error = new Error('aggregate unavailable')
+		fetchAllProtocolEmissionsMock.mockRejectedValue(error)
+
+		await expect(getAllProtocolEmissions({ getHistoricalPrices: false, tokenlist: {} })).rejects.toBe(error)
+	})
+
 	it('builds historical price requests around the latest eligible past unlock', () => {
 		const day = 86_400
 		const nowSec = 1_700_000_000
@@ -344,14 +487,12 @@ describe('getAllProtocolEmissions', () => {
 		const result = buildUnlocksHistoricalPriceRequests(
 			[
 				{
-					name: 'Chainlink',
-					token: 'coingecko:chainlink',
 					gecko_id: 'chainlink',
 					events: [
-						{ timestamp: nowSec - 60 * day, noOfTokens: [1] },
-						{ timestamp: lastPastEvent, noOfTokens: [2], category: 'team' },
-						{ timestamp: nowSec - 8 * day + 3600, noOfTokens: [3], category: 'farming' },
-						{ timestamp: nowSec + day, noOfTokens: [4] }
+						cliff(nowSec - 60 * day, 1),
+						cliff(lastPastEvent, 2),
+						cliff(nowSec - 8 * day + 3600, 3, 'farming'),
+						cliff(nowSec + day, 4)
 					]
 				}
 			],
@@ -385,11 +526,7 @@ describe('getAllProtocolEmissions', () => {
 			[
 				{
 					gecko_id: 'chainlink',
-					events: [
-						{ timestamp: nowSec - 60 * 86_400, noOfTokens: [1] },
-						{ timestamp: knownPastEvent, noOfTokens: [2] },
-						{ timestamp: nowSec - 8 * 86_400, noOfTokens: [], hasUnknownTokenAmount: true }
-					]
+					events: [cliff(nowSec - 60 * 86_400, 1), cliff(knownPastEvent, 2), unknownLinear(nowSec - 8 * 86_400)]
 				}
 			],
 			nowSec
@@ -399,15 +536,32 @@ describe('getAllProtocolEmissions', () => {
 		expect(result.priceReqs['coingecko:chainlink']).toBeDefined()
 	})
 
+	it('preserves the exact event timestamp while using its UTC day as the price-request anchor', () => {
+		const nowSec = 1_700_000_000
+		const exactTimestamp = nowSec - 10 * 86_400 + 917
+		const result = buildUnlocksHistoricalPriceRequests(
+			[
+				{
+					gecko_id: 'chainlink',
+					events: [cliff(nowSec - 20 * 86_400, 1), cliff(exactTimestamp, 2)]
+				}
+			],
+			nowSec
+		)
+
+		expect(result.lastPastTimestampByCoinKey.get('coingecko:chainlink')).toBe(exactTimestamp)
+		expect(result.priceReqs['coingecko:chainlink']?.[7]).toBe(Math.floor(exactTimestamp / 86_400) * 86_400)
+	})
+
 	it('uses tokenlist prices without fetching current coin prices', async () => {
 		const nowSec = Date.now() / 1000
 		fetchAllProtocolEmissionsMock.mockResolvedValue([
-			{
+			protocolEmission({
 				name: 'Chainlink',
 				token: 'coingecko:chainlink',
-				gecko_id: 'chainlink',
-				events: [{ timestamp: nowSec + 3600, noOfTokens: [10] }]
-			}
+				geckoId: 'chainlink',
+				events: [cliff(nowSec + 3600, 10)]
+			})
 		])
 
 		const result = await getAllProtocolEmissions({
@@ -432,21 +586,14 @@ describe('getAllProtocolEmissions', () => {
 		const nowSec = 1_700_000_000
 		const upcomingTimestamp = nowSec + 3600
 		const dateNow = vi.spyOn(Date, 'now').mockReturnValue(nowSec * 1000)
+		const knownEvent = cliff(upcomingTimestamp, 10)
 		fetchAllProtocolEmissionsMock.mockResolvedValue([
-			{
+			protocolEmission({
 				name: 'Chainlink',
 				token: 'coingecko:chainlink',
-				gecko_id: 'chainlink',
-				events: [
-					{ timestamp: upcomingTimestamp, noOfTokens: [10], category: 'team' },
-					{
-						timestamp: upcomingTimestamp,
-						noOfTokens: [],
-						hasUnknownTokenAmount: true,
-						unlockType: 'linear'
-					}
-				]
-			}
+				geckoId: 'chainlink',
+				events: [knownEvent, unknownLinear(upcomingTimestamp)]
+			})
 		])
 
 		const result = await getAllProtocolEmissions({
@@ -455,7 +602,7 @@ describe('getAllProtocolEmissions', () => {
 		})
 		dateNow.mockRestore()
 
-		expect(result[0]?.upcomingEvent).toEqual([{ timestamp: upcomingTimestamp, noOfTokens: [10], category: 'team' }])
+		expect(result[0]?.upcomingEvent).toEqual([knownEvent])
 	})
 
 	it('uses artifact historical prices without fetching historical coin prices', async () => {
@@ -465,16 +612,12 @@ describe('getAllProtocolEmissions', () => {
 		const dateNow = vi.spyOn(Date, 'now').mockReturnValue(nowSec * 1000)
 
 		fetchAllProtocolEmissionsMock.mockResolvedValue([
-			{
+			protocolEmission({
 				name: 'Chainlink',
 				token: 'coingecko:chainlink',
-				gecko_id: 'chainlink',
-				events: [
-					{ timestamp: nowSec - 60 * day, noOfTokens: [1], category: 'team' },
-					{ timestamp: lastPastEvent, noOfTokens: [10], category: 'team' },
-					{ timestamp: nowSec + day, noOfTokens: [20], category: 'team' }
-				]
-			}
+				geckoId: 'chainlink',
+				events: [cliff(nowSec - 60 * day, 1), cliff(lastPastEvent, 10), cliff(nowSec + day, 20)]
+			})
 		])
 
 		const emissionsHistoricalPrices = {
@@ -498,7 +641,7 @@ describe('getAllProtocolEmissions', () => {
 		dateNow.mockRestore()
 
 		expect(batchFetchHistoricalPricesMock).not.toHaveBeenCalled()
-		expect(result[0]?.lastEvent).toEqual([{ timestamp: lastPastEvent, noOfTokens: [10], category: 'team' }])
+		expect(result[0]?.lastEvent).toEqual([cliff(lastPastEvent, 10)])
 		expect(result[0]?.historicalPrice).toEqual([
 			[(lastPastEvent - day) * 1000, 5],
 			[(lastPastEvent + day) * 1000, 10]
@@ -523,15 +666,12 @@ describe('getAllProtocolEmissions', () => {
 			}
 		})
 		fetchAllProtocolEmissionsMock.mockResolvedValue([
-			{
+			protocolEmission({
 				name: 'Chainlink',
 				token: 'coingecko:chainlink',
-				gecko_id: 'chainlink',
-				events: [
-					{ timestamp: nowSec - 60 * day, noOfTokens: [1], category: 'team' },
-					{ timestamp: lastPastEvent, noOfTokens: [10], category: 'team' }
-				]
-			}
+				geckoId: 'chainlink',
+				events: [cliff(nowSec - 60 * day, 1), cliff(lastPastEvent, 10)]
+			})
 		])
 
 		const result = await getAllProtocolEmissions({
@@ -562,7 +702,9 @@ describe('getAllProtocolEmissions', () => {
 		fetchCoinPricesMock.mockResolvedValueOnce({
 			'coingecko:chainlink': {
 				price: 3,
-				symbol: 'LINK'
+				symbol: 'LINK',
+				confidence: 1,
+				timestamp: nowSec
 			}
 		})
 		batchFetchHistoricalPricesMock.mockResolvedValueOnce({
@@ -573,16 +715,12 @@ describe('getAllProtocolEmissions', () => {
 			}
 		})
 		fetchAllProtocolEmissionsMock.mockResolvedValue([
-			{
+			protocolEmission({
 				name: 'Chainlink',
 				token: 'coingecko:chainlink',
-				gecko_id: 'chainlink',
-				events: [
-					{ timestamp: nowSec - 60 * day, noOfTokens: [1], category: 'team' },
-					{ timestamp: lastPastEvent, noOfTokens: [10], category: 'team' },
-					{ timestamp: nowSec + day, noOfTokens: [20], category: 'team' }
-				]
-			}
+				geckoId: 'chainlink',
+				events: [cliff(nowSec - 60 * day, 1), cliff(lastPastEvent, 10), cliff(nowSec + day, 20)]
+			})
 		])
 
 		const result = await getAllProtocolEmissions()
@@ -600,5 +738,89 @@ describe('getAllProtocolEmissions', () => {
 			tSymbol: 'LINK',
 			historicalPrice: [[lastPastEvent * 1000, 2]]
 		})
+	})
+})
+
+describe('getUnlocksCalendarStaticPropsData', () => {
+	afterEach(() => {
+		vi.useRealTimers()
+		vi.restoreAllMocks()
+		fetchAllProtocolEmissionsMock.mockReset()
+		fetchCoinPricesMock.mockReset()
+		fetchJsonMock.mockReset()
+	})
+
+	it('indexes UTC days once and applies cliff, linear, zero, and unknown amount semantics', async () => {
+		vi.useFakeTimers()
+		vi.setSystemTime(new Date('2026-08-08T12:00:00Z'))
+		fetchJsonMock.mockResolvedValue([])
+		fetchCoinPricesMock.mockResolvedValue({
+			'coingecko:test-token': { price: 2, symbol: 'TST', confidence: 1, timestamp: 1 }
+		})
+		fetchAllProtocolEmissionsMock.mockResolvedValue([
+			protocolEmission({
+				name: 'Test Protocol',
+				token: 'coingecko:test-token',
+				geckoId: 'test-token',
+				events: [
+					{
+						description: 'Cliff',
+						category: 'insiders',
+						unlockType: 'cliff',
+						timestamp: Date.parse('2026-08-08T04:00:00Z') / 1000,
+						noOfTokens: [10]
+					},
+					{
+						description: 'Same-day cliff',
+						category: 'insiders',
+						unlockType: 'cliff',
+						timestamp: Date.parse('2026-08-09T04:00:00Z') / 1000,
+						noOfTokens: [1]
+					},
+					{
+						description: 'Weekly rate decreases',
+						category: 'farming',
+						unlockType: 'linear',
+						timestamp: Date.parse('2026-08-09T04:00:00Z') / 1000,
+						noOfTokens: [100, 5],
+						rateDurationDays: 7
+					},
+					{
+						description: 'Unknown',
+						category: 'farming',
+						unlockType: 'linear',
+						timestamp: Date.parse('2026-08-10T04:00:00Z') / 1000,
+						noOfTokens: [],
+						rateDurationDays: 7,
+						hasUnknownTokenAmount: true
+					},
+					{
+						description: 'Known zero',
+						category: 'publicSale',
+						unlockType: 'cliff',
+						timestamp: Date.parse('2026-08-11T04:00:00Z') / 1000,
+						noOfTokens: [0]
+					},
+					{
+						description: 'Negative correction',
+						category: 'publicSale',
+						unlockType: 'cliff',
+						timestamp: Date.parse('2026-08-12T04:00:00Z') / 1000,
+						noOfTokens: [-5]
+					}
+				]
+			})
+		])
+
+		const result = await getUnlocksCalendarStaticPropsData()
+
+		expect(result.unlocksData['2026-08-08']?.totalValue).toBe(20)
+		expect(result.unlocksData['2026-08-09']?.totalValue).toBe(2)
+		expect(result.unlocksData['2026-08-09']?.events).toMatchObject([{ value: 2 }, { value: 10, unit: 'week' }])
+		expect(result.unlocksData['2026-08-10']).toBeUndefined()
+		expect(result.unlocksData['2026-08-11']).toBeUndefined()
+		expect(result.unlocksData['2026-08-12']).toBeUndefined()
+		expect(result.precomputedData.monthlyMaxValues['2026-07']).toBe(20)
+		expect(result.precomputedData.listEvents['2026-08-08']).toHaveLength(3)
 	})
 })

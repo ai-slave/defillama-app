@@ -6,7 +6,7 @@ import { geckoTokenIconUrl } from '~/utils/icons'
 
 interface TopThreeRowProps {
 	name: string
-	symbol: string
+	symbol: string | null
 	geckoId?: string | null
 	value: ReactNode
 	trailingIcon?: ReactNode

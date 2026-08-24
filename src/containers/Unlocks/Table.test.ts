@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { EmissionEvent } from './api.types'
 import { filterUnlockTableProtocols, type IEmission, parseUnlockFilterValue } from './Table'
 
 const ALL_UNLOCK_TYPES = [
@@ -15,15 +16,59 @@ const ALL_UNLOCK_TYPES = [
 const protocol = (
 	name: string,
 	price: number | null,
-	mcap: number | null,
+	mcap: number | undefined,
 	events: IEmission['upcomingEvent']
-): IEmission =>
-	({
-		name,
-		tPrice: price,
-		mcap,
-		upcomingEvent: events
-	}) as IEmission
+): IEmission => ({
+	sources: [],
+	protocolId: null,
+	circSupply: 0,
+	circSupply30d: 0,
+	totalLocked: 0,
+	maxSupply: 0,
+	unlocksPerDay: null,
+	token: `coingecko:${name.toLowerCase()}`,
+	events,
+	unlockEvents: null,
+	lastEvent: [],
+	historicalPrice: [],
+	tSymbol: name.toUpperCase(),
+	...(mcap !== undefined ? { mcap } : {}),
+	name,
+	tPrice: price,
+	upcomingEvent: events
+})
+
+const cliff = (description: string, category: string, timestamp: number, amount: number): EmissionEvent => ({
+	description,
+	category,
+	unlockType: 'cliff',
+	timestamp,
+	noOfTokens: [amount]
+})
+
+const linear = (
+	description: string,
+	category: string,
+	timestamp: number,
+	previousRate: number,
+	newRate: number
+): EmissionEvent => ({
+	description,
+	category,
+	unlockType: 'linear',
+	timestamp,
+	noOfTokens: [previousRate, newRate],
+	rateDurationDays: 7
+})
+
+const unknown = (description: string, category: string, timestamp: number): EmissionEvent => ({
+	description,
+	category,
+	unlockType: 'cliff',
+	timestamp,
+	noOfTokens: [],
+	hasUnknownTokenAmount: true
+})
 
 const options = (overrides: Partial<Parameters<typeof filterUnlockTableProtocols>[1]> = {}) => ({
 	showOnlyWatchlist: false,
@@ -38,9 +83,7 @@ const options = (overrides: Partial<Parameters<typeof filterUnlockTableProtocols
 
 describe('unlock table construction behavior fixture', () => {
 	it('returns the input array and rows when no filter is active', () => {
-		const alpha = protocol('Alpha', 2, 1_000, [
-			{ description: 'Team', category: 'insiders', timestamp: 1, noOfTokens: [10] }
-		])
+		const alpha = protocol('Alpha', 2, 1_000, [cliff('Team', 'insiders', 1, 10)])
 		const protocols = [alpha]
 		const result = filterUnlockTableProtocols(protocols, options())
 
@@ -49,12 +92,8 @@ describe('unlock table construction behavior fixture', () => {
 	})
 
 	it('retains row identity for watchlist-only and value-only filters', () => {
-		const alpha = protocol('Alpha', 2, 1_000, [
-			{ description: 'Team', category: 'insiders', timestamp: 1, noOfTokens: [10] }
-		])
-		const beta = protocol('Beta', 1, 100, [
-			{ description: 'Sale', category: 'privateSale', timestamp: 2, noOfTokens: [5] }
-		])
+		const alpha = protocol('Alpha', 2, 1_000, [cliff('Team', 'insiders', 1, 10)])
+		const beta = protocol('Beta', 1, 100, [cliff('Sale', 'privateSale', 2, 5)])
 
 		const watchlist = filterUnlockTableProtocols(
 			[alpha, beta],
@@ -71,12 +110,12 @@ describe('unlock table construction behavior fixture', () => {
 
 	it('retains identity when every event survives and clones only a partially filtered row', () => {
 		const alphaEvents: IEmission['upcomingEvent'] = [
-			{ description: 'Team', category: 'insiders', timestamp: 1, noOfTokens: [10] },
-			{ description: 'Advisors', category: 'insiders', timestamp: 2, noOfTokens: [5] }
+			cliff('Team', 'insiders', 1, 10),
+			cliff('Advisors', 'insiders', 2, 5)
 		]
 		const betaEvents: IEmission['upcomingEvent'] = [
-			{ description: 'Sale', category: 'privateSale', timestamp: 3, noOfTokens: [20] },
-			{ description: 'Farm', category: 'farming', timestamp: 4, noOfTokens: [30] }
+			cliff('Sale', 'privateSale', 3, 20),
+			cliff('Farm', 'farming', 4, 30)
 		]
 		const alpha = protocol('Alpha', 2, 1_000, alphaEvents)
 		const beta = protocol('Beta', 1, 100, betaEvents)
@@ -86,24 +125,22 @@ describe('unlock table construction behavior fixture', () => {
 
 		expect(result[0]).toBe(alpha)
 		expect(result[1]).not.toBe(beta)
-		expect(result[1].upcomingEvent).toEqual([betaEvents[0]])
+		expect(result[1]!.upcomingEvent).toEqual([betaEvents[0]])
 		expect(input).toEqual([alpha, beta])
 		expect(beta.upcomingEvent).toBe(betaEvents)
 	})
 
-	it('combines category, watchlist, value, and percentage filters without changing encounter order', () => {
+	it('combines filters without treating a weekly rate as a one-time unlock value', () => {
 		const alphaEvents: IEmission['upcomingEvent'] = [
-			{ description: 'Team', category: 'insiders', timestamp: 1, noOfTokens: [10, 5] },
-			{ description: 'Farm', category: 'farming', timestamp: 2, noOfTokens: [100] }
+			linear('Team', 'insiders', 1, 10, 15),
+			cliff('Farm', 'farming', 2, 100)
 		]
 		const gammaEvents: IEmission['upcomingEvent'] = [
-			{ description: 'Advisors', category: 'insiders', timestamp: 5, noOfTokens: [15] },
-			{ description: 'Public', category: 'publicSale', timestamp: 6, noOfTokens: [10] }
+			cliff('Advisors', 'insiders', 5, 15),
+			cliff('Public', 'publicSale', 6, 10)
 		]
 		const alpha = protocol('Alpha', 2, 1_000, alphaEvents)
-		const beta = protocol('Beta', 1, 100, [
-			{ description: 'Sale', category: 'privateSale', timestamp: 3, noOfTokens: [50] }
-		])
+		const beta = protocol('Beta', 1, 100, [cliff('Sale', 'privateSale', 3, 50)])
 		const gamma = protocol('Gamma', 2, 1_000, gammaEvents)
 		const inputSnapshot = structuredClone([alpha, beta, gamma])
 
@@ -120,15 +157,13 @@ describe('unlock table construction behavior fixture', () => {
 			})
 		)
 
-		expect(result.map((row) => row.name)).toEqual(['Alpha', 'Gamma'])
-		expect(result.map((row) => row.upcomingEvent[0].description)).toEqual(['Team', 'Advisors'])
+		expect(result.map((row) => row.name)).toEqual(['Gamma'])
+		expect(result.map((row) => row.upcomingEvent[0]!.description)).toEqual(['Advisors'])
 		expect([alpha, beta, gamma]).toEqual(inputSnapshot)
 	})
 
 	it('keeps inclusive value and percentage boundaries', () => {
-		const exact = protocol('Exact', 2, 1_000, [
-			{ description: 'Exact', category: 'insiders', timestamp: 1, noOfTokens: [10] }
-		])
+		const exact = protocol('Exact', 2, 1_000, [cliff('Exact', 'insiders', 1, 10)])
 
 		const result = filterUnlockTableProtocols(
 			[exact],
@@ -139,25 +174,27 @@ describe('unlock table construction behavior fixture', () => {
 		expect(result[0]).toBe(exact)
 	})
 
-	it('preserves null-event, empty-token, missing-price, and non-positive-market-cap rules', () => {
+	it('keeps known zero distinct while excluding unavailable value and percentage rows', () => {
 		const ignoredEvents: IEmission['upcomingEvent'] = [
-			{ description: 'No date', category: 'insiders', timestamp: null, noOfTokens: [10] },
-			{ description: 'No tokens', category: 'insiders', timestamp: 1, noOfTokens: [] }
+			unknown('Unknown amount', 'insiders', 1),
+			cliff('Known zero', 'insiders', 2, 0),
+			cliff('Negative correction', 'insiders', 3, -10)
 		]
 		const missingPrice = protocol('Missing price', null, 100, ignoredEvents)
-		const missingMcap = protocol('Missing mcap', 2, null, ignoredEvents)
+		const missingMcap = protocol('Missing mcap', 2, undefined, ignoredEvents)
 		const zeroMcap = protocol('Zero mcap', 2, 0, ignoredEvents)
 		const negativeMcap = protocol('Negative mcap', 2, -1, ignoredEvents)
+		const knownZero = protocol('Known zero', 2, 100, ignoredEvents)
 
 		expect(
 			filterUnlockTableProtocols([missingPrice, missingMcap, zeroMcap, negativeMcap], options({ minUnlockValue: 1 }))
 		).toEqual([])
 		expect(
 			filterUnlockTableProtocols(
-				[missingPrice, missingMcap, zeroMcap, negativeMcap],
+				[missingPrice, missingMcap, zeroMcap, negativeMcap, knownZero],
 				options({ minPerc: 0, maxPerc: 0 })
 			)
-		).toEqual([missingPrice, missingMcap, zeroMcap, negativeMcap])
+		).toEqual([knownZero])
 	})
 
 	it('normalizes malformed and non-finite numeric query values once', () => {

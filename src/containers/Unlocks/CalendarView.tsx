@@ -17,7 +17,13 @@ import { TagGroup } from '~/ui/SegmentedControl'
 import { formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import { CalendarDayCell } from './CalendarDayCell'
-import type { CalendarViewProps, CalendarUnlockEvent, DailyUnlocks, DayInfo } from './calendarTypes'
+import {
+	isWeeklyRateCalendarEvent,
+	type CalendarViewProps,
+	type CalendarUnlockEvent,
+	type DailyUnlocks,
+	type DayInfo
+} from './calendarTypes'
 import { generateCalendarDays, generateWeekDays } from './calendarUtils'
 import { DAYS_OF_WEEK } from './constants'
 import { UnlocksListView } from './UnlocksListView'
@@ -61,21 +67,23 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 		[date: string]: DailyUnlocks
 	} = React.useMemo(() => {
 		let filteredData = initialUnlocksData
-		if (!filteredData) return {}
 
 		if (showOnlyWatchlist || showOnlyInsider) {
 			filteredData = {}
 			for (const date in initialUnlocksData) {
-				const dailyData = initialUnlocksData[date]
-				const filteredEvents = dailyData.events.filter(
-					(event) =>
-						(!showOnlyWatchlist || savedProtocols.has(event.protocol)) &&
-						(!showOnlyInsider || event.category === 'insiders')
-				)
+				const dailyData = initialUnlocksData[date]!
+				const filteredEvents: CalendarUnlockEvent[] = []
+				for (const event of dailyData.events) {
+					if (showOnlyWatchlist && !savedProtocols.has(event.protocol)) continue
+					if (showOnlyInsider && event.category !== 'insiders') continue
+					filteredEvents.push(event)
+				}
 
 				if (filteredEvents.length > 0) {
 					let totalValue = 0
-					for (const event of filteredEvents) totalValue += event.value
+					for (const event of filteredEvents) {
+						if (!isWeeklyRateCalendarEvent(event)) totalValue += event.value
+					}
 					filteredData[date] = { ...dailyData, events: filteredEvents, totalValue }
 				}
 			}
@@ -113,7 +121,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 		for (const dateStr in unlocksData) {
 			if (dateStr >= startKey && dateStr < endKey) {
 				const date = dayjs(dateStr)
-				for (const event of unlocksData[dateStr].events) {
+				for (const event of unlocksData[dateStr]!.events) {
 					events.push({ date, event })
 				}
 			}
@@ -122,14 +130,15 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 		return events.toSorted((a, b) => a.date.valueOf() - b.date.valueOf())
 	}, [currentDate, viewMode, unlocksData, precomputedData, showOnlyWatchlist, showOnlyInsider])
 
-	const { weeklyChart, monthlyChart } = useUnlockChartData({
+	const chartDataOptions = {
 		currentDate,
 		viewMode,
 		unlocksData,
 		// Only use server-precomputed chart payloads for the unfiltered view.
 		// Filtered modes (watchlist/insiders) must be computed client-side.
-		precomputedData: showOnlyWatchlist || showOnlyInsider ? undefined : precomputedData
-	})
+		...(showOnlyWatchlist || showOnlyInsider || precomputedData === undefined ? {} : { precomputedData })
+	}
+	const { weeklyChart, monthlyChart } = useUnlockChartData(chartDataOptions)
 	const currentChart = viewMode === 'Week' ? weeklyChart : viewMode === 'Month' ? monthlyChart : null
 	const protocolSeries = React.useMemo(
 		() => currentChart?.charts.map((chart) => chart.name) ?? [],
@@ -166,7 +175,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 		let max = 0
 		for (const dateStr in unlocksData) {
 			if (dateStr.startsWith(datePrefix)) {
-				const val = unlocksData[dateStr].totalValue
+				const val = unlocksData[dateStr]!.totalValue
 				if (val > max) max = val
 			}
 		}

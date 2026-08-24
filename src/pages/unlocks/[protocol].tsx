@@ -49,22 +49,23 @@ export const getStaticProps = withPerformanceLogging(
 			}
 		}
 
-		const noUpcomingEvent = emissions?.upcomingEvent?.[0]?.timestamp == null
-		if ((emissions.chartData?.documented?.length ?? 0) === 0 && (emissions.chartData?.realtime?.length ?? 0) === 0) {
+		const noUpcomingEvent = emissions.upcomingEvent[0]?.timestamp == null
+		if (emissions.chartData.documented.length === 0 && emissions.chartData.realtime.length === 0) {
 			return {
 				notFound: true,
 				revalidate: maxAgeForNext([22])
 			}
 		}
-		const resolvedTokenSymbol = tokenSymbol ?? emissions.tokenPrice?.symbol ?? null
-		const seoTitle = `${emissions.name} Token Unlocks & Vesting Schedule`
-		const seoDescription = `View ${emissions.name}${resolvedTokenSymbol ? ` (${resolvedTokenSymbol})` : ''} token unlock schedule, vesting charts, and cliff events. Track upcoming emissions on DefiLlama.`
+		const resolvedTokenSymbol = tokenSymbol ?? emissions.tokenPrice.symbol ?? null
+		const displayName = emissions.name
+		const seoTitle = `${displayName} Token Unlocks & Vesting Schedule`
+		const seoDescription = `View ${displayName}${resolvedTokenSymbol ? ` (${resolvedTokenSymbol})` : ''} token unlock schedule, vesting charts, and cliff events. Track upcoming emissions on DefiLlama.`
 
 		return {
 			props: {
 				emissions,
 				totalUnlockValue: calculateTotalUnlockValue(emissions),
-				eventCountdown: getEventCountdown(emissions?.upcomingEvent?.[0]?.timestamp),
+				eventCountdown: getEventCountdown(emissions.upcomingEvent[0]?.timestamp),
 				noUpcomingEvent,
 				initialTokenMarketData,
 				canonicalProtocol,
@@ -106,11 +107,15 @@ export default function Protocol({
 				unlockPage={true}
 				cardName={emissions.name}
 				logo={tokenIconUrl(emissions.name)}
-				unlockAmount={formatUsd(totalUnlockValue, {
-					compact: true,
-					minimumCompactValue: 1_000_000,
-					compactSuffix: 'lowercase'
-				})}
+				unlockAmount={
+					totalUnlockValue === null
+						? 'N/A'
+						: formatUsd(totalUnlockValue, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})
+				}
 				tvl={noUpcomingEvent ? 'No Events' : eventCountdown}
 			/>
 			<EmissionsByProtocol

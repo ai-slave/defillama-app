@@ -9,11 +9,10 @@ function createRow(timestamp: number): EmissionsChartRow {
 describe('emissions chart data transforms', () => {
 	it('keeps forecast series separate when standard allocation groups their base series', () => {
 		const result = buildEmissionProjectionModel({
-			chartSections: ['App Rewards', 'App Rewards (forecast)'],
+			chartSections: ['App Rewards', 'Projected Rewards'],
 			categoriesBreakdown: { farming: ['App Rewards'] },
 			sectionMetadata: {
-				'App Rewards': {},
-				'App Rewards (forecast)': { isForecast: true, colorFrom: 'App Rewards' }
+				'Projected Rewards': { isForecast: true, colorFrom: 'App Rewards' }
 			},
 			seriesTbdSections: [],
 			seriesForecastSections: []
@@ -22,15 +21,15 @@ describe('emissions chart data transforms', () => {
 		expect(result).toEqual({
 			categoriesBreakdown: {
 				farming: ['App Rewards'],
-				'farming (forecast)': ['App Rewards (forecast)']
+				'farming (forecast)': ['Projected Rewards']
 			},
 			tbdSections: [],
-			forecastSections: ['App Rewards (forecast)', 'farming (forecast)']
+			forecastSections: ['Projected Rewards', 'farming (forecast)']
 		})
 
 		const row = createRow(1)
 		row['App Rewards'] = 10
-		row['App Rewards (forecast)'] = 4
+		row['Projected Rewards'] = 4
 		expect(processGroupedChartData([row], result.categoriesBreakdown!)).toEqual([
 			{ timestamp: 1, farming: 10, 'farming (forecast)': 4 }
 		])

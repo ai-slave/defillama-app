@@ -1,4 +1,3 @@
-import dayjs from 'dayjs'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { lazy, useMemo } from 'react'
@@ -11,20 +10,33 @@ import {
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import {
 	ChartGroupingSelector,
-	DWM_GROUPING_OPTIONS_LOWERCASE,
-	type LowercaseDwmGrouping
+	DWM_GROUPING_OPTIONS_LOWERCASE
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { BasicLink } from '~/components/Link'
+import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { PastUnlockPriceImpact } from '~/containers/Unlocks/PastUnlockPriceImpact'
-import { getAllProtocolEmissions } from '~/containers/Unlocks/queries'
+import { getAllProtocolEmissions, type EnrichedProtocolEmission } from '~/containers/Unlocks/queries'
 import { UnlocksTable } from '~/containers/Unlocks/Table'
 import { TopUnlocks } from '~/containers/Unlocks/TopUnlocks'
 import {
 	buildUpcomingUnlockChart,
 	buildUpcomingUnlockSeries,
-	type UpcomingUnlockChartSeries
+	calculateUpcomingUnlockStatistics,
+	type UpcomingUnlockChartSeries,
+	type UpcomingUnlockValueBreakdown
 } from '~/containers/Unlocks/upcomingUnlockChart'
+import {
+	getUpcomingUnlockGroupByQueryValue,
+	getUpcomingUnlockTypeLabel,
+	getUpcomingUnlockTypeQueryValue,
+	getUpcomingUnlockViewModeQueryValue,
+	parseUpcomingUnlockChartState,
+	UPCOMING_UNLOCK_CHART_QUERY_KEYS,
+	UPCOMING_UNLOCK_TYPE_HELP,
+	UPCOMING_UNLOCK_TYPE_OPTIONS,
+	UPCOMING_UNLOCK_VIEW_MODES
+} from '~/containers/Unlocks/upcomingUnlockChartState'
 import { useWatchlistManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
@@ -32,8 +44,10 @@ import Layout from '~/layout'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
+import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { TagGroup } from '~/ui/SegmentedControl'
-import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
+import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
+import { Tooltip } from '~/ui/Tooltip'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { formatUsd } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -41,60 +55,24 @@ import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
-const calculateUnlockStatistics = (data, nowSec: number) => {
-	let upcomingUnlocks30dValue = 0
-	let upcomingUnlocks7dValue = 0
-	const thirtyDaysLater = nowSec + 30 * 24 * 60 * 60
-	const sevenDaysLater = nowSec + 7 * 24 * 60 * 60
-
-	if (data) {
-		for (const protocol of data) {
-			if (!protocol.upcomingEvent || protocol.tPrice == null) {
-				continue
-			}
-
-			for (const event of protocol.upcomingEvent) {
-				if (event.timestamp === null || !event.noOfTokens || event.noOfTokens.length === 0) {
-					continue
-				}
-
-				const totalTokens = event.noOfTokens.reduce((sum, amount) => sum + amount, 0)
-				if (totalTokens === 0) {
-					continue
-				}
-
-				const valueUSD = totalTokens * protocol.tPrice
-				if (event.timestamp >= nowSec && event.timestamp <= thirtyDaysLater) {
-					upcomingUnlocks30dValue += valueUSD
-				}
-				if (event.timestamp >= nowSec && event.timestamp <= sevenDaysLater) {
-					upcomingUnlocks7dValue += valueUSD
-				}
-			}
-		}
-	}
-
-	return {
-		upcomingUnlocks7dValue,
-		upcomingUnlocks30dValue,
-		totalProtocols: data?.length || 0
-	}
-}
+const SECONDS_PER_DAY = 24 * 60 * 60
+const UPCOMING_WINDOW_DAYS = 30
 
 export const getStaticProps = withPerformanceLogging('unlocks', async () => {
 	const generatedAtSec = Math.floor(Date.now() / 1000)
+	const chartEndTimestampSec = generatedAtSec + UPCOMING_WINDOW_DAYS * SECONDS_PER_DAY
 	const metadataModule = await import('~/utils/metadata')
 	metadataModule.refreshMetadataInBackgroundIfStale('unlocks_index')
 	const metadataCache = metadataModule.default
 	const data = await getAllProtocolEmissions({
-		endDate: generatedAtSec + 30 * 24 * 60 * 60,
+		endDate: chartEndTimestampSec,
 		tokenlist: metadataCache.tokenlist,
 		emissionsHistoricalPrices: metadataCache.emissionsHistoricalPrices
 	})
 	return {
 		props: {
 			data,
-			unlockChartSeries: buildUpcomingUnlockSeries(data, generatedAtSec, END_TIMESTAMP),
+			unlockChartSeries: buildUpcomingUnlockSeries(data, generatedAtSec, chartEndTimestampSec),
 			generatedAtSec
 		},
 		revalidate: maxAgeForNext([22])
@@ -103,44 +81,46 @@ export const getStaticProps = withPerformanceLogging('unlocks', async () => {
 
 const pageName = ['Protocols', 'ranked by', 'Token Unlocks']
 
-const VIEW_MODES = ['Total View', 'Breakdown View'] as const
-type ViewMode = (typeof VIEW_MODES)[number]
-
-const END_TIMESTAMP = dayjs('2031-01-01').unix()
-
 const EMPTY_CHART_RESULT = {
-	dataset: { source: [], dimensions: ['timestamp'] } satisfies MultiSeriesChartDataset,
+	dataset: {
+		source: [],
+		dimensions: ['timestamp']
+	} satisfies MultiSeriesChartDataset,
 	charts: [] as NonNullable<IMultiSeriesChartProps['charts']>
 }
 
-const normalizeChartGroup = (value: string | null | undefined): LowercaseDwmGrouping | null => {
-	const normalizedValue = value?.toLowerCase() ?? null
-	if (DWM_GROUPING_OPTIONS_LOWERCASE.some((option) => option.value === normalizedValue)) {
-		return normalizedValue as LowercaseDwmGrouping
-	}
-	return null
+const formatUnlockValue = (value: number) =>
+	formatUsd(value, {
+		compact: true,
+		minimumCompactValue: 1_000_000,
+		compactSuffix: 'lowercase'
+	})
+
+function UpcomingUnlockMetric({ days, values }: { days: 7 | 30; values: UpcomingUnlockValueBreakdown }) {
+	return (
+		<MetricSection
+			label={`Upcoming Unlocks (${days}d)`}
+			tooltip={`Combined cliff and linear unlock value over the exact ${days}-day period. USD values use token prices from the data snapshot, not projected prices.`}
+			value={formatUnlockValue(values.total)}
+		>
+			<SubMetricRow
+				label="Cliff Unlocks"
+				tooltip={UPCOMING_UNLOCK_TYPE_HELP.cliff}
+				value={formatUnlockValue(values.cliff)}
+			/>
+			<SubMetricRow
+				label="Linear Unlocks"
+				tooltip={UPCOMING_UNLOCK_TYPE_HELP.linear}
+				value={formatUnlockValue(values.linear)}
+			/>
+		</MetricSection>
+	)
 }
 
 function UpcomingUnlockVolumeChart({ series }: { series: UpcomingUnlockChartSeries[] }) {
 	const router = useRouter()
-
-	const updateQueryParam = React.useCallback(
-		(key: string, value: string, defaultValue: string) => {
-			void pushShallowQuery(router, { [key]: value === defaultValue ? undefined : value })
-		},
-		[router]
-	)
-
-	const chartGroupParam = readSingleQueryValue(router.query.chartGroup)
-	const timePeriod: LowercaseDwmGrouping =
-		// Preserve existing shared/bookmarked URLs that still use title-cased values like `Weekly`.
-		normalizeChartGroup(chartGroupParam) ?? 'daily'
-
-	const chartViewParam = readSingleQueryValue(router.query.chartView)
-	const viewMode: ViewMode =
-		chartViewParam && (VIEW_MODES as readonly string[]).includes(chartViewParam)
-			? (chartViewParam as ViewMode)
-			: 'Total View'
+	const { groupBy: timePeriod, unlockType, viewMode } = parseUpcomingUnlockChartState(router.query)
+	const unlockTypeLabel = getUpcomingUnlockTypeLabel(unlockType)
 
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
 
@@ -149,17 +129,19 @@ function UpcomingUnlockVolumeChart({ series }: { series: UpcomingUnlockChartSeri
 		return buildUpcomingUnlockChart({
 			series,
 			groupBy: timePeriod,
-			viewMode
+			viewMode,
+			unlockType
 		})
-	}, [series, timePeriod, viewMode])
+	}, [series, timePeriod, unlockType, viewMode])
 	const chartPresentation = useMemo(
-		() => ({ chartData: unlockChartData, timePeriod, viewMode }),
-		[timePeriod, unlockChartData, viewMode]
+		() => ({ chartData: unlockChartData, timePeriod, unlockType, viewMode }),
+		[timePeriod, unlockChartData, unlockType, viewMode]
 	)
 	const deferredChartPresentation = React.useDeferredValue(chartPresentation)
 	const {
 		chartData: deferredChartData,
 		timePeriod: deferredTimePeriod,
+		unlockType: deferredUnlockType,
 		viewMode: deferredViewMode
 	} = deferredChartPresentation
 	const protocolSeries = useMemo(
@@ -174,7 +156,7 @@ function UpcomingUnlockVolumeChart({ series }: { series: UpcomingUnlockChartSeri
 	)
 	const { activeSeries, selectedCharts, setSelectedSeries } = useSeriesSelection({
 		availableSeries: protocolSeries,
-		selectionKey: deferredViewMode
+		selectionKey: `${deferredViewMode}:${deferredUnlockType}`
 	})
 	const selectedBreakdown = useMemo(
 		() =>
@@ -191,51 +173,89 @@ function UpcomingUnlockVolumeChart({ series }: { series: UpcomingUnlockChartSeri
 
 	return (
 		<>
+			<ChartPanelToolbar className="justify-end">
+				<div className="mr-auto">
+					<Select
+						allValues={UPCOMING_UNLOCK_TYPE_OPTIONS}
+						selectedValues={unlockType}
+						setSelectedValues={(value) => {
+							const selectedType = UPCOMING_UNLOCK_TYPE_OPTIONS.find((option) => option.key === value)?.key
+							if (!selectedType) throw new Error(`Unknown upcoming unlock type: ${value}`)
+							void pushShallowQuery(router, {
+								[UPCOMING_UNLOCK_CHART_QUERY_KEYS.unlockType]: getUpcomingUnlockTypeQueryValue(selectedType)
+							})
+						}}
+						label={unlockTypeLabel}
+						labelType="none"
+						variant="filter"
+						size="md"
+						triggerProps={{ 'aria-label': 'Upcoming unlock type' }}
+					/>
+				</div>
+				<ChartGroupingSelector
+					value={timePeriod}
+					onValueChange={(value) => {
+						void pushShallowQuery(router, {
+							[UPCOMING_UNLOCK_CHART_QUERY_KEYS.groupBy]: getUpcomingUnlockGroupByQueryValue(value)
+						})
+					}}
+					options={DWM_GROUPING_OPTIONS_LOWERCASE}
+				/>
+				<div className="flex items-center gap-1">
+					<TagGroup
+						variant="default"
+						size="md"
+						selectedValue={viewMode}
+						setValue={(value) => {
+							void pushShallowQuery(router, {
+								[UPCOMING_UNLOCK_CHART_QUERY_KEYS.viewMode]: getUpcomingUnlockViewModeQueryValue(value)
+							})
+						}}
+						values={UPCOMING_UNLOCK_VIEW_MODES}
+					/>
+					<Tooltip
+						content="Total View aggregates the selected unlock type across all protocols. Breakdown View stacks the same value by protocol."
+						render={<button type="button" aria-label="Explain chart views" className="cursor-help text-tertiary" />}
+					>
+						<Icon name="help-circle" height={16} width={16} aria-hidden="true" />
+					</Tooltip>
+				</div>
+				{protocolSeries.length > 1 ? (
+					<SelectWithCombobox
+						allValues={protocolSeries}
+						selectedValues={activeSeries}
+						setSelectedValues={setSelectedSeries}
+						label="Protocol"
+						labelType="smol"
+						variant="filter"
+						size="md"
+					/>
+				) : null}
+				{deferredChartData.dataset.source.length > 0 ? (
+					<ChartExportButtons
+						chartInstance={exportChartInstance}
+						filename={`${unlockType}-upcoming-unlocks`}
+						title={unlockType === 'all' ? 'Upcoming Unlocks' : `Upcoming ${unlockTypeLabel}`}
+						csvSource={
+							selectedBreakdown?.csvSource ?? {
+								type: 'dataset',
+								dataset: deferredChartData.dataset
+							}
+						}
+					/>
+				) : null}
+			</ChartPanelToolbar>
 			{deferredChartData.dataset.source.length > 0 ? (
-				<>
-					<ChartPanelToolbar className="justify-end">
-						<h2 className="mr-auto heading-xs">Upcoming Unlocks</h2>
-						<ChartGroupingSelector
-							value={timePeriod}
-							onValueChange={(value) => updateQueryParam('chartGroup', value, 'daily')}
-							options={DWM_GROUPING_OPTIONS_LOWERCASE}
-						/>
-						<TagGroup
-							variant="default"
-							size="md"
-							selectedValue={viewMode}
-							setValue={(value) => updateQueryParam('chartView', value, 'Total View')}
-							values={VIEW_MODES}
-						/>
-						{protocolSeries.length > 1 ? (
-							<SelectWithCombobox
-								allValues={protocolSeries}
-								selectedValues={activeSeries}
-								setSelectedValues={setSelectedSeries}
-								label="Protocol"
-								labelType="smol"
-								variant="filter"
-								size="md"
-							/>
-						) : null}
-						<ChartExportButtons
-							chartInstance={exportChartInstance}
-							filename="upcoming-unlocks"
-							title="Upcoming Unlocks"
-							csvSource={selectedBreakdown?.csvSource ?? { type: 'dataset', dataset: deferredChartData.dataset }}
-						/>
-					</ChartPanelToolbar>
-					<React.Suspense fallback={<ChartPanelBodyFallback />}>
-						<MultiSeriesChart
-							dataset={selectedBreakdown?.dataset ?? deferredChartData.dataset}
-							charts={selectedBreakdown?.charts ?? deferredChartData.charts}
-							hideDefaultLegend={deferredViewMode === 'Total View'}
-							groupBy={deferredTimePeriod}
-							valueSymbol="$"
-							onReady={handleChartReady}
-						/>
-					</React.Suspense>
-				</>
+				<React.Suspense fallback={<ChartPanelBodyFallback />}>
+					<MultiSeriesChart
+						dataset={selectedBreakdown?.dataset ?? deferredChartData.dataset}
+						charts={selectedBreakdown?.charts ?? deferredChartData.charts}
+						hideDefaultLegend={deferredViewMode === 'Total View'}
+						groupBy={deferredTimePeriod}
+						valueSymbol="$"
+						onReady={handleChartReady}
+					/>
+				</React.Suspense>
 			) : (
 				<p className="flex items-center justify-center" style={{ height: '360px' }}>
 					No upcoming unlock data available for the selected period.
@@ -250,7 +270,7 @@ export default function Protocols({
 	unlockChartSeries,
 	generatedAtSec
 }: {
-	data: any[]
+	data: EnrichedProtocolEmission[]
 	unlockChartSeries: UpcomingUnlockChartSeries[]
 	generatedAtSec: number
 }) {
@@ -259,10 +279,11 @@ export default function Protocols({
 
 	const showOnlyWatchlist = readSingleQueryValue(router.query.watchlist) === 'true'
 
-	const { upcomingUnlocks7dValue, upcomingUnlocks30dValue, totalProtocols } = useMemo(
-		() => calculateUnlockStatistics(data, generatedAtSec),
+	const { upcomingUnlocks7d, upcomingUnlocks30d } = useMemo(
+		() => calculateUpcomingUnlockStatistics(data, generatedAtSec),
 		[data, generatedAtSec]
 	)
+	const totalProtocols = data.length
 
 	return (
 		<Layout
@@ -286,23 +307,11 @@ export default function Protocols({
 			<SummaryCardGrid>
 				<SummaryStatsCard>
 					<h1 className="heading-sm">Unlock Statistics</h1>
-					<StatItem label="Total Protocols Tracked" value={totalProtocols} />
-					<StatItem
-						label="Upcoming Unlocks (7d)"
-						value={formatUsd(upcomingUnlocks7dValue, {
-							compact: true,
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})}
-					/>
-					<StatItem
-						label="Upcoming Unlocks (30d)"
-						value={formatUsd(upcomingUnlocks30dValue, {
-							compact: true,
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})}
-					/>
+					<div className="flex flex-col">
+						<UpcomingUnlockMetric days={7} values={upcomingUnlocks7d} />
+						<UpcomingUnlockMetric days={30} values={upcomingUnlocks30d} />
+						<MetricRow label="Total Protocols Tracked" value={totalProtocols} />
+					</div>
 					<BasicLink
 						href="/unlocks/calendar"
 						className="mt-auto flex items-center justify-center gap-1 rounded-md border border-medium px-2 py-1.5 text-secondary hover:bg-hover-row focus-visible:bg-hover-row"

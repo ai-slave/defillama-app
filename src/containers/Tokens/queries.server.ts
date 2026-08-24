@@ -15,13 +15,13 @@ import {
 	getTokenRightsPrimaryValueLabel,
 	parseTokenRightsEntry
 } from '~/containers/TokenRights/utils'
-import { getAllProtocolEmissions } from '~/containers/Unlocks/queries'
+import { getCliffEmissionAmount } from '~/containers/Unlocks/eventAmount'
+import { getAllProtocolEmissions, type EnrichedProtocolEmission } from '~/containers/Unlocks/queries'
 import { cachedResult } from '~/server/api/resultCache'
 import { slug } from '~/utils'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
 import { getCanonicalTokenRoute, type TokenDirectoryRecord } from '~/utils/tokenDirectory'
-import type { TokensRawProtocolEmission } from './api.types'
 import { TOKENS_SOURCE_CACHE_TTL_MS } from './cache.server'
 import {
 	buildMarketsMap,
@@ -144,7 +144,7 @@ function buildTokenRightsMap(entries: IRawTokenRightsEntry[]): Map<string, Token
 	return map
 }
 
-function buildUnlocksMap(rows: TokensRawProtocolEmission[], nowSec: number): Map<string, TokenUnlockMetrics> {
+function buildUnlocksMap(rows: EnrichedProtocolEmission[], nowSec: number): Map<string, TokenUnlockMetrics> {
 	const map = new Map<string, TokenUnlockMetrics>()
 	const startSec = nowSec - THIRTY_DAYS_SECONDS
 
@@ -154,15 +154,24 @@ function buildUnlocksMap(rows: TokensRawProtocolEmission[], nowSec: number): Map
 		let unlock30dUsd = 0
 		let upcomingUnlockUsd = 0
 
-		if (price != null) {
-			for (const event of row.events ?? []) {
+		if (price !== null && price > 0) {
+			for (const event of row.events) {
 				if (event.timestamp < startSec || event.timestamp > nowSec) continue
-				for (const amount of event.noOfTokens) unlock30dUsd += amount * price
+				const amount = getCliffEmissionAmount(event)
+				if (amount !== null && amount > 0) unlock30dUsd += amount * price
 			}
 
-			for (const event of row.upcomingEvent ?? []) {
-				if (event.timestamp == null) continue
-				for (const amount of event.noOfTokens) upcomingUnlockUsd += amount * price
+			let nextCliffTimestamp: number | null = null
+			for (const event of row.events) {
+				if (event.timestamp < nowSec) continue
+				const amount = getCliffEmissionAmount(event)
+				if (amount === null || amount <= 0) continue
+				if (nextCliffTimestamp === null || event.timestamp < nextCliffTimestamp) {
+					nextCliffTimestamp = event.timestamp
+					upcomingUnlockUsd = amount * price
+				} else if (event.timestamp === nextCliffTimestamp) {
+					upcomingUnlockUsd += amount * price
+				}
 			}
 		}
 
@@ -307,7 +316,6 @@ export async function fetchTokensSourceRows(marketSnapshot: TokensMarketSnapshot
 			.catch(() => []),
 		getAllProtocolEmissions({
 			startDate: nowSec - THIRTY_DAYS_SECONDS,
-			endDate: nowSec,
 			getHistoricalPrices: false,
 			tokenlist: metadata.tokenlist
 		}).catch(() => [])
@@ -323,7 +331,7 @@ export async function fetchTokensSourceRows(marketSnapshot: TokensMarketSnapshot
 			fees,
 			revenue,
 			holdersRevenue,
-			unlocks: unlocks as TokensRawProtocolEmission[],
+			unlocks,
 			metadata,
 			nowSec
 		}),
@@ -353,7 +361,7 @@ export function buildTokensSourceRows({
 	fees: AdapterProtocolMetric[]
 	revenue: AdapterProtocolMetric[]
 	holdersRevenue: AdapterProtocolMetric[]
-	unlocks: TokensRawProtocolEmission[]
+	unlocks: EnrichedProtocolEmission[]
 	metadata: MetadataCache
 	nowSec: number
 }): TokensSourceRows {

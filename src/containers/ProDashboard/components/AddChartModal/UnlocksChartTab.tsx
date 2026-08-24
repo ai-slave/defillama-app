@@ -4,7 +4,7 @@ import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeries
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import type { EmissionsDataset } from '~/containers/Unlocks/api.types'
+import type { EmissionsChartConfig, EmissionsDataset } from '~/containers/Unlocks/api.types'
 import { formatUnlockDate } from '~/containers/Unlocks/dateFormat'
 import { getAllProtocolEmissions, getProtocolEmissons } from '~/containers/Unlocks/queries'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
@@ -18,6 +18,7 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
 const EMPTY_DATASET: EmissionsDataset = { source: [], dimensions: ['timestamp'] }
+const EMPTY_SCHEDULE_CHARTS: EmissionsChartConfig = []
 
 interface UnlocksChartTabProps {
 	selectedUnlocksProtocol: string | null
@@ -90,15 +91,16 @@ export function UnlocksChartTab({
 
 	const unlocksProtocolOptions = useMemo(() => {
 		const map = new Map<string, VirtualizedSelectOption>()
-		for (const protocol of unlocksProtocols || []) {
-			if (!protocol?.name) continue
+		for (const protocol of unlocksProtocols ?? []) {
+			if (!protocol.name) continue
 			const value = slug(protocol.name)
 			if (!value) continue
 			if (!map.has(value)) {
+				const logo = protocolLogoBySlug.get(value)
 				map.set(value, {
 					value,
 					label: protocol.name,
-					logo: protocolLogoBySlug.get(value)
+					...(logo === undefined ? {} : { logo })
 				})
 			}
 		}
@@ -119,12 +121,12 @@ export function UnlocksChartTab({
 	})
 
 	// Pre-built from the API — no need to reconstruct dataset/charts from scratch.
-	const scheduleDataset = data?.datasets?.documented ?? EMPTY_DATASET
-	const scheduleCharts = data?.chartsConfigs?.documented
+	const scheduleDataset = data?.datasets.documented ?? EMPTY_DATASET
+	const scheduleCharts = data?.chartsConfigs.documented ?? EMPTY_SCHEDULE_CHARTS
 
 	const stacks = useMemo(() => {
-		if (scheduleCharts?.length) return scheduleCharts.map((chart) => chart.name)
-		const categories = data?.categories?.documented ?? EMPTY_STACKS
+		if (scheduleCharts.length) return scheduleCharts.map((chart) => chart.name)
+		const categories = data?.categories.documented ?? EMPTY_STACKS
 		if (categories.length > 0) return categories
 		return EMPTY_STACKS
 	}, [scheduleCharts, data])
@@ -146,13 +148,13 @@ export function UnlocksChartTab({
 		return { available, chartData }
 	}, [data, selectedUnlocksChartType])
 
-	const allocationPieChartColors = data?.stackColors?.documented ?? EMPTY_CHART_COLORS
+	const allocationPieChartColors = data?.stackColors.documented ?? EMPTY_CHART_COLORS
 
 	const unlockedPercent = useMemo(() => {
 		const totalLocked = data?.meta?.totalLocked
 		const maxSupply = data?.meta?.maxSupply
 		if (totalLocked == null || maxSupply == null) return null
-		if (maxSupply === 0) return null
+		if (maxSupply <= 0) return null
 		const percent = 100 - (totalLocked / maxSupply) * 100
 		return Math.min(100, Math.max(0, percent))
 	}, [data])
@@ -188,9 +190,9 @@ export function UnlocksChartTab({
 		const dimensions = scheduleDataset.dimensions
 		const totalSource = new Array<MultiSeriesChartDataset['source'][number]>(source.length)
 		for (let i = 0; i < source.length; i++) {
-			const entry = source[i]
+			const entry = source[i]!
 			let total = 0
-			for (let j = 1; j < dimensions.length; j++) total += (entry[j] as number | null) ?? 0
+			for (let j = 1; j < dimensions.length; j++) total += entry[j] ?? 0
 			totalSource[i] = [entry[0], total]
 		}
 		return { source: totalSource, dimensions: ['timestamp', TOTAL_UNLOCKS_SERIES_NAME] }

@@ -1,36 +1,29 @@
 import { DATASETS_SERVER_URL, SERVER_URL } from '~/constants'
-import { fetchJson, getSlowJsonTimeoutMs } from '~/utils/async'
-import type { EmissionEvent, ProtocolEmission, ProtocolEmissionDetail } from './api.types'
+import { fetchJson, getSlowJsonTimeoutMs, handleFetchResponse } from '~/utils/async'
+import { fetchWithPoolingOnServer } from '~/utils/http-client'
+import type {
+	EmissionEvent,
+	KnownEmissionEvent,
+	ProtocolEmission,
+	ProtocolEmissionDetail,
+	RawEmissionEvent,
+	RawProtocolEmission,
+	RawProtocolEmissionDetail,
+	RawStructuredEmissionEvent,
+	StructuredEmissionEvent
+} from './api.types'
 
 const PROTOCOL_EMISSIONS_API = `${SERVER_URL}/emissions`
 const PROTOCOL_EMISSIONS_LIST_API = `${DATASETS_SERVER_URL}/emissionsProtocolsList`
 const PROTOCOL_EMISSION_API = `${DATASETS_SERVER_URL}/emissions`
 
-type RawEmissionEvent = Omit<EmissionEvent, 'timestamp' | 'noOfTokens' | 'hasUnknownTokenAmount'> & {
-	timestamp: number | `${number}`
-	noOfTokens: Array<number | null>
-}
-type RawProtocolEmission = ProtocolEmission | (Omit<ProtocolEmission, 'events'> & { events: RawEmissionEvent[] })
-type RawProtocolEmissionDetail =
-	| ProtocolEmissionDetail
-	| (Omit<ProtocolEmissionDetail, 'metadata'> & {
-			metadata: Omit<NonNullable<ProtocolEmissionDetail['metadata']>, 'events'> & {
-				events: RawEmissionEvent[]
-			}
-	  })
-
-function hasKnownEmissionAmounts(amounts: Array<number | null>): amounts is number[] {
-	for (const amount of amounts) {
-		if (amount === null) return false
-	}
-	return true
+function isNormalizedEmissionEvent(event: RawEmissionEvent): event is KnownEmissionEvent {
+	if (typeof event.timestamp !== 'number') return false
+	if (event.unlockType === 'cliff') return event.noOfTokens[0] !== null
+	return event.noOfTokens[0] !== null && event.noOfTokens[1] !== null
 }
 
-function isNormalizedEmissionEvent(event: RawEmissionEvent): event is EmissionEvent {
-	return typeof event.timestamp === 'number' && hasKnownEmissionAmounts(event.noOfTokens)
-}
-
-function areNormalizedEmissionEvents(events: RawEmissionEvent[]): events is EmissionEvent[] {
+function areNormalizedEmissionEvents(events: RawEmissionEvent[]): events is KnownEmissionEvent[] {
 	for (const event of events) {
 		if (!isNormalizedEmissionEvent(event)) return false
 	}
@@ -39,17 +32,50 @@ function areNormalizedEmissionEvents(events: RawEmissionEvent[]): events is Emis
 
 function normalizeEmissionEvent(event: RawEmissionEvent): EmissionEvent {
 	if (isNormalizedEmissionEvent(event)) return event
-	const { timestamp, noOfTokens, ...metadata } = event
-	const normalizedTimestamp = typeof timestamp === 'string' ? Number(timestamp) : timestamp
-	if (!hasKnownEmissionAmounts(noOfTokens)) {
+
+	const timestamp = typeof event.timestamp === 'string' ? Number(event.timestamp) : event.timestamp
+	if (event.unlockType === 'cliff') {
+		const amount = event.noOfTokens[0]
+		if (amount === null) {
+			return {
+				description: event.description,
+				category: event.category,
+				unlockType: 'cliff',
+				timestamp,
+				noOfTokens: [],
+				hasUnknownTokenAmount: true
+			}
+		}
 		return {
-			...metadata,
-			timestamp: normalizedTimestamp,
+			description: event.description,
+			category: event.category,
+			unlockType: 'cliff',
+			timestamp,
+			noOfTokens: [amount]
+		}
+	}
+
+	const previousRatePerWeek = event.noOfTokens[0]
+	const newRatePerWeek = event.noOfTokens[1]
+	if (previousRatePerWeek === null || newRatePerWeek === null) {
+		return {
+			description: event.description,
+			category: event.category,
+			unlockType: 'linear',
+			timestamp,
 			noOfTokens: [],
+			rateDurationDays: event.rateDurationDays,
 			hasUnknownTokenAmount: true
 		}
 	}
-	return { ...metadata, timestamp: normalizedTimestamp, noOfTokens }
+	return {
+		description: event.description,
+		category: event.category,
+		unlockType: 'linear',
+		timestamp,
+		noOfTokens: [previousRatePerWeek, newRatePerWeek],
+		rateDurationDays: event.rateDurationDays
+	}
 }
 
 function normalizeEmissionEvents(events: RawEmissionEvent[]): EmissionEvent[] {
@@ -60,79 +86,112 @@ function normalizeEmissionEvents(events: RawEmissionEvent[]): EmissionEvent[] {
 	return normalizedEvents
 }
 
-function isNormalizedProtocolEmission(value: RawProtocolEmission): value is ProtocolEmission {
-	const events = value.events
-	return events == null || areNormalizedEmissionEvents(events)
+function isNormalizedStructuredEmissionEvent(event: RawStructuredEmissionEvent): event is StructuredEmissionEvent {
+	for (const allocation of event.linearAllocations) {
+		if (typeof allocation.endTimestamp !== 'number') return false
+	}
+	return true
 }
 
-function isNormalizedProtocolEmissionDetail(value: RawProtocolEmissionDetail): value is ProtocolEmissionDetail {
-	const events = value.metadata?.events
-	return events == null || areNormalizedEmissionEvents(events)
+function areNormalizedStructuredEmissionEvents(
+	events: RawStructuredEmissionEvent[]
+): events is StructuredEmissionEvent[] {
+	for (const event of events) {
+		if (!isNormalizedStructuredEmissionEvent(event)) return false
+	}
+	return true
 }
 
-/**
- * Fetch emission data for a single protocol
- */
+function normalizeStructuredEmissionEvents(events: RawStructuredEmissionEvent[]): StructuredEmissionEvent[] {
+	if (areNormalizedStructuredEmissionEvents(events)) return events
+	const normalized = new Array<StructuredEmissionEvent>(events.length)
+	for (let eventIndex = 0; eventIndex < events.length; eventIndex++) {
+		const event = events[eventIndex]!
+		if (isNormalizedStructuredEmissionEvent(event)) {
+			normalized[eventIndex] = event
+			continue
+		}
+		const linearAllocations = new Array(event.linearAllocations.length)
+		for (let allocationIndex = 0; allocationIndex < event.linearAllocations.length; allocationIndex++) {
+			const allocation = event.linearAllocations[allocationIndex]!
+			linearAllocations[allocationIndex] = {
+				...allocation,
+				endTimestamp:
+					typeof allocation.endTimestamp === 'string' ? Number(allocation.endTimestamp) : allocation.endTimestamp
+			}
+		}
+		normalized[eventIndex] = { ...event, linearAllocations }
+	}
+	return normalized
+}
+
+function isNormalizedProtocolEmission(
+	value: RawProtocolEmission
+): value is RawProtocolEmission & { events: KnownEmissionEvent[]; unlockEvents: StructuredEmissionEvent[] } {
+	return areNormalizedEmissionEvents(value.events) && areNormalizedStructuredEmissionEvents(value.unlockEvents)
+}
+
+export function normalizeProtocolEmission(value: RawProtocolEmission): ProtocolEmission {
+	if (isNormalizedProtocolEmission(value)) return value
+	return {
+		...value,
+		events: normalizeEmissionEvents(value.events),
+		unlockEvents: normalizeStructuredEmissionEvents(value.unlockEvents)
+	}
+}
+
+export function normalizeProtocolEmissions(values: RawProtocolEmission[]): ProtocolEmission[] {
+	const normalized = new Array<ProtocolEmission>(values.length)
+	for (let index = 0; index < values.length; index++) normalized[index] = normalizeProtocolEmission(values[index]!)
+	return normalized
+}
+
+function isNormalizedProtocolEmissionDetail(value: RawProtocolEmissionDetail): value is RawProtocolEmissionDetail & {
+	metadata: { events: KnownEmissionEvent[]; unlockEvents: StructuredEmissionEvent[] }
+} {
+	return (
+		areNormalizedEmissionEvents(value.metadata.events) &&
+		areNormalizedStructuredEmissionEvents(value.metadata.unlockEvents)
+	)
+}
+
+function normalizeProtocolEmissionDetail(value: RawProtocolEmissionDetail): ProtocolEmissionDetail {
+	if (isNormalizedProtocolEmissionDetail(value)) return value
+	return {
+		...value,
+		metadata: {
+			...value.metadata,
+			events: normalizeEmissionEvents(value.metadata.events),
+			unlockEvents: normalizeStructuredEmissionEvents(value.metadata.unlockEvents)
+		}
+	}
+}
+
+/** Fetch the canonical schedule for one emissions slug. A missing R2 object is the only null outcome. */
 export async function fetchProtocolEmission(protocolName: string): Promise<ProtocolEmissionDetail | null> {
-	if (!protocolName) return null
+	if (!protocolName) throw new Error('Protocol emission slug is required')
 	const encodedProtocolName = encodeURIComponent(protocolName)
-	try {
-		const response = await fetchJson<RawProtocolEmissionDetail>(`${PROTOCOL_EMISSION_API}/${encodedProtocolName}`)
-		if (isNormalizedProtocolEmissionDetail(response)) return response
-		const { metadata, ...detail } = response
-		const { events, ...metadataFields } = metadata
-		return {
-			...detail,
-			metadata: {
-				...metadataFields,
-				events: normalizeEmissionEvents(events)
-			}
-		}
-	} catch (error) {
-		console.error(`Failed to fetch protocol emission for ${protocolName}:`, error)
-		return null
+	const response = await fetchWithPoolingOnServer(`${PROTOCOL_EMISSION_API}/${encodedProtocolName}`, {
+		timeout: getSlowJsonTimeoutMs()
+	})
+	if (response.status === 404) return null
+	if (!response.ok) {
+		await handleFetchResponse(response)
+		throw new Error('Unreachable protocol emissions response state')
 	}
+	const body: RawProtocolEmissionDetail = await response.json()
+	return normalizeProtocolEmissionDetail(body)
 }
 
-/**
- * Fetch all protocol emissions data
- */
+/** Fetch and normalize the aggregate emissions index. */
 export async function fetchAllProtocolEmissions(): Promise<ProtocolEmission[]> {
-	try {
-		const res = await fetchJson<RawProtocolEmission[]>(PROTOCOL_EMISSIONS_API)
-		// The endpoint is ascending, but a few legacy rows encode the timestamp as
-		// a numeric string. Normalize that known boundary mismatch once so all
-		// downstream chart/calendar loops keep a strict numeric contract.
-		const protocols: ProtocolEmission[] = []
-		for (const protocol of res) {
-			if (isNormalizedProtocolEmission(protocol)) {
-				protocols.push(protocol)
-				continue
-			}
-
-			const events = protocol.events
-			if (!events) continue
-			const normalizedEvents = normalizeEmissionEvents(events)
-			protocols.push({ ...protocol, events: normalizedEvents })
-		}
-
-		return protocols
-	} catch {
-		return []
-	}
+	const response = await fetchJson<RawProtocolEmission[]>(PROTOCOL_EMISSIONS_API)
+	return normalizeProtocolEmissions(response)
 }
 
-/**
- * Fetch the list of protocol names that have emissions data
- */
+/** Fetch the authoritative set of protocol slugs with emissions data. */
 export async function fetchEmissionsProtocolsList(options: { timeout?: number } = {}): Promise<string[]> {
-	try {
-		const res = await fetchJson<string[]>(PROTOCOL_EMISSIONS_LIST_API, {
-			timeout: options.timeout ?? getSlowJsonTimeoutMs()
-		})
-		return res
-	} catch (error) {
-		console.error('Failed to fetch emissions protocols list:', error)
-		return []
-	}
+	return fetchJson<string[]>(PROTOCOL_EMISSIONS_LIST_API, {
+		timeout: options.timeout ?? getSlowJsonTimeoutMs()
+	})
 }

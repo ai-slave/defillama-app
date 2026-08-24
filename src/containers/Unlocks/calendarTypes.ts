@@ -6,13 +6,21 @@ export type UnlocksMultiSeriesChart = {
 	charts: NonNullable<IMultiSeriesChartProps['charts']>
 }
 
-export interface CalendarUnlockEvent {
+export interface CalendarUnlockEventFields {
 	protocol: string
 	geckoId?: string | null
 	value: number
 	details: string
 	unlockType: string
 	category?: string
+}
+
+export type CliffCalendarUnlockEvent = CalendarUnlockEventFields & { unit?: never }
+export type WeeklyRateCalendarUnlockEvent = CalendarUnlockEventFields & { unit: 'week' }
+export type CalendarUnlockEvent = CliffCalendarUnlockEvent | WeeklyRateCalendarUnlockEvent
+
+export function isWeeklyRateCalendarEvent(event: CalendarUnlockEvent): event is WeeklyRateCalendarUnlockEvent {
+	return 'unit' in event
 }
 
 export interface DailyUnlocks {

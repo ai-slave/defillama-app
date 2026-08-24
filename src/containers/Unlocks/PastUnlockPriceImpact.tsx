@@ -7,14 +7,12 @@ import { PercentChange } from '~/ui/PercentChange'
 import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
+import { getEmissionEventAmount } from './eventAmount'
+import type { EnrichedProtocolEmission } from './queries'
 import { TopThreeRow } from './TopThreeRow'
-import type { ProtocolEmissionWithHistory } from './types'
-
-/** Protocols that have confirmed tPrice and tSymbol (caller pre-filters nulls). */
-type ProtocolData = ProtocolEmissionWithHistory & { tPrice: number; tSymbol: string }
 
 interface PastUnlockPriceImpactProps {
-	data: ProtocolData[]
+	data: EnrichedProtocolEmission[]
 	title?: string
 	className?: string
 	initialNowSec?: number
@@ -41,11 +39,7 @@ export const PastUnlockPriceImpact: React.FC<PastUnlockPriceImpactProps> = ({
 	className,
 	initialNowSec
 }) => {
-	const [now] = React.useState(() =>
-		typeof initialNowSec === 'number' && Number.isFinite(initialNowSec)
-			? Math.floor(initialNowSec)
-			: Math.floor(Date.now() / 1000)
-	)
+	const [now] = React.useState(() => Math.floor(initialNowSec ?? Date.now() / 1000))
 	const { topImpacts } = React.useMemo(() => {
 		const protocolImpacts = new Map<
 			string,
@@ -54,83 +48,63 @@ export const PastUnlockPriceImpact: React.FC<PastUnlockPriceImpactProps> = ({
 				symbol: string
 				geckoId?: string | null
 				impact: number
-				value: number
 				timestamp: number
 				unlockBreakdown: UnlockBreakdown[]
-				maxSupply?: number
+				cliffAmount: number
+				linearWeeklyAmount: number
+				maxSupply: number
 				mcap?: number
 				price: number
 			}
 		>()
 
-		for (const protocol of data ?? []) {
-			if (!protocol.historicalPrice?.length || protocol.historicalPrice.length < 8 || !protocol.lastEvent?.length)
-				continue
+		for (const protocol of data) {
+			if (protocol.historicalPrice.length < 8 || protocol.lastEvent.length === 0) continue
+			if (protocol.tPrice === null || protocol.tPrice <= 0 || protocol.tSymbol === null) continue
 			const thirtyDaysAgo = now - 30 * 24 * 60 * 60
+			const latestTimestamp = protocol.lastEvent[0]!.timestamp
+			if (latestTimestamp < thirtyDaysAgo) continue
 
-			const lastEvents = protocol.lastEvent?.filter((event) => event.timestamp >= thirtyDaysAgo) || []
-			if (!lastEvents.length) continue
-
-			const eventsByTimestamp = lastEvents.reduce(
-				(acc: Record<number, { totalTokens: number; events: typeof lastEvents }>, event) => {
-					const totalTokens = event.noOfTokens?.reduce((sum: number, amount: number) => sum + amount, 0) || 0
-					if (acc[event.timestamp]) {
-						acc[event.timestamp].totalTokens += totalTokens
-						acc[event.timestamp].events.push(event)
-					} else {
-						acc[event.timestamp] = {
-							totalTokens,
-							events: [event]
-						}
-					}
-					return acc
-				},
-				{}
-			)
-
-			let latestTimestamp = -Infinity
-			for (const ts in eventsByTimestamp) {
-				const num = Number(ts)
-				if (num > latestTimestamp) latestTimestamp = num
-			}
-			const latestEvent = eventsByTimestamp[latestTimestamp]
-
-			const unlockValue = latestEvent.totalTokens * protocol.tPrice
-
-			const priceAtUnlock = protocol.historicalPrice[7][1]
-			const priceAfter7d = protocol.historicalPrice[protocol.historicalPrice.length - 1][1]
-			const impact = ((priceAfter7d - priceAtUnlock) / priceAtUnlock) * 100
-
+			let cliffAmount = 0
+			let linearWeeklyAmount = 0
 			const breakdown: UnlockBreakdown[] = []
-			for (const event of latestEvent.events) {
-				for (const amount of event.noOfTokens ?? []) {
-					breakdown.push({
-						name: parseDescription(event.description || ''),
-						amount,
-						timestamp: event.timestamp,
-						unlockType: event.unlockType || 'cliff'
-					})
-				}
+			for (const event of protocol.lastEvent) {
+				const amount = getEmissionEventAmount(event)
+				if (amount === null || amount <= 0) continue
+				if (event.unlockType === 'linear') linearWeeklyAmount += amount
+				else cliffAmount += amount
+				breakdown.push({
+					name: parseDescription(event.description),
+					amount,
+					timestamp: event.timestamp,
+					unlockType: event.unlockType
+				})
 			}
-			breakdown.sort((a, b) => b.amount - a.amount)
+			if (cliffAmount === 0 && linearWeeklyAmount === 0) continue
+
+			const priceAtUnlock = protocol.historicalPrice[7]![1]
+			const priceAfter7d = protocol.historicalPrice[protocol.historicalPrice.length - 1]![1]
+			if (priceAtUnlock <= 0) continue
+			const impact = ((priceAfter7d - priceAtUnlock) / priceAtUnlock) * 100
 
 			protocolImpacts.set(protocol.name, {
 				name: protocol.name,
 				symbol: protocol.tSymbol,
-				geckoId: protocol.gecko_id,
+				...(protocol.gecko_id !== undefined ? { geckoId: protocol.gecko_id } : {}),
 				impact,
-				value: unlockValue,
 				timestamp: latestTimestamp,
 				unlockBreakdown: breakdown,
-				maxSupply: protocol.maxSupply ?? undefined,
-				mcap: protocol.mcap ?? undefined,
+				cliffAmount,
+				linearWeeklyAmount,
+				maxSupply: protocol.maxSupply,
+				...(protocol.mcap !== undefined ? { mcap: protocol.mcap } : {}),
 				price: protocol.tPrice
 			})
 		}
 
 		return {
 			topImpacts: Array.from(protocolImpacts.values())
-				.sort((a, b) => b.value - a.value)
+				.sort((a, b) => Math.abs(b.impact) - Math.abs(a.impact))
 				.slice(0, 3)
 		}
 	}, [data, now])
@@ -139,167 +113,184 @@ export const PastUnlockPriceImpact: React.FC<PastUnlockPriceImpactProps> = ({
 		<div className={`flex flex-col gap-3 text-primary ${className ?? ''}`}>
 			<Tooltip
 				className="heading-xs text-primary"
-				content="Price change 7 days after the most recent major unlock event, not counting non-circulating and farming emissions. Sorted by the value of the unlock event."
+				content="Price change 7 days after the most recent major unlock event, not counting non-circulating and farming emissions. Sorted by absolute 7-day price change."
 			>
 				{title}
 			</Tooltip>
 
-			{topImpacts.map((impact) => (
-				<TopThreeRow
-					key={impact.name}
-					name={impact.name}
-					symbol={impact.symbol}
-					geckoId={impact.geckoId}
-					value={
-						<span className="mono-md-bold">
-							<PercentChange percent={impact.impact} />
-						</span>
-					}
-					trailingIcon={
-						<Ariakit.HovercardProvider>
-							<Ariakit.HovercardAnchor>
-								<Icon name="help-circle" width={16} height={16} className="cursor-help text-tertiary" />
-							</Ariakit.HovercardAnchor>
-							<Ariakit.Hovercard
-								className="z-10 flex max-h-(--popover-available-height) w-96 max-w-(--popover-available-width) flex-col gap-2 overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay p-4 text-sm text-primary shadow-overlay-sm"
-								unmountOnHide
-								hideOnInteractOutside
-								overflowPadding={16}
-								portal={true}
-							>
-								<span className="flex items-center justify-between gap-4">
-									<span className="flex items-center gap-2 font-medium">
-										<TokenLogo
-											name={impact.name}
-											kind="token"
-											size={30}
-											fallbackSrc={impact.geckoId ? geckoTokenIconUrl(impact.geckoId) : null}
-											alt={`Logo of ${impact.name}`}
-										/>
-										{impact.symbol}
-									</span>
-									<span className="flex flex-col items-end">
-										<span className="font-medium">{dayjs(impact.timestamp * 1e3).format('MMM D, YYYY')}</span>
-										<span className="text-xs text-tertiary">
-											{dayjs(impact.timestamp * 1e3).format('HH:mm')} GMT
-											{dayjs(impact.timestamp * 1e3).format('Z')}
-										</span>
-									</span>
-								</span>
-
-								<hr className="border-medium" />
-
-								<span className="flex flex-col gap-4">
-									{impact.unlockBreakdown.map((item) => {
-										const percentage = impact.maxSupply ? (item.amount / impact.maxSupply) * 100 : null
-										const percentageFloat = impact.mcap ? ((item.amount * impact.price) / impact.mcap) * 100 : null
-										const usdValue = item.amount * impact.price
-
-										return (
-											<span
-												className="flex flex-col gap-1"
-												key={`unlock-${item.name}-${percentage}-${percentageFloat}-${usdValue}`}
-											>
-												<span className="flex items-center justify-between gap-2">
-													<span className="flex items-center gap-2">
-														{item.name}
-														<Tooltip content={item.unlockType === 'linear' ? 'Linear Unlock' : 'Cliff Unlock'}>
-															<Icon
-																name={item.unlockType === 'linear' ? 'linear-unlock' : 'cliff-unlock'}
-																height={16}
-																width={16}
-																className="text-tertiary"
-															/>
-														</Tooltip>
-													</span>
-													<span className="font-medium">
-														{usdValue
-															? formatUsd(usdValue, {
-																	compact: true,
-																	minimumCompactValue: 1_000_000,
-																	compactSuffix: 'lowercase'
-																})
-															: '-'}
-													</span>
-												</span>
-												<span className="flex items-center justify-between gap-2 text-xs text-tertiary">
-													<span>
-														{percentage != null ? (
-															<>
-																{formatCompactNumber(percentage, {
-																	minimumCompactValue: 1_000_000,
-																	compactSuffix: 'lowercase'
-																})}
-																%
-															</>
-														) : null}{' '}
-														{percentageFloat != null ? (
-															<>
-																(
-																{formatCompactNumber(percentageFloat, {
-																	minimumCompactValue: 1_000_000,
-																	compactSuffix: 'lowercase'
-																})}
-																% of float)
-															</>
-														) : null}
-													</span>
-													<span>
-														{formatCompactNumber(item.amount, {
-															minimumCompactValue: 1_000_000,
-															compactSuffix: 'lowercase'
-														})}{' '}
-														{impact.symbol}
-													</span>
-												</span>
-											</span>
-										)
-									})}
-								</span>
-								<hr className="border-medium" />
-
-								<span className="flex flex-col gap-1">
-									<span className="flex items-center justify-between gap-2 font-semibold">
-										<span>Total</span>
-										<span>
-											{formatUsd(
-												impact.unlockBreakdown.reduce((acc, item) => acc + item.amount * impact.price, 0),
-												{ compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }
-											)}
-										</span>
-									</span>
-									<span className="flex items-center justify-between gap-2 text-xs text-tertiary">
-										<span>
-											{impact.maxSupply
-												? `${formatPercent(impact.unlockBreakdown.reduce((acc, item) => acc + item.amount, 0) / impact.maxSupply, { input: 'fraction', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
-												: null}
-											{impact.mcap
-												? ` (${formatPercent(
-														impact.unlockBreakdown.reduce((acc, item) => acc + item.amount * impact.price, 0) /
-															impact.mcap,
-														{
-															input: 'fraction',
-															compact: true,
-															minimumCompactValue: 1_000_000,
-															compactSuffix: 'lowercase'
-														}
-													)} of float)`
-												: null}
-										</span>
-										<span>
-											{formatCompactNumber(
-												impact.unlockBreakdown.reduce((acc, item) => acc + item.amount, 0),
-												{ minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }
-											)}{' '}
+			{topImpacts.map((impact) => {
+				const summaries: Array<{ label: string; amount: number; displayUnit: '' | 'per week' }> = []
+				if (impact.cliffAmount > 0) {
+					summaries.push({ label: 'Cliff Unlock', amount: impact.cliffAmount, displayUnit: '' })
+				}
+				if (impact.linearWeeklyAmount > 0) {
+					summaries.push({
+						label: 'Weekly Unlock Rate',
+						amount: impact.linearWeeklyAmount,
+						displayUnit: 'per week'
+					})
+				}
+				return (
+					<TopThreeRow
+						key={impact.name}
+						name={impact.name}
+						symbol={impact.symbol}
+						{...(impact.geckoId !== undefined ? { geckoId: impact.geckoId } : {})}
+						value={
+							<span className="mono-md-bold">
+								<PercentChange percent={impact.impact} />
+							</span>
+						}
+						trailingIcon={
+							<Ariakit.HovercardProvider>
+								<Ariakit.HovercardAnchor>
+									<Icon name="help-circle" width={16} height={16} className="cursor-help text-tertiary" />
+								</Ariakit.HovercardAnchor>
+								<Ariakit.Hovercard
+									className="z-10 flex max-h-(--popover-available-height) w-96 max-w-(--popover-available-width) flex-col gap-2 overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay p-4 text-sm text-primary shadow-overlay-sm"
+									unmountOnHide
+									hideOnInteractOutside
+									overflowPadding={16}
+									portal={true}
+								>
+									<span className="flex items-center justify-between gap-4">
+										<span className="flex items-center gap-2 font-medium">
+											<TokenLogo
+												name={impact.name}
+												kind="token"
+												size={30}
+												fallbackSrc={impact.geckoId ? geckoTokenIconUrl(impact.geckoId) : null}
+												alt={`Logo of ${impact.name}`}
+											/>
 											{impact.symbol}
 										</span>
+										<span className="flex flex-col items-end">
+											<span className="font-medium">{dayjs(impact.timestamp * 1e3).format('MMM D, YYYY')}</span>
+											<span className="text-xs text-tertiary">
+												{dayjs(impact.timestamp * 1e3).format('HH:mm')} GMT
+												{dayjs(impact.timestamp * 1e3).format('Z')}
+											</span>
+										</span>
 									</span>
-								</span>
-							</Ariakit.Hovercard>
-						</Ariakit.HovercardProvider>
-					}
-				/>
-			))}
+
+									<hr className="border-medium" />
+
+									<span className="flex flex-col gap-4">
+										{impact.unlockBreakdown.map((item) => {
+											const percentage = impact.maxSupply > 0 ? (item.amount / impact.maxSupply) * 100 : null
+											const percentageFloat =
+												impact.mcap != null && impact.mcap > 0
+													? ((item.amount * impact.price) / impact.mcap) * 100
+													: null
+											const usdValue = item.amount * impact.price
+
+											return (
+												<span
+													className="flex flex-col gap-1"
+													key={`unlock-${item.name}-${percentage}-${percentageFloat}-${usdValue}`}
+												>
+													<span className="flex items-center justify-between gap-2">
+														<span className="flex items-center gap-2">
+															{item.name}
+															<Tooltip content={item.unlockType === 'linear' ? 'Linear Unlock' : 'Cliff Unlock'}>
+																<Icon
+																	name={item.unlockType === 'linear' ? 'linear-unlock' : 'cliff-unlock'}
+																	height={16}
+																	width={16}
+																	className="text-tertiary"
+																/>
+															</Tooltip>
+														</span>
+														<span className="font-medium">
+															{formatUsd(usdValue, {
+																compact: true,
+																minimumCompactValue: 1_000_000,
+																compactSuffix: 'lowercase'
+															})}
+															{item.unlockType === 'linear' ? ' / week' : ''}
+														</span>
+													</span>
+													<span className="flex items-center justify-between gap-2 text-xs text-tertiary">
+														<span>
+															{percentage != null ? (
+																<>
+																	{formatCompactNumber(percentage, {
+																		minimumCompactValue: 1_000_000,
+																		compactSuffix: 'lowercase'
+																	})}
+																	%
+																</>
+															) : null}{' '}
+															{percentageFloat != null ? (
+																<>
+																	(
+																	{formatCompactNumber(percentageFloat, {
+																		minimumCompactValue: 1_000_000,
+																		compactSuffix: 'lowercase'
+																	})}
+																	% of float)
+																</>
+															) : null}
+														</span>
+														<span>
+															{formatCompactNumber(item.amount, {
+																minimumCompactValue: 1_000_000,
+																compactSuffix: 'lowercase'
+															})}{' '}
+															{impact.symbol}
+															{item.unlockType === 'linear' ? ' / week' : ''}
+														</span>
+													</span>
+												</span>
+											)
+										})}
+									</span>
+									<hr className="border-medium" />
+
+									<span className="flex flex-col gap-2">
+										{summaries.map((summary) => {
+											const usdValue = summary.amount * impact.price
+											return (
+												<span key={summary.label} className="flex flex-col gap-1">
+													<span className="flex items-center justify-between gap-2 font-semibold">
+														<span>{summary.label}</span>
+														<span>
+															{formatUsd(usdValue, {
+																compact: true,
+																minimumCompactValue: 1_000_000,
+																compactSuffix: 'lowercase'
+															})}
+															{summary.displayUnit ? ' / week' : ''}
+														</span>
+													</span>
+													<span className="flex items-center justify-between gap-2 text-xs text-tertiary">
+														<span>
+															{impact.maxSupply > 0
+																? formatPercent(summary.amount / impact.maxSupply, { input: 'fraction', compact: true })
+																: null}
+															{impact.mcap != null && impact.mcap > 0
+																? ` (${formatPercent(usdValue / impact.mcap, { input: 'fraction', compact: true })} of float)`
+																: null}
+														</span>
+														<span>
+															{formatCompactNumber(summary.amount, {
+																minimumCompactValue: 1_000_000,
+																compactSuffix: 'lowercase'
+															})}{' '}
+															{impact.symbol}
+															{summary.displayUnit ? ' / week' : ''}
+														</span>
+													</span>
+												</span>
+											)
+										})}
+									</span>
+								</Ariakit.Hovercard>
+							</Ariakit.HovercardProvider>
+						}
+					/>
+				)
+			})}
 		</div>
 	)
 }

@@ -5,11 +5,14 @@ import type { IEquitiesCompanyRoute } from '~/containers/Equities/api.types'
 import { fetchEquitiesCompanyRouteMetadata } from '~/containers/Equities/server/metadata'
 import type { RawAllLiquidationsResponse } from '~/containers/LiquidationsV2/api.types'
 import type { RWAPlatformsIndex } from '~/containers/RWA/PlatformPage/api.types'
-import { fetchEmissionsProtocolsList } from '~/containers/Unlocks/api'
-import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
+import { fetchEmissionsProtocolsList, normalizeProtocolEmissions } from '~/containers/Unlocks/api'
+import type {
+	ProtocolEmission,
+	ProtocolEmissionSupplyMetricsMap,
+	RawProtocolEmission
+} from '~/containers/Unlocks/api.types'
 import { getErrorMessage } from '~/utils/error'
 import type { TokenDirectory } from '~/utils/tokenDirectory'
-import type { UnlockHistoricalPriceProtocol } from '~/utils/unlocks/historicalPriceRequests'
 import { getMetadataFetchTimeoutMs } from './config'
 import { fetchMetadataJson } from './http'
 import type {
@@ -39,7 +42,7 @@ export type CoreMetadataSources = {
 	bridgesResponse: RawBridgesWithChainsResponse
 	emissionsProtocolsList: string[]
 	emissionsSupplyMetrics: ProtocolEmissionSupplyMetricsMap
-	emissions: UnlockHistoricalPriceProtocol[]
+	emissions: ProtocolEmission[]
 	equitiesCompanyRoutes: IEquitiesCompanyRoute[]
 }
 
@@ -129,7 +132,7 @@ export async function fetchCoreMetadataSources(): Promise<CoreMetadataSources> {
 		),
 		fetchNamedMetadataSource(
 			'emissions API',
-			fetchMetadataJson<UnlockHistoricalPriceProtocol[]>(`${coreApiBase}/emissions`)
+			fetchMetadataJson<RawProtocolEmission[]>(`${coreApiBase}/emissions`).then(normalizeProtocolEmissions)
 		),
 		fetchNamedMetadataSource('equities company routes API', fetchEquitiesCompanyRouteMetadata())
 	])

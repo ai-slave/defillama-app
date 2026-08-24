@@ -1,20 +1,7 @@
-export interface UnlockHistoricalPriceEvent {
-	timestamp?: number | null
-	category?: string | null
-	noOfTokens?: number[] | null
-	hasUnknownTokenAmount?: true
-}
+import type { ProtocolEmission } from '~/containers/Unlocks/api.types'
+import { isUnknownEmissionEvent } from '~/containers/Unlocks/eventAmount'
 
-export interface UnlockHistoricalPriceProtocol {
-	name?: string
-	token?: string
-	gecko_id?: string | null
-	events?: UnlockHistoricalPriceEvent[] | null
-}
-
-function roundToNearestHalfHour(timestamp: number): number {
-	return Math.floor(timestamp / 1800) * 1800
-}
+export type UnlockHistoricalPriceProtocol = Pick<ProtocolEmission, 'gecko_id' | 'events'>
 
 export function buildUnlocksHistoricalPriceRequests(
 	protocols: UnlockHistoricalPriceProtocol[],
@@ -30,34 +17,31 @@ export function buildUnlocksHistoricalPriceRequests(
 	const lastPastTimestampByCoinKey = new Map<string, number>()
 
 	for (const protocol of protocols) {
-		const geckoId = protocol?.gecko_id
+		const geckoId = protocol.gecko_id
 		if (!geckoId) continue
 
 		const coinKey = `coingecko:${geckoId}`
-		const events = Array.isArray(protocol?.events) ? protocol.events : []
 
 		let earliestEvent: number | undefined
 		let lastPastEvent: number | undefined
 
-		for (const e of events) {
-			if (e.hasUnknownTokenAmount) continue
-			const ts = e?.timestamp
-			if (typeof ts !== 'number' || !Number.isFinite(ts)) continue
-			if (earliestEvent == null || ts < earliestEvent) earliestEvent = ts
+		for (const event of protocol.events) {
+			if (isUnknownEmissionEvent(event)) continue
+			const ts = event.timestamp
+			if (earliestEvent === undefined || ts < earliestEvent) earliestEvent = ts
 
-			const cat = e?.category
+			const cat = event.category
 			if (cat === 'noncirculating' || cat === 'farming') continue
 
-			const roundedTs = roundToNearestHalfHour(ts)
-			if (roundedTs < weekAgoSec && (lastPastEvent == null || roundedTs > lastPastEvent)) {
-				lastPastEvent = roundedTs
+			if (ts < weekAgoSec && (lastPastEvent === undefined || ts > lastPastEvent)) {
+				lastPastEvent = ts
 			}
 		}
 
-		if (lastPastEvent == null) continue
+		if (lastPastEvent === undefined) continue
 
 		lastPastTimestampByCoinKey.set(coinKey, lastPastEvent)
-		if (earliestEvent != null && lastPastEvent === roundToNearestHalfHour(earliestEvent)) continue
+		if (earliestEvent !== undefined && lastPastEvent === earliestEvent) continue
 
 		const anchor = Math.floor(lastPastEvent / 86400) * 86400
 		const timestamps: number[] = []

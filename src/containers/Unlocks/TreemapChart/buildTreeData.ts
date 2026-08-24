@@ -1,5 +1,5 @@
 import { getChartTheme } from '~/components/ECharts/shared/chartTheme'
-import type { UnlocksData } from '~/containers/Unlocks/calendarTypes'
+import { isWeeklyRateCalendarEvent, type UnlocksData } from '~/containers/Unlocks/calendarTypes'
 import { tokenIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
 
@@ -85,6 +85,7 @@ const MONTH_NAMES: Record<string, string> = {
 
 function addEvents(month: MonthInfo, events: UnlocksData[string]['events'], year?: YearInfo): void {
 	for (const event of events) {
+		if (isWeeklyRateCalendarEvent(event)) continue
 		month.protocols[event.protocol] = (month.protocols[event.protocol] ?? 0) + event.value
 		month.value += event.value
 		if (year) year.value += event.value
@@ -94,7 +95,7 @@ function addEvents(month: MonthInfo, events: UnlocksData[string]['events'], year
 function buildProtocolNodes(protocols: Record<string, number>): UnlocksTreemapNode[] {
 	const nodes: UnlocksTreemapNode[] = []
 	for (const protocol in protocols) {
-		const value = protocols[protocol]
+		const value = protocols[protocol]!
 		const iconUrl = tokenIconUrl(protocol)
 		nodes.push({
 			name: protocol,
@@ -185,7 +186,7 @@ export function buildUnlocksTreemapTreeData({
 		for (const date in unlocksData) {
 			// The calendar data contract uses canonical YYYY-MM-DD keys.
 			if (date.slice(0, 4) !== selectedYear || date.slice(5, 7) !== selectedMonth) continue
-			addEvents(month, unlocksData[date].events)
+			addEvents(month, unlocksData[date]!.events)
 		}
 		return buildProtocolNodes(month.protocols)
 	}
@@ -195,8 +196,8 @@ export function buildUnlocksTreemapTreeData({
 		const year: YearInfo = { months: new Map(), value: 0 }
 		for (const date in unlocksData) {
 			if (date.slice(0, 4) !== currentYearKey) continue
-			const month = getMonth(year, MONTH_NAMES[date.slice(5, 7)])
-			addEvents(month, unlocksData[date].events, year)
+			const month = getMonth(year, MONTH_NAMES[date.slice(5, 7)]!)
+			addEvents(month, unlocksData[date]!.events, year)
 		}
 		return year.months.size ? buildMonthNodes(year, getChartTheme(isDark).ink(1), 13) : []
 	}
@@ -212,8 +213,8 @@ export function buildUnlocksTreemapTreeData({
 			years.set(yearKey, year)
 		}
 
-		const month = getMonth(year, MONTH_NAMES[date.slice(5, 7)])
-		addEvents(month, unlocksData[date].events, year)
+		const month = getMonth(year, MONTH_NAMES[date.slice(5, 7)]!)
+		addEvents(month, unlocksData[date]!.events, year)
 	}
 
 	if (!years.size) return []

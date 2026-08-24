@@ -2,22 +2,25 @@ import { fetchCoinGeckoChartByIdWithCacheFallback } from '~/api/coingecko'
 import { getProtocolEmissons } from '~/containers/Unlocks/queries'
 import { slug } from '~/utils'
 import type { ITokenListEntry } from '~/utils/metadata/types'
-import type { EmissionEvent } from './api.types'
+import { getCliffEmissionAmount } from './eventAmount'
+import type { ProtocolEmissionResult } from './types'
 
-export function calculateTotalUnlockValue(emissions: {
-	tokenPrice?: { price?: number | null } | null
-	upcomingEvent?: EmissionEvent[] | null
-}): number {
-	if (!emissions?.tokenPrice?.price) return 0
+export function calculateTotalUnlockValue(
+	emissions: Pick<ProtocolEmissionResult, 'tokenPrice' | 'upcomingEvent'>
+): number | null {
+	const price = emissions.tokenPrice?.price
+	if (price == null || price <= 0) return null
 
-	const events = Array.isArray(emissions?.upcomingEvent) ? emissions.upcomingEvent : []
-	const totalAmount = events.reduce((sum: number, event: EmissionEvent) => {
-		const tokens = Array.isArray(event?.noOfTokens) ? event.noOfTokens : []
-		const eventTotal = tokens.reduce((eventSum: number, amount: number) => eventSum + (Number(amount) || 0), 0)
-		return sum + eventTotal
-	}, 0)
+	let totalAmount = 0
+	let hasKnownCliffAmount = false
+	for (const event of emissions.upcomingEvent) {
+		const amount = getCliffEmissionAmount(event)
+		if (amount === null) continue
+		hasKnownCliffAmount = true
+		if (amount > 0) totalAmount += amount
+	}
 
-	return (totalAmount || 0) * emissions.tokenPrice.price
+	return hasKnownCliffAmount ? totalAmount * price : null
 }
 
 export function getEventCountdown(timestamp: number | null | undefined): string {
@@ -65,14 +68,26 @@ export async function getProtocolUnlocksStaticPropsData(
 	const emissions = await getProtocolEmissons(normalizedName, {
 		emissionsProtocolsList,
 		tokenlist
-	}).catch(() => null)
-	const geckoId = emissions?.geckoId ?? emissions?.meta?.gecko_id ?? null
+	})
+	if (emissions.name === null) {
+		return {
+			normalizedName,
+			emissions: null,
+			geckoId: null,
+			tokenSymbol: null,
+			initialTokenMarketData: null
+		}
+	}
+
+	const geckoId = emissions.geckoId ?? emissions.meta?.gecko_id ?? null
 	const tokenEntry = geckoId ? (tokenlist[geckoId] ?? null) : null
 	const cgChart = geckoId
-		? await fetchCoinGeckoChartByIdWithCacheFallback(geckoId, { fullChart: false }).catch(() => null)
+		? await fetchCoinGeckoChartByIdWithCacheFallback(geckoId, {
+				fullChart: false
+			}).catch(() => null)
 		: null
 	const cgMarketData = cgChart?.data?.coinData?.market_data
-	const tokenSymbol = emissions?.tokenPrice?.symbol ?? tokenEntry?.symbol?.toUpperCase() ?? null
+	const tokenSymbol = emissions.tokenPrice.symbol ?? tokenEntry?.symbol?.toUpperCase() ?? null
 	const initialTokenMarketData = tokenEntry
 		? {
 				price: tokenEntry.current_price ?? null,

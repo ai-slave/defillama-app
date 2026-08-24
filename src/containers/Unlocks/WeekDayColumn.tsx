@@ -16,7 +16,7 @@ interface WeekDayColumnProps {
 export const WeekDayColumn: React.FC<WeekDayColumnProps> = ({ dayInfo, unlocksData }) => {
 	const dateStr = dayInfo.date?.format('YYYY-MM-DD')
 	const dayData = dateStr ? unlocksData[dateStr] : undefined
-	const hasUnlocks = dayData && dayData.events && dayData.events.length > 0
+	const hasUnlocks = dayData !== undefined && dayData.events.length > 0
 	const isToday = dayInfo.date?.isSame(dayjs(), 'day')
 
 	return (
@@ -63,6 +63,7 @@ export const WeekDayColumn: React.FC<WeekDayColumnProps> = ({ dayInfo, unlocksDa
 										minimumCompactValue: 1_000_000,
 										compactSuffix: 'lowercase'
 									})}
+									{event.unit === 'week' ? ' / week' : ''}
 								</div>
 							</div>
 						</BasicLink>

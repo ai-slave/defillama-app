@@ -3,7 +3,7 @@ import { fetchCoinPrices as fetchCoinPricesBatched } from '~/api/pricing'
 import { DATASETS_SERVER_URL } from '~/constants'
 import { buildUnlocksMultiSeriesChartForDateRange } from '~/containers/Unlocks/buildUnlocksMultiSeriesChart'
 import type { PrecomputedData, UnlocksData } from '~/containers/Unlocks/calendarTypes'
-import { batchFetchHistoricalPrices, capitalizeFirstLetter, getNDistinctColors, roundToNearestHalfHour } from '~/utils'
+import { batchFetchHistoricalPrices, capitalizeFirstLetter, getNDistinctColors } from '~/utils'
 import { fetchJson, getSlowJsonTimeoutMs } from '~/utils/async'
 import type { IEmissionsHistoricalPrices, ITokenListEntry } from '~/utils/metadata/types'
 import { buildUnlocksHistoricalPriceRequests } from '~/utils/unlocks/historicalPriceRequests'
@@ -16,13 +16,13 @@ import type {
 	ProtocolEmission,
 	ProtocolEmissionChartData,
 	ProtocolEmissionDetail,
-	TokenAllocationPayload,
 	TokenAllocationSplit,
 	TokenIncentiveChartPoint
 } from './api.types'
-import type { CalendarUnlockEvent } from './calendarTypes'
+import { isWeeklyRateCalendarEvent, type CalendarUnlockEvent } from './calendarTypes'
 import { buildEmissionProjectionModel } from './emissionsChartData'
-import type { ProtocolEmissionResult } from './types'
+import { getEmissionEventAmount, isUnknownEmissionEvent } from './eventAmount'
+import type { EmptyProtocolEmissionResult, ProtocolEmissionResult } from './types'
 
 type UnlockTokenlistEntry = Pick<ITokenListEntry, 'current_price' | 'symbol'>
 type UnlockTokenlist = Record<string, UnlockTokenlistEntry | undefined>
@@ -36,12 +36,10 @@ let unlockTokenlistPromise: Promise<UnlockTokenlist> | null = null
 function buildEmissionsDataset(chartData: Array<EmissionsChartRow>, stacks: string[]): EmissionsDataset {
 	const source: EmissionsDataset['source'] = []
 	for (const input of chartData) {
-		const row = new Array<number | null>(stacks.length + 1)
-		row[0] = input.timestamp
+		const row: EmissionsDataset['source'][number] = [input.timestamp]
 		for (let stackIndex = 0; stackIndex < stacks.length; stackIndex++) {
-			const stack = stacks[stackIndex]
-			if (stack === undefined) continue
-			row[stackIndex + 1] = input[stack] ?? null
+			const stack = stacks[stackIndex]!
+			row.push(input[stack] ?? null)
 		}
 		source.push(row)
 	}
@@ -52,19 +50,22 @@ function buildEmissionsDataset(chartData: Array<EmissionsChartRow>, stacks: stri
 }
 
 function buildEmissionsCharts(stacks: string[], colors: Record<string, string>): EmissionsChartConfig {
-	return stacks.map((name, index) => {
+	const charts: EmissionsChartConfig = []
+	for (let index = 0; index < stacks.length; index++) {
+		const name = stacks[index]!
 		const color = colors[name]
-		return {
-			type: 'line' as const,
+		charts.push({
+			type: 'line',
 			name,
-			encode: { x: 0 as const, y: index + 1 },
+			encode: { x: 0, y: index + 1 },
 			...(color !== undefined ? { color } : {}),
 			stack: 'A'
-		}
-	})
+		})
+	}
+	return charts
 }
 
-function formatEmissionLabel(label: string | undefined): string {
+function formatEmissionLabel(label: string): string {
 	if (!label) return ''
 	return label
 		.split(' ')
@@ -72,36 +73,15 @@ function formatEmissionLabel(label: string | undefined): string {
 		.join(' ')
 }
 
-function roundEmissionEvents(events: EmissionEvent[] | undefined | null): EmissionEvent[] {
-	if (!events?.length) return []
-	let roundedEvents: EmissionEvent[] | null = null
-	for (let index = 0; index < events.length; index++) {
-		const event = events[index]
-		if (event === undefined) continue
-		const timestamp = roundToNearestHalfHour(event.timestamp)
-		if (timestamp === event.timestamp) {
-			roundedEvents?.push(event)
-			continue
-		}
-		if (!roundedEvents) roundedEvents = events.slice(0, index)
-		roundedEvents.push({ ...event, timestamp })
-	}
-	return roundedEvents ?? events
-}
-
 const EMPTY_TOKEN_ALLOCATION_SPLIT: TokenAllocationSplit = {
 	current: {},
-	final: {}
+	final: {},
+	progress: {},
+	bySection: { current: {}, final: {}, progress: {} }
 }
 
-function normalizeTokenAllocation(input: TokenAllocationPayload | null | undefined): TokenAllocationSplit {
-	if (!input) return EMPTY_TOKEN_ALLOCATION_SPLIT
-	if (isTokenAllocationSplit(input)) return input
-	return { current: { ...input }, final: { ...input } }
-}
-
-function isTokenAllocationSplit(input: TokenAllocationPayload): input is TokenAllocationSplit {
-	return typeof input.current === 'object' && typeof input.final === 'object'
+function getTokenAllocation(input: TokenAllocationSplit | undefined): TokenAllocationSplit {
+	return input ?? EMPTY_TOKEN_ALLOCATION_SPLIT
 }
 
 function isPositiveNumber(value: number | null | undefined): value is number {
@@ -156,14 +136,14 @@ async function fetchCurrentUnlockPrices({
 	protocols,
 	tokenlist
 }: {
-	protocols: Array<{ gecko_id?: string | null }>
+	protocols: Array<Pick<ProtocolEmission, 'gecko_id'>>
 	tokenlist?: UnlockTokenlist
 }): Promise<Record<string, UnlockCurrentPrice | undefined>> {
 	const prices: Record<string, UnlockCurrentPrice | undefined> = {}
 	const geckoIds = new Set<string>()
 
 	for (const protocol of protocols) {
-		const geckoId = protocol?.gecko_id
+		const geckoId = protocol.gecko_id
 		if (geckoId) geckoIds.add(geckoId)
 	}
 
@@ -200,8 +180,9 @@ function buildEmissionsSeriesAndCategories(input: ProtocolEmissionChartData | nu
 	const seen = new Set<string>()
 	const tbdSections: string[] = []
 	const forecastSections: string[] = []
+	if (!input) return { series, categories, tbdSections, forecastSections }
 
-	for (const emission of input?.data ?? []) {
+	for (const emission of input.data) {
 		const label = formatEmissionLabel(emission.label)
 		if (!label) continue
 
@@ -211,11 +192,11 @@ function buildEmissionsSeriesAndCategories(input: ProtocolEmissionChartData | nu
 		}
 		// Projection is a series-level property duplicated on every live API point.
 		// Read the first point once instead of checking it in the row-construction loop.
-		const firstValue = emission.data?.[0]
+		const firstValue = emission.data[0]
 		if (firstValue?.isTBD) tbdSections.push(label)
 		else if (firstValue?.isForecast) forecastSections.push(label)
 
-		for (const value of emission.data ?? []) {
+		for (const value of emission.data) {
 			const ts = value.timestamp
 			let entry = series.get(ts)
 			if (!entry) {
@@ -223,7 +204,7 @@ function buildEmissionsSeriesAndCategories(input: ProtocolEmissionChartData | nu
 				series.set(ts, createdEntry)
 				entry = createdEntry
 			}
-			entry[label] = value.unlocked ?? null
+			entry[label] = value.unlocked
 		}
 	}
 
@@ -246,8 +227,7 @@ function seriesToChartRows(series: Map<number, Record<string, number | null>>): 
 
 function buildPieFromChart(chart: EmissionsChartRow[]): Array<{ name: string; value: number }> {
 	if (!chart.length) return []
-	const last = chart[chart.length - 1]
-	if (!last) return []
+	const last = chart[chart.length - 1]!
 	const pie: Array<{ name: string; value: number }> = []
 	for (const key in last) {
 		if (key !== 'timestamp') {
@@ -265,7 +245,7 @@ function buildColorsForPie(
 	colorFrom: Record<string, string> = {}
 ): Record<string, string> {
 	const colors: Record<string, string> = {}
-	const names = new Set(pie.map((p) => p.name))
+	const names = new Set(pie.map((entry) => entry.name))
 	const baseNameCache = new Map<string, string>()
 	const baseNameOf = (name: string): string => {
 		const cached = baseNameCache.get(name)
@@ -279,10 +259,8 @@ function buildColorsForPie(
 			const next = colorFrom[current]
 			if (!next || !names.has(next)) break
 			if (seen.has(next)) {
-				const cycle = [...visited, current, next].filter((item, index, arr) => arr.indexOf(item) === index)
-				const cycleStart = cycle.toSorted()[0]
-				if (!cycleStart) throw new Error('Emission color cycle is unexpectedly empty')
-				current = cycleStart
+				const cycle = [...visited, current, next].filter((item, index, values) => values.indexOf(item) === index)
+				current = cycle.toSorted()[0]!
 				break
 			}
 			visited.push(current)
@@ -290,26 +268,19 @@ function buildColorsForPie(
 			current = next
 		}
 
-		for (const visitedName of visited) {
-			baseNameCache.set(visitedName, current)
-		}
+		for (const visitedName of visited) baseNameCache.set(visitedName, current)
 		baseNameCache.set(name, current)
 		return current
 	}
-	const primary = pie.filter((p) => baseNameOf(p.name) === p.name)
+
+	const primary = pie.filter((entry) => baseNameOf(entry.name) === entry.name)
 	const palette = getNDistinctColors(primary.length)
 	for (let index = 0; index < primary.length; index++) {
-		const entry = primary[index]
-		if (entry === undefined) continue
-		const color = palette[index]
-		if (!color) throw new Error(`Missing emission pie color at index ${index}`)
-		colors[entry.name] = color
+		colors[primary[index]!.name] = palette[index]!
 	}
-	for (const p of pie) {
-		if (colors[p.name]) continue
-		const base = baseNameOf(p.name)
-		const color = colors[base]
-		if (color) colors[p.name] = color
+	for (const entry of pie) {
+		if (colors[entry.name]) continue
+		colors[entry.name] = colors[baseNameOf(entry.name)]!
 	}
 	return colors
 }
@@ -326,14 +297,17 @@ export async function getProtocolEmissionsCharts(protocolName: string): Promise<
 	}
 	unlockUsdChart: TokenIncentiveChartPoint[] | null
 }> {
-	const empty = { chartData: { documented: [], realtime: [] }, unlockUsdChart: null }
+	const empty = {
+		chartData: { documented: [], realtime: [] },
+		unlockUsdChart: null
+	}
 	if (!protocolName) return empty
 
 	const res = await fetchProtocolEmission(protocolName)
 	if (!res) return empty
 
-	const documentedData = res.documentedData ?? {}
-	const realTimeData = res.realTimeData ?? {}
+	const documentedData = res.documentedData
+	const realTimeData = res.realTimeData
 
 	const documented = buildEmissionsSeriesAndCategories(documentedData).series
 	const realtime = buildEmissionsSeriesAndCategories(realTimeData).series
@@ -343,17 +317,22 @@ export async function getProtocolEmissionsCharts(protocolName: string): Promise<
 
 	return {
 		chartData: { documented: documentedChart, realtime: realtimeChart },
-		unlockUsdChart: res.unlockUsdChart ?? null
+		unlockUsdChart: res.unlockUsdChart
 	}
 }
 
-export async function getProtocolEmissionsScheduleData(protocolName: string): Promise<{
+interface ProtocolEmissionsScheduleData {
 	datasets: { documented: EmissionsDataset; realtime: EmissionsDataset }
-	chartsConfigs: { documented: EmissionsChartConfig; realtime: EmissionsChartConfig }
+	chartsConfigs: {
+		documented: EmissionsChartConfig
+		realtime: EmissionsChartConfig
+	}
 	categories: { documented: string[]; realtime: string[] }
 	hallmarks: { documented: [number, string][]; realtime: [number, string][] }
-}> {
-	const empty = {
+}
+
+export async function getProtocolEmissionsScheduleData(protocolName: string): Promise<ProtocolEmissionsScheduleData> {
+	const empty: ProtocolEmissionsScheduleData = {
 		datasets: {
 			documented: { source: [], dimensions: ['timestamp'] },
 			realtime: { source: [], dimensions: ['timestamp'] }
@@ -366,9 +345,12 @@ export async function getProtocolEmissionsScheduleData(protocolName: string): Pr
 	const res = await fetchProtocolEmission(protocolName)
 	if (!res) return empty
 
-	const documentedBuilt = buildEmissionsSeriesAndCategories(res.documentedData ?? {})
-	const realtimeBuilt = buildEmissionsSeriesAndCategories(res.realTimeData ?? {})
-	const categories = { documented: documentedBuilt.categories, realtime: realtimeBuilt.categories }
+	const documentedBuilt = buildEmissionsSeriesAndCategories(res.documentedData)
+	const realtimeBuilt = buildEmissionsSeriesAndCategories(res.realTimeData)
+	const categories = {
+		documented: documentedBuilt.categories,
+		realtime: realtimeBuilt.categories
+	}
 
 	const documentedChart = seriesToChartRows(documentedBuilt.series)
 	const realtimeChart = seriesToChartRows(realtimeBuilt.series)
@@ -377,20 +359,16 @@ export async function getProtocolEmissionsScheduleData(protocolName: string): Pr
 	const documentedPalette = getNDistinctColors(categories.documented.length)
 	const documentedColors: Record<string, string> = {}
 	for (let index = 0; index < categories.documented.length; index++) {
-		const category = categories.documented[index]
-		if (category === undefined) continue
-		const color = documentedPalette[index]
-		if (!color) throw new Error(`Missing documented emission color at index ${index}`)
+		const category = categories.documented[index]!
+		const color = documentedPalette[index]!
 		documentedColors[category] = color
 	}
 
 	const realtimePalette = getNDistinctColors(categories.realtime.length)
 	const realtimeColors: Record<string, string> = {}
 	for (let index = 0; index < categories.realtime.length; index++) {
-		const category = categories.realtime[index]
-		if (category === undefined) continue
-		const color = realtimePalette[index]
-		if (!color) throw new Error(`Missing realtime emission color at index ${index}`)
+		const category = categories.realtime[index]!
+		const color = realtimePalette[index]!
 		realtimeColors[category] = color
 	}
 
@@ -404,8 +382,8 @@ export async function getProtocolEmissionsScheduleData(protocolName: string): Pr
 	}
 
 	const nowSec = Date.now() / 1000
-	const documentedHasData = (res.documentedData?.data?.length ?? 0) > 0
-	const realtimeHasData = (res.realTimeData?.data?.length ?? 0) > 0
+	const documentedHasData = res.documentedData.data.length > 0
+	const realtimeHasData = res.realTimeData !== undefined && res.realTimeData.data.length > 0
 
 	return {
 		datasets,
@@ -418,16 +396,7 @@ export async function getProtocolEmissionsScheduleData(protocolName: string): Pr
 	}
 }
 
-interface ProtocolEmissionMeta {
-	name?: string
-	token?: string
-	gecko_id?: string | null
-	events?: EmissionEvent[] | null
-	tPrice?: number | null
-	tSymbol?: string | null
-	totalLocked?: number | null
-	maxSupply?: number | null
-}
+type ProtocolEmissionSupplyMeta = Pick<ProtocolEmission, 'totalLocked' | 'maxSupply'>
 
 export async function getProtocolEmissionsPieData(
 	protocolName: string,
@@ -437,20 +406,23 @@ export async function getProtocolEmissionsPieData(
 		documented: Array<{ name: string; value: number }>
 		realtime: Array<{ name: string; value: number }>
 	}
-	stackColors: { documented: Record<string, string>; realtime: Record<string, string> }
-	meta: ProtocolEmissionMeta
+	stackColors: {
+		documented: Record<string, string>
+		realtime: Record<string, string>
+	}
+	meta: ProtocolEmissionSupplyMeta | null
 }> {
 	const empty = {
 		pieChartData: { documented: [], realtime: [] },
 		stackColors: { documented: {}, realtime: {} },
-		meta: {}
+		meta: null
 	}
 
 	const res = await fetchProtocolEmission(protocolName)
 	if (!res) return empty
 
-	const documentedBuilt = buildEmissionsSeriesAndCategories(res.documentedData ?? {})
-	const realtimeBuilt = buildEmissionsSeriesAndCategories(res.realTimeData ?? {})
+	const documentedBuilt = buildEmissionsSeriesAndCategories(res.documentedData)
+	const realtimeBuilt = buildEmissionsSeriesAndCategories(res.realTimeData)
 
 	const documentedChart = seriesToChartRows(documentedBuilt.series)
 	const realtimeChart = seriesToChartRows(realtimeBuilt.series)
@@ -459,37 +431,28 @@ export async function getProtocolEmissionsPieData(
 		documented: buildPieFromChart(documentedChart),
 		realtime: buildPieFromChart(realtimeChart)
 	}
-	const colorFromMap = extractColorFromMap(res)
+	const colorFrom = extractColorFromMap(res)
 	const stackColors = {
-		documented: buildColorsForPie(pieChartData.documented, colorFromMap),
-		realtime: buildColorsForPie(pieChartData.realtime, colorFromMap)
+		documented: buildColorsForPie(pieChartData.documented, colorFrom),
+		realtime: buildColorsForPie(pieChartData.realtime, colorFrom)
 	}
 
-	const token = res.metadata?.token
-	const meta =
-		includeSupplyMeta && token
-			? ((await fetchAllProtocolEmissions()).find((protocol) => protocol.token === token) ?? {})
-			: {}
+	const token = res.metadata.token
+	const meta = includeSupplyMeta
+		? ((await fetchAllProtocolEmissions()).find((protocol) => protocol.token === token) ?? null)
+		: null
 
 	return { pieChartData, stackColors, meta }
 }
 
-type UnlockCalendarProtocolEvent = {
-	timestamp: number
-	noOfTokens: number[]
-	description?: string
-	category?: string
-}
-
-export function buildUnlockTypesByTimestamp(
-	allEventsForProtocol: readonly UnlockCalendarProtocolEvent[]
-): Map<number, string> {
+export function buildUnlockTypesByTimestamp(allEventsForProtocol: readonly EmissionEvent[]): Map<number, string> {
 	const nowSec = Math.floor(Date.now() / 1000)
 	const unlockTypes = new Map<number, string>()
 	// The emissions API contract is timestamp-ascending. Filtering preserves that
 	// order, so classify adjacent future events without copying or re-sorting.
-	let event: UnlockCalendarProtocolEvent | undefined
+	let event: EmissionEvent | undefined
 	for (const nextEvent of allEventsForProtocol) {
+		if (nextEvent.noOfTokens.length === 0) continue
 		if (!event) {
 			event = nextEvent
 			continue
@@ -513,8 +476,8 @@ export async function getUnlocksCalendarStaticPropsData(): Promise<{
 }> {
 	// Import dayjs lazily to keep this server-oriented builder isolated.
 	const dayjs = (await import('dayjs')).default
-	const isBetweenPlugin = (await import('dayjs/plugin/isBetween')).default
-	dayjs.extend(isBetweenPlugin)
+	const utcPlugin = (await import('dayjs/plugin/utc')).default
+	dayjs.extend(utcPlugin)
 
 	const data = await getAllProtocolEmissionsWithHistory()
 	const unlocksData: UnlocksData = {}
@@ -526,102 +489,123 @@ export async function getUnlocksCalendarStaticPropsData(): Promise<{
 		monthCharts: {}
 	}
 
-	for (const protocol of data ?? []) {
-		if (!protocol?.events || protocol.tPrice == null) continue
+	for (const protocol of data) {
+		if (protocol.tPrice == null || protocol.tPrice <= 0) continue
 
-		const validEvents = protocol.events.filter((event: EmissionEvent) => event.noOfTokens.length > 0)
-		const unlockTypesByTimestamp = buildUnlockTypesByTimestamp(validEvents)
+		const unlockTypesByTimestamp = buildUnlockTypesByTimestamp(protocol.events)
 
+		type ProtocolCalendarEntry = {
+			value: number
+			details: string[]
+			unlockTypes: string[]
+			category?: string
+		}
 		const protocolUnlocksByDate: Record<
 			string,
-			{ value: number; details: string[]; unlockTypes: string[]; category?: string }
+			{
+				one_time?: ProtocolCalendarEntry
+				weekly_rate?: ProtocolCalendarEntry
+			}
 		> = {}
 
-		for (const event of validEvents) {
-			let totalTokens = 0
-			for (const amount of event.noOfTokens) totalTokens += amount
-			if (totalTokens === 0) continue
+		for (const event of protocol.events) {
+			const totalTokens = getEmissionEventAmount(event)
+			if (totalTokens === null || totalTokens <= 0) continue
 
 			const valueUSD = totalTokens * protocol.tPrice
 			const dateStr = new Date(event.timestamp * 1000).toISOString().slice(0, 10)
 			const unlockType = unlockTypesByTimestamp.get(event.timestamp) ?? ''
-
+			const valueUnit = event.unlockType === 'linear' ? 'weekly_rate' : 'one_time'
+			const dailyEntries = protocolUnlocksByDate[dateStr] ?? (protocolUnlocksByDate[dateStr] = {})
 			const entry =
-				protocolUnlocksByDate[dateStr] ??
-				(protocolUnlocksByDate[dateStr] = { value: 0, details: [], unlockTypes: [], category: event.category || '' })
+				dailyEntries[valueUnit] ??
+				(dailyEntries[valueUnit] = {
+					value: 0,
+					details: [],
+					unlockTypes: [],
+					category: event.category
+				})
 
 			entry.value += valueUSD
-			entry.details.push(event.description || 'Token unlock')
+			entry.details.push(event.description)
 			entry.unlockTypes.push(unlockType)
-			if (event.category) entry.category = event.category
+			entry.category = event.category
 		}
 
 		for (const dateStr in protocolUnlocksByDate) {
-			const dailyData = protocolUnlocksByDate[dateStr]
-			if (dailyData === undefined) continue
+			const dailyEntries = protocolUnlocksByDate[dateStr]!
 			const unlockDay = unlocksData[dateStr] ?? { totalValue: 0, events: [] }
 			unlocksData[dateStr] = unlockDay
 
-			unlockDay.totalValue += dailyData.value
-			unlockDay.events.push({
-				protocol: protocol.name,
-				geckoId: protocol.gecko_id ?? null,
-				value: dailyData.value,
-				details: dailyData.details.join(', '),
-				unlockType: dailyData.unlockTypes.find((type) => type !== '') || '',
-				...(dailyData.category !== undefined ? { category: dailyData.category } : {})
-			})
+			for (const valueUnit of ['one_time', 'weekly_rate'] as const) {
+				const dailyData = dailyEntries[valueUnit]
+				if (dailyData === undefined) continue
+				if (valueUnit === 'one_time') unlockDay.totalValue += dailyData.value
+				const calendarEvent = {
+					protocol: protocol.name,
+					geckoId: protocol.gecko_id ?? null,
+					value: dailyData.value,
+					details: dailyData.details.join(', '),
+					unlockType: dailyData.unlockTypes.find((type) => type !== '') || '',
+					...(dailyData.category !== undefined ? { category: dailyData.category } : {})
+				}
+				if (valueUnit === 'weekly_rate') unlockDay.events.push({ ...calendarEvent, unit: 'week' })
+				else unlockDay.events.push(calendarEvent)
+			}
 		}
 	}
 
-	const unlockEntries: Array<[string, UnlocksData[string]]> = []
-	for (const dateStr in unlocksData) {
-		const dailyData = unlocksData[dateStr]
-		if (dailyData === undefined) continue
-		dailyData.events = dailyData.events.toSorted((a, b) => b.value - a.value)
-		unlockEntries.push([dateStr, dailyData])
-	}
-	const currentYear = new Date().getFullYear()
+	const currentYear = new Date().getUTCFullYear()
 	for (let year = currentYear - 1; year <= currentYear + 2; year++) {
 		for (let month = 0; month < 12; month++) {
-			const startOfMonth = dayjs().year(year).month(month).startOf('month')
-			const endOfMonth = startOfMonth.endOf('month')
-			const monthKey = `${year}-${month.toString().padStart(2, '0')}`
-
-			let maxValue = 0
-			for (const [dateStr, dailyData] of unlockEntries) {
-				const date = dayjs(dateStr)
-				if (date.isBetween(startOfMonth.subtract(1, 'day'), endOfMonth.add(1, 'day'))) {
-					if (dailyData.totalValue > maxValue) maxValue = dailyData.totalValue
-				}
-			}
-
-			precomputedData.monthlyMaxValues[monthKey] = maxValue
+			precomputedData.monthlyMaxValues[`${year}-${month.toString().padStart(2, '0')}`] = 0
 		}
 	}
 
-	const now = dayjs()
-	for (let i = 0; i < 6; i++) {
-		const startDate = now.add(i * 30, 'days').startOf('day')
-		const endDate = startDate.add(30, 'days')
-		const startDateKey = startDate.format('YYYY-MM-DD')
-
+	const now = new Date()
+	const todayUtcMs = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+	const listWindowEvents = new Array<Array<{ date: string; event: CalendarUnlockEvent }>>(6)
+	for (let windowIndex = 0; windowIndex < 6; windowIndex++) {
+		const start = new Date(todayUtcMs + windowIndex * 30 * 86_400_000)
+		const startKey = start.toISOString().slice(0, 10)
 		const events: Array<{ date: string; event: CalendarUnlockEvent }> = []
-		for (const [dateStr, dailyData] of unlockEntries) {
-			const date = dayjs(dateStr)
-			if (date.isBetween(startDate.subtract(1, 'day'), endDate)) {
-				for (const event of dailyData.events) events.push({ date: dateStr, event })
+		listWindowEvents[windowIndex] = events
+		precomputedData.listEvents[startKey] = events
+	}
+
+	for (const dateStr in unlocksData) {
+		const dailyData = unlocksData[dateStr]!
+		dailyData.events = dailyData.events.toSorted((a, b) => {
+			const aIsWeeklyRate = isWeeklyRateCalendarEvent(a)
+			const bIsWeeklyRate = isWeeklyRateCalendarEvent(b)
+			if (aIsWeeklyRate !== bIsWeeklyRate) return aIsWeeklyRate ? 1 : -1
+			return b.value - a.value
+		})
+
+		const year = Number(dateStr.slice(0, 4))
+		const month = Number(dateStr.slice(5, 7)) - 1
+		if (year >= currentYear - 1 && year <= currentYear + 2 && month >= 0 && month < 12) {
+			const monthKey = `${year}-${month.toString().padStart(2, '0')}`
+			if (dailyData.totalValue > precomputedData.monthlyMaxValues[monthKey]!) {
+				precomputedData.monthlyMaxValues[monthKey] = dailyData.totalValue
 			}
 		}
 
-		precomputedData.listEvents[startDateKey] = events.toSorted(
-			(a, b) => dayjs(a.date).valueOf() - dayjs(b.date).valueOf()
-		)
+		const dateMs = Date.parse(`${dateStr}T00:00:00Z`)
+		const dayOffset = Math.floor((dateMs - todayUtcMs) / 86_400_000)
+		if (dayOffset >= 0 && dayOffset < 180) {
+			const windowEvents = listWindowEvents[Math.floor(dayOffset / 30)]!
+			for (const event of dailyData.events) windowEvents.push({ date: dateStr, event })
+		}
+	}
+	for (let windowIndex = 0; windowIndex < listWindowEvents.length; windowIndex++) {
+		const events = listWindowEvents[windowIndex]!
+		events.sort((a, b) => a.date.localeCompare(b.date))
 	}
 
 	// Precompute chart payloads for the current week/month so the client can render MultiSeriesChart
 	// without recomputing on first paint (still falls back to client computation for filtered views).
-	const weekStart = dayjs().startOf('week')
+	const weekStart = dayjs.utc().startOf('week')
 	const weekKey = weekStart.format('YYYY-MM-DD')
 	const weekDates = Array.from({ length: 7 }, (_, i) => weekStart.add(i, 'day').format('YYYY-MM-DD'))
 	precomputedData.weekCharts[weekKey] = buildUnlocksMultiSeriesChartForDateRange({
@@ -629,7 +613,7 @@ export async function getUnlocksCalendarStaticPropsData(): Promise<{
 		unlocksData
 	})
 
-	const monthStart = dayjs().startOf('month')
+	const monthStart = dayjs.utc().startOf('month')
 	const daysInMonth = monthStart.endOf('month').date()
 	const monthDates = Array.from({ length: daysInMonth }, (_, i) => monthStart.date(i + 1).format('YYYY-MM-DD'))
 	const monthKey = `${monthStart.year()}-${monthStart.month().toString().padStart(2, '0')}`
@@ -650,54 +634,45 @@ const getAllProtocolEmissionsWithHistory = async ({
 	endDate?: number
 	tokenlist?: UnlockTokenlist
 } = {}) => {
-	try {
-		const protocols = await fetchAllProtocolEmissions()
+	const protocols = await fetchAllProtocolEmissions()
 
-		const coinPrices = await fetchCurrentUnlockPrices({
-			protocols,
-			...(tokenlist !== undefined ? { tokenlist } : {})
+	const coinPrices = await fetchCurrentUnlockPrices({
+		protocols,
+		...(tokenlist !== undefined ? { tokenlist } : {})
+	})
+
+	const rows: Array<ProtocolEmission & { tPrice: number | null; tSymbol: string | null }> = []
+	for (const protocol of protocols) {
+		let events = protocol.events
+		if (startDate !== undefined || endDate !== undefined) {
+			events = []
+			for (const event of protocol.events) {
+				if (startDate !== undefined && event.timestamp < startDate) continue
+				if (endDate !== undefined && event.timestamp > endDate) continue
+				events.push(event)
+			}
+		}
+
+		const coin = protocol.gecko_id ? coinPrices[`coingecko:${protocol.gecko_id}`] : undefined
+		rows.push({
+			...protocol,
+			events,
+			tPrice: coin?.price ?? null,
+			tSymbol: coin?.symbol ?? null
 		})
-
-		return protocols
-			.map((protocol: ProtocolEmission) => {
-				try {
-					let filteredEvents = protocol.events || []
-					if (startDate) {
-						filteredEvents = filteredEvents.filter((e: EmissionEvent) => e.timestamp >= startDate)
-					}
-					if (endDate) {
-						filteredEvents = filteredEvents.filter((e: EmissionEvent) => e.timestamp <= endDate)
-					}
-
-					const coin = coinPrices[`coingecko:${protocol.gecko_id}`]
-
-					return {
-						...protocol,
-						events: filteredEvents,
-						tPrice: coin?.price ?? null,
-						tSymbol: coin?.symbol ?? null
-					}
-				} catch (e) {
-					console.log('error', protocol.name, e)
-					return null
-				}
-			})
-			.filter(<T>(x: T | null): x is T => x !== null)
-			.sort((a, b) => {
-				const x = a.events?.[0]?.timestamp
-				const y = b.events?.[0]?.timestamp
-				if (x === y) return 0
-				if (x == null) return 1
-				if (y == null) return -1
-				return x < y ? -1 : 1
-			})
-	} catch (e) {
-		console.log(e)
-		return []
 	}
+	rows.sort((a, b) => {
+		const x = a.events[0]?.timestamp
+		const y = b.events[0]?.timestamp
+		if (x === y) return 0
+		if (x == null) return 1
+		if (y == null) return -1
+		return x < y ? -1 : 1
+	})
+	return rows
 }
 
-type EnrichedProtocolEmission = ProtocolEmission & {
+export type EnrichedProtocolEmission = Omit<ProtocolEmission, 'unlockEvents'> & {
 	unlockEvents: null
 	upcomingEvent: EmissionEvent[]
 	events: EmissionEvent[]
@@ -722,140 +697,137 @@ export const getAllProtocolEmissions = async ({
 	tokenlist?: UnlockTokenlist
 	emissionsHistoricalPrices?: IEmissionsHistoricalPrices
 } = {}) => {
-	try {
-		const protocols = await fetchAllProtocolEmissions()
-		const nowSec = Date.now() / 1000
+	const protocols = await fetchAllProtocolEmissions()
+	const nowSec = Date.now() / 1000
 
-		const coinPrices = await fetchCurrentUnlockPrices({
-			protocols,
-			...(tokenlist !== undefined ? { tokenlist } : {})
-		})
-		const { priceReqs, hasPriceRequests, lastPastTimestampByCoinKey } = buildUnlocksHistoricalPriceRequests(
-			protocols,
-			nowSec
-		)
-		let historicalPrices: UnlockHistoricalPricesByCoin = {}
-		if (getHistoricalPrices) {
-			if (emissionsHistoricalPrices !== undefined) {
-				for (const coin in emissionsHistoricalPrices) {
-					const prices = emissionsHistoricalPrices[coin]
-					if (prices !== undefined) historicalPrices[coin] = prices
-				}
-			}
-
-			if (hasPriceRequests) {
-				const missingPriceReqs: Record<string, number[]> = {}
-				let hasMissingPriceRequests = false
-
-				for (const coin in priceReqs) {
-					if (historicalPrices[coin]?.prices?.length) continue
-					const requests = priceReqs[coin]
-					if (requests === undefined) continue
-					missingPriceReqs[coin] = requests
-					hasMissingPriceRequests = true
-				}
-
-				if (hasMissingPriceRequests) {
-					Object.assign(historicalPrices, (await batchFetchHistoricalPrices(missingPriceReqs)).results)
-				}
+	const coinPrices = await fetchCurrentUnlockPrices({
+		protocols,
+		...(tokenlist !== undefined ? { tokenlist } : {})
+	})
+	const { priceReqs, hasPriceRequests, lastPastTimestampByCoinKey } = buildUnlocksHistoricalPriceRequests(
+		protocols,
+		nowSec
+	)
+	let historicalPrices: UnlockHistoricalPricesByCoin = {}
+	if (getHistoricalPrices) {
+		if (emissionsHistoricalPrices !== undefined) {
+			for (const coin in emissionsHistoricalPrices) {
+				const prices = emissionsHistoricalPrices[coin]
+				if (prices !== undefined) historicalPrices[coin] = prices
 			}
 		}
 
-		const rows: EnrichedProtocolEmission[] = []
-		for (const protocol of protocols) {
-			try {
-				const geckoId = protocol?.gecko_id
-				const coinKey = geckoId ? `coingecko:${geckoId}` : null
+		if (hasPriceRequests) {
+			const missingPriceReqs: Record<string, number[]> = {}
+			let hasMissingPriceRequests = false
 
-				const events = roundEmissionEvents(protocol.events)
+			for (const coin in priceReqs) {
+				if (historicalPrices[coin]?.prices?.length) continue
+				const requests = priceReqs[coin]
+				if (requests === undefined) continue
+				missingPriceReqs[coin] = requests
+				hasMissingPriceRequests = true
+			}
 
-				// Upcoming event: choose the earliest upcoming event with non-zero tokens.
-				let upcomingTimestamp: number | null = null
-				for (const e of events) {
-					const ts = e.timestamp
-					if (ts < nowSec) continue
-					if (e.hasUnknownTokenAmount) continue
-					if (e?.noOfTokens?.length === 1 && e.noOfTokens[0] === 0) continue
-					if (upcomingTimestamp === null || ts < upcomingTimestamp) upcomingTimestamp = ts
-				}
-
-				const upcomingEvent: EmissionEvent[] = []
-				if (upcomingTimestamp !== null) {
-					for (const event of events) {
-						if (event.timestamp === upcomingTimestamp && !event.hasUnknownTokenAmount) {
-							upcomingEvent.push(event)
-						}
-					}
-				}
-
-				const lastPastTimestamp = coinKey ? lastPastTimestampByCoinKey.get(coinKey) : undefined
-				const lastEvent: EmissionEvent[] = []
-				if (typeof lastPastTimestamp === 'number') {
-					for (const event of events) {
-						if (
-							event.timestamp === lastPastTimestamp &&
-							!event.hasUnknownTokenAmount &&
-							event.category !== 'noncirculating' &&
-							event.category !== 'farming'
-						) {
-							lastEvent.push(event)
-						}
-					}
-				}
-
-				let filteredEvents = events
-				if (startDate) filteredEvents = filteredEvents.filter((e: EmissionEvent) => e.timestamp >= startDate)
-				if (endDate) filteredEvents = filteredEvents.filter((e: EmissionEvent) => e.timestamp <= endDate)
-
-				const coin = coinKey ? coinPrices[coinKey] : null
-				const tSymbol = coin?.symbol ?? null
-				const historicalPrice = coinKey ? historicalPrices[coinKey] : null
-
-				const formattedHistoricalPrice: Array<[number, number]> = []
-				if (lastEvent.length > 0 && historicalPrice?.prices) {
-					for (const price of historicalPrice.prices) {
-						formattedHistoricalPrice.push([price.timestamp * 1000, price.price])
-					}
-				}
-
-				rows.push({
-					...protocol,
-					// Reduce payload without mutating original object
-					unlockEvents: null,
-					upcomingEvent,
-					events: filteredEvents,
-					tPrice: coin?.price ?? null,
-					historicalPrice: formattedHistoricalPrice,
-					lastEvent,
-					tSymbol
-				})
-			} catch (e) {
-				console.log('error', protocol.name, e)
+			if (hasMissingPriceRequests) {
+				Object.assign(historicalPrices, (await batchFetchHistoricalPrices(missingPriceReqs)).results)
 			}
 		}
-		rows.sort((a, b) => {
-			const x = a.upcomingEvent?.[0]?.timestamp
-			const y = b.upcomingEvent?.[0]?.timestamp
-			// equal items sort equally
-			if (x === y) {
-				return 0
-			}
-
-			// nulls sort after anything else
-			if (x == null) {
-				return 1
-			}
-			if (y == null) {
-				return -1
-			}
-
-			return x < y ? -1 : 1
-		})
-		return rows
-	} catch (e) {
-		console.log(e)
-		return []
 	}
+
+	const rows: EnrichedProtocolEmission[] = []
+	for (const protocol of protocols) {
+		const geckoId = protocol.gecko_id
+		const coinKey = geckoId ? `coingecko:${geckoId}` : null
+
+		const events = protocol.events
+
+		// Upcoming event: choose the earliest upcoming event with non-zero tokens.
+		let upcomingTimestamp: number | null = null
+		for (const e of events) {
+			const ts = e.timestamp
+			if (ts < nowSec) continue
+			const amount = getEmissionEventAmount(e)
+			if (amount === null || amount <= 0) continue
+			if (upcomingTimestamp === null || ts < upcomingTimestamp) upcomingTimestamp = ts
+		}
+
+		const upcomingEvent: EmissionEvent[] = []
+		if (upcomingTimestamp !== null) {
+			for (const event of events) {
+				if (event.timestamp === upcomingTimestamp && !isUnknownEmissionEvent(event)) {
+					upcomingEvent.push(event)
+				}
+			}
+		}
+
+		const lastPastTimestamp = coinKey ? lastPastTimestampByCoinKey.get(coinKey) : undefined
+		const lastEvent: EmissionEvent[] = []
+		if (lastPastTimestamp !== undefined) {
+			for (const event of events) {
+				if (
+					event.timestamp === lastPastTimestamp &&
+					!isUnknownEmissionEvent(event) &&
+					event.category !== 'noncirculating' &&
+					event.category !== 'farming'
+				) {
+					lastEvent.push(event)
+				}
+			}
+		}
+
+		let filteredEvents = events
+		if (startDate !== undefined || endDate !== undefined) {
+			filteredEvents = []
+			for (const event of events) {
+				if (startDate !== undefined && event.timestamp < startDate) continue
+				if (endDate !== undefined && event.timestamp > endDate) continue
+				filteredEvents.push(event)
+			}
+		}
+
+		const coin = coinKey ? coinPrices[coinKey] : null
+		const tSymbol = coin?.symbol ?? null
+		const historicalPrice = coinKey ? historicalPrices[coinKey] : null
+
+		const formattedHistoricalPrice: Array<[number, number]> = []
+		if (lastEvent.length > 0 && historicalPrice?.prices) {
+			for (const price of historicalPrice.prices) {
+				formattedHistoricalPrice.push([price.timestamp * 1000, price.price])
+			}
+		}
+
+		rows.push({
+			...protocol,
+			// Reduce payload without mutating original object
+			unlockEvents: null,
+			upcomingEvent,
+			events: filteredEvents,
+			tPrice: coin?.price ?? null,
+			historicalPrice: formattedHistoricalPrice,
+			lastEvent,
+			tSymbol
+		})
+	}
+	rows.sort((a, b) => {
+		const x = a.upcomingEvent?.[0]?.timestamp
+		const y = b.upcomingEvent?.[0]?.timestamp
+		// equal items sort equally
+		if (x === y) {
+			return 0
+		}
+
+		// nulls sort after anything else
+		if (x == null) {
+			return 1
+		}
+		if (y == null) {
+			return -1
+		}
+
+		return x < y ? -1 : 1
+	})
+	return rows
 }
 
 const EMPTY_TBD_SECTIONS: string[] = []
@@ -864,18 +836,15 @@ const EMPTY_FORECAST_SECTIONS: string[] = []
 function extractColorFromMap(res: ProtocolEmissionDetail): Record<string, string> {
 	const sections = res.componentData?.sections
 	if (!sections) return {}
-	const map: Record<string, string> = {}
+	const colorFrom: Record<string, string> = {}
 	for (const name in sections) {
-		const section: (typeof sections)[string] | undefined = sections[name]
-		const target = section?.colorFrom
-		if (typeof target === 'string' && target && target !== name && sections[target]) {
-			map[name] = target
-		}
+		const source = sections[name]!.colorFrom
+		if (source) colorFrom[name] = source
 	}
-	return map
+	return colorFrom
 }
 
-export function createEmptyProtocolEmissionResult(): ProtocolEmissionResult {
+export function createEmptyProtocolEmissionResult(): EmptyProtocolEmissionResult {
 	return {
 		chartData: { documented: [], realtime: [] },
 		pieChartData: { documented: [], realtime: [] },
@@ -885,7 +854,7 @@ export function createEmptyProtocolEmissionResult(): ProtocolEmissionResult {
 			realtime: { source: [], dimensions: ['timestamp'] }
 		},
 		chartsConfigs: { documented: [], realtime: [] },
-		meta: {},
+		meta: null,
 		notes: [],
 		events: [],
 		token: null,
@@ -908,12 +877,10 @@ export function createEmptyProtocolEmissionResult(): ProtocolEmissionResult {
 	}
 }
 
-export function isEmptyProtocolEmissionResult(result: ProtocolEmissionResult | null | undefined): boolean {
-	if (!result) return true
-
-	return (
-		result.categories.documented.length === 0 && result.categories.realtime.length === 0 && result.events.length === 0
-	)
+export function isEmptyProtocolEmissionResult(
+	result: ProtocolEmissionResult | null | undefined
+): result is EmptyProtocolEmissionResult | null | undefined {
+	return result == null || result.name === null
 }
 
 export const getProtocolEmissons = async (
@@ -924,145 +891,146 @@ export const getProtocolEmissons = async (
 		tokenlist?: UnlockTokenlist
 	}
 ): Promise<ProtocolEmissionResult> => {
-	try {
-		const emptyResult = createEmptyProtocolEmissionResult()
-		if (!protocolName) return emptyResult
+	const emptyResult = createEmptyProtocolEmissionResult()
+	if (!protocolName) return emptyResult
 
-		const shouldCheckAvailability = !options?.skipAvailabilityCheck
-		if (
-			shouldCheckAvailability &&
-			options?.emissionsProtocolsList &&
-			!options.emissionsProtocolsList.includes(protocolName)
-		) {
-			return emptyResult
+	const shouldCheckAvailability = !options?.skipAvailabilityCheck
+	if (
+		shouldCheckAvailability &&
+		options?.emissionsProtocolsList &&
+		!options.emissionsProtocolsList.includes(protocolName)
+	) {
+		return emptyResult
+	}
+
+	const [res, allEmissions] = await Promise.all([
+		fetchProtocolEmission(protocolName),
+		fetchAllProtocolEmissions().catch(() => null)
+	])
+	if (!res) return emptyResult
+
+	const { metadata, name, futures } = res
+
+	const documentedData = res.documentedData
+	const realTimeData = res.realTimeData
+
+	const documentedBuilt = buildEmissionsSeriesAndCategories(documentedData)
+	const realtimeBuilt = buildEmissionsSeriesAndCategories(realTimeData)
+	const emissionCategories = {
+		documented: documentedBuilt.categories,
+		realtime: realtimeBuilt.categories
+	}
+	const projectionModel = buildEmissionProjectionModel({
+		chartSections: documentedBuilt.categories.concat(realtimeBuilt.categories),
+		categoriesBreakdown: res.categories,
+		sectionMetadata: res.componentData?.sections,
+		seriesTbdSections: documentedBuilt.tbdSections.concat(realtimeBuilt.tbdSections),
+		seriesForecastSections: documentedBuilt.forecastSections.concat(realtimeBuilt.forecastSections)
+	})
+
+	const chartData = {
+		documented: seriesToChartRows(documentedBuilt.series),
+		realtime: seriesToChartRows(realtimeBuilt.series)
+	}
+
+	const pieChartData = {
+		documented: buildPieFromChart(chartData.documented),
+		realtime: buildPieFromChart(chartData.realtime)
+	}
+
+	const colorFrom = extractColorFromMap(res)
+	const stackColors = {
+		documented: buildColorsForPie(pieChartData.documented, colorFrom),
+		realtime: buildColorsForPie(pieChartData.realtime, colorFrom)
+	}
+
+	const events = metadata.events
+	const nowSec = Date.now() / 1000
+
+	const tokenKey = metadata.token
+	const geckoId = res.gecko_id
+		? res.gecko_id
+		: tokenKey.startsWith('coingecko:')
+			? tokenKey.slice('coingecko:'.length)
+			: null
+	const coinKey = tokenKey || (geckoId ? `coingecko:${geckoId}` : null)
+	const tokenlistPrices = options?.tokenlist ?? (geckoId ? await fetchUnlockTokenlistPrices() : undefined)
+	const tokenlistPrice = getTokenlistCurrentPrice(geckoId, tokenlistPrices)
+	const prices: Record<string, UnlockCurrentPrice | undefined> =
+		coinKey && !tokenlistPrice
+			? await fetchCoinPricesBatched([coinKey], { searchWidth: '4h' }).catch((err) => {
+					console.log(err)
+					return {}
+				})
+			: {}
+
+	const tokenPriceData = tokenlistPrice ?? (coinKey ? prices[coinKey] : undefined)
+	const tokenPrice: { price?: number; symbol?: string } = {}
+	if (isPositiveNumber(tokenPriceData?.price)) tokenPrice.price = tokenPriceData.price
+	if (tokenPriceData?.symbol) tokenPrice.symbol = tokenPriceData.symbol
+
+	const upcomingEvent: EmissionEvent[] = []
+	let upcomingTimestamp: number | null = null
+	for (const event of events) {
+		if (event.timestamp < nowSec) continue
+		const amount = getEmissionEventAmount(event)
+		if (amount === null || amount <= 0) continue
+		upcomingTimestamp = event.timestamp
+		break
+	}
+	if (upcomingTimestamp !== null) {
+		for (const event of events) {
+			if (event.timestamp < upcomingTimestamp) continue
+			if (event.timestamp > upcomingTimestamp) break
+			if (!isUnknownEmissionEvent(event)) upcomingEvent.push(event)
 		}
+	}
 
-		const [res, allEmissions] = await Promise.all([
-			fetchProtocolEmission(protocolName),
-			fetchAllProtocolEmissions().catch(() => [])
-		])
+	if (protocolName === 'looksrare') {
+		tokenPrice.symbol = 'LOOKS'
+	}
 
-		if (!res) return emptyResult
+	// Pre-build MultiSeriesChart-ready datasets so consumers don't duplicate this work.
+	const datasets = {
+		documented: buildEmissionsDataset(chartData.documented, emissionCategories.documented),
+		realtime: buildEmissionsDataset(chartData.realtime, emissionCategories.realtime)
+	}
+	const chartsConfigs = {
+		documented: buildEmissionsCharts(emissionCategories.documented, stackColors.documented),
+		realtime: buildEmissionsCharts(emissionCategories.realtime, stackColors.realtime)
+	}
 
-		const { metadata, name, futures } = res
-
-		const documentedData = res.documentedData ?? {}
-		const realTimeData = res.realTimeData ?? {}
-
-		const documentedBuilt = buildEmissionsSeriesAndCategories(documentedData)
-		const realtimeBuilt = buildEmissionsSeriesAndCategories(realTimeData)
-		const emissionCategories = { documented: documentedBuilt.categories, realtime: realtimeBuilt.categories }
-		const projectionModel = buildEmissionProjectionModel({
-			chartSections: documentedBuilt.categories.concat(realtimeBuilt.categories),
-			categoriesBreakdown: res.categories ?? null,
-			sectionMetadata: res.componentData?.sections,
-			seriesTbdSections: documentedBuilt.tbdSections.concat(realtimeBuilt.tbdSections),
-			seriesForecastSections: documentedBuilt.forecastSections.concat(realtimeBuilt.forecastSections)
-		})
-
-		const chartData = {
-			documented: seriesToChartRows(documentedBuilt.series),
-			realtime: seriesToChartRows(realtimeBuilt.series)
+	return {
+		chartData,
+		pieChartData,
+		stackColors,
+		datasets,
+		chartsConfigs,
+		meta: allEmissions?.find((protocol) => protocol.token === metadata.token) ?? null,
+		notes: metadata.notes ?? [],
+		events,
+		token: metadata.token,
+		geckoId,
+		upcomingEvent,
+		tokenAllocation: {
+			documented: documentedData.tokenAllocation,
+			realtime: getTokenAllocation(realTimeData?.tokenAllocation)
+		},
+		futures: futures ?? {},
+		categories: emissionCategories,
+		categoriesBreakdown: projectionModel.categoriesBreakdown,
+		hallmarks: {
+			documented: documentedData.data.length > 0 ? [[nowSec, 'Today']] : [],
+			realtime: realTimeData && realTimeData.data.length > 0 ? [[nowSec, 'Today']] : []
+		},
+		name,
+		tokenPrice,
+		unlockUsdChart: res.unlockUsdChart,
+		tbdSections: projectionModel.tbdSections,
+		forecastSections: projectionModel.forecastSections,
+		insiders: {
+			methodology: res.insiders?.methodology ?? '',
+			addresses: res.insiders?.addresses ?? []
 		}
-
-		const pieChartData = {
-			documented: buildPieFromChart(chartData.documented),
-			realtime: buildPieFromChart(chartData.realtime)
-		}
-
-		const colorFromMap = extractColorFromMap(res)
-		const stackColors = {
-			documented: buildColorsForPie(pieChartData.documented, colorFromMap),
-			realtime: buildColorsForPie(pieChartData.realtime, colorFromMap)
-		}
-
-		const roundedEvents = roundEmissionEvents(metadata?.events)
-		const nowSec = Date.now() / 1000
-
-		const tokenKey = metadata?.token
-		const geckoId =
-			typeof res?.gecko_id === 'string' && res.gecko_id
-				? res.gecko_id
-				: typeof tokenKey === 'string' && tokenKey.startsWith('coingecko:')
-					? tokenKey.slice('coingecko:'.length)
-					: null
-		const coinKey = typeof tokenKey === 'string' && tokenKey ? tokenKey : geckoId ? `coingecko:${geckoId}` : null
-		const tokenlistPrices = options?.tokenlist ?? (geckoId ? await fetchUnlockTokenlistPrices() : undefined)
-		const tokenlistPrice = getTokenlistCurrentPrice(geckoId, tokenlistPrices)
-		const prices: Record<string, UnlockCurrentPrice | undefined> =
-			coinKey && !tokenlistPrice
-				? await fetchCoinPricesBatched([coinKey], { searchWidth: '4h' }).catch((err) => {
-						console.log(err)
-						return {}
-					})
-				: {}
-
-		const tokenPriceData = tokenlistPrice ?? (coinKey ? prices[coinKey] : undefined)
-		const tokenPrice: { price?: number; symbol?: string } = {}
-		if (isPositiveNumber(tokenPriceData?.price)) tokenPrice.price = tokenPriceData.price
-		if (typeof tokenPriceData?.symbol === 'string' && tokenPriceData.symbol) tokenPrice.symbol = tokenPriceData.symbol
-
-		let upcomingEvent: EmissionEvent[] = []
-		if (roundedEvents.length > 0) {
-			const event = roundedEvents.find(
-				(e) =>
-					e.timestamp >= nowSec && !e.hasUnknownTokenAmount && !(e.noOfTokens.length === 1 && e.noOfTokens[0] === 0)
-			)
-
-			if (event) {
-				upcomingEvent = roundedEvents.filter((e) => e.timestamp === event.timestamp && !e.hasUnknownTokenAmount)
-			}
-		}
-
-		if (protocolName === 'looksrare') {
-			tokenPrice.symbol = 'LOOKS'
-		}
-
-		// Pre-build MultiSeriesChart-ready datasets so consumers don't duplicate this work.
-		const datasets = {
-			documented: buildEmissionsDataset(chartData.documented, emissionCategories.documented),
-			realtime: buildEmissionsDataset(chartData.realtime, emissionCategories.realtime)
-		}
-		const chartsConfigs = {
-			documented: buildEmissionsCharts(emissionCategories.documented, stackColors.documented),
-			realtime: buildEmissionsCharts(emissionCategories.realtime, stackColors.realtime)
-		}
-
-		return {
-			chartData,
-			pieChartData,
-			stackColors,
-			datasets,
-			chartsConfigs,
-			meta: allEmissions?.find((p) => p?.token === metadata?.token) ?? {},
-			notes: metadata?.notes ?? [],
-			events: roundedEvents,
-			token: metadata?.token ?? null,
-			geckoId,
-			upcomingEvent,
-			tokenAllocation: {
-				documented: normalizeTokenAllocation(documentedData.tokenAllocation),
-				realtime: normalizeTokenAllocation(realTimeData.tokenAllocation)
-			},
-			futures: futures ?? {},
-			categories: emissionCategories,
-			categoriesBreakdown: projectionModel.categoriesBreakdown,
-			hallmarks: {
-				documented: (documentedData.data?.length ?? 0) > 0 ? [[nowSec, 'Today']] : [],
-				realtime: (realTimeData.data?.length ?? 0) > 0 ? [[nowSec, 'Today']] : []
-			},
-			name: name || null,
-			tokenPrice,
-			unlockUsdChart: res.unlockUsdChart ?? null,
-			tbdSections: projectionModel.tbdSections,
-			forecastSections: projectionModel.forecastSections,
-			insiders: {
-				methodology: res.insiders?.methodology ?? '',
-				addresses: res.insiders?.addresses ?? []
-			}
-		}
-	} catch (e) {
-		console.log(e)
-		return createEmptyProtocolEmissionResult()
 	}
 }

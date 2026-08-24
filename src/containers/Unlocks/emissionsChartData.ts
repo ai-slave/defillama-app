@@ -1,6 +1,7 @@
-import type { EmissionsChartRow, EmissionSectionMetadata } from './api.types'
+import type { EmissionsChartRow, ProtocolEmissionComponentSection } from './api.types'
 
 type Projection = 'tbd' | 'forecast'
+type ProjectionSectionMetadata = Pick<ProtocolEmissionComponentSection, 'isTBD' | 'isForecast' | 'colorFrom'>
 
 /**
  * Keep projection metadata attached only to series that the schedule chart can render.
@@ -16,7 +17,7 @@ export function buildEmissionProjectionModel({
 }: {
 	chartSections: string[]
 	categoriesBreakdown: Record<string, string[]> | null
-	sectionMetadata: Record<string, EmissionSectionMetadata> | undefined
+	sectionMetadata: Record<string, ProjectionSectionMetadata> | undefined
 	seriesTbdSections: string[]
 	seriesForecastSections: string[]
 }): {
@@ -33,7 +34,7 @@ export function buildEmissionProjectionModel({
 		groupedSections = {}
 		for (const group in categoriesBreakdown) {
 			const sections: string[] = []
-			for (const section of categoriesBreakdown[group]) {
+			for (const section of categoriesBreakdown[group]!) {
 				const chartSection = chartSectionByLowerName.get(section.toLowerCase())
 				if (!chartSection) continue
 				sections.push(chartSection)
@@ -48,10 +49,10 @@ export function buildEmissionProjectionModel({
 	const projectionBySection = new Map<string, Projection>()
 	for (const section of seriesForecastSections) projectionBySection.set(section.toLowerCase(), 'forecast')
 	for (const section of seriesTbdSections) projectionBySection.set(section.toLowerCase(), 'tbd')
-	const metadataBySection = new Map<string, EmissionSectionMetadata>()
+	const metadataBySection = new Map<string, ProjectionSectionMetadata>()
 	const metadataSections = sectionMetadata ?? {}
 	for (const metadataName in metadataSections) {
-		const metadata = metadataSections[metadataName]
+		const metadata = metadataSections[metadataName]!
 		const lowerName = metadataName.toLowerCase()
 		metadataBySection.set(lowerName, metadata)
 		if (metadata.isTBD) projectionBySection.set(lowerName, 'tbd')
@@ -64,7 +65,6 @@ export function buildEmissionProjectionModel({
 		const chartSection = chartSectionByLowerName.get(lowerName)
 		if (!chartSection) continue
 		const metadata = metadataBySection.get(lowerName)
-
 		const projectionSections = projection === 'tbd' ? tbdSections : forecastSections
 		projectionSections.push(chartSection)
 
@@ -76,11 +76,12 @@ export function buildEmissionProjectionModel({
 		if (!group) continue
 
 		const directGroup = groupBySection.get(chartSection.toLowerCase())
-		if (directGroup) {
-			groupedSections[directGroup] = groupedSections[directGroup].filter(
+		const directGroupSections = directGroup ? groupedSections[directGroup] : undefined
+		if (directGroup && directGroupSections) {
+			groupedSections[directGroup] = directGroupSections.filter(
 				(section) => section.toLowerCase() !== chartSection.toLowerCase()
 			)
-			if (groupedSections[directGroup].length === 0) delete groupedSections[directGroup]
+			if (groupedSections[directGroup]?.length === 0) delete groupedSections[directGroup]
 		}
 
 		const suffix = projection === 'tbd' ? 'TBD' : 'forecast'
@@ -99,14 +100,15 @@ export function processGroupedChartData(
 	const result = new Array<EmissionsChartRow>(chartData.length)
 
 	for (let i = 0; i < chartData.length; i++) {
-		const entry = chartData[i]
+		const entry = chartData[i]!
 		const valuesByLowerName = new Map<string, number | null>()
 		for (const key in entry) {
 			const lowerName = key.toLowerCase()
-			if (!valuesByLowerName.has(lowerName)) valuesByLowerName.set(lowerName, entry[key])
+			const value = entry[key]
+			if (!valuesByLowerName.has(lowerName) && value !== undefined) valuesByLowerName.set(lowerName, value)
 		}
 
-		const groupedEntry = { timestamp: entry.timestamp } as { timestamp: number } & Record<string, number | null>
+		const groupedEntry: EmissionsChartRow = { timestamp: entry.timestamp }
 		const price = entry.Price
 		if (price != null) groupedEntry.Price = price
 		const marketCap = entry['Market Cap']
@@ -114,7 +116,7 @@ export function processGroupedChartData(
 
 		for (const group in categoriesBreakdown) {
 			let total = 0
-			for (const category of categoriesBreakdown[group]) {
+			for (const category of categoriesBreakdown[group]!) {
 				total += valuesByLowerName.get(category.toLowerCase()) ?? 0
 			}
 			groupedEntry[group] = total
@@ -129,7 +131,7 @@ export function processGroupedChartData(
 export function sortStacksByVolatility(stacks: string[], chartData: EmissionsChartRow[]): string[] {
 	if (chartData.length < 2) return stacks
 
-	const volatility = {}
+	const volatility: Record<string, number> = {}
 	for (const stack of stacks) {
 		let min = Infinity
 		let max = -Infinity
@@ -146,5 +148,5 @@ export function sortStacksByVolatility(stacks: string[], chartData: EmissionsCha
 		volatility[stack] = max - min
 	}
 
-	return stacks.toSorted((a, b) => volatility[b] - volatility[a])
+	return stacks.toSorted((a, b) => volatility[b]! - volatility[a]!)
 }

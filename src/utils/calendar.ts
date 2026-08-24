@@ -6,10 +6,6 @@ dayjs.extend(utc)
 
 interface UnlockEvent {
 	timestamp: number
-	name: string
-	description: string
-	symbol: string
-	noOfTokens: number[]
 }
 
 function formatGoogleCalendarDates(timestamp: number) {
@@ -18,7 +14,7 @@ function formatGoogleCalendarDates(timestamp: number) {
 	return `${start.format('YYYYMMDD[T]HHmmss[Z]')}/${end.format('YYYYMMDD[T]HHmmss[Z]')}`
 }
 
-export function generateGoogleCalendarUrl(event: UnlockEvent, tokenName: string, tokenValue: number) {
+export function generateGoogleCalendarUrl(event: UnlockEvent, tokenName: string, tokenValue: string) {
 	const params = {
 		text: `${tokenName} Unlock`,
 		dates: formatGoogleCalendarDates(event.timestamp),

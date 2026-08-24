@@ -1,46 +1,136 @@
-import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+type NumericString = `${number}`
 
-// Raw API request/response types for emissions/unlocks API endpoints
+interface EmissionEventFields {
+	description: string
+	category: string
+}
 
-export interface EmissionEvent {
+export type RawEmissionEvent =
+	| (EmissionEventFields & {
+			unlockType: 'cliff'
+			timestamp: number | NumericString
+			noOfTokens: readonly [number | null]
+	  })
+	| (EmissionEventFields & {
+			unlockType: 'linear'
+			timestamp: number | NumericString
+			noOfTokens: readonly [number | null, number | null]
+			rateDurationDays: number
+	  })
+
+export type KnownCliffEmissionEvent = EmissionEventFields & {
+	unlockType: 'cliff'
 	timestamp: number
-	noOfTokens: number[]
-	/** Present when the producer supplied at least one unknown token amount. */
-	hasUnknownTokenAmount?: true
-	description?: string
-	category?: string
-	unlockType?: string
-	rateDurationDays?: number
+	noOfTokens: readonly [number]
+	hasUnknownTokenAmount?: never
 }
 
-interface TokenPriceSnapshot {
-	symbol?: string | null
-	price?: number | null
+export type KnownLinearEmissionEvent = EmissionEventFields & {
+	unlockType: 'linear'
+	timestamp: number
+	noOfTokens: readonly [number, number]
+	rateDurationDays: number
+	hasUnknownTokenAmount?: never
 }
 
-export interface TokenAllocationSplit {
-	current: Record<string, number>
-	final: Record<string, number>
-	progress?: Record<string, number>
-	bySection?: Omit<TokenAllocationSplit, 'bySection'>
+export type UnknownCliffEmissionEvent = EmissionEventFields & {
+	unlockType: 'cliff'
+	timestamp: number
+	noOfTokens: readonly []
+	hasUnknownTokenAmount: true
 }
 
-export type LegacyTokenAllocation = Record<string, number>
-export type TokenAllocationPayload = TokenAllocationSplit | LegacyTokenAllocation
+export type UnknownLinearEmissionEvent = EmissionEventFields & {
+	unlockType: 'linear'
+	timestamp: number
+	noOfTokens: readonly []
+	rateDurationDays: number
+	hasUnknownTokenAmount: true
+}
 
-export interface ProtocolEmission {
+export type KnownEmissionEvent = KnownCliffEmissionEvent | KnownLinearEmissionEvent
+export type UnknownEmissionEvent = UnknownCliffEmissionEvent | UnknownLinearEmissionEvent
+export type EmissionEvent = KnownEmissionEvent | UnknownEmissionEvent
+
+export interface EmissionCliffAllocation {
+	recipient: string
+	category: string
+	unlockType: 'cliff'
+	amount: number
+}
+
+interface EmissionLinearAllocationFields {
+	recipient: string
+	category: string
+	unlockType: 'linear_start' | 'linear_rate_change'
+	previousRatePerWeek: number
+	newRatePerWeek: number | null
+}
+
+export interface RawEmissionLinearAllocation extends EmissionLinearAllocationFields {
+	endTimestamp: number | NumericString
+}
+
+export interface EmissionLinearAllocation extends EmissionLinearAllocationFields {
+	endTimestamp: number
+}
+
+interface StructuredEmissionEventFields {
+	timestamp: number
+	cliffAllocations: EmissionCliffAllocation[]
+	summary: {
+		totalTokensCliff?: number
+		netChangeInWeeklyRate?: number | null
+		totalNewWeeklyRate?: number | null
+	}
+}
+
+export interface RawStructuredEmissionEvent extends StructuredEmissionEventFields {
+	linearAllocations: RawEmissionLinearAllocation[]
+}
+
+export interface StructuredEmissionEvent extends StructuredEmissionEventFields {
+	linearAllocations: EmissionLinearAllocation[]
+}
+
+export interface TokenPriceSnapshot {
+	symbol: string
+	price: number
+	timestamp: number
+	confidence: number
+	decimals?: number
+}
+
+export interface ProtocolEmissionNextEvent {
+	date: number
+	toUnlock: number
+	proportion?: number
+}
+
+interface ProtocolEmissionDtoBase<UnlockEvent> {
 	name: string
 	token: string
+	sources: string[]
+	protocolId: string | null
+	protocolSlug?: string
 	gecko_id?: string | null
-	events?: EmissionEvent[] | null
-	tokenPrice?: TokenPriceSnapshot[] | null
-	tPrice?: number | null
-	tSymbol?: string | null
-	circSupply?: number | null
-	maxSupply?: number | null
-	totalLocked?: number | null
-	mcap?: number | null
-	unlocksPerDay?: number | null
+	circSupply: number
+	circSupply30d: number
+	totalLocked: number
+	maxSupply: number
+	mcap?: number
+	unlocksPerDay: number | null
+	nextEvent?: ProtocolEmissionNextEvent
+	tokenPrice?: TokenPriceSnapshot[]
+	unlockEvents: UnlockEvent[]
+}
+
+export interface RawProtocolEmission extends ProtocolEmissionDtoBase<RawStructuredEmissionEvent> {
+	events: RawEmissionEvent[]
+}
+
+export interface ProtocolEmission extends ProtocolEmissionDtoBase<StructuredEmissionEvent> {
+	events: EmissionEvent[]
 }
 
 export interface InsiderAllocation {
@@ -66,48 +156,85 @@ export interface InsidersPayload {
 
 export interface EmissionSeriesPoint {
 	timestamp: number
-	unlocked?: number | null
-	rawEmission?: number | null
-	burned?: number | null
+	unlocked: number
+	rawEmission: number
+	burned: number
 	isTBD?: boolean
 	isForecast?: boolean
 }
 
 export interface EmissionSeries {
-	label?: string
-	data?: EmissionSeriesPoint[]
+	label: string
+	data: EmissionSeriesPoint[]
+}
+
+export interface TokenAllocationValues {
+	current: Record<string, number>
+	final: Record<string, number>
+	progress: Record<string, number>
+}
+
+export interface TokenAllocationSplit extends TokenAllocationValues {
+	bySection: TokenAllocationValues
 }
 
 export interface ProtocolEmissionChartData {
-	data?: EmissionSeries[] | null
-	tokenAllocation?: TokenAllocationPayload | null
+	data: EmissionSeries[]
+	tokenAllocation: TokenAllocationSplit
 }
 
-export interface ProtocolEmissionDetail {
+export interface ProtocolEmissionMetadata<Event, UnlockEvent> {
+	token: string
+	protocolIds: string[]
+	events: Event[]
+	unlockEvents: UnlockEvent[]
+	total?: number
+	notes?: string[]
+	chain?: string
+	overrideMaxSupply?: boolean
+	version?: 2
+}
+
+export interface ProtocolEmissionComponentMetadata {
+	chain?: string
+	chainId?: string
+	contract?: string
+	contracts?: string[]
+	eventSignature?: string
+	hedgeyContract?: string
+	siloToken?: string
+}
+
+export interface ProtocolEmissionComponent {
 	name: string
-	gecko_id?: string | null
-	metadata?: {
-		token?: string | null
-		notes?: string[] | null
-		events?: EmissionEvent[] | null
-	} | null
-	documentedData?: ProtocolEmissionChartData | null
-	realTimeData?: ProtocolEmissionChartData | null
-	unlockUsdChart?: TokenIncentiveChartPoint[] | null
-	futures?: { openInterest?: number; fundingRate?: number } | null
-	categories?: Record<string, string[]> | null
-	componentData?: {
-		sections?: Record<string, EmissionSectionMetadata>
-	} | null
-	insiders?: InsidersPayload | null
+	methodology?: string
+	isIncentive: boolean
+	isTBD: boolean
+	isForecast?: boolean
+	protocols?: string[]
+	emission24h: number
+	emission7d: number
+	emission30d: number
+	metadata?: ProtocolEmissionComponentMetadata
+	unlockUsdChart: TokenIncentiveChartPoint[]
 }
 
-export type TokenIncentiveChartPoint = [timestamp: number, value: number]
-
-export interface EmissionSectionMetadata {
+export interface ProtocolEmissionComponentSection {
+	displayName: string
+	methodology?: string
+	isIncentive?: boolean
 	isTBD?: boolean
 	isForecast?: boolean
 	colorFrom?: string
+	protocols?: string[]
+	emission24h: number
+	emission7d: number
+	emission30d: number
+	components: Record<string, ProtocolEmissionComponent>
+}
+
+export interface ProtocolEmissionComponentData {
+	sections: Record<string, ProtocolEmissionComponentSection>
 }
 
 export interface EmissionSupplyMetrics {
@@ -117,6 +244,34 @@ export interface EmissionSupplyMetrics {
 	incentiveAmount: number
 	nonIncentiveAmount: number
 }
+
+interface ProtocolEmissionDetailDtoBase<Event, UnlockEvent> {
+	name: string
+	gecko_id: string | null
+	pId: string | null
+	defillamaIds: string[]
+	chainName: string
+	protocolCategory?: string
+	metadata: ProtocolEmissionMetadata<Event, UnlockEvent>
+	documentedData: ProtocolEmissionChartData
+	realTimeData?: ProtocolEmissionChartData
+	unlockUsdChart: TokenIncentiveChartPoint[]
+	futures?: { openInterest: number; fundingRate: number }
+	categories: Record<string, string[]>
+	supplyMetrics?: EmissionSupplyMetrics
+	insiders?: InsidersPayload
+}
+
+type ProtocolEmissionDetailVersion =
+	| { version?: never; componentData?: never }
+	| { version: 2; componentData: ProtocolEmissionComponentData }
+
+export type RawProtocolEmissionDetail = ProtocolEmissionDetailDtoBase<RawEmissionEvent, RawStructuredEmissionEvent> &
+	ProtocolEmissionDetailVersion
+export type ProtocolEmissionDetail = ProtocolEmissionDetailDtoBase<EmissionEvent, StructuredEmissionEvent> &
+	ProtocolEmissionDetailVersion
+
+export type TokenIncentiveChartPoint = [timestamp: number, value: number]
 
 export interface ProtocolEmissionSupplyMetricsEntry {
 	name: string
@@ -128,8 +283,8 @@ export type ProtocolEmissionSupplyMetricsMap = Record<string, ProtocolEmissionSu
 // Chart data is kept object-shaped while categories are still dynamic. Renderer
 // datasets are materialized as positional rows once the dimension order is known.
 export interface EmissionsDataset {
-	source: MultiSeriesChartDataset['source']
-	dimensions: string[]
+	source: Array<[timestamp: number, ...values: Array<number | null>]>
+	dimensions: [timestamp: 'timestamp', ...series: string[]]
 }
 
 export interface EmissionsChartRow {

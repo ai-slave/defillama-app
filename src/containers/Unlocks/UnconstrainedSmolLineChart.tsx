@@ -4,6 +4,7 @@ import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import type { EmissionEvent } from './api.types'
+import { getEmissionEventAmount } from './eventAmount'
 
 const COLOR_MAP = {
 	green: { dark: '#3fb84f', light: '#008a13' },
@@ -12,14 +13,14 @@ const COLOR_MAP = {
 
 function smoothPath(points: Array<[number, number]>): string {
 	if (points.length < 2) return ''
-	if (points.length === 2) return `M${points[0][0]},${points[0][1]} L${points[1][0]},${points[1][1]}`
+	if (points.length === 2) return `M${points[0]![0]},${points[0]![1]} L${points[1]![0]},${points[1]![1]}`
 
-	let d = `M${points[0][0]},${points[0][1]}`
+	let d = `M${points[0]![0]},${points[0]![1]}`
 	for (let i = 0; i < points.length - 1; i++) {
-		const p0 = points[Math.max(i - 1, 0)]
-		const p1 = points[i]
-		const p2 = points[i + 1]
-		const p3 = points[Math.min(i + 2, points.length - 1)]
+		const p0 = points[Math.max(i - 1, 0)]!
+		const p1 = points[i]!
+		const p2 = points[i + 1]!
+		const p3 = points[Math.min(i + 2, points.length - 1)]!
 
 		const cp1x = p1[0] + (p2[0] - p0[0]) / 6
 		const cp1y = p1[1] + (p2[1] - p0[1]) / 6
@@ -101,14 +102,19 @@ export function UnconstrainedSmolLineChart({
 			unlockIndex < series.length ? (series.length === 1 ? VB_W / 2 : (unlockIndex / (series.length - 1)) * VB_W) : 0
 
 		const themeKey = isThemeDark ? 'dark' : 'light'
-		return { pathD: smoothPath(pts), stroke: COLOR_MAP[color][themeKey], markLineX: mlX }
+		return {
+			pathD: smoothPath(pts),
+			stroke: COLOR_MAP[color][themeKey],
+			markLineX: mlX
+		}
 	}, [series, color, isThemeDark])
 
 	if (series.length === 0 || series.length < 8) return null
 
-	const unlockValue = series[unlockIndex]?.[1]
+	const unlockValue = series[unlockIndex]![1]
 	const dayPosition = hoveredIndex != null ? hoveredIndex - unlockIndex : null
-	const hoveredValue = hoveredIndex != null ? series[hoveredIndex]?.[1] : null
+	const hoveredPoint = hoveredIndex != null ? series[hoveredIndex] : undefined
+	const hoveredValue = hoveredPoint?.[1] ?? null
 	const percentChange =
 		dayPosition != null && dayPosition !== 0 && unlockValue && hoveredValue != null
 			? ((hoveredValue - unlockValue) / unlockValue) * 100
@@ -141,20 +147,22 @@ export function UnconstrainedSmolLineChart({
 				{hoveredIndex != null ? (
 					<div
 						className="pointer-events-none absolute top-0 h-full border-l border-dashed border-medium"
-						style={{ left: `${series.length === 1 ? 50 : (hoveredIndex / (series.length - 1)) * 100}%` }}
+						style={{
+							left: `${series.length === 1 ? 50 : (hoveredIndex / (series.length - 1)) * 100}%`
+						}}
 					/>
 				) : null}
-				{hoveredIndex != null
+				{hoveredIndex != null && hoveredPoint
 					? createPortal(
 							<div
 								ref={tooltipRef}
 								className="pointer-events-none fixed z-[1000] rounded-md border border-medium bg-overlay px-2.5 py-1 body-sm whitespace-nowrap text-secondary shadow-md"
 							>
-								<p>{formatTooltipChartDate(series[hoveredIndex][0], 'daily', true)}</p>
+								<p>{formatTooltipChartDate(hoveredPoint[0], 'daily', true)}</p>
 								<p className="flex items-center gap-1">
 									<span className="inline-block size-[10px] rounded-full" style={{ backgroundColor: stroke }} />
 									Price: $
-									{formatCompactNumber(series[hoveredIndex][1], {
+									{formatCompactNumber(hoveredPoint[1], {
 										minimumCompactValue: 1_000_000,
 										compactSuffix: 'lowercase'
 									})}
@@ -209,30 +217,44 @@ function UnlockEventTooltip({
 	unlockValue: number
 	stroke: string
 }) {
-	const parseEventData = (event: EmissionEvent) => {
-		const { description, noOfTokens, category } = event
-		const regex =
-			/(?:of (.+?) tokens (?:will be|were) unlocked)|(?:will (?:increase|decrease) from \{tokens\[0\]\} to \{tokens\[1\]\} tokens per week from (.+?) on {timestamp})|(?:from (.+?) on {timestamp})|(?:was (?:increased|decreased) from \{tokens\[0\]\} to \{tokens\[1\]\} tokens per week from (.+?) on {timestamp})/
-		const matches = description?.match(regex)
-		const name = matches?.[1] || matches?.[2] || matches?.[3] || matches?.[4] || ''
-		const amount = noOfTokens?.reduce((a: number, b: number) => a + b, 0) || 0
-		return { name, amount, category }
+	let hasCliff = false
+	let hasLinear = false
+	let cliffAmount = 0
+	let linearWeeklyAmount = 0
+	const categories = new Set<string>()
+	for (const event of lastEvent) {
+		const amount = getEmissionEventAmount(event)
+		if (amount === null || amount <= 0) continue
+		categories.add(event.category)
+		if (event.unlockType === 'linear') {
+			hasLinear = true
+			linearWeeklyAmount += amount
+		} else {
+			hasCliff = true
+			cliffAmount += amount
+		}
 	}
 
-	const eventDatas = lastEvent.map(parseEventData)
-	const totalAmount = eventDatas.reduce((sum, event) => sum + event.amount, 0)
-	const uniqueCategories = Array.from(new Set(eventDatas.flatMap((event) => (event.category ? [event.category] : []))))
+	const uniqueCategories = Array.from(categories)
+	const formatValue = (amount: number) =>
+		formatUsd(amount * unlockValue, {
+			compact: true,
+			minimumCompactValue: 1_000_000,
+			compactSuffix: 'lowercase'
+		})
 
 	return (
 		<div className="mt-1">
-			<div className="flex items-center gap-1" style={{ color: stroke }}>
-				Unlocked:{' '}
-				{formatUsd(totalAmount * unlockValue, {
-					compact: true,
-					minimumCompactValue: 1_000_000,
-					compactSuffix: 'lowercase'
-				})}
-			</div>
+			{hasCliff ? (
+				<div className="flex items-center gap-1" style={{ color: stroke }}>
+					Unlocked: {formatValue(cliffAmount)}
+				</div>
+			) : null}
+			{hasLinear ? (
+				<div className="flex items-center gap-1" style={{ color: stroke }}>
+					Weekly unlock rate: {formatValue(linearWeeklyAmount)} / week
+				</div>
+			) : null}
 			{uniqueCategories.length > 0 ? (
 				<div className="body-xs text-tertiary">
 					Categories: {uniqueCategories.map((cat) => cat.charAt(0).toUpperCase() + cat.slice(1)).join(', ')}

@@ -1,49 +1,142 @@
 import { describe, expect, it } from 'vitest'
+import type { EmissionEvent } from '../api.types'
 import {
 	buildUpcomingUnlockChart,
 	buildUpcomingUnlockSeries,
+	calculateUpcomingUnlockStatistics,
 	type UpcomingUnlockChartProtocol
 } from '../upcomingUnlockChart'
 
 const day = (dayOfMonth: number) => Date.UTC(2024, 0, dayOfMonth) / 1e3
 
+function cliff(timestamp: number, amount: number): EmissionEvent {
+	return {
+		description: 'Cliff',
+		category: 'insiders',
+		unlockType: 'cliff',
+		timestamp,
+		noOfTokens: [amount]
+	}
+}
+
+function linear(timestamp: number, previousRate: number, newRate: number, rateDurationDays = 7): EmissionEvent {
+	return {
+		description: 'Linear rate change',
+		category: 'farming',
+		unlockType: 'linear',
+		timestamp,
+		noOfTokens: [previousRate, newRate],
+		rateDurationDays
+	}
+}
+
 const protocols: UpcomingUnlockChartProtocol[] = [
 	{
 		name: 'Zeta',
 		tPrice: 2,
-		events: [
-			{ timestamp: day(2), noOfTokens: [2, 3] },
-			{ timestamp: day(3), noOfTokens: [1] },
-			{ timestamp: day(20), noOfTokens: [100] }
-		]
+		events: [cliff(day(3), 1), cliff(day(20), 100)]
 	},
 	{
 		name: 'Alpha',
 		tPrice: 1,
-		events: [
-			{ timestamp: day(2), noOfTokens: [4] },
-			{ timestamp: day(3), noOfTokens: [0] }
-		]
+		events: [cliff(day(2), 4), cliff(day(3), 0), cliff(day(3), -4)]
 	}
 ]
 
 describe('buildUpcomingUnlockChart', () => {
 	const series = buildUpcomingUnlockSeries(protocols, day(1), day(10))
 
-	it('compacts eligible raw events into daily USD points', () => {
+	it('compacts one-time cliffs', () => {
 		expect(series).toEqual([
 			{
 				name: 'Zeta',
-				points: [
-					[Date.UTC(2024, 0, 2), 10],
-					[Date.UTC(2024, 0, 3), 2]
-				]
+				cliffPoints: [[Date.UTC(2024, 0, 3), 2]],
+				linearPoints: []
 			},
-			{ name: 'Alpha', points: [[Date.UTC(2024, 0, 2), 4]] }
+			{
+				name: 'Alpha',
+				cliffPoints: [[Date.UTC(2024, 0, 2), 4]],
+				linearPoints: []
+			}
 		])
 	})
 
-	it('preserves current-day exclusion and the exclusive end bound used by the page', () => {
+	it('spreads the new weekly rate across active days and adds same-day cliffs', () => {
+		const result = buildUpcomingUnlockSeries(
+			[
+				{
+					name: 'Linear',
+					tPrice: 7,
+					events: [linear(day(2), 100, 7, 2), cliff(day(3), 1)]
+				}
+			],
+			day(1),
+			day(5)
+		)
+
+		expect(result).toEqual([
+			{
+				name: 'Linear',
+				cliffPoints: [[Date.UTC(2024, 0, 3), 7]],
+				linearPoints: [
+					[Date.UTC(2024, 0, 2), 7],
+					[Date.UTC(2024, 0, 3), 7]
+				]
+			}
+		])
+	})
+
+	it('prorates partial days and stops at the declared linear duration', () => {
+		const result = buildUpcomingUnlockSeries(
+			[
+				{
+					name: 'Partial',
+					tPrice: 7,
+					events: [linear(day(2) + 12 * 60 * 60, 0, 7, 1)]
+				}
+			],
+			day(1),
+			day(5)
+		)
+
+		expect(result).toEqual([
+			{
+				name: 'Partial',
+				cliffPoints: [],
+				linearPoints: [
+					[Date.UTC(2024, 0, 2), 3.5],
+					[Date.UTC(2024, 0, 3), 3.5]
+				]
+			}
+		])
+	})
+
+	it('keeps adjacent linear intervals separate without double-counting their boundary', () => {
+		const result = buildUpcomingUnlockSeries(
+			[
+				{
+					name: 'Adjacent',
+					tPrice: 1,
+					events: [linear(day(2), 0, 7, 1), linear(day(3), 7, 14, 1)]
+				}
+			],
+			day(1),
+			day(5)
+		)
+
+		expect(result).toEqual([
+			{
+				name: 'Adjacent',
+				cliffPoints: [],
+				linearPoints: [
+					[Date.UTC(2024, 0, 2), 1],
+					[Date.UTC(2024, 0, 3), 2]
+				]
+			}
+		])
+	})
+
+	it('includes the remaining current day while keeping the exact start and end bounds', () => {
 		const startTimestampSec = day(1) + 60 * 60
 		const bounded = buildUpcomingUnlockSeries(
 			[
@@ -51,9 +144,11 @@ describe('buildUpcomingUnlockChart', () => {
 					name: 'Bounded',
 					tPrice: 1,
 					events: [
-						{ timestamp: day(1) + 2 * 60 * 60, noOfTokens: [1] },
-						{ timestamp: day(2), noOfTokens: [2] },
-						{ timestamp: day(3), noOfTokens: [3] }
+						linear(day(1), 0, 7, 4),
+						cliff(day(1) + 30 * 60, 10),
+						cliff(day(1) + 2 * 60 * 60, 1),
+						cliff(day(2), 2),
+						cliff(day(3), 3)
 					]
 				}
 			],
@@ -61,19 +156,51 @@ describe('buildUpcomingUnlockChart', () => {
 			day(3)
 		)
 
-		expect(bounded).toEqual([{ name: 'Bounded', points: [[Date.UTC(2024, 0, 2), 2]] }])
+		expect(bounded).toEqual([
+			{
+				name: 'Bounded',
+				cliffPoints: [
+					[Date.UTC(2024, 0, 1), 1],
+					[Date.UTC(2024, 0, 2), 2]
+				],
+				linearPoints: [
+					[Date.UTC(2024, 0, 1), 23 / 24],
+					[Date.UTC(2024, 0, 2), 1]
+				]
+			}
+		])
+	})
+
+	it('prorates both partial boundary days of the chart interval', () => {
+		const result = buildUpcomingUnlockSeries(
+			[{ name: 'Boundaries', tPrice: 7, events: [linear(day(1), 0, 7, 10)] }],
+			day(1) + 12 * 60 * 60,
+			day(2) + 6 * 60 * 60
+		)
+
+		expect(result).toEqual([
+			{
+				name: 'Boundaries',
+				cliffPoints: [],
+				linearPoints: [
+					[Date.UTC(2024, 0, 1), 3.5],
+					[Date.UTC(2024, 0, 2), 1.75]
+				]
+			}
+		])
 	})
 
 	it('builds one unstacked total series and sums values by period', () => {
 		const result = buildUpcomingUnlockChart({
 			series,
 			groupBy: 'weekly',
-			viewMode: 'Total View'
+			viewMode: 'Total View',
+			unlockType: 'all'
 		})
 
 		expect(result.dataset).toEqual({
 			dimensions: ['timestamp', 'Total Upcoming Unlock Value'],
-			source: [[Date.UTC(2024, 0, 7), 16]]
+			source: [[Date.UTC(2024, 0, 7), 6]]
 		})
 		expect(result.charts).toEqual([
 			{
@@ -89,17 +216,101 @@ describe('buildUpcomingUnlockChart', () => {
 		const result = buildUpcomingUnlockChart({
 			series,
 			groupBy: 'daily',
-			viewMode: 'Breakdown View'
+			viewMode: 'Breakdown View',
+			unlockType: 'all'
 		})
 
 		expect(result.dataset.dimensions).toEqual(['timestamp', 'Alpha', 'Zeta'])
 		expect(result.dataset.source).toEqual([
-			[Date.UTC(2024, 0, 2), 4, 10],
+			[Date.UTC(2024, 0, 2), 4, null],
 			[Date.UTC(2024, 0, 3), null, 2]
 		])
 		expect(result.charts.map(({ name, stack }) => ({ name, stack }))).toEqual([
 			{ name: 'Alpha', stack: 'A' },
 			{ name: 'Zeta', stack: 'A' }
 		])
+	})
+
+	it('filters total and protocol views by unlock type', () => {
+		const typedSeries = buildUpcomingUnlockSeries(
+			[
+				{
+					name: 'Combined',
+					tPrice: 7,
+					events: [linear(day(1), 0, 7, 2), cliff(day(2), 1)]
+				}
+			],
+			day(1),
+			day(3)
+		)
+
+		const cliffTotal = buildUpcomingUnlockChart({
+			series: typedSeries,
+			groupBy: 'daily',
+			viewMode: 'Total View',
+			unlockType: 'cliff'
+		})
+		const linearBreakdown = buildUpcomingUnlockChart({
+			series: typedSeries,
+			groupBy: 'daily',
+			viewMode: 'Breakdown View',
+			unlockType: 'linear'
+		})
+
+		expect(cliffTotal.dataset.source).toEqual([[Date.UTC(2024, 0, 2), 7]])
+		expect(cliffTotal.dataset.dimensions).toEqual(['timestamp', 'Upcoming Cliff Unlock Value'])
+		expect(linearBreakdown.dataset.source).toEqual([
+			[Date.UTC(2024, 0, 1), 7],
+			[Date.UTC(2024, 0, 2), 7]
+		])
+	})
+})
+
+describe('calculateUpcomingUnlockStatistics', () => {
+	it('combines cliffs with linear flow already active at the start of each window', () => {
+		const nowTimestampSec = day(2)
+		const result = calculateUpcomingUnlockStatistics(
+			[
+				{
+					name: 'Combined',
+					tPrice: 7,
+					events: [linear(day(1), 0, 7, 30), cliff(day(3), 1)]
+				}
+			],
+			nowTimestampSec
+		)
+
+		expect(result).toEqual({
+			upcomingUnlocks7d: { cliff: 7, linear: 49, total: 56 },
+			upcomingUnlocks30d: { cliff: 7, linear: 203, total: 210 }
+		})
+	})
+
+	it('matches the chart total across the same exact rolling interval', () => {
+		const nowTimestampSec = day(1) + 6 * 60 * 60
+		const data: UpcomingUnlockChartProtocol[] = [
+			{
+				name: 'Boundaries',
+				tPrice: 7,
+				events: [
+					linear(day(1), 0, 7, 40),
+					cliff(day(1) + 5 * 60 * 60, 100),
+					cliff(day(1) + 8 * 60 * 60, 2),
+					cliff(nowTimestampSec + 30 * 24 * 60 * 60, 200)
+				]
+			}
+		]
+		const statistics = calculateUpcomingUnlockStatistics(data, nowTimestampSec)
+		const series = buildUpcomingUnlockSeries(data, nowTimestampSec, nowTimestampSec + 30 * 24 * 60 * 60)
+		let cliffValue = 0
+		let linearValue = 0
+		for (const item of series) {
+			for (const point of item.cliffPoints) cliffValue += point[1]
+			for (const point of item.linearPoints) linearValue += point[1]
+		}
+
+		expect({ cliff: cliffValue, linear: linearValue, total: cliffValue + linearValue }).toEqual(
+			statistics.upcomingUnlocks30d
+		)
 	})
 })

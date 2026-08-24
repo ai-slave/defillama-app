@@ -161,12 +161,16 @@ export const Pagination = ({ items, startIndex = 0 }: PaginationProps) => {
 	}
 
 	const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-		dispatch({ type: 'TOUCH_START', payload: e.targetTouches[0].clientX })
+		const touch = e.targetTouches[0]
+		if (!touch) return
+		dispatch({ type: 'TOUCH_START', payload: touch.clientX })
 	}
 
 	const onTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
 		if (touchStart === null || !isSwiping) return
-		dispatch({ type: 'TOUCH_MOVE', payload: e.targetTouches[0].clientX })
+		const touch = e.targetTouches[0]
+		if (!touch) return
+		dispatch({ type: 'TOUCH_MOVE', payload: touch.clientX })
 	}
 
 	const onTouchEnd = () => {

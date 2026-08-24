@@ -18,6 +18,8 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { VirtualTable } from '~/components/Table/Table'
 import { useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
+import { getCliffEmissionAmount } from '~/containers/Unlocks/eventAmount'
+import type { EnrichedProtocolEmission } from '~/containers/Unlocks/queries'
 import { UnconstrainedSmolLineChart } from '~/containers/Unlocks/UnconstrainedSmolLineChart'
 import { UpcomingEvent } from '~/containers/Unlocks/UpcomingEvent'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
@@ -117,12 +119,12 @@ export const filterUnlockTableProtocols = (
 	for (const protocol of protocols) {
 		if (showOnlyWatchlist && !savedProtocols.has(protocol.name)) continue
 
-		const upcomingEvents = protocol.upcomingEvent ?? []
+		const upcomingEvents = protocol.upcomingEvent
 		let filteredUpcomingEvents: IEmission['upcomingEvent'] | null = null
 		if (selectedCategories) {
 			for (let index = 0; index < upcomingEvents.length; index++) {
-				const event = upcomingEvents[index]
-				if (typeof event.category === 'string' && selectedCategories.has(event.category)) {
+				const event = upcomingEvents[index]!
+				if (selectedCategories.has(event.category)) {
 					filteredUpcomingEvents?.push(event)
 				} else if (filteredUpcomingEvents === null) {
 					filteredUpcomingEvents = upcomingEvents.slice(0, index)
@@ -133,22 +135,29 @@ export const filterUnlockTableProtocols = (
 		const events = filteredUpcomingEvents ?? upcomingEvents
 		if (isCategoryFilterActive && events.length === 0) continue
 
-		let totalUnlockValue = 0
+		let totalUnlockValue: number | null = null
 		if (isValueFilterActive || isPercentageFilterActive) {
-			for (const event of events) {
-				if (event.timestamp == null || event.noOfTokens.length === 0 || protocol.tPrice == null) continue
-				let totalTokens = 0
-				for (const amount of event.noOfTokens) totalTokens += amount
-				totalUnlockValue += totalTokens * protocol.tPrice
+			if (protocol.tPrice != null && protocol.tPrice > 0) {
+				let hasKnownAmount = false
+				let knownUnlockValue = 0
+				for (const event of events) {
+					const amount = getCliffEmissionAmount(event)
+					if (amount === null) continue
+					hasKnownAmount = true
+					if (amount > 0) knownUnlockValue += amount * protocol.tPrice
+				}
+				if (hasKnownAmount) totalUnlockValue = knownUnlockValue
 			}
 		}
 
-		if (minUnlockValue !== null && totalUnlockValue < minUnlockValue) continue
-		if (maxUnlockValue !== null && totalUnlockValue > maxUnlockValue) continue
+		if (isValueFilterActive && totalUnlockValue === null) continue
+		if (minUnlockValue !== null && totalUnlockValue! < minUnlockValue) continue
+		if (maxUnlockValue !== null && totalUnlockValue! > maxUnlockValue) continue
 
 		if (isPercentageFilterActive) {
-			const mcap = protocol.mcap ?? 0
-			const percentageToUnlock = mcap > 0 ? (totalUnlockValue / mcap) * 100 : 0
+			const mcap = protocol.mcap
+			if (totalUnlockValue === null || mcap == null || mcap <= 0) continue
+			const percentageToUnlock = (totalUnlockValue / mcap) * 100
 			if (minPerc !== '' && percentageToUnlock < minPerc) continue
 			if (maxPerc !== '' && percentageToUnlock > maxPerc) continue
 		}
@@ -198,7 +207,10 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 	}
 
 	const handleUnlockValueClear = () => {
-		void pushShallowQuery(router, { minUnlockValue: undefined, maxUnlockValue: undefined })
+		void pushShallowQuery(router, {
+			minUnlockValue: undefined,
+			maxUnlockValue: undefined
+		})
 	}
 
 	const handleUnlockPercSubmit = (e: FormSubmitEvent) => {
@@ -213,7 +225,10 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 	}
 
 	const handleUnlockPercClear = () => {
-		void pushShallowQuery(router, { minUnlockPerc: undefined, maxUnlockPerc: undefined })
+		void pushShallowQuery(router, {
+			minUnlockPerc: undefined,
+			maxUnlockPerc: undefined
+		})
 	}
 
 	const rawColumnsInStorage = useStorageItem(optionsKey, defaultColumns)
@@ -226,7 +241,10 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 			parsedColumnVisibility = JSON.parse(columnsInStorage) as Record<string, boolean>
 		} catch {}
 
-		const columnVisibility = { ...defaultColumnVisibility, ...parsedColumnVisibility }
+		const columnVisibility = {
+			...defaultColumnVisibility,
+			...parsedColumnVisibility
+		}
 		const selectedOptions = columnOptions.flatMap((column) => (columnVisibility[column.key] ? [column.key] : []))
 
 		return { columnVisibility, selectedOptions }
@@ -282,7 +300,10 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 		getSortedRowModel: getSortedRowModel(),
 		getExpandedRowModel: getExpandedRowModel()
 	})
-	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
+	const [_projectName, setProjectName] = useTableSearch({
+		instance,
+		columnToSearch: 'name'
+	})
 
 	return (
 		<Card padding="none">
@@ -389,35 +410,7 @@ const columnOptions = [
 
 const defaultColumns = JSON.stringify(Object.fromEntries(columnOptions.map((column) => [column.key, true])))
 
-export interface IEmission {
-	name: string
-	gecko_id?: string | null
-	maxSupply: number
-	circSupply: number
-	totalLocked: number
-	nextEvent: { data: string; toUnlock: number }
-	token: string
-	tokenPrice: { coins: { [key: string]: { price: number; symbol: string } } }
-	tPrice?: number | null
-	tSymbol?: string | null
-	mcap: number | null
-	unlocksPerDay: number | null
-	historicalPrice?: [number, number][]
-	lastEvent?: Array<{
-		description: string
-		noOfTokens: number[]
-		timestamp: number
-		category?: string
-	}>
-	upcomingEvent: Array<{
-		description: string
-		noOfTokens: number[]
-		timestamp: number | null
-		category?: string
-		unlockType?: string
-		rateDurationDays?: number
-	}>
-}
+export type IEmission = EnrichedProtocolEmission
 
 const emissionsColumns = [
 	columnHelper.accessor('name', {
@@ -459,7 +452,7 @@ const emissionsColumns = [
 			headerClassName: 'w-[160px]'
 		}
 	}),
-	columnHelper.accessor((row) => (row.tPrice != null ? +row.tPrice : undefined), {
+	columnHelper.accessor((row) => row.tPrice ?? undefined, {
 		id: 'tPrice',
 		header: 'Price',
 		cell: ({ row }) => {
@@ -467,7 +460,11 @@ const emissionsColumns = [
 			return (
 				<div className="flex h-full items-center justify-end">
 					{value != null
-						? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						? formatUsd(value, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})
 						: ''}
 				</div>
 			)
@@ -477,7 +474,7 @@ const emissionsColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor((row) => (row.mcap != null ? +row.mcap : undefined), {
+	columnHelper.accessor((row) => row.mcap, {
 		id: 'mcap',
 		header: 'MCap',
 		cell: ({ row }) => {
@@ -485,7 +482,11 @@ const emissionsColumns = [
 			if (value == null) return null
 			return (
 				<div className="flex h-full items-center justify-end">
-					{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+					{formatUsd(value, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
 				</div>
 			)
 		},
@@ -496,17 +497,15 @@ const emissionsColumns = [
 	}),
 	columnHelper.accessor(
 		(row) => {
-			const rawPctUnlocked = row.maxSupply ? 100 - (row.totalLocked / row.maxSupply) * 100 : 0
-			return Number.isFinite(rawPctUnlocked) ? Math.max(0, Math.min(100, rawPctUnlocked)) : 0
+			if (row.maxSupply <= 0) return undefined
+			return Math.max(0, Math.min(100, 100 - (row.totalLocked / row.maxSupply) * 100))
 		},
 		{
 			id: 'totalLocked',
 			header: 'Total Unlocked',
-			cell: ({ row }) => {
-				const maxSupply = row.original.maxSupply
-				const totalLocked = row.original.totalLocked
-				const rawPctUnlocked = maxSupply ? 100 - (totalLocked / maxSupply) * 100 : 0
-				const pctUnlocked = Number.isFinite(rawPctUnlocked) ? Math.max(0, Math.min(100, rawPctUnlocked)) : 0
+			cell: ({ getValue }) => {
+				const pctUnlocked = getValue()
+				if (pctUnlocked === undefined) return null
 
 				return (
 					<div className="flex h-full w-full flex-col items-end justify-center gap-2 px-2">
@@ -535,12 +534,12 @@ const emissionsColumns = [
 			}
 		}
 	),
-	columnHelper.accessor((row) => (row.historicalPrice ? row.historicalPrice : undefined), {
+	columnHelper.accessor((row) => (row.historicalPrice.length > 0 ? row.historicalPrice : undefined), {
 		id: 'prevUnlock',
 		header: 'Prev. Unlock Analysis',
 		cell: ({ row }) => {
 			const historicalPrice = row.original.historicalPrice
-			if (!historicalPrice?.length) {
+			if (historicalPrice.length === 0) {
 				return <div className="flex h-full items-center justify-end"></div>
 			}
 			return (
@@ -550,8 +549,8 @@ const emissionsColumns = [
 							series={historicalPrice}
 							name=""
 							color={
-								historicalPrice[Math.floor(historicalPrice.length / 2)][1] >=
-								historicalPrice[historicalPrice.length - 1][1]
+								historicalPrice[Math.floor(historicalPrice.length / 2)]![1] >=
+								historicalPrice[historicalPrice.length - 1]![1]
 									? 'red'
 									: 'green'
 							}
@@ -573,9 +572,10 @@ const emissionsColumns = [
 	}),
 	columnHelper.accessor(
 		(row) => {
-			if (!row.historicalPrice?.length || row.historicalPrice.length < 8) return undefined
-			const priceAtUnlock = row.historicalPrice[7][1]
-			const priceAfter7d = row.historicalPrice[row.historicalPrice.length - 1][1]
+			if (row.historicalPrice.length < 8) return undefined
+			const priceAtUnlock = row.historicalPrice[7]![1]
+			if (priceAtUnlock <= 0) return undefined
+			const priceAfter7d = row.historicalPrice[row.historicalPrice.length - 1]![1]
 			return ((priceAfter7d - priceAtUnlock) / priceAtUnlock) * 100
 		},
 		{
@@ -596,39 +596,45 @@ const emissionsColumns = [
 			}
 		}
 	),
-	columnHelper.accessor((row) => (row.tPrice && row.unlocksPerDay ? +row.tPrice * row.unlocksPerDay : undefined), {
-		id: 'nextEvent',
-		header: 'Daily Unlocks',
-		cell: ({ row }) => {
-			if (!row.original.unlocksPerDay) return <div className="flex h-full items-center justify-end"></div>
-			const value =
-				row.original.tPrice && row.original.unlocksPerDay ? row.original.tPrice * row.original.unlocksPerDay : undefined
+	columnHelper.accessor(
+		(row) =>
+			row.tPrice != null && row.tPrice > 0 && row.unlocksPerDay != null ? row.tPrice * row.unlocksPerDay : undefined,
+		{
+			id: 'nextEvent',
+			header: 'Daily Unlocks',
+			cell: ({ row }) => {
+				if (row.original.unlocksPerDay == null) return <div className="flex h-full items-center justify-end"></div>
+				const value =
+					row.original.tPrice != null && row.original.tPrice > 0
+						? row.original.tPrice * row.original.unlocksPerDay
+						: undefined
 
-			return (
-				<div className="flex h-full items-center justify-end">
-					<span className="flex flex-col gap-1">
-						{value
-							? formatUsd(value, {
-									compact: true,
-									minimumCompactValue: 1_000_000,
-									compactSuffix: 'lowercase'
-								})
-							: ''}
-					</span>
-				</div>
-			)
-		},
-		meta: {
-			headerClassName: 'w-[140px]',
-			align: 'end'
+				return (
+					<div className="flex h-full items-center justify-end">
+						<span className="flex flex-col gap-1">
+							{value != null
+								? formatUsd(value, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})
+								: ''}
+						</span>
+					</div>
+				)
+			},
+			meta: {
+				headerClassName: 'w-[140px]',
+				align: 'end'
+			}
 		}
-	})
+	)
 ]
 
 const upcomingEventColumn = (nowSec: number) =>
 	columnHelper.accessor(
 		(row) => {
-			const { timestamp } = row.upcomingEvent?.[0] || {}
+			const timestamp = row.upcomingEvent[0]?.timestamp
 			if (!timestamp || timestamp < nowSec) return undefined
 			return timestamp
 		},
@@ -636,25 +642,21 @@ const upcomingEventColumn = (nowSec: number) =>
 			id: 'upcomingEvent',
 			header: 'Next Event',
 			cell: ({ row }) => {
-				if (!Array.isArray(row.original.upcomingEvent) || !row.original.upcomingEvent.length) return null
-				const { timestamp } = row.original.upcomingEvent[0]
+				if (row.original.upcomingEvent.length === 0) return null
+				const { timestamp } = row.original.upcomingEvent[0]!
 				if (!timestamp || timestamp < nowSec) return null
 
 				return (
 					<UpcomingEvent
 						{...{
-							noOfTokens: row.original.upcomingEvent.map((x) => x.noOfTokens),
 							timestamp,
-							event: row.original.upcomingEvent.map((event) => ({
-								...event,
-								timestamp: event.timestamp ?? timestamp
-							})),
+							event: row.original.upcomingEvent,
 							price: row.original.tPrice,
 							symbol: row.original.tSymbol,
 							mcap: row.original.mcap,
 							maxSupply: row.original.maxSupply,
 							name: row.original.name,
-							geckoId: row.original.gecko_id
+							...(row.original.gecko_id !== undefined ? { geckoId: row.original.gecko_id } : {})
 						}}
 					/>
 				)

@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { buildUnlocksMultiSeriesChartForDateRange } from '../buildUnlocksMultiSeriesChart'
+import type { CalendarUnlockEvent } from '../calendarTypes'
+
+function unlockEvent(protocol: string, value: number, unit?: 'week'): CalendarUnlockEvent {
+	const fields = {
+		protocol,
+		value,
+		details: `${protocol} unlock`,
+		unlockType: 'Cliff'
+	}
+	return unit === 'week' ? { ...fields, unit } : fields
+}
 
 describe('buildUnlocksMultiSeriesChartForDateRange', () => {
 	it('builds stacked unlock bars outside ECharts large mode', () => {
@@ -7,13 +18,12 @@ describe('buildUnlocksMultiSeriesChartForDateRange', () => {
 			dates: ['2026-01-01', '2026-01-02'],
 			unlocksData: {
 				'2026-01-01': {
-					events: [
-						{ protocol: 'Alpha', value: 10 },
-						{ protocol: 'Beta', value: 5 }
-					]
+					totalValue: 15,
+					events: [unlockEvent('Alpha', 10), unlockEvent('Beta', 5), unlockEvent('Weekly Rate', 100, 'week')]
 				},
 				'2026-01-02': {
-					events: [{ protocol: 'Alpha', value: 3 }]
+					totalValue: 3,
+					events: [unlockEvent('Alpha', 3)]
 				}
 			}
 		})

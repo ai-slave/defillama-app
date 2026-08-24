@@ -19,6 +19,7 @@ import calendarEvents from '~/constants/calendar'
 import { fetchAllProtocolEmissions } from '~/containers/Unlocks/api'
 import type { ProtocolEmission } from '~/containers/Unlocks/api.types'
 import { formatUnlockDate, formatUnlockTime } from '~/containers/Unlocks/dateFormat'
+import { getCliffEmissionAmount } from '~/containers/Unlocks/eventAmount'
 import Layout from '~/layout'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
@@ -46,22 +47,15 @@ type CalendarEmission = ProtocolEmission & {
 
 export const getStaticProps = withPerformanceLogging('calendar', async () => {
 	const res = await fetchAllProtocolEmissions()
+	const nowSec = Date.now() / 1000
 
 	const emissions: CalendarEmission[] = []
 	for (const protocol of res) {
 		const unlocksByDate = new Map<number, number>()
-		for (const e of protocol.events ?? []) {
-			if (
-				e.timestamp < Date.now() / 1000 ||
-				e.hasUnknownTokenAmount ||
-				e.noOfTokens.length === 0 ||
-				(e.noOfTokens.length === 1 && e.noOfTokens[0] === 0)
-			)
-				continue
-			const firstAmount = e.noOfTokens[0]
-			if (firstAmount === undefined) continue
-			const secondAmount = e.noOfTokens[1]
-			const amount = e.noOfTokens.length === 2 && secondAmount !== undefined ? secondAmount - firstAmount : firstAmount
+		for (const e of protocol.events) {
+			if (e.timestamp < nowSec) continue
+			const amount = getCliffEmissionAmount(e)
+			if (amount === null || amount <= 0) continue
 			unlocksByDate.set(e.timestamp, (unlocksByDate.get(e.timestamp) ?? 0) + amount)
 		}
 		let maxUnlock: CalendarEmission['unlock'] | null = null
@@ -121,7 +115,12 @@ export default function Protocols({ emissions }: { emissions: CalendarEmission[]
 	const [mountedAtMs] = React.useState(() => Date.now())
 
 	const allEvents = React.useMemo(() => {
-		const events: Array<{ name: string; timestamp: number; type: string; link?: string }> = []
+		const events: Array<{
+			name: string
+			timestamp: number
+			type: string
+			link?: string
+		}> = []
 		for (const emission of emissions) {
 			const tokens = emission.unlock[1]
 			const tokenValue = emission.tPrice ? tokens * emission.tPrice : null
@@ -146,7 +145,12 @@ export default function Protocols({ emissions }: { emissions: CalendarEmission[]
 			}
 		}
 
-		const filteredEvents: Array<{ name: string; timestamp: number; type: string; link?: string }> = []
+		const filteredEvents: Array<{
+			name: string
+			timestamp: number
+			type: string
+			link?: string
+		}> = []
 		for (const event of events) {
 			if (event.timestamp >= mountedAtMs && selectedOptionsSet.has(event.type)) {
 				filteredEvents.push(event)
@@ -173,7 +177,10 @@ export default function Protocols({ emissions }: { emissions: CalendarEmission[]
 		getCoreRowModel: getCoreRowModel(),
 		getSortedRowModel: getSortedRowModel()
 	})
-	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
+	const [_projectName, setProjectName] = useTableSearch({
+		instance,
+		columnToSearch: 'name'
+	})
 
 	return (
 		<Layout

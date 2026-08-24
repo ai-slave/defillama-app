@@ -35,7 +35,11 @@ vi.mock('~/utils/metadata', () => ({
 	__esModule: true,
 	default: {
 		emissionsProtocolsList: ['aave'],
-		emissionsProtocolBySlug: { aave: 'aave', 'aave-alias': 'aave-alias', nvda: 'nvda' },
+		emissionsProtocolBySlug: {
+			aave: 'aave',
+			'aave-alias': 'aave-alias',
+			nvda: 'nvda'
+		},
 		tokenlist: { aave: { symbol: 'AAVE' } }
 	},
 	refreshMetadataInBackgroundIfStale: refreshMetadataInBackgroundIfStaleMock
@@ -51,14 +55,20 @@ import tokenUnlocksHandler from '~/pages/api/private/token-unlocks/[protocol]'
 beforeEach(() => {
 	vi.clearAllMocks()
 	validateSubscriptionMock.mockResolvedValue({ valid: true, isTrial: false })
-	resolveProtocolParamFromMetadataMock.mockReturnValue({ canonicalSlug: 'aave' })
+	resolveProtocolParamFromMetadataMock.mockReturnValue({
+		canonicalSlug: 'aave'
+	})
 	getProtocolEmissonsMock.mockResolvedValue({ protocol: 'aave' })
 	isEmptyProtocolEmissionResultMock.mockReturnValue(false)
 })
 
 describe('/api/private/token-unlocks/[protocol]', () => {
 	it('returns 405 with private no-store for non-GET requests', async () => {
-		const req = { method: 'POST', headers: {}, query: {} } as unknown as NextApiRequest
+		const req = {
+			method: 'POST',
+			headers: {},
+			query: {}
+		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
 		await tokenUnlocksHandler(req, res)
@@ -83,7 +93,9 @@ describe('/api/private/token-unlocks/[protocol]', () => {
 		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer ok')
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
 		expect(res.status).toHaveBeenCalledWith(400)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Missing protocol parameter' })
+		expect(res.json).toHaveBeenCalledWith({
+			error: 'Missing protocol parameter'
+		})
 	})
 
 	it('returns auth failures before checking missing protocol params', async () => {
@@ -92,7 +104,11 @@ describe('/api/private/token-unlocks/[protocol]', () => {
 			status: 401,
 			error: 'Authentication required'
 		})
-		const req = { method: 'GET', headers: {}, query: {} } as unknown as NextApiRequest
+		const req = {
+			method: 'GET',
+			headers: {},
+			query: {}
+		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
 		await tokenUnlocksHandler(req, res)
@@ -121,7 +137,9 @@ describe('/api/private/token-unlocks/[protocol]', () => {
 		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer bad')
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
 		expect(res.status).toHaveBeenCalledWith(403)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Active subscription required' })
+		expect(res.json).toHaveBeenCalledWith({
+			error: 'Active subscription required'
+		})
 	})
 
 	it('returns 404 with private no-store for unavailable protocols', async () => {
@@ -137,7 +155,9 @@ describe('/api/private/token-unlocks/[protocol]', () => {
 
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
 		expect(res.status).toHaveBeenCalledWith(404)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Protocol emissions not found' })
+		expect(res.json).toHaveBeenCalledWith({
+			error: 'Protocol emissions not found'
+		})
 		expect(getProtocolEmissonsMock).not.toHaveBeenCalled()
 	})
 
@@ -209,6 +229,25 @@ describe('/api/private/token-unlocks/[protocol]', () => {
 
 		await tokenUnlocksHandler(req, res)
 
+		expect(recordRouteRuntimeErrorMock).toHaveBeenCalledWith(error, 'apiRoute')
+		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
+		expect(res.status).toHaveBeenCalledWith(500)
+		expect(res.json).toHaveBeenCalledWith({ error: 'Internal server error' })
+	})
+
+	it('returns 500 instead of a false 404 when the emissions source fails', async () => {
+		const error = new Error('Emissions source unavailable')
+		getProtocolEmissonsMock.mockRejectedValue(error)
+		const req = {
+			method: 'GET',
+			headers: { authorization: 'Bearer ok' },
+			query: { protocol: 'aave' }
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await tokenUnlocksHandler(req, res)
+
+		expect(isEmptyProtocolEmissionResultMock).not.toHaveBeenCalled()
 		expect(recordRouteRuntimeErrorMock).toHaveBeenCalledWith(error, 'apiRoute')
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
 		expect(res.status).toHaveBeenCalledWith(500)

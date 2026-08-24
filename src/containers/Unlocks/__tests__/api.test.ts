@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ProtocolEmission, RawProtocolEmission, RawProtocolEmissionDetail } from '../api.types'
 
 const mocks = vi.hoisted(() => ({
 	fetchJson: vi.fn(),
+	fetchWithPoolingOnServer: vi.fn(),
 	datasetsServerUrl: 'https://datasets.example.com',
 	serverUrl: 'https://api.example.com'
 }))
@@ -16,92 +18,267 @@ vi.mock('~/constants', () => ({
 }))
 
 vi.mock('~/utils/async', () => ({
-	fetchJson: mocks.fetchJson
+	fetchJson: mocks.fetchJson,
+	getSlowJsonTimeoutMs: () => 45_000,
+	handleFetchResponse: async (response: Response) => {
+		throw new Error(`request failed: ${response.status}`)
+	}
 }))
+
+vi.mock('~/utils/http-client', () => ({
+	fetchWithPoolingOnServer: mocks.fetchWithPoolingOnServer
+}))
+
+function jsonResponse(status: number, body: object): Response {
+	return new Response(JSON.stringify(body), {
+		status,
+		headers: { 'Content-Type': 'application/json' }
+	})
+}
 
 beforeEach(() => {
 	vi.resetModules()
 	mocks.fetchJson.mockReset()
+	mocks.fetchWithPoolingOnServer.mockReset()
 	mocks.datasetsServerUrl = 'https://datasets.example.com'
 	mocks.serverUrl = 'https://api.example.com'
 })
 
 describe('unlocks api', () => {
 	it('fetches protocol emission details from the datasets endpoint', async () => {
-		mocks.fetchJson.mockResolvedValue({
+		const rawDetail = {
 			name: 'Chainlink',
+			gecko_id: 'chainlink',
+			pId: 'chainlink',
+			defillamaIds: ['chainlink'],
+			chainName: 'Ethereum',
+			categories: { insiders: ['Team'] },
+			unlockUsdChart: [],
 			metadata: {
+				token: 'coingecko:chainlink',
+				protocolIds: ['chainlink'],
+				unlockEvents: [
+					{
+						timestamp: 200,
+						cliffAllocations: [],
+						linearAllocations: [
+							{
+								recipient: 'Team',
+								category: 'insiders',
+								unlockType: 'linear_rate_change',
+								previousRatePerWeek: 2,
+								newRatePerWeek: null,
+								endTimestamp: '300'
+							}
+						],
+						summary: { netChangeInWeeklyRate: null }
+					}
+				],
 				events: [
-					{ timestamp: 100, noOfTokens: [1] },
-					{ timestamp: '200', noOfTokens: [2, null] }
+					{
+						timestamp: 100,
+						noOfTokens: [1],
+						description: 'Team cliff',
+						category: 'insiders',
+						unlockType: 'cliff'
+					},
+					{
+						timestamp: '200',
+						noOfTokens: [2, null],
+						description: 'Team rate change',
+						category: 'insiders',
+						unlockType: 'linear',
+						rateDurationDays: 30
+					}
 				]
 			},
-			documentedData: { data: [] }
-		})
+			documentedData: {
+				data: [],
+				tokenAllocation: {
+					current: {},
+					final: {},
+					progress: {},
+					bySection: { current: {}, final: {}, progress: {} }
+				}
+			}
+		} satisfies RawProtocolEmissionDetail
+
+		mocks.fetchWithPoolingOnServer.mockResolvedValue(jsonResponse(200, rawDetail))
 
 		const api = await import('../api')
 		const result = await api.fetchProtocolEmission('chain/link')
 
-		expect(mocks.fetchJson).toHaveBeenCalledWith('https://datasets.example.com/emissions/chain%2Flink')
-		expect(mocks.fetchJson).toHaveBeenCalledTimes(1)
-		expect(result?.name).toBe('Chainlink')
-		expect(result?.metadata?.events).toEqual([
-			{ timestamp: 100, noOfTokens: [1] },
-			{ timestamp: 200, noOfTokens: [], hasUnknownTokenAmount: true }
+		expect(mocks.fetchWithPoolingOnServer).toHaveBeenCalledWith('https://datasets.example.com/emissions/chain%2Flink', {
+			timeout: 45_000
+		})
+		expect(mocks.fetchWithPoolingOnServer).toHaveBeenCalledTimes(1)
+		expect(result).not.toBeNull()
+		if (!result) throw new Error('Expected protocol detail')
+		expect(result.name).toBe('Chainlink')
+		expect(result.metadata.events).toEqual([
+			{
+				timestamp: 100,
+				noOfTokens: [1],
+				description: 'Team cliff',
+				category: 'insiders',
+				unlockType: 'cliff'
+			},
+			{
+				timestamp: 200,
+				noOfTokens: [],
+				description: 'Team rate change',
+				category: 'insiders',
+				unlockType: 'linear',
+				rateDurationDays: 30,
+				hasUnknownTokenAmount: true
+			}
 		])
+		expect(result.metadata.unlockEvents[0]?.linearAllocations[0]?.endTimestamp).toBe(300)
 	})
 
-	it('returns null when the datasets emission request fails', async () => {
-		const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-		mocks.fetchJson.mockRejectedValue(new Error('not found'))
+	it('preserves a failed detail request as a failure', async () => {
+		const error = new Error('upstream unavailable')
+		mocks.fetchWithPoolingOnServer.mockRejectedValue(error)
 
 		const api = await import('../api')
-		const result = await api.fetchProtocolEmission('chainlink')
 
-		expect(result).toBeNull()
-		expect(mocks.fetchJson).toHaveBeenCalledTimes(1)
-		expect(consoleError).toHaveBeenCalledWith('Failed to fetch protocol emission for chainlink:', expect.any(Error))
-		consoleError.mockRestore()
+		await expect(api.fetchProtocolEmission('chainlink')).rejects.toBe(error)
+		expect(mocks.fetchWithPoolingOnServer).toHaveBeenCalledTimes(1)
+	})
+
+	it('returns null only for a missing protocol detail', async () => {
+		mocks.fetchWithPoolingOnServer.mockResolvedValue(jsonResponse(404, {}))
+
+		const api = await import('../api')
+
+		await expect(api.fetchProtocolEmission('missing')).resolves.toBeNull()
+	})
+
+	it('throws for a non-not-found HTTP response', async () => {
+		mocks.fetchWithPoolingOnServer.mockResolvedValue(jsonResponse(503, {}))
+
+		const api = await import('../api')
+
+		await expect(api.fetchProtocolEmission('chainlink')).rejects.toThrow('request failed: 503')
 	})
 
 	it('normalizes numeric-string event timestamps once at the list API boundary', async () => {
-		const normalizedProtocol = {
+		const aggregateFields = {
+			sources: [],
+			protocolId: 'chainlink',
+			protocolSlug: 'chainlink',
+			gecko_id: 'chainlink',
+			circSupply: 10,
+			circSupply30d: 9,
+			totalLocked: 90,
+			maxSupply: 100,
+			unlocksPerDay: 1,
+			unlockEvents: []
+		}
+		const normalizedProtocol: ProtocolEmission = {
+			...aggregateFields,
 			name: 'Already normalized',
 			token: 'NORMAL',
-			events: [{ timestamp: 300, noOfTokens: [3] }]
+			events: [
+				{
+					timestamp: 300,
+					noOfTokens: [3],
+					description: 'Normalized cliff',
+					category: 'publicSale',
+					unlockType: 'cliff'
+				}
+			]
 		}
-		mocks.fetchJson.mockResolvedValue([
-			{
-				name: 'Chainlink',
-				token: 'LINK',
-				events: [
-					{ timestamp: 100, noOfTokens: [1] },
-					{ timestamp: '200', noOfTokens: [2, null] }
-				]
-			},
-			normalizedProtocol
-		])
+		const rawProtocol = {
+			...aggregateFields,
+			name: 'Chainlink',
+			token: 'LINK',
+			unlockEvents: [
+				{
+					timestamp: 200,
+					cliffAllocations: [],
+					linearAllocations: [
+						{
+							recipient: 'Team',
+							category: 'insiders',
+							unlockType: 'linear_rate_change',
+							previousRatePerWeek: 2,
+							newRatePerWeek: 3,
+							endTimestamp: '400'
+						}
+					],
+					summary: { netChangeInWeeklyRate: 1 }
+				}
+			],
+			events: [
+				{
+					timestamp: 100,
+					noOfTokens: [1],
+					description: 'Team cliff',
+					category: 'insiders',
+					unlockType: 'cliff'
+				},
+				{
+					timestamp: '200',
+					noOfTokens: [2, null],
+					description: 'Team rate change',
+					category: 'insiders',
+					unlockType: 'linear',
+					rateDurationDays: 30
+				}
+			]
+		} satisfies RawProtocolEmission
+		mocks.fetchJson.mockResolvedValue([rawProtocol, normalizedProtocol])
 
 		const api = await import('../api')
 		const result = await api.fetchAllProtocolEmissions()
 
 		expect(result[0]?.events).toEqual([
-			{ timestamp: 100, noOfTokens: [1] },
-			{ timestamp: 200, noOfTokens: [], hasUnknownTokenAmount: true }
+			{
+				timestamp: 100,
+				noOfTokens: [1],
+				description: 'Team cliff',
+				category: 'insiders',
+				unlockType: 'cliff'
+			},
+			{
+				timestamp: 200,
+				noOfTokens: [],
+				description: 'Team rate change',
+				category: 'insiders',
+				unlockType: 'linear',
+				rateDurationDays: 30,
+				hasUnknownTokenAmount: true
+			}
 		])
 		expect(result[1]).toBe(normalizedProtocol)
 		expect(result[1]?.events).toBe(normalizedProtocol.events)
+		expect(result[0]?.unlockEvents[0]?.linearAllocations[0]?.endTimestamp).toBe(400)
 	})
 
-	it('returns an empty list without re-logging a failed list request', async () => {
-		const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-		mocks.fetchJson.mockRejectedValue(new Error('Failed to fetch'))
+	it('preserves a failed aggregate request as a failure', async () => {
+		const error = new Error('Failed to fetch')
+		mocks.fetchJson.mockRejectedValue(error)
 
 		const api = await import('../api')
-		const result = await api.fetchAllProtocolEmissions()
 
-		expect(result).toEqual([])
-		expect(consoleError).not.toHaveBeenCalled()
-		consoleError.mockRestore()
+		await expect(api.fetchAllProtocolEmissions()).rejects.toBe(error)
+	})
+
+	it('keeps a successful empty aggregate distinct from failure', async () => {
+		mocks.fetchJson.mockResolvedValue([])
+
+		const api = await import('../api')
+
+		await expect(api.fetchAllProtocolEmissions()).resolves.toEqual([])
+	})
+
+	it('preserves a failed protocol-list request as a failure', async () => {
+		const error = new Error('metadata unavailable')
+		mocks.fetchJson.mockRejectedValue(error)
+
+		const api = await import('../api')
+
+		await expect(api.fetchEmissionsProtocolsList()).rejects.toBe(error)
 	})
 })
