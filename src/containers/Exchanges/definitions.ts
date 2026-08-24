@@ -84,7 +84,11 @@ export const exchangeDefinitions = {
 		name: {
 			label: 'Exchange',
 			description:
-				'Venue identity and related links. “Metadata only” means exchange information exists but market activity is not tracked.'
+				'Venue identity. “Metadata only” means exchange information exists but market activity is not tracked.'
+		},
+		venueLinks: {
+			label: 'Links',
+			description: 'Shortcuts to the venue’s reserves page, its DefiLlama profile, and its website.'
 		},
 		execCostToTrade: {
 			label: 'Cost to trade',

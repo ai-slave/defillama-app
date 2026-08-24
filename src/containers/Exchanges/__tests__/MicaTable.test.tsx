@@ -118,6 +118,7 @@ describe('mica table columns', () => {
 		const columns = buildMicaColumns('2026-07-15')
 		expect(columns.map((column) => column.id ?? (column as any).accessorKey)).toEqual([
 			'name',
+			'venueActions',
 			'spotDepth2',
 			'spotDepth05',
 			'perpDepth2',

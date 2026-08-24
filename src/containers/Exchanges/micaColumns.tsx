@@ -72,7 +72,6 @@ export function buildMicaColumns(asOfDate: string): ColumnDef<MicaVenueModel, an
 				cell: ({ row }) => {
 					const venue = row.original
 					const venueDestination = selectVenueDestination(venue.exchange, venue.referralUrl, venue.website)
-					const promotion = selectActivePromotion(venue.promotions, asOfDate)
 					return (
 						<div className="flex w-full min-w-0 items-center gap-2">
 							<TokenLogo
@@ -100,32 +99,47 @@ export function buildMicaColumns(asOfDate: string): ColumnDef<MicaVenueModel, an
 									<span className="block truncate label-md">{venue.name}</span>
 								)}
 							</span>
-							<span className="ml-auto flex shrink-0 items-center gap-1.5">
-								{promotion ? <PromotionGift promotion={promotion} venue={venue} /> : null}
-								{venueDestination ? (
-									<a
-										href={venueDestination.url}
-										target="_blank"
-										rel="noopener noreferrer"
-										data-umami-event="mica-exchange-click"
-										data-umami-event-exchange={venue.exchange}
-										data-umami-event-type={venueDestination.kind === 'referral' ? 'ref' : 'website'}
-										data-umami-event-placement="trade"
-										data-umami-event-url={venueDestination.url}
-										className="inline-flex h-7 items-center gap-1 rounded-md border border-medium px-2.5 label-sm text-link hover:bg-hover-row"
-										aria-label={`Trade on ${venue.name}`}
-									>
-										Trade
-										<Icon name="arrow-up-right" height={13} width={13} />
-									</a>
-								) : null}
-							</span>
 						</div>
 					)
 				},
-				meta: { headerClassName: 'w-[280px] min-w-[280px]', csvValue: (row) => row.name }
+				meta: { headerClassName: 'w-[190px] min-w-[190px]', csvValue: (row) => row.name }
 			}
 		),
+		// The promo chip and Trade CTA sit outside the sticky name column so they cannot
+		// squeeze the venue name; both stay fully visible at every viewport.
+		columnHelper.display({
+			id: 'venueActions',
+			header: 'Trade',
+			enableSorting: false,
+			cell: ({ row }) => {
+				const venue = row.original
+				const venueDestination = selectVenueDestination(venue.exchange, venue.referralUrl, venue.website)
+				const promotion = selectActivePromotion(venue.promotions, asOfDate)
+				return (
+					<div className="flex items-center gap-1.5">
+						{promotion ? <PromotionGift promotion={promotion} venue={venue} /> : null}
+						{venueDestination ? (
+							<a
+								href={venueDestination.url}
+								target="_blank"
+								rel="noopener noreferrer"
+								data-umami-event="mica-exchange-click"
+								data-umami-event-exchange={venue.exchange}
+								data-umami-event-type={venueDestination.kind === 'referral' ? 'ref' : 'website'}
+								data-umami-event-placement="trade"
+								data-umami-event-url={venueDestination.url}
+								className="inline-flex h-7 items-center gap-1 rounded-md border border-medium px-2.5 label-sm text-link hover:bg-hover-row"
+								aria-label={`Trade on ${venue.name}`}
+							>
+								Trade
+								<Icon name="arrow-up-right" height={13} width={13} />
+							</a>
+						) : null}
+					</div>
+				)
+			},
+			meta: { headerClassName: 'w-[132px] min-w-[132px]' }
+		}),
 		columnHelper.accessor((row) => pairTotal(row.depth.spotBid2Usd, row.depth.spotAsk2Usd) ?? undefined, {
 			id: 'spotDepth2',
 			header: 'Spot ±2%',

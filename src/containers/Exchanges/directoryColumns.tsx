@@ -186,9 +186,6 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 			cell: ({ row }) => {
 				const venue = row.original
 				const profileHref = withCountryParam(venue.profileHref, venue.selectedCountry)
-				const reservesHref = venue.reservesHref ? withCountryParam(venue.reservesHref, venue.selectedCountry) : null
-				const defillamaPath = venue.secondaryUrl
-				const venueDestination = selectVenueDestination(venue.slug, venue.referralUrl, venue.websiteUrl)
 				const liquidityNote = row.depth > 0 ? describeChildLiquidity(venue) : null
 				// Every row wears its own chip: the brand row its family's best rank,
 				// each child venue its own sub-rank underneath.
@@ -235,58 +232,76 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 									{venue.name}
 								</BasicLink>
 								{liquidityNote ? <QuestionHelper text={liquidityNote} /> : null}
-								<KindBadge kind={venue.kind} />
 							</div>
 							{venue.tracked ? null : <span className="body-sm text-tertiary">Metadata only</span>}
-						</div>
-						<div className="flex shrink-0 items-center gap-0.5">
-							{reservesHref ? (
-								<Tooltip content="Open reserves">
-									<BasicLink
-										href={reservesHref}
-										aria-label={`Open ${venue.name} reserves`}
-										className={buttonStyles({ variant: 'ghost', size: 'sm', square: true })}
-									>
-										<Icon name="wallet" className="size-4" />
-									</BasicLink>
-								</Tooltip>
-							) : null}
-							{defillamaPath ? (
-								<Tooltip content={`Open ${venue.kind.toUpperCase()} profile`}>
-									<BasicLink
-										href={defillamaPath}
-										aria-label={`Open ${venue.name} ${venue.kind.toUpperCase()} profile`}
-										className={buttonStyles({ variant: 'ghost', size: 'sm', square: true })}
-									>
-										<Icon name="bar-chart-2" className="size-4" />
-									</BasicLink>
-								</Tooltip>
-							) : null}
-							{venueDestination ? (
-								<Tooltip content="Open venue website">
-									<BasicLink
-										href={venueDestination.url}
-										target="_blank"
-										rel="noopener noreferrer"
-										aria-label={`Open ${venue.name} website`}
-										data-umami-event="exchange-website-click"
-										data-umami-event-exchange={venue.name}
-										data-umami-event-referral={venueDestination.kind === 'referral' ? 'true' : 'false'}
-										data-umami-event-url={venueDestination.url}
-										className={buttonStyles({ variant: 'ghost', size: 'sm', square: true })}
-									>
-										<Icon name="globe" className="size-4" />
-									</BasicLink>
-								</Tooltip>
-							) : null}
 						</div>
 					</div>
 				)
 			},
 			meta: {
-				headerClassName: 'w-[299px] min-w-[299px]',
+				headerClassName: 'w-[254px] min-w-[254px]',
 				headerHelperText: definitions.name.description,
 				csvValue: (row) => row.name
+			}
+		}),
+		// Lives outside the sticky name column so the venue name is not squeezed by up to
+		// three shrink-0 buttons, which cost the name ~50px on a mobile viewport.
+		columnHelper.display({
+			id: 'venueLinks',
+			header: definitions.venueLinks.label,
+			enableSorting: false,
+			cell: ({ row }) => {
+				const venue = row.original
+				const reservesHref = venue.reservesHref ? withCountryParam(venue.reservesHref, venue.selectedCountry) : null
+				const defillamaPath = venue.secondaryUrl
+				const venueDestination = selectVenueDestination(venue.slug, venue.referralUrl, venue.websiteUrl)
+				return (
+					<div className="flex items-center gap-0.5">
+						{reservesHref ? (
+							<Tooltip content="Open reserves">
+								<BasicLink
+									href={reservesHref}
+									aria-label={`Open ${venue.name} reserves`}
+									className={buttonStyles({ variant: 'ghost', size: 'sm', square: true })}
+								>
+									<Icon name="wallet" className="size-4" />
+								</BasicLink>
+							</Tooltip>
+						) : null}
+						{defillamaPath ? (
+							<Tooltip content={`Open ${venue.kind.toUpperCase()} profile`}>
+								<BasicLink
+									href={defillamaPath}
+									aria-label={`Open ${venue.name} ${venue.kind.toUpperCase()} profile`}
+									className={buttonStyles({ variant: 'ghost', size: 'sm', square: true })}
+								>
+									<Icon name="bar-chart-2" className="size-4" />
+								</BasicLink>
+							</Tooltip>
+						) : null}
+						{venueDestination ? (
+							<Tooltip content="Open venue website">
+								<BasicLink
+									href={venueDestination.url}
+									target="_blank"
+									rel="noopener noreferrer"
+									aria-label={`Open ${venue.name} website`}
+									data-umami-event="exchange-website-click"
+									data-umami-event-exchange={venue.name}
+									data-umami-event-referral={venueDestination.kind === 'referral' ? 'true' : 'false'}
+									data-umami-event-url={venueDestination.url}
+									className={buttonStyles({ variant: 'ghost', size: 'sm', square: true })}
+								>
+									<Icon name="globe" className="size-4" />
+								</BasicLink>
+							</Tooltip>
+						) : null}
+					</div>
+				)
+			},
+			meta: {
+				headerClassName: 'w-[100px] min-w-[100px]',
+				headerHelperText: definitions.venueLinks.description
 			}
 		}),
 		columnHelper.accessor('kind', {

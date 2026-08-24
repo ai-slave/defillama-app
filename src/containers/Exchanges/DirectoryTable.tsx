@@ -77,7 +77,11 @@ const GROUP_COLUMN_IDS: Record<DirectoryColumnGroup, string[]> = {
 }
 
 const OPTIONAL_COLUMN_IDS = ['licenseCount', 'founded']
-const ALL_COLUMN_IDS = ['kind', ...new Set([...Object.values(GROUP_COLUMN_IDS).flat(), ...OPTIONAL_COLUMN_IDS])]
+const ALL_COLUMN_IDS = [
+	'kind',
+	'venueLinks',
+	...new Set([...Object.values(GROUP_COLUMN_IDS).flat(), ...OPTIONAL_COLUMN_IDS])
+]
 
 // Fee columns follow the active segment scope exactly; perp-only metrics don't apply to
 // spot. Execution columns are measured on the linear-perp basket only today, so they
@@ -99,7 +103,7 @@ const SCOPE_HIDDEN_COLUMN_IDS: Record<ExchangeSegment, string[]> = {
 function directoryColumnVisibility(group: DirectoryColumnGroup, scope: ExchangeSegment): VisibilityState {
 	const hidden = SCOPE_HIDDEN_COLUMN_IDS[scope]
 	const groupColumns = GROUP_COLUMN_IDS[group].filter((id) => !hidden.includes(id))
-	const visible = new Set(['name', ...groupColumns])
+	const visible = new Set(['name', 'venueLinks', 'kind', ...groupColumns])
 	return Object.fromEntries(ALL_COLUMN_IDS.map((id) => [id, visible.has(id)]))
 }
 
