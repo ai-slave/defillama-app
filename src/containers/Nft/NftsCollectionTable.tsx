@@ -59,11 +59,11 @@ const columns = [
 			const item = row.original
 
 			return (
-				<span className="flex items-center gap-2">
+				<span className="flex min-w-0 items-center gap-2">
 					<TokenLogo src={item.image} alt={`Logo of ${item.name}`} />
 					<BasicLink
 						href={`/nfts/collection/${slug(item.collectionId)}`}
-						className="text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
+						className="min-w-0 truncate text-sm font-medium text-link hover:underline"
 					>{`${item.name}`}</BasicLink>
 				</span>
 			)

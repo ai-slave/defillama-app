@@ -1280,7 +1280,7 @@ const columns = [
 			)
 		},
 		meta: {
-			headerClassName: 'w-[257px] min-w-[257px]'
+			headerClassName: 'w-[200px] min-w-[200px] lg:w-[257px] lg:min-w-[257px]'
 		}
 	}),
 	columnHelper.accessor('category', {
