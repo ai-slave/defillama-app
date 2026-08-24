@@ -1,4 +1,4 @@
-import { type ColumnDef, createColumnHelper } from '@tanstack/react-table'
+import { createColumnHelper, type TableOptions } from '@tanstack/react-table'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { formatPercent, formatRatio } from '~/utils/numberFormat'
@@ -28,15 +28,40 @@ function loopLegRows(row: LoopTableRow): SignedTipRow[] {
 	const bMultProp = leverage != null ? bMult : undefined
 	const rows: SignedTipRow[] = []
 	if (supplyApyBase != null)
-		rows.push({ label: 'Supply base', value: supplyApyBase * sMult, signed: 'plus', multiple: sMultProp })
+		rows.push({
+			label: 'Supply base',
+			value: supplyApyBase * sMult,
+			signed: 'plus',
+			...(sMultProp !== undefined ? { multiple: sMultProp } : {})
+		})
 	if (hasPart(supplyApyReward))
-		rows.push({ label: 'Supply reward', value: supplyApyReward * sMult, signed: 'plus', multiple: sMultProp })
+		rows.push({
+			label: 'Supply reward',
+			value: supplyApyReward * sMult,
+			signed: 'plus',
+			...(sMultProp !== undefined ? { multiple: sMultProp } : {})
+		})
 	if (hasPart(supplyApyIntrinsic))
-		rows.push({ label: 'Supply intrinsic', value: supplyApyIntrinsic * sMult, signed: 'plus', multiple: sMultProp })
+		rows.push({
+			label: 'Supply intrinsic',
+			value: supplyApyIntrinsic * sMult,
+			signed: 'plus',
+			...(sMultProp !== undefined ? { multiple: sMultProp } : {})
+		})
 	if (borrowApyBase != null)
-		rows.push({ label: 'Borrow base cost', value: borrowApyBase * bMult, signed: 'minus', multiple: bMultProp })
+		rows.push({
+			label: 'Borrow base cost',
+			value: borrowApyBase * bMult,
+			signed: 'minus',
+			...(bMultProp !== undefined ? { multiple: bMultProp } : {})
+		})
 	if (hasPart(borrowApyReward))
-		rows.push({ label: 'Borrow reward', value: borrowApyReward * bMult, signed: 'plus', multiple: bMultProp })
+		rows.push({
+			label: 'Borrow reward',
+			value: borrowApyReward * bMult,
+			signed: 'plus',
+			...(bMultProp !== undefined ? { multiple: bMultProp } : {})
+		})
 	return rows
 }
 
@@ -65,7 +90,7 @@ const loopHelper = createColumnHelper<LoopTableRow>()
 
 // Column order / labels: Token, Protocol, Chain, Leverage, Supply APY, Borrow APY,
 // Looped APY, Available, Loop LTV.
-const loopColumns: Array<ColumnDef<LoopTableRow, unknown>> = [
+const loopColumns: TableOptions<LoopTableRow>['columns'] = [
 	loopHelper.accessor('pool', {
 		id: 'token',
 		header: 'Token',
@@ -137,7 +162,7 @@ const loopColumns: Array<ColumnDef<LoopTableRow, unknown>> = [
 										label: 'Supply',
 										value: supplyApy * supplyMult,
 										signed: 'plus' as const,
-										multiple: leverage != null ? supplyMult : undefined
+										...(leverage != null ? { multiple: supplyMult } : {})
 									}
 								]
 							: []),
@@ -147,7 +172,7 @@ const loopColumns: Array<ColumnDef<LoopTableRow, unknown>> = [
 										label: 'Borrow cost',
 										value: borrowApy * borrowMult,
 										signed: 'minus' as const,
-										multiple: leverage != null ? borrowMult : undefined
+										...(leverage != null ? { multiple: borrowMult } : {})
 									}
 								]
 							: [])

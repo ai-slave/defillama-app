@@ -83,7 +83,7 @@ export function RiskTabs({ tabs, defaultId }: { tabs: RiskTab[]; defaultId: stri
 		else if (e.key === 'End') next = tabs.length - 1
 		else return
 		e.preventDefault()
-		const t = tabs[next]
+		const t = tabs[next]!
 		activate(t.id)
 		tablistRef.current?.querySelector<HTMLButtonElement>(`#risk-tab-${t.id}`)?.focus()
 	}

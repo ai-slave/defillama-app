@@ -100,7 +100,15 @@ function LossHero({
 
 // The expanded row's numbers. Reads the SAME stress the row rendered at, so the two never
 // disagree; a typed deposit rescales every figure pro-rata.
-function LossBox({ scenario, supplyUsd, stress }: { scenario: ScenarioVM; supplyUsd: number; stress?: StressSel }) {
+function LossBox({
+	scenario,
+	supplyUsd,
+	stress
+}: {
+	scenario: ScenarioVM
+	supplyUsd: number | null
+	stress?: StressSel
+}) {
 	const exit = exitWindowLabel(scenario)
 	const [position] = usePositionUsd()
 	// Percent of deposit leads; a typed deposit appends the amount it works out to.
@@ -134,7 +142,8 @@ function LossBox({ scenario, supplyUsd, stress }: { scenario: ScenarioVM; supply
 	const cell = modeledLossCell(scenario, stress, supplyUsd)
 	const heroAmount = cell.sortUsd > 0 ? asShare(cell.sortUsd) : cell.amount
 	const tone = toneClasses(scenarioTone(scenario))
-	const ringDenom = full && supplyUsd > 0 ? Math.min(scenario.lossMaxUsd, supplyUsd) : scenario.lossMaxUsd
+	const ringDenom =
+		full && supplyUsd != null && supplyUsd > 0 ? Math.min(scenario.lossMaxUsd, supplyUsd) : scenario.lossMaxUsd
 	const ringPct = ringDenom > 0 ? Math.min(100, (cell.sortUsd / ringDenom) * 100) : 0
 	const cappedNote =
 		scenario.cappedAtSupply && scenario.rawLossMaxUsd ? (
@@ -159,7 +168,7 @@ function LossBox({ scenario, supplyUsd, stress }: { scenario: ScenarioVM; supply
 						<StatRow
 							key={a.dropPct}
 							label={`−${formatPercent(a.dropPct, { input: 'percent' })}`}
-							value={a.lossUsd <= 0 ? (supplyUsd > 0 ? '0%' : '$0') : asShare(a.lossUsd)}
+							value={a.lossUsd <= 0 ? (supplyUsd != null && supplyUsd > 0 ? '0%' : '$0') : asShare(a.lossUsd)}
 							active={stress === a.dropPct}
 							muted={a.lossUsd <= 0}
 						/>
@@ -248,7 +257,7 @@ function OracleDrainTable({ scenario }: { scenario: ScenarioVM }) {
 											compactSuffix: 'lowercase'
 										})}
 									</span>
-									<OracleAdminNote admins={a.oracleAdmins} />
+									<OracleAdminNote {...(a.oracleAdmins ? { admins: a.oracleAdmins } : {})} />
 								</td>
 							</tr>
 						))}
@@ -266,7 +275,7 @@ function OracleDrainTable({ scenario }: { scenario: ScenarioVM }) {
 	)
 }
 
-function PerAssetTable({ scenario, supplyUsd }: { scenario: ScenarioVM; supplyUsd: number }) {
+function PerAssetTable({ scenario, supplyUsd }: { scenario: ScenarioVM; supplyUsd: number | null }) {
 	if (!scenario.perAsset?.length) return null
 	if (scenario.scenarioId === ORACLE_FULL_DRAIN_SCENARIO_ID) return <OracleDrainTable scenario={scenario} />
 	return (
@@ -313,7 +322,8 @@ function RealizedStrip({ scenario }: { scenario: ScenarioVM }) {
 			</p>
 			<ul className="mt-2 space-y-1.5">
 				{scenario.realized.incidents.map((inc) => {
-					const madeWhole = inc.usd_recovered >= inc.usd_lost && inc.usd_lost > 0
+					const recovered = inc.usd_recovered ?? null
+					const madeWhole = recovered !== null && recovered >= inc.usd_lost && inc.usd_lost > 0
 					return (
 						<li
 							key={`${inc.date}:${inc.usd_lost}:${inc.usd_recovered}:${inc.post_mortem_url ?? ''}`}
@@ -323,11 +333,11 @@ function RealizedStrip({ scenario }: { scenario: ScenarioVM }) {
 							<span>
 								{formatUsd(inc.usd_lost, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}{' '}
 								lost
-								{inc.usd_recovered > 0 ? (
+								{recovered !== null && recovered > 0 ? (
 									<>
 										{' · '}
 										<span className={madeWhole ? 'text-(--yield-positive-text)' : undefined}>
-											{formatUsd(inc.usd_recovered, {
+											{formatUsd(recovered, {
 												compact: true,
 												minimumCompactValue: 1_000_000,
 												compactSuffix: 'lowercase'
@@ -399,7 +409,7 @@ function WhoCanDoThis({ scenario, protocol }: { scenario: ScenarioVM; protocol: 
 		if (guardian) parts.push(`guardian: ${guardian}`)
 	}
 	if (protocol.multisigs?.length) {
-		const ms = protocol.multisigs[0]
+		const ms = protocol.multisigs[0]!
 		parts.push(`a ${ms.threshold.m}-of-${ms.threshold.n} multisig`)
 	}
 	if (!parts.length) return null
@@ -434,7 +444,7 @@ function NarrativeBody({
 }: {
 	scenario: ScenarioVM
 	protocol: ProtocolRiskFixture | null
-	supplyUsd: number
+	supplyUsd: number | null
 }) {
 	return (
 		<div className="flex flex-col gap-4">
@@ -531,21 +541,21 @@ export function ScenarioDetailContent({
 }: {
 	scenario: ScenarioVM
 	protocol: ProtocolRiskFixture | null
-	supplyUsd: number
+	supplyUsd: number | null
 	stress?: StressSel
 	layout?: 'stack' | 'two-column'
 }) {
 	if (layout === 'two-column') {
 		return (
 			<div className="grid gap-4 lg:grid-cols-[1fr_3fr]">
-				<LossBox scenario={scenario} supplyUsd={supplyUsd} stress={stress} />
+				<LossBox scenario={scenario} supplyUsd={supplyUsd} {...(stress !== undefined ? { stress } : {})} />
 				<NarrativeBody scenario={scenario} protocol={protocol} supplyUsd={supplyUsd} />
 			</div>
 		)
 	}
 	return (
 		<div className="flex flex-col gap-4">
-			<LossBox scenario={scenario} supplyUsd={supplyUsd} stress={stress} />
+			<LossBox scenario={scenario} supplyUsd={supplyUsd} {...(stress !== undefined ? { stress } : {})} />
 			<NarrativeBody scenario={scenario} protocol={protocol} supplyUsd={supplyUsd} />
 		</div>
 	)

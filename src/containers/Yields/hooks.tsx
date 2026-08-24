@@ -13,10 +13,10 @@ export const useFormatYieldQueryParams = ({
 }: IFormatYieldQueryParams) => {
 	const router = useRouter()
 	return decodeYieldsQuery(router.query, {
-		projectList,
-		chainList,
-		categoryList,
-		evmChains,
+		...(projectList ? { projectList } : {}),
+		...(chainList ? { chainList } : {}),
+		...(categoryList ? { categoryList } : {}),
+		...(evmChains ? { evmChains } : {}),
 		projectQueryKey,
 		excludeProjectQueryKey
 	})

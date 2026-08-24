@@ -1,3 +1,4 @@
+import type { InferGetStaticPropsType } from 'next'
 import { Announcement } from '~/components/Announcement'
 import { disclaimer } from '~/containers/Yields/constants'
 import LoopingPage from '~/containers/Yields/views/LoopView'
@@ -20,7 +21,7 @@ export const getStaticProps = withPerformanceLogging('yields/loop', async () => 
 
 const pageName = ['Yields: Loop']
 
-export default function YieldsLoopingPage(data) {
+export default function YieldsLoopingPage(data: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout
 			title="Looping - Leveraged DeFi Yield Strategies - DefiLlama"

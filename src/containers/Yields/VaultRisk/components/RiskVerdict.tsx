@@ -27,16 +27,40 @@ function Stat({ value, sub }: { value: React.ReactNode; sub?: React.ReactNode })
 }
 
 // "Recorded" phrasing on the clean case — absence of evidence, not a proven zero.
-function trackRecordSummary(incidents: HistoryIncident[]): { label: string; tone: Tone; detail: string | null } {
-	const totalLost = incidents.reduce((a, i) => a + (i.usdLost || 0), 0)
-	const totalRecovered = incidents.reduce((a, i) => a + Math.min(i.usdRecovered || 0, i.usdLost || 0), 0)
-	if (!incidents.length) return { label: 'No pool-level losses recorded', tone: 'good', detail: null }
+export function trackRecordSummary(incidents: HistoryIncident[]): {
+	label: string
+	tone: Tone
+	detail: string | null
+} {
+	let totalLost = 0
+	let totalRecovered = 0
+	let recoveryUnavailable = false
+	for (const incident of incidents) {
+		totalLost += incident.usdLost
+		if (incident.usdRecovered === null) recoveryUnavailable = true
+		else totalRecovered += Math.min(incident.usdRecovered, incident.usdLost)
+	}
+	if (!incidents.length)
+		return {
+			label: 'No pool-level losses recorded',
+			tone: 'good',
+			detail: null
+		}
 	const n = incidents.length === 1 ? '1 incident' : `${incidents.length} incidents`
-	if (totalLost > 0 && totalRecovered >= totalLost) return { label: `${n} · made whole`, tone: 'good', detail: null }
+	if (!recoveryUnavailable && totalLost > 0 && totalRecovered >= totalLost) {
+		return { label: `${n} · made whole`, tone: 'good', detail: null }
+	}
+	const recovered =
+		totalRecovered > 0
+			? `${formatUsd(totalRecovered, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} recovered`
+			: null
+	const recovery = recoveryUnavailable
+		? [recovered, 'recovery unavailable'].filter(Boolean).join(', ')
+		: (recovered ?? 'not recovered')
 	return {
 		label: `${formatUsd(totalLost, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} lost`,
 		tone: 'danger',
-		detail: `${n}${totalRecovered > 0 ? `, ${formatUsd(totalRecovered, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} recovered` : ', not recovered'}`
+		detail: `${n}, ${recovery}`
 	}
 }
 
@@ -46,21 +70,29 @@ function trackRecordSummary(incidents: HistoryIncident[]): { label: string; tone
 function realisticWorst(
 	scenarios: ScenarioVM[],
 	stress: Stress | null,
-	supplyUsd: number,
+	supplyUsd: number | null,
 	worstUsd: number
 ): { lossUsd: number; condition: string } | null {
-	if (supplyUsd <= 0) return null
+	if (supplyUsd == null || supplyUsd <= 0) return null
 	const ceil = worstUsd > 0 ? worstUsd : supplyUsd
 	const inBand = (usd: number) => usd > supplyUsd * 0.01 && usd < ceil * 0.95
 	const anchors = (stress?.anchors ?? []).filter((a) => inBand(a.bad_debt_usd))
 	if (anchors.length) {
 		const deepest = anchors.reduce((best, a) => (a.bad_debt_usd > best.bad_debt_usd ? a : best))
-		return { lossUsd: deepest.bad_debt_usd, condition: `if collateral falls ${deepest.drop_pct}%` }
+		return {
+			lossUsd: deepest.bad_debt_usd,
+			condition: `if collateral falls ${deepest.drop_pct}%`
+		}
 	}
 	const worstBelow = [...scenarios]
 		.filter((s) => s.status === 'computed' && inBand(s.lossMaxUsd))
 		.sort((a, b) => b.lossMaxUsd - a.lossMaxUsd)[0]
-	return worstBelow ? { lossUsd: worstBelow.lossMaxUsd, condition: `from ${worstBelow.title.toLowerCase()}` } : null
+	return worstBelow
+		? {
+				lossUsd: worstBelow.lossMaxUsd,
+				condition: `from ${worstBelow.title.toLowerCase()}`
+			}
+		: null
 }
 
 // One number, one cause, then the ceiling as a sentence. Both figures are shares of the
@@ -77,13 +109,13 @@ function LossHeadline({
 	realistic: { lossUsd: number; condition: string } | null
 	worstUsd: number
 	worstTitle: string | null
-	supplyUsd: number
+	supplyUsd: number | null
 	noEscape: boolean
 	position: number | null
 }) {
-	const share = (usd: number) => formatDepositPct(supplyUsd > 0 ? Math.min(1, usd / supplyUsd) : 0)
+	const share = (usd: number) => formatDepositPct(supplyUsd != null && supplyUsd > 0 ? Math.min(1, usd / supplyUsd) : 0)
 	const inDollars = (usd: number) =>
-		position != null && supplyUsd > 0
+		position != null && supplyUsd != null && supplyUsd > 0
 			? ` · ≈ ${formatUsd(usd * Math.min(1, position / supplyUsd), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
 			: ''
 	const catLabel = worstTitle ?? 'worst case'
@@ -149,7 +181,7 @@ export function RiskVerdict({
 	headline: HeadlineVM
 	scenarios: ScenarioVM[]
 	stress?: Stress | null
-	supplyUsd: number
+	supplyUsd: number | null
 	exit: ExitReadinessVM
 	audits: Audit[]
 	incidents: HistoryIncident[]
@@ -159,8 +191,8 @@ export function RiskVerdict({
 
 	// "Your deposit": when set, depositor-facing dollar figures scale pro-rata to your slice.
 	const [position, setPosition] = usePositionUsd()
-	const personal = position != null && position > 0 && supplyUsd > 0
-	const ratio = personal ? position / supplyUsd : 1
+	const personal = position != null && position > 0 && supplyUsd != null && supplyUsd > 0
+	const ratio = personal && supplyUsd != null ? position / supplyUsd : 1
 
 	const avail = exit.availableLiquidityUsd
 	const util =
@@ -208,7 +240,9 @@ export function RiskVerdict({
 					<span className="label-sm text-secondary">
 						{personal ? 'How much could I lose?' : 'How much could be lost?'}
 					</span>
-					{supplyUsd > 0 && worst > 0 ? <PositionControl position={position} onChange={setPosition} /> : null}
+					{supplyUsd != null && supplyUsd > 0 && worst > 0 ? (
+						<PositionControl position={position} onChange={setPosition} />
+					) : null}
 				</div>
 				{worst > 0 ? (
 					<LossHeadline

@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
+import type { FormEvent } from 'react'
 import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { formatNumber } from '~/utils/numberFormat'
@@ -15,11 +16,11 @@ interface IAPYRange {
 export function APYRange({ nestedMenu, placement, size = 'sm' }: IAPYRange) {
 	const router = useRouter()
 
-	const handleSubmit = (e) => {
+	const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
-		const form = e.target
-		const minApy = form.min?.value
-		const maxApy = form.max?.value
+		const form = new FormData(e.currentTarget)
+		const minApy = String(form.get('min') ?? '')
+		const maxApy = String(form.get('max') ?? '')
 
 		const eventData: Record<string, number> = {}
 		if (minApy) eventData.min = Number(minApy)
@@ -65,11 +66,11 @@ export function APYRange({ nestedMenu, placement, size = 'sm' }: IAPYRange) {
 			variant="secondary"
 			onSubmit={handleSubmit}
 			onClear={handleClear}
-			nestedMenu={nestedMenu}
+			{...(nestedMenu !== undefined ? { nestedMenu } : {})}
 			size={size}
 			min={min}
 			max={max}
-			placement={placement}
+			{...(placement !== undefined ? { placement } : {})}
 		/>
 	)
 }

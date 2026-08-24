@@ -69,6 +69,7 @@ function coll(partial: Partial<CollateralVM>): CollateralVM {
 describe('buildAllocation', () => {
 	it('produces a sane histogram denominator for the real morpho vault', () => {
 		const vm = morphoVm()
+		if (vm.supplyUsd == null) throw new Error('Expected known vault supply')
 		const alloc = buildAllocation(vm.collateral, vm.supplyUsd, vm.allocatedUsd, vm.idleUsd)!
 		expect(alloc).not.toBeNull()
 		expect(alloc.totalUsd).toBeGreaterThan(0)
@@ -117,5 +118,9 @@ describe('buildAllocation', () => {
 	it('returns null when nothing is deployed', () => {
 		expect(buildAllocation([], 100, null, null)).toBeNull()
 		expect(buildAllocation([coll({ allocationUsd: 0, exposureUsd: 0 })], 100, 0, 0)).toBeNull()
+	})
+
+	it('does not invent an allocation denominator when supply is unknown', () => {
+		expect(buildAllocation([coll({ allocationUsd: 60 })], null, 60, 0)).toBeNull()
 	})
 })

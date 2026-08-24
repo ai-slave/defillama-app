@@ -13,9 +13,16 @@ export interface ApyTriple {
 
 export type ApyWindows = Record<ApyWindow, ApyTriple>
 
+export interface CompositionValues {
+	base: number | null
+	base_reward: number | null
+	base_intrinsic: number | null
+	base_reward_intrinsic: number | null
+}
+
 export interface IntrinsicApy {
 	apy: Record<ApyWindow, { base: number | null }>
-	source_pool?: { id: string; pool_token: string | null; symbol: string | null }
+	source_pool: { id: string; pool_token: string | null; symbol: string | null }
 }
 
 export interface ResolvedApy {
@@ -34,7 +41,7 @@ export interface Holders {
 export interface Token {
 	address: string
 	symbol: string | null
-	decimals?: number
+	decimals: number | null
 }
 
 export interface PoolToken {
@@ -43,16 +50,19 @@ export interface PoolToken {
 	name: string | null
 }
 
-export interface Trend {
+interface TrendFields {
 	id: string
 	start_date: string
 	end_date: string
-	base?: (number | null)[]
-	reward?: (number | null)[]
 	intrinsic?: (number | null)[]
-	// Replaces base/reward (never served alongside them) when the apy is unattributable.
-	total?: (number | null)[]
 }
+
+// An unattributable total never appears alongside the component series.
+export type Trend = TrendFields &
+	(
+		| { total: (number | null)[]; base?: never; reward?: never }
+		| { base: (number | null)[]; reward?: (number | null)[]; total?: never }
+	)
 
 export interface TokenKeys {
 	id: string
@@ -109,9 +119,9 @@ export interface YieldsMeta {
 }
 
 export interface EarnAttributes {
-	stablecoin_only: boolean
-	single_asset_exposure: boolean
-	impermanent_loss_risk: boolean
+	stablecoin_only: boolean | null
+	single_asset_exposure: boolean | null
+	impermanent_loss_risk: boolean | null
 }
 
 // Worst-deviation-per-pool for pools holding a USD stablecoin off peg (>2%), served by
@@ -137,8 +147,8 @@ export interface EarnRow {
 	tvl_usd: number | null
 	apy: ApyWindows
 	intrinsic: IntrinsicApy | null
-	stability_30d: Record<string, number | null>
-	holders: Holders | null
+	stability_30d: CompositionValues
+	holders: Holders
 	price_per_share: number | null
 	volume_1d_usd: number | null
 	attributes: EarnAttributes
@@ -147,6 +157,8 @@ export interface EarnRow {
 
 export interface BorrowMarketRow {
 	id: string
+	pool_key: string
+	pool_token: PoolToken | null
 	protocol: string
 	chain: string
 	display: { label: string | null; detail: string | null }
@@ -165,24 +177,26 @@ export interface BorrowMarketRow {
 
 export interface RouteLegCollateral {
 	id: string
+	pool_key: string
 	url: string | null
 	token: Token | null
 	loan_to_value: number | null
 	total_supply_usd: number | null
 	apy: ApyWindows
 	intrinsic: IntrinsicApy | null
-	reward_tokens?: Token[]
+	reward_tokens: Token[]
 }
 
 export interface RouteLegBorrow {
 	id: string
+	pool_key: string
 	url: string | null
 	token: Token | null
 	total_borrow_usd: number | null
 	available_borrow_usd: number | null
 	cost_apy: ApyWindows
 	intrinsic: IntrinsicApy | null
-	reward_tokens?: Token[]
+	reward_tokens: Token[]
 }
 
 export interface RouteRow {
@@ -191,14 +205,14 @@ export interface RouteRow {
 	display: { detail: string | null }
 	collateral: RouteLegCollateral
 	borrow: RouteLegBorrow
-	net_apy: Record<ApyWindow, Record<string, number>>
+	net_apy: Record<ApyWindow, CompositionValues>
 }
 
 export interface LoopRow {
 	id: string
 	protocol: string
 	chain: string
-	display: { detail: string | null } | null
+	display: { detail: string | null }
 	token: Token | null
 	url: string | null
 	loan_to_value: number | null
@@ -207,12 +221,12 @@ export interface LoopRow {
 	available_borrow_usd: number | null
 	supply_apy: ApyWindows
 	borrow_cost_apy: ApyWindows
-	loop_apy: { loop_count: number; total: number | null }
+	loop_apy: { loop_count: number | null; total: number | null }
 	leverage: { supply_multiplier: number | null; borrow_multiplier: number | null }
 	intrinsic: IntrinsicApy | null
 	// Per-leg reward tokens (supply/borrow) carried on the raw blob — surfaced as symbols for the
 	// supply/borrow leg tooltips.
-	reward_tokens?: { supply?: Token[]; borrow?: Token[] }
+	reward_tokens: { supply: Token[]; borrow: Token[] }
 }
 
 // Entity facts joined on from /v2/meta (rows only carry plain name strings).
@@ -278,10 +292,10 @@ export interface EarnPageRow {
 	exploited?: boolean
 	pegDeviation?: number
 	pegTokenSymbol?: string
-	stablecoin: boolean
+	stablecoin: boolean | null
 	tokenSymbols: string[]
-	singleAssetExposure: boolean
-	ilRisk: boolean
+	singleAssetExposure: boolean | null
+	ilRisk: boolean | null
 	// Optional so other EarnPageRow producers can omit it.
 	availableSupplyUsd?: number | null
 }

@@ -25,8 +25,11 @@ const SECTOR_GAP_DEG = 14
 
 function collectRefs(node: ConditionNode | undefined, out: string[]): void {
 	if (!node) return
-	if (node.ref) out.push(node.ref)
-	for (const child of node.children ?? []) collectRefs(child, out)
+	if (node.op === 'leaf') {
+		if (node.ref) out.push(node.ref)
+		return
+	}
+	for (const child of node.children) collectRefs(child, out)
 }
 
 function depName(d: ExternalDependency): string {

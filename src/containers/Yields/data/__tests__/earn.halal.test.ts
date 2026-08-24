@@ -51,8 +51,8 @@ function row(id: string, protocolSlug: string | null, overrides: Partial<Enriche
 		tvl_usd: 1_000,
 		apy: ZERO_APY,
 		intrinsic: null,
-		stability_30d: {},
-		holders: null,
+		stability_30d: { base: null, base_reward: null, base_intrinsic: null, base_reward_intrinsic: null },
+		holders: { count: null, avg_position_usd: null, top_10_share_pct: null },
 		price_per_share: null,
 		volume_1d_usd: null,
 		attributes: ATTRIBUTES,
@@ -103,5 +103,20 @@ describe('getEarnPage halal filter', () => {
 
 		const result = await getEarnPage({ halal: 'true', stablecoin: 'true', pageSize: 'all' })
 		expect(result.rows.map((r) => r.id)).toEqual(['halal-stable'])
+	})
+
+	it('does not classify unknown attributes as explicit false values', async () => {
+		getEnrichedEarn.mockResolvedValue([
+			row('safe', 'aave-v3'),
+			row('unknown', 'aave-v3', {
+				attributes: { stablecoin_only: null, single_asset_exposure: null, impermanent_loss_risk: null }
+			}),
+			row('risky', 'aave-v3', {
+				attributes: { stablecoin_only: false, single_asset_exposure: false, impermanent_loss_risk: true }
+			})
+		])
+
+		const result = await getEarnPage({ noIlRisk: 'true', pageSize: 'all' })
+		expect(result.rows.map((item) => item.id)).toEqual(['safe'])
 	})
 })

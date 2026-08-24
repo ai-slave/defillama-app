@@ -25,7 +25,7 @@ export function VaultStress({
 	onReset
 }: {
 	collateral: CollateralVM[]
-	supplyUsd: number
+	supplyUsd: number | null
 	poolType: PoolType
 	singleCollateral: boolean
 	dropFor: (c: CollateralVM) => number
@@ -69,7 +69,10 @@ export function VaultStress({
 		.sort((a, b) => b.loss - a.loss)
 	const total = vaultDepegLossUsdAtDrops(modelable, (c) => dropFor(c) / 100)
 	const buffered = total <= 0
-	const yourShare = !buffered && position != null && supplyUsd > 0 ? total * Math.min(1, position / supplyUsd) : null
+	const yourShare =
+		!buffered && position != null && supplyUsd != null && supplyUsd > 0
+			? total * Math.min(1, position / supplyUsd)
+			: null
 	// Bad debt reads as a share of the deposit; dollars only once a deposit is entered.
 	const asShare = (usd: number) =>
 		lossPct(usd, supplyUsd) ??

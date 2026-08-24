@@ -24,7 +24,7 @@ const AXIS_Y = 60
 export interface HistoryIncident {
 	date: string
 	usdLost: number
-	usdRecovered: number
+	usdRecovered: number | null
 	postMortemUrl?: string
 	title: string
 }
@@ -34,12 +34,12 @@ export interface ProtocolIncidentInput {
 	date: string
 	kind: string
 	classification: string
-	chain?: string
-	technique?: string
+	chain: string
+	technique: string
 	usdLost: number
 	usdRecovered: number
 	fullyRecovered: boolean
-	postMortemUrl?: string
+	postMortemUrl: string | null
 	notes?: string
 }
 
@@ -108,7 +108,10 @@ function classificationContext(c: string): string {
 }
 
 // One dollar sentence, shared by both lanes.
-function moneyStory(usdLost: number, usdRecovered: number, madeWhole: boolean): string {
+function moneyStory(usdLost: number, usdRecovered: number | null, madeWhole: boolean): string {
+	if (usdRecovered === null) {
+		return `${formatUsd(usdLost, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} lost, recovery unavailable`
+	}
 	if (usdLost <= 0 && usdRecovered > 0) {
 		return `${formatUsd(usdRecovered, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} returned before depositors lost anything`
 	}
@@ -152,20 +155,21 @@ export function buildHistoryStrip(
 	}
 	const x = (t: number) => 2 + ((t - min) / (max - min)) * 96
 
-	const maxUsd = Math.max(1, ...incidentTs.map((e) => Math.max(e.i.usdLost, e.i.usdRecovered)))
+	const maxUsd = Math.max(1, ...incidentTs.map((e) => Math.max(e.i.usdLost, e.i.usdRecovered ?? 0)))
 	const incidentPts: IncidentPoint[] = incidentTs.map(({ ts, i }, idx) => {
-		const averted = i.usdLost <= 0 && i.usdRecovered > 0
-		const madeWhole = !averted && i.usdLost > 0 && i.usdRecovered >= i.usdLost
+		const recovered = i.usdRecovered ?? 0
+		const averted = i.usdRecovered !== null && i.usdLost <= 0 && recovered > 0
+		const madeWhole = i.usdRecovered !== null && !averted && i.usdLost > 0 && recovered >= i.usdLost
 		const money = moneyStory(i.usdLost, i.usdRecovered, madeWhole)
 		return {
 			key: `inc-${idx}`,
 			x: x(ts),
-			r: 5 + 6 * Math.sqrt(Math.max(i.usdLost, i.usdRecovered) / maxUsd),
+			r: 5 + 6 * Math.sqrt(Math.max(i.usdLost, recovered) / maxUsd),
 			tone: averted ? 'averted' : madeWhole ? 'made-whole' : 'loss',
 			title: i.title,
 			money,
 			label: `${formatVerified(i.date)} · ${i.title} · ${money}`,
-			url: i.postMortemUrl,
+			...(i.postMortemUrl ? { url: i.postMortemUrl } : {}),
 			date: i.date
 		}
 	})
@@ -188,7 +192,7 @@ export function buildHistoryStrip(
 			technique: i.technique,
 			contextLabel,
 			label: `${formatVerified(i.date)} · ${title} (${contextLabel}) · ${money}`,
-			url: i.postMortemUrl,
+			...(i.postMortemUrl ? { url: i.postMortemUrl } : {}),
 			date: i.date
 		}
 	})
@@ -206,8 +210,8 @@ export function buildHistoryStrip(
 			key: `aud-${clusters.length}`,
 			x: (current.startX + current.lastX) / 2,
 			count: current.items.length,
-			from: current.items[0].date,
-			to: current.items[current.items.length - 1].date,
+			from: current.items[0]!.date,
+			to: current.items[current.items.length - 1]!.date,
 			items: current.items
 		})
 		current = null
@@ -216,13 +220,13 @@ export function buildHistoryStrip(
 		const px = x(ts)
 		if (current && px - current.startX <= CLUSTER_W) {
 			current.lastX = px
-			current.items.push({ firm: a.firm, date: a.date, url: a.report?.value })
+			current.items.push({ firm: a.firm, date: a.date, url: a.report.value })
 		} else {
 			flush()
 			current = {
 				startX: px,
 				lastX: px,
-				items: [{ firm: a.firm, date: a.date, url: a.report?.value }]
+				items: [{ firm: a.firm, date: a.date, url: a.report.value }]
 			}
 		}
 	}
@@ -344,7 +348,7 @@ function ProtocolIncidentDot({
 
 function AuditChip({ c, selected, onToggle }: { c: AuditCluster; selected: boolean; onToggle: () => void }) {
 	const range = c.from === c.to ? formatVerified(c.from) : `${formatVerified(c.from)} – ${formatVerified(c.to)}`
-	const label = c.count === 1 ? `${c.items[0].firm} audit · ${range}` : `${c.count} audits · ${range}`
+	const label = c.count === 1 ? `${c.items[0]!.firm} audit · ${range}` : `${c.count} audits · ${range}`
 	return (
 		<Tooltip
 			content={label}
@@ -382,7 +386,7 @@ function DetailPanel({ selection, onClose }: { selection: Selection; onClose: ()
 			: selection.kind === 'protocol'
 				? `${selection.p.title} · ${formatVerified(selection.p.date)}`
 				: selection.c.count === 1
-					? `${selection.c.items[0].firm} audit · ${formatVerified(selection.c.from)}`
+					? `${selection.c.items[0]!.firm} audit · ${formatVerified(selection.c.from)}`
 					: `${selection.c.count} audits · ${formatVerified(selection.c.from)} – ${formatVerified(selection.c.to)}`
 	return (
 		<Card padding="none" id={DETAIL_ID} role="region" aria-label={title}>

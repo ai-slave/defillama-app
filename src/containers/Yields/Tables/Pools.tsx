@@ -282,7 +282,7 @@ function createEarnColumns(query: Record<string, unknown>, median?: EarnApyMedia
 				<ApyStabilityIndicator
 					score={row.original.stabilityScore}
 					rating={row.original.stabilityRating}
-					avg30d={row.original.stabilityAvg30d}
+					{...(row.original.stabilityAvg30d !== undefined ? { avg30d: row.original.stabilityAvg30d } : {})}
 				/>
 			),
 			meta: {
@@ -453,15 +453,15 @@ export function PaginatedYieldsPoolTable({
 			tableClassName="min-w-[1180px] [&_td]:py-1.5"
 			initialPageSize={initialPageSize}
 			initialPageIndex={initialPageIndex}
-			rowCount={rowCount}
+			{...(rowCount !== undefined ? { rowCount } : {})}
 			manualPagination={manualPagination}
 			manualSorting={manualSorting}
-			paginationState={paginationState}
+			{...(paginationState ? { paginationState } : {})}
 			sortingState={sortingState}
-			onPaginationChange={onPaginationChange}
-			onSortingChange={onSortingChange}
+			{...(onPaginationChange ? { onPaginationChange } : {})}
+			{...(onSortingChange ? { onSortingChange } : {})}
 			interactionDisabled={interactionDisabled}
-			loadingLabel={loadingLabel}
+			{...(loadingLabel ? { loadingLabel } : {})}
 			shell={appearance === 'embedded' ? 'none' : 'default'}
 		/>
 	)

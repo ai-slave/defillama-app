@@ -49,7 +49,7 @@ function medianApyOf(rows: EarnPageRow[]): number | null {
 	if (values.length === 0) return null
 	values.sort((a, b) => a - b)
 	const mid = Math.floor(values.length / 2)
-	return values.length % 2 === 0 ? (values[mid - 1] + values[mid]) / 2 : values[mid]
+	return values.length % 2 === 0 ? (values[mid - 1]! + values[mid]!) / 2 : values[mid]!
 }
 
 // Build the per-row option-key sets for the token filter.
@@ -141,7 +141,7 @@ async function buildPreparedEarn(snapshot: YieldsSnapshot, query: ApiQuery): Pro
 		if (stablecoin && !row.attributes.stablecoin_only) continue
 		if (halalSlugs && !(row.protocolSlug != null && halalSlugs.has(row.protocolSlug))) continue
 		if (!matchesTriState(singleAssetExposure, row.attributes.single_asset_exposure)) continue
-		if (noIlRisk && row.attributes.impermanent_loss_risk) continue
+		if (noIlRisk && row.attributes.impermanent_loss_risk !== false) continue
 		if (hasAudit && !row.hasAudit) continue
 		if (!matchesTriState(protocolHasToken, row.protocolHasToken)) continue
 		if (minTvl != null && !(row.tvl_usd != null && row.tvl_usd >= minTvl)) continue
@@ -198,7 +198,7 @@ function toEarnPageRow(
 	// so it, like the sparkline, ignores the reward toggle.
 	const stabilityComponents =
 		row.trend?.total && !components.includes('reward') ? [...components, 'reward' as const] : components
-	const stabilityScore = resolveVariant<number>(row.stability_30d, stabilityComponents)
+	const stabilityScore = resolveVariant(row.stability_30d, stabilityComponents)
 	// 30d average of the scored composition — same resolver as the APY cell so the
 	// stability tooltip matches the APY column.
 	const stabilityAvg30d = resolveApy(row.apy, row.intrinsic, 'avg_30d', stabilityComponents).total

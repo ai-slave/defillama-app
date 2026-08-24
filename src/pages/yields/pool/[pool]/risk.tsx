@@ -99,7 +99,7 @@ function RiskPageView({ poolId, poolName, chain, vaultRisk }: RiskPageProps) {
 					data={vaultRisk}
 					poolName={poolName}
 					chain={chain}
-					explorers={blockExplorersData}
+					{...(blockExplorersData ? { explorers: blockExplorersData } : {})}
 					standalone
 				/>
 			) : (

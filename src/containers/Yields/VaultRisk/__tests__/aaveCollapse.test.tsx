@@ -60,7 +60,7 @@ const PER_ASSET_LOSS = [100, 200, 300]
 function makeSyntheticAave(): VaultRiskData {
 	// Each collapsed family is fanned across the three assets with the same loss vector.
 	const fanned: VaultScenario[] = COLLAPSED_IDS.flatMap((id) =>
-		ASSETS.map((asset, i) => makeFannedRow(id, asset, PER_ASSET_LOSS[i]))
+		ASSETS.map((asset, i) => makeFannedRow(id, asset, PER_ASSET_LOSS[i]!))
 	)
 	// One passthrough scenario that is NOT collapsed — proves passthrough rows survive untouched
 	// and gives the section a distinct non-fanned family. Bigger loss so it's the worst case.
@@ -82,13 +82,13 @@ function makeSyntheticAave(): VaultRiskData {
 			// two collaterals so the collateral-tab test has >1 row; distinct exposure avoids dust
 			collateral_risks: [
 				makeCollateral({
-					token: ASSETS[0],
+					token: ASSETS[0]!,
 					exposure_usd: 500_000,
 					market_loss_ceiling_usd: 500_000,
 					aggregate_trust_usd: 12_000_000
 				}),
 				makeCollateral({
-					token: ASSETS[1],
+					token: ASSETS[1]!,
 					exposure_usd: 250_000,
 					market_loss_ceiling_usd: 250_000,
 					aggregate_trust_usd: 8_000_000
@@ -124,7 +124,7 @@ function collapseAave(vault: VaultRiskFixture): VaultRiskFixture {
 		const sumMax = computed.reduce((a, r) => a + (r.loss.max_usd || 0), 0)
 		const sumMin = computed.reduce((a, r) => a + (r.loss.min_usd || 0), 0)
 		const maxSingle = computed.reduce((a, r) => Math.max(a, r.loss.max_usd || 0), 0)
-		const { asset: _drop, ...head } = rows[0]
+		const { asset: _drop, ...head } = rows[0]!
 		aggregated.push({
 			...head,
 			loss: {
@@ -156,7 +156,7 @@ describe('Aave collapsed scenario payload', () => {
 			// and the collapsed payload emits exactly one asset-less row per family
 			const out = collapsed.vault.vault_specific_risks.filter((s) => s.scenario_id === id)
 			expect(out).toHaveLength(1)
-			expect(out[0].asset).toBeUndefined()
+			expect(out[0]!.asset).toBeUndefined()
 		}
 	})
 
@@ -187,7 +187,7 @@ describe('Aave collapsed scenario payload', () => {
 			expect(a.inputs.sum_collateral_loss_usd).toBeGreaterThan(0)
 			expect(a.inputs.max_single_collateral_loss_usd).toBeGreaterThan(0)
 			// the sum is the family total; the max-single never exceeds it
-			expect(a.inputs.max_single_collateral_loss_usd).toBeLessThanOrEqual(a.inputs.sum_collateral_loss_usd)
+			expect(a.inputs.max_single_collateral_loss_usd!).toBeLessThanOrEqual(a.inputs.sum_collateral_loss_usd!)
 		}
 	})
 
@@ -232,6 +232,6 @@ describe('Aave collapsed scenario payload', () => {
 		// same collateral set as before — the per-asset surface is unaffected by the scenario collapse
 		expect(after.collateral.length).toBe(before.collateral.length)
 		expect(after.collateral.length).toBeGreaterThan(1)
-		expect(html).toContain(after.collateral[0].symbol)
+		expect(html).toContain(after.collateral[0]!.symbol)
 	})
 })

@@ -114,7 +114,7 @@ export function buildScenarios(vault: VaultRiskFixture, deps: BuildScenariosDeps
 
 	const out: ScenarioVM[] = []
 	for (const [scenarioId, rows] of groups) {
-		const head = rows[0]
+		const head = rows[0]!
 		const status = rows.length === 1 ? head.loss.status : groupStatus(rows)
 		// magnitude only sums computed rows
 		const computedRows = rows.filter((r) => r.loss.status === 'computed')
@@ -151,10 +151,10 @@ export function buildScenarios(vault: VaultRiskFixture, deps: BuildScenariosDeps
 						address: r.asset.address,
 						lossMaxUsd: computed ? r.loss.max_usd || 0 : 0,
 						lossMinUsd: computed ? r.loss.min_usd || 0 : 0,
-						oracleType: oc?.type,
-						heartbeatSec: oc?.heartbeat_sec,
-						deviationThreshold: oc?.deviation_threshold,
-						oracleAdmins: r.oracle_admins
+						...(oc ? { oracleType: oc.type } : {}),
+						...(oc?.heartbeat_sec !== undefined ? { heartbeatSec: oc.heartbeat_sec } : {}),
+						...(oc?.deviation_threshold !== undefined ? { deviationThreshold: oc.deviation_threshold } : {}),
+						...(r.oracle_admins ? { oracleAdmins: r.oracle_admins } : {})
 					}
 				})
 				.sort((a, b) => b.lossMaxUsd - a.lossMaxUsd)
@@ -168,17 +168,17 @@ export function buildScenarios(vault: VaultRiskFixture, deps: BuildScenariosDeps
 			status,
 			lossMinUsd,
 			lossMaxUsd,
-			lossByAnchor,
+			...(lossByAnchor ? { lossByAnchor } : {}),
 			magnitudePct: 0, // filled in after sectionMax known
 			actingWindow: parseActingWindow(head.loss),
-			perAsset,
+			...(perAsset ? { perAsset } : {}),
 			conditions: head.conditions,
 			mitigations: [...new Set(head.mitigations ?? [])],
 			evidence: head.evidence ?? [],
 			inputs: head.loss.inputs ?? {},
-			formula: head.loss.formula,
-			notes: head.loss.notes,
-			realized: deps.realizedByScenario.get(scenarioId),
+			...(head.loss.formula ? { formula: head.loss.formula } : {}),
+			...(head.loss.notes ? { notes: head.loss.notes } : {}),
+			...(deps.realizedByScenario.has(scenarioId) ? { realized: deps.realizedByScenario.get(scenarioId)! } : {}),
 			coverage: coverageForScenario(deps.coverageVMs, scenarioId)
 		})
 	}
@@ -210,7 +210,7 @@ export function coverageForScenario(coverage: CoverageVM[], scenarioId: string):
 export function buildCollateral(vault: VaultRiskFixture, explorers?: BlockExplorersResponse): CollateralVM[] {
 	const oracleByAddr = oracleConfigByAddress(vault.oracle_config ?? [])
 	const marketByAddr = marketOracleByCollateral(vault.market_oracles ?? [])
-	const supplyUsd = vault.pool_total_supply_usd ?? 0
+	const supplyUsd = vault.pool_total_supply_usd
 	const list: CollateralVM[] = (vault.collateral_risks ?? []).map((c: CollateralRisk) => {
 		const oc = oracleByAddr.get(c.token.address.toLowerCase())
 		const mo = marketByAddr.get(c.token.address.toLowerCase())
@@ -243,7 +243,8 @@ export function buildCollateral(vault: VaultRiskFixture, explorers?: BlockExplor
 			aggregateTrustUsd: c.aggregate_trust_usd || 0,
 			vaultCount: c.vault_count || 0,
 			// prefer the server figure; fall back to exposure / TVL so the bar always has a value
-			exposurePct: c.exposure_pct != null ? c.exposure_pct : supplyUsd > 0 ? exposureUsd / supplyUsd : 0,
+			exposurePct:
+				c.exposure_pct != null ? c.exposure_pct : supplyUsd != null && supplyUsd > 0 ? exposureUsd / supplyUsd : null,
 			vaultMarketShare: c.vault_market_share ?? null,
 			oracleProviders: c.oracle_providers ?? [],
 			oracleAddresses: c.oracle_addresses ?? [],
@@ -254,7 +255,7 @@ export function buildCollateral(vault: VaultRiskFixture, explorers?: BlockExplor
 			oracleLegs,
 			ptPricing,
 			magnitudePct: 0,
-			oracleConfig: oc
+			...(oc ? { oracleConfig: oc } : {})
 		}
 	})
 	// Rank by the depositor-facing market-break loss; position cap and ceiling break ties.
@@ -431,7 +432,7 @@ export function resolveRef(ref: string, protocol: ProtocolRiskFixture | null): R
 	if (ref.startsWith('external_dependencies.')) {
 		const key = ref.slice('external_dependencies.'.length)
 		const dep = deps.find((d) => d.id === key || d.name === key)
-		if (dep) return { label: dep.name || dep.id, url: dep.source_url }
+		if (dep) return { label: dep.name || dep.id, ...(dep.source_url ? { url: dep.source_url } : {}) }
 		return { label: key }
 	}
 	// stable-id rule: exact id, or `<id>.<aspect>` — ids may themselves contain dots
@@ -442,7 +443,7 @@ export function resolveRef(ref: string, protocol: ProtocolRiskFixture | null): R
 		const name = dep.name || dep.id
 		return {
 			label: aspect ? `${name} · ${aspect}` : name,
-			url: dep.source_url
+			...(dep.source_url ? { url: dep.source_url } : {})
 		}
 	}
 	return { label: ref }
@@ -475,16 +476,16 @@ export function buildVaultRiskVM(data: VaultRiskData, explorers?: BlockExplorers
 		(r.incidents ?? []).map((i) => ({
 			date: i.date,
 			usdLost: i.usd_lost,
-			usdRecovered: i.usd_recovered,
-			postMortemUrl: i.post_mortem_url,
+			usdRecovered: i.usd_recovered ?? null,
+			...(i.post_mortem_url ? { postMortemUrl: i.post_mortem_url } : {}),
 			title: r.title ?? r.scenario_id
 		}))
 	)
 
 	// Depositor cap: you can't lose more than the pool holds. Market-wide ceilings can exceed
 	// supply — clamp and keep the raw figure for context.
-	const supplyUsd = vault.pool_total_supply_usd ?? 0
-	if (supplyUsd > 0) {
+	const supplyUsd = vault.pool_total_supply_usd
+	if (supplyUsd != null && supplyUsd > 0) {
 		for (const s of scenarios) {
 			if (s.status === 'computed' && s.lossMaxUsd > supplyUsd) {
 				s.rawLossMaxUsd = s.lossMaxUsd

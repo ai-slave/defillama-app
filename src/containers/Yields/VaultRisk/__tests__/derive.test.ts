@@ -119,6 +119,7 @@ describe('buildScenarios (grouping + status)', () => {
 				realized_incidents: [
 					{
 						scenario_id: 'smart-contract-bug',
+						title: 'Smart contract bug',
 						description: 'A past exploit',
 						incidents: [{ date: '2023-05-01', usd_lost: 1000, usd_recovered: 0 }]
 					}
@@ -127,7 +128,7 @@ describe('buildScenarios (grouping + status)', () => {
 		)
 		const withRealized = vm.scenarios.filter((s) => s.realized)
 		expect(withRealized.length).toBeGreaterThanOrEqual(1)
-		expect(withRealized[0].realized!.incidents.length).toBeGreaterThan(0)
+		expect(withRealized[0]!.realized!.incidents.length).toBeGreaterThan(0)
 	})
 })
 
@@ -149,10 +150,11 @@ describe('buildScenarios — oracle full-drain (per-collateral, min/max range + 
 	it('breaks a single affected collateral out into perAsset (min floor, max ceiling, admins)', () => {
 		const admins = [{ address: '0xadm', kind: 'safe', threshold: 4, signers: 9 }]
 		const [scenario] = buildScenarios(fullDrainVault(admins), scenarioDeps())
+		if (!scenario) throw new Error('Expected full-drain scenario')
 		expect(scenario.perAsset).toHaveLength(1)
-		expect(scenario.perAsset![0].lossMinUsd).toBe(12_000_000)
-		expect(scenario.perAsset![0].lossMaxUsd).toBe(124_000_000)
-		expect(scenario.perAsset![0].oracleAdmins).toEqual(admins)
+		expect(scenario.perAsset![0]!.lossMinUsd).toBe(12_000_000)
+		expect(scenario.perAsset![0]!.lossMaxUsd).toBe(124_000_000)
+		expect(scenario.perAsset![0]!.oracleAdmins).toEqual(admins)
 		// scenario-level range mirrors the (single) row
 		expect(scenario.lossMinUsd).toBe(12_000_000)
 		expect(scenario.lossMaxUsd).toBe(124_000_000)
@@ -160,8 +162,9 @@ describe('buildScenarios — oracle full-drain (per-collateral, min/max range + 
 
 	it('leaves oracleAdmins undefined when the backend did not resolve the admin this tick', () => {
 		const [scenario] = buildScenarios(fullDrainVault(undefined), scenarioDeps())
+		if (!scenario) throw new Error('Expected full-drain scenario')
 		expect(scenario.perAsset).toHaveLength(1)
-		expect(scenario.perAsset![0].oracleAdmins).toBeUndefined()
+		expect(scenario.perAsset![0]!.oracleAdmins).toBeUndefined()
 	})
 
 	it('a single-asset market-oracle-compromise still gets no perAsset breakout (unchanged)', () => {
@@ -176,6 +179,7 @@ describe('buildScenarios — oracle full-drain (per-collateral, min/max range + 
 			]
 		})
 		const [scenario] = buildScenarios(v, scenarioDeps())
+		if (!scenario) throw new Error('Expected market-oracle scenario')
 		expect(scenario.perAsset).toBeUndefined()
 	})
 })
@@ -359,6 +363,7 @@ describe('buildHeadline', () => {
 			})
 		)
 		expect(vm.collateral.length).toBeGreaterThan(0)
+		if (vm.supplyUsd == null) throw new Error('Expected known vault supply')
 		for (const c of vm.collateral) {
 			expect(c.exposureUsd).toBeLessThanOrEqual(c.marketLossCeilingUsd + 1)
 			expect(c.exposureUsd).toBeLessThanOrEqual(vm.supplyUsd * 1.001)
@@ -366,8 +371,8 @@ describe('buildHeadline', () => {
 			expect(c.magnitudePct).toBeLessThanOrEqual(1)
 		}
 		for (let i = 1; i < vm.collateral.length; i++) {
-			expect(collateralMarketBreakLossUsd(vm.collateral[i - 1])).toBeGreaterThanOrEqual(
-				collateralMarketBreakLossUsd(vm.collateral[i])
+			expect(collateralMarketBreakLossUsd(vm.collateral[i - 1]!)).toBeGreaterThanOrEqual(
+				collateralMarketBreakLossUsd(vm.collateral[i]!)
 			)
 		}
 		expect(vm.allocatedUsd).not.toBeNull()
@@ -424,6 +429,23 @@ describe('buildVaultRiskVM exit readiness', () => {
 })
 
 describe('depositor cap (loss never exceeds pool supply)', () => {
+	it('does not cap losses or derive exposure shares when pool supply is unknown', () => {
+		const vm = buildVaultRiskVM(
+			makeVaultRiskData({
+				pool_total_supply_usd: null,
+				vault_specific_risks: [
+					makeScenario({ scenario_id: 'unknown-supply', loss: makeLoss({ status: 'computed', max_usd: 500 }) })
+				],
+				collateral_risks: [makeCollateral({ exposure_usd: 250, exposure_pct: null })]
+			})
+		)
+		const scenario = vm.scenarios.find((item) => item.scenarioId === 'unknown-supply')!
+		expect(vm.supplyUsd).toBeNull()
+		expect(scenario.lossMaxUsd).toBe(500)
+		expect(scenario.cappedAtSupply).toBeUndefined()
+		expect(vm.collateral[0]?.exposurePct).toBeNull()
+	})
+
 	it('clamps a scenario that exceeds supply and preserves the raw ceiling', () => {
 		const supply = 1_000
 		const vm = buildVaultRiskVM(
@@ -439,8 +461,8 @@ describe('depositor cap (loss never exceeds pool supply)', () => {
 		)
 		const capped = vm.scenarios.find((s) => s.cappedAtSupply)
 		expect(capped).toBeTruthy()
-		expect(capped!.rawLossMaxUsd!).toBeGreaterThan(vm.supplyUsd)
-		expect(capped!.lossMaxUsd).toBe(vm.supplyUsd)
+		expect(capped!.rawLossMaxUsd!).toBeGreaterThan(supply)
+		expect(capped!.lossMaxUsd).toBe(supply)
 	})
 
 	it('no scenario reports a depositor loss above supply', () => {
@@ -456,9 +478,9 @@ describe('depositor cap (loss never exceeds pool supply)', () => {
 				]
 			})
 		)
-		expect(vm.headline.worstCaseMaxUsd).toBeLessThanOrEqual(vm.supplyUsd)
+		expect(vm.headline.worstCaseMaxUsd).toBeLessThanOrEqual(supply)
 		for (const s of vm.scenarios) {
-			if (s.status === 'computed') expect(s.lossMaxUsd).toBeLessThanOrEqual(vm.supplyUsd)
+			if (s.status === 'computed') expect(s.lossMaxUsd).toBeLessThanOrEqual(supply)
 		}
 	})
 })
@@ -466,8 +488,22 @@ describe('depositor cap (loss never exceeds pool supply)', () => {
 describe('resolveRef', () => {
 	const p = makeProtocolRiskFixture({
 		external_dependencies: [
-			{ id: 'chainlink', kind: 'oracle', name: 'Chainlink', source_url: 'https://chain.link' },
-			{ id: 'l2.sequencer', kind: 'infra', name: 'L2 Sequencer', source_url: 'https://seq' }
+			{
+				id: 'chainlink',
+				kind: 'oracle',
+				name: 'Chainlink',
+				description: 'Price oracle',
+				relevance: 'principal',
+				source_url: 'https://chain.link'
+			},
+			{
+				id: 'l2.sequencer',
+				kind: 'infra',
+				name: 'L2 Sequencer',
+				description: 'Sequencer dependency',
+				relevance: 'principal',
+				source_url: 'https://seq'
+			}
 		]
 	})
 	it('oracle_config → in-page anchor', () => {
@@ -517,7 +553,7 @@ describe('fixture fields reach the VM (passthrough)', () => {
 						vault_market_share: 0.5
 					})
 				],
-				stress: makeStress({ anchors: [makeStressAnchor({ drop_pct: 30, bad_debt_usd: 125 })], ceiling_usd: 1_000 }),
+				stress: makeStress({ anchors: [makeStressAnchor({ drop_pct: 30, bad_debt_usd: 125 })] }),
 				oracle_dependencies: [
 					{
 						admin_address: '0xadmin',
@@ -529,7 +565,9 @@ describe('fixture fields reach the VM (passthrough)', () => {
 					}
 				],
 				market_oracles: [],
-				external_dependencies: [{ id: 'dep-1', kind: 'oracle', name: 'Dep', relevance: 'principal' }]
+				external_dependencies: [
+					{ id: 'dep-1', kind: 'oracle', name: 'Dep', description: 'Oracle dependency', relevance: 'principal' }
+				]
 			},
 			{ governance: makeGovernance({ top10_clears_quorum: true, voting_power_top10_tokens: 1_000 }) }
 		)
@@ -573,6 +611,7 @@ describe('fixture fields reach the VM (passthrough)', () => {
 		const vm = buildVaultRiskVM(richData())
 		expect(vm.collateral.length).toBeGreaterThan(0)
 		for (const c of vm.collateral) {
+			if (c.exposurePct == null) throw new Error('Expected known collateral exposure share')
 			expect(c.exposurePct).toBeGreaterThanOrEqual(0)
 			expect(c.exposurePct).toBeLessThanOrEqual(1.001)
 			expect(Array.isArray(c.oracleProviders)).toBe(true)
@@ -584,7 +623,7 @@ describe('fixture fields reach the VM (passthrough)', () => {
 	it('passes stress, market_oracles, scoped deps and freshness flags through', () => {
 		const vm = buildVaultRiskVM(richData())
 		expect(Array.isArray(vm.stress?.anchors)).toBe(true)
-		expect(vm.stress!.ceiling_usd).toBeGreaterThanOrEqual(0)
+		expect(vm.stress!.anchors[0]?.bad_debt_usd).toBeGreaterThanOrEqual(0)
 		expect(Array.isArray(vm.marketOracles)).toBe(true)
 		expect(Array.isArray(vm.oracleDependencies)).toBe(true)
 		for (const o of vm.oracleDependencies) {
@@ -621,18 +660,17 @@ describe('vault depeg stress curve', () => {
 				anchors: [
 					makeStressAnchor({ drop_pct: 30, bad_debt_usd: 125 }),
 					makeStressAnchor({ drop_pct: 50, bad_debt_usd: 375 })
-				],
-				ceiling_usd: 1_000
+				]
 			})
 		})
 
-	it('the FE stress helper reproduces every served stress anchor and the ceiling', () => {
+	it('the FE stress helper reproduces every served stress anchor and full-drop collateral loss', () => {
 		const v = stressVault()
 		const collateral = buildCollateral(v)
 		for (const anchor of v.stress!.anchors) {
 			expect(vaultDepegLossUsd(collateral, anchor.drop_pct / 100)).toBeCloseTo(anchor.bad_debt_usd, 2)
 		}
-		expect(vaultDepegLossUsd(collateral, 1)).toBeCloseTo(v.stress!.ceiling_usd, 2)
+		expect(vaultDepegLossUsd(collateral, 1)).toBeCloseTo(1_000, 2)
 		expect(vaultDepegLossUsd(collateral, 0.1)).toBeLessThan(vaultDepegLossUsd(collateral, 0.3)) // monotonic
 	})
 
@@ -658,10 +696,7 @@ describe('vault depeg stress curve', () => {
 				],
 				coverage: [makeCoverage({ kind: 'treasury', access: 'discretionary', cap_usd: 5_000 })],
 				realized_incidents: [],
-				stress: makeStress({
-					anchors: [makeStressAnchor({ drop_pct: 30, bad_debt_usd: 80_000 })],
-					ceiling_usd: 200_000
-				})
+				stress: makeStress({ anchors: [makeStressAnchor({ drop_pct: 30, bad_debt_usd: 80_000 })] })
 			})
 		)
 		const crash = vm.scenarios.find((s) => s.scenarioId === 'wide-crypto-drop')!
@@ -866,7 +901,8 @@ describe('buildCollateral — oracle explanation fields', () => {
 					chain: 'ethereum',
 					instance: 'test',
 					asset_symbol: 'TOK',
-					...entry
+					...entry,
+					source_attribution: entry.source_attribution ?? { value: 'test fixture' }
 				})),
 				market_oracles: market_oracles.map((market) => ({
 					loan_asset: null,
@@ -899,6 +935,7 @@ describe('buildCollateral — oracle explanation fields', () => {
 				}
 			]
 		})
+		if (!c) throw new Error('Expected collateral')
 		expect(c.oracleMechanism).toBe('PT-x uses a Pendle linear-discount PT model.')
 		expect(c.oracleBaseLeg).toBe('Pendle linear-discount PT rate')
 		expect(c.oracleQuoteLeg).toBe('No independent quote feed identified')
@@ -919,6 +956,7 @@ describe('buildCollateral — oracle explanation fields', () => {
 				}
 			]
 		})
+		if (!c) throw new Error('Expected collateral')
 		expect(c.oracleMechanism).toBe('siUSD uses a composite oracle path.')
 		expect(c.oracleBaseLeg).toBe('Composite base price path')
 		expect(c.ptPricing).toBeNull()
@@ -964,6 +1002,7 @@ describe('buildCollateral — oracle explanation fields', () => {
 				}
 			]
 		})
+		if (!fromCfg) throw new Error('Expected config-backed collateral')
 		expect(fromCfg.oracleLegs?.map((l) => l.description)).toEqual(['CBETH / ETH', 'ETH / USD', 'USDC / USD'])
 
 		const [fromMarket] = build({
@@ -977,12 +1016,14 @@ describe('buildCollateral — oracle explanation fields', () => {
 				}
 			]
 		})
+		if (!fromMarket) throw new Error('Expected market-backed collateral')
 		expect(fromMarket.oracleLegs?.[0]).toMatchObject({ description: 'weETH / ETH', kind: 'exchange-rate' })
 
 		const [none] = build({
 			collateral_risks: [coll('X', '0x11')],
 			oracle_config: [{ type: 'hybrid', asset_address: '0x11', oracle_address: '0xfeed' }]
 		})
+		if (!none) throw new Error('Expected collateral without oracle legs')
 		expect(none.oracleLegs).toBeNull()
 	})
 })
@@ -1024,8 +1065,9 @@ describe('buildCollateral — oracle badge (server-authoritative)', () => {
 		asset_symbol: 'TOK',
 		asset_address: address,
 		oracle_address: '0xfeed',
-		feed_kind,
-		provider
+		source_attribution: { value: 'test fixture' },
+		...(feed_kind !== undefined ? { feed_kind } : {}),
+		...(provider !== undefined ? { provider } : {})
 	})
 	const typeOf = (collateral: CollateralRisk, config?: OracleConfigEntry): string | undefined =>
 		buildCollateral(
@@ -1034,7 +1076,7 @@ describe('buildCollateral — oracle badge (server-authoritative)', () => {
 				collateral_risks: [collateral],
 				oracle_config: config ? [config] : []
 			})
-		)[0].oracleType
+		)[0]!.oracleType
 
 	it('takes the collateral oracle_type verbatim — no FE re-derivation from feed signals', () => {
 		expect(

@@ -34,7 +34,7 @@ describe('pool chart models', () => {
 			['reward', [2, 3], [5, 6], [7, 8]],
 			['intrinsic', [null, 0.5], [null, 0.6], [null, 0.7]]
 		])
-		expect(model?.lines[0].values).toEqual([100, null])
+		expect(model?.lines[0]?.values).toEqual([100, null])
 	})
 
 	it('preserves borrow components, net averages, and liquidity series', () => {

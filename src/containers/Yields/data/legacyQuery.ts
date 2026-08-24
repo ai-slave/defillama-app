@@ -140,7 +140,7 @@ function isTrue(value: string | string[] | undefined): boolean {
 }
 
 function packList(values: string[]): string | string[] {
-	return values.length === 1 ? values[0] : values
+	return values.length === 1 ? values[0]! : values
 }
 
 export function canonicalizeLegacyYieldsQuery(

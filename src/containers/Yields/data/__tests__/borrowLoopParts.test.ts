@@ -66,7 +66,14 @@ function intrinsicApy(base: number, symbol = 'stETH'): IntrinsicApy {
 	}
 }
 
-const token = (symbol: string): Token => ({ address: `0x${symbol}`, symbol })
+const token = (symbol: string): Token => ({ address: `0x${symbol}`, symbol, decimals: null })
+
+const composition = (baseReward: number) => ({
+	base: null,
+	base_reward: baseReward,
+	base_intrinsic: null,
+	base_reward_intrinsic: baseReward
+})
 
 const ENTITY = {
 	protocolSlug: 'aave-v3',
@@ -104,6 +111,8 @@ function loopRow(overrides: Partial<EnrichedLoopRow> = {}): EnrichedLoopRow {
 function marketRow(overrides: Partial<EnrichedMarketRow> = {}): EnrichedMarketRow {
 	return {
 		id: 'market-1',
+		pool_key: 'market-1',
+		pool_token: null,
 		protocol: 'Aave V3',
 		chain: 'Ethereum',
 		display: { label: 'ETH', detail: null },
@@ -131,6 +140,7 @@ function routeRow(overrides: Partial<EnrichedRouteRow> = {}): EnrichedRouteRow {
 		display: { detail: null },
 		collateral: {
 			id: 'c-1',
+			pool_key: 'c-1',
 			url: null,
 			token: token('ETH'),
 			loan_to_value: 0.8,
@@ -141,6 +151,7 @@ function routeRow(overrides: Partial<EnrichedRouteRow> = {}): EnrichedRouteRow {
 		},
 		borrow: {
 			id: 'b-1',
+			pool_key: 'b-1',
 			url: null,
 			token: token('USDC'),
 			total_borrow_usd: 500,
@@ -149,7 +160,7 @@ function routeRow(overrides: Partial<EnrichedRouteRow> = {}): EnrichedRouteRow {
 			intrinsic: null,
 			reward_tokens: []
 		},
-		net_apy: { current: { base_reward: 2.5 }, avg_7d: { base_reward: 2.5 }, avg_30d: { base_reward: 2.5 } },
+		net_apy: { current: composition(2.5), avg_7d: composition(2.5), avg_30d: composition(2.5) },
 		...ENTITY,
 		collateralTokenKeys: null,
 		borrowTokenKeys: null,
@@ -169,7 +180,7 @@ describe('getLoopsPage per-leg components', () => {
 		getEnrichedLoops.mockResolvedValue([loopRow()])
 		const { rows } = await getLoopsPage({ pageSize: 'all' })
 		expect(rows).toHaveLength(1)
-		const row = rows[0]
+		const row = rows[0]!
 		expect(row.supplyApy).toBe(4)
 		expect(row.supplyApyBase).toBe(3)
 		expect(row.supplyApyReward).toBe(1)
@@ -184,15 +195,15 @@ describe('getLoopsPage per-leg components', () => {
 	it('drops the reward component from the view when reward is toggled off', async () => {
 		getEnrichedLoops.mockResolvedValue([loopRow()])
 		const { rows } = await getLoopsPage({ pageSize: 'all', apyComponents: 'base' })
-		expect(rows[0].supplyApyReward).toBeNull()
-		expect(rows[0].supplyApy).toBe(3)
+		expect(rows[0]!.supplyApyReward).toBeNull()
+		expect(rows[0]!.supplyApy).toBe(3)
 	})
 
 	it('surfaces the supply intrinsic component when intrinsic is toggled on', async () => {
 		getEnrichedLoops.mockResolvedValue([loopRow({ intrinsic: intrinsicApy(0.7) })])
 		const { rows } = await getLoopsPage({ pageSize: 'all', apyComponents: 'base,reward,intrinsic' })
-		expect(rows[0].supplyApyIntrinsic).toBe(0.7)
-		expect(rows[0].supplyApy).toBeCloseTo(4.7)
+		expect(rows[0]!.supplyApyIntrinsic).toBe(0.7)
+		expect(rows[0]!.supplyApy).toBeCloseTo(4.7)
 	})
 })
 
@@ -200,7 +211,7 @@ describe('getBorrowMarketsPage per-leg components', () => {
 	it('emits supply/borrow components + reward-token symbols', async () => {
 		getEnrichedMarkets.mockResolvedValue([marketRow()])
 		const { rows } = await getBorrowMarketsPage({ pageSize: 'all' })
-		const row = rows[0]
+		const row = rows[0]!
 		expect(row.supplyApyBase).toBe(3)
 		expect(row.supplyApyReward).toBe(1)
 		expect(row.borrowApyBase).toBe(2)
@@ -218,7 +229,7 @@ describe('getBorrowMarketsPage per-leg components', () => {
 			marketRow({ intrinsic: { supply: null, borrow: intrinsicApy(0.3, 'weETH') } })
 		])
 		const { rows } = await getBorrowMarketsPage({ pageSize: 'all', apyComponents: 'base,reward,intrinsic' })
-		expect(rows[0].borrowApyIntrinsic).toBe(0.3)
+		expect(rows[0]!.borrowApyIntrinsic).toBe(0.3)
 	})
 })
 
@@ -226,7 +237,7 @@ describe('getBorrowRoutesPage per-leg components', () => {
 	it('emits supply/borrow base + reward for both legs', async () => {
 		getEnrichedRoutes.mockResolvedValue([routeRow()])
 		const { rows } = await getBorrowRoutesPage({ pageSize: 'all' })
-		const row = rows[0]
+		const row = rows[0]!
 		expect(row.supplyApyBase).toBe(3)
 		expect(row.supplyApyReward).toBe(1)
 		expect(row.borrowApyBase).toBe(2)
@@ -247,9 +258,9 @@ describe('getBorrowRoutesPage per-leg components', () => {
 				collateralTokenKeys,
 				borrowTokenKeys,
 				net_apy: {
-					current: { base_reward: netApy },
-					avg_7d: { base_reward: netApy },
-					avg_30d: { base_reward: netApy }
+					current: composition(netApy),
+					avg_7d: composition(netApy),
+					avg_30d: composition(netApy)
 				}
 			})
 			row.collateral.id = collateralId
@@ -278,23 +289,23 @@ describe('airdrop raise-valuation stamping', () => {
 		getEnrichedMarkets.mockResolvedValue([marketRow()])
 		getEnrichedRoutes.mockResolvedValue([routeRow()])
 		getEnrichedLoops.mockResolvedValue([loopRow()])
-		expect((await getBorrowMarketsPage({ pageSize: 'all' })).rows[0].raiseValuationUsd).toBe(25_000_000)
-		expect((await getBorrowRoutesPage({ pageSize: 'all' })).rows[0].raiseValuationUsd).toBe(25_000_000)
-		expect((await getLoopsPage({ pageSize: 'all' })).rows[0].raiseValuationUsd).toBe(25_000_000)
+		expect((await getBorrowMarketsPage({ pageSize: 'all' })).rows[0]!.raiseValuationUsd).toBe(25_000_000)
+		expect((await getBorrowRoutesPage({ pageSize: 'all' })).rows[0]!.raiseValuationUsd).toBe(25_000_000)
+		expect((await getLoopsPage({ pageSize: 'all' })).rows[0]!.raiseValuationUsd).toBe(25_000_000)
 	})
 
 	it('leaves raiseValuationUsd null on an airdrop row with no known raise', async () => {
 		getEnrichedMarkets.mockResolvedValue([marketRow()])
 		const { rows } = await getBorrowMarketsPage({ pageSize: 'all' })
-		expect(rows[0].airdrop).toBe(true)
-		expect(rows[0].raiseValuationUsd ?? null).toBeNull()
+		expect(rows[0]!.airdrop).toBe(true)
+		expect(rows[0]!.raiseValuationUsd ?? null).toBeNull()
 	})
 
 	it('never stamps a valuation on a non-airdrop row (protocol has a token)', async () => {
 		raiseValuationsUsdMap.set('aave-v3', 25_000_000)
 		getEnrichedMarkets.mockResolvedValue([marketRow({ protocolHasToken: true })])
 		const { rows } = await getBorrowMarketsPage({ pageSize: 'all' })
-		expect(rows[0].airdrop).toBe(false)
-		expect(rows[0].raiseValuationUsd ?? null).toBeNull()
+		expect(rows[0]!.airdrop).toBe(false)
+		expect(rows[0]!.raiseValuationUsd ?? null).toBeNull()
 	})
 })

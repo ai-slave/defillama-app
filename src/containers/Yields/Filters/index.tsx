@@ -220,7 +220,11 @@ export function YieldFilters({
 				</ResponsiveFilterLayout>
 				{resetFilters ? (
 					<div className="ml-auto">
-						<ResetAllYieldFilters pathname={pathname} nestedMenu={false} label={resetFiltersLabel} />
+						<ResetAllYieldFilters
+							pathname={pathname}
+							nestedMenu={false}
+							{...(resetFiltersLabel ? { label: resetFiltersLabel } : {})}
+						/>
 					</div>
 				) : null}
 			</TableToolbar>

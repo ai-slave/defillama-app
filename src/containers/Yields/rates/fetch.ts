@@ -9,11 +9,6 @@ export type RateRange = '30d' | '90d' | 'max'
 
 export interface RefRateStat {
 	apy: number | null
-	weight_usd?: number | null
-	market_count?: number
-	protocol_count?: number
-	chain_count?: number
-	sample_ts?: string
 }
 
 export interface RefRateSet {
@@ -27,9 +22,10 @@ export interface RefRateProtocol {
 	apy: number | null
 	weight_usd: number | null
 	weight_pct: number | null
-	market_count?: number
-	chain_count?: number
-	sample_ts?: string
+}
+
+export interface RefRateAssetSet extends Omit<RefRateSet, 'supply'> {
+	supply: RefRateStat & { market_count: number }
 }
 
 export interface RefRateCompositionSides {
@@ -40,7 +36,7 @@ export interface RefRateCompositionSides {
 export interface StablecoinRatesCurrent {
 	assets: string[]
 	rates: RefRateSet
-	by_asset: { asset: string; rates: RefRateSet }[]
+	by_asset: { asset: string; rates: RefRateAssetSet }[]
 	composition: {
 		by_protocol: RefRateCompositionSides
 		by_asset: { asset: string; by_protocol: RefRateCompositionSides }[]
@@ -88,6 +84,6 @@ export function fetchStablecoinRatesHistory(
 ): Promise<StablecoinRatesHistory> {
 	return getJson<StablecoinRatesHistory>(
 		getYieldsHistoryUrl(`/v2/reference-rates/stablecoins/history?range=${range}`),
-		{ signal: opts.signal }
+		opts.signal ? { signal: opts.signal } : undefined
 	)
 }

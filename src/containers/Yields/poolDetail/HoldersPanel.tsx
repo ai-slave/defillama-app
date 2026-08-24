@@ -36,7 +36,7 @@ function lerpHex(a: string, b: string, t: number): string {
 		'#' +
 		pa
 			.map((value, i) =>
-				Math.round(value + (pb[i] - value) * t)
+				Math.round(value + (pb[i]! - value) * t)
 					.toString(16)
 					.padStart(2, '0')
 			)
@@ -52,13 +52,13 @@ function pctStr(value: number, digits = 1): string {
 	return `${formatPercent(value, { input: 'percent', minimumFractionDigits: digits, maximumFractionDigits: digits, useGrouping: false })}`
 }
 
-function fmtToken(balance: string, decimals: number): string {
+function fmtToken(balance: string | null, decimals: number | null): string {
+	if (balance === null || decimals === null) return '—'
 	const value = Number(balance) / 10 ** decimals
 	return Number.isFinite(value)
 		? formatCompactNumber(value, {
 				compactSuffix: 'lowercase',
-				minimumFractionDigits: value >= 1e3 ? 1 : undefined,
-				maximumFractionDigits: value >= 1e3 ? 1 : undefined
+				...(value >= 1e3 ? { minimumFractionDigits: 1, maximumFractionDigits: 1 } : {})
 			})
 		: '—'
 }
@@ -71,24 +71,21 @@ function changeColor(value: number): string {
 	return value > 0 ? 'text-(--yield-positive-text)' : value < 0 ? 'text-(--yield-negative-text)' : ''
 }
 
-function windowDelta(
-	change: HolderChange | undefined,
-	mode: HolderMode
-): { status: HolderStatus; value: number | null } | null {
-	if (!change) return null
+function windowDelta(change: HolderChange, mode: HolderMode): { status: HolderStatus; value: number | null } {
 	return mode === 'share'
 		? { status: change.share.status, value: change.share.pct_point_delta }
 		: { status: change.balance.status, value: change.balance.pct_delta }
 }
 
-function ChangeBadge({ delta }: { delta: { status: HolderStatus; value: number | null } | null }) {
+export function ChangeBadge({ delta }: { delta: { status: HolderStatus; value: number | null } | null }) {
 	if (!delta) return <span className="text-secondary">—</span>
 	switch (delta.status) {
 		case 'up':
+			if (delta.value === null) return <span className="text-secondary">—</span>
 			return (
 				<span className="inline-flex items-center justify-end gap-1 whitespace-nowrap text-(--yield-positive-text)">
 					<Icon name="arrow-up" className="size-3.5 shrink-0" aria-hidden />+
-					{formatPercent(Math.abs(delta.value ?? 0), {
+					{formatPercent(Math.abs(delta.value), {
 						input: 'percent',
 						minimumFractionDigits: 1,
 						maximumFractionDigits: 1,
@@ -97,10 +94,11 @@ function ChangeBadge({ delta }: { delta: { status: HolderStatus; value: number |
 				</span>
 			)
 		case 'down':
+			if (delta.value === null) return <span className="text-secondary">—</span>
 			return (
 				<span className="inline-flex items-center justify-end gap-1 whitespace-nowrap text-(--yield-negative-text)">
 					<Icon name="arrow-down" className="size-3.5 shrink-0" aria-hidden />-
-					{formatPercent(Math.abs(delta.value ?? 0), {
+					{formatPercent(Math.abs(delta.value), {
 						input: 'percent',
 						minimumFractionDigits: 1,
 						maximumFractionDigits: 1,
@@ -118,9 +116,28 @@ function ChangeBadge({ delta }: { delta: { status: HolderStatus; value: number |
 					Entered
 				</Tooltip>
 			)
-		default:
+		case 'steady':
 			return <span className="text-secondary">Steady</span>
+		case 'unknown':
+			return <span className="text-secondary">—</span>
+		default: {
+			const exhaustive: never = delta.status
+			return exhaustive
+		}
 	}
+}
+
+export function holderDistributionShares(
+	list: Holder[],
+	top10Pct: number | null
+): { shares: number[]; top10: number; others: number } | null {
+	const shares: number[] = []
+	for (const holder of list) {
+		if (holder.share_pct === null) return null
+		shares.push(holder.share_pct)
+	}
+	const top10 = top10Pct ?? shares.reduce((total, share) => total + share, 0)
+	return { shares, top10, others: Math.max(0, 100 - top10) }
 }
 
 function HolderDistribution({
@@ -138,14 +155,20 @@ function HolderDistribution({
 	exportTitle?: string
 	onReady: (instance: ECharts | null) => void
 }) {
-	const top10 = top10Pct ?? list.reduce((total, holder) => total + holder.share_pct, 0)
-	const others = Math.max(0, 100 - top10)
+	const distribution = holderDistributionShares(list, top10Pct)
+	if (!distribution) {
+		return <div className="flex min-h-[360px] items-center justify-center body-sm text-tertiary">Unavailable</div>
+	}
+	const { shares, others } = distribution
 	const pieData = [
-		...list.map((holder, i) => ({ name: `#${i + 1} ${shortAddr(holder.address)}`, value: holder.share_pct })),
+		...list.map((holder, i) => ({
+			name: `#${i + 1} ${shortAddr(holder.address)}`,
+			value: shares[i]!
+		})),
 		...(others > 0 ? [{ name: 'Others', value: others }] : [])
 	]
 	const stackColors: Record<string, string> = {}
-	for (const [i, holder] of list.entries()) stackColors[`#${i + 1} ${shortAddr(holder.address)}`] = colors[i]
+	for (const [i, holder] of list.entries()) stackColors[`#${i + 1} ${shortAddr(holder.address)}`] = colors[i]!
 	stackColors.Others = OTHERS_COLOR
 
 	return (
@@ -191,7 +214,7 @@ function HoldersTable({
 	onActiveChange
 }: {
 	list: Holder[]
-	decimals: number
+	decimals: number | null
 	colors: string[]
 	chain?: string | null
 	mode: HolderMode
@@ -289,11 +312,19 @@ function HoldersTable({
 									key={holder.address}
 									onMouseEnter={() => {
 										onActiveChange(i)
-										donutInstance?.dispatchAction({ type: 'highlight', seriesIndex: 0, dataIndex: i })
+										donutInstance?.dispatchAction({
+											type: 'highlight',
+											seriesIndex: 0,
+											dataIndex: i
+										})
 									}}
 									onMouseLeave={() => {
 										onActiveChange(null)
-										donutInstance?.dispatchAction({ type: 'downplay', seriesIndex: 0, dataIndex: i })
+										donutInstance?.dispatchAction({
+											type: 'downplay',
+											seriesIndex: 0,
+											dataIndex: i
+										})
 									}}
 									className={`border-b border-subtle last:border-b-0 ${active === i ? 'bg-hover-row' : ''}`}
 								>
@@ -330,7 +361,7 @@ function HoldersTable({
 										</span>
 									</TokenPageTableBodyCell>
 									<TokenPageTableBodyCell textAlign="end">
-										{mode === 'share' ? (
+										{mode === 'share' && holder.share_pct !== null ? (
 											<span className="flex items-center justify-end gap-2">
 												<span className="text-primary">
 													{formatPercent(holder.share_pct, {
@@ -343,12 +374,17 @@ function HoldersTable({
 												<span className="hidden h-1.5 w-16 overflow-hidden rounded-full bg-border-subtle sm:block">
 													<span
 														className="block h-full rounded-full"
-														style={{ width: `${Math.min(holder.share_pct, 100)}%`, background: colors[i] }}
+														style={{
+															width: `${Math.min(holder.share_pct, 100)}%`,
+															background: colors[i]!
+														}}
 													/>
 												</span>
 											</span>
-										) : (
+										) : mode === 'balance' ? (
 											<span className="block text-right text-primary">{fmtToken(holder.balance, decimals)}</span>
+										) : (
+											<span className="text-secondary">—</span>
 										)}
 									</TokenPageTableBodyCell>
 									<TokenPageTableBodyCell textAlign="end">
@@ -372,10 +408,23 @@ function HolderInsights({ holders, list, tvlUsd }: { holders: DetailHolders; lis
 	const avg = holders.avg_position_usd
 	const countChange7d = holders.count_change_7d ?? null
 	const countChange30d = holders.count_change_30d ?? null
-	const top10 = holders.top_10_share_pct ?? list.reduce((total, holder) => total + holder.share_pct, 0)
+	let knownShareTotal: number | null = 0
+	for (const holder of list) {
+		if (holder.share_pct === null) {
+			knownShareTotal = null
+			break
+		}
+		knownShareTotal += holder.share_pct
+	}
+	const top10 = holders.top_10_share_pct ?? knownShareTotal
 	const exposureTiers = [
 		{ label: 'Top 1', pct: list[0]?.share_pct ?? null },
-		{ label: 'Top 5', pct: list.slice(0, 5).reduce((total, holder) => total + holder.share_pct, 0) },
+		{
+			label: 'Top 5',
+			pct: list.slice(0, 5).every((holder) => holder.share_pct !== null)
+				? list.slice(0, 5).reduce((total, holder) => total + holder.share_pct!, 0)
+				: null
+		},
 		{ label: 'Top 10', pct: top10 }
 	]
 
@@ -429,7 +478,11 @@ function HolderInsights({ holders, list, tvlUsd }: { holders: DetailHolders; lis
 					<div className="flex flex-col gap-1 rounded-md bg-surface-elevated-1 p-2">
 						<span className="body-md text-secondary">Avg Position Size</span>
 						<span className="mono-md-bold text-primary">
-							{formatUsd(avg, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+							{formatUsd(avg, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}
 						</span>
 					</div>
 				) : null}
@@ -472,7 +525,7 @@ export function HoldersPanel({
 	const avg = holders.avg_position_usd
 	const top10Pct = holders.top_10_share_pct
 	const list = holders.top_10_holders?.holders ?? []
-	const decimals = holders.top_10_holders?.decimals ?? 18
+	const decimals = holders.top_10_holders?.decimals ?? null
 	const hasAny = (count != null && count > 0) || avg != null || top10Pct != null || list.length > 0
 	if (!hasAny) return null
 
@@ -488,8 +541,7 @@ export function HoldersPanel({
 								? '—'
 								: formatCompactNumber(count, {
 										compactSuffix: 'lowercase',
-										minimumFractionDigits: count >= 1e3 ? 1 : undefined,
-										maximumFractionDigits: count >= 1e3 ? 1 : undefined
+										...(count >= 1e3 ? { minimumFractionDigits: 1, maximumFractionDigits: 1 } : {})
 									})
 						}
 					/>
@@ -508,14 +560,14 @@ export function HoldersPanel({
 				colors={colors}
 				top10Pct={top10Pct}
 				poolId={poolId}
-				exportTitle={exportTitle}
+				{...(exportTitle ? { exportTitle } : {})}
 				onReady={setDonutInstance}
 			/>
 			<HoldersTable
 				list={list}
 				decimals={decimals}
 				colors={colors}
-				chain={chain}
+				{...(chain !== undefined ? { chain } : {})}
 				mode={mode}
 				onModeChange={(next) =>
 					void pushShallowQuery(router, { holderMode: getHolderModeQueryValue(next) }, router.pathname)
@@ -524,7 +576,7 @@ export function HoldersPanel({
 				active={active}
 				onActiveChange={setActive}
 			/>
-			<HolderInsights holders={holders} list={list} tvlUsd={tvlUsd} />
+			<HolderInsights holders={holders} list={list} {...(tvlUsd !== undefined ? { tvlUsd } : {})} />
 		</Card>
 	)
 }

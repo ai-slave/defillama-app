@@ -79,7 +79,7 @@ export function buildSupplyChart(series: PoolHistoryPoint[], tvlLabel = 'TVL'): 
 	let hasTotal = false
 
 	for (let index = 0; index < series.length; index++) {
-		const point = series[index]
+		const point = series[index]!
 		dates[index] = ms(point.date)
 		tvl[index] = point.tvl_usd
 		base[index] = point.apy.avg_1d.base
@@ -174,7 +174,7 @@ export function buildBorrowChart(series: BorrowMarketHistoryPoint[]): PoolChartM
 	let hasIntrinsic = false
 
 	for (let index = 0; index < series.length; index++) {
-		const point = series[index]
+		const point = series[index]!
 		dates[index] = ms(point.date)
 		borrowed[index] = point.total_borrow_usd
 		available[index] = point.available_borrow_usd

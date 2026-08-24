@@ -19,7 +19,7 @@ function oracleAdminLabel(o: OracleDependency): string {
 function parseMofN(s?: string): { m: number; n: number } | null {
 	if (!s) return null
 	const [m, n] = s.split('/').map((x) => Number(x.trim()))
-	return Number.isFinite(m) && Number.isFinite(n) && n > 0 ? { m, n } : null
+	return m !== undefined && n !== undefined && Number.isFinite(m) && Number.isFinite(n) && n > 0 ? { m, n } : null
 }
 
 // exposure_pct can slightly exceed 1 via overlap — clamp; sub-1% reads as "<1%".
@@ -61,7 +61,7 @@ export function OracleDependencies({
 	chain,
 	explorers,
 	totalDrainableUsd = 0,
-	supplyUsd = 0,
+	supplyUsd = null,
 	poolType = 'vault'
 }: {
 	providers: OracleExposure['by_provider']
@@ -70,7 +70,7 @@ export function OracleDependencies({
 	chain?: string
 	explorers?: BlockExplorersResponse
 	totalDrainableUsd?: number
-	supplyUsd?: number
+	supplyUsd?: number | null
 	poolType?: PoolType
 }) {
 	const shareWord = poolType === 'market' ? 'of market' : 'of vault'
@@ -105,7 +105,9 @@ export function OracleDependencies({
 		(v) => (resolvedVendorExposure.get(v.provider.toLowerCase()) ?? 0) < v.exposure_usd * 0.9
 	)
 	const totalPct =
-		totalDrainableUsd > 0 && supplyUsd > 0 ? pctOfVault(Math.min(1, totalDrainableUsd / supplyUsd)) : null
+		totalDrainableUsd > 0 && supplyUsd != null && supplyUsd > 0
+			? pctOfVault(Math.min(1, totalDrainableUsd / supplyUsd))
+			: null
 	const feedCount = vendors.length
 	const controlCount = admins.length
 
@@ -229,7 +231,7 @@ export function OracleDependencies({
 
 				{vendorless.map((g) => {
 					const immutable = g.kind === 'exchange-rate'
-					const p = pctOfVault(supplyUsd > 0 ? g.exposureUsd / supplyUsd : null)
+					const p = pctOfVault(supplyUsd != null && supplyUsd > 0 ? g.exposureUsd / supplyUsd : null)
 					return (
 						<li
 							key={`vendorless-${g.kind}`}

@@ -40,7 +40,7 @@ export function parseTriState(query: ApiQuery, name: string): TriState {
 }
 
 // True when a row's boolean value satisfies the tri-state filter (null = keep all).
-export function matchesTriState(state: TriState, value: boolean): boolean {
+export function matchesTriState(state: TriState, value: boolean | null): boolean {
 	if (state == null) return true
 	if (state === 'both') return false
 	return value === (state === 'true')
@@ -198,7 +198,7 @@ function matchesExactAny(tokens: Set<string>, on: TokenOn, input: TokenFilterInp
 //     verified.
 function matchesSetTarget(want: Set<string>, families: string[], presentKeys: string[], exactKeys: string[]): boolean {
 	if (want.size === 0) {
-		return families.length === 1 && exactKeys.includes(families[0])
+		return families.length === 1 && exactKeys.includes(families[0]!)
 	}
 	const have = assetKeySet(presentKeys)
 	if (want.size !== have.size) return false

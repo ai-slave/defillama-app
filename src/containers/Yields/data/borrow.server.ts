@@ -127,7 +127,7 @@ function toRouteTableRow(row: EnrichedRouteRow, window: ApyWindow, components: A
 		borrowIntrinsicSourceSymbol: row.borrow.intrinsic?.source_pool?.symbol ?? null,
 		supplyRewardTokensSymbols: tokenSymbols(row.collateral.reward_tokens),
 		borrowRewardTokensSymbols: tokenSymbols(row.borrow.reward_tokens),
-		netApy: resolveVariant<number>(row.net_apy[window], components),
+		netApy: resolveVariant(row.net_apy[window], components),
 		availableBorrowUsd: row.borrow.available_borrow_usd,
 		totalBorrowUsd: row.borrow.total_borrow_usd,
 		borrowCapacityFilled: deriveBorrowCapacityFilled(row.borrow.total_borrow_usd, row.borrow.available_borrow_usd),

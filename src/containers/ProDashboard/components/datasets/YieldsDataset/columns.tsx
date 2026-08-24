@@ -1,4 +1,4 @@
-import type { ColumnDef } from '@tanstack/react-table'
+import { createColumnHelper, type TableOptions } from '@tanstack/react-table'
 import { IconsRow } from '~/components/IconsRow'
 import { toChainIconItems, yieldsChainHref } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
@@ -42,11 +42,12 @@ function DollarCell({ value }: { value: number | null | undefined }) {
 	)
 }
 
-export const yieldsDatasetColumns: ColumnDef<ProYieldRow>[] = [
-	{
+const columnHelper = createColumnHelper<ProYieldRow>()
+
+export const yieldsDatasetColumns: TableOptions<ProYieldRow>['columns'] = [
+	columnHelper.accessor('pool', {
 		header: 'Pool',
 		id: 'pool',
-		accessorFn: (row) => row.pool,
 		enableSorting: false,
 		cell: ({ row }) => (
 			<span className="relative flex items-center gap-2 pl-6">
@@ -64,10 +65,9 @@ export const yieldsDatasetColumns: ColumnDef<ProYieldRow>[] = [
 			</span>
 		),
 		size: 240
-	},
-	{
+	}),
+	columnHelper.accessor('project', {
 		header: 'Protocol',
-		accessorKey: 'project',
 		cell: ({ row }) => (
 			<BasicLink href={`/yields?protocol=${encodeURIComponent(row.original.project)}`} className="text-sm text-link">
 				{row.original.project}
@@ -75,39 +75,34 @@ export const yieldsDatasetColumns: ColumnDef<ProYieldRow>[] = [
 		),
 		size: 140,
 		meta: { align: 'end' }
-	},
-	{
+	}),
+	columnHelper.accessor('chains', {
 		header: 'Chain',
-		accessorKey: 'chains',
 		enableSorting: false,
 		cell: ({ row }) => <IconsRow items={toChainIconItems(row.original.chains, (chain) => yieldsChainHref(chain))} />,
 		size: 60,
 		meta: { align: 'end' }
-	},
-	{
+	}),
+	columnHelper.accessor('tvl', {
 		header: 'TVL',
-		accessorKey: 'tvl',
 		cell: ({ row }) => <DollarCell value={row.original.tvl} />,
 		size: 120,
 		meta: { align: 'end' }
-	},
-	{
+	}),
+	columnHelper.accessor('apy', {
 		header: 'Supply APY',
-		accessorKey: 'apy',
 		cell: ({ row }) => <PercentCell value={row.original.apy} bold />,
 		size: 110,
 		meta: { align: 'end' }
-	},
-	{
+	}),
+	columnHelper.accessor('apyBase', {
 		header: 'Base APY',
-		accessorKey: 'apyBase',
 		cell: ({ row }) => <PercentCell value={row.original.apyBase} />,
 		size: 100,
 		meta: { align: 'end' }
-	},
-	{
+	}),
+	columnHelper.accessor('apyReward', {
 		header: 'Reward APY',
-		accessorKey: 'apyReward',
 		cell: ({ row }) => (
 			<span className="flex items-center justify-end gap-1">
 				<PercentCell value={row.original.apyReward} />
@@ -118,71 +113,62 @@ export const yieldsDatasetColumns: ColumnDef<ProYieldRow>[] = [
 		),
 		size: 150,
 		meta: { align: 'end' }
-	},
-	{
+	}),
+	columnHelper.accessor('apyMean30d', {
 		header: '30d Avg APY',
-		accessorKey: 'apyMean30d',
 		cell: ({ row }) => <PercentCell value={row.original.apyMean30d} />,
 		size: 120,
 		meta: { align: 'end' }
-	},
-	{
+	}),
+	columnHelper.accessor('stabilityRating', {
 		header: '30d Stability',
-		accessorKey: 'stabilityRating',
 		cell: ({ row }) => <span className="capitalize">{row.original.stabilityRating ?? '-'}</span>,
 		size: 120,
 		meta: { align: 'end' }
-	},
-	{
+	}),
+	columnHelper.accessor('volumeUsd1d', {
 		header: '24h Volume',
-		accessorKey: 'volumeUsd1d',
 		cell: ({ row }) => <DollarCell value={row.original.volumeUsd1d} />,
 		size: 120,
 		meta: { align: 'end' }
-	},
-	{
+	}),
+	columnHelper.accessor('ilRisk', {
 		header: 'IL Risk',
-		accessorKey: 'ilRisk',
-		cell: ({ row }) => (row.original.ilRisk ? 'Yes' : 'No'),
+		cell: ({ getValue }) => (getValue() == null ? '-' : getValue() ? 'Yes' : 'No'),
 		size: 80,
 		meta: { align: 'end' }
-	},
-	{
+	}),
+	columnHelper.accessor('apyBorrow', {
 		header: 'Borrow Cost APY',
-		accessorKey: 'apyBorrow',
 		cell: ({ row }) => <PercentCell value={row.original.apyBorrow} />,
 		size: 130,
 		meta: { align: 'end' }
-	},
-	{
+	}),
+	columnHelper.accessor('totalSupplyUsd', {
 		header: 'Total Supplied',
-		accessorKey: 'totalSupplyUsd',
 		cell: ({ row }) => <DollarCell value={row.original.totalSupplyUsd} />,
 		size: 130,
 		meta: { align: 'end' }
-	},
-	{
+	}),
+	columnHelper.accessor('totalBorrowUsd', {
 		header: 'Total Borrowed',
-		accessorKey: 'totalBorrowUsd',
 		cell: ({ row }) => <DollarCell value={row.original.totalBorrowUsd} />,
 		size: 130,
 		meta: { align: 'end' }
-	},
-	{
+	}),
+	columnHelper.accessor('totalAvailableUsd', {
 		header: 'Available',
-		accessorKey: 'totalAvailableUsd',
 		cell: ({ row }) => <DollarCell value={row.original.totalAvailableUsd} />,
 		size: 120,
 		meta: { align: 'end' }
-	},
-	{
+	}),
+	columnHelper.accessor('ltv', {
 		header: 'LTV',
-		accessorKey: 'ltv',
 		cell: ({ row }) => {
 			const value = row.original.ltv
 			return <PercentCell value={value == null ? null : value * 100} />
 		},
 		size: 80,
 		meta: { align: 'end' }
-	}
+	})
 ]

@@ -95,7 +95,7 @@ function groupMultisigsByRole(multisigs: Multisig[] | undefined, poolChain?: str
 				entries.find((e) => e.chain === poolChain && isRealMultisig(e)) ??
 				entries.find((e) => isRealMultisig(e)) ??
 				entries.find((e) => e.chain === poolChain) ??
-				entries[0]
+				entries[0]!
 			return { role, rep, chains: [...new Set(entries.map((e) => e.chain))] }
 		})
 		.sort(
@@ -149,7 +149,7 @@ function MultisigGroupRow({ group, explorers }: { group: GovGroup; explorers?: B
 						n={rep.threshold.n}
 						signers={rep.signers ?? []}
 						chain={rep.chain}
-						explorers={explorers}
+						{...(explorers ? { explorers } : {})}
 					/>
 					<span>
 						{rep.threshold.m}-of-{rep.threshold.n}
@@ -261,7 +261,7 @@ export function GovernanceBlock({
 			{govGroups.length ? (
 				<div className="flex flex-col divide-y divide-(--border-subtle)">
 					{govGroups.map((group) => (
-						<MultisigGroupRow key={group.role} group={group} explorers={explorers} />
+						<MultisigGroupRow key={group.role} group={group} {...(explorers ? { explorers } : {})} />
 					))}
 				</div>
 			) : null}
@@ -295,7 +295,7 @@ export function GovernanceBlock({
 											? 'A small set of holders can pass proposals on their own.'
 											: 'Voting power is relatively distributed.'
 								}
-								className={concentrationHigh ? toneClasses('danger').text : undefined}
+								{...(concentrationHigh ? { className: toneClasses('danger').text } : {})}
 							>
 								{formatPercent(concentration, {
 									input: 'fraction',

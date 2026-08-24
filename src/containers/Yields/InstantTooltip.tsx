@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { tooltipSurfaceStyles } from '~/ui/Popover'
 
 // Zero-delay hover tooltip used by the reference-rates tables (weight-in-USD hints).
-interface Props extends Ariakit.TooltipAnchorOptions {
+type Props = Omit<Ariakit.TooltipAnchorOptions, 'render'> & {
 	content: React.ReactNode
 	children: React.ReactNode
 	placement?: Ariakit.TooltipStoreProps['placement']
@@ -11,7 +11,7 @@ interface Props extends Ariakit.TooltipAnchorOptions {
 	wide?: boolean
 }
 
-export function InstantTooltip({ content, children, placement = 'top', className, wide, ...props }: Props) {
+export function InstantTooltip({ content, children, placement = 'top', className, render, wide, ...props }: Props) {
 	const store = Ariakit.useTooltipStore({ placement, showTimeout: 0, hideTimeout: 0, skipTimeout: 0, timeout: 0 })
 
 	if (!content || content === '') return <>{children}</>
@@ -23,8 +23,8 @@ export function InstantTooltip({ content, children, placement = 'top', className
 			<Ariakit.TooltipAnchor
 				store={store}
 				className={`flex shrink-0 items-center overflow-hidden text-ellipsis whitespace-nowrap ${className ?? ''}`}
-				render={props.render ?? <span />}
-				{...(props.render ? {} : { onTouchStart: store.toggle, onMouseLeave: store.hide })}
+				render={render ?? <span />}
+				{...(render ? {} : { onTouchStart: store.toggle, onMouseLeave: store.hide })}
 				{...props}
 			>
 				{children}

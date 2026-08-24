@@ -21,7 +21,7 @@ export function dedupeCoverage(raw: Coverage[]): CoverageVM[] {
 			excludesOwnTokens: c.cap_usd_excl_own_tokens != null,
 			accessTimeSec: c.access_time_sec ?? null,
 			appliesTo: c.applies_to ?? [],
-			description: c.description,
+			...(c.description ? { description: c.description } : {}),
 			priority: c.priority
 		})
 	}

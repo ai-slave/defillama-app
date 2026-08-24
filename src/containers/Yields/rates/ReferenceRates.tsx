@@ -26,6 +26,7 @@ import { YieldsTabs } from '../YieldsTabs'
 import {
 	fetchStablecoinRatesHistory,
 	type RateRange,
+	type RefRateAssetSet,
 	type RefRateProtocol,
 	type RefRatePoint,
 	type RefRateSet,
@@ -85,7 +86,7 @@ const RATES_ORDER: Record<string, number> = { Supply: 0, Borrow: 1, Spread: 2 }
 function ratesTooltipFormatter(params: unknown): string {
 	const items = getChartTooltipItems(params)
 	if (!items.length) return ''
-	const first = items[0]
+	const first = items[0]!
 	const ts = getChartTooltipTimestamp(first)
 	const date = Number.isFinite(ts) ? formatTooltipChartDate(ts, 'daily') : ''
 	const sorted = [...items].sort((a, b) => (RATES_ORDER[a.seriesName] ?? 9) - (RATES_ORDER[b.seriesName] ?? 9))
@@ -126,7 +127,7 @@ function RatesChart({ points, onReady }: { points: RefRatePoint[]; onReady?: (in
 				valueSymbol="%"
 				hideDefaultLegend={false}
 				exportButtons="hidden"
-				onReady={onReady}
+				{...(onReady ? { onReady } : {})}
 			/>
 		</Suspense>
 	)
@@ -504,8 +505,8 @@ export function ReferenceRates({
 		const s = seriesForAsset(widest.history, asset)
 		const n = s.length
 		if (n < 8) return null
-		const a = s[n - 1].rates
-		const b = s[n - 8].rates
+		const a = s[n - 1]!.rates
+		const b = s[n - 8]!.rates
 		if (a.supply.apy == null || b.supply.apy == null) return null
 		return {
 			supply: a.supply.apy - b.supply.apy,
@@ -607,7 +608,7 @@ export function ReferenceRates({
 	)
 }
 
-function AssetRow({ name, rates }: { name: string; rates: RefRateSet }) {
+function AssetRow({ name, rates }: { name: string; rates: RefRateAssetSet }) {
 	const sp = spreadPct(rates.spread.apy)
 	return (
 		<tr className="border-b border-subtle last:border-b-0">
@@ -626,8 +627,7 @@ function AssetRow({ name, rates }: { name: string; rates: RefRateSet }) {
 			<TokenPageTableBodyCell textAlign="end" className="text-primary">
 				{formatCompactNumber(rates.supply.market_count, {
 					compactSuffix: 'lowercase',
-					minimumFractionDigits: rates.supply.market_count >= 1e3 ? 1 : undefined,
-					maximumFractionDigits: rates.supply.market_count >= 1e3 ? 1 : undefined
+					...(rates.supply.market_count >= 1e3 ? { minimumFractionDigits: 1, maximumFractionDigits: 1 } : {})
 				})}
 			</TokenPageTableBodyCell>
 		</tr>

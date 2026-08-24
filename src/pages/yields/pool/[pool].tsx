@@ -117,8 +117,8 @@ async function buildBorrowOnlyProps(
 		poolId: id,
 		mode: 'borrow',
 		initialRange,
-		symbol: market.display?.label ?? '—',
-		name: market.display?.detail ?? '',
+		symbol: market.display.label ?? '—',
+		name: market.display.detail ?? '',
 		protocol: {
 			slug: protocolMeta?.slug ?? '',
 			name: market.protocol,
@@ -133,7 +133,7 @@ async function buildBorrowOnlyProps(
 		borrow,
 		supplyChart: null,
 		borrowChart,
-		holders: market.holders ?? null,
+		holders: null,
 		stability: null,
 		details: {
 			poolTokenAddress: market.pool_token?.address ?? null,
@@ -235,7 +235,7 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 		metrics: [{ label: usesSupplyLabel ? 'Total supplied' : 'TVL', value: pool.tvl_usd ?? null }]
 	}
 
-	const stabilityScore = resolveVariant<number>(pool.stability_30d, DETAIL_APY_COMPONENTS)
+	const stabilityScore = resolveVariant(pool.stability_30d, DETAIL_APY_COMPONENTS)
 
 	res.setHeader('cache-control', 'public, s-maxage=300, stale-while-revalidate=600')
 
@@ -246,8 +246,8 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 			poolId: id,
 			mode: 'pool',
 			initialRange,
-			symbol: pool.display?.label ?? '—',
-			name: pool.display?.detail ?? '',
+			symbol: pool.display.label ?? '—',
+			name: pool.display.detail ?? '',
 			protocol: {
 				slug: protocolMeta?.slug ?? '',
 				name: pool.protocol,

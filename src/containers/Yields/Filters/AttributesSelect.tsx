@@ -68,7 +68,7 @@ export function YieldAttributesSelect({
 			setSelectedValues={setSelectedValues}
 			label="Attributes"
 			labelType="regular"
-			nestedMenu={nestedMenu}
+			{...(nestedMenu !== undefined ? { nestedMenu } : {})}
 		/>
 	)
 }

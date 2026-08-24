@@ -15,7 +15,7 @@ describe('pool APY tooltip data', () => {
 			value: [1_700_000_000_000, 2, 3]
 		})
 
-		expect(getChartTooltipTimestamp(item)).toBe(1_700_000_000_000)
-		expect(getChartTooltipValue(item)).toBe(3)
+		expect(getChartTooltipTimestamp(item!)).toBe(1_700_000_000_000)
+		expect(getChartTooltipValue(item!)).toBe(3)
 	})
 })

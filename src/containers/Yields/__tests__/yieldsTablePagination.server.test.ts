@@ -27,7 +27,7 @@ describe('paginateAndSortRows', () => {
 
 		expect(result).toMatchObject({ total: 60, page: 1, pageSize: 50, hasMore: true })
 		expect(result.rows).toHaveLength(50)
-		expect(result.rows[0].id).toBe('0')
+		expect(result.rows[0]?.id).toBe('0')
 	})
 
 	it('honors page and pageSize query params', () => {

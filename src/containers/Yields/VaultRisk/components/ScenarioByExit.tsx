@@ -48,7 +48,7 @@ function exitSortKey(s: ScenarioVM): number {
 
 // The scenario's loss at the fixed stress depth. Price-driven rows read their served anchor;
 // the rest show their own figure, which doesn't move with price anyway.
-function LossCell({ s, supplyUsd }: { s: ScenarioVM; supplyUsd: number }) {
+function LossCell({ s, supplyUsd }: { s: ScenarioVM; supplyUsd: number | null }) {
 	const cell = modeledLossCell(s, s.lossByAnchor?.length ? STRESS_DEPTH : undefined, supplyUsd)
 	return (
 		<td className="px-3 py-3 text-right align-middle whitespace-nowrap">
@@ -69,7 +69,7 @@ function ScenarioRow({
 }: {
 	s: ScenarioVM
 	protocol: ProtocolRiskFixture | null
-	supplyUsd: number
+	supplyUsd: number | null
 	selected: boolean
 	onToggle: () => void
 }) {
@@ -207,7 +207,7 @@ export function ScenarioByExit({
 }: {
 	scenarios: ScenarioVM[]
 	protocol: ProtocolRiskFixture | null
-	supplyUsd: number
+	supplyUsd: number | null
 }) {
 	const [selectedId, setSelectedId] = useState<string | null>(null)
 	const [sortKey, setSortKey] = useState<SortKey>('worst')

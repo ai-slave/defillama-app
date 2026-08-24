@@ -69,7 +69,7 @@ function OracleLegs({ legs }: { legs: OracleLeg[] }) {
 		<div className="flex flex-col gap-1">
 			{legs.map((leg, i) => {
 				const side = legSide(leg.slot)
-				const showSide = i === 0 || legSide(legs[i - 1].slot) !== side
+				const showSide = i === 0 || legSide(legs[i - 1]!.slot) !== side
 				return (
 					<span key={`${leg.slot}-${i}`} className="flex items-start gap-2">
 						<span className="w-10 shrink-0 pt-0.5 label-sm text-secondary">{showSide ? side : ''}</span>
@@ -136,12 +136,20 @@ function MarketBreakCell({
 
 // `className` carries layout only — the ink is owned here so the empty-value tier can't collide
 // with a caller's text colour.
-function OracleExposureValue({ c, supplyUsd, className }: { c: CollateralVM; supplyUsd: number; className: string }) {
+function OracleExposureValue({
+	c,
+	supplyUsd,
+	className
+}: {
+	c: CollateralVM
+	supplyUsd: number | null
+	className: string
+}) {
 	if (c.drainableUsd == null || c.drainableUsd <= 0)
 		return <span className={`${className} label-md text-tertiary`}>—</span>
 	return (
 		<span className={`${className} label-md text-primary`}>
-			{supplyUsd > 0
+			{supplyUsd != null && supplyUsd > 0
 				? vaultSharePct(c.drainableUsd / supplyUsd)
 				: formatUsd(c.drainableUsd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 		</span>
@@ -157,7 +165,7 @@ function DepegWhatIf({
 	onDropChange
 }: {
 	c: CollateralVM
-	supplyUsd: number
+	supplyUsd: number | null
 	drop: number
 	onDropChange?: (drop: number) => void
 }) {
@@ -165,7 +173,7 @@ function DepegWhatIf({
 	const p = marketBreakPresentation(c)
 	// Modeled bad debt reads as a share of the deposit; the pool-wide dollars stay secondary.
 	const share = (usd: number) =>
-		supplyUsd > 0
+		supplyUsd != null && supplyUsd > 0
 			? vaultSharePct(usd / supplyUsd)
 			: formatUsd(usd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 	if (c.exposureUsd <= 0)
@@ -187,7 +195,8 @@ function DepegWhatIf({
 	if (p.approximate) {
 		// market-wide basis has no per-position LLTV curve — show the flat all-break estimate,
 		// not a slider that does nothing.
-		const yourShareApprox = position != null && supplyUsd > 0 ? p.usd * Math.min(1, position / supplyUsd) : null
+		const yourShareApprox =
+			position != null && supplyUsd != null && supplyUsd > 0 ? p.usd * Math.min(1, position / supplyUsd) : null
 		return (
 			<span className="flex flex-col gap-1 text-secondary">
 				<span className="flex flex-wrap items-baseline gap-x-1.5">
@@ -204,7 +213,10 @@ function DepegWhatIf({
 	}
 	const poolLoss = collateralDepegLossUsd(c, drop / 100)
 	const buffered = poolLoss <= 0
-	const yourShare = !buffered && position != null && supplyUsd > 0 ? poolLoss * Math.min(1, position / supplyUsd) : null
+	const yourShare =
+		!buffered && position != null && supplyUsd != null && supplyUsd > 0
+			? poolLoss * Math.min(1, position / supplyUsd)
+			: null
 	const capUsd = c.allocationUsd ?? c.badDebtAtZeroUsd ?? 0
 	const method = c.badDebtMarkets.length
 		? `Uses ${c.badDebtMarkets.length} market LLTV curve${c.badDebtMarkets.length === 1 ? '' : 's'}`
@@ -277,7 +289,7 @@ export function CollateralRow({
 	alloc: AllocationVM | null
 	poolType: PoolType
 	singleCollateral: boolean
-	supplyUsd: number
+	supplyUsd: number | null
 	stressDrop: number
 	tuned: boolean
 	onStressDropChange?: (drop: number) => void
@@ -291,10 +303,10 @@ export function CollateralRow({
 	const breakLossUsd = collateralMarketBreakLossUsd(c)
 	const shareWord = poolType === 'market' ? 'of market' : 'of vault'
 	const showBreakShare = !singleCollateral
-	const breakLossSharePct = vaultSharePct(supplyUsd > 0 ? breakLossUsd / supplyUsd : 0)
+	const breakLossSharePct = vaultSharePct(supplyUsd != null && supplyUsd > 0 ? breakLossUsd / supplyUsd : 0)
 	const oracleExposure =
 		c.drainableUsd != null && c.drainableUsd > 0
-			? supplyUsd > 0
+			? supplyUsd != null && supplyUsd > 0
 				? vaultSharePct(c.drainableUsd / supplyUsd)
 				: formatUsd(c.drainableUsd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 			: null
@@ -506,7 +518,11 @@ export function CollateralRow({
 						</span>
 						<span className="flex flex-wrap items-center gap-x-1.5">
 							<span className="text-primary">Token:</span>
-							<AddressActions address={c.address} url={explorer?.url} label={`${c.symbol} token address`} />
+							<AddressActions
+								address={c.address}
+								{...(explorer?.url ? { url: explorer.url } : {})}
+								label={`${c.symbol} token address`}
+							/>
 						</span>
 						{alloc && c.allocationUsd != null ? (
 							<span className="sm:hidden">
@@ -525,13 +541,18 @@ export function CollateralRow({
 						</span>
 					</div>
 					<div className="flex min-w-0 flex-col gap-2">
-						<DepegWhatIf c={c} supplyUsd={supplyUsd} drop={stressDrop} onDropChange={onStressDropChange} />
+						<DepegWhatIf
+							c={c}
+							supplyUsd={supplyUsd}
+							drop={stressDrop}
+							{...(onStressDropChange ? { onDropChange: onStressDropChange } : {})}
+						/>
 					</div>
 					{c.drainableUsd != null && c.drainableUsd > 0 ? (
 						<span className="border-t border-subtle pt-3 text-secondary">
 							<span className="text-primary">Oracle exposure:</span> {'up to '}
 							<span className="text-primary">
-								{supplyUsd > 0
+								{supplyUsd != null && supplyUsd > 0
 									? vaultSharePct(c.drainableUsd / supplyUsd)
 									: formatUsd(c.drainableUsd, {
 											compact: true,
@@ -539,7 +560,7 @@ export function CollateralRow({
 											compactSuffix: 'lowercase'
 										})}
 							</span>
-							{supplyUsd > 0 ? ` ${shareWord}` : ''}
+							{supplyUsd != null && supplyUsd > 0 ? ` ${shareWord}` : ''}
 							{' drainable if the feed is compromised'}
 							<span className="mt-1 block body-sm text-tertiary">
 								separate path: an attacker borrows against a fake price

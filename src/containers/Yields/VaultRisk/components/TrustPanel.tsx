@@ -48,9 +48,9 @@ export function TrustPanel({
 		technique: i.technique,
 		usdLost: i.usd_lost,
 		usdRecovered: i.usd_recovered,
-		fullyRecovered: i.fully_recovered ?? false,
+		fullyRecovered: i.fully_recovered,
 		postMortemUrl: i.post_mortem_url,
-		notes: i.notes
+		...(i.notes ? { notes: i.notes } : {})
 	}))
 
 	// Prefer the vault-scoped, relevance-tagged list; only principal dependencies surface —
@@ -72,7 +72,12 @@ export function TrustPanel({
 				}
 			/>
 
-			<HistoryStrip audits={audits} incidents={incidents} protocolIncidents={protocolIncidents} nowIso={nowIso} />
+			<HistoryStrip
+				audits={audits}
+				incidents={incidents}
+				protocolIncidents={protocolIncidents}
+				{...(nowIso ? { nowIso } : {})}
+			/>
 
 			{/* markets correctly have no vault operators — say so, so empty reads as intentional */}
 			{isMarket ? (
@@ -109,20 +114,30 @@ export function TrustPanel({
 						<VaultRolesBlock
 							roles={vaultRoles}
 							capabilities={protocol.role_capabilities}
-							chain={chain}
-							explorers={explorers}
-							nowIso={nowIso}
+							{...(chain ? { chain } : {})}
+							{...(explorers ? { explorers } : {})}
+							{...(nowIso ? { nowIso } : {})}
 						/>
 					</div>
 					<div className="grid grid-cols-1 gap-x-8 gap-y-6 border-t border-subtle pt-4 lg:grid-cols-2">
 						<AuditsBlock audits={audits} />
-						<GovernanceBlock protocol={protocol} chain={chain} explorers={explorers} vaultScoped />
+						<GovernanceBlock
+							protocol={protocol}
+							{...(chain ? { chain } : {})}
+							{...(explorers ? { explorers } : {})}
+							vaultScoped
+						/>
 					</div>
 				</>
 			) : (
 				<div className="grid grid-cols-1 gap-x-8 gap-y-6 border-t border-subtle pt-4 lg:grid-cols-2">
 					<AuditsBlock audits={audits} />
-					<GovernanceBlock protocol={protocol} chain={chain} explorers={explorers} vaultScoped={false} />
+					<GovernanceBlock
+						protocol={protocol}
+						{...(chain ? { chain } : {})}
+						{...(explorers ? { explorers } : {})}
+						vaultScoped={false}
+					/>
 				</div>
 			)}
 

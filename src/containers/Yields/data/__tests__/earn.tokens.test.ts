@@ -206,8 +206,8 @@ function row(id: string, keys: Partial<TokenKeys>, over: Partial<EnrichedEarnRow
 		tvl_usd: 1_000,
 		apy: ZERO_APY,
 		intrinsic: null,
-		stability_30d: {},
-		holders: null,
+		stability_30d: { base: null, base_reward: null, base_intrinsic: null, base_reward_intrinsic: null },
+		holders: { count: null, avg_position_usd: null, top_10_share_pct: null },
 		price_per_share: null,
 		volume_1d_usd: null,
 		attributes: ATTRIBUTES,
@@ -249,7 +249,7 @@ describe('getEarnPage token filter', () => {
 		const res = await getEarnPage({ token: 'family:eth', pageSize: 'all' })
 		// The pair and triple no longer match — their whole reference set isn't all-ETH-family.
 		expect(res.rows.map((r) => r.id)).toEqual(['steth'])
-		expect(res.rows[0].tokenSymbols).toEqual(['stETH', 'ETH'])
+		expect(res.rows[0]!.tokenSymbols).toEqual(['stETH', 'ETH'])
 	})
 
 	it('exposes structured pool attributes without deriving them from display labels', async () => {
@@ -258,7 +258,7 @@ describe('getEarnPage token filter', () => {
 				'pool',
 				{},
 				{
-					underlying_tokens: [{ address: '0xusdc', symbol: 'USDC' }],
+					underlying_tokens: [{ address: '0xusdc', symbol: 'USDC', decimals: null }],
 					attributes: { stablecoin_only: true, single_asset_exposure: true, impermanent_loss_risk: true }
 				}
 			)

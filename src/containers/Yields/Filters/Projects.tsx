@@ -33,8 +33,8 @@ export function YieldProjects({
 			size="sm"
 			allValues={projectList}
 			selectedValues={selectedProjects}
-			label={label}
-			nestedMenu={nestedMenu}
+			label={label ?? 'Projects'}
+			{...(nestedMenu !== undefined ? { nestedMenu } : {})}
 			labelType={!selectedQueryValue || selectedQueryValue === 'All' ? 'none' : 'regular'}
 			includeQueryKey={includeQueryKey}
 			excludeQueryKey={excludeQueryKey}

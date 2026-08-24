@@ -4,7 +4,7 @@
 // `holders` block (count_change_7d/30d + top_10_holders). Entity facts (protocol
 // slug / category / audit, chain slug) are joined on app-side from /v2/meta.
 
-import type { ApyWindows, IntrinsicApy, PoolToken, Token } from '../data/types'
+import type { BorrowMarketRow, EarnRow, Holders } from '../data/types'
 
 export type PoolHistoryRange = '30d' | '90d' | 'max'
 
@@ -21,78 +21,34 @@ export interface HolderChange {
 export interface Holder {
 	rank: number
 	address: string
-	balance: string
-	share_pct: number
-	change_7d?: HolderChange
-	change_30d?: HolderChange
+	balance: string | null
+	share_pct: number | null
+	change_7d: HolderChange
+	change_30d: HolderChange
 }
 
-export interface DetailHolders {
-	count: number | null
-	avg_position_usd: number | null
-	top_10_share_pct: number | null
-	count_change_7d?: number | null
-	count_change_30d?: number | null
+export interface DetailHolders extends Holders {
+	count_change_7d: number | null
+	count_change_30d: number | null
 	// `balance` is the raw on-chain amount (string, scaled by `decimals`).
-	top_10_holders?: {
+	top_10_holders: {
 		holders: Holder[]
-		decimals: number
+		decimals: number | null
 	} | null
 }
 
 // `/v2/earn/:id` response body (`data`).
-export interface PoolDetail {
-	id: string
-	pool_key: string | null
-	pool_token: PoolToken | null
-	display: { label: string | null; detail: string | null } | null
-	reference_asset_symbol: string | null
-	url: string | null
-	protocol: string
-	chain: string
-	underlying_tokens: Token[]
-	reward_tokens: Token[]
-	tvl_usd: number | null
-	apy: ApyWindows
-	intrinsic: IntrinsicApy | null
-	stability_30d: Record<string, number | null>
-	holders: DetailHolders | null
-	price_per_share: number | null
-	volume_1d_usd: number | null
-	attributes: {
-		stablecoin_only: boolean
-		single_asset_exposure: boolean
-		impermanent_loss_risk: boolean
-		has_meme_token: boolean
-	}
-	available_history?: { supply: boolean; borrow: boolean }
+export interface PoolDetail extends Omit<EarnRow, 'holders'> {
+	holders: DetailHolders
+	available_history: { supply: boolean; borrow: boolean }
 }
 
 // `/v2/borrow/markets/:id` response body (`data`). Borrow-only markets have no
 // `/v2/earn/:id` row (they never appear in the earn dataset), so the detail page
 // falls back to this endpoint. Same NAME-string protocol/chain shape as the earn
 // detail; carries both supply and borrow APY windows plus market sizing + LTV.
-export interface BorrowMarketDetail {
-	id: string
-	pool_key: string | null
-	pool_token: PoolToken | null
-	display: { label: string | null; detail: string | null } | null
-	url: string | null
-	protocol: string
-	chain: string
-	collateral_token: Token | null
-	borrow_token: Token | null
-	reward_tokens: Token[]
-	loan_to_value: number | null
-	total_supply_usd: number | null
-	total_borrow_usd: number | null
-	available_borrow_usd: number | null
-	supply_apy: ApyWindows
-	borrow_cost_apy: ApyWindows
-	intrinsic: { supply: IntrinsicApy | null; borrow: IntrinsicApy | null }
-	attributes: { has_meme_token: boolean }
-	holders?: DetailHolders | null
-	available_history?: { supply: boolean; borrow: boolean }
+export interface BorrowMarketDetail extends BorrowMarketRow {
+	available_history: { supply: boolean; borrow: boolean }
 }
 
 // Entity facts joined on from /v2/meta and passed to the header / holders panel.

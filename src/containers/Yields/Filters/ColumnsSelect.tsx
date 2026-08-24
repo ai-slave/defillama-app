@@ -41,7 +41,7 @@ export function ColumnsSelect({ nestedMenu }: { nestedMenu?: boolean }) {
 			setSelectedValues={setSelectedValues}
 			label="Columns"
 			labelType="regular"
-			nestedMenu={nestedMenu}
+			{...(nestedMenu !== undefined ? { nestedMenu } : {})}
 		/>
 	)
 }

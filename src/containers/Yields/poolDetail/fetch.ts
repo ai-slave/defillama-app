@@ -52,5 +52,5 @@ export function fetchBorrowMarketDetailHistory(
 }
 
 export function isNotFoundError(error: unknown): boolean {
-	return error instanceof ApiError && (error.status === 400 || error.status === 404)
+	return error instanceof ApiError && error.status === 404
 }

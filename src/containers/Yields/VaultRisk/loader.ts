@@ -15,8 +15,8 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 // stays silent; `label` keeps the API key (present in pro-routed URLs) out of the log.
 async function fetchData<T>(url: string, label: string): Promise<T | null> {
 	try {
-		const body = await fetchJson<{ data?: T }>(url, { timeout: FETCH_TIMEOUT_MS })
-		return body?.data ?? null
+		const body = await fetchJson<{ data: T }>(url, { timeout: FETCH_TIMEOUT_MS })
+		return body.data
 	} catch (err) {
 		const msg = err instanceof Error ? err.message : String(err)
 		if (!/\[404\]/.test(msg)) console.warn(`[vault-risk] fetch ${label} failed:`, msg)
@@ -24,15 +24,11 @@ async function fetchData<T>(url: string, label: string): Promise<T | null> {
 	}
 }
 
-function isVaultFixture(vault: unknown): vault is VaultRiskFixture {
-	return !!vault && typeof vault === 'object' && Array.isArray((vault as VaultRiskFixture).vault_specific_risks)
-}
-
 export async function loadVaultRisk(poolId: string): Promise<VaultRiskData | null> {
 	if (!poolId || !UUID_RE.test(poolId)) return null
 
 	const vault = await fetchData<VaultRiskFixture>(`${VAULT_RISK_API}/${poolId}`, 'vault-risks')
-	if (!isVaultFixture(vault)) return null
+	if (!vault) return null
 
 	const protocol = vault.protocol_id
 		? await fetchData<ProtocolRiskFixture>(`${PROTOCOL_RISK_API}/${vault.protocol_id}`, 'protocol-risks')
@@ -45,5 +41,5 @@ export async function hasVaultRisk(poolId: string): Promise<boolean> {
 	if (!poolId || !UUID_RE.test(poolId)) return false
 
 	const vault = await fetchData<VaultRiskFixture>(`${VAULT_RISK_API}/${poolId}`, 'vault-risks')
-	return isVaultFixture(vault)
+	return vault !== null
 }

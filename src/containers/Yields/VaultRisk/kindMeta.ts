@@ -32,7 +32,7 @@ interface OracleBadge {
 	story: string
 }
 
-const ORACLE_BADGE: Record<string, OracleBadge> = {
+const ORACLE_BADGE = {
 	market: {
 		label: 'Market',
 		tone: 'neutral',
@@ -58,10 +58,10 @@ const ORACLE_BADGE: Record<string, OracleBadge> = {
 		tone: 'muted',
 		story: 'Oracle design not classified (long-tail market).'
 	}
-}
+} satisfies Record<OracleType, OracleBadge>
 
 export function oracleBadge(type: OracleType): OracleBadge {
-	return ORACLE_BADGE[type] ?? ORACLE_BADGE.unknown
+	return ORACLE_BADGE[type]
 }
 
 // Tone → Tailwind class bundle, using the app's semantic CSS-var tokens.

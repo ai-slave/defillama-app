@@ -26,7 +26,9 @@ export const makeFreshness = (o: Partial<Freshness> = {}): Freshness => ({
 	...o
 })
 
-export const makeCondition = (o: Partial<ConditionNode> = {}): ConditionNode => ({
+export const makeCondition = (
+	o: Partial<Extract<ConditionNode, { op: 'leaf' }>> = {}
+): Extract<ConditionNode, { op: 'leaf' }> => ({
 	op: 'leaf',
 	description: 'condition',
 	...o
@@ -46,13 +48,13 @@ export const makeLoss = (o: Partial<RiskLoss> = {}): RiskLoss => ({
 export const makeScenario = (o: Partial<VaultScenario> = {}): VaultScenario => ({
 	id: 'sc-1',
 	scenario_id: 'scenario-1',
+	title: 'Representative failure',
 	kind: 'smart-contract',
 	description: 'A representative failure scenario.',
 	loss: makeLoss(o.loss),
 	conditions: makeCondition(),
 	mitigations: [],
 	evidence: [],
-	probability_estimates: [],
 	...o
 })
 
@@ -64,7 +66,14 @@ export const makeCollateral = (o: Partial<CollateralRisk> = {}): CollateralRisk 
 	aggregate_trust_usd: 0,
 	vault_count: 0,
 	oracle_type: 'market',
+	oracle_addresses: [],
+	oracle_providers: [],
 	token_listing_id: null,
+	liquidation_threshold: null,
+	collateral_borrowed_debt_usd: null,
+	bad_debt_at_price_zero_usd: null,
+	vault_market_share: null,
+	exposure_pct: null,
 	...o
 })
 
@@ -87,7 +96,6 @@ export const makeStressAnchor = (o: Partial<StressAnchor> = {}): StressAnchor =>
 
 export const makeStress = (o: Partial<Stress> = {}): Stress => ({
 	anchors: [],
-	ceiling_usd: 0,
 	...o
 })
 
@@ -102,6 +110,10 @@ export const makeVaultRoles = (o: Partial<VaultRoles> = {}): VaultRoles => ({
 	curator: null,
 	guardian: null,
 	sentinels: [],
+	pending_owner: null,
+	timelock_sec: null,
+	allocators: [],
+	pending_changes: [],
 	...o
 })
 
@@ -109,16 +121,29 @@ export const makeGovernance = (o: Partial<Governance> = {}): Governance => ({
 	chain: 'ethereum',
 	contract: '0x00000000000000000000000000000000000060a1',
 	guardian_role: null,
+	depositor_blast_radius: null,
+	voting_token: {
+		chain: 'ethereum',
+		symbol: 'GOV',
+		address: '0x00000000000000000000000000000000000060a2'
+	},
 	execution_delay_min_sec: 0,
 	execution_delay_max_sec: 0,
+	quorum_min: 0,
+	quorum_max: 0,
+	voting_power_top10_tokens: null,
+	top10_clears_quorum: null,
 	voting_power_concentration_top10_pct: 0,
 	...o
 })
 
 export const makeMultisig = (o: Partial<Multisig> = {}): Multisig => ({
-	kind: 'gnosis-safe',
+	kind: 'safe',
 	chain: 'ethereum',
 	address: '0x0000000000000000000000000000000000005219',
+	role: 'owner',
+	role_label: 'Owner',
+	powers: { value: 'Administer the protocol' },
 	signers: [],
 	threshold: { m: 1, n: 1 },
 	...o
@@ -127,7 +152,13 @@ export const makeMultisig = (o: Partial<Multisig> = {}): Multisig => ({
 export const makeAudit = (o: Partial<Audit> = {}): Audit => ({
 	date: '2024-01-01',
 	firm: 'Audit Firm',
+	report: { value: 'https://example.com/audit' },
+	scope: 'Protocol contracts',
+	version: '1.0',
+	commit_hash: null,
 	findings: { high: null, critical: null, resolved: null },
+	findings_status: 'ok',
+	matches_deployed: null,
 	...o
 })
 
@@ -145,7 +176,23 @@ export const makeVaultRiskFixture = (o: Partial<VaultRiskFixture> = {}): VaultRi
 	realized_incidents: [],
 	coverage: [],
 	oracle_config: [],
+	market_oracles: [],
+	oracle_dependencies: [],
+	oracle_exposure: { by_provider: [] },
+	stress: makeStress(),
+	external_dependencies: [],
 	freshness: makeFreshness(o.freshness),
+	risk_tier: {
+		tier: 'lower',
+		relative_band: 'lower',
+		capped_by: [],
+		facts: [],
+		limited_data: false
+	},
+	last_updated_ts: 1_767_225_600,
+	stale: false,
+	retired: false,
+	retired_reason: null,
 	...o
 })
 
@@ -155,6 +202,10 @@ export const makeProtocolRiskFixture = (o: Partial<ProtocolRiskFixture> = {}): P
 	coverage: [],
 	multisigs: [],
 	governance: makeGovernance(o.governance),
+	external_dependencies: [],
+	role_capabilities: [],
+	incidents: [],
+	aggregate_trust_scope: [],
 	freshness: makeFreshness(o.freshness),
 	...o
 })

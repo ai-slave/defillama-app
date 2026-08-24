@@ -152,7 +152,8 @@ export function VaultRiskUnmapped({
 }
 
 export function VaultRiskSection({ data, poolName, chain, explorers, standalone = false }: VaultRiskSectionProps) {
-	// A malformed fixture must never crash the pool page — degrade to "no usable data".
+	// This is an optional panel fed by a separate service. Keep an incomplete 200 response
+	// from taking down the pool page while still trusting the typed contract on the happy path.
 	const vm = useMemo<VaultRiskVM | null>(() => {
 		if (!data) return null
 		try {
@@ -175,13 +176,13 @@ export function VaultRiskSection({ data, poolName, chain, explorers, standalone 
 				content: (
 					<CollateralView
 						collateral={vm.collateral}
-						explorers={explorers}
+						{...(explorers ? { explorers } : {})}
 						protocolId={vm.protocolId}
 						poolType={vm.poolType}
 						supplyUsd={vm.supplyUsd}
 						allocatedUsd={vm.allocatedUsd}
 						idleUsd={vm.idleUsd}
-						trustScope={vm.protocol?.aggregate_trust_scope}
+						{...(vm.protocol ? { trustScope: vm.protocol.aggregate_trust_scope } : {})}
 						marketOracles={vm.marketOracles}
 						oracleDependencies={vm.oracleDependencies}
 						oracleExposure={vm.oracleExposure}
@@ -204,13 +205,13 @@ export function VaultRiskSection({ data, poolName, chain, explorers, standalone 
 				content: (
 					<TrustPanel
 						protocol={vm.protocol}
-						explorers={explorers}
+						{...(explorers ? { explorers } : {})}
 						chain={vm.chain}
 						poolType={vm.poolType}
 						scenarios={vm.scenarios}
 						vaultRoles={vm.vaultRoles}
 						vaultDependencies={vm.vaultExternalDependencies}
-						nowIso={vm.freshness?.last_run}
+						nowIso={vm.freshness.last_run}
 						incidents={vm.realizedIncidents}
 					/>
 				)

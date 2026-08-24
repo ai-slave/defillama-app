@@ -3,7 +3,7 @@ import { getTooltipAxisValue, getTooltipRawYValue } from '~/components/ECharts/s
 export interface ChartTooltipItem {
 	axisValue: unknown
 	data: unknown
-	dataIndex: number | null
+	dataIndex?: number
 	dimensionNames?: readonly string[]
 	encode?: { x?: readonly (number | string)[]; y?: readonly (number | string)[] }
 	marker: string
@@ -23,14 +23,16 @@ function toTooltipItem(value: unknown): ChartTooltipItem | null {
 	return {
 		axisValue: value.axisValue,
 		data: value.data,
-		dataIndex: typeof value.dataIndex === 'number' ? value.dataIndex : null,
-		dimensionNames: Array.isArray(value.dimensionNames) ? (value.dimensionNames as string[]) : undefined,
-		encode: encode
+		...(typeof value.dataIndex === 'number' ? { dataIndex: value.dataIndex } : {}),
+		...(Array.isArray(value.dimensionNames) ? { dimensionNames: value.dimensionNames as string[] } : {}),
+		...(encode
 			? {
-					x: Array.isArray(encode.x) ? (encode.x as Array<number | string>) : undefined,
-					y: Array.isArray(encode.y) ? (encode.y as Array<number | string>) : undefined
+					encode: {
+						...(Array.isArray(encode.x) ? { x: encode.x as Array<number | string> } : {}),
+						...(Array.isArray(encode.y) ? { y: encode.y as Array<number | string> } : {})
+					}
 				}
-			: undefined,
+			: {}),
 		marker: typeof value.marker === 'string' ? value.marker : '',
 		name: typeof value.name === 'string' ? value.name : '',
 		seriesName: typeof value.seriesName === 'string' ? value.seriesName : '',

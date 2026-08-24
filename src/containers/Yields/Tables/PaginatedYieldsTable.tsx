@@ -50,14 +50,14 @@ export function PaginatedYieldsTable<TRow>({
 		columns,
 		state: { sorting, pagination },
 		defaultColumn: { sortUndefined: 'last' },
-		rowCount: manualPagination ? rowCount : undefined,
+		...(manualPagination && rowCount !== undefined ? { rowCount } : {}),
 		manualPagination,
 		manualSorting,
 		enableSortingRemoval: false,
 		onSortingChange: (updater) =>
 			startTransition(() => {
 				const next = typeof updater === 'function' ? updater(sorting) : updater
-				if (next.length > 0) trackYieldsEvent(YIELDS_EVENTS.TABLE_SORT, { column: next[0].id, desc: next[0].desc })
+				if (next.length > 0) trackYieldsEvent(YIELDS_EVENTS.TABLE_SORT, { column: next[0]!.id, desc: next[0]!.desc })
 				if (!onSortingChange) setLocalSorting(next)
 				onSortingChange?.(next)
 			}),
@@ -79,7 +79,7 @@ export function PaginatedYieldsTable<TRow>({
 			tableClassName={tableClassName}
 			pageSizeOptions={PAGE_SIZE_OPTIONS}
 			interactionDisabled={interactionDisabled}
-			loadingLabel={loadingLabel}
+			{...(loadingLabel ? { loadingLabel } : {})}
 			shell="none"
 		/>
 	)

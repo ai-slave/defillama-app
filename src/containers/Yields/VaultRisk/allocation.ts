@@ -17,10 +17,11 @@ export function positionUsd(c: CollateralVM): number {
 
 export function buildAllocation(
 	collateral: CollateralVM[],
-	supplyUsd: number,
+	supplyUsd: number | null,
 	allocatedUsd: number | null,
 	idleUsd: number | null
 ): AllocationVM | null {
+	if (supplyUsd === null) return null
 	const positions = collateral.map(positionUsd).filter((p) => p > 0)
 	if (!positions.length) return null
 

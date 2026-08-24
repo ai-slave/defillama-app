@@ -75,7 +75,7 @@ describe('Pro Yields V2 chart transforms', () => {
 	})
 
 	it('does not manufacture an APY composition series from all-null components', () => {
-		const point = structuredClone(supplyHistory[0])
+		const point = structuredClone(supplyHistory[0]!)
 		point.apy.avg_1d = { base: null, reward: null, total: null }
 		point.intrinsic = null
 		expect(
@@ -87,19 +87,28 @@ describe('Pro Yields V2 chart transforms', () => {
 		})
 	})
 
+	it('keeps intrinsic APY when the primary total is unknown', () => {
+		const point = structuredClone(supplyHistory[0]!)
+		point.apy.avg_1d = { base: null, reward: null, total: null }
+		expect(buildProYieldChartSeries({ chartType: 'tvl-apy', chartData: [point], borrowData: [] }).source).toEqual([
+			[Date.UTC(2026, 0, 2), 0.5, 1_000]
+		])
+	})
+
 	it('keeps a missing borrow reward null instead of manufacturing a negative offset', () => {
-		const point = structuredClone(borrowHistory[0])
+		const point = structuredClone(borrowHistory[0]!)
 		point.borrow_cost_apy.avg_1d.reward = null
 		expect(
-			buildProYieldChartSeries({ chartType: 'borrow-apy', chartData: supplyHistory, borrowData: [point] }).source[0][2]
+			buildProYieldChartSeries({ chartType: 'borrow-apy', chartData: supplyHistory, borrowData: [point] })
+				.source[0]?.[2]
 		).toBeNull()
 	})
 
 	it('omits gap-only supply and borrow lines without manufacturing zeroes', () => {
-		const supplyPoint = structuredClone(supplyHistory[0])
+		const supplyPoint = structuredClone(supplyHistory[0]!)
 		supplyPoint.apy.avg_7d.total = null
 		supplyPoint.intrinsic = null
-		const borrowPoint = structuredClone(borrowHistory[0])
+		const borrowPoint = structuredClone(borrowHistory[0]!)
 		borrowPoint.borrow_cost_apy.avg_1d = { base: null, reward: null, total: null }
 
 		expect(

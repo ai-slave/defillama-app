@@ -31,7 +31,7 @@ export function CollateralView({
 	explorers,
 	protocolId,
 	poolType,
-	supplyUsd = 0,
+	supplyUsd = null,
 	allocatedUsd = null,
 	idleUsd = null,
 	trustScope,
@@ -44,7 +44,7 @@ export function CollateralView({
 	explorers?: BlockExplorersResponse
 	protocolId: string
 	poolType: PoolType
-	supplyUsd?: number
+	supplyUsd?: number | null
 	allocatedUsd?: number | null
 	idleUsd?: number | null
 	trustScope?: string[]
@@ -160,7 +160,7 @@ export function CollateralView({
 						<CollateralRow
 							key={c.address}
 							c={c}
-							explorers={explorers}
+							{...(explorers ? { explorers } : {})}
 							cols={cols}
 							alloc={alloc}
 							poolType={poolType}
@@ -169,7 +169,7 @@ export function CollateralView({
 							stressDrop={dropFor(c)}
 							tuned={customDrops[c.address.toLowerCase()] != null}
 							onStressDropChange={(drop) => setDropFor(c, drop)}
-							trustScope={trustScope}
+							{...(trustScope ? { trustScope } : {})}
 							markets={marketOracles}
 						/>
 					))}
@@ -201,14 +201,14 @@ export function CollateralView({
 				providers={oracleExposure?.by_provider ?? []}
 				deps={oracleDependencies}
 				collateral={collateral}
-				chain={chain}
-				explorers={explorers}
+				{...(chain ? { chain } : {})}
+				{...(explorers ? { explorers } : {})}
 				totalDrainableUsd={totalDrainableUsd}
 				supplyUsd={supplyUsd}
 				poolType={poolType}
 			/>
 
-			<MarketOracleTable markets={orphanMarkets} explorers={explorers} />
+			<MarketOracleTable markets={orphanMarkets} {...(explorers ? { explorers } : {})} />
 		</div>
 	)
 }

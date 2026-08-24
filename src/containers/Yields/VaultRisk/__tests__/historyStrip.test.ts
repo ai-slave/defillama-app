@@ -8,19 +8,30 @@ function audit(date: string, firm = 'Firm'): Audit {
 }
 
 function incident(partial: Partial<HistoryIncident>): HistoryIncident {
-	return { date: '2025-01-01', usdLost: 0, usdRecovered: 0, title: 'Test', ...partial }
+	return {
+		date: '2025-01-01',
+		usdLost: 0,
+		usdRecovered: 0,
+		title: 'Test',
+		...partial
+	}
 }
 
 function protoIncident(partial: Partial<ProtocolIncidentInput>): ProtocolIncidentInput {
-	return {
-		date: '2025-01-01',
-		kind: 'oracle-misconfiguration',
-		classification: 'protocol',
-		usdLost: 0,
-		usdRecovered: 0,
-		fullyRecovered: false,
-		...partial
-	}
+	return Object.assign(
+		{
+			date: '2025-01-01',
+			kind: 'oracle-misconfiguration',
+			classification: 'protocol',
+			chain: 'ethereum',
+			technique: 'configuration error',
+			usdLost: 0,
+			usdRecovered: 0,
+			fullyRecovered: false,
+			postMortemUrl: null
+		},
+		partial
+	)
 }
 
 // Two firms per quarter across 2023-Q1 → 2025-Q3 (~2.5y): packed enough that clustering must
@@ -79,10 +90,10 @@ describe('buildHistoryStrip', () => {
 		expect(vm.audits.reduce((a, c) => a + c.count, 0)).toBe(manyAudits.length)
 		expect(vm.audits.length).toBeLessThan(manyAudits.length) // 22 audits over ~2.5y must merge
 		for (let i = 0; i < vm.audits.length; i++) {
-			expect(vm.audits[i].x).toBeGreaterThanOrEqual(2)
-			expect(vm.audits[i].x).toBeLessThanOrEqual(98)
-			if (i > 0) expect(vm.audits[i].x).toBeGreaterThan(vm.audits[i - 1].x)
-			expect(vm.audits[i].items.length).toBe(vm.audits[i].count)
+			expect(vm.audits[i]!.x).toBeGreaterThanOrEqual(2)
+			expect(vm.audits[i]!.x).toBeLessThanOrEqual(98)
+			if (i > 0) expect(vm.audits[i]!.x).toBeGreaterThan(vm.audits[i - 1]!.x)
+			expect(vm.audits[i]!.items.length).toBe(vm.audits[i]!.count)
 		}
 		expect(vm.years.length).toBeGreaterThan(0)
 		expect(vm.years.map((y) => y.label)).toEqual([...vm.years.map((y) => y.label)].sort())
@@ -105,25 +116,66 @@ describe('buildHistoryStrip', () => {
 		const vm = buildHistoryStrip(
 			[],
 			[
-				incident({ date: '2024-01-01', usdLost: 100, usdRecovered: 0, title: 'L' }),
-				incident({ date: '2025-01-01', usdLost: 100, usdRecovered: 100, title: 'W' }),
-				incident({ date: '2025-06-01', usdLost: 0, usdRecovered: 50, title: 'A' })
+				incident({
+					date: '2024-01-01',
+					usdLost: 100,
+					usdRecovered: 0,
+					title: 'L'
+				}),
+				incident({
+					date: '2025-01-01',
+					usdLost: 100,
+					usdRecovered: 100,
+					title: 'W'
+				}),
+				incident({
+					date: '2025-06-01',
+					usdLost: 0,
+					usdRecovered: 50,
+					title: 'A'
+				})
 			],
 			[],
 			'2026-06-01'
 		)!
 		expect(vm.incidents.map((i) => i.tone)).toEqual(['loss', 'made-whole', 'averted'])
-		expect(vm.incidents[0].money).toContain('not recovered')
-		expect(vm.incidents[1].money).toContain('made whole')
-		expect(vm.incidents[2].money).toContain('before depositors lost anything')
+		expect(vm.incidents[0]!.money).toContain('not recovered')
+		expect(vm.incidents[1]!.money).toContain('made whole')
+		expect(vm.incidents[2]!.money).toContain('before depositors lost anything')
 		// bigger dollars → bigger dot
-		expect(vm.incidents[0].r).toBeGreaterThan(vm.incidents[2].r)
+		expect(vm.incidents[0]!.r).toBeGreaterThan(vm.incidents[2]!.r)
+	})
+
+	it('distinguishes unavailable recovery from explicit zero recovery', () => {
+		const vm = buildHistoryStrip(
+			[],
+			[
+				incident({
+					date: '2024-01-01',
+					usdLost: 100,
+					usdRecovered: null,
+					title: 'Unknown'
+				}),
+				incident({
+					date: '2025-01-01',
+					usdLost: 100,
+					usdRecovered: 0,
+					title: 'Zero'
+				})
+			],
+			[],
+			'2026-06-01'
+		)!
+
+		expect(vm.incidents[0]!.money).toContain('recovery unavailable')
+		expect(vm.incidents[0]!.money).not.toContain('not recovered')
+		expect(vm.incidents[1]!.money).toContain('not recovered')
 	})
 
 	it('a lone event still gets a readable axis instead of a zero-width domain', () => {
 		const vm = buildHistoryStrip([], [incident({ date: '2025-04-10', usdRecovered: 2_600_000 })], [], undefined)!
-		expect(vm.incidents[0].x).toBeGreaterThan(2)
-		expect(vm.incidents[0].x).toBeLessThan(98)
+		expect(vm.incidents[0]!.x).toBeGreaterThan(2)
+		expect(vm.incidents[0]!.x).toBeLessThan(98)
 	})
 
 	it('keeps protocol incidents in their own lane, separate from pool incidents (never summed)', () => {

@@ -36,8 +36,8 @@ describe('prepareYieldPoolsCsv', () => {
 			'Holders',
 			'Pool Meta'
 		])
-		expect(csv.rows[1][0]).toBe('stETH')
-		expect(csv.rows[1][2]).toBe('Lido')
+		expect(csv.rows[1]?.[0]).toBe('stETH')
+		expect(csv.rows[1]?.[2]).toBe('Lido')
 	})
 
 	it('base-only view collapses to a single APY column', () => {

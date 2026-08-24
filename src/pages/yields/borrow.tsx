@@ -1,3 +1,4 @@
+import type { InferGetStaticPropsType } from 'next'
 import { Announcement } from '~/components/Announcement'
 import { disclaimer } from '~/containers/Yields/constants'
 import BorrowPage from '~/containers/Yields/views/BorrowView'
@@ -20,7 +21,7 @@ export const getStaticProps = withPerformanceLogging('yields/borrow', async () =
 
 const pageName = ['Yields: Borrow']
 
-export default function YieldsBorrowPage(data) {
+export default function YieldsBorrowPage(data: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout
 			title="Borrow Markets - Best DeFi Borrow Rates - DefiLlama"

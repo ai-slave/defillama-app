@@ -49,8 +49,8 @@ export function YieldFilterDropdowns({
 				<FilterByChain
 					chainList={chainList}
 					selectedChains={selectedChains ?? EMPTY_CHAINS}
-					evmChains={evmChains}
-					nestedMenu={nestedMenu}
+					{...(evmChains ? { evmChains } : {})}
+					{...(nestedMenu !== undefined ? { nestedMenu } : {})}
 				/>
 			) : null}
 
@@ -59,7 +59,7 @@ export function YieldFilterDropdowns({
 					projectList={projectList}
 					selectedProjects={selectedProjects ?? EMPTY_PROJECTS}
 					label={projectsLabel ?? 'Projects'}
-					nestedMenu={nestedMenu}
+					{...(nestedMenu !== undefined ? { nestedMenu } : {})}
 					includeQueryKey="protocol"
 					excludeQueryKey="excludeProtocol"
 				/>
@@ -69,17 +69,19 @@ export function YieldFilterDropdowns({
 				<FiltersByCategory
 					categoryList={categoryList}
 					selectedCategories={selectedCategories ?? EMPTY_CATEGORIES}
-					nestedMenu={nestedMenu}
-					label={categoriesLabel}
+					{...(nestedMenu !== undefined ? { nestedMenu } : {})}
+					{...(categoriesLabel ? { label: categoriesLabel } : {})}
 				/>
 			) : null}
 
-			{attributeIds ? <YieldAttributesSelect nestedMenu={nestedMenu} attributeIds={attributeIds} /> : null}
+			{attributeIds ? (
+				<YieldAttributesSelect attributeIds={attributeIds} {...(nestedMenu !== undefined ? { nestedMenu } : {})} />
+			) : null}
 
 			{tvlRange ? (
 				<TVLRange
-					label={tvlRangeLabel}
-					nestedMenu={nestedMenu}
+					{...(tvlRangeLabel ? { label: tvlRangeLabel } : {})}
+					{...(nestedMenu !== undefined ? { nestedMenu } : {})}
 					variant="secondary"
 					placement="bottom-start"
 					pushQueryUpdates={(updates) => {
@@ -103,13 +105,13 @@ export function YieldFilterDropdowns({
 				/>
 			) : null}
 
-			{apyRange ? <APYRange nestedMenu={nestedMenu} placement="bottom-start" /> : null}
+			{apyRange ? <APYRange {...(nestedMenu !== undefined ? { nestedMenu } : {})} placement="bottom-start" /> : null}
 
-			{showColumns ? <ColumnsSelect nestedMenu={nestedMenu} /> : null}
+			{showColumns ? <ColumnsSelect {...(nestedMenu !== undefined ? { nestedMenu } : {})} /> : null}
 
 			{availableRange ? (
 				<AvailableRange
-					nestedMenu={nestedMenu}
+					{...(nestedMenu !== undefined ? { nestedMenu } : {})}
 					placement="bottom-start"
 					pushQueryUpdates={(updates) => {
 						void pushYieldsQuery(router, updates, {
@@ -122,8 +124,8 @@ export function YieldFilterDropdowns({
 			{resetFilters ? (
 				<ResetAllYieldFilters
 					pathname={pathname || router.pathname}
-					nestedMenu={nestedMenu}
-					label={resetFiltersLabel}
+					nestedMenu={nestedMenu ?? false}
+					{...(resetFiltersLabel ? { label: resetFiltersLabel } : {})}
 				/>
 			) : null}
 

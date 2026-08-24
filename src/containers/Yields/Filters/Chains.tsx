@@ -20,7 +20,7 @@ export function FilterByChain({
 	selectedChains,
 	evmChains,
 	nestedMenu,
-	size
+	size = 'sm'
 }: IFiltersByChainProps) {
 	const router = useRouter()
 	const { chain } = router.query
@@ -160,7 +160,7 @@ export function FilterByChain({
 			allValues={chainListWithSpecial}
 			selectedValues={displaySelectedChains}
 			setSelectedValues={handleValuesChange}
-			nestedMenu={nestedMenu}
+			{...(nestedMenu !== undefined ? { nestedMenu } : {})}
 			labelType={!chain || chain === 'All' ? 'none' : 'regular'}
 			size={size}
 		/>

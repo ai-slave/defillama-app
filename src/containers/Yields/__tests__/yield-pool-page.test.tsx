@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { BorrowMarketDetail, PoolDetail } from '~/containers/Yields/poolDetail/types'
 import { getServerSideProps } from '~/pages/yields/pool/[pool]'
 
 type PageContext = Parameters<typeof getServerSideProps>[0]
@@ -45,7 +46,7 @@ vi.mock('~/containers/Yields/poolDetail/fetch', () => ({
 	fetchPoolDetailHistory: fetchPoolDetailHistoryMock,
 	fetchBorrowMarketDetail: fetchBorrowMarketDetailMock,
 	fetchBorrowMarketDetailHistory: fetchBorrowMarketDetailHistoryMock,
-	isNotFoundError: (error: unknown) => error instanceof ApiError && (error.status === 400 || error.status === 404)
+	isNotFoundError: (error: unknown) => error instanceof ApiError && error.status === 404
 }))
 
 vi.mock('~/containers/Yields/server/dataset.server', () => ({
@@ -68,12 +69,20 @@ vi.mock('~/containers/Yields/VaultRisk/loader', () => ({
 
 const META = {
 	chains: [{ slug: 'ethereum', name: 'Ethereum', is_evm: true }],
-	protocols: [{ slug: 'lido', name: 'Lido', category: 'Liquid Staking', has_audit: true, has_token: true }],
+	protocols: [
+		{
+			slug: 'lido',
+			name: 'Lido',
+			category: 'Liquid Staking',
+			has_audit: true,
+			has_token: true
+		}
+	],
 	categories: [{ slug: 'liquid-staking', name: 'Liquid Staking' }],
 	tokens: { families: [], assets: [] }
 }
 
-function detailFixture() {
+function detailFixture(): PoolDetail {
 	return {
 		id: '79e042b5-e55d-4a4e-b0b0-6661a570470b',
 		pool_key: 'k',
@@ -92,22 +101,34 @@ function detailFixture() {
 			avg_30d: { base: 2.1, reward: null, total: 2.1 }
 		},
 		intrinsic: null,
-		stability_30d: { base: 0.9, base_reward: 0.9, base_intrinsic: 0.9, base_reward_intrinsic: 0.9 },
-		holders: null,
+		stability_30d: {
+			base: 0.9,
+			base_reward: 0.9,
+			base_intrinsic: 0.9,
+			base_reward_intrinsic: 0.9
+		},
+		holders: {
+			count: null,
+			avg_position_usd: null,
+			top_10_share_pct: null,
+			count_change_7d: null,
+			count_change_30d: null,
+			top_10_holders: null
+		},
 		price_per_share: 1,
 		volume_1d_usd: null,
+		available_supply_usd: null,
 		attributes: {
 			stablecoin_only: false,
 			single_asset_exposure: true,
-			impermanent_loss_risk: false,
-			has_meme_token: false
+			impermanent_loss_risk: false
 		},
 		available_history: { supply: false, borrow: false }
 	}
 }
 
 // `/v2/borrow/markets/:id` detail shape for a borrow-only market (no earn row).
-function marketFixture() {
+function marketFixture(): BorrowMarketDetail {
 	const zero = { base: 0, reward: null, total: 0 }
 	const cost = { base: 4.3, reward: null, total: 4.3 }
 	return {
@@ -115,7 +136,6 @@ function marketFixture() {
 		pool_key: 'plasma_0x99',
 		pool_token: { address: '0x991416', symbol: null, name: null },
 		display: { label: 'weETH / GHO', detail: null },
-		market_type: 'isolated',
 		url: 'https://fluid.io/vaults/9745/24',
 		protocol: 'Lido',
 		chain: 'Ethereum',
@@ -126,11 +146,9 @@ function marketFixture() {
 		total_supply_usd: 5,
 		total_borrow_usd: 5,
 		available_borrow_usd: 100480,
-		borrow_capacity_filled: 0.0000497587,
 		supply_apy: { current: zero, avg_7d: zero, avg_30d: zero },
 		borrow_cost_apy: { current: cost, avg_7d: cost, avg_30d: cost },
 		intrinsic: { supply: null, borrow: null },
-		attributes: { has_meme_token: false },
 		available_history: { supply: false, borrow: true }
 	}
 }
@@ -187,6 +205,15 @@ describe('YieldPoolPage', () => {
 		expect(res.setHeader).not.toHaveBeenCalled()
 	})
 
+	it('propagates an invalid-id 400 instead of classifying it as not found', async () => {
+		const poolId = 'invalid-id'
+		const error = new ApiError(400, `/v2/earn/${poolId}`)
+		fetchPoolDetailMock.mockRejectedValue(error)
+
+		await expect(getServerSideProps(pageContext(poolId, { setHeader: vi.fn() }))).rejects.toBe(error)
+		expect(fetchBorrowMarketDetailMock).not.toHaveBeenCalled()
+	})
+
 	it('falls back to the borrow-market detail for a borrow-only market', async () => {
 		const poolId = '4cb40f0a-65df-431b-be1a-da0ab66a04a9'
 		const res = { setHeader: vi.fn() }
@@ -203,10 +230,19 @@ describe('YieldPoolPage', () => {
 		expect(props.poolId).toBe(poolId)
 		expect(props.symbol).toBe('weETH / GHO')
 		// Entity facts joined from meta the same way earn pools are.
-		expect(props.protocol).toEqual({ slug: 'lido', name: 'Lido', category: 'Liquid Staking', has_audit: true })
+		expect(props.protocol).toEqual({
+			slug: 'lido',
+			name: 'Lido',
+			category: 'Liquid Staking',
+			has_audit: true
+		})
 		expect(props.chain).toEqual({ slug: 'ethereum', name: 'Ethereum' })
+		if (!props.supply || !props.borrow) throw new Error('Expected borrow market views')
 		expect(props.supply.apyLabel).toBe('Supply APY')
-		expect(props.supply.metrics[0]).toEqual({ label: 'Total supplied', value: 5 })
+		expect(props.supply.metrics[0]).toEqual({
+			label: 'Total supplied',
+			value: 5
+		})
 		expect(props.borrow.apyLabel).toBe('Borrow APY')
 		expect(props.borrow.apy.base).toBe(4.3)
 		expect(props.borrow.metrics).toEqual([
@@ -238,10 +274,16 @@ describe('YieldPoolPage', () => {
 		const props = await result.props
 		expect(props.poolId).toBe(poolId)
 		expect(props.symbol).toBe('stETH')
-		expect(props.protocol).toEqual({ slug: 'lido', name: 'Lido', category: 'Liquid Staking', has_audit: true })
+		expect(props.protocol).toEqual({
+			slug: 'lido',
+			name: 'Lido',
+			category: 'Liquid Staking',
+			has_audit: true
+		})
 		expect(props.chain).toEqual({ slug: 'ethereum', name: 'Ethereum' })
+		if (!props.supply) throw new Error('Expected supply view')
 		expect(props.supply.apy.base).toBe(2.3)
-		expect(props.supply.metrics[0].label).toBe('TVL')
+		expect(props.supply.metrics[0]?.label).toBe('TVL')
 		expect(props.stability).toEqual({ score: 0.9, rating: 'stable' })
 		// available_history.supply is false → no history fetch, no supply chart.
 		expect(fetchPoolDetailHistoryMock).not.toHaveBeenCalled()

@@ -77,10 +77,9 @@ export function asRoleEntity(value: unknown): RoleEntity | null {
 			return {
 				address: v.address,
 				kind: v.kind ?? 'unknown',
-				threshold:
-					v.threshold && typeof v.threshold.n === 'number' && typeof v.threshold.m === 'number'
-						? v.threshold
-						: undefined
+				...(v.threshold && typeof v.threshold.n === 'number' && typeof v.threshold.m === 'number'
+					? { threshold: v.threshold }
+					: {})
 			}
 		}
 	}

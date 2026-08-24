@@ -116,7 +116,7 @@ export function IncludeTokens({
 					<Icon name="search" height={16} width={16} />
 					{hasSelection ? (
 						<span className="flex min-w-0 flex-1 items-center gap-1 text-left text-primary">
-							<span className="truncate">{nameByValue.get(selectedValues[0]) ?? selectedValues[0]}</span>
+							<span className="truncate">{nameByValue.get(selectedValues[0]!) ?? selectedValues[0]!}</span>
 							{selectedValues.length > 1 ? (
 								<span className="shrink-0 label-xs text-tertiary">+{selectedValues.length - 1}</span>
 							) : null}
@@ -148,7 +148,7 @@ export function IncludeTokens({
 					onToggle={toggleToken}
 					onClear={clearAll}
 					placeholder={placeholder}
-					match={match}
+					{...(match ? { match } : {})}
 				/>
 			) : null}
 		</>

@@ -156,7 +156,7 @@ function buildChartInputs(
 	const rows = new Array<MultiSeriesChartDataset['source'][number]>(total - start)
 	for (let sourceIndex = start, rowIndex = 0; sourceIndex < total; sourceIndex++, rowIndex++) {
 		const row = new Array<number | null>(dimensions.length)
-		row[0] = model.dates[sourceIndex]
+		row[0] = model.dates[sourceIndex]!
 		let dimensionIndex = 1
 		for (const bar of renderedBars) {
 			const value = bar.values[sourceIndex]
@@ -164,7 +164,7 @@ function buildChartInputs(
 		}
 		for (const averageKey of visibleAverageKeys) {
 			if (model.net && model.netLine) {
-				row[dimensionIndex++] = (averageKey === '7d' ? model.netLine.avg7 : model.netLine.avg30)[sourceIndex]
+				row[dimensionIndex++] = (averageKey === '7d' ? model.netLine.avg7 : model.netLine.avg30)[sourceIndex] ?? null
 			} else {
 				let sum = 0
 				let hasValue = false
@@ -178,8 +178,8 @@ function buildChartInputs(
 				row[dimensionIndex++] = hasValue ? sum : null
 			}
 		}
-		if (netLine) row[dimensionIndex++] = netLine.values[sourceIndex]
-		for (const line of enabledLines) row[dimensionIndex++] = line.values[sourceIndex]
+		if (netLine) row[dimensionIndex++] = netLine.values[sourceIndex] ?? null
+		for (const line of enabledLines) row[dimensionIndex++] = line.values[sourceIndex] ?? null
 		rows[rowIndex] = row
 	}
 
@@ -198,7 +198,7 @@ function buildTooltipFormatter(model: PoolChartModel) {
 		const byName = new Map<string, ChartTooltipItem>()
 		for (const p of items) byName.set(p.seriesName, p)
 
-		const first = items[0]
+		const first = items[0]!
 		const ts = getChartTooltipTimestamp(first)
 		const date = Number.isFinite(ts) ? formatTooltipChartDate(ts, 'daily') : ''
 
@@ -229,8 +229,9 @@ function buildTooltipFormatter(model: PoolChartModel) {
 		}
 
 		const summaryStyle = 'font-weight:600;'
-		if (model.net && netLabel && byName.has(netLabel)) {
-			const v = valueOf(byName.get(netLabel))
+		if (model.net && netLabel) {
+			const item = byName.get(netLabel)
+			const v = item ? valueOf(item) : null
 			if (v != null) html += li(`${netLabel}: ${fmtVal(v, '%')}`, summaryStyle)
 		} else if (!model.net && hasBar) {
 			html += li(`Total APY: ${fmtVal(total, '%')}`, summaryStyle)
@@ -242,7 +243,8 @@ function buildTooltipFormatter(model: PoolChartModel) {
 		}
 
 		for (const label of magLabels) {
-			if (byName.has(label)) html += row(byName.get(label), '$')
+			const item = byName.get(label)
+			if (item) html += row(item, '$')
 		}
 
 		return html
@@ -395,7 +397,7 @@ export function PoolApyChart({
 		void pushShallowQuery(router, { [queryKey]: getBooleanOverride(!active, defaultEnabled) }, router.pathname)
 	}
 
-	const netOn = currentModel.netLine ? enabled[currentModel.netLine.key] : false
+	const netOn = currentModel.netLine ? (enabled[currentModel.netLine.key] ?? false) : false
 
 	return (
 		<ChartPanel className="h-full">
@@ -436,8 +438,8 @@ export function PoolApyChart({
 				{AVG_KEYS.map((key) => (
 					<Chip
 						key={key}
-						active={avgEnabled[key]}
-						onClick={() => toggle(`avg${key}`, avgEnabled[key], false)}
+						active={avgEnabled[key] ?? false}
+						onClick={() => toggle(`avg${key}`, avgEnabled[key] ?? false, false)}
 						color={AVG_COLORS[key]}
 					>
 						{key} avg
@@ -452,7 +454,7 @@ export function PoolApyChart({
 							<Chip
 								key={b.key}
 								active={enabled[b.key] ?? true}
-								onClick={() => toggle(b.key, enabled[b.key], true)}
+								onClick={() => toggle(b.key, enabled[b.key] ?? true, true)}
 								color={color(b.colorKey)}
 							>
 								{b.label}
@@ -469,7 +471,7 @@ export function PoolApyChart({
 							<Chip
 								key={line.key}
 								active={enabled[line.key] ?? false}
-								onClick={() => toggle(line.key, enabled[line.key], false)}
+								onClick={() => toggle(line.key, enabled[line.key] ?? false, false)}
 								color={color(line.colorKey)}
 							>
 								{line.label}

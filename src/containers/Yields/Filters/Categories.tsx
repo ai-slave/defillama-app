@@ -32,7 +32,7 @@ export function FiltersByCategory({
 			label={label}
 			allValues={categoryList}
 			selectedValues={selectedCategories}
-			nestedMenu={nestedMenu}
+			{...(nestedMenu !== undefined ? { nestedMenu } : {})}
 			labelType={labelType ? labelType : !category || category === 'All' ? 'none' : 'regular'}
 			includeQueryKey="category"
 			excludeQueryKey="excludeCategory"

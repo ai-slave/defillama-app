@@ -2,8 +2,8 @@ import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { formatLossRange } from '../format'
 import type { ScenarioVM } from '../types'
 
-export function isFullLoss(s: ScenarioVM, supplyUsd: number): boolean {
-	return Boolean(s.cappedAtSupply) || (supplyUsd > 0 && s.lossMaxUsd >= supplyUsd * 0.995)
+export function isFullLoss(s: ScenarioVM, supplyUsd: number | null): boolean {
+	return Boolean(s.cappedAtSupply) || (supplyUsd != null && supplyUsd > 0 && s.lossMaxUsd >= supplyUsd * 0.995)
 }
 
 // Sub-1% keeps "<1%" so a thin tail never rounds to a dishonest "0%"; ≥99.5% reads "100%".
@@ -19,13 +19,13 @@ export function formatDepositPct(share: number): string {
 // Position-independent by construction: your loss scales pro-rata with your slice, so the
 // percentage is the same whether you deposited $1k or the whole pool. Null when there's no
 // denominator to divide by, which is the caller's cue to fall back to dollars.
-export function lossPct(lossUsd: number, supplyUsd: number): string | null {
-	if (supplyUsd <= 0) return null
+export function lossPct(lossUsd: number, supplyUsd: number | null): string | null {
+	if (supplyUsd == null || supplyUsd <= 0) return null
 	return formatDepositPct(Math.min(1, lossUsd / supplyUsd))
 }
 
 // Percent when we can, dollars when we can't — used for every modeled-loss figure.
-function lossAmount(lossUsd: number, supplyUsd: number): string {
+function lossAmount(lossUsd: number, supplyUsd: number | null): string {
 	return (
 		lossPct(lossUsd, supplyUsd) ??
 		formatUsd(lossUsd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
@@ -33,14 +33,14 @@ function lossAmount(lossUsd: number, supplyUsd: number): string {
 }
 
 // An explicit modeled zero ("buffered"), distinct from a missing figure ("—").
-function zeroAmount(supplyUsd: number): string {
-	return supplyUsd > 0 ? '0%' : '$0'
+function zeroAmount(supplyUsd: number | null): string {
+	return supplyUsd != null && supplyUsd > 0 ? '0%' : '$0'
 }
 
 // Your loss = pool loss × your pro-rata share, capped at 1 (you can't lose more than you
 // deposited). Pool-wide figure unchanged when no position is set.
-export function scaleToPosition(poolUsd: number, supplyUsd: number, position: number | null): number {
-	if (position == null || supplyUsd <= 0) return poolUsd
+export function scaleToPosition(poolUsd: number, supplyUsd: number | null, position: number | null): number {
+	if (position == null || supplyUsd == null || supplyUsd <= 0) return poolUsd
 	return poolUsd * Math.min(1, position / supplyUsd)
 }
 
@@ -91,7 +91,7 @@ export function anyHasAnchors(scenarios: ScenarioVM[]): boolean {
 }
 
 // Drop-agnostic cell — never implies a stress drop the scenario wasn't modeled with.
-function baseModeledCell(scenario: ScenarioVM, supplyUsd: number): ModeledLossCell {
+function baseModeledCell(scenario: ScenarioVM, supplyUsd: number | null): ModeledLossCell {
 	const drop = dropPct(scenario)
 	const min = scenario.lossMinUsd
 	const max = scenario.lossMaxUsd
@@ -130,7 +130,11 @@ function baseModeledCell(scenario: ScenarioVM, supplyUsd: number): ModeledLossCe
 // With `stress` set, price-driven rows re-price to the served loss at that anchor; rows
 // with no drop dimension stay fixed. `supplyUsd` is the percentage denominator — omit it
 // (or pass 0) and every figure degrades to dollars.
-export function modeledLossCell(scenario: ScenarioVM, stress?: StressSel, supplyUsd = 0): ModeledLossCell {
+export function modeledLossCell(
+	scenario: ScenarioVM,
+	stress?: StressSel,
+	supplyUsd: number | null = null
+): ModeledLossCell {
 	if (scenario.status !== 'computed') {
 		return { amount: formatLossRange({ status: scenario.status, min_usd: 0, max_usd: 0 }), note: null, sortUsd: 0 }
 	}
@@ -225,7 +229,7 @@ export const SCENARIO_GROUPS: Array<{ key: ScenarioGroupKey; label: string; blur
 
 // Position-independent: the ceiling as a share of the deposit, so it reads the same for
 // every depositor in the pool.
-export function worstCaseLabel(scenario: ScenarioVM, supplyUsd: number): string {
+export function worstCaseLabel(scenario: ScenarioVM, supplyUsd: number | null): string {
 	if (scenario.status !== 'computed') return formatLossRange({ status: scenario.status, min_usd: 0, max_usd: 0 })
 	if (isFullLoss(scenario, supplyUsd)) return 'Full deposit'
 	const amount = lossAmount(scenario.lossMaxUsd, supplyUsd)

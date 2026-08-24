@@ -37,8 +37,16 @@ const UPDATED_TS = 1_780_000_000 // fixed unix seconds → deterministic "Update
 // A Morpho-style VAULT: price-driven curve (stress toggle), a full-deposit smart-contract row, a
 // fanned oracle-compromise, live vault roles with a queued change, and a resolved oracle-admin Safe.
 function morphoData(): VaultRiskData {
-	const weETH = { chain: 'ethereum', symbol: 'weETH', address: '0x00000000000000000000000000000000000000aa' }
-	const cbETH = { chain: 'ethereum', symbol: 'cbETH', address: '0x00000000000000000000000000000000000000bb' }
+	const weETH = {
+		chain: 'ethereum',
+		symbol: 'weETH',
+		address: '0x00000000000000000000000000000000000000aa'
+	}
+	const cbETH = {
+		chain: 'ethereum',
+		symbol: 'cbETH',
+		address: '0x00000000000000000000000000000000000000bb'
+	}
 	const collateral = (token: typeof weETH, badDebt: number): CollateralRisk =>
 		makeCollateral({
 			token,
@@ -99,7 +107,11 @@ function morphoData(): VaultRiskData {
 			kind: 'oracle-hack',
 			asset: weETH,
 			description: 'A compromised feed misprices collateral in the markets this vault supplies.',
-			loss: makeLoss({ status: 'computed', min_usd: 500_000, max_usd: 500_000 })
+			loss: makeLoss({
+				status: 'computed',
+				min_usd: 500_000,
+				max_usd: 500_000
+			})
 		}),
 		makeScenario({
 			id: 'sc-orc-cbeth',
@@ -107,7 +119,11 @@ function morphoData(): VaultRiskData {
 			kind: 'oracle-hack',
 			asset: cbETH,
 			description: 'A compromised feed misprices collateral in the markets this vault supplies.',
-			loss: makeLoss({ status: 'computed', min_usd: 200_000, max_usd: 200_000 })
+			loss: makeLoss({
+				status: 'computed',
+				min_usd: 200_000,
+				max_usd: 200_000
+			})
 		})
 	]
 	return {
@@ -123,26 +139,49 @@ function morphoData(): VaultRiskData {
 			last_updated_ts: UPDATED_TS,
 			vault_specific_risks: scenarios,
 			collateral_risks: [collateral(weETH, 900_000), collateral(cbETH, 600_000)],
-			coverage: [makeCoverage({ kind: 'treasury', access: 'discretionary', cap_usd: 5_000_000, applies_to: [] })],
+			coverage: [
+				makeCoverage({
+					kind: 'treasury',
+					access: 'discretionary',
+					cap_usd: 5_000_000,
+					applies_to: []
+				})
+			],
 			stress: makeStress({
 				anchors: [
 					makeStressAnchor({ drop_pct: 10, bad_debt_usd: 0 }),
 					makeStressAnchor({ drop_pct: 30, bad_debt_usd: 900_000 }),
 					makeStressAnchor({ drop_pct: 50, bad_debt_usd: 1_800_000 })
-				],
-				ceiling_usd: 6_000_000
+				]
 			}),
 			vault_roles: makeVaultRoles({
-				owner: makeRoleEntity({ kind: 'contract', address: '0x00000000000000000000000000000000000000c0' }),
+				owner: makeRoleEntity({
+					kind: 'contract',
+					address: '0x00000000000000000000000000000000000000c0'
+				}),
 				curator: makeRoleEntity({
 					kind: 'safe',
 					address: '0x00000000000000000000000000000000000000c1',
 					threshold: { m: 4, n: 9 }
 				}),
-				guardian: makeRoleEntity({ kind: 'contract', address: '0x00000000000000000000000000000000000000c2' }),
+				guardian: makeRoleEntity({
+					kind: 'contract',
+					address: '0x00000000000000000000000000000000000000c2'
+				}),
 				timelock_sec: 86_400,
-				allocators: [makeRoleEntity({ kind: 'contract', address: '0x00000000000000000000000000000000000000c3' })],
-				pending_changes: [{ function_name: 'SetCap', valid_at: 1_782_000_000 }]
+				allocators: [
+					makeRoleEntity({
+						kind: 'contract',
+						address: '0x00000000000000000000000000000000000000c3'
+					})
+				],
+				pending_changes: [
+					{
+						function_name: 'SetCap',
+						label: 'Set supply cap',
+						valid_at: 1_782_000_000
+					}
+				]
 			}),
 			oracle_dependencies: [
 				{
@@ -156,24 +195,24 @@ function morphoData(): VaultRiskData {
 				}
 			],
 			oracle_exposure: {
-				by_type: [
-					{ type: 'market', exposure_usd: 2_000_000, exposure_pct: 0.4, collateral_symbols: ['weETH', 'cbETH'] }
-				],
 				by_provider: [
-					{ provider: 'Chainlink', exposure_usd: 2_000_000, exposure_pct: 0.4, collateral_symbols: ['weETH', 'cbETH'] }
+					{
+						provider: 'Chainlink',
+						exposure_usd: 2_000_000,
+						exposure_pct: 0.4,
+						collateral_symbols: ['weETH', 'cbETH']
+					}
 				]
 			},
 			market_oracles: [
 				{
 					market_id: '0x1',
-					collateral_asset: { symbol: 'weETH', address: weETH.address, chain: 'ethereum' },
-					loan_asset: {
-						symbol: 'USDC',
-						address: '0x00000000000000000000000000000000000usdc0',
-						chain: 'ethereum',
-						decimals: 6,
-						price_usd: 1
+					collateral_asset: {
+						symbol: 'weETH',
+						address: weETH.address,
+						chain: 'ethereum'
 					},
+					loan_asset: { symbol: 'USDC', chain: 'ethereum' },
 					allocation_usd: 2_000_000,
 					supply_cap_usd: 4_000_000,
 					lltv: 0.86,
@@ -185,7 +224,15 @@ function morphoData(): VaultRiskData {
 					oracle_instance: null
 				}
 			],
-			external_dependencies: [{ id: 'chainlink', kind: 'oracle', name: 'Chainlink', relevance: 'principal' }],
+			external_dependencies: [
+				{
+					id: 'chainlink',
+					kind: 'oracle',
+					name: 'Chainlink',
+					description: 'Price oracle',
+					relevance: 'principal'
+				}
+			],
 			risk_tier: {
 				tier: 'moderate',
 				relative_band: 'moderate',
@@ -219,13 +266,25 @@ function morphoData(): VaultRiskData {
 				{
 					date: '2024-05-01',
 					kind: 'exploit',
+					technique: 'smart-contract exploit',
 					classification: 'protocol',
+					chain: 'ethereum',
 					usd_lost: 1_000_000,
 					usd_recovered: 0,
-					fully_recovered: false
+					fully_recovered: false,
+					post_mortem_url: null,
+					root_cause_still_possible: 'no'
 				}
 			],
-			external_dependencies: [{ id: 'chainlink', kind: 'oracle', name: 'Chainlink' }]
+			external_dependencies: [
+				{
+					id: 'chainlink',
+					kind: 'oracle',
+					name: 'Chainlink',
+					description: 'Price oracle',
+					relevance: 'principal'
+				}
+			]
 		})
 	}
 }
@@ -233,7 +292,11 @@ function morphoData(): VaultRiskData {
 // A governed MARKET (Compound-style): live exit liquidity, drift on the protocol, no by_anchor
 // curve (so no stress toggle), no vault roles.
 function compoundData(): VaultRiskData {
-	const usdc = { chain: 'ethereum', symbol: 'USDC', address: '0x00000000000000000000000000000000000usdc0' }
+	const usdc = {
+		chain: 'ethereum',
+		symbol: 'USDC',
+		address: '0x00000000000000000000000000000000000usdc0'
+	}
 	return {
 		vault: makeVaultRiskFixture({
 			protocol_id: 'compound-v3',
@@ -249,7 +312,11 @@ function compoundData(): VaultRiskData {
 					scenario_id: 'smart-contract-bug',
 					kind: 'smart-contract',
 					description: 'A bug in the Comet contract impairs the market.',
-					loss: makeLoss({ status: 'computed', min_usd: 3_000_000, max_usd: 3_000_000 })
+					loss: makeLoss({
+						status: 'computed',
+						min_usd: 3_000_000,
+						max_usd: 3_000_000
+					})
 				})
 			],
 			collateral_risks: [
@@ -286,7 +353,9 @@ function compoundData(): VaultRiskData {
 					role: 'governance-multisig-owner',
 					role_label: 'Governance owner',
 					threshold: { m: 4, n: 7 },
-					signers: Array.from({ length: 7 }, (_, i) => ({ address: `0x${String(i).padStart(40, '1')}` })),
+					signers: Array.from({ length: 7 }, (_, i) => ({
+						address: `0x${String(i).padStart(40, '1')}`
+					})),
 					depositor_impact: {
 						reaches_principal: true,
 						gate: 'vault-timelock',
@@ -343,7 +412,11 @@ function aaveData(): VaultRiskData {
 					scenario_id: 'market-oracle-compromise',
 					kind: 'oracle-hack',
 					description: 'A compromised feed misprices collateral shared across the market.',
-					loss: makeLoss({ status: 'computed', min_usd: 1_000_000, max_usd: 1_000_000 })
+					loss: makeLoss({
+						status: 'computed',
+						min_usd: 1_000_000,
+						max_usd: 1_000_000
+					})
 				})
 			],
 			collateral_risks: [
@@ -351,9 +424,13 @@ function aaveData(): VaultRiskData {
 				mk('USDe', '0x0000000000000000000000000000000000005de0')
 			],
 			oracle_exposure: {
-				by_type: [{ type: 'market', exposure_usd: 8_000_000, exposure_pct: 0.4, collateral_symbols: ['WETH', 'USDe'] }],
 				by_provider: [
-					{ provider: 'Chainlink', exposure_usd: 8_000_000, exposure_pct: 0.4, collateral_symbols: ['WETH', 'USDe'] }
+					{
+						provider: 'Chainlink',
+						exposure_usd: 8_000_000,
+						exposure_pct: 0.4,
+						collateral_symbols: ['WETH', 'USDe']
+					}
 				]
 			},
 			oracle_dependencies: []
@@ -390,6 +467,16 @@ describe('VaultRiskSection render', () => {
 		expect(html).toContain('mapped yet')
 		expect(html).toContain('Coverage is rolling out across protocols') // honest, protocol-agnostic copy
 		expect(html).toContain('morpho-blue') // protocol chip still rendered
+	})
+
+	it('contains an incomplete successful payload at the optional panel boundary', async () => {
+		const data = morphoData()
+		data.vault.vault_specific_risks = null as never
+
+		const html = await render(<VaultRiskSection data={data} poolName="x" chain="ethereum" />)
+
+		expect(html).toContain('mapped yet')
+		expect(html).toContain('Coverage is rolling out across protocols')
 	})
 
 	it('VaultRiskUnmapped renders the scanning-radar loader for a pool with no record (standalone /risk page)', async () => {
@@ -478,7 +565,7 @@ describe('VaultRiskSection render', () => {
 		expect(html).toContain('a 4/9 Safe multisig') // the resolved admin row still renders
 		expect(html).toContain('on-chain control not resolved') // …and so does the $8m vendor row
 		// with an admin row covering (nearly) all of the vendor's exposure, the vendor row is deduped
-		d.vault.oracle_dependencies[0].exposure_usd = 8_000_000
+		d.vault.oracle_dependencies[0]!.exposure_usd = 8_000_000
 		const vm2 = buildVaultRiskVM(d)
 		const html2 = await render(
 			<CollateralView
@@ -497,23 +584,35 @@ describe('VaultRiskSection render', () => {
 	it('renders vendorless drainable exposure as explicit rows instead of dropping it (sUSDe / mHYPER shapes)', async () => {
 		const d = aaveData()
 		// sUSDe shape: immutable ERC4626 exchange rate — no vendor, no admin anywhere.
-		Object.assign(d.vault.collateral_risks[0], {
-			token: { chain: 'ethereum', symbol: 'sUSDe', address: d.vault.collateral_risks[0].token.address },
+		Object.assign(d.vault.collateral_risks[0]!, {
+			token: {
+				chain: 'ethereum',
+				symbol: 'sUSDe',
+				address: d.vault.collateral_risks[0]!.token.address
+			},
 			oracle_providers: [],
 			feed_kinds: ['exchange-rate'],
 			drainable_usd: 3_500_000
 		})
 		// mHYPER shape: composite feed whose vendor the resolver could not identify.
-		Object.assign(d.vault.collateral_risks[1], {
-			token: { chain: 'ethereum', symbol: 'mHYPER', address: d.vault.collateral_risks[1].token.address },
+		Object.assign(d.vault.collateral_risks[1]!, {
+			token: {
+				chain: 'ethereum',
+				symbol: 'mHYPER',
+				address: d.vault.collateral_risks[1]!.token.address
+			},
 			oracle_providers: [],
 			feed_kinds: ['composite'],
 			drainable_usd: 300_000
 		})
 		d.vault.oracle_exposure = {
-			by_type: [],
 			by_provider: [
-				{ provider: 'none', exposure_usd: 3_800_000, exposure_pct: 0.19, collateral_symbols: ['sUSDe', 'mHYPER'] }
+				{
+					provider: 'none',
+					exposure_usd: 3_800_000,
+					exposure_pct: 0.19,
+					collateral_symbols: ['sUSDe', 'mHYPER']
+				}
 			]
 		}
 		d.vault.oracle_dependencies = []
@@ -543,7 +642,7 @@ describe('VaultRiskSection render', () => {
 	it('aave collateral renders each bad_debt_basis distinctly (precise / approx / confident-zero / unmodeled)', async () => {
 		const d = aaveData()
 		// confident-zero: a borrow-disabled reserve scanned to exactly $0 bad debt (oracle-drain still real)
-		Object.assign(d.vault.collateral_risks[0], {
+		Object.assign(d.vault.collateral_risks[0]!, {
 			bad_debt_basis: 'position-scan',
 			bad_debt_at_price_zero_usd: 0,
 			collateral_borrowed_debt_usd: 0,
@@ -551,7 +650,7 @@ describe('VaultRiskSection render', () => {
 			drainable_usd: 63_000_000
 		})
 		// precise: a per-position scan with a real figure
-		Object.assign(d.vault.collateral_risks[1], {
+		Object.assign(d.vault.collateral_risks[1]!, {
 			bad_debt_basis: 'position-scan',
 			bad_debt_at_price_zero_usd: 5_000_000,
 			bad_debt_markets: [],
@@ -562,7 +661,11 @@ describe('VaultRiskSection render', () => {
 		// approximate: a market-wide estimate (RWA / Horizon style)
 		d.vault.collateral_risks.push(
 			makeCollateral({
-				token: { chain: 'ethereum', symbol: 'wstETH', address: '0x0000000000000000000000000000000000005731' },
+				token: {
+					chain: 'ethereum',
+					symbol: 'wstETH',
+					address: '0x0000000000000000000000000000000000005731'
+				},
 				bad_debt_basis: 'market-wide',
 				bad_debt_at_price_zero_usd: 3_000_000,
 				bad_debt_markets: [],
@@ -580,7 +683,11 @@ describe('VaultRiskSection render', () => {
 		// a fourth reserve stays unmodeled (bad_debt_at_price_zero_usd null)
 		d.vault.collateral_risks.push(
 			makeCollateral({
-				token: { chain: 'ethereum', symbol: 'BTCb', address: '0x0000000000000000000000000000000000005b7c' },
+				token: {
+					chain: 'ethereum',
+					symbol: 'BTCb',
+					address: '0x0000000000000000000000000000000000005b7c'
+				},
 				bad_debt_at_price_zero_usd: null,
 				market_loss_ceiling_usd: 5_000_000,
 				exposure_usd: 4_000_000,
@@ -657,6 +764,7 @@ describe('VaultRiskSection render', () => {
 			asset_symbol: c.token.symbol,
 			asset_address: c.token.address,
 			oracle_address: '0x00000000000000000000000000000000000feed0',
+			source_attribution: { value: 'test fixture' },
 			mechanism_summary: 'Priced via a weETH/ETH exchange-rate leg plus a Chainlink market-rate quote path.',
 			base_leg: 'weETH/ETH exchange-rate adapter',
 			quote_leg: 'Chainlink market-rate quote feed path',
@@ -693,14 +801,30 @@ describe('VaultRiskSection render', () => {
 			asset_symbol: c.token.symbol,
 			asset_address: c.token.address,
 			oracle_address: '0x00000000000000000000000000000000000feed0',
+			source_attribution: { value: 'test fixture' },
 			mechanism_summary: 'Priced via CBETH / ETH × ETH / USD, quoted in USDC / USD — 3-hop market feeds.',
 			// legs must win over base_leg/quote_leg as the richer breakdown
 			base_leg: 'should not render when legs are present',
 			quote_leg: 'should not render when legs are present',
 			legs: [
-				{ slot: 'base1', description: 'CBETH / ETH', vendor: 'Chainlink', kind: 'market' },
-				{ slot: 'base2', description: 'ETH / USD', vendor: 'Chainlink', kind: 'market' },
-				{ slot: 'quote1', description: 'USDC / USD', vendor: 'Chainlink', kind: 'nav' }
+				{
+					slot: 'base1',
+					description: 'CBETH / ETH',
+					vendor: 'Chainlink',
+					kind: 'market'
+				},
+				{
+					slot: 'base2',
+					description: 'ETH / USD',
+					vendor: 'Chainlink',
+					kind: 'market'
+				},
+				{
+					slot: 'quote1',
+					description: 'USDC / USD',
+					vendor: 'Chainlink',
+					kind: 'nav'
+				}
 			]
 		}))
 		const vm = buildVaultRiskVM(d)
@@ -728,8 +852,8 @@ describe('VaultRiskSection render', () => {
 
 	it('renders the oracle full-drain detail as a drainable-now → if-forced range with the admin inline', async () => {
 		const d = morphoData()
-		const weETH = d.vault.collateral_risks[0].token
-		const cbETH = d.vault.collateral_risks[1].token
+		const weETH = d.vault.collateral_risks[0]!.token
+		const cbETH = d.vault.collateral_risks[1]!.token
 		d.vault.vault_specific_risks.push(
 			makeScenario({
 				id: 'sc-fulldrain-weeth',
@@ -747,7 +871,12 @@ describe('VaultRiskSection render', () => {
 					time_window_sec: { min: 0, max: 0 }
 				}),
 				oracle_admins: [
-					{ address: '0x00000000000000000000000000000000000000d1', kind: 'safe', threshold: 4, signers: 9 }
+					{
+						address: '0x00000000000000000000000000000000000000d1',
+						kind: 'safe',
+						threshold: 4,
+						signers: 9
+					}
 				]
 			}),
 			makeScenario({
@@ -766,7 +895,12 @@ describe('VaultRiskSection render', () => {
 					time_window_sec: { min: 0, max: 0 }
 				}),
 				// no threshold/signers → a bare single-key control, toned as the weaker admin
-				oracle_admins: [{ address: '0x00000000000000000000000000000000000000d2', kind: 'eoa' }]
+				oracle_admins: [
+					{
+						address: '0x00000000000000000000000000000000000000d2',
+						kind: 'eoa'
+					}
+				]
 			})
 		)
 		const vm = buildVaultRiskVM(d)
@@ -792,7 +926,7 @@ describe('VaultRiskSection render', () => {
 				scenario_id: 'oracle-compromise-full-drain',
 				kind: 'oracle-hack',
 				title: 'Oracle compromise (full drain)',
-				asset: d.vault.collateral_risks[0].token,
+				asset: d.vault.collateral_risks[0]!.token,
 				description: 'A managed oracle can be forced to any price, letting an attacker borrow out the whole position.',
 				loss: makeLoss({
 					status: 'computed',
@@ -863,7 +997,10 @@ describe('VaultRiskSection render', () => {
 	it('sentinels fill the veto slot: listed like allocators, capability joined by role, no unguarded state', async () => {
 		// newer Morpho vaults appoint sentinels instead of a guardian — same veto role, several holders
 		const roles = makeVaultRoles({
-			curator: makeRoleEntity({ kind: 'safe', address: '0x00000000000000000000000000000000000000c1' }),
+			curator: makeRoleEntity({
+				kind: 'safe',
+				address: '0x00000000000000000000000000000000000000c1'
+			}),
 			guardian: null,
 			sentinels: [
 				makeRoleEntity({
@@ -871,7 +1008,10 @@ describe('VaultRiskSection render', () => {
 					address: '0x00000000000000000000000000000000000000f1',
 					threshold: { m: 3, n: 5 }
 				}),
-				makeRoleEntity({ kind: 'eoa', address: '0x00000000000000000000000000000000000000f2' })
+				makeRoleEntity({
+					kind: 'eoa',
+					address: '0x00000000000000000000000000000000000000f2'
+				})
 			]
 		})
 		const protocol = makeProtocolRiskFixture({
@@ -897,7 +1037,10 @@ describe('VaultRiskSection render', () => {
 
 	it('keys the unguarded state on guardian null AND sentinels empty', async () => {
 		const roles = makeVaultRoles({
-			curator: makeRoleEntity({ kind: 'safe', address: '0x00000000000000000000000000000000000000c1' }),
+			curator: makeRoleEntity({
+				kind: 'safe',
+				address: '0x00000000000000000000000000000000000000c1'
+			}),
 			guardian: null,
 			sentinels: []
 		})

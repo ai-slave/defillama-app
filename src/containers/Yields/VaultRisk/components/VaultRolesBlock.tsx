@@ -91,16 +91,18 @@ function OperatorLine({
 	return (
 		<ExpandableLine
 			marker={marker}
-			detail={summary}
-			trailing={
-				entity ? (
-					<AddressActions
-						address={entity.address}
-						url={explorerUrl(entity.address, linkChain, explorers)}
-						label={`vault ${roleName.toLowerCase()} address`}
-					/>
-				) : undefined
-			}
+			{...(summary ? { detail: summary } : {})}
+			{...(entity
+				? {
+						trailing: (
+							<AddressActions
+								address={entity.address}
+								url={explorerUrl(entity.address, linkChain, explorers)}
+								label={`vault ${roleName.toLowerCase()} address`}
+							/>
+						)
+					}
+				: {})}
 		>
 			<span className="w-20 shrink-0 label-md text-primary">{roleName}</span>
 			{entity ? (
@@ -286,9 +288,9 @@ export function VaultRolesBlock({
 							roleName={caps.get('owner')?.role_label ?? 'Owner'}
 							roleKey="owner"
 							entity={owner}
-							capability={caps.get('owner')}
+							{...(caps.get('owner') ? { capability: caps.get('owner')! } : {})}
 							linkChain={linkChain}
-							explorers={explorers}
+							{...(explorers ? { explorers } : {})}
 						/>
 					) : null}
 					{curator ? (
@@ -296,9 +298,9 @@ export function VaultRolesBlock({
 							roleName={caps.get('curator')?.role_label ?? 'Curator'}
 							roleKey="curator"
 							entity={curator}
-							capability={caps.get('curator')}
+							{...(caps.get('curator') ? { capability: caps.get('curator')! } : {})}
 							linkChain={linkChain}
-							explorers={explorers}
+							{...(explorers ? { explorers } : {})}
 						/>
 					) : null}
 				</div>
@@ -309,9 +311,9 @@ export function VaultRolesBlock({
 							roleName={caps.get('guardian')?.role_label ?? 'Guardian'}
 							roleKey="guardian"
 							entity={guardian}
-							capability={caps.get('guardian')}
+							{...(caps.get('guardian') ? { capability: caps.get('guardian')! } : {})}
 							linkChain={linkChain}
-							explorers={explorers}
+							{...(explorers ? { explorers } : {})}
 						/>
 					) : null}
 					{sentinels.length ? (
@@ -319,9 +321,9 @@ export function VaultRolesBlock({
 							roleName="Sentinels"
 							roleKey="sentinel"
 							entities={sentinels}
-							capability={caps.get('sentinel')}
+							{...(caps.get('sentinel') ? { capability: caps.get('sentinel')! } : {})}
 							linkChain={linkChain}
-							explorers={explorers}
+							{...(explorers ? { explorers } : {})}
 						/>
 					) : null}
 					{allocators.length ? (
@@ -329,9 +331,9 @@ export function VaultRolesBlock({
 							roleName="Allocators"
 							roleKey="allocator"
 							entities={allocators}
-							capability={caps.get('allocator')}
+							{...(caps.get('allocator') ? { capability: caps.get('allocator')! } : {})}
 							linkChain={linkChain}
-							explorers={explorers}
+							{...(explorers ? { explorers } : {})}
 						/>
 					) : null}
 				</div>

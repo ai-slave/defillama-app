@@ -46,8 +46,8 @@ function pool(id: string, tvl: number): EnrichedEarnRow {
 		tvl_usd: tvl,
 		apy: apyOf(1),
 		intrinsic: null,
-		stability_30d: {},
-		holders: null,
+		stability_30d: { base: null, base_reward: null, base_intrinsic: null, base_reward_intrinsic: null },
+		holders: { count: null, avg_position_usd: null, top_10_share_pct: null },
 		price_per_share: null,
 		volume_1d_usd: null,
 		attributes: ATTRIBUTES,
@@ -60,7 +60,7 @@ function pool(id: string, tvl: number): EnrichedEarnRow {
 		trend: null,
 		tokenKeys: null,
 		available_supply_usd: null
-	} as EnrichedEarnRow
+	}
 }
 
 const snapshotOf = (generationId: string) => ({ generationId }) as never
