@@ -116,7 +116,7 @@ export function buildMicaColumns(asOfDate: string): ColumnDef<MicaVenueModel, an
 				const venueDestination = selectVenueDestination(venue.exchange, venue.referralUrl, venue.website)
 				const promotion = selectActivePromotion(venue.promotions, asOfDate)
 				return (
-					<div className="flex items-center gap-1.5">
+					<div className="flex items-center justify-end gap-1.5">
 						{promotion ? <PromotionGift promotion={promotion} venue={venue} /> : null}
 						{venueDestination ? (
 							<a
@@ -138,7 +138,7 @@ export function buildMicaColumns(asOfDate: string): ColumnDef<MicaVenueModel, an
 					</div>
 				)
 			},
-			meta: { headerClassName: 'w-[132px] min-w-[132px]' }
+			meta: { headerClassName: 'w-[132px] min-w-[132px]', align: 'end' }
 		}),
 		columnHelper.accessor((row) => pairTotal(row.depth.spotBid2Usd, row.depth.spotAsk2Usd) ?? undefined, {
 			id: 'spotDepth2',

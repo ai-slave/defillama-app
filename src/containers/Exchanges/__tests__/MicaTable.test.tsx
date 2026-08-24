@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { RampCostValue } from '../MicaCells'
 import { buildMicaColumns } from '../micaColumns'
 import { micaColumnVisibility, orderMicaVenues } from '../MicaTable'
-import type { MicaVenueModel } from '../models'
+import type { ExchangePromotionModel, MicaVenueModel } from '../models'
 
 function micaVenue(patch: Partial<MicaVenueModel> = {}): MicaVenueModel {
 	return {
@@ -71,6 +71,18 @@ const RAMP_COST: NonNullable<MicaVenueModel['rampCost']> = {
 	}
 }
 
+const PROMOTION: ExchangePromotionModel = {
+	label: '10% fee rebate',
+	title: 'Venue launch offer',
+	subtitle: 'Trade within 30 days. T&Cs apply.',
+	url: 'https://example.com/promo',
+	termsUrl: 'https://example.com/terms',
+	startsAt: null,
+	endsAt: null,
+	priority: 1,
+	sourceUrl: 'https://example.com/promo'
+}
+
 describe('contractual Bybit EU placement', () => {
 	it('pins bybit-eu to the first row while keeping the curated backend order otherwise', () => {
 		const rows = [
@@ -134,6 +146,21 @@ describe('mica table columns', () => {
 		const venue = micaVenue({ rampCost: RAMP_COST })
 		expect((columns.find((column) => column.id === 'onRampCost') as any).accessorFn(venue, 0)).toBe(3.9)
 		expect((columns.find((column) => column.id === 'offRampCost') as any).accessorFn(venue, 0)).toBe(4.9)
+	})
+
+	it('right-aligns the trade cell so the CTA lines up with or without a promo gift', () => {
+		const tradeColumn = buildMicaColumns('2026-07-15').find((column) => column.id === 'venueActions')!
+		expect((tradeColumn.meta as any).align).toBe('end')
+
+		const plain = renderToStaticMarkup(flexRender(tradeColumn.cell, { row: { original: micaVenue() } } as never))
+		const promoted = renderToStaticMarkup(
+			flexRender(tradeColumn.cell, { row: { original: micaVenue({ promotions: [PROMOTION] }) } } as never)
+		)
+
+		expect(plain).toContain('justify-end')
+		expect(promoted).toContain('justify-end')
+		// The gift sits before the CTA, so only a right-aligned row keeps every Trade button on one edge.
+		expect(promoted.indexOf('promotion')).toBeLessThan(promoted.indexOf('data-umami-event-placement="trade"'))
 	})
 
 	it('does not link exchange names to gated profile pages', () => {
