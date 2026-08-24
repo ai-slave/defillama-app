@@ -72,6 +72,7 @@ interface IncomeStatementProps {
 	className?: string
 	showTitles?: boolean
 	titleClassName?: string
+	description?: string
 }
 
 export const IncomeStatement = ({
@@ -82,7 +83,8 @@ export const IncomeStatement = ({
 	anchorId,
 	className,
 	showTitles = true,
-	titleClassName
+	titleClassName,
+	description
 }: IncomeStatementProps) => {
 	const [groupBy, setGroupBy] = useState<IncomeStatementGroupBy>('Quarterly')
 	const [sankeyGroupBy, setSankeyGroupBy] = useState<IncomeStatementGroupBy>('Quarterly')
@@ -556,16 +558,19 @@ export const IncomeStatement = ({
 		<Panel padding="sm" className={`col-span-full gap-4 ${className ?? ''}`}>
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				{showTitles ? (
-					<h2 className={`group relative flex items-center gap-1 heading-xs ${titleClassName ?? ''}`} id={headerId}>
-						Income Statement for {name}
-						<a
-							aria-hidden="true"
-							tabIndex={-1}
-							href={`#${headerId}`}
-							className="absolute top-0 right-0 z-10 flex size-full items-center"
-						/>
-						<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
-					</h2>
+					<div>
+						<h2 className={`group relative flex items-center gap-1 heading-xs ${titleClassName ?? ''}`} id={headerId}>
+							Income Statement for {name}
+							<a
+								aria-hidden="true"
+								tabIndex={-1}
+								href={`#${headerId}`}
+								className="absolute top-0 right-0 z-10 flex size-full items-center"
+							/>
+							<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
+						</h2>
+						{description ? <p className="mt-1 body-sm text-secondary">{description}</p> : null}
+					</div>
 				) : null}
 				{showTable ? (
 					<TableToolbarControlGroup className="ml-auto justify-end">

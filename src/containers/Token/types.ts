@@ -66,7 +66,7 @@ export type TokenPageSection =
 	| {
 			id: 'token-income-statement'
 			label: 'Income Statement'
-			tokenName: string
+			tokenSymbol: string
 			incomeStatement: TokenIncomeStatementData
 	  }
 	| {

@@ -1416,7 +1416,8 @@ async function getIncomeStatement(source: IncomeStatementSource) {
 			methodology: methodology,
 			breakdownMethodology: breakdownMethodology,
 			hasOtherTokenHolderFlows: metricTypes.has('Others Token Holder Flows'),
-			hasTokenHolderNetIncome: metricTypes.has('Token Holder Net Income')
+			hasTokenHolderNetIncome: metricTypes.has('Token Holder Net Income'),
+			components: incomeStatement.components
 		}
 	} catch (err) {
 		if (typeof window === 'undefined') {

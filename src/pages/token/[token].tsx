@@ -320,7 +320,7 @@ const TOKEN_SECTION_RENDERERS = {
 	),
 	'token-markets': ({ section }) => <TokenMarketsSection geckoId={section.geckoId} tokenSymbol={section.tokenSymbol} />,
 	'token-income-statement': ({ section }) => (
-		<TokenIncomeStatementSection tokenName={section.tokenName} incomeStatement={section.incomeStatement} />
+		<TokenIncomeStatementSection tokenSymbol={section.tokenSymbol} incomeStatement={section.incomeStatement} />
 	),
 	'token-risks': ({ section }) => <TokenRisksSection tokenSymbol={section.tokenSymbol} riskData={section.riskData} />,
 	'token-rights-and-value-accrual': ({ section }) => (

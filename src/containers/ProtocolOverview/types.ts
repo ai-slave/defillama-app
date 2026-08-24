@@ -223,6 +223,12 @@ export interface IProtocolOverviewPageData {
 		breakdownMethodology: Record<string, Record<string, string>>
 		hasOtherTokenHolderFlows: boolean
 		hasTokenHolderNetIncome: boolean
+		components?: Array<{
+			name: string
+			id: string
+			protocolType: string
+			module: string | null
+		}> | null
 	} | null
 	openSmolStatsSummaryByDefault?: boolean
 	warningBanners?: IProtocolMetricsV2['warningBanners']

@@ -139,7 +139,7 @@ export function getTokenPageSections({
 		sections.push({
 			id: 'token-income-statement',
 			label: 'Income Statement',
-			tokenName: record.name,
+			tokenSymbol: record.symbol,
 			incomeStatement
 		})
 	}

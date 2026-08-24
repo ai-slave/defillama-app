@@ -854,6 +854,10 @@ describe('getProtocolOverviewPageData', () => {
 
 	it('fetches token income statements from the token endpoint', async () => {
 		const response = {
+			components: [
+				{ name: 'Hyperliquid', id: 'chain#hyperliquid', protocolType: 'chain', module: 'hyperliquid' },
+				{ name: 'Hyper Foundation', id: 'parent#hyper-foundation', protocolType: 'protocol', module: null }
+			],
 			aggregates: {
 				monthly: {
 					'2026-01': {
@@ -886,6 +890,7 @@ describe('getProtocolOverviewPageData', () => {
 				Revenue: { value: 0, 'by-label': { Fees: 0 } }
 			}
 		})
+		expect(incomeStatement?.components).toEqual(response.components)
 		expect(response).toEqual(original)
 	})
 

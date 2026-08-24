@@ -559,7 +559,7 @@ describe('token page', () => {
 			{
 				id: 'token-income-statement',
 				label: 'Income Statement',
-				tokenName: 'Bitcoin',
+				tokenSymbol: 'BTC',
 				incomeStatement: { data: {} } as never
 			},
 			{
@@ -1352,7 +1352,7 @@ describe('token page', () => {
 			'token-usage'
 		])
 		expect(incomeStatementSection).toMatchObject({
-			tokenName: 'Aave',
+			tokenSymbol: 'AAVE',
 			incomeStatement: incomeStatementData
 		})
 		expect(getTokenIncomeStatement).toHaveBeenCalledWith({ token: 'AAVE' })

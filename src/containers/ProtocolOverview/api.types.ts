@@ -179,6 +179,12 @@ export interface IIncomeStatementApiResponse {
 		methodology?: Record<string, string> | null
 		breakdownMethodology?: Record<string, string | Record<string, string>> | null
 	}> | null
+	components?: Array<{
+		name: string
+		id: string
+		protocolType: string
+		module: string | null
+	}> | null
 }
 
 export interface IProtocolExpenses {
