@@ -9,9 +9,11 @@ export type UpcomingUnlockChartType = 'all' | 'cliff' | 'linear'
 export type UpcomingUnlockChartViewMode = 'Total View' | 'Breakdown View'
 
 export const UPCOMING_UNLOCK_TYPE_HELP = {
-	all: 'Cliff unlocks plus linear releases accrued within each chart bucket.',
-	cliff: 'One-time token releases scheduled within this period.',
-	linear: "Tokens released continuously during this period, calculated from each schedule's active emission rate."
+	all: 'Cliff unlocks plus linear releases accrued within each chart bucket. Events without a known amount or valid snapshot price are excluded.',
+	cliff:
+		'One-time token releases scheduled within this period. Events without a known amount or valid snapshot price are excluded.',
+	linear:
+		"Tokens released continuously during this period, calculated from each schedule's active emission rate. Events without a known amount or valid snapshot price are excluded."
 } as const satisfies Record<UpcomingUnlockChartType, string>
 
 export const UPCOMING_UNLOCK_TYPE_OPTIONS = [

@@ -18,7 +18,6 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { VirtualTable } from '~/components/Table/Table'
 import { useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
-import { getCliffEmissionAmount } from '~/containers/Unlocks/eventAmount'
 import type { EnrichedProtocolEmission } from '~/containers/Unlocks/queries'
 import { UnconstrainedSmolLineChart } from '~/containers/Unlocks/UnconstrainedSmolLineChart'
 import { UpcomingEvent } from '~/containers/Unlocks/UpcomingEvent'
@@ -30,6 +29,7 @@ import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { PercentChange } from '~/ui/PercentChange'
 import { TableToolbar } from '~/ui/Toolbar'
+import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
@@ -52,17 +52,6 @@ interface IUnlocksTableProps {
 }
 const columnHelper = createColumnHelper<IEmission>()
 
-const UNLOCK_TYPES = [
-	'publicSale',
-	'privateSale',
-	'insiders',
-	'airdrop',
-	'farming',
-	'noncirculating',
-	'liquidity',
-	'uncategorized'
-]
-
 const formatUnlockTypeLabel = (type: string) =>
 	type
 		.replace(/([a-z0-9])([A-Z])/g, '$1 $2')
@@ -72,14 +61,18 @@ const formatUnlockTypeLabel = (type: string) =>
 		.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
 		.join(' ')
 
-const UNLOCK_TYPE_OPTIONS = UNLOCK_TYPES.map((type) => ({
-	name: formatUnlockTypeLabel(type),
-	key: type
-}))
+export function getUnlockTypes(protocols: IEmission[]): string[] {
+	const categories = new Set<string>()
+	for (const protocol of protocols) {
+		for (const event of protocol.events) categories.add(event.category)
+	}
+	return Array.from(categories).sort((a, b) => a.localeCompare(b))
+}
 
 export interface UnlockTableFilterOptions {
 	showOnlyWatchlist: boolean
 	savedProtocols: Set<string>
+	allUnlockTypes: string[]
 	selectedUnlockTypes: string[]
 	minUnlockValue: number | null
 	maxUnlockValue: number | null
@@ -98,6 +91,7 @@ export const filterUnlockTableProtocols = (
 	{
 		showOnlyWatchlist,
 		savedProtocols,
+		allUnlockTypes,
 		selectedUnlockTypes,
 		minUnlockValue,
 		maxUnlockValue,
@@ -105,7 +99,7 @@ export const filterUnlockTableProtocols = (
 		maxPerc
 	}: UnlockTableFilterOptions
 ): IEmission[] => {
-	const isCategoryFilterActive = selectedUnlockTypes.length !== UNLOCK_TYPES.length
+	const isCategoryFilterActive = selectedUnlockTypes.length !== allUnlockTypes.length
 	const isValueFilterActive = minUnlockValue !== null || maxUnlockValue !== null
 	const isPercentageFilterActive = minPerc !== '' || maxPerc !== ''
 	const isAnyFilterActive =
@@ -138,15 +132,7 @@ export const filterUnlockTableProtocols = (
 		let totalUnlockValue: number | null = null
 		if (isValueFilterActive || isPercentageFilterActive) {
 			if (protocol.tPrice != null && protocol.tPrice > 0) {
-				let hasKnownAmount = false
-				let knownUnlockValue = 0
-				for (const event of events) {
-					const amount = getCliffEmissionAmount(event)
-					if (amount === null) continue
-					hasKnownAmount = true
-					if (amount > 0) knownUnlockValue += amount * protocol.tPrice
-				}
-				if (hasKnownAmount) totalUnlockValue = knownUnlockValue
+				totalUnlockValue = protocol.next24h.total * protocol.tPrice
 			}
 		}
 
@@ -170,6 +156,11 @@ export const filterUnlockTableProtocols = (
 
 export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: IUnlocksTableProps) => {
 	const router = useRouter()
+	const unlockTypes = useMemo(() => getUnlockTypes(protocols), [protocols])
+	const unlockTypeOptions = useMemo(
+		() => unlockTypes.map((type) => ({ name: formatUnlockTypeLabel(type), key: type })),
+		[unlockTypes]
+	)
 
 	const setQueryParam = (key: string, value: string | undefined) => {
 		void pushShallowQuery(router, { [key]: value })
@@ -177,10 +168,10 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 
 	const unlockTypesParam = readSingleQueryValue(router.query.unlockTypes)
 	const selectedUnlockTypes = useMemo(() => {
-		if (!unlockTypesParam) return UNLOCK_TYPES
-		const types = unlockTypesParam.split(',').filter((t) => UNLOCK_TYPES.includes(t))
-		return types.length > 0 ? types : UNLOCK_TYPES
-	}, [unlockTypesParam])
+		if (!unlockTypesParam) return unlockTypes
+		const types = Array.from(new Set(unlockTypesParam.split(','))).filter((type) => unlockTypes.includes(type))
+		return types.length > 0 ? types : unlockTypes
+	}, [unlockTypes, unlockTypesParam])
 
 	const {
 		minUnlockValue: minUnlockValueQuery,
@@ -258,6 +249,7 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 		return filterUnlockTableProtocols(protocols, {
 			showOnlyWatchlist,
 			savedProtocols,
+			allUnlockTypes: unlockTypes,
 			selectedUnlockTypes,
 			minUnlockValue,
 			maxUnlockValue,
@@ -268,6 +260,7 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 		protocols,
 		savedProtocols,
 		showOnlyWatchlist,
+		unlockTypes,
 		selectedUnlockTypes,
 		minUnlockValue,
 		maxUnlockValue,
@@ -335,7 +328,7 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 				</Button>
 
 				<FilterBetweenRange
-					trigger={<span>Unlock Value</span>}
+					trigger={<span>Next 24h Value</span>}
 					onSubmit={handleUnlockValueSubmit}
 					onClear={handleUnlockValueClear}
 					min={min ?? ''}
@@ -346,7 +339,7 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 				/>
 
 				<FilterBetweenRange
-					trigger={<span>Unlock Perc.</span>}
+					trigger={<span>Next 24h %</span>}
 					onSubmit={handleUnlockPercSubmit}
 					onClear={handleUnlockPercClear}
 					min={minPerc ?? ''}
@@ -371,15 +364,15 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 				/>
 
 				<SelectWithCombobox
-					allValues={UNLOCK_TYPE_OPTIONS}
+					allValues={unlockTypeOptions}
 					selectedValues={selectedUnlockTypes}
 					setSelectedValues={(values: string[] | ((prev: string[]) => string[])) => {
 						const keys = typeof values === 'function' ? values(selectedUnlockTypes) : values
-						const isAllSelected = keys.length === UNLOCK_TYPES.length
+						const isAllSelected = keys.length === unlockTypes.length
 						setQueryParam('unlockTypes', isAllSelected ? undefined : keys.join(','))
 					}}
 					nestedMenu={false}
-					label={'Unlock Types'}
+					label={'Next Event Types'}
 					labelType="smol"
 					variant="filter-responsive"
 					size="md"
@@ -394,10 +387,10 @@ const columnOptions = [
 	{ name: 'Name', key: 'name' },
 	{ name: 'Price', key: 'tPrice' },
 	{ name: 'Market Cap', key: 'mcap' },
-	{ name: 'Total Unlocked', key: 'totalLocked' },
+	{ name: 'Unlocked Supply', key: 'totalLocked' },
 	{ name: 'Prev. Unlock Analysis', key: 'prevUnlock' },
-	{ name: '7d Post Unlock', key: 'postUnlock' },
-	{ name: 'Daily Unlocks', key: 'nextEvent' },
+	{ name: '7d Price Change After Unlock', key: 'postUnlock' },
+	{ name: 'Next 24h Unlocks', key: 'nextEvent' },
 	{ name: 'Next Event', key: 'upcomingEvent' }
 ]
 
@@ -502,7 +495,7 @@ const emissionsColumns = [
 		},
 		{
 			id: 'totalLocked',
-			header: 'Total Unlocked',
+			header: 'Unlocked Supply',
 			cell: ({ getValue }) => {
 				const pctUnlocked = getValue()
 				if (pctUnlocked === undefined) return null
@@ -530,7 +523,8 @@ const emissionsColumns = [
 			},
 			meta: {
 				headerClassName: 'w-[140px]',
-				align: 'end'
+				align: 'end',
+				headerHelperText: 'Share of maximum supply unlocked at the emissions artifact snapshot.'
 			}
 		}
 	),
@@ -567,7 +561,7 @@ const emissionsColumns = [
 			headerClassName: 'w-[min(180px,40vw)]',
 			align: 'end',
 			headerHelperText:
-				"Price trend shown from 7 days before to 7 days after the most recent major unlock event. Doesn't include Non-Circulating and Farming emissions."
+				"Price trend shown from 7 days before to 7 days after the most recent unlock event. Doesn't include Non-Circulating and Farming emissions."
 		}
 	}),
 	columnHelper.accessor(
@@ -580,7 +574,7 @@ const emissionsColumns = [
 		},
 		{
 			id: 'postUnlock',
-			header: '7d Post Unlock',
+			header: '7d Price Change After Unlock',
 			cell: ({ getValue }) => {
 				const value = getValue()
 				return (
@@ -592,43 +586,42 @@ const emissionsColumns = [
 			meta: {
 				headerClassName: 'w-[140px]',
 				align: 'end',
-				headerHelperText: 'Price change 7 days after the most recent major unlock event'
+				headerHelperText:
+					'Observed token price change during the 7 days after the most recent unlock. This does not imply that the unlock caused the change.'
 			}
 		}
 	),
-	columnHelper.accessor(
-		(row) =>
-			row.tPrice != null && row.tPrice > 0 && row.unlocksPerDay != null ? row.tPrice * row.unlocksPerDay : undefined,
-		{
-			id: 'nextEvent',
-			header: 'Daily Unlocks',
-			cell: ({ row }) => {
-				if (row.original.unlocksPerDay == null) return <div className="flex h-full items-center justify-end"></div>
-				const value =
-					row.original.tPrice != null && row.original.tPrice > 0
-						? row.original.tPrice * row.original.unlocksPerDay
-						: undefined
+	columnHelper.accessor((row) => (row.tPrice != null && row.tPrice > 0 ? row.tPrice * row.next24h.total : undefined), {
+		id: 'nextEvent',
+		header: 'Next 24h Unlocks',
+		cell: ({ row }) => {
+			const price = row.original.tPrice
+			if (price == null || price <= 0) return <div className="flex h-full items-center justify-end"></div>
+			const next24h = row.original.next24h
+			const value = next24h.total * price
 
-				return (
-					<div className="flex h-full items-center justify-end">
-						<span className="flex flex-col gap-1">
-							{value != null
-								? formatUsd(value, {
-										compact: true,
-										minimumCompactValue: 1_000_000,
-										compactSuffix: 'lowercase'
-									})
-								: ''}
-						</span>
-					</div>
-				)
-			},
-			meta: {
-				headerClassName: 'w-[140px]',
-				align: 'end'
-			}
+			return (
+				<div className="flex h-full items-center justify-end">
+					<Tooltip
+						content={`Cliff: ${formatUsd(next24h.cliff * price)}. Linear: ${formatUsd(next24h.linear * price)}.`}
+						render={<span className="flex flex-col gap-1" />}
+					>
+						{formatUsd(value, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
+					</Tooltip>
+				</div>
+			)
+		},
+		meta: {
+			headerClassName: 'w-[140px]',
+			align: 'end',
+			headerHelperText:
+				'Cliff unlocks plus linear releases accrued during the exact rolling 24-hour period from the emissions artifact snapshot. Events without a known amount or valid snapshot price are excluded.'
 		}
-	)
+	})
 ]
 
 const upcomingEventColumn = (nowSec: number) =>

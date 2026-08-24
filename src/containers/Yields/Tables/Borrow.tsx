@@ -1,4 +1,4 @@
-import { type ColumnDef, createColumnHelper } from '@tanstack/react-table'
+import { createColumnHelper } from '@tanstack/react-table'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
@@ -48,7 +48,7 @@ function UsdCell({ value }: { value: number | null | undefined }) {
 // defs (not the pools config). Column ids double as the server `sortBy` keys.
 const marketHelper = createColumnHelper<MarketTableRow>()
 
-const marketColumns: Array<ColumnDef<MarketTableRow, unknown>> = [
+const marketColumns = [
 	marketHelper.accessor('pool', {
 		id: 'market',
 		header: 'Market',
@@ -87,9 +87,7 @@ const marketColumns: Array<ColumnDef<MarketTableRow, unknown>> = [
 		id: 'chains',
 		header: 'Chain',
 		enableSorting: false,
-		cell: (info) => (
-			<IconsRow items={toChainIconItems(info.getValue() as string[], (chain) => chainHref('/chain', chain))} />
-		),
+		cell: (info) => <IconsRow items={toChainIconItems(info.getValue(), (chain) => chainHref('/chain', chain))} />,
 		meta: { headerClassName: 'w-[55px] min-w-[55px]', align: 'end' }
 	}),
 	marketHelper.accessor((row) => row.supplyApy ?? undefined, {
@@ -147,7 +145,7 @@ const marketColumns: Array<ColumnDef<MarketTableRow, unknown>> = [
 		id: 'total_borrow',
 		header: 'Borrowed',
 		enableSorting: true,
-		cell: (info) => <UsdCell value={info.getValue() as number | null} />,
+		cell: (info) => <UsdCell value={info.getValue()} />,
 		meta: { headerClassName: 'w-[120px] min-w-[120px]', align: 'end' }
 	}),
 	marketHelper.accessor((row) => row.ltv ?? undefined, {
@@ -161,7 +159,7 @@ const marketColumns: Array<ColumnDef<MarketTableRow, unknown>> = [
 
 const routeHelper = createColumnHelper<RouteTableRow>()
 
-const routeColumns: Array<ColumnDef<RouteTableRow, unknown>> = [
+const routeColumns = [
 	routeHelper.accessor('pool', {
 		id: 'route',
 		header: 'Collateral / Borrow',
@@ -200,9 +198,7 @@ const routeColumns: Array<ColumnDef<RouteTableRow, unknown>> = [
 		id: 'chains',
 		header: 'Chain',
 		enableSorting: false,
-		cell: (info) => (
-			<IconsRow items={toChainIconItems(info.getValue() as string[], (chain) => chainHref('/chain', chain))} />
-		),
+		cell: (info) => <IconsRow items={toChainIconItems(info.getValue(), (chain) => chainHref('/chain', chain))} />,
 		meta: { headerClassName: 'w-[60px] min-w-[60px]', align: 'end' }
 	}),
 	routeHelper.accessor((row) => row.netApy ?? undefined, {

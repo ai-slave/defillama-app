@@ -319,6 +319,12 @@ describe('buildTokensSourceRows', () => {
 					maxSupply: 1000,
 					totalLocked: 400,
 					unlocksPerDay: null,
+					next24h: {
+						cliff: 100,
+						linear: 12 / 7,
+						total: 100 + 12 / 7,
+						unknownEventCount: 0
+					},
 					unlockEvents: null,
 					tPrice: 2,
 					tSymbol: 'ENA',

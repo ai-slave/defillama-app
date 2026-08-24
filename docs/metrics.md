@@ -406,6 +406,42 @@ The warehouse has a different contract: `fact.raise_event.amount` and `fact.hack
 Do not pass warehouse rows through the Raises API normalizer or silently combine warehouse and API records; the sources
 also differ in coverage and may differ in returned-funds data.
 
+## Unlocks
+
+Unlock totals combine one-time cliffs with tokens released by active linear schedules. They do not add a weekly rate
+directly to a cliff amount.
+
+For every half-open interval `[start, end)`:
+
+- A cliff contributes its one-time token amount when its timestamp is at or after `start` and before `end`.
+- A linear schedule contributes its new weekly rate prorated over the overlap between the interval and the schedule's
+  declared duration. This includes schedules that start before the requested interval and remain active inside it.
+- Signed burn events remain in the source schedule but contribute zero to an unlock total. Burns can reduce unlocked
+  supply; consumers must not clamp a cumulative supply series to its earlier maximum.
+- All Unlocks equals Cliff Unlocks plus Linear Unlocks.
+- Events without a known amount are excluded from unlock totals; null must not become zero. Producers retain an
+  `unknownEventCount` for coverage monitoring without changing the displayed metric label.
+- A missing events array, a missing tuple member, an unknown event type, or a non-finite duration violates the producer
+  contract. The producer must reject the artifact update and preserve the last known good artifact.
+
+Exact rolling summaries and charts use the same interval. Daily chart buckets split that interval at UTC-day boundaries,
+including partial first and last days, so their sum equals the summary. USD totals include only events with a known amount
+and protocols with a valid historical price requested at the artifact timestamp; producers retain coverage counts for
+excluded inputs. Price and market-cap enrichments retain their own source timestamps rather than claiming a shared
+fetch-completion timestamp. Current unlocked supply uses the last schedule sample at or before the artifact timestamp,
+never a future sample.
+
+The homepage unlock summary version 2 exposes cliff, linear, total, and coverage counts. The app accepts version 1
+temporarily for a backend-first rollout, but version 1 cannot provide a truthful cliff/linear breakdown. Unlocks table
+semantics are:
+
+- `Unlocked Supply`: supply measured at the artifact timestamp.
+- `Next 24h Unlocks`: exact rolling cliff plus linear releases; value and percentage filters use this same metric.
+- `Next Event`: event information only. A cliff shows its one-time amount; a linear event shows its new weekly rate.
+  Signed negative values are labeled as cliff or weekly burns and never presented as negative unlocks.
+- `Next Event Types`: filters the categories shown for the next event. It does not change the all-category Next 24h metric.
+- `7d Price Change After Unlock`: observed post-event price movement. It does not claim that the unlock caused the change.
+
 ## RWA
 
 RWA metrics have their own definitions and breakdown files:

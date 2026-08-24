@@ -250,8 +250,12 @@ describe('ChainOverview small charts', () => {
 					<UpcomingUnlocksChart
 						data={[1, 2, 3, 4].map((date) => ({
 							date,
+							cliff: date * 10,
+							linear: 0,
 							total: date * 10,
-							breakdown: [{ token: `Token ${date}`, value: date, pct: '1' }]
+							unknownEventCount: 0,
+							missingPriceProtocolCount: 0,
+							breakdown: [{ token: `Token ${date}`, value: date, cliff: date, linear: 0, pct: '1' }]
 						}))}
 					/>
 				),
@@ -259,8 +263,12 @@ describe('ChainOverview small charts', () => {
 					<UpcomingUnlocksChart
 						data={[5, 6].map((date) => ({
 							date,
+							cliff: date * 10,
+							linear: 0,
 							total: date * 10,
-							breakdown: [{ token: `Token ${date}`, value: date, pct: '1' }]
+							unknownEventCount: 0,
+							missingPriceProtocolCount: 0,
+							breakdown: [{ token: `Token ${date}`, value: date, cliff: date, linear: 0, pct: '1' }]
 						}))}
 					/>
 				)

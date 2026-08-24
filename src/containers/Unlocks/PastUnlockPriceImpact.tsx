@@ -113,7 +113,7 @@ export const PastUnlockPriceImpact: React.FC<PastUnlockPriceImpactProps> = ({
 		<div className={`flex flex-col gap-3 text-primary ${className ?? ''}`}>
 			<Tooltip
 				className="heading-xs text-primary"
-				content="Price change 7 days after the most recent major unlock event, not counting non-circulating and farming emissions. Sorted by absolute 7-day price change."
+				content="Observed price change during the 7 days after the most recent unlock, excluding non-circulating and farming emissions. This does not imply causation. Sorted by absolute price change."
 			>
 				{title}
 			</Tooltip>

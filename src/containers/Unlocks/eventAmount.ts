@@ -31,6 +31,7 @@ export function getLinearEmissionWeeklyRate(event: EmissionEvent): number | null
 
 export function getLinearEmissionRateDelta(event: EmissionEvent): number | null {
 	if (isUnknownEmissionEvent(event) || event.unlockType !== 'linear') return null
+	if (event.noOfTokens[0] === null) return null
 	return event.noOfTokens[1] - event.noOfTokens[0]
 }
 
@@ -44,7 +45,7 @@ export function getEmissionAmountOverInterval(
 
 	if (event.unlockType === 'cliff') {
 		if (event.timestamp < startTimestampSec || event.timestamp >= endTimestampSec) return 0
-		return isUnknownEmissionEvent(event) ? null : event.noOfTokens[0]
+		return isUnknownEmissionEvent(event) ? null : Math.max(event.noOfTokens[0], 0)
 	}
 
 	const eventEndTimestampSec = event.timestamp + event.rateDurationDays * 24 * 60 * 60
@@ -52,6 +53,38 @@ export function getEmissionAmountOverInterval(
 	const overlapEndTimestampSec = Math.min(eventEndTimestampSec, endTimestampSec)
 	if (overlapEndTimestampSec <= overlapStartTimestampSec) return 0
 	if (isUnknownEmissionEvent(event)) return null
+	if (event.noOfTokens[1] <= 0) return 0
 
 	return (event.noOfTokens[1] * (overlapEndTimestampSec - overlapStartTimestampSec)) / SECONDS_PER_WEEK
+}
+
+export type EmissionAmountBreakdown = {
+	cliff: number
+	linear: number
+	total: number
+	unknownEventCount: number
+}
+
+export function getEmissionAmountBreakdownOverInterval(
+	events: readonly EmissionEvent[],
+	startTimestampSec: number,
+	endTimestampSec: number
+): EmissionAmountBreakdown {
+	let cliff = 0
+	let linear = 0
+	let unknownEventCount = 0
+
+	for (const event of events) {
+		const amount = getEmissionAmountOverInterval(event, startTimestampSec, endTimestampSec)
+		if (amount === null) unknownEventCount += 1
+		else if (event.unlockType === 'cliff') cliff += amount
+		else linear += amount
+	}
+
+	return {
+		cliff,
+		linear,
+		total: cliff + linear,
+		unknownEventCount
+	}
 }

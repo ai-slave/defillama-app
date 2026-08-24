@@ -89,6 +89,14 @@ describe('unlocks api', () => {
 						category: 'insiders',
 						unlockType: 'linear',
 						rateDurationDays: 30
+					},
+					{
+						timestamp: '250',
+						noOfTokens: [null, 7],
+						description: 'Known new rate',
+						category: 'farming',
+						unlockType: 'linear',
+						rateDurationDays: 7
 					}
 				]
 			},
@@ -131,6 +139,14 @@ describe('unlocks api', () => {
 				unlockType: 'linear',
 				rateDurationDays: 30,
 				hasUnknownTokenAmount: true
+			},
+			{
+				timestamp: 250,
+				noOfTokens: [null, 7],
+				description: 'Known new rate',
+				category: 'farming',
+				unlockType: 'linear',
+				rateDurationDays: 7
 			}
 		])
 		expect(result.metadata.unlockEvents[0]?.linearAllocations[0]?.endTimestamp).toBe(300)
@@ -225,6 +241,14 @@ describe('unlocks api', () => {
 					category: 'insiders',
 					unlockType: 'linear',
 					rateDurationDays: 30
+				},
+				{
+					timestamp: '250',
+					noOfTokens: [null, 7],
+					description: 'Known new rate',
+					category: 'farming',
+					unlockType: 'linear',
+					rateDurationDays: 7
 				}
 			]
 		} satisfies RawProtocolEmission
@@ -249,6 +273,14 @@ describe('unlocks api', () => {
 				unlockType: 'linear',
 				rateDurationDays: 30,
 				hasUnknownTokenAmount: true
+			},
+			{
+				timestamp: 250,
+				noOfTokens: [null, 7],
+				description: 'Known new rate',
+				category: 'farming',
+				unlockType: 'linear',
+				rateDurationDays: 7
 			}
 		])
 		expect(result[1]).toBe(normalizedProtocol)

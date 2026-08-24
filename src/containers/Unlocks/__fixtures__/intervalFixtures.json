@@ -1,0 +1,70 @@
+[
+	{
+		"name": "active linear schedule plus cliff",
+		"startTimestampSec": 86400,
+		"endTimestampSec": 259200,
+		"events": [
+			{
+				"description": "Active linear",
+				"category": "community",
+				"unlockType": "linear",
+				"timestamp": 0,
+				"noOfTokens": [0, 7],
+				"rateDurationDays": 10
+			},
+			{
+				"description": "Cliff",
+				"category": "insiders",
+				"unlockType": "cliff",
+				"timestamp": 172800,
+				"noOfTokens": [10]
+			}
+		],
+		"expected": {
+			"cliff": 10,
+			"linear": 2,
+			"total": 12,
+			"unknownEventCount": 0
+		}
+	},
+	{
+		"name": "unknown amount is excluded and counted",
+		"startTimestampSec": 0,
+		"endTimestampSec": 172800,
+		"events": [
+			{
+				"description": "Unknown cliff",
+				"category": "community",
+				"unlockType": "cliff",
+				"timestamp": 86400,
+				"noOfTokens": [null]
+			}
+		],
+		"expected": {
+			"cliff": 0,
+			"linear": 0,
+			"total": 0,
+			"unknownEventCount": 1
+		}
+	},
+	{
+		"name": "end boundary is excluded",
+		"startTimestampSec": 0,
+		"endTimestampSec": 86400,
+		"events": [
+			{
+				"description": "Boundary cliff",
+				"category": "publicSale",
+				"unlockType": "cliff",
+				"timestamp": 86400,
+				"noOfTokens": [25]
+			}
+		],
+		"expected": {
+			"cliff": 0,
+			"linear": 0,
+			"total": 0,
+			"unknownEventCount": 0
+		}
+	}
+]

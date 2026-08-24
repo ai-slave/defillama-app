@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import type { EmissionEvent } from '../api.types'
+import intervalFixtures from '../__fixtures__/intervalFixtures.json'
+import { normalizeEmissionEvents } from '../api'
+import type { EmissionEvent, RawEmissionEvent } from '../api.types'
 import {
 	getCliffEmissionAmount,
+	getEmissionAmountBreakdownOverInterval,
 	getEmissionAmountOverInterval,
 	getEmissionEventAmount,
 	getLinearEmissionRateDelta,
@@ -47,6 +50,21 @@ describe('emission event amounts', () => {
 		expect(getCliffEmissionAmount(linear)).toBeNull()
 		expect(getLinearEmissionWeeklyRate(linear)).toBe(amount)
 		expect(getLinearEmissionRateDelta(linear)).toBe(delta)
+	})
+
+	it('integrates a known new rate when the previous rate is unavailable', () => {
+		const linear = event({
+			description: 'Linear rate change',
+			category: 'farming',
+			unlockType: 'linear',
+			timestamp: 0,
+			noOfTokens: [null, 7],
+			rateDurationDays: 1
+		})
+
+		expect(getLinearEmissionWeeklyRate(linear)).toBe(7)
+		expect(getLinearEmissionRateDelta(linear)).toBeNull()
+		expect(getEmissionAmountOverInterval(linear, 0, 86400)).toBe(1)
 	})
 
 	it('keeps an unavailable amount distinct from a known zero', () => {
@@ -97,5 +115,40 @@ describe('emission event amounts', () => {
 		expect(getEmissionAmountOverInterval(linear, startTimestampSec + 43200, startTimestampSec + 86400)).toBe(1)
 		expect(getEmissionAmountOverInterval(linear, startTimestampSec, startTimestampSec + 3 * 86400)).toBe(4)
 		expect(getEmissionAmountOverInterval(linear, startTimestampSec + 2 * 86400, startTimestampSec + 3 * 86400)).toBe(0)
+	})
+
+	it('does not subtract signed burns from unlock totals', () => {
+		const burns: EmissionEvent[] = [
+			event({
+				description: 'Cliff burn',
+				category: 'burn',
+				unlockType: 'cliff',
+				timestamp: 1,
+				noOfTokens: [-10]
+			}),
+			event({
+				description: 'Linear burn',
+				category: 'burn',
+				unlockType: 'linear',
+				timestamp: 0,
+				noOfTokens: [5, -7],
+				rateDurationDays: 2
+			})
+		]
+
+		expect(getEmissionAmountBreakdownOverInterval(burns, 0, 2 * 86400)).toEqual({
+			cliff: 0,
+			linear: 0,
+			total: 0,
+			unknownEventCount: 0
+		})
+	})
+
+	it.each(intervalFixtures)('matches the $name fixture', (fixture) => {
+		const events = normalizeEmissionEvents(fixture.events as unknown as RawEmissionEvent[])
+
+		expect(getEmissionAmountBreakdownOverInterval(events, fixture.startTimestampSec, fixture.endTimestampSec)).toEqual(
+			fixture.expected
+		)
 	})
 })

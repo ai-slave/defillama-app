@@ -20,7 +20,7 @@ const PROTOCOL_EMISSION_API = `${DATASETS_SERVER_URL}/emissions`
 function isNormalizedEmissionEvent(event: RawEmissionEvent): event is KnownEmissionEvent {
 	if (typeof event.timestamp !== 'number') return false
 	if (event.unlockType === 'cliff') return event.noOfTokens[0] !== null
-	return event.noOfTokens[0] !== null && event.noOfTokens[1] !== null
+	return event.noOfTokens[1] !== null
 }
 
 function areNormalizedEmissionEvents(events: RawEmissionEvent[]): events is KnownEmissionEvent[] {
@@ -57,7 +57,7 @@ function normalizeEmissionEvent(event: RawEmissionEvent): EmissionEvent {
 
 	const previousRatePerWeek = event.noOfTokens[0]
 	const newRatePerWeek = event.noOfTokens[1]
-	if (previousRatePerWeek === null || newRatePerWeek === null) {
+	if (newRatePerWeek === null) {
 		return {
 			description: event.description,
 			category: event.category,
@@ -78,7 +78,7 @@ function normalizeEmissionEvent(event: RawEmissionEvent): EmissionEvent {
 	}
 }
 
-function normalizeEmissionEvents(events: RawEmissionEvent[]): EmissionEvent[] {
+export function normalizeEmissionEvents(events: RawEmissionEvent[]): EmissionEvent[] {
 	if (areNormalizedEmissionEvents(events)) return events
 
 	const normalizedEvents: EmissionEvent[] = []

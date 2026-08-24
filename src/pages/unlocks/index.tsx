@@ -59,16 +59,18 @@ const SECONDS_PER_DAY = 24 * 60 * 60
 const UPCOMING_WINDOW_DAYS = 30
 
 export const getStaticProps = withPerformanceLogging('unlocks', async () => {
-	const generatedAtSec = Math.floor(Date.now() / 1000)
-	const chartEndTimestampSec = generatedAtSec + UPCOMING_WINDOW_DAYS * SECONDS_PER_DAY
+	const requestedAtSec = Math.floor(Date.now() / 1000)
+	const requestedChartEndTimestampSec = requestedAtSec + UPCOMING_WINDOW_DAYS * SECONDS_PER_DAY
 	const metadataModule = await import('~/utils/metadata')
 	metadataModule.refreshMetadataInBackgroundIfStale('unlocks_index')
 	const metadataCache = metadataModule.default
 	const data = await getAllProtocolEmissions({
-		endDate: chartEndTimestampSec,
+		endDate: requestedChartEndTimestampSec,
 		tokenlist: metadataCache.tokenlist,
 		emissionsHistoricalPrices: metadataCache.emissionsHistoricalPrices
 	})
+	const generatedAtSec = data[0]?.supplyGeneratedAtSec ?? requestedAtSec
+	const chartEndTimestampSec = generatedAtSec + UPCOMING_WINDOW_DAYS * SECONDS_PER_DAY
 	return {
 		props: {
 			data,
@@ -100,7 +102,7 @@ function UpcomingUnlockMetric({ days, values }: { days: 7 | 30; values: Upcoming
 	return (
 		<MetricSection
 			label={`Upcoming Unlocks (${days}d)`}
-			tooltip={`Combined cliff and linear unlock value over the exact ${days}-day period. USD values use token prices from the data snapshot, not projected prices.`}
+			tooltip={`Combined cliff and linear unlock value over the exact ${days}-day period. USD values use token prices from the data snapshot, not projected prices. Events without a known amount or valid snapshot price are excluded.`}
 			value={formatUnlockValue(values.total)}
 		>
 			<SubMetricRow
@@ -178,7 +180,7 @@ function UpcomingUnlockVolumeChart({ series }: { series: UpcomingUnlockChartSeri
 					<Select
 						allValues={UPCOMING_UNLOCK_TYPE_OPTIONS}
 						selectedValues={unlockType}
-						setSelectedValues={(value) => {
+						setSelectedValues={(value: string) => {
 							const selectedType = UPCOMING_UNLOCK_TYPE_OPTIONS.find((option) => option.key === value)?.key
 							if (!selectedType) throw new Error(`Unknown upcoming unlock type: ${value}`)
 							void pushShallowQuery(router, {
@@ -327,15 +329,15 @@ export default function Protocols({
 
 			<div className="isolate grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
 				<Card padding="sm" className="col-span-1 flex flex-col gap-3">
-					<TopUnlocks data={data} period={1} title="24h Top Unlocks" initialNowSec={generatedAtSec} />
+					<TopUnlocks data={data} period={1} title="Past 24h Top Unlocks" initialNowSec={generatedAtSec} />
 				</Card>
 
 				<Card padding="sm" className="col-span-1 flex flex-col gap-3">
-					<TopUnlocks data={data} period={30} title="30d Top Unlocks" initialNowSec={generatedAtSec} />
+					<TopUnlocks data={data} period={30} title="Past 30d Top Unlocks" initialNowSec={generatedAtSec} />
 				</Card>
 
 				<Card padding="sm" className="col-span-1 flex flex-col gap-3">
-					<PastUnlockPriceImpact data={data} title="Post Unlock Price Impact" initialNowSec={generatedAtSec} />
+					<PastUnlockPriceImpact data={data} title="7d Price Change After Unlock" initialNowSec={generatedAtSec} />
 				</Card>
 			</div>
 

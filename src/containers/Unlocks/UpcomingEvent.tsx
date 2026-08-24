@@ -113,6 +113,7 @@ interface UpcomingEventProps {
 interface UnlockBreakdown {
 	name: string
 	amount: number
+	isBurn: boolean
 	displayUnit: '' | 'per week'
 	timestamp: number
 	unlockType: string
@@ -123,7 +124,7 @@ interface UnlockBreakdown {
 }
 
 interface EventSummary {
-	label: 'Cliff Unlock' | 'Weekly Unlock Rate'
+	label: 'Cliff Unlock' | 'Cliff Burn' | 'Weekly Unlock Rate' | 'Weekly Burn Rate'
 	amount: number
 	displayUnit: '' | 'per week'
 	usdValue: number | null
@@ -191,10 +192,14 @@ export const UpcomingEvent = ({
 	const tokenSymbol = symbol ? symbol.toUpperCase() : ''
 	const { currentUnlockBreakdown, eventSummaries, calendarTokenValue } = useMemo(() => {
 		const breakdown: UnlockBreakdown[] = []
-		let hasCliff = false
-		let hasLinear = false
-		let cliffAmount = 0
-		let linearWeeklyAmount = 0
+		let hasCliffUnlock = false
+		let hasCliffBurn = false
+		let hasLinearUnlock = false
+		let hasLinearBurn = false
+		let cliffUnlockAmount = 0
+		let cliffBurnAmount = 0
+		let linearWeeklyUnlockAmount = 0
+		let linearWeeklyBurnAmount = 0
 		for (const emissionEvent of event) {
 			if (isUnknownEmissionEvent(emissionEvent)) continue
 			const { description, timestamp: eventTimestamp, unlockType } = emissionEvent
@@ -203,16 +208,28 @@ export const UpcomingEvent = ({
 			const matches = description.match(regex)
 			const eventName = matches?.[1] || matches?.[2] || matches?.[3] || matches?.[4] || ''
 
-			const amount = getEmissionEventAmount(emissionEvent)
-			if (amount === null) continue
+			const signedAmount = getEmissionEventAmount(emissionEvent)
+			if (signedAmount === null) continue
+			const isBurn = signedAmount < 0
+			const amount = Math.abs(signedAmount)
 			let displayUnit: UnlockBreakdown['displayUnit']
 			if (unlockType === 'linear') {
-				hasLinear = true
-				linearWeeklyAmount += amount
+				if (isBurn) {
+					hasLinearBurn = true
+					linearWeeklyBurnAmount += amount
+				} else {
+					hasLinearUnlock = true
+					linearWeeklyUnlockAmount += amount
+				}
 				displayUnit = 'per week'
 			} else {
-				hasCliff = true
-				cliffAmount += amount
+				if (isBurn) {
+					hasCliffBurn = true
+					cliffBurnAmount += amount
+				} else {
+					hasCliffUnlock = true
+					cliffUnlockAmount += amount
+				}
 				displayUnit = ''
 			}
 			const usdValue = price != null && price > 0 ? amount * price : null
@@ -223,6 +240,7 @@ export const UpcomingEvent = ({
 			breakdown.push({
 				name: eventName,
 				amount,
+				isBurn,
 				displayUnit,
 				timestamp: eventTimestamp,
 				unlockType,
@@ -234,25 +252,47 @@ export const UpcomingEvent = ({
 		}
 
 		const eventSummaries: EventSummary[] = []
-		if (hasCliff) {
-			const usdValue = price != null && price > 0 ? cliffAmount * price : null
+		if (hasCliffUnlock) {
+			const usdValue = price != null && price > 0 ? cliffUnlockAmount * price : null
 			eventSummaries.push({
 				label: 'Cliff Unlock',
-				amount: cliffAmount,
+				amount: cliffUnlockAmount,
 				displayUnit: '',
 				usdValue,
-				percentage: maxSupply != null && maxSupply > 0 ? (cliffAmount / maxSupply) * 100 : null,
+				percentage: maxSupply != null && maxSupply > 0 ? (cliffUnlockAmount / maxSupply) * 100 : null,
 				percentageFloat: usdValue !== null && mcap != null && mcap > 0 ? (usdValue / mcap) * 100 : null
 			})
 		}
-		if (hasLinear) {
-			const usdValue = price != null && price > 0 ? linearWeeklyAmount * price : null
+		if (hasCliffBurn) {
+			const usdValue = price != null && price > 0 ? cliffBurnAmount * price : null
+			eventSummaries.push({
+				label: 'Cliff Burn',
+				amount: cliffBurnAmount,
+				displayUnit: '',
+				usdValue,
+				percentage: maxSupply != null && maxSupply > 0 ? (cliffBurnAmount / maxSupply) * 100 : null,
+				percentageFloat: usdValue !== null && mcap != null && mcap > 0 ? (usdValue / mcap) * 100 : null
+			})
+		}
+		if (hasLinearUnlock) {
+			const usdValue = price != null && price > 0 ? linearWeeklyUnlockAmount * price : null
 			eventSummaries.push({
 				label: 'Weekly Unlock Rate',
-				amount: linearWeeklyAmount,
+				amount: linearWeeklyUnlockAmount,
 				displayUnit: 'per week',
 				usdValue,
-				percentage: maxSupply != null && maxSupply > 0 ? (linearWeeklyAmount / maxSupply) * 100 : null,
+				percentage: maxSupply != null && maxSupply > 0 ? (linearWeeklyUnlockAmount / maxSupply) * 100 : null,
+				percentageFloat: usdValue !== null && mcap != null && mcap > 0 ? (usdValue / mcap) * 100 : null
+			})
+		}
+		if (hasLinearBurn) {
+			const usdValue = price != null && price > 0 ? linearWeeklyBurnAmount * price : null
+			eventSummaries.push({
+				label: 'Weekly Burn Rate',
+				amount: linearWeeklyBurnAmount,
+				displayUnit: 'per week',
+				usdValue,
+				percentage: maxSupply != null && maxSupply > 0 ? (linearWeeklyBurnAmount / maxSupply) * 100 : null,
 				percentageFloat: usdValue !== null && mcap != null && mcap > 0 ? (usdValue / mcap) * 100 : null
 			})
 		}
@@ -312,7 +352,17 @@ export const UpcomingEvent = ({
 					<span className="flex items-center gap-1.5">
 						{item.name}
 						{isOngoing ? ' (Ongoing)' : null}
-						<Tooltip content={item.unlockType === 'linear' ? 'Linear Unlock' : 'Cliff Unlock'}>
+						<Tooltip
+							content={
+								item.isBurn
+									? item.unlockType === 'linear'
+										? 'Linear Burn'
+										: 'Cliff Burn'
+									: item.unlockType === 'linear'
+										? 'Linear Unlock'
+										: 'Cliff Unlock'
+							}
+						>
 							<Icon
 								name={item.unlockType === 'linear' ? 'linear-unlock' : 'cliff-unlock'}
 								height={iconSize}

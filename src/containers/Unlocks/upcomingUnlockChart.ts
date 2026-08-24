@@ -6,7 +6,11 @@ import {
 import type { LowercaseDwmGrouping } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
 import { CHART_COLORS } from '~/constants/colors'
-import { getCliffEmissionAmount, getEmissionAmountOverInterval } from './eventAmount'
+import {
+	getCliffEmissionAmount,
+	getEmissionAmountBreakdownOverInterval,
+	getEmissionAmountOverInterval
+} from './eventAmount'
 import type { EnrichedProtocolEmission } from './queries'
 import type { UpcomingUnlockChartType, UpcomingUnlockChartViewMode } from './upcomingUnlockChartState'
 
@@ -24,25 +28,41 @@ export type UpcomingUnlockValueBreakdown = {
 	total: number
 	cliff: number
 	linear: number
+	unknownEventCount: number
+	missingPriceProtocolCount: number
 }
 
 export function calculateUpcomingUnlockStatistics(protocols: UpcomingUnlockChartProtocol[], nowTimestampSec: number) {
-	const upcomingUnlocks30d = { cliff: 0, linear: 0 }
-	const upcomingUnlocks7d = { cliff: 0, linear: 0 }
+	const upcomingUnlocks30d = { cliff: 0, linear: 0, unknownEventCount: 0, missingPriceProtocolCount: 0 }
+	const upcomingUnlocks7d = { cliff: 0, linear: 0, unknownEventCount: 0, missingPriceProtocolCount: 0 }
 	const thirtyDaysLaterTimestampSec = nowTimestampSec + 30 * SECONDS_PER_DAY
 	const sevenDaysLaterTimestampSec = nowTimestampSec + 7 * SECONDS_PER_DAY
 
 	for (const protocol of protocols) {
+		const amounts30d = getEmissionAmountBreakdownOverInterval(
+			protocol.events,
+			nowTimestampSec,
+			thirtyDaysLaterTimestampSec
+		)
+		const amounts7d = getEmissionAmountBreakdownOverInterval(
+			protocol.events,
+			nowTimestampSec,
+			sevenDaysLaterTimestampSec
+		)
+		upcomingUnlocks30d.unknownEventCount += amounts30d.unknownEventCount
+		upcomingUnlocks7d.unknownEventCount += amounts7d.unknownEventCount
+
 		const price = protocol.tPrice
-		if (price === null || price <= 0) continue
-
-		for (const event of protocol.events) {
-			const amount30d = getEmissionAmountOverInterval(event, nowTimestampSec, thirtyDaysLaterTimestampSec)
-			if (amount30d !== null && amount30d > 0) upcomingUnlocks30d[event.unlockType] += amount30d * price
-
-			const amount7d = getEmissionAmountOverInterval(event, nowTimestampSec, sevenDaysLaterTimestampSec)
-			if (amount7d !== null && amount7d > 0) upcomingUnlocks7d[event.unlockType] += amount7d * price
+		if (price === null || price <= 0) {
+			if (amounts30d.total > 0) upcomingUnlocks30d.missingPriceProtocolCount += 1
+			if (amounts7d.total > 0) upcomingUnlocks7d.missingPriceProtocolCount += 1
+			continue
 		}
+
+		upcomingUnlocks30d.cliff += amounts30d.cliff * price
+		upcomingUnlocks30d.linear += amounts30d.linear * price
+		upcomingUnlocks7d.cliff += amounts7d.cliff * price
+		upcomingUnlocks7d.linear += amounts7d.linear * price
 	}
 
 	return {

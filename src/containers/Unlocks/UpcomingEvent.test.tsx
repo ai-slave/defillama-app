@@ -75,4 +75,12 @@ describe('UpcomingEvent amount presentation', () => {
 		expect(renderEvent([unknown(), cliff(0)])).toContain('$0')
 		expect(renderEvent([unknown()])).toContain('Amount unavailable')
 	})
+
+	it('labels signed burn events without presenting negative unlock values', () => {
+		const markup = renderEvent([cliff(-5), linear(10, -20)])
+
+		expect(markup).toContain('Cliff Burn')
+		expect(markup).toContain('Weekly Burn Rate')
+		expect(markup).not.toContain('-$')
+	})
 })

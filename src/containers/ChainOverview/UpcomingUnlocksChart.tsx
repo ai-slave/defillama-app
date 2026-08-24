@@ -3,18 +3,13 @@ import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { domChartCrosshairStyles, domChartTooltipStyles } from '~/ui/ChartTooltip'
 import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import { getChainOverviewPaletteColor } from './constants'
+import type { HomepageUnlockChartEntry } from './types'
 import { useSmolChartHover } from './useSmolChartHover'
 
 const BAR_COLOR = getChainOverviewPaletteColor(0)
 const HOVERED_BAR_COLOR = getChainOverviewPaletteColor(1)
 
-interface UnlockEntry {
-	date: number
-	total: number
-	breakdown: Array<{ token: string; value: number; pct: string }>
-}
-
-export function UpcomingUnlocksChart({ data, className }: { data: Array<UnlockEntry>; className?: string }) {
+export function UpcomingUnlocksChart({ data, className }: { data: HomepageUnlockChartEntry[]; className?: string }) {
 	const { containerRef, tooltipRef, hoveredIndex, onMouseMove, onMouseLeave } = useSmolChartHover(data.length)
 
 	const maxVal = useMemo(() => Math.max(...data.map((d) => d.total)) || 1, [data])
@@ -51,6 +46,20 @@ export function UpcomingUnlocksChart({ data, className }: { data: Array<UnlockEn
 								compactSuffix: 'lowercase'
 							})}
 						</p>
+						{hoveredEntry.cliff !== null && hoveredEntry.linear !== null ? (
+							<p style={{ marginBottom: '4px' }}>
+								Cliff: $
+								{formatCompactNumber(hoveredEntry.cliff, {
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
+								&nbsp;&nbsp;Linear: $
+								{formatCompactNumber(hoveredEntry.linear, {
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
+							</p>
+						) : null}
 						{hoveredEntry.breakdown.map((item) => (
 							<p key={item.token} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
 								{item.token}&nbsp;&nbsp;$

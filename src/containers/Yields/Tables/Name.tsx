@@ -10,9 +10,9 @@ import { DepegWarningIcon } from './YieldsCells'
 
 interface INameYield {
 	project: string
-	projectslug?: string
-	airdrop?: boolean
-	raiseValuationUsd?: number | null
+	projectslug?: string | undefined
+	airdrop?: boolean | undefined
+	raiseValuationUsd?: number | null | undefined
 }
 
 // Quiet external-link glyph (text-tertiary → link on hover) in the leading rail,
@@ -55,13 +55,13 @@ export function PoolNameLockup({
 	configID: string
 	url?: string | null
 	poolMeta?: string | null
-	hasRiskData?: boolean
+	hasRiskData?: boolean | undefined
 	bookmark?: boolean
-	exploited?: boolean
+	exploited?: boolean | undefined
 	rowId?: string
-	pegDeviation?: number | null
-	pegTokenSymbol?: string | null
-	pegConsequence?: string
+	pegDeviation?: number | null | undefined
+	pegTokenSymbol?: string | null | undefined
+	pegConsequence?: string | undefined
 }) {
 	// Inline rank: number inside the name cell (no dedicated column, so table-layout:fixed
 	// can't balloon the gap), min-w-4 slot; longer ranks simply grow and nudge the content.
@@ -115,7 +115,7 @@ export function PoolNameLockup({
 // glyph sitting inline after the protocol name.
 // The tooltip carries the meaning. When the protocol has a known fundraise, the glyph
 // becomes 💸 and the tooltip adds its last valuation.
-function AirdropHint({ raiseValuationUsd }: { raiseValuationUsd?: number | null }) {
+function AirdropHint({ raiseValuationUsd }: { raiseValuationUsd?: number | null | undefined }) {
 	return (
 		<Tooltip
 			content={
@@ -147,7 +147,7 @@ function AirdropHint({ raiseValuationUsd }: { raiseValuationUsd?: number | null 
 
 // Quiet risk-page entry on the meta line: only for pools with confirmed vault-risk
 // coverage (per-pool ids from the risk server — never a dead link).
-export function RiskDataHint({ configID, className }: { configID: string; className?: string }) {
+export function RiskDataHint({ configID, className }: { configID: string; className?: string | undefined }) {
 	return (
 		<Tooltip content="View risk data" className={`shrink-0 ${className ?? ''}`}>
 			<BasicLink

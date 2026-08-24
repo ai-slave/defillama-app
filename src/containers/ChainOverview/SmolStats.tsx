@@ -21,6 +21,10 @@ export const SmolStats = (props: IChainOverviewData) => {
 	const stablecoins = props.stablecoins
 	const stablecoinChart = stablecoins?.mcapChartData
 	const stablecoinChangeIsNonNegative = stablecoins != null && Number(stablecoins.change7d) >= 0
+	const unlocksTooltip =
+		unlocks !== null && unlocks.cliff14d !== null && unlocks.linear14d !== null
+			? `Cliff unlocks: ${formatUsd(unlocks.cliff14d)}. Linear releases: ${formatUsd(unlocks.linear14d)}. USD values use prices captured with the unlock snapshot. Events without a known amount or valid snapshot price are excluded.`
+			: 'Value of tokens unlocking over the next 14 days. Events without a known amount or valid snapshot price are excluded.'
 
 	return (
 		<div className="isolate grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
@@ -35,7 +39,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 								<Tooltip
 									render={<BasicLink href="/unlocks" />}
 									className="text-sm font-semibold"
-									content="Value of tokens unlocking over the next 14 days"
+									content={unlocksTooltip}
 								>
 									Upcoming Unlocks
 								</Tooltip>

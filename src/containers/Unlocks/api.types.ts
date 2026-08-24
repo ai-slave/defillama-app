@@ -28,7 +28,7 @@ export type KnownCliffEmissionEvent = EmissionEventFields & {
 export type KnownLinearEmissionEvent = EmissionEventFields & {
 	unlockType: 'linear'
 	timestamp: number
-	noOfTokens: readonly [number, number]
+	noOfTokens: readonly [number | null, number]
 	rateDurationDays: number
 	hasUnknownTokenAmount?: never
 }
@@ -107,6 +107,13 @@ export interface ProtocolEmissionNextEvent {
 	proportion?: number
 }
 
+export interface ProtocolEmissionNext24h {
+	cliff: number
+	linear: number
+	total: number
+	unknownEventCount: number
+}
+
 interface ProtocolEmissionDtoBase<UnlockEvent> {
 	name: string
 	token: string
@@ -116,6 +123,8 @@ interface ProtocolEmissionDtoBase<UnlockEvent> {
 	gecko_id?: string | null
 	circSupply: number
 	circSupply30d: number
+	supplyGeneratedAtSec?: number
+	mcapUpdatedAtSec?: number
 	totalLocked: number
 	maxSupply: number
 	mcap?: number
@@ -123,6 +132,7 @@ interface ProtocolEmissionDtoBase<UnlockEvent> {
 	nextEvent?: ProtocolEmissionNextEvent
 	tokenPrice?: TokenPriceSnapshot[]
 	unlockEvents: UnlockEvent[]
+	next24h?: ProtocolEmissionNext24h
 }
 
 export interface RawProtocolEmission extends ProtocolEmissionDtoBase<RawStructuredEmissionEvent> {

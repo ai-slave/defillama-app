@@ -36,13 +36,63 @@ describe('homepage unlocks summary', () => {
 			})
 		).toEqual({
 			total14d: 100,
+			cliff14d: null,
+			linear14d: null,
+			unknownEventCount: null,
+			missingPriceProtocolCount: null,
+			generatedAtSec: 1779292800,
+			priceSnapshotAtSec: null,
 			chart: [
 				{
 					date: 1779292800000,
 					total: 100,
-					breakdown: [{ token: 'ETH', value: 100, pct: '100.00' }]
+					cliff: null,
+					linear: null,
+					unknownEventCount: null,
+					missingPriceProtocolCount: null,
+					breakdown: [{ token: 'ETH', value: 100, cliff: null, linear: null, pct: '100.00' }]
 				}
 			]
+		})
+	})
+
+	it('projects the typed v2 breakdown and coverage metadata', async () => {
+		const { projectHomepageUnlocksSummary } = await import('../homepageUnlocks.server')
+		const chartDay = {
+			date: 1779292800000,
+			cliff: 40,
+			linear: 60,
+			total: 100,
+			unknownEventCount: 1,
+			missingPriceProtocolCount: 0,
+			breakdown: [{ token: 'ETH', value: 100, cliff: 40, linear: 60, pct: '100.00' }]
+		}
+
+		expect(
+			projectHomepageUnlocksSummary({
+				schemaVersion: 2,
+				generatedAtSec: 1779292800,
+				priceSnapshotAtSec: 1779292800,
+				windowDays: 14,
+				chart: [chartDay],
+				totals: {
+					cliff: 40,
+					linear: 60,
+					total: 100,
+					unknownEventCount: 1,
+					missingPriceProtocolCount: 0
+				},
+				total14d: 100
+			})
+		).toEqual({
+			chart: [chartDay],
+			total14d: 100,
+			cliff14d: 40,
+			linear14d: 60,
+			unknownEventCount: 1,
+			missingPriceProtocolCount: 0,
+			generatedAtSec: 1779292800,
+			priceSnapshotAtSec: 1779292800
 		})
 	})
 

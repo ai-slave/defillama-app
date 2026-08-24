@@ -16,12 +16,13 @@ import type {
 	ProtocolEmission,
 	ProtocolEmissionChartData,
 	ProtocolEmissionDetail,
+	ProtocolEmissionNext24h,
 	TokenAllocationSplit,
 	TokenIncentiveChartPoint
 } from './api.types'
 import { isWeeklyRateCalendarEvent, type CalendarUnlockEvent } from './calendarTypes'
 import { buildEmissionProjectionModel } from './emissionsChartData'
-import { getEmissionEventAmount, isUnknownEmissionEvent } from './eventAmount'
+import { getEmissionAmountBreakdownOverInterval, getEmissionEventAmount, isUnknownEmissionEvent } from './eventAmount'
 import type { EmptyProtocolEmissionResult, ProtocolEmissionResult } from './types'
 
 type UnlockTokenlistEntry = Pick<ITokenListEntry, 'current_price' | 'symbol'>
@@ -680,6 +681,7 @@ export type EnrichedProtocolEmission = Omit<ProtocolEmission, 'unlockEvents'> & 
 	historicalPrice: Array<[number, number]>
 	lastEvent: EmissionEvent[]
 	tSymbol: string | null
+	next24h: ProtocolEmissionNext24h
 }
 
 type UnlockHistoricalPricesByCoin = Record<string, { prices?: Array<{ timestamp: number; price: number }> }>
@@ -741,23 +743,22 @@ export const getAllProtocolEmissions = async ({
 		const coinKey = geckoId ? `coingecko:${geckoId}` : null
 
 		const events = protocol.events
+		const next24h = protocol.next24h ?? getEmissionAmountBreakdownOverInterval(events, nowSec, nowSec + 24 * 60 * 60)
 
-		// Upcoming event: choose the earliest upcoming event with non-zero tokens.
+		// Keep unknown amounts and linear rate stops visible. Skip only known zero cliffs,
+		// which do not represent a release or rate transition.
 		let upcomingTimestamp: number | null = null
 		for (const e of events) {
 			const ts = e.timestamp
 			if (ts < nowSec) continue
-			const amount = getEmissionEventAmount(e)
-			if (amount === null || amount <= 0) continue
+			if (e.unlockType === 'cliff' && !isUnknownEmissionEvent(e) && e.noOfTokens[0] <= 0) continue
 			if (upcomingTimestamp === null || ts < upcomingTimestamp) upcomingTimestamp = ts
 		}
 
 		const upcomingEvent: EmissionEvent[] = []
 		if (upcomingTimestamp !== null) {
 			for (const event of events) {
-				if (event.timestamp === upcomingTimestamp && !isUnknownEmissionEvent(event)) {
-					upcomingEvent.push(event)
-				}
+				if (event.timestamp === upcomingTimestamp) upcomingEvent.push(event)
 			}
 		}
 
@@ -787,7 +788,9 @@ export const getAllProtocolEmissions = async ({
 		}
 
 		const coin = coinKey ? coinPrices[coinKey] : null
-		const tSymbol = coin?.symbol ?? null
+		const aggregatePrice = protocol.tokenPrice?.[0]
+		const tPrice = aggregatePrice && aggregatePrice.price > 0 ? aggregatePrice.price : (coin?.price ?? null)
+		const tSymbol = aggregatePrice?.symbol ?? coin?.symbol ?? null
 		const historicalPrice = coinKey ? historicalPrices[coinKey] : null
 
 		const formattedHistoricalPrice: Array<[number, number]> = []
@@ -803,10 +806,11 @@ export const getAllProtocolEmissions = async ({
 			unlockEvents: null,
 			upcomingEvent,
 			events: filteredEvents,
-			tPrice: coin?.price ?? null,
+			tPrice,
 			historicalPrice: formattedHistoricalPrice,
 			lastEvent,
-			tSymbol
+			tSymbol,
+			next24h
 		})
 	}
 	rows.sort((a, b) => {
@@ -973,16 +977,12 @@ export const getProtocolEmissons = async (
 	let upcomingTimestamp: number | null = null
 	for (const event of events) {
 		if (event.timestamp < nowSec) continue
-		const amount = getEmissionEventAmount(event)
-		if (amount === null || amount <= 0) continue
-		upcomingTimestamp = event.timestamp
-		break
+		if (event.unlockType === 'cliff' && !isUnknownEmissionEvent(event) && event.noOfTokens[0] <= 0) continue
+		if (upcomingTimestamp === null || event.timestamp < upcomingTimestamp) upcomingTimestamp = event.timestamp
 	}
 	if (upcomingTimestamp !== null) {
 		for (const event of events) {
-			if (event.timestamp < upcomingTimestamp) continue
-			if (event.timestamp > upcomingTimestamp) break
-			if (!isUnknownEmissionEvent(event)) upcomingEvent.push(event)
+			if (event.timestamp === upcomingTimestamp) upcomingEvent.push(event)
 		}
 	}
 

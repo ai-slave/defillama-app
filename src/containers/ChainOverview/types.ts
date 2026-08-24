@@ -9,6 +9,33 @@ export type ChainOverviewChartData = Partial<
 	Record<ChainChartLabels, Array<[timestampMs: number, value: number | null]>>
 >
 
+export type HomepageUnlockChartEntry = {
+	date: number
+	cliff: number | null
+	linear: number | null
+	total: number
+	unknownEventCount: number | null
+	missingPriceProtocolCount: number | null
+	breakdown: Array<{
+		token: string
+		value: number
+		cliff: number | null
+		linear: number | null
+		pct: string
+	}>
+}
+
+export type HomepageUnlockSummary = {
+	chart: HomepageUnlockChartEntry[]
+	total14d: number
+	cliff14d: number | null
+	linear14d: number | null
+	unknownEventCount: number | null
+	missingPriceProtocolCount: number | null
+	generatedAtSec: number
+	priceSnapshotAtSec: number | null
+}
+
 export interface IChainOverviewData {
 	chain: string
 	metadata: IChainMetadata
@@ -81,10 +108,7 @@ export interface IChainOverviewData {
 	nfts: { total24h: number | null } | null
 	etfs: Array<[number, number]> | null
 	allChains: Array<{ label: string; to: string }>
-	unlocks: {
-		chart: Array<{ date: number; total: number; breakdown: Array<{ token: string; value: number; pct: string }> }>
-		total14d: number
-	} | null
+	unlocks: HomepageUnlockSummary | null
 	tvlOptions: Array<{ name: string; key: string }>
 	charts: ChainChartLabels[]
 	description: string

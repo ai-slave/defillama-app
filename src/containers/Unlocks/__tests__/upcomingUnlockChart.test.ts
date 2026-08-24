@@ -281,8 +281,20 @@ describe('calculateUpcomingUnlockStatistics', () => {
 		)
 
 		expect(result).toEqual({
-			upcomingUnlocks7d: { cliff: 7, linear: 49, total: 56 },
-			upcomingUnlocks30d: { cliff: 7, linear: 203, total: 210 }
+			upcomingUnlocks7d: {
+				cliff: 7,
+				linear: 49,
+				total: 56,
+				unknownEventCount: 0,
+				missingPriceProtocolCount: 0
+			},
+			upcomingUnlocks30d: {
+				cliff: 7,
+				linear: 203,
+				total: 210,
+				unknownEventCount: 0,
+				missingPriceProtocolCount: 0
+			}
 		})
 	})
 
@@ -309,8 +321,10 @@ describe('calculateUpcomingUnlockStatistics', () => {
 			for (const point of item.linearPoints) linearValue += point[1]
 		}
 
-		expect({ cliff: cliffValue, linear: linearValue, total: cliffValue + linearValue }).toEqual(
-			statistics.upcomingUnlocks30d
-		)
+		expect(statistics.upcomingUnlocks30d).toMatchObject({
+			cliff: cliffValue,
+			linear: linearValue,
+			total: cliffValue + linearValue
+		})
 	})
 })

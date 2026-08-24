@@ -18,25 +18,43 @@ const protocol = (
 	price: number | null,
 	mcap: number | undefined,
 	events: IEmission['upcomingEvent']
-): IEmission => ({
-	sources: [],
-	protocolId: null,
-	circSupply: 0,
-	circSupply30d: 0,
-	totalLocked: 0,
-	maxSupply: 0,
-	unlocksPerDay: null,
-	token: `coingecko:${name.toLowerCase()}`,
-	events,
-	unlockEvents: null,
-	lastEvent: [],
-	historicalPrice: [],
-	tSymbol: name.toUpperCase(),
-	...(mcap !== undefined ? { mcap } : {}),
-	name,
-	tPrice: price,
-	upcomingEvent: events
-})
+): IEmission => {
+	let cliffAmount = 0
+	let linearAmount = 0
+	let unknownEventCount = 0
+	for (const event of events) {
+		if ('hasUnknownTokenAmount' in event) unknownEventCount += 1
+		else if (event.unlockType === 'cliff') cliffAmount += Math.max(event.noOfTokens[0], 0)
+		else linearAmount += Math.max(event.noOfTokens[1], 0) / 7
+	}
+	const next24h = {
+		cliff: cliffAmount,
+		linear: linearAmount,
+		total: cliffAmount + linearAmount,
+		unknownEventCount
+	}
+
+	return {
+		sources: [],
+		protocolId: null,
+		circSupply: 0,
+		circSupply30d: 0,
+		totalLocked: 0,
+		maxSupply: 0,
+		unlocksPerDay: next24h.total,
+		next24h,
+		token: `coingecko:${name.toLowerCase()}`,
+		events,
+		unlockEvents: null,
+		lastEvent: [],
+		historicalPrice: [],
+		tSymbol: name.toUpperCase(),
+		...(mcap !== undefined ? { mcap } : {}),
+		name,
+		tPrice: price,
+		upcomingEvent: events
+	}
+}
 
 const cliff = (description: string, category: string, timestamp: number, amount: number): EmissionEvent => ({
 	description,
@@ -73,6 +91,7 @@ const unknown = (description: string, category: string, timestamp: number): Emis
 const options = (overrides: Partial<Parameters<typeof filterUnlockTableProtocols>[1]> = {}) => ({
 	showOnlyWatchlist: false,
 	savedProtocols: new Set<string>(),
+	allUnlockTypes: ALL_UNLOCK_TYPES,
 	selectedUnlockTypes: ALL_UNLOCK_TYPES,
 	minUnlockValue: null,
 	maxUnlockValue: null,
@@ -130,7 +149,7 @@ describe('unlock table construction behavior fixture', () => {
 		expect(beta.upcomingEvent).toBe(betaEvents)
 	})
 
-	it('combines filters without treating a weekly rate as a one-time unlock value', () => {
+	it('combines filters using the integrated next-24h value', () => {
 		const alphaEvents: IEmission['upcomingEvent'] = [
 			linear('Team', 'insiders', 1, 10, 15),
 			cliff('Farm', 'farming', 2, 100)
@@ -150,10 +169,10 @@ describe('unlock table construction behavior fixture', () => {
 				showOnlyWatchlist: true,
 				savedProtocols: new Set(['Gamma', 'Alpha']),
 				selectedUnlockTypes: ['insiders'],
-				minUnlockValue: 25,
-				maxUnlockValue: 35,
-				minPerc: 2,
-				maxPerc: 4
+				minUnlockValue: 45,
+				maxUnlockValue: 55,
+				minPerc: 4,
+				maxPerc: 6
 			})
 		)
 
@@ -174,7 +193,7 @@ describe('unlock table construction behavior fixture', () => {
 		expect(result[0]).toBe(exact)
 	})
 
-	it('keeps known zero distinct while excluding unavailable value and percentage rows', () => {
+	it('filters on known values while excluding rows without required market data', () => {
 		const ignoredEvents: IEmission['upcomingEvent'] = [
 			unknown('Unknown amount', 'insiders', 1),
 			cliff('Known zero', 'insiders', 2, 0),
@@ -184,17 +203,18 @@ describe('unlock table construction behavior fixture', () => {
 		const missingMcap = protocol('Missing mcap', 2, undefined, ignoredEvents)
 		const zeroMcap = protocol('Zero mcap', 2, 0, ignoredEvents)
 		const negativeMcap = protocol('Negative mcap', 2, -1, ignoredEvents)
-		const knownZero = protocol('Known zero', 2, 100, ignoredEvents)
+		const knownSubtotalZero = protocol('Known subtotal zero', 2, 100, ignoredEvents)
+		const knownZero = protocol('Known zero', 2, 100, [cliff('Known zero', 'insiders', 2, 0)])
 
 		expect(
 			filterUnlockTableProtocols([missingPrice, missingMcap, zeroMcap, negativeMcap], options({ minUnlockValue: 1 }))
 		).toEqual([])
 		expect(
 			filterUnlockTableProtocols(
-				[missingPrice, missingMcap, zeroMcap, negativeMcap, knownZero],
+				[missingPrice, missingMcap, zeroMcap, negativeMcap, knownSubtotalZero, knownZero],
 				options({ minPerc: 0, maxPerc: 0 })
 			)
-		).toEqual([knownZero])
+		).toEqual([knownSubtotalZero, knownZero])
 	})
 
 	it('normalizes malformed and non-finite numeric query values once', () => {

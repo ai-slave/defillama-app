@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatUsd } from '~/utils/numberFormat'
-import { getCliffEmissionAmount } from './eventAmount'
+import { getEmissionAmountBreakdownOverInterval } from './eventAmount'
 import type { EnrichedProtocolEmission } from './queries'
 import { TopThreeRow } from './TopThreeRow'
 
@@ -23,6 +23,8 @@ export const TopUnlocks: React.FC<TopUnlocksProps> = ({ data, period, title, cla
 				symbol: string | null
 				geckoId?: string | null
 				value: number
+				cliff: number
+				linear: number
 			}
 		>()
 		const startTime = now - period * 24 * 60 * 60
@@ -30,20 +32,17 @@ export const TopUnlocks: React.FC<TopUnlocksProps> = ({ data, period, title, cla
 		for (const protocol of data) {
 			const price = protocol.tPrice
 			if (price == null || price <= 0) continue
-			let totalUnlockValue = 0
-			for (const event of protocol.events) {
-				if (event.timestamp < startTime || event.timestamp > now) continue
-				const amount = getCliffEmissionAmount(event)
-				if (amount === null || amount <= 0) continue
-				totalUnlockValue += amount * price
-			}
+			const amounts = getEmissionAmountBreakdownOverInterval(protocol.events, startTime, now)
+			const totalUnlockValue = amounts.total * price
 
 			if (totalUnlockValue > 0) {
 				protocolUnlocks.set(protocol.name, {
 					name: protocol.name,
 					symbol: protocol.tSymbol,
 					...(protocol.gecko_id !== undefined ? { geckoId: protocol.gecko_id } : {}),
-					value: totalUnlockValue
+					value: totalUnlockValue,
+					cliff: amounts.cliff * price,
+					linear: amounts.linear * price
 				})
 			}
 		}
@@ -59,7 +58,7 @@ export const TopUnlocks: React.FC<TopUnlocksProps> = ({ data, period, title, cla
 		<div className={`flex flex-col gap-3 text-primary ${className ?? ''}`}>
 			<Tooltip
 				className="heading-xs text-primary"
-				content={`List of top one-time cliff unlocks in the last ${period} ${period === 1 ? 'day' : 'days'}`}
+				content={`Top cliff and linear token releases accrued during the previous ${period} ${period === 1 ? 'day' : 'days'}. Events without a known amount or valid snapshot price are excluded.`}
 			>
 				{title}
 			</Tooltip>
@@ -71,13 +70,16 @@ export const TopUnlocks: React.FC<TopUnlocksProps> = ({ data, period, title, cla
 					symbol={unlock.symbol}
 					{...(unlock.geckoId !== undefined ? { geckoId: unlock.geckoId } : {})}
 					value={
-						<span className="mono-md-bold text-primary">
+						<Tooltip
+							content={`Cliff: ${formatUsd(unlock.cliff)}. Linear: ${formatUsd(unlock.linear)}.`}
+							render={<span className="mono-md-bold text-primary" />}
+						>
 							{formatUsd(unlock.value, {
 								compact: true,
 								minimumCompactValue: 1_000_000,
 								compactSuffix: 'lowercase'
 							})}
-						</span>
+						</Tooltip>
 					}
 				/>
 			))}

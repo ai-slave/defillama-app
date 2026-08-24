@@ -65,7 +65,7 @@ export function DepegWarningIcon({
 	deviation: number | null | undefined
 	symbol: string | null | undefined
 	// Per-surface tail of the tooltip: earn warns about the yield, borrow/loop about the asset.
-	consequence?: string
+	consequence?: string | undefined
 }) {
 	if (deviation == null) return null
 	const severity = getDepegWarningSeverity(deviation)

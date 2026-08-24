@@ -418,6 +418,41 @@ describe('getProtocolEmissons', () => {
 		expect(result.tokenPrice).toEqual({ price: 12.34, symbol: 'LINK' })
 	})
 
+	it('keeps the earliest actionable next event regardless of source ordering', async () => {
+		const nowSec = 1_800_000_000
+		vi.spyOn(Date, 'now').mockReturnValue(nowSec * 1000)
+		const unknownCliff: EmissionEvent = {
+			description: 'Unknown cliff',
+			category: 'insiders',
+			unlockType: 'cliff',
+			timestamp: nowSec + 20,
+			noOfTokens: [],
+			hasUnknownTokenAmount: true
+		}
+		const rateStop: EmissionEvent = {
+			description: 'Rate stop',
+			category: 'farming',
+			unlockType: 'linear',
+			timestamp: nowSec + 10,
+			noOfTokens: [7, 0],
+			rateDurationDays: 1
+		}
+		fetchProtocolEmissionMock.mockResolvedValue(
+			protocolDetail({
+				name: 'Unsorted',
+				events: [unknownCliff, cliff(nowSec + 5, -10), rateStop],
+				documentedData: chartData([{ label: 'team', data: [chartPoint(1, 10)] }])
+			})
+		)
+
+		const result = await getProtocolEmissons('unsorted', {
+			skipAvailabilityCheck: true,
+			tokenlist: {}
+		})
+
+		expect(result.upcomingEvent).toEqual([rateStop])
+	})
+
 	it('returns renderable raw and grouped forecast sections without exposing metadata-only TBD sections', async () => {
 		fetchProtocolEmissionMock.mockResolvedValue(
 			protocolDetailV2(
@@ -582,17 +617,18 @@ describe('getAllProtocolEmissions', () => {
 		})
 	})
 
-	it('excludes unknown token amounts from a shared upcoming timestamp', async () => {
+	it('keeps unknown token amounts visible at a shared upcoming timestamp', async () => {
 		const nowSec = 1_700_000_000
 		const upcomingTimestamp = nowSec + 3600
 		const dateNow = vi.spyOn(Date, 'now').mockReturnValue(nowSec * 1000)
 		const knownEvent = cliff(upcomingTimestamp, 10)
+		const unknownEvent = unknownLinear(upcomingTimestamp)
 		fetchAllProtocolEmissionsMock.mockResolvedValue([
 			protocolEmission({
 				name: 'Chainlink',
 				token: 'coingecko:chainlink',
 				geckoId: 'chainlink',
-				events: [knownEvent, unknownLinear(upcomingTimestamp)]
+				events: [knownEvent, unknownEvent]
 			})
 		])
 
@@ -602,7 +638,7 @@ describe('getAllProtocolEmissions', () => {
 		})
 		dateNow.mockRestore()
 
-		expect(result[0]?.upcomingEvent).toEqual([knownEvent])
+		expect(result[0]?.upcomingEvent).toEqual([knownEvent, unknownEvent])
 	})
 
 	it('uses artifact historical prices without fetching historical coin prices', async () => {
