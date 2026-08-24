@@ -16,7 +16,9 @@ beforeEach(() => {
 })
 
 function getCalledUrl(index: number): URL {
-	return new URL(fetchJson.mock.calls[index][0])
+	const call = fetchJson.mock.calls[index]
+	if (!call) throw new Error(`Missing fetchJson call ${index}`)
+	return new URL(call[0])
 }
 
 describe('equities api urls', () => {
@@ -40,15 +42,15 @@ describe('equities api urls', () => {
 		expect(getCalledUrl(2).searchParams.get('timeframe')).toBe('1M')
 	})
 
-	it('adds only ticker to the on-chain endpoint', async () => {
+	it('adds canonical ticker and country to the on-chain endpoint', async () => {
 		const api = await import('../api')
 
-		await api.fetchEquitiesOnchain('AAPL')
+		await api.fetchEquitiesOnchain('AAPL', 'US')
 
 		const onchainUrl = getCalledUrl(0)
 		expect(onchainUrl.pathname).toBe('/equities/v1/onchain')
 		expect(onchainUrl.searchParams.get('ticker')).toBe('AAPL')
-		expect(onchainUrl.searchParams.has('country')).toBe(false)
+		expect(onchainUrl.searchParams.get('country')).toBe('US')
 	})
 
 	it('keeps companies as a list request', async () => {
@@ -58,6 +60,7 @@ describe('equities api urls', () => {
 
 		const url = getCalledUrl(0)
 		expect(url.pathname).toBe('/equities/v1/companies')
+		expect(url.searchParams.get('countries')).toBe('US')
 		expect(url.searchParams.has('ticker')).toBe(false)
 		expect(url.searchParams.has('country')).toBe(false)
 	})
@@ -69,6 +72,7 @@ describe('equities api urls', () => {
 
 		const url = getCalledUrl(0)
 		expect(url.pathname).toBe('/equities/v1/companies-list')
+		expect(url.searchParams.get('countries')).toBe('US')
 		expect(url.searchParams.has('ticker')).toBe(false)
 		expect(url.searchParams.has('country')).toBe(false)
 	})

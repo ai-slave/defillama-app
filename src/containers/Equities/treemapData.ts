@@ -33,9 +33,9 @@ export const EQUITIES_TREEMAP_DEFAULT_LIMIT = 500
 const FALLBACK_SECTOR = 'Other'
 
 export interface IEquitiesTreemapLeaf extends MarketTreemapLeaf {
-	country?: string
-	sector?: string
-	industry?: string
+	country: string
+	sector: string
+	industry: string
 }
 
 export interface IEquitiesTreemapGroup extends Omit<MarketTreemapGroup, 'children'> {
@@ -161,8 +161,8 @@ export function buildEquitiesTreemapLeaves(
 	const leaves: IEquitiesTreemapLeaf[] = []
 	const { rows, sizeMetric } = ranking
 
-	for (let index = 0; index < rows.length; index++) {
-		const row = rows[index]
+	let index = 0
+	for (const row of rows) {
 		const changePct = row[colorMetric]
 		leaves.push({
 			name: row.ticker,
@@ -176,6 +176,7 @@ export function buildEquitiesTreemapLeaves(
 			industry: row.industry || '',
 			marketCap: row.marketCap
 		})
+		index++
 	}
 
 	return leaves
@@ -190,10 +191,11 @@ export function groupEquitiesTreemapLeaves(
 	const treeData: IEquitiesTreemapGroup[] = []
 	const groups = new Map<string, IEquitiesTreemapGroup>()
 	for (const leaf of leaves) {
-		let group = groups.get(leaf.sector)
+		const sector = leaf.sector
+		let group = groups.get(sector)
 		if (!group) {
-			group = { name: leaf.sector, value: [0, null], children: [] }
-			groups.set(leaf.sector, group)
+			group = { name: sector, value: [0, null], children: [] }
+			groups.set(sector, group)
 			treeData.push(group)
 		}
 		group.value[0] += leaf.value[0]

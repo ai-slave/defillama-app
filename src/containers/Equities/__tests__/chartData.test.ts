@@ -48,4 +48,18 @@ describe('equities chart data', () => {
 			dimensions: ['timestamp', 'Holders Revenue']
 		})
 	})
+
+	it('preserves measured zero in price and dimension charts', () => {
+		expect(buildPriceHistoryChart([['2025-01-01', 0]]).dataset.source).toEqual([[Date.parse('2025-01-01'), 0]])
+		expect(
+			buildEquitiesDimensionsChart(
+				{
+					...dimensions,
+					earnings: { ...dimensions.earnings, quarterly: [['2025-06-30', 0]] }
+				},
+				'earnings',
+				'quarterly'
+			).dataset.source
+		).toEqual([[Date.parse('2025-06-30T00:00:00Z'), 0]])
+	})
 })

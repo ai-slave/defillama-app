@@ -61,6 +61,12 @@ function makeRow(overrides: Partial<IEquitiesListCompanyRow>): IEquitiesListComp
 	}
 }
 
+function getRequiredItem<T>(items: T[], index: number): T {
+	const item = items[index]
+	if (item === undefined) throw new Error(`Missing item ${index}`)
+	return item
+}
+
 const baseOptions = {
 	groupBy: 'none',
 	sizeMetric: 'marketCap',
@@ -178,7 +184,7 @@ describe('buildEquitiesTreemap', () => {
 		const result = buildEquitiesTreemap(rows, { ...baseOptions, groupBy: 'sector' })
 		const groups = result.treeData as IEquitiesTreemapGroup[]
 		expect(groups.map((g) => g.name)).toEqual(['Healthcare', 'Technology'])
-		expect(groups[1].children.map((c) => c.name)).toEqual(['T2', 'T1'])
+		expect(getRequiredItem(groups, 1).children.map((c) => c.name)).toEqual(['T2', 'T1'])
 	})
 
 	it('reuses canonical leaves between flat and grouped presentation', () => {
@@ -195,8 +201,8 @@ describe('buildEquitiesTreemap', () => {
 
 		expect(flat).toBe(leaves)
 		expect(grouped.map((group) => group.name)).toEqual(['Technology', 'Healthcare'])
-		expect(grouped[0].children[0]).toBe(leaves[0])
-		expect(grouped[1].children[0]).toBe(leaves[1])
+		expect(getRequiredItem(getRequiredItem(grouped, 0).children, 0)).toBe(getRequiredItem(leaves, 0))
+		expect(getRequiredItem(getRequiredItem(grouped, 1).children, 0)).toBe(getRequiredItem(leaves, 1))
 	})
 
 	it('sets group value to the sum of children sizes', () => {
@@ -206,7 +212,7 @@ describe('buildEquitiesTreemap', () => {
 		]
 		const result = buildEquitiesTreemap(rows, { ...baseOptions, groupBy: 'sector' })
 		const groups = result.treeData as IEquitiesTreemapGroup[]
-		expect(groups[0].value).toEqual([300, null])
+		expect(getRequiredItem(groups, 0).value).toEqual([300, null])
 	})
 
 	it('puts companies with empty sector into Other group', () => {

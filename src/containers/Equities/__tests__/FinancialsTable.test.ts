@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { IEquitiesStatementsResponse } from '../api.types'
-import { getStatementHeaderIndexes } from '../FinancialsTable'
-import { getAvailableEquitiesStatementOptions, resolveEquitiesStatementOption } from '../financialStatements'
+import { getStatementHeaders } from '../FinancialsTable'
+import { buildEquitiesStatementRows, getEquitiesStatementValue } from '../financialStatements'
 
 const statementSection = {
 	labels: ['Revenue'],
@@ -12,22 +12,92 @@ const statementSection = {
 
 describe('equities financials statement headers', () => {
 	it('orders periodEnding values from newest to oldest', () => {
-		expect(getStatementHeaderIndexes(['1984-03-31', '1984-09-30', '1984-06-30'])).toEqual([1, 2, 0])
+		expect(getStatementHeaders(['1984-03-31', '1984-09-30', '1984-06-30'])).toEqual([
+			{ index: 1, periodEnding: '1984-09-30' },
+			{ index: 2, periodEnding: '1984-06-30' },
+			{ index: 0, periodEnding: '1984-03-31' }
+		])
 	})
 
-	it('falls back to the first section the API returned', () => {
-		const statements: IEquitiesStatementsResponse = { balanceSheet: statementSection }
-
-		expect(getAvailableEquitiesStatementOptions(statements)).toEqual(['Balance Sheet'])
-		expect(resolveEquitiesStatementOption(statements, 'Income Statement')).toBe('Balance Sheet')
-	})
-
-	it('keeps the requested section when it is available', () => {
+	it('keeps all required sections present when one has no periods', () => {
+		const emptySection = {
+			...statementSection,
+			quarterly: { periodEnding: [], values: [[]], children: {} },
+			annual: { periodEnding: [], values: [[]], children: {} }
+		}
 		const statements: IEquitiesStatementsResponse = {
-			incomeStatement: statementSection,
-			balanceSheet: statementSection
+			incomeStatement: emptySection,
+			balanceSheet: statementSection,
+			cashflow: statementSection
 		}
 
-		expect(resolveEquitiesStatementOption(statements, 'Income Statement')).toBe('Income Statement')
+		expect(buildEquitiesStatementRows(statements, 'Income Statement', 'Quarterly')).toEqual([
+			{ id: 'Revenue', label: 'Revenue', values: [], depth: 0 }
+		])
+	})
+
+	it('keeps parent and child values aligned with sorted headers', () => {
+		const incomeStatement = {
+			labels: ['Revenue'],
+			children: {
+				quarterly: { Revenue: { labels: ['Product'] } },
+				annual: {}
+			},
+			quarterly: {
+				periodEnding: ['1984-03-31', '1984-09-30', '1984-06-30'],
+				values: [[10, null, 0]],
+				children: { Revenue: { values: [[null, 20, 0]] } }
+			},
+			annual: { periodEnding: [], values: [[]], children: {} }
+		}
+		const statements: IEquitiesStatementsResponse = {
+			incomeStatement,
+			balanceSheet: statementSection,
+			cashflow: statementSection
+		}
+		const headers = getStatementHeaders(incomeStatement.quarterly.periodEnding)
+		const [row] = buildEquitiesStatementRows(statements, 'Income Statement', 'Quarterly')
+		if (!row) throw new Error('Missing Revenue row')
+		const [childRow] = row.subRows ?? []
+		if (!childRow) throw new Error('Missing Product row')
+		const [newestHeader] = headers
+		if (!newestHeader) throw new Error('Missing newest statement header')
+
+		expect(headers.map(({ index }) => row.values[index])).toEqual([null, 0, 10])
+		expect(headers.map(({ index }) => childRow.values[index])).toEqual([20, 0, null])
+		expect(getEquitiesStatementValue(row, newestHeader)).toBeNull()
+	})
+
+	it('rejects malformed producer row and cell alignment', () => {
+		const missingParentRow: IEquitiesStatementsResponse = {
+			incomeStatement: {
+				...statementSection,
+				quarterly: { periodEnding: ['2026-03-31'], values: [], children: {} }
+			},
+			balanceSheet: statementSection,
+			cashflow: statementSection
+		}
+		const missingChildRow: IEquitiesStatementsResponse = {
+			incomeStatement: {
+				...statementSection,
+				children: { quarterly: { Revenue: { labels: ['Product'] } }, annual: {} },
+				quarterly: { periodEnding: ['2026-03-31'], values: [[1]], children: {} }
+			},
+			balanceSheet: statementSection,
+			cashflow: statementSection
+		}
+
+		expect(() => buildEquitiesStatementRows(missingParentRow, 'Income Statement', 'Quarterly')).toThrow(
+			'Missing statement values for Revenue'
+		)
+		expect(() => buildEquitiesStatementRows(missingChildRow, 'Income Statement', 'Quarterly')).toThrow(
+			'Missing statement breakdown values for Revenue'
+		)
+		expect(() =>
+			getEquitiesStatementValue(
+				{ id: 'Revenue', label: 'Revenue', values: [], depth: 0 },
+				{ index: 0, periodEnding: '2026-03-31' }
+			)
+		).toThrow('Missing Revenue value for 2026-03-31')
 	})
 })

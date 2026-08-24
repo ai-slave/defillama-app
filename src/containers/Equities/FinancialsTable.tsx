@@ -18,9 +18,9 @@ import {
 	equitiesStatementPeriodMap,
 	equitiesStatementSectionMap,
 	flattenEquitiesStatementRows,
-	getAvailableEquitiesStatementOptions,
-	getEquitiesStatementHeaderIndexes,
-	resolveEquitiesStatementOption,
+	getEquitiesStatementHeaders,
+	getEquitiesStatementValue,
+	type EquitiesStatementHeader,
 	type EquitiesStatementOption,
 	type EquitiesStatementPeriodOption
 } from './financialStatements'
@@ -37,12 +37,9 @@ const periodQueryValueMap: Record<EquitiesStatementPeriodOption, string> = {
 	Annual: 'annual'
 }
 
-function getStatementTypeFromQueryValue(
-	value: string | undefined,
-	statements: IEquitiesStatementsResponse
-): EquitiesStatementOption {
+function getStatementTypeFromQueryValue(value: string | undefined): EquitiesStatementOption {
 	const requested = EQUITIES_STATEMENT_OPTIONS.find((option) => statementQueryValueMap[option] === value)
-	return resolveEquitiesStatementOption(statements, requested ?? 'Income Statement')
+	return requested ?? 'Income Statement'
 }
 
 function getPeriodTypeFromQueryValue(value?: string): EquitiesStatementPeriodOption {
@@ -50,8 +47,8 @@ function getPeriodTypeFromQueryValue(value?: string): EquitiesStatementPeriodOpt
 	return periodType ?? 'Quarterly'
 }
 
-export function getStatementHeaderIndexes(periodEnding: string[]): number[] {
-	return getEquitiesStatementHeaderIndexes(periodEnding)
+export function getStatementHeaders(periodEnding: string[]): EquitiesStatementHeader[] {
+	return getEquitiesStatementHeaders(periodEnding)
 }
 
 function formatStatementPeriodLabel(periodEnding: string): string {
@@ -60,11 +57,11 @@ function formatStatementPeriodLabel(periodEnding: string): string {
 
 function FinancialRow({
 	row,
-	headerIndexes,
+	headers,
 	showExpandPlaceholder
 }: {
 	row: IEquitiesStatementTableRow
-	headerIndexes: number[]
+	headers: EquitiesStatementHeader[]
 	showExpandPlaceholder: boolean
 }) {
 	const hasSubRows = Boolean(row.subRows?.length)
@@ -101,12 +98,12 @@ function FinancialRow({
 						<span className="truncate">{row.label}</span>
 					</div>
 				</th>
-				{headerIndexes.map((index) => (
+				{headers.map((header) => (
 					<td
-						key={`${row.id}-${index}`}
+						key={`${row.id}-${header.index}`}
 						className="group-hover-wash truncate border border-subtle p-2 text-left font-medium"
 					>
-						{formatEquitiesStatementCellValue(row.label, row.values[index] ?? null)}
+						{formatEquitiesStatementCellValue(row.label, getEquitiesStatementValue(row, header))}
 					</td>
 				))}
 			</tr>
@@ -116,12 +113,12 @@ function FinancialRow({
 							<th className="group-hover-wash w-[28%] truncate border border-subtle bg-surface p-2 pl-9 text-left font-normal italic">
 								<span className="truncate">{subRow.label}</span>
 							</th>
-							{headerIndexes.map((index) => (
+							{headers.map((header) => (
 								<td
-									key={`${subRow.id}-${index}`}
+									key={`${subRow.id}-${header.index}`}
 									className="group-hover-wash truncate border border-subtle p-2 text-left font-normal"
 								>
-									{formatEquitiesStatementCellValue(subRow.label, subRow.values[index] ?? null)}
+									{formatEquitiesStatementCellValue(subRow.label, getEquitiesStatementValue(subRow, header))}
 								</td>
 							))}
 						</tr>
@@ -135,17 +132,16 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 	const router = useRouter()
 	const statementQueryValue = readSingleQueryValue(router.query['financials-table'])
 	const periodQueryValue = readSingleQueryValue(router.query['financials-timeframe'])
-	const availableStatementOptions = useMemo(() => getAvailableEquitiesStatementOptions(statements), [statements])
-	const statementType: EquitiesStatementOption = getStatementTypeFromQueryValue(statementQueryValue, statements)
+	const statementType: EquitiesStatementOption = getStatementTypeFromQueryValue(statementQueryValue)
 	const periodType: EquitiesStatementPeriodOption = getPeriodTypeFromQueryValue(periodQueryValue)
 
-	const section = statements[equitiesStatementSectionMap[statementType]]!
+	const section = statements[equitiesStatementSectionMap[statementType]]
 	const periodData = section[equitiesStatementPeriodMap[periodType]]
 	const rows = useMemo(
 		() => buildEquitiesStatementRows(statements, statementType, periodType),
 		[statements, statementType, periodType]
 	)
-	const headerIndexes = useMemo(() => getStatementHeaderIndexes(periodData.periodEnding), [periodData.periodEnding])
+	const statementHeaders = useMemo(() => getStatementHeaders(periodData.periodEnding), [periodData.periodEnding])
 	const hasAnyBreakdownRows = rows.some((row) => (row.subRows?.length ?? 0) > 0)
 	const setStatementType = (value: EquitiesStatementOption) => {
 		void pushShallowQuery(router, {
@@ -158,23 +154,23 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 		})
 	}
 	const prepareCsv = () => {
-		const headers = ['Name']
-		for (const index of headerIndexes) {
-			headers.push(formatStatementPeriodLabel(periodData.periodEnding[index]))
+		const csvHeaders = ['Name']
+		for (const header of statementHeaders) {
+			csvHeaders.push(formatStatementPeriodLabel(header.periodEnding))
 		}
 		const flattenedRows = flattenEquitiesStatementRows(rows)
 		const csvRows: Array<Array<string | number>> = []
 		for (const row of flattenedRows) {
 			const csvRow: Array<string | number> = [row.depth > 0 ? `  ${row.label}` : row.label]
-			for (const index of headerIndexes) {
-				csvRow.push(row.values[index] ?? '')
+			for (const header of statementHeaders) {
+				csvRow.push(getEquitiesStatementValue(row, header) ?? '')
 			}
 			csvRows.push(csvRow)
 		}
 
 		return {
 			filename: `equities-${statementType.toLowerCase().replaceAll(' ', '-')}-${periodType.toLowerCase()}`,
-			rows: [headers, ...csvRows]
+			rows: [csvHeaders, ...csvRows]
 		}
 	}
 
@@ -188,7 +184,7 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 						size="md"
 						selectedValue={statementType}
 						setValue={(value) => startTransition(() => setStatementType(value))}
-						values={availableStatementOptions}
+						values={EQUITIES_STATEMENT_OPTIONS}
 					/>
 					<TagGroup
 						variant="default"
@@ -222,24 +218,24 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 					<thead>
 						<tr>
 							<th className="min-w-[220px] truncate border border-subtle bg-page p-2 text-left font-medium">Name</th>
-							{headerIndexes.map((index, position) => {
-								let tooltipContent = `Ends at ${periodData.periodEnding[index]}`
-								const previousIndex = headerIndexes[position + 1]
+							{statementHeaders.map((header, position) => {
+								let tooltipContent = `Ends at ${header.periodEnding}`
+								const previousHeader = statementHeaders[position + 1]
 
-								if (previousIndex !== undefined) {
-									const startDate = new Date(`${periodData.periodEnding[previousIndex]}T00:00:00Z`)
+								if (previousHeader !== undefined) {
+									const startDate = new Date(`${previousHeader.periodEnding}T00:00:00Z`)
 									startDate.setUTCDate(startDate.getUTCDate() + 1)
-									tooltipContent = `From ${startDate.toISOString().slice(0, 10)} till ${periodData.periodEnding[index]}`
+									tooltipContent = `From ${startDate.toISOString().slice(0, 10)} till ${header.periodEnding}`
 								}
 
 								return (
 									<th
-										key={`${statementType}-${periodType}-${periodData.periodEnding[index]}`}
+										key={`${statementType}-${periodType}-${header.periodEnding}`}
 										className="min-w-[132px] truncate border border-subtle bg-page p-2 text-left font-medium"
 									>
 										<Tooltip content={tooltipContent}>
 											<span className="underline decoration-dotted underline-offset-3">
-												{formatStatementPeriodLabel(periodData.periodEnding[index])}
+												{formatStatementPeriodLabel(header.periodEnding)}
 											</span>
 										</Tooltip>
 									</th>
@@ -252,7 +248,7 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 							<FinancialRow
 								key={row.id}
 								row={row}
-								headerIndexes={headerIndexes}
+								headers={statementHeaders}
 								showExpandPlaceholder={hasAnyBreakdownRows}
 							/>
 						))}

@@ -21,23 +21,14 @@ export const equitiesStatementPeriodMap: Record<EquitiesStatementPeriodOption, S
 	Annual: 'annual'
 }
 
-export function getAvailableEquitiesStatementOptions(
-	statements: IEquitiesStatementsResponse
-): EquitiesStatementOption[] {
-	const available: EquitiesStatementOption[] = []
-	for (const option of EQUITIES_STATEMENT_OPTIONS) {
-		if (statements[equitiesStatementSectionMap[option]]) available.push(option)
-	}
-	return available
-}
-
-export function resolveEquitiesStatementOption(
-	statements: IEquitiesStatementsResponse,
-	requested: EquitiesStatementOption
-): EquitiesStatementOption {
-	if (statements[equitiesStatementSectionMap[requested]]) return requested
-	// The equities API guarantees at least one statement section, though each named section is optional.
-	return getAvailableEquitiesStatementOptions(statements)[0]!
+function getRequiredStatementRow(
+	rows: Array<Array<number | null>>,
+	index: number,
+	label: string
+): Array<number | null> {
+	const row = rows[index]
+	if (!row) throw new Error(`Missing statement values for ${label}`)
+	return row
 }
 
 export function buildEquitiesStatementRows(
@@ -45,51 +36,70 @@ export function buildEquitiesStatementRows(
 	statementType: EquitiesStatementOption,
 	periodType: EquitiesStatementPeriodOption
 ): IEquitiesStatementTableRow[] {
-	const section = statements[equitiesStatementSectionMap[statementType]]!
+	const section = statements[equitiesStatementSectionMap[statementType]]
 	const periodKey = equitiesStatementPeriodMap[periodType]
 	const periodData = section[periodKey]
 	const childrenMeta = section.children[periodKey]
 	const rows: IEquitiesStatementTableRow[] = []
 
-	for (let rowIndex = 0; rowIndex < section.labels.length; rowIndex++) {
-		const label = section.labels[rowIndex]
-		const childLabels = childrenMeta[label]?.labels ?? []
-		const childValues = periodData.children[label]?.values ?? []
+	let rowIndex = 0
+	for (const label of section.labels) {
+		const childLabels = childrenMeta[label]?.labels
 		let subRows: IEquitiesStatementTableRow[] | undefined
 
-		if (childLabels.length > 0) {
+		if (childLabels && childLabels.length > 0) {
+			const childData = periodData.children[label]
+			if (!childData) throw new Error(`Missing statement breakdown values for ${label}`)
 			subRows = []
-			for (let childIndex = 0; childIndex < childLabels.length; childIndex++) {
-				const childLabel = childLabels[childIndex]
+			let childIndex = 0
+			for (const childLabel of childLabels) {
 				subRows.push({
 					id: `${label}-${childLabel}`,
 					label: childLabel,
-					values: childValues[childIndex] ?? [],
+					values: getRequiredStatementRow(childData.values, childIndex, `${label} / ${childLabel}`),
 					depth: 1
 				})
+				childIndex++
 			}
 		}
 
 		rows.push({
 			id: label,
 			label,
-			values: periodData.values[rowIndex] ?? [],
+			values: getRequiredStatementRow(periodData.values, rowIndex, label),
 			depth: 0,
-			subRows
+			...(subRows ? { subRows } : {})
 		})
+		rowIndex++
 	}
 
 	return rows
 }
 
-export function getEquitiesStatementHeaderIndexes(periodEnding: string[]): number[] {
-	const indexes: number[] = []
-	for (let index = 0; index < periodEnding.length; index++) indexes.push(index)
-	return indexes.sort((a, b) => {
-		const aTime = new Date(`${periodEnding[a] ?? ''}T00:00:00Z`).getTime()
-		const bTime = new Date(`${periodEnding[b] ?? ''}T00:00:00Z`).getTime()
-		return bTime - aTime
-	})
+export interface EquitiesStatementHeader {
+	index: number
+	periodEnding: string
+}
+
+export function getEquitiesStatementValue(
+	row: IEquitiesStatementTableRow,
+	header: EquitiesStatementHeader
+): number | null {
+	const value = row.values[header.index]
+	if (value === undefined) throw new Error(`Missing ${row.label} value for ${header.periodEnding}`)
+	return value
+}
+
+export function getEquitiesStatementHeaders(periodEnding: string[]): EquitiesStatementHeader[] {
+	const headers: EquitiesStatementHeader[] = []
+	let index = 0
+	for (const date of periodEnding) {
+		headers.push({ index, periodEnding: date })
+		index++
+	}
+	return headers.sort(
+		(a, b) => new Date(`${b.periodEnding}T00:00:00Z`).getTime() - new Date(`${a.periodEnding}T00:00:00Z`).getTime()
+	)
 }
 
 export function flattenEquitiesStatementRows(rows: IEquitiesStatementTableRow[]): IEquitiesStatementTableRow[] {

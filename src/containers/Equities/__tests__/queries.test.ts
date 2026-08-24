@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type {
 	EquitiesPriceHistory,
+	IEquitiesCompanyApiItem,
 	IEquitiesDimensionsResponse,
 	IEquitiesFilingApiItem,
 	IEquitiesMetadataResponse,
@@ -8,18 +9,18 @@ import type {
 	IEquitiesStatementsResponse,
 	IEquitiesSummaryResponse
 } from '../api.types'
-import { getEquitiesTickerPageData } from '../queries'
+import { getEquitiesListPageData, getEquitiesTickerPageData } from '../queries'
 
 const mocks = vi.hoisted(() => ({
-	fetchEquitiesCompanies: vi.fn(),
+	fetchEquitiesCompanies: vi.fn<() => Promise<IEquitiesCompanyApiItem[]>>(),
 	fetchEquitiesCompaniesList: vi.fn(),
-	fetchEquitiesDimensions: vi.fn<() => Promise<IEquitiesDimensionsResponse>>(),
-	fetchEquitiesFilings: vi.fn<() => Promise<IEquitiesFilingApiItem[]>>(),
-	fetchEquitiesMetadata: vi.fn<() => Promise<IEquitiesMetadataResponse>>(),
-	fetchEquitiesOnchain: vi.fn<() => Promise<IEquitiesOnchainResponse>>(),
-	fetchEquitiesPriceHistory: vi.fn<() => Promise<EquitiesPriceHistory>>(),
-	fetchEquitiesStatements: vi.fn<() => Promise<IEquitiesStatementsResponse>>(),
-	fetchEquitiesSummary: vi.fn<() => Promise<IEquitiesSummaryResponse>>()
+	fetchEquitiesDimensions: vi.fn<(ticker: string, country: string) => Promise<IEquitiesDimensionsResponse>>(),
+	fetchEquitiesFilings: vi.fn<(ticker: string, country: string) => Promise<IEquitiesFilingApiItem[]>>(),
+	fetchEquitiesMetadata: vi.fn<(ticker: string, country: string) => Promise<IEquitiesMetadataResponse>>(),
+	fetchEquitiesOnchain: vi.fn<(ticker: string, country: string) => Promise<IEquitiesOnchainResponse>>(),
+	fetchEquitiesPriceHistory: vi.fn<(ticker: string, country: string) => Promise<EquitiesPriceHistory>>(),
+	fetchEquitiesStatements: vi.fn<(ticker: string, country: string) => Promise<IEquitiesStatementsResponse>>(),
+	fetchEquitiesSummary: vi.fn<(ticker: string, country: string) => Promise<IEquitiesSummaryResponse>>()
 }))
 
 vi.mock('../api', () => mocks)
@@ -30,9 +31,81 @@ const emptyDimensions: IEquitiesDimensionsResponse = {
 	earnings: { annual: [], quarterly: [] }
 }
 
+const emptyStatementSection = {
+	labels: [],
+	children: { quarterly: {}, annual: {} },
+	quarterly: { periodEnding: [], values: [], children: {} },
+	annual: { periodEnding: [], values: [], children: {} }
+}
+
+const emptyStatements: IEquitiesStatementsResponse = {
+	incomeStatement: emptyStatementSection,
+	balanceSheet: emptyStatementSection,
+	cashflow: emptyStatementSection
+}
+
+const emptySummary: IEquitiesSummaryResponse = {
+	currentPrice: null,
+	volume: null,
+	marketCap: null,
+	circulatingMarketCap: null,
+	enterpriseValue: null,
+	fiftyTwoWeekHigh: null,
+	fiftyTwoWeekLow: null,
+	dividendYield: null,
+	trailingPE: null,
+	priceToRevenue: null,
+	priceChangePercentage1d: null,
+	priceChangePercentage7d: null,
+	priceChangePercentage1m: null,
+	priceChange1d: null,
+	marketCapChange1d: null,
+	priceToBook: null,
+	enterpriseValueToEbitda: null,
+	holdersYield: null,
+	updatedAt: '2026-08-24T00:00:00.000Z',
+	revenueTTM: null,
+	grossProfitTTM: null,
+	earningsTTM: null,
+	ebitdaTTM: null,
+	operatingProfitMarginTTM: null,
+	holdersRevenueTTM: null,
+	holderEarningsTTM: null,
+	dividendsTTM: null,
+	stockRepurchaseTTM: null,
+	stockIssuanceTTM: null,
+	stockBasedCompensationTTM: null,
+	cashAndCashEquivalents: null,
+	totalAssets: null,
+	totalLiabilities: null,
+	totalShareholdersEquity: null,
+	totalDebt: null,
+	circulatingSupply: null,
+	totalSupply: null,
+	employeeCount: null
+}
+
+function company(ticker: string, marketCap: number): IEquitiesCompanyApiItem {
+	return {
+		...emptySummary,
+		ticker,
+		country: 'US',
+		name: ticker,
+		marketCap,
+		sector: 'Technology',
+		industry: 'Semiconductors'
+	}
+}
+
+const pageMetadata = {
+	protocolDisplayNames: new Map<string, string>(),
+	rwaPlatforms: [],
+	emissionsProtocolBySlug: {}
+}
+
 beforeEach(() => {
 	vi.clearAllMocks()
-	mocks.fetchEquitiesSummary.mockResolvedValue({} as IEquitiesSummaryResponse)
+	mocks.fetchEquitiesSummary.mockResolvedValue(emptySummary)
 	mocks.fetchEquitiesMetadata.mockResolvedValue({
 		ticker: 'NVDA',
 		name: 'NVIDIA Corporation',
@@ -45,10 +118,20 @@ beforeEach(() => {
 		startDate: ''
 	})
 	mocks.fetchEquitiesPriceHistory.mockResolvedValue([])
-	mocks.fetchEquitiesStatements.mockResolvedValue({} as IEquitiesStatementsResponse)
+	mocks.fetchEquitiesStatements.mockResolvedValue(emptyStatements)
 	mocks.fetchEquitiesFilings.mockResolvedValue([])
 	mocks.fetchEquitiesDimensions.mockResolvedValue(emptyDimensions)
 	mocks.fetchEquitiesOnchain.mockResolvedValue({ perps: [], tokens: [] })
+})
+
+describe('getEquitiesListPageData', () => {
+	it('preserves producer company order', async () => {
+		mocks.fetchEquitiesCompanies.mockResolvedValue([company('FIRST', 1), company('SECOND', 2)])
+
+		const result = await getEquitiesListPageData()
+
+		expect(result.companies.map(({ ticker }) => ticker)).toEqual(['FIRST', 'SECOND'])
+	})
 })
 
 describe('getEquitiesTickerPageData', () => {
@@ -70,5 +153,148 @@ describe('getEquitiesTickerPageData', () => {
 		})
 
 		expect(result?.unlocksSlug).toBeNull()
+	})
+
+	it('keeps successful empty optional sources available', async () => {
+		const result = await getEquitiesTickerPageData('NVDA', 'US', {
+			protocolDisplayNames: new Map(),
+			rwaPlatforms: [],
+			emissionsProtocolBySlug: {}
+		})
+
+		expect(result?.priceHistoryChart?.dataset.source).toEqual([])
+		expect(result?.filings).toEqual([])
+		expect(result?.onchain).toEqual({ perps: [], tokens: [] })
+		expect(mocks.fetchEquitiesOnchain).toHaveBeenCalledWith('NVDA', 'US')
+	})
+
+	it('preserves populated optional data and maps on-chain display names', async () => {
+		mocks.fetchEquitiesFilings.mockResolvedValue([
+			{
+				filingDate: '2026-08-20',
+				reportDate: null,
+				form: '10-Q',
+				primaryDocumentUrl: 'https://www.sec.gov/filing',
+				documentDescription: 'Quarterly report'
+			}
+		])
+		mocks.fetchEquitiesOnchain.mockResolvedValue({
+			perps: [
+				{
+					pair: 'NVDA/USD',
+					price: null,
+					volume24h: 0,
+					openInterest: null,
+					annualizedFundingRate: 0,
+					tradeUrl: 'https://example.com/cex',
+					contractSlug: 'nvda',
+					exchangeProtocolSlug: 'binance',
+					rwaPlatformSlug: 'ondo-finance',
+					exchangeType: 'CEX',
+					updatedAt: '2026-08-24T00:00:00.000Z'
+				},
+				{
+					pair: 'NVDA/USDC',
+					price: 180,
+					volume24h: null,
+					openInterest: 0,
+					annualizedFundingRate: null,
+					tradeUrl: 'https://example.com/dex',
+					contractSlug: 'nvda',
+					exchangeProtocolSlug: 'binance',
+					rwaPlatformSlug: 'ondo-finance',
+					exchangeType: 'DEX',
+					updatedAt: '2026-08-24T00:00:00.000Z'
+				}
+			],
+			tokens: [
+				{
+					issuer: 'Ondo',
+					issuerRwaPlatformSlug: 'ondo-finance',
+					price: null,
+					assetSlug: 'nvda',
+					activeMarketcap: 0
+				}
+			]
+		})
+
+		const result = await getEquitiesTickerPageData('NVDA', 'US', {
+			protocolDisplayNames: new Map([['binance', 'Binance']]),
+			rwaPlatforms: ['Ondo Finance'],
+			emissionsProtocolBySlug: {}
+		})
+
+		expect(result?.filings?.[0]?.reportDate).toBeNull()
+		expect(result?.filingForms).toEqual(['10-Q'])
+		expect(result?.onchain?.perps.map(({ exchangeType }) => exchangeType)).toEqual(['CEX', 'DEX'])
+		expect(result?.onchain?.perps[0]).toMatchObject({
+			price: null,
+			volume24h: 0,
+			openInterest: null,
+			annualizedFundingRate: 0,
+			exchangeName: 'Binance',
+			platformName: 'Ondo Finance'
+		})
+		expect(result?.onchain?.tokens[0]).toMatchObject({
+			price: null,
+			activeMarketcap: 0,
+			issuerRwaPlatformName: 'Ondo Finance'
+		})
+	})
+
+	it('keeps filings and on-chain data available when price history fails', async () => {
+		mocks.fetchEquitiesPriceHistory.mockRejectedValue(new Error('prices unavailable'))
+
+		const result = await getEquitiesTickerPageData('NVDA', 'US', pageMetadata)
+
+		expect(result).not.toBeNull()
+		expect(result?.priceHistoryChart).toBeNull()
+		expect(result?.filings).toEqual([])
+		expect(result?.filingForms).toEqual([])
+		expect(result?.onchain).toEqual({ perps: [], tokens: [] })
+	})
+
+	it('keeps price and on-chain data available when filings fail', async () => {
+		mocks.fetchEquitiesFilings.mockRejectedValue(new Error('filings unavailable'))
+
+		const result = await getEquitiesTickerPageData('NVDA', 'US', pageMetadata)
+
+		expect(result).not.toBeNull()
+		expect(result?.priceHistoryChart?.dataset.source).toEqual([])
+		expect(result?.filings).toBeNull()
+		expect(result?.filingForms).toEqual([])
+		expect(result?.onchain).toEqual({ perps: [], tokens: [] })
+	})
+
+	it('keeps price and filings data available when on-chain data fails', async () => {
+		mocks.fetchEquitiesOnchain.mockRejectedValue(new Error('on-chain unavailable'))
+
+		const result = await getEquitiesTickerPageData('NVDA', 'US', pageMetadata)
+
+		expect(result).not.toBeNull()
+		expect(result?.priceHistoryChart?.dataset.source).toEqual([])
+		expect(result?.filings).toEqual([])
+		expect(result?.onchain).toBeNull()
+	})
+
+	it('keeps required statement failure page-atomic', async () => {
+		mocks.fetchEquitiesStatements.mockRejectedValue(new Error('statements unavailable'))
+
+		await expect(getEquitiesTickerPageData('NVDA', 'US', pageMetadata)).resolves.toBeNull()
+	})
+
+	it('keeps required dimensions failure page-atomic', async () => {
+		mocks.fetchEquitiesDimensions.mockRejectedValue(new Error('dimensions unavailable'))
+
+		await expect(getEquitiesTickerPageData('NVDA', 'US', pageMetadata)).resolves.toBeNull()
+	})
+
+	it.each([
+		['summary', () => mocks.fetchEquitiesSummary.mockRejectedValue(new Error('summary unavailable'))],
+		['metadata', () => mocks.fetchEquitiesMetadata.mockRejectedValue(new Error('metadata unavailable'))]
+	])('keeps required %s request failure page-atomic', async (_source, rejectRequest) => {
+		rejectRequest()
+
+		await expect(getEquitiesTickerPageData('NVDA', 'US', pageMetadata)).rejects.toThrow('unavailable')
 	})
 })

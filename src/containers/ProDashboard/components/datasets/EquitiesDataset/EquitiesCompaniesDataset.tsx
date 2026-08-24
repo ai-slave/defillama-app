@@ -21,11 +21,16 @@ import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetch
 import { PRO_EQUITIES_COMPANIES_QUERY_KEY } from '~/containers/ProDashboard/tableQueryKeys'
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV } from '~/utils/download'
-import { formatPercentChange, formatRatio, formatUsd, formatPercent } from '~/utils/numberFormat'
+import { formatPercentChange, formatRatio, formatUsd } from '~/utils/numberFormat'
 import { CSVExportButton } from '../../CSVExportButton'
 import { LoadingSpinner } from '../../LoadingSpinner'
 import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
+import {
+	formatEquitiesCompanyDividendYield,
+	formatEquitiesCompanyVolume,
+	getEquitiesCompanyCsvRow
+} from './EquitiesCompaniesDataset.utils'
 
 const columnHelper = createColumnHelper<IEquitiesCompanyApiItem>()
 
@@ -65,8 +70,7 @@ const columns = [
 	columnHelper.accessor('volume', {
 		id: 'volume',
 		header: 'Volume',
-		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+		cell: (info) => formatEquitiesCompanyVolume(info.getValue()),
 		meta: { align: 'end' },
 		size: 130
 	}),
@@ -116,12 +120,7 @@ const columns = [
 	columnHelper.accessor('dividendYield', {
 		id: 'dividendYield',
 		header: 'Div Yield',
-		cell: (info) => {
-			const val = info.getValue()
-			return val != null
-				? `${formatPercent(val, { input: 'fraction', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
-				: '—'
-		},
+		cell: (info) => formatEquitiesCompanyDividendYield(info.getValue()),
 		meta: { align: 'end' },
 		size: 100
 	}),
@@ -273,21 +272,7 @@ export function EquitiesCompaniesDataset() {
 									]
 								]
 								for (const row of rows) {
-									const item = row.original
-									csv.push([
-										item.ticker,
-										item.name,
-										item.currentPrice,
-										item.marketCap,
-										item.volume,
-										item.priceChangePercentage1d,
-										item.priceChangePercentage7d,
-										item.priceChangePercentage1m,
-										item.trailingPE,
-										item.dividendYield,
-										item.revenueTTM,
-										item.earningsTTM
-									])
+									csv.push(getEquitiesCompanyCsvRow(row.original))
 								}
 
 								downloadCSV('equities-companies.csv', csv, { addTimestamp: true })

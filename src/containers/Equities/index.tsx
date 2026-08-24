@@ -802,7 +802,7 @@ function EquitiesRankingsTable({
 				]
 					.filter(Boolean)
 					.join(' ') || undefined
-			options.push({ key, name, help })
+			options.push({ key, name, ...(help === undefined ? {} : { help }) })
 		}
 		return options
 	}, [filters])

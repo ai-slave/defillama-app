@@ -13,11 +13,12 @@ const FUNDAMENTAL_CHART_LABELS: Record<EquitiesDimensionMetric, string> = {
 }
 
 export function buildPriceHistoryChart(priceHistory: EquitiesPriceHistory): IEquitiesPriceHistoryChart {
-	const source: number[][] = []
-	// The equities API returns newest-first rows; reverse iteration emits the chart contract in one pass.
-	for (let i = priceHistory.length - 1; i >= 0; i--) {
-		const point = priceHistory[i]
-		source.push([Date.parse(point[0]), point[1]])
+	const source: number[][] = new Array(priceHistory.length)
+	let targetIndex = priceHistory.length - 1
+	// The API is newest-first; filling backward emits chart order without a copied reverse array.
+	for (const [date, close] of priceHistory) {
+		source[targetIndex] = [Date.parse(date), close]
+		targetIndex--
 	}
 
 	return {
@@ -41,11 +42,12 @@ export function buildEquitiesDimensionsChart(
 	period: EquitiesDimensionPeriod
 ): IEquitiesPriceHistoryChart {
 	const label = FUNDAMENTAL_CHART_LABELS[metric]
-	const source: Array<Array<number | null>> = []
-	const points = dimensions[metric]?.[period] ?? []
-	for (let i = points.length - 1; i >= 0; i--) {
-		const point = points[i]
-		source.push([Date.parse(`${point[0]}T00:00:00Z`), point[1]])
+	const points = dimensions[metric][period]
+	const source: Array<Array<number | null>> = new Array(points.length)
+	let targetIndex = points.length - 1
+	for (const [date, value] of points) {
+		source[targetIndex] = [Date.parse(`${date}T00:00:00Z`), value]
+		targetIndex--
 	}
 
 	return {

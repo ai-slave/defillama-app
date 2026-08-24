@@ -53,11 +53,11 @@ export interface IEquityTickerPageProps {
 	name: string
 	metadata: IEquitiesMetadataResponse
 	summary: IEquitiesSummaryResponse
-	priceHistoryChart: IEquitiesPriceHistoryChart
+	priceHistoryChart: IEquitiesPriceHistoryChart | null
 	statements: IEquitiesStatementsResponse
 	dimensions: IEquitiesDimensionsResponse
-	filings: IEquitiesFilingApiItem[]
+	filings: IEquitiesFilingApiItem[] | null
 	filingForms: string[]
-	onchain: IEquitiesOnchainPageData
+	onchain: IEquitiesOnchainPageData | null
 	unlocksSlug: string | null
 }

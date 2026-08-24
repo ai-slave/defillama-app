@@ -17,15 +17,11 @@ import type { IEquitiesListPageProps, IEquitiesOnchainPageData, IEquityTickerPag
 
 export async function getEquitiesListPageData(): Promise<IEquitiesListPageProps> {
 	const companies = await fetchEquitiesCompanies()
-	const sortedCompanies = companies.toSorted((a, b) => {
-		const aMarketCap = a.marketCap ?? -1
-		const bMarketCap = b.marketCap ?? -1
-		return bMarketCap - aMarketCap
-	})
 	const rows: IEquitiesListPageProps['companies'] = []
 	let updatedAt: string | undefined
 
-	for (const company of sortedCompanies) {
+	// The producer already writes this complete population in descending market-cap order.
+	for (const company of companies) {
 		rows.push({
 			...company,
 			href: `/equities/${buildEquityTickerCountrySlug(company.ticker, company.country)}`
@@ -33,10 +29,7 @@ export async function getEquitiesListPageData(): Promise<IEquitiesListPageProps>
 		updatedAt ??= company.updatedAt
 	}
 
-	return {
-		companies: rows,
-		updatedAt
-	}
+	return { companies: rows, ...(updatedAt === undefined ? {} : { updatedAt }) }
 }
 
 function buildRwaPlatformNameLookup(platforms: string[]): Map<string, string> {
@@ -96,11 +89,11 @@ export async function getEquitiesTickerPageData(
 	const [summary, metadata, priceHistory, statements, filings, dimensions, rawOnchain] = await Promise.all([
 		fetchEquitiesSummary(ticker, country),
 		fetchEquitiesMetadata(ticker, country),
-		fetchEquitiesPriceHistory(ticker, country).catch(() => []),
+		fetchEquitiesPriceHistory(ticker, country).catch(() => null),
 		fetchEquitiesStatements(ticker, country).catch(() => null),
-		fetchEquitiesFilings(ticker, country).catch(() => []),
+		fetchEquitiesFilings(ticker, country).catch(() => null),
 		fetchEquitiesDimensions(ticker, country).catch(() => null),
-		fetchEquitiesOnchain(ticker).catch(() => ({ perps: [], tokens: [] }))
+		fetchEquitiesOnchain(ticker, country).catch(() => null)
 	])
 
 	if (!summary || !metadata || !statements || !dimensions || !metadata.ticker || !metadata.name) {
@@ -108,8 +101,8 @@ export async function getEquitiesTickerPageData(
 	}
 
 	const filingForms = new Set<string>()
-	for (const filing of filings) {
-		if (filing.form) filingForms.add(filing.form)
+	if (filings) {
+		for (const filing of filings) filingForms.add(filing.form)
 	}
 
 	// Equities unlocks are keyed by lowercased ticker in the emissions list
@@ -123,16 +116,18 @@ export async function getEquitiesTickerPageData(
 		name: metadata.name,
 		metadata,
 		summary,
-		priceHistoryChart: buildPriceHistoryChart(priceHistory),
+		priceHistoryChart: priceHistory ? buildPriceHistoryChart(priceHistory) : null,
 		statements,
 		dimensions,
 		filings,
 		filingForms: Array.from(filingForms).sort((a, b) => a.localeCompare(b)),
-		onchain: addEquitiesOnchainDisplayNames({
-			onchain: rawOnchain,
-			protocolDisplayNames: pageMetadata.protocolDisplayNames,
-			rwaPlatforms: pageMetadata.rwaPlatforms
-		}),
+		onchain: rawOnchain
+			? addEquitiesOnchainDisplayNames({
+					onchain: rawOnchain,
+					protocolDisplayNames: pageMetadata.protocolDisplayNames,
+					rwaPlatforms: pageMetadata.rwaPlatforms
+				})
+			: null,
 		unlocksSlug
 	}
 }
@@ -140,9 +135,9 @@ export async function getEquitiesTickerPageData(
 export async function getEquitiesTickerPaths(limit = 50): Promise<string[]> {
 	const companies = await fetchEquitiesCompaniesList().catch(() => [])
 	const paths: string[] = []
-	for (let i = 0; i < companies.length && i < limit; i++) {
-		const company = companies[i]
-		if (company.ticker && company.country) paths.push(buildEquityTickerCountrySlug(company.ticker, company.country))
+	for (const company of companies) {
+		if (paths.length >= limit) break
+		paths.push(buildEquityTickerCountrySlug(company.ticker, company.country))
 	}
 	return paths
 }

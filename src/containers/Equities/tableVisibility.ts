@@ -8,7 +8,7 @@ export function applyEquityFilterColumnVisibility({
 	columnVisibility: VisibilityState
 	filters: EquityActiveFilter[]
 }): VisibilityState {
-	const effectiveVisibility = { ...columnVisibility, searchPriority: false }
+	const effectiveVisibility: VisibilityState = { ...columnVisibility, searchPriority: false }
 	for (const filter of filters) {
 		effectiveVisibility[filter.id] = true
 	}
@@ -16,10 +16,7 @@ export function applyEquityFilterColumnVisibility({
 }
 
 function getDefaultSortingFilter(filters: EquityActiveFilter[]): EquityActiveFilter | null {
-	for (let i = filters.length - 1; i >= 0; i--) {
-		if (filters[i].kind !== 'categorical') return filters[i]
-	}
-	return null
+	return filters.findLast((filter) => filter.kind !== 'categorical') ?? null
 }
 
 function isDefaultFilterSortDescending(filter: EquityActiveFilter): boolean {
@@ -40,8 +37,9 @@ export function getEquityFilterDefaultSorting({
 
 function isSortingEqual(left: SortingState, right: SortingState): boolean {
 	if (left.length !== right.length) return false
-	for (let i = 0; i < left.length; i++) {
-		if (left[i].id !== right[i].id || left[i].desc !== right[i].desc) return false
+	for (const [index, leftSort] of left.entries()) {
+		const rightSort = right[index]
+		if (!rightSort || leftSort.id !== rightSort.id || leftSort.desc !== rightSort.desc) return false
 	}
 	return true
 }

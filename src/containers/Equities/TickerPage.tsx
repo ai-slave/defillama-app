@@ -26,6 +26,7 @@ import { EquitiesFilingsTable } from './FilingsTable'
 import { formatEquitiesCompactValue } from './financialsFormatting'
 import { EquitiesFinancialsTable } from './FinancialsTable'
 import { EquitiesMarketsTable, EquitiesTokensTable } from './OnchainTables'
+import { getAvailableEquityTabs, type EquityTab } from './tickerPageState'
 import type { IEquityTickerPageProps } from './types'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -44,9 +45,6 @@ const EQUITIES_PRICE_HISTORY_TIMEFRAMES: readonly EquitiesPriceHistoryTimeframe[
 ]
 const DEFAULT_PRICE_HISTORY_TIMEFRAME: EquitiesPriceHistoryTimeframe = 'MAX'
 const SCALED_Y_AXIS_CHART_OPTIONS = { yAxis: { scale: true } }
-
-const TABS = ['financials', 'overview', 'filings', 'tokens', 'markets', 'unlocks'] as const
-type EquityTab = (typeof TABS)[number]
 
 const EQUITY_FUNDAMENTAL_CHART_OPTIONS = ['Revenue', 'Holders Revenue', 'Earnings'] as const
 type EquityFundamentalChartOption = (typeof EQUITY_FUNDAMENTAL_CHART_OPTIONS)[number]
@@ -212,8 +210,13 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 	const { chartInstance: fundamentalsChartInstance, handleChartReady: handleFundamentalsChartReady } =
 		useGetChartInstance()
 	const availableTabs = useMemo<readonly EquityTab[]>(
-		() => (props.unlocksSlug ? TABS : TABS.filter((tab) => tab !== 'unlocks')),
-		[props.unlocksSlug]
+		() =>
+			getAvailableEquityTabs({
+				hasFilings: props.filings !== null,
+				hasOnchain: props.onchain !== null,
+				hasUnlocks: props.unlocksSlug !== null
+			}),
+		[props.filings, props.onchain, props.unlocksSlug]
 	)
 
 	const tabQueryValue = readSingleQueryValue(router.query.tab)
@@ -233,6 +236,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 	)
 
 	const activePriceHistoryChart = useMemo(() => {
+		if (!props.priceHistoryChart) return null
 		const duration = TIMEFRAME_MS[activeTimeframe]
 		if (!duration) return props.priceHistoryChart
 		const latestPoint = props.priceHistoryChart.dataset.source.at(-1)
@@ -279,12 +283,14 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 	const exportFilename = `${props.ticker.toLowerCase()}-price-history-${activeTimeframe.toLowerCase()}`
 	const fundamentalsExportTitle = `${props.ticker} ${activeFundamentalChart} (${activeDimensionPeriod})`
 	const fundamentalsExportFilename = `${props.ticker.toLowerCase()}-${activeFundamentalChart.toLowerCase().replaceAll(' ', '-')}-${activeDimensionPeriod.toLowerCase()}`
-
 	return (
 		<article className="flex flex-col gap-2">
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
 				{/* Desktop: left stats panel */}
-				<Card padding="sm" className="col-span-1 hidden flex-col gap-6 xl:flex xl:min-h-[360px]">
+				<Card
+					padding="sm"
+					className={`col-span-1 hidden flex-col gap-6 xl:flex ${activePriceHistoryChart ? 'xl:min-h-[360px]' : 'xl:col-span-full'}`}
+				>
 					<EquityTitle
 						ticker={props.ticker}
 						country={props.country}
@@ -300,52 +306,71 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 					<EquityKeyMetrics summary={props.summary} />
 				</Card>
 
-				<div className="col-span-1 grid grid-cols-2 gap-2 xl:col-[2/-1]">
-					<Panel padding="none" className="col-span-full">
-						{/* Mobile: name + market cap */}
-						<div className="flex flex-col gap-6 p-2 pb-0 xl:hidden">
-							<EquityTitle
-								ticker={props.ticker}
-								country={props.country}
-								name={props.name}
-								website={props.metadata.website}
-							/>
-							<p className="flex flex-col">
-								<span className="text-secondary">{defs.marketCap.label}</span>
-								<span className="min-h-8 font-jetbrains text-2xl font-semibold">
-									{formatEquitiesCompactValue(props.summary.marketCap, '$') ?? '-'}
-								</span>
-							</p>
-						</div>
+				<div className={`col-span-1 grid grid-cols-2 gap-2 ${activePriceHistoryChart ? 'xl:col-[2/-1]' : 'xl:hidden'}`}>
+					{activePriceHistoryChart ? (
+						<Panel padding="none" className="col-span-full">
+							{/* Mobile: name + market cap */}
+							<div className="flex flex-col gap-6 p-2 pb-0 xl:hidden">
+								<EquityTitle
+									ticker={props.ticker}
+									country={props.country}
+									name={props.name}
+									website={props.metadata.website}
+								/>
+								<p className="flex flex-col">
+									<span className="text-secondary">{defs.marketCap.label}</span>
+									<span className="min-h-8 font-jetbrains text-2xl font-semibold">
+										{formatEquitiesCompactValue(props.summary.marketCap, '$') ?? '-'}
+									</span>
+								</p>
+							</div>
 
-						<ChartPanelToolbar className="justify-end">
-							<h2 className="mr-auto heading-xs">Price History</h2>
-							<TagGroup
-								variant="default"
-								size="md"
-								selectedValue={activeTimeframe}
-								setValue={setActiveTimeframe}
-								values={EQUITIES_PRICE_HISTORY_TIMEFRAMES}
-							/>
-							<ChartExportButtons
-								chartInstance={priceChartInstance}
-								filename={exportFilename}
-								title={exportTitle}
-								csvSource={{ type: 'dataset', dataset: activePriceHistoryChart.dataset }}
-							/>
-						</ChartPanelToolbar>
-						<Suspense fallback={<ChartPanelBodyFallback />}>
-							<MultiSeriesChart
-								dataset={activePriceHistoryChart.dataset}
-								charts={activePriceHistoryChart.charts}
-								chartOptions={SCALED_Y_AXIS_CHART_OPTIONS}
-								valueSymbol="$"
-								title=""
-								hideDataZoom={activePriceHistoryChart.dataset.source.length < 2}
-								onReady={handlePriceChartReady}
-							/>
-						</Suspense>
-					</Panel>
+							<ChartPanelToolbar className="justify-end">
+								<h2 className="mr-auto heading-xs">Price History</h2>
+								<TagGroup
+									variant="default"
+									size="md"
+									selectedValue={activeTimeframe}
+									setValue={setActiveTimeframe}
+									values={EQUITIES_PRICE_HISTORY_TIMEFRAMES}
+								/>
+								<ChartExportButtons
+									chartInstance={priceChartInstance}
+									filename={exportFilename}
+									title={exportTitle}
+									csvSource={{ type: 'dataset', dataset: activePriceHistoryChart.dataset }}
+								/>
+							</ChartPanelToolbar>
+							<Suspense fallback={<ChartPanelBodyFallback />}>
+								<MultiSeriesChart
+									dataset={activePriceHistoryChart.dataset}
+									charts={activePriceHistoryChart.charts}
+									chartOptions={SCALED_Y_AXIS_CHART_OPTIONS}
+									valueSymbol="$"
+									title=""
+									hideDataZoom={activePriceHistoryChart.dataset.source.length < 2}
+									onReady={handlePriceChartReady}
+								/>
+							</Suspense>
+						</Panel>
+					) : (
+						<Panel padding="none" className="col-span-full xl:hidden">
+							<div className="flex flex-col gap-6 p-2">
+								<EquityTitle
+									ticker={props.ticker}
+									country={props.country}
+									name={props.name}
+									website={props.metadata.website}
+								/>
+								<p className="flex flex-col">
+									<span className="text-secondary">{defs.marketCap.label}</span>
+									<span className="min-h-8 font-jetbrains text-2xl font-semibold">
+										{formatEquitiesCompactValue(props.summary.marketCap, '$') ?? '-'}
+									</span>
+								</p>
+							</div>
+						</Panel>
+					)}
 
 					{/* Mobile: key metrics below chart */}
 					<Card padding="sm" className="col-span-full flex flex-col gap-6 xl:hidden">
@@ -669,11 +694,15 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 			) : null}
 
 			{activeTab === 'financials' ? <EquitiesFinancialsTable statements={props.statements} /> : null}
-			{activeTab === 'filings' ? (
+			{activeTab === 'filings' && props.filings ? (
 				<EquitiesFilingsTable filings={props.filings} filingForms={props.filingForms} />
 			) : null}
-			{activeTab === 'tokens' ? <EquitiesTokensTable tokens={props.onchain.tokens} ticker={props.ticker} /> : null}
-			{activeTab === 'markets' ? <EquitiesMarketsTable markets={props.onchain.perps} ticker={props.ticker} /> : null}
+			{activeTab === 'tokens' && props.onchain ? (
+				<EquitiesTokensTable tokens={props.onchain.tokens} ticker={props.ticker} />
+			) : null}
+			{activeTab === 'markets' && props.onchain ? (
+				<EquitiesMarketsTable markets={props.onchain.perps} ticker={props.ticker} />
+			) : null}
 			{activeTab === 'unlocks' && props.unlocksSlug ? (
 				<TokenUnlocksSection resolvedUnlocksSlug={props.unlocksSlug} />
 			) : null}

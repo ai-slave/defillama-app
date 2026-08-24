@@ -25,7 +25,7 @@ const EQUITIES_ONCHAIN_API = `${EQUITIES_SERVER_URL}/onchain`
 
 function createEquitiesUrl(
 	baseUrl: string,
-	params?: { ticker?: string; country?: string; timeframe?: EquitiesPriceHistoryTimeframe }
+	params?: { ticker?: string; country?: string; countries?: 'US'; timeframe?: EquitiesPriceHistoryTimeframe }
 ): string {
 	const url = new URL(baseUrl)
 
@@ -35,6 +35,10 @@ function createEquitiesUrl(
 
 	if (params?.country) {
 		url.searchParams.set('country', params.country)
+	}
+
+	if (params?.countries) {
+		url.searchParams.set('countries', params.countries)
 	}
 
 	if (params?.timeframe) {
@@ -49,14 +53,14 @@ function createEquitiesUrl(
  * Fetch the live market summary for all companies.
  */
 export async function fetchEquitiesCompanies(): Promise<IEquitiesCompanyApiItem[]> {
-	return fetchJson<IEquitiesCompanyApiItem[]>(createEquitiesUrl(EQUITIES_COMPANIES_API))
+	return fetchJson<IEquitiesCompanyApiItem[]>(createEquitiesUrl(EQUITIES_COMPANIES_API, { countries: 'US' }))
 }
 
 /**
  * Fetch the lightweight identity list for all synced companies.
  */
 export async function fetchEquitiesCompaniesList(): Promise<IEquitiesCompanyListApiItem[]> {
-	return fetchJson<IEquitiesCompanyListApiItem[]>(createEquitiesUrl(EQUITIES_COMPANIES_LIST_API))
+	return fetchJson<IEquitiesCompanyListApiItem[]>(createEquitiesUrl(EQUITIES_COMPANIES_LIST_API, { countries: 'US' }))
 }
 
 /**
@@ -108,6 +112,6 @@ export async function fetchEquitiesDimensions(ticker: string, country: string): 
 /**
  * Fetch on-chain tokenized asset and perp market coverage for a company ticker.
  */
-export async function fetchEquitiesOnchain(ticker: string): Promise<IEquitiesOnchainResponse> {
-	return fetchJson<IEquitiesOnchainResponse>(createEquitiesUrl(EQUITIES_ONCHAIN_API, { ticker }))
+export async function fetchEquitiesOnchain(ticker: string, country: string): Promise<IEquitiesOnchainResponse> {
+	return fetchJson<IEquitiesOnchainResponse>(createEquitiesUrl(EQUITIES_ONCHAIN_API, { ticker, country }))
 }

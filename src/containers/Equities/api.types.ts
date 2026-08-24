@@ -110,6 +110,7 @@ export interface IEquitiesOnchainPerpApiItem {
 	contractSlug: string
 	exchangeProtocolSlug?: string
 	rwaPlatformSlug?: string
+	exchangeType: 'CEX' | 'DEX'
 	updatedAt: string
 }
 
@@ -143,8 +144,7 @@ interface IEquitiesStatementSection {
 }
 
 export interface IEquitiesStatementsResponse {
-	/** The upstream returns at least one section, but any individual section may be absent. */
-	incomeStatement?: IEquitiesStatementSection
-	balanceSheet?: IEquitiesStatementSection
-	cashflow?: IEquitiesStatementSection
+	incomeStatement: IEquitiesStatementSection
+	balanceSheet: IEquitiesStatementSection
+	cashflow: IEquitiesStatementSection
 }

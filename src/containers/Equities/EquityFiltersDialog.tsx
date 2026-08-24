@@ -312,15 +312,15 @@ function NumericFilterEditor({
 							value={inputs.minValue}
 							onChange={updateMinValue}
 							placeholder="Min"
-							prefix={prefix}
-							suffix={suffix}
+							{...(prefix === undefined ? {} : { prefix })}
+							{...(suffix === undefined ? {} : { suffix })}
 						/>
 						<NumericInput
 							value={inputs.maxValue}
 							onChange={updateMaxValue}
 							placeholder="Max"
-							prefix={prefix}
-							suffix={suffix}
+							{...(prefix === undefined ? {} : { prefix })}
+							{...(suffix === undefined ? {} : { suffix })}
 						/>
 					</>
 				) : (
@@ -328,8 +328,8 @@ function NumericFilterEditor({
 						value={inputs.value}
 						onChange={updateValue}
 						placeholder="10b, 500m, 20"
-						prefix={prefix}
-						suffix={suffix}
+						{...(prefix === undefined ? {} : { prefix })}
+						{...(suffix === undefined ? {} : { suffix })}
 					/>
 				)}
 			</div>
