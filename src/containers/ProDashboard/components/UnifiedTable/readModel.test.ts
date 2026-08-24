@@ -316,12 +316,21 @@ describe('protocol table read model', () => {
 						chainFees24h: 10,
 						chainFees7d: 70,
 						chainFees30d: 300,
+						chainFeesChange1d: 10,
+						chainFeesChange7dOver7d: 20,
+						chainFeesChange30dOver30d: 30,
 						chainRevenue24h: 4,
 						chainRevenue7d: 28,
 						chainRevenue30d: 120,
+						chainRevenueChange1d: -10,
+						chainRevenueChange7dOver7d: -20,
+						chainRevenueChange30dOver30d: -30,
 						chainRev24h: 11,
 						chainRev7d: 77,
-						chainRev30d: 330
+						chainRev30d: 330,
+						chainRevChange1d: 40,
+						chainRevChange7dOver7d: 50,
+						chainRevChange30dOver30d: 60
 					}
 				}
 			},
@@ -332,12 +341,21 @@ describe('protocol table read model', () => {
 			chainFees24h: 10,
 			chainFees7d: 70,
 			chainFees30d: 300,
+			chainFeesChange1d: 10,
+			chainFeesChange7dOver7d: 20,
+			chainFeesChange30dOver30d: 30,
 			chainRevenue24h: 4,
 			chainRevenue7d: 28,
 			chainRevenue30d: 120,
+			chainRevenueChange1d: -10,
+			chainRevenueChange7dOver7d: -20,
+			chainRevenueChange30dOver30d: -30,
 			chainRev24h: 11,
 			chainRev7d: 77,
-			chainRev30d: 330
+			chainRev30d: 330,
+			chainRevChange1d: 40,
+			chainRevChange7dOver7d: 50,
+			chainRevChange30dOver30d: 60
 		})
 	})
 

@@ -1459,9 +1459,15 @@ type ChainMetricsRow = { chain: string } & Partial<{
 	chain_fees_1d: number | null
 	chain_fees_7d: number | null
 	chain_fees_30d: number | null
+	chain_fees_1d_pct_change: number | null
+	chain_fees_7d_pct_change: number | null
+	chain_fees_30d_pct_change: number | null
 	chain_rev_1d: number | null
 	chain_rev_7d: number | null
 	chain_rev_30d: number | null
+	chain_rev_1d_pct_change: number | null
+	chain_rev_7d_pct_change: number | null
+	chain_rev_30d_pct_change: number | null
 	app_revenue_1d: number | null
 	app_revenue_7d: number | null
 	app_revenue_30d: number | null
@@ -1481,6 +1487,9 @@ type ChainMetricsRow = { chain: string } & Partial<{
 	chain_revenue_1d: number | null
 	chain_revenue_7d: number | null
 	chain_revenue_30d: number | null
+	chain_revenue_1d_pct_change: number | null
+	chain_revenue_7d_pct_change: number | null
+	chain_revenue_30d_pct_change: number | null
 	incentive_1d: number | null
 	incentive_1d_pct_change: number | null
 	incentive_7d: number | null
@@ -1590,9 +1599,15 @@ const CHAIN_METRIC_COLUMNS_BY_FAMILY: Readonly<
 		'chain_fees_1d',
 		'chain_fees_7d',
 		'chain_fees_30d',
+		'chain_fees_1d_pct_change',
+		'chain_fees_7d_pct_change',
+		'chain_fees_30d_pct_change',
 		'chain_rev_1d',
 		'chain_rev_7d',
-		'chain_rev_30d'
+		'chain_rev_30d',
+		'chain_rev_1d_pct_change',
+		'chain_rev_7d_pct_change',
+		'chain_rev_30d_pct_change'
 	],
 	incentives: [
 		'incentive_1d',
@@ -1627,7 +1642,10 @@ const CHAIN_METRIC_COLUMNS_BY_FAMILY: Readonly<
 		'app_revenue_ytd_pct_change',
 		'chain_revenue_1d',
 		'chain_revenue_7d',
-		'chain_revenue_30d'
+		'chain_revenue_30d',
+		'chain_revenue_1d_pct_change',
+		'chain_revenue_7d_pct_change',
+		'chain_revenue_30d_pct_change'
 	],
 	'perps-volume': [
 		'volume_derivatives_1d',
@@ -1757,9 +1775,15 @@ const mapCanonicalChainMetrics = (
 		metrics.chainFees24h = row.chain_fees_1d ?? null
 		metrics.chainFees7d = row.chain_fees_7d ?? null
 		metrics.chainFees30d = row.chain_fees_30d ?? null
+		metrics.chainFeesChange1d = toPercent(row.chain_fees_1d_pct_change)
+		metrics.chainFeesChange7dOver7d = toPercent(row.chain_fees_7d_pct_change)
+		metrics.chainFeesChange30dOver30d = toPercent(row.chain_fees_30d_pct_change)
 		metrics.chainRev24h = row.chain_rev_1d ?? null
 		metrics.chainRev7d = row.chain_rev_7d ?? null
 		metrics.chainRev30d = row.chain_rev_30d ?? null
+		metrics.chainRevChange1d = toPercent(row.chain_rev_1d_pct_change)
+		metrics.chainRevChange7dOver7d = toPercent(row.chain_rev_7d_pct_change)
+		metrics.chainRevChange30dOver30d = toPercent(row.chain_rev_30d_pct_change)
 	}
 
 	if (requested.has('incentives')) {
@@ -1802,6 +1826,9 @@ const mapCanonicalChainMetrics = (
 		metrics.chainRevenue24h = row.chain_revenue_1d ?? null
 		metrics.chainRevenue7d = row.chain_revenue_7d ?? null
 		metrics.chainRevenue30d = row.chain_revenue_30d ?? null
+		metrics.chainRevenueChange1d = toPercent(row.chain_revenue_1d_pct_change)
+		metrics.chainRevenueChange7dOver7d = toPercent(row.chain_revenue_7d_pct_change)
+		metrics.chainRevenueChange30dOver30d = toPercent(row.chain_revenue_30d_pct_change)
 	}
 
 	if (requested.has('perps-volume')) {

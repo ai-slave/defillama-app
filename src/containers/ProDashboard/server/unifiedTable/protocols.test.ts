@@ -545,12 +545,21 @@ describe('unified table metric totals cache', () => {
 					chain_fees_1d: 10,
 					chain_fees_7d: 70,
 					chain_fees_30d: 300,
+					chain_fees_1d_pct_change: 0.1,
+					chain_fees_7d_pct_change: 0.2,
+					chain_fees_30d_pct_change: 0.3,
 					chain_revenue_1d: 4,
 					chain_revenue_7d: 28,
 					chain_revenue_30d: 120,
+					chain_revenue_1d_pct_change: -0.1,
+					chain_revenue_7d_pct_change: -0.2,
+					chain_revenue_30d_pct_change: -0.3,
 					chain_rev_1d: 11,
 					chain_rev_7d: 77,
 					chain_rev_30d: 330,
+					chain_rev_1d_pct_change: 0.4,
+					chain_rev_7d_pct_change: 0.5,
+					chain_rev_30d_pct_change: 0.6,
 					tvl_base: 999
 				}
 			])
@@ -573,12 +582,21 @@ describe('unified table metric totals cache', () => {
 			chainFees24h: 10,
 			chainFees7d: 70,
 			chainFees30d: 300,
+			chainFeesChange1d: 10,
+			chainFeesChange7dOver7d: 20,
+			chainFeesChange30dOver30d: 30,
 			chainRevenue24h: 4,
 			chainRevenue7d: 28,
 			chainRevenue30d: 120,
+			chainRevenueChange1d: -10,
+			chainRevenueChange7dOver7d: -20,
+			chainRevenueChange30dOver30d: -30,
 			chainRev24h: 11,
 			chainRev7d: 77,
-			chainRev30d: 330
+			chainRev30d: 330,
+			chainRevChange1d: 40,
+			chainRevChange7dOver7d: 50,
+			chainRevChange30dOver30d: 60
 		})
 		expect(ethereum.metrics).not.toHaveProperty('tvl')
 		expect(ethereum.metrics).not.toHaveProperty('tvlShare')

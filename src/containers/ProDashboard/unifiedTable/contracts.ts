@@ -52,9 +52,15 @@ export interface ProtocolTableMetrics {
 	chainFees24h?: number | null
 	chainFees7d?: number | null
 	chainFees30d?: number | null
+	chainFeesChange1d?: number | null
+	chainFeesChange7dOver7d?: number | null
+	chainFeesChange30dOver30d?: number | null
 	chainRev24h?: number | null
 	chainRev7d?: number | null
 	chainRev30d?: number | null
+	chainRevChange1d?: number | null
+	chainRevChange7dOver7d?: number | null
+	chainRevChange30dOver30d?: number | null
 	holderRevenue_24h?: number | null
 	holderRevenue_7d?: number | null
 	holdersRevenue30d?: number | null
@@ -95,6 +101,9 @@ export interface ProtocolTableMetrics {
 	chainRevenue24h?: number | null
 	chainRevenue7d?: number | null
 	chainRevenue30d?: number | null
+	chainRevenueChange1d?: number | null
+	chainRevenueChange7dOver7d?: number | null
+	chainRevenueChange30dOver30d?: number | null
 	revenueChange_1d?: number | null
 	revenue24h7dAgo?: number | null
 	revenue24h30dAgo?: number | null
@@ -279,9 +288,15 @@ export const EMPTY_CANONICAL_CHAIN_METRICS = {
 	chainFees24h: null,
 	chainFees7d: null,
 	chainFees30d: null,
+	chainFeesChange1d: null,
+	chainFeesChange7dOver7d: null,
+	chainFeesChange30dOver30d: null,
 	chainRev24h: null,
 	chainRev7d: null,
 	chainRev30d: null,
+	chainRevChange1d: null,
+	chainRevChange7dOver7d: null,
+	chainRevChange30dOver30d: null,
 	feesChange_1d: null,
 	fees24h7dAgo: null,
 	fees24h30dAgo: null,
@@ -306,6 +321,9 @@ export const EMPTY_CANONICAL_CHAIN_METRICS = {
 	chainRevenue24h: null,
 	chainRevenue7d: null,
 	chainRevenue30d: null,
+	chainRevenueChange1d: null,
+	chainRevenueChange7dOver7d: null,
+	chainRevenueChange30dOver30d: null,
 	revenueChange_1d: null,
 	revenue24h7dAgo: null,
 	revenue24h30dAgo: null,

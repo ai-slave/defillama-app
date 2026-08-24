@@ -202,6 +202,30 @@ const feesColumns: ColumnDictionaryItem[] = [
 		chainGroupOnly: true
 	},
 	{
+		id: 'chainFeesChange1d',
+		header: '1d Chain Fees Change',
+		group: 'fees',
+		render: 'percent',
+		tags: ['change'],
+		chainGroupOnly: true
+	},
+	{
+		id: 'chainFeesChange7dOver7d',
+		header: '7d over 7d Chain Fees Change',
+		group: 'fees',
+		render: 'percent',
+		tags: ['change'],
+		chainGroupOnly: true
+	},
+	{
+		id: 'chainFeesChange30dOver30d',
+		header: '30d over 30d Chain Fees Change',
+		group: 'fees',
+		render: 'percent',
+		tags: ['change'],
+		chainGroupOnly: true
+	},
+	{
 		id: 'chainRev24h',
 		header: '24h Chain REV',
 		description: 'Chain fees plus MEV tips.',
@@ -223,6 +247,30 @@ const feesColumns: ColumnDictionaryItem[] = [
 		description: 'Chain fees plus MEV tips.',
 		group: 'fees',
 		render: 'usd',
+		chainGroupOnly: true
+	},
+	{
+		id: 'chainRevChange1d',
+		header: '1d Chain REV Change',
+		group: 'fees',
+		render: 'percent',
+		tags: ['change'],
+		chainGroupOnly: true
+	},
+	{
+		id: 'chainRevChange7dOver7d',
+		header: '7d over 7d Chain REV Change',
+		group: 'fees',
+		render: 'percent',
+		tags: ['change'],
+		chainGroupOnly: true
+	},
+	{
+		id: 'chainRevChange30dOver30d',
+		header: '30d over 30d Chain REV Change',
+		group: 'fees',
+		render: 'percent',
+		tags: ['change'],
 		chainGroupOnly: true
 	},
 	{
@@ -446,6 +494,30 @@ const revenueColumns: ColumnDictionaryItem[] = [
 		description: 'Fees retained by the chain.',
 		group: 'revenue',
 		render: 'usd',
+		chainGroupOnly: true
+	},
+	{
+		id: 'chainRevenueChange1d',
+		header: '1d Chain Revenue Change',
+		group: 'revenue',
+		render: 'percent',
+		tags: ['change'],
+		chainGroupOnly: true
+	},
+	{
+		id: 'chainRevenueChange7dOver7d',
+		header: '7d over 7d Chain Revenue Change',
+		group: 'revenue',
+		render: 'percent',
+		tags: ['change'],
+		chainGroupOnly: true
+	},
+	{
+		id: 'chainRevenueChange30dOver30d',
+		header: '30d over 30d Chain Revenue Change',
+		group: 'revenue',
+		render: 'percent',
+		tags: ['change'],
 		chainGroupOnly: true
 	},
 	{

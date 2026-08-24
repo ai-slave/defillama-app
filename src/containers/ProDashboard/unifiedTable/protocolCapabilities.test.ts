@@ -136,7 +136,14 @@ describe('protocol base metric family capabilities', () => {
 		expect(
 			getProtocolMetricCapabilities(
 				config({
-					columnOrder: ['chainFees24h', 'chainRevenue7d', 'chainRev30d']
+					columnOrder: [
+						'chainFees24h',
+						'chainFeesChange7dOver7d',
+						'chainRevenue7d',
+						'chainRevenueChange1d',
+						'chainRev30d',
+						'chainRevChange30dOver30d'
+					]
 				})
 			).baseMetricFamilies
 		).toEqual(['fees', 'revenue'])
