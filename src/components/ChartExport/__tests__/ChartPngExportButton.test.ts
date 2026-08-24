@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
 	applyTreemapViewportExportState,
+	buildPieExportLegendOption,
 	getTreemapTargetDataRoot,
 	mutateAndWaitForChartRender,
 	readTreemapViewportExportState,
@@ -8,6 +9,29 @@ import {
 	scaleXAxisForExport,
 	scaleYAxisForExport
 } from '../ChartPngExportButton'
+
+describe('pie PNG export legend', () => {
+	it('keeps the legend vertical and on the right like the rendered pie chart', () => {
+		const formatter = (name: string) => name
+		const legend = buildPieExportLegendOption(
+			{ data: ['Kalshi', 'Polymarket'], width: 200, formatter },
+			'Prediction Markets',
+			false
+		)
+
+		expect(legend).toMatchObject({
+			show: true,
+			orient: 'vertical',
+			type: 'scroll',
+			right: 16,
+			top: 72,
+			width: 400,
+			itemWidth: 20,
+			itemHeight: 20
+		})
+		expect(legend.formatter).toBe(formatter)
+	})
+})
 
 describe('mutateAndWaitForChartRender', () => {
 	it('subscribes before a mutation emits rendered synchronously', async () => {

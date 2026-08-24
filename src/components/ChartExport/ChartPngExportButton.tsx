@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import type {
 	DefaultLabelFormatterCallbackParams,
 	EChartsOption,
+	LegendComponentOption,
 	SeriesOption,
 	TitleComponentOption,
 	XAXisComponentOption,
@@ -975,6 +976,39 @@ function isLegendVisibleForExport(flags: SeriesFlags, options: EChartsOption): b
 	return true
 }
 
+/**
+ * Pie charts render their legend beside the plot in the app. Keep that geometry in
+ * the fixed-size export instead of routing pies through the horizontal chart legend.
+ * The source legend width is scaled with the export font so labels retain the same
+ * amount of readable text as they have on screen.
+ */
+export function buildPieExportLegendOption(
+	sourceLegend: LegendComponentOption | undefined,
+	title: string | undefined,
+	isDark: boolean
+): LegendComponentOption {
+	const sourceWidth = parsePixelValue(sourceLegend?.width)
+	return {
+		...(sourceLegend ?? {}),
+		show: true,
+		type: 'scroll',
+		orient: 'vertical',
+		top: title ? 72 : 16,
+		right: 16,
+		...(sourceWidth != null ? { width: sourceWidth * 2 } : {}),
+		textStyle: {
+			...(sourceLegend?.textStyle ?? {}),
+			fontSize: EXPORT_FONT_SIZE,
+			color: getChartTheme(isDark).text
+		},
+		itemWidth: 20,
+		itemHeight: 20,
+		itemGap: 16,
+		padding: [0, 0, 0, 0],
+		pageButtonPosition: 'end'
+	}
+}
+
 // --- Series adjustments for export ---
 
 function adjustSeriesForExport(opts: {
@@ -1401,6 +1435,7 @@ async function renderClonedChartExport(
 		}
 
 		if (layout.hasLegend) {
+			const sourceLegend = Array.isArray(currentOptions.legend) ? currentOptions.legend[0] : currentOptions.legend
 			const legendBase = {
 				show: true,
 				textStyle: {
@@ -1413,9 +1448,11 @@ async function renderClonedChartExport(
 				top: layout.legendTop,
 				right: 16
 			}
-			currentOptions.legend = expandLegend
-				? { ...legendBase, type: 'plain', padding: [0, 0, 0, 0], ...(layout.canShareRow ? {} : { left: 16 }) }
-				: { ...legendBase, type: 'scroll', padding: [0, 0, 0, 18], pageButtonPosition: 'end' }
+			currentOptions.legend = flags.isPieChart
+				? buildPieExportLegendOption(sourceLegend, title, isDark)
+				: expandLegend
+					? { ...legendBase, type: 'plain', padding: [0, 0, 0, 0], ...(layout.canShareRow ? {} : { left: 16 }) }
+					: { ...legendBase, type: 'scroll', padding: [0, 0, 0, 18], pageButtonPosition: 'end' }
 		}
 
 		await mutateAndWaitForChartRender(tempChart, () => tempChart.setOption(currentOptions))
