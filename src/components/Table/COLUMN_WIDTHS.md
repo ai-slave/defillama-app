@@ -216,3 +216,20 @@ meta: { headerClassName: 'w-[170px] min-w-[170px]', cellClassName: 'truncate', a
 
 Keep responsive variants where they exist, e.g. Equities' country column:
 `'w-[76px] min-w-[76px] lg:w-[88px] lg:min-w-[88px]'`.
+
+### Renaming a header invalidates its width
+
+A header-bound column's width is a function of its label, so changing the label breaks
+the fit silently — nothing fails, the header just clips. `06bf1e750` renamed three columns
+in the unlocks table and left all three at their old `w-[140px]`:
+
+| old label        | new label                      | width it now needs |
+| ---------------- | ------------------------------ | ------------------ |
+| `Total Unlocked` | `Unlocked Supply`              | 152px              |
+| `Daily Unlocks`  | `Next 24h Unlocks`             | 158px              |
+| `7d Post Unlock` | `7d Price Change After Unlock` | 235px              |
+
+Re-measure in the same commit that changes a label. A longer label is not free: it either
+widens the column or clips. When the width it demands is out of proportion to the body
+content — 235px of column for a `+25.41%` cell — shorten the label instead and let
+`headerHelperText` carry the detail.

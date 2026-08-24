@@ -424,16 +424,17 @@ const emissionsColumns = [
 			return (
 				<div className="flex h-full items-center">
 					<span className="relative flex items-center gap-2 pl-6">
-						<Bookmark readableName={protocolName} data-bookmark className="absolute -left-0.5" />
+						<Bookmark readableName={protocolName} data-lgonly data-bookmark className="absolute -left-0.5" />
 						<TokenLogo
 							name={protocolName}
 							kind="token"
+							data-lgonly
 							fallbackSrc={geckoId ? geckoTokenIconUrl(geckoId) : null}
 							alt={`Logo of ${protocolName}`}
 						/>
 						<BasicLink
 							href={`/unlocks/${slug(protocolName)}`}
-							className="truncate text-sm font-medium text-link hover:underline"
+							className="min-w-0 truncate text-sm font-medium text-link hover:underline"
 						>
 							{protocolName}
 						</BasicLink>
@@ -442,7 +443,7 @@ const emissionsColumns = [
 			)
 		},
 		meta: {
-			headerClassName: 'w-[160px]'
+			headerClassName: 'w-[160px] lg:w-[214px]'
 		}
 	}),
 	columnHelper.accessor((row) => row.tPrice ?? undefined, {
@@ -463,7 +464,7 @@ const emissionsColumns = [
 			)
 		},
 		meta: {
-			headerClassName: 'w-[80px]',
+			headerClassName: 'w-[90px]',
 			align: 'end'
 		}
 	}),
@@ -522,7 +523,7 @@ const emissionsColumns = [
 				)
 			},
 			meta: {
-				headerClassName: 'w-[140px]',
+				headerClassName: 'w-[152px]',
 				align: 'end',
 				headerHelperText: 'Share of maximum supply unlocked at the emissions artifact snapshot.'
 			}
@@ -558,7 +559,7 @@ const emissionsColumns = [
 			)
 		},
 		meta: {
-			headerClassName: 'w-[min(180px,40vw)]',
+			headerClassName: 'w-[min(184px,40vw)]',
 			align: 'end',
 			headerHelperText:
 				"Price trend shown from 7 days before to 7 days after the most recent unlock event. Doesn't include Non-Circulating and Farming emissions."
@@ -584,7 +585,7 @@ const emissionsColumns = [
 				)
 			},
 			meta: {
-				headerClassName: 'w-[140px]',
+				headerClassName: 'w-[236px]',
 				align: 'end',
 				headerHelperText:
 					'Observed token price change during the 7 days after the most recent unlock. This does not imply that the unlock caused the change.'
@@ -616,7 +617,7 @@ const emissionsColumns = [
 			)
 		},
 		meta: {
-			headerClassName: 'w-[140px]',
+			headerClassName: 'w-[158px]',
 			align: 'end',
 			headerHelperText:
 				'Cliff unlocks plus linear releases accrued during the exact rolling 24-hour period from the emissions artifact snapshot. Events without a known amount or valid snapshot price are excluded.'
