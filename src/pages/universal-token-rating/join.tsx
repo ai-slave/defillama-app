@@ -1,17 +1,32 @@
+import type { InferGetStaticPropsType } from 'next'
 import { UtrAccessGate } from '~/containers/UniversalTokenRating/AccessGate'
 import { ClaimTokenProfile } from '~/containers/UniversalTokenRating/ClaimTokenProfile'
+import { exchangeOptionsFromScoringConfig, fetchUtrScoringConfig } from '~/containers/UniversalTokenRating/server'
 import Layout from '~/layout'
+import { maxAgeForNext } from '~/utils/maxAgeForNext'
+import { withPerformanceLogging } from '~/utils/perf'
 
-export default function UniversalTokenRatingJoinPage() {
+export const getStaticProps = withPerformanceLogging('universal-token-rating/join', async () => {
+	const scoringConfig = await fetchUtrScoringConfig()
+	return {
+		props: { scoringConfig, exchangeOptions: exchangeOptionsFromScoringConfig(scoringConfig) },
+		revalidate: maxAgeForNext([22])
+	}
+})
+
+export default function UniversalTokenRatingJoinPage({
+	scoringConfig,
+	exchangeOptions
+}: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout
-			title="Join the Universal Token Rating - DefiLlama"
-			description="Join the Universal Token Rating to get your token scored on disclosures and market performance."
+			title="Apply for the Universal Token Rating - DefiLlama"
+			description="Apply for the Universal Token Rating by submitting your token's disclosure and project information."
 			canonicalUrl="/universal-token-rating/join"
-			pageName={['Universal Token Rating', 'Join']}
+			pageName={['Universal Token Rating', 'Apply for the Universal Token Rating']}
 		>
 			<UtrAccessGate>
-				<ClaimTokenProfile variant="join" />
+				<ClaimTokenProfile variant="join" exchangeOptions={exchangeOptions} scoringConfig={scoringConfig} />
 			</UtrAccessGate>
 		</Layout>
 	)

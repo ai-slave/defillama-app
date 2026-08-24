@@ -3,7 +3,8 @@ import { UtrAccessGate } from '~/containers/UniversalTokenRating/AccessGate'
 import { ClaimTokenProfile } from '~/containers/UniversalTokenRating/ClaimTokenProfile'
 import {
 	fetchUtrDisclosureScoreSummaries,
-	fetchUtrExchangeOptions,
+	exchangeOptionsFromScoringConfig,
+	fetchUtrScoringConfig,
 	fetchUtrProjects
 } from '~/containers/UniversalTokenRating/server'
 import type { UtrClaimProjectOption } from '~/containers/UniversalTokenRating/types'
@@ -12,11 +13,12 @@ import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging('universal-token-rating/claim', async () => {
-	const [projects, scoreSummaries, exchangeOptions] = await Promise.all([
+	const [projects, scoreSummaries, scoringConfig] = await Promise.all([
 		fetchUtrProjects(),
 		fetchUtrDisclosureScoreSummaries(),
-		fetchUtrExchangeOptions()
+		fetchUtrScoringConfig()
 	])
+	const exchangeOptions = exchangeOptionsFromScoringConfig(scoringConfig)
 	const scoreByProject = new Map(scoreSummaries.map((summary) => [summary.arcticId, summary]))
 	const projectOptions = projects.reduce<UtrClaimProjectOption[]>((options, project) => {
 		if (project.isActive) {
@@ -36,14 +38,15 @@ export const getStaticProps = withPerformanceLogging('universal-token-rating/cla
 	projectOptions.sort((a, b) => a.projectName.localeCompare(b.projectName))
 
 	return {
-		props: { projects: projectOptions, exchangeOptions },
+		props: { projects: projectOptions, exchangeOptions, scoringConfig },
 		revalidate: maxAgeForNext([22])
 	}
 })
 
 export default function UniversalTokenRatingClaimPage({
 	projects,
-	exchangeOptions
+	exchangeOptions,
+	scoringConfig
 }: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout
@@ -53,7 +56,7 @@ export default function UniversalTokenRatingClaimPage({
 			pageName={['Universal Token Rating', 'Claim']}
 		>
 			<UtrAccessGate>
-				<ClaimTokenProfile projects={projects} exchangeOptions={exchangeOptions} />
+				<ClaimTokenProfile projects={projects} exchangeOptions={exchangeOptions} scoringConfig={scoringConfig} />
 			</UtrAccessGate>
 		</Layout>
 	)

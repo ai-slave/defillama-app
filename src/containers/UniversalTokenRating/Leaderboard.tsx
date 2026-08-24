@@ -12,20 +12,28 @@ import { CategoryBreakdownTable, rowBreakdownColumns, type BreakdownColumn } fro
 import { GradeBadge, ScoreBar } from './grades'
 import { PerformanceMatrix } from './PerformanceMatrix'
 import { ClaimProfileBanner } from './TokenPage'
-import type { UtrLeaderboardRow } from './types'
+import type { UtrGradeScaleEntry, UtrGradingConfig, UtrLeaderboardRow } from './types'
 
-function ExpandedRow({ row }: { row: UtrLeaderboardRow }) {
+function ExpandedRow({ row, grading }: { row: UtrLeaderboardRow; grading?: UtrGradingConfig | null }) {
 	const columns = rowBreakdownColumns(row)
 	return (
 		<div className="flex flex-col gap-4 p-4">
 			<div className="flex flex-col gap-4 xl:flex-row">
 				<div className="flex min-w-0 flex-1 flex-col gap-4">
-					<CategoryBreakdownTable title="Disclosures: Breakdown by Category" columns={columns.disclosure} />
-					<CategoryBreakdownTable title="Performance: Breakdown by Category" columns={columns.performance} />
+					<CategoryBreakdownTable
+						title="Disclosures: Breakdown by Category"
+						columns={columns.disclosure}
+						gradingScale={grading?.disclosure.scale}
+					/>
+					<CategoryBreakdownTable
+						title="Performance: Breakdown by Category"
+						columns={columns.performance}
+						gradingScale={grading?.performance.scale}
+					/>
 				</div>
 				<div className="flex flex-col gap-3 xl:w-96 xl:shrink-0">
 					<div className="flex flex-1 rounded-lg border border-subtle bg-surface">
-						<PerformanceMatrix rows={[row]} className="min-h-[280px] w-full flex-1" />
+						<PerformanceMatrix rows={[row]} grading={grading} className="min-h-[280px] w-full flex-1" />
 					</div>
 					<div className="flex gap-3">
 						<Button
@@ -57,8 +65,9 @@ function ExpandedRow({ row }: { row: UtrLeaderboardRow }) {
 
 type BreakdownMode = 'grade' | 'score' | 'percentile'
 
-function breakdownValue(column: BreakdownColumn, mode: BreakdownMode) {
-	if (mode === 'grade') return <GradeBadge score={column.score} scale={10} grade={column.grade ?? undefined} />
+function breakdownValue(column: BreakdownColumn, mode: BreakdownMode, gradingScale?: UtrGradeScaleEntry[] | null) {
+	if (mode === 'grade')
+		return <GradeBadge score={column.score} scale={10} grade={column.grade} gradingScale={gradingScale} />
 	if (mode === 'score')
 		return (
 			<span className="font-jetbrains tabular-nums">
@@ -90,11 +99,13 @@ function breakdownValue(column: BreakdownColumn, mode: BreakdownMode) {
 function MobileBreakdownTable({
 	title,
 	columns,
-	mode
+	mode,
+	gradingScale
 }: {
 	title: string
 	columns: BreakdownColumn[]
 	mode: BreakdownMode
+	gradingScale?: UtrGradeScaleEntry[] | null
 }) {
 	return (
 		<div className="rounded-lg border border-subtle bg-surface">
@@ -105,14 +116,14 @@ function MobileBreakdownTable({
 					className="flex items-center justify-between gap-3 border-b border-subtle px-3 py-2 last:border-b-0"
 				>
 					<span className="body-sm text-secondary">{column.label}</span>
-					{breakdownValue(column, mode)}
+					{breakdownValue(column, mode, gradingScale)}
 				</div>
 			))}
 		</div>
 	)
 }
 
-function MobileExpandedRow({ row }: { row: UtrLeaderboardRow }) {
+function MobileExpandedRow({ row, grading }: { row: UtrLeaderboardRow; grading?: UtrGradingConfig | null }) {
 	const [mode, setMode] = useState<BreakdownMode>('grade')
 	const columns = rowBreakdownColumns(row)
 	return (
@@ -129,10 +140,20 @@ function MobileExpandedRow({ row }: { row: UtrLeaderboardRow }) {
 					{ value: 'percentile', label: 'Percentile' }
 				]}
 			/>
-			<MobileBreakdownTable title="Disclosures: Breakdown by Category" columns={columns.disclosure} mode={mode} />
-			<MobileBreakdownTable title="Performance: Breakdown by Category" columns={columns.performance} mode={mode} />
+			<MobileBreakdownTable
+				title="Disclosures: Breakdown by Category"
+				columns={columns.disclosure}
+				mode={mode}
+				gradingScale={grading?.disclosure.scale}
+			/>
+			<MobileBreakdownTable
+				title="Performance: Breakdown by Category"
+				columns={columns.performance}
+				mode={mode}
+				gradingScale={grading?.performance.scale}
+			/>
 			<div className="rounded-lg border border-subtle bg-surface">
-				<PerformanceMatrix rows={[row]} className="min-h-[260px] w-full" />
+				<PerformanceMatrix rows={[row]} grading={grading} className="min-h-[260px] w-full" />
 			</div>
 			<div className="flex gap-3">
 				<Button
@@ -195,6 +216,7 @@ function sortValue(row: UtrLeaderboardRow, key: UtrSortKey): number {
 }
 
 const PAGE_SIZE = 100
+export const LEADERBOARD_COLUMN_COUNT = 8
 
 const RANK_WIDTH = 48
 const STICKY_CELL_BACKGROUND = 'var(--bg-surface)'
@@ -221,10 +243,12 @@ function stickyStyle(index: 0 | 1): CSSProperties {
 
 export function Leaderboard({
 	rows,
+	grading,
 	sort,
 	setSort
 }: {
 	rows: UtrLeaderboardRow[]
+	grading?: UtrGradingConfig | null
 	sort: UtrSort
 	setSort: (updater: (prev: UtrSort) => UtrSort) => void
 }) {
@@ -276,6 +300,9 @@ export function Leaderboard({
 								style={stickyStyle(1)}
 							>
 								Protocol
+							</th>
+							<th className="border-b border-subtle px-3 py-2.5 text-left label-sm whitespace-nowrap text-secondary">
+								Grade
 							</th>
 							{SORTABLE_COLUMNS.map((column) => (
 								<th key={column.key} className="border-b border-subtle px-3 py-2.5 text-left whitespace-nowrap">
@@ -329,9 +356,12 @@ export function Leaderboard({
 												</span>
 											</BasicLink>
 										</td>
+										<td className="border-b border-subtle px-3 py-2.5">
+											<GradeBadge score={row.scores.overall} grade={row.grade} gradingScale={grading?.overall.scale} />
+										</td>
 										<td className="border-b border-subtle px-3 py-2.5 whitespace-nowrap">
 											<span className="flex items-center gap-3">
-												<ScoreBar score={row.scores.overall} />
+												<ScoreBar score={row.scores.overall} grade={row.grade} gradingScale={grading?.overall.scale} />
 												<span
 													className={`font-jetbrains tabular-nums ${
 														(row.scores.overallMomChangePct ?? 0) >= 0 ? 'text-success' : 'text-error'
@@ -342,10 +372,20 @@ export function Leaderboard({
 											</span>
 										</td>
 										<td className="border-b border-subtle px-3 py-2.5 whitespace-nowrap">
-											<ScoreBar score={row.scores.disclosure} scale={10} />
+											<ScoreBar
+												score={row.scores.disclosure}
+												scale={10}
+												grade={row.disclosureGrade}
+												gradingScale={grading?.disclosure.scale}
+											/>
 										</td>
 										<td className="border-b border-subtle px-3 py-2.5 whitespace-nowrap">
-											<ScoreBar score={row.scores.performance} scale={10} />
+											<ScoreBar
+												score={row.scores.performance}
+												scale={10}
+												grade={row.performanceGrade}
+												gradingScale={grading?.performance.scale}
+											/>
 										</td>
 										<td className="border-b border-subtle px-3 py-2.5 font-jetbrains whitespace-nowrap tabular-nums">
 											{row.fdvUsd == null ? 'N/A' : `$${formatNumber(row.fdvUsd)}`}
@@ -364,13 +404,13 @@ export function Leaderboard({
 									</tr>
 									{expanded ? (
 										<tr>
-											<td colSpan={7} className="border-b border-subtle bg-surface p-0">
+											<td colSpan={LEADERBOARD_COLUMN_COUNT} className="border-b border-subtle bg-surface p-0">
 												<div className="sticky left-0 max-w-[calc(100vw-16px)] lg:max-w-none">
 													<div className="max-lg:hidden">
-														<ExpandedRow row={row} />
+														<ExpandedRow row={row} grading={grading} />
 													</div>
 													<div className="lg:hidden">
-														<MobileExpandedRow row={row} />
+														<MobileExpandedRow row={row} grading={grading} />
 													</div>
 												</div>
 											</td>

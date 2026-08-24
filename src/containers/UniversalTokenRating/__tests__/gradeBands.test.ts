@@ -1,34 +1,52 @@
 import { describe, expect, it } from 'vitest'
-import { resolveUtrGrade, utrGradeColor } from '../gradeBands'
+import { resolveUtrGrade, resolveUtrGradeOrLabel, utrGradeColor } from '../gradeBands'
+
+const overallScale = [
+	{ min: 60, grade: 'AAA', interpretation: 'Highest confidence' },
+	{ min: 40, grade: 'AA', interpretation: 'Very high confidence' },
+	{ min: 35, grade: 'A', interpretation: 'High confidence' },
+	{ min: 30, grade: 'BBB', interpretation: 'Moderate confidence' },
+	{ min: 25, grade: 'BB', interpretation: 'Developing confidence' },
+	{ min: 20, grade: 'B', interpretation: 'Low confidence' },
+	{ min: null, grade: 'CCC', interpretation: 'Very low confidence' }
+]
+
+const axisScale = [
+	{ min: 8, grade: 'AAA', interpretation: 'Exceptional' },
+	{ min: 6, grade: 'AA', interpretation: 'Excellent' },
+	{ min: 5, grade: 'A', interpretation: 'Strong' },
+	{ min: 4.5, grade: 'BBB', interpretation: 'Good' },
+	{ min: 4, grade: 'BB', interpretation: 'Adequate' },
+	{ min: 3, grade: 'B', interpretation: 'Limited' },
+	{ min: null, grade: 'CCC', interpretation: 'Insufficient' }
+]
 
 describe('resolveUtrGrade', () => {
-	it('maps the 0-100 overall scale onto the overall bands with inclusive lower cutoffs', () => {
-		expect(resolveUtrGrade(100)).toBe('AAA')
-		expect(resolveUtrGrade(82.5)).toBe('AAA')
-		expect(resolveUtrGrade(82.49)).toBe('AA')
-		expect(resolveUtrGrade(75)).toBe('AA')
-		expect(resolveUtrGrade(67.5)).toBe('A')
-		expect(resolveUtrGrade(63.73)).toBe('BBB')
-		expect(resolveUtrGrade(50)).toBe('BB')
-		expect(resolveUtrGrade(40)).toBe('B')
-		expect(resolveUtrGrade(39.99)).toBe('CCC')
-		expect(resolveUtrGrade(0)).toBe('CCC')
+	it('uses the runtime overall scale with inclusive lower cutoffs', () => {
+		expect(resolveUtrGrade(100, overallScale)).toBe('AAA')
+		expect(resolveUtrGrade(60, overallScale)).toBe('AAA')
+		expect(resolveUtrGrade(59.99, overallScale)).toBe('AA')
+		expect(resolveUtrGrade(40, overallScale)).toBe('AA')
+		expect(resolveUtrGrade(39.99, overallScale)).toBe('A')
+		expect(resolveUtrGrade(20, overallScale)).toBe('B')
+		expect(resolveUtrGrade(19.99, overallScale)).toBe('CCC')
 	})
 
-	it('maps the 0-10 axis scale onto the axis bands', () => {
-		expect(resolveUtrGrade(9.5, 10)).toBe('AAA')
-		expect(resolveUtrGrade(9, 10)).toBe('AA')
-		expect(resolveUtrGrade(8.5, 10)).toBe('A')
-		expect(resolveUtrGrade(7.25, 10)).toBe('BBB')
-		expect(resolveUtrGrade(6.25, 10)).toBe('BB')
-		expect(resolveUtrGrade(5.25, 10)).toBe('B')
-		expect(resolveUtrGrade(5.24, 10)).toBe('CCC')
+	it('uses the runtime axis scale at and immediately below each boundary', () => {
+		expect(resolveUtrGrade(8, axisScale)).toBe('AAA')
+		expect(resolveUtrGrade(7.99, axisScale)).toBe('AA')
+		expect(resolveUtrGrade(6, axisScale)).toBe('AA')
+		expect(resolveUtrGrade(5.99, axisScale)).toBe('A')
+		expect(resolveUtrGrade(3, axisScale)).toBe('B')
+		expect(resolveUtrGrade(2.99, axisScale)).toBe('CCC')
 	})
 
-	it('returns null for missing or invalid scores', () => {
-		expect(resolveUtrGrade(null)).toBeNull()
-		expect(resolveUtrGrade(undefined)).toBeNull()
-		expect(resolveUtrGrade(Number.NaN)).toBeNull()
+	it('returns null without runtime configuration and lets explicit API grades win', () => {
+		expect(resolveUtrGrade(60, null)).toBeNull()
+		expect(resolveUtrGrade(null, overallScale)).toBeNull()
+		expect(resolveUtrGrade(undefined, overallScale)).toBeNull()
+		expect(resolveUtrGrade(Number.NaN, overallScale)).toBeNull()
+		expect(resolveUtrGradeOrLabel(60, overallScale, 'B')).toBe('B')
 	})
 })
 

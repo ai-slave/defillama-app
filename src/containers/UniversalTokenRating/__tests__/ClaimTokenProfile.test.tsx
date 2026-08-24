@@ -45,4 +45,11 @@ describe('ClaimTokenProfile', () => {
 		expect(html).toContain('Token list unavailable')
 		expect(html).not.toContain('Abeezee (ABC)')
 	})
+
+	it('uses application language for the join variant', () => {
+		const html = renderToStaticMarkup(<ClaimTokenProfile variant="join" />)
+
+		expect(html).toContain('Apply for the Universal Token Rating')
+		expect(html).not.toContain('Join the Universal Token Rating')
+	})
 })

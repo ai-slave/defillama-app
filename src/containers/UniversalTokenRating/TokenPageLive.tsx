@@ -41,7 +41,7 @@ import type {
 	UtrCriterionBreakdown,
 	UtrExchangesResponse,
 	UtrLeaderboardRow,
-	UtrScoringDocs
+	UtrScoringConfig
 } from './types'
 
 const EXCHANGE_LABELS: Record<string, string> = {
@@ -184,12 +184,14 @@ function AboutDrawer({
 	asset,
 	exchanges,
 	iconDataUrl,
+	scoringConfig,
 	open,
 	onClose
 }: {
 	asset: UtrAssetResponse
 	exchanges?: UtrExchangesResponse | null
 	iconDataUrl?: string | null
+	scoringConfig?: UtrScoringConfig | null
 	open: boolean
 	onClose: () => void
 }) {
@@ -206,6 +208,8 @@ function AboutDrawer({
 		coingeckoId: asset.coingeckoId,
 		iconDataUrl,
 		grade: asset.grade,
+		disclosureGrade: asset.disclosure?.grade ?? null,
+		performanceGrade: asset.performance?.grade ?? null,
 		scores: {
 			overall: asset.overallScore,
 			overallMomChangePct: asset.momChangePct,
@@ -245,7 +249,11 @@ function AboutDrawer({
 					</Button>
 				) : null}
 				<div className="grid grid-cols-2 items-center gap-3 rounded-lg border border-subtle bg-surface p-3 lg:flex lg:flex-wrap lg:justify-between lg:gap-4">
-					<GradeChip score={asset.overallScore} grade={asset.grade} />
+					<GradeChip
+						score={asset.overallScore}
+						grade={asset.grade}
+						gradingScale={scoringConfig?.grading.overall.scale}
+					/>
 					<span className="flex flex-col gap-0.5">
 						<span className="body-sm text-tertiary">Overall Score</span>
 						<span className="flex items-center gap-2">
@@ -259,7 +267,12 @@ function AboutDrawer({
 										})}
 								<span className="text-tertiary"> /100</span>
 							</span>
-							<ScoreBar score={asset.overallScore} grade={asset.grade} showValue={false} />
+							<ScoreBar
+								score={asset.overallScore}
+								grade={asset.grade}
+								gradingScale={scoringConfig?.grading.overall.scale}
+								showValue={false}
+							/>
 						</span>
 					</span>
 					<span className="flex flex-col gap-0.5">
@@ -286,18 +299,20 @@ function AboutDrawer({
 					<AccentBadge className="h-6">Last 30-day</AccentBadge>
 				</div>
 				<div className="rounded-lg border border-subtle bg-surface">
-					<PerformanceMatrix rows={[matrixRow]} className="h-[320px] w-full" />
+					<PerformanceMatrix rows={[matrixRow]} grading={scoringConfig?.grading} className="h-[320px] w-full" />
 				</div>
 				<div className="flex flex-col divide-y divide-(--border-subtle) rounded-lg border border-subtle bg-surface sm:flex-row sm:divide-x sm:divide-y-0">
 					<TickScoreStrip
 						label="Disclosures"
 						score={asset.disclosure?.score ?? null}
 						gradeLabel={asset.disclosure?.grade ?? null}
+						gradingScale={scoringConfig?.grading.disclosure.scale}
 					/>
 					<TickScoreStrip
 						label="Performance"
 						score={asset.performance?.score ?? null}
 						gradeLabel={asset.performance?.grade ?? null}
+						gradingScale={scoringConfig?.grading.performance.scale}
 					/>
 				</div>
 				<VenueList title="CEX where listed" venues={cexVenues} />
@@ -312,13 +327,13 @@ export function TokenPageLive({
 	asset,
 	legacy,
 	exchanges,
-	scoringDocs,
+	scoringConfig,
 	iconDataUrl
 }: {
 	asset: UtrAssetResponse
 	legacy?: UtrAssetMetrics | null
 	exchanges?: UtrExchangesResponse | null
-	scoringDocs?: UtrScoringDocs | null
+	scoringConfig?: UtrScoringConfig | null
 	iconDataUrl?: string | null
 }) {
 	const axisColor = useChartAxisColor()
@@ -326,7 +341,7 @@ export function TokenPageLive({
 	const [aboutOpen, setAboutOpen] = useState(false)
 
 	const docsFor = (axis: 'disclosure' | 'performance', categoryKey: string) =>
-		scoringDocs?.[axis].find((entry) => entry.key === categoryKey)?.criteria ?? []
+		scoringConfig?.[axis].categories.find((entry) => entry.key === categoryKey)?.criteria ?? []
 	const openCriteria = (
 		title: string,
 		axis: 'disclosure' | 'performance',
@@ -467,7 +482,11 @@ export function TokenPageLive({
 			<Panel padding="none">
 				<div className="flex flex-col divide-y divide-(--border-subtle) md:flex-row md:divide-x md:divide-y-0">
 					<div className="flex items-center gap-3 px-4 py-3">
-						<GradeChip score={asset.overallScore} grade={asset.grade} />
+						<GradeChip
+							score={asset.overallScore}
+							grade={asset.grade}
+							gradingScale={scoringConfig?.grading.overall.scale}
+						/>
 						<div className="flex flex-col">
 							<span className="label-md">
 								Overall Score:{' '}
@@ -493,11 +512,13 @@ export function TokenPageLive({
 						label="Disclosures"
 						score={asset.disclosure?.score ?? null}
 						gradeLabel={asset.disclosure?.grade ?? null}
+						gradingScale={scoringConfig?.grading.disclosure.scale}
 					/>
 					<TickScoreStrip
 						label="Performance"
 						score={asset.performance?.score ?? null}
 						gradeLabel={asset.performance?.grade ?? null}
+						gradingScale={scoringConfig?.grading.performance.scale}
 					/>
 				</div>
 			</Panel>
@@ -555,7 +576,12 @@ export function TokenPageLive({
 												{DISCLOSURE_CRITERION_TITLES[item.key] ?? item.label}
 											</span>
 											<span className="flex items-center gap-2">
-												<GradeBadge score={item.score} scale={10} grade={item.grade} />
+												<GradeBadge
+													score={item.score}
+													scale={10}
+													grade={item.grade}
+													gradingScale={scoringConfig?.grading.disclosure.scale}
+												/>
 												<span className="min-w-[8ch] text-right mono-sm tabular-nums">
 													{item.score == null
 														? 'N/A'
@@ -585,6 +611,7 @@ export function TokenPageLive({
 						<MetricCard
 							title="Total Volume (as % of Market Cap)"
 							onOpen={() => openTotalMarket(marketQuality?.volumeMcap.criterionKey)}
+							gradingScale={scoringConfig?.grading.performance.scale}
 							{...summaryFooter(marketQuality?.volumeMcap)}
 						>
 							{marketQuality?.series.length ? (
@@ -643,6 +670,7 @@ export function TokenPageLive({
 						<MetricCard
 							title="Depth +/- 2% (as a % of Market Capitalization)"
 							onOpen={() => openTotalMarket(marketQuality?.depthMcap.criterionKey)}
+							gradingScale={scoringConfig?.grading.performance.scale}
 							{...summaryFooter(marketQuality?.depthMcap)}
 						>
 							{marketQuality?.series.length ? (
@@ -693,6 +721,7 @@ export function TokenPageLive({
 						<MetricCard
 							title="Bid / Ask Spread (Volume weighted spreads)"
 							onOpen={() => openTotalMarket(spread?.criterionKey)}
+							gradingScale={scoringConfig?.grading.performance.scale}
 							{...summaryFooter(spread)}
 						>
 							{spread?.exchanges.length ? (
@@ -738,6 +767,7 @@ export function TokenPageLive({
 						<MetricCard
 							title="Price Performance"
 							onOpen={() => openTotalMarket(priceChart?.criterionKey)}
+							gradingScale={scoringConfig?.grading.performance.scale}
 							badge={
 								priceChart?.changePct == null ? null : (
 									<AccentBadge className="h-6">
@@ -778,6 +808,7 @@ export function TokenPageLive({
 						<MetricCard
 							title="Open Interest (as a % of Market Capitalization)"
 							onOpen={() => openTotalMarket(openInterest?.criterionKey)}
+							gradingScale={scoringConfig?.grading.performance.scale}
 							{...summaryFooter(openInterest)}
 						>
 							<div className="flex flex-1 flex-col gap-3">
@@ -801,6 +832,7 @@ export function TokenPageLive({
 						<MetricCard
 							title="Funding Rate"
 							onOpen={() => openTotalMarket(funding?.criterionKey)}
+							gradingScale={scoringConfig?.grading.performance.scale}
 							{...summaryFooter(funding)}
 						>
 							{funding?.exchanges.length ? (
@@ -880,7 +912,12 @@ export function TokenPageLive({
 											<Icon name="arrow-right" height={14} width={14} />
 										</Button>
 									</div>
-									<GradeFooterColumns score={entry.score} grade={entry.grade} percentile={entry.percentile} />
+									<GradeFooterColumns
+										score={entry.score}
+										grade={entry.grade}
+										gradingScale={scoringConfig?.grading.performance.scale}
+										percentile={entry.percentile}
+									/>
 								</Panel>
 							))}
 						</div>
@@ -939,6 +976,7 @@ export function TokenPageLive({
 								<GradeFooter
 									score={tier1Criterion?.score ?? null}
 									grade={tier1Criterion?.grade}
+									gradingScale={scoringConfig?.grading.performance.scale}
 									percentile={tier1Criterion?.percentile}
 									divider={false}
 								/>
@@ -951,6 +989,7 @@ export function TokenPageLive({
 								title={entry.title}
 								key={entry.title}
 								onOpen={() => openFootprint(entry.chart?.criterionKey)}
+								gradingScale={scoringConfig?.grading.performance.scale}
 								{...summaryFooter(entry.chart)}
 							>
 								{entry.chart?.points.length ? (
@@ -1095,6 +1134,7 @@ export function TokenPageLive({
 										<GradeFooter
 											score={vestingCriterion?.score ?? null}
 											grade={vestingCriterion?.grade}
+											gradingScale={scoringConfig?.grading.performance.scale}
 											percentile={vestingCriterion?.percentile}
 										/>
 									</div>
@@ -1133,6 +1173,7 @@ export function TokenPageLive({
 										<GradeFooterStacked
 											score={card.criterion?.score ?? null}
 											grade={card.criterion?.grade}
+											gradingScale={scoringConfig?.grading.performance.scale}
 											percentile={card.criterion?.percentile}
 										/>
 									</Panel>
@@ -1154,6 +1195,7 @@ export function TokenPageLive({
 				asset={asset}
 				exchanges={exchanges}
 				iconDataUrl={iconDataUrl}
+				scoringConfig={scoringConfig}
 				open={aboutOpen}
 				onClose={() => setAboutOpen(false)}
 			/>
@@ -1161,6 +1203,7 @@ export function TokenPageLive({
 				state={criteriaDrawer}
 				assetLabel={`${asset.projectName} (${asset.symbol.toUpperCase()})`}
 				lastEditedAt={asset.lastEditedAt}
+				grading={scoringConfig?.grading}
 				onSelect={(key) => setCriteriaDrawer((current) => (current ? { ...current, activeKey: key } : current))}
 				onClose={() => setCriteriaDrawer(null)}
 			/>

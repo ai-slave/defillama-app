@@ -104,6 +104,8 @@ export type UtrLeaderboardRow = {
 	coingeckoId?: string | null
 	iconDataUrl?: string | null
 	grade?: string | null
+	disclosureGrade?: string | null
+	performanceGrade?: string | null
 	breakdown?: {
 		disclosure: UtrCategoryBreakdown[]
 		performance: UtrCategoryBreakdown[]
@@ -349,6 +351,8 @@ export type UtrLeaderboardApiRow = {
 	cmcId: string | null
 	notRated: boolean
 	grade: string | null
+	disclosureGrade?: string | null
+	performanceGrade?: string | null
 	overallScore: number | null
 	momChangePct: number | null
 	disclosureScore: number | null
@@ -386,6 +390,57 @@ export type UtrCategoryDoc = {
 export type UtrScoringDocs = {
 	disclosure: UtrCategoryDoc[]
 	performance: UtrCategoryDoc[]
+}
+
+export type UtrGradeScaleEntry = {
+	min: number | null
+	grade: string
+	interpretation: string
+}
+
+export type UtrGradingAxisConfig = {
+	description: string
+	scale: UtrGradeScaleEntry[]
+}
+
+export type UtrGradingConfig = {
+	overall: UtrGradingAxisConfig
+	disclosure: UtrGradingAxisConfig
+	performance: UtrGradingAxisConfig
+}
+
+export type UtrCriterionApplicability = 'both' | 'preTge' | 'postTge'
+
+export type UtrScoringCriterionConfig = UtrCriterionDoc & {
+	weight: number
+	applicability: UtrCriterionApplicability
+	evaluationType: string | null
+	ignoreBlacklistedExchanges: boolean | null
+	expression: string | null
+	bands: unknown[]
+}
+
+export type UtrScoringCategoryConfig = {
+	key: string
+	label: string
+	criteria: UtrScoringCriterionConfig[]
+}
+
+export type UtrScoringExchange = {
+	id: string
+	displayName: string
+	logoUrl: string | null
+}
+
+export type UtrScoringConfig = {
+	version: number
+	grading: UtrGradingConfig
+	disclosure: { categories: UtrScoringCategoryConfig[] }
+	performance: { categories: UtrScoringCategoryConfig[] }
+	exchanges: {
+		tier1: UtrScoringExchange[]
+		tier2: UtrScoringExchange[]
+	}
 }
 
 export type UtrExchangeVenue = {

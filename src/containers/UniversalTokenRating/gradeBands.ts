@@ -1,31 +1,6 @@
+import type { UtrGradeScaleEntry } from './types'
+
 export type UtrGradeLabel = 'AAA' | 'AA' | 'A' | 'BBB' | 'BB' | 'B' | 'CCC'
-
-export type UtrGradeBand = {
-	min: number
-	label: UtrGradeLabel
-}
-
-// Bands come from the TVS docs grade tables; Forgd tunes them in their admin
-// dashboard, so keep every cutoff in these two tables only.
-export const UTR_AXIS_GRADE_BANDS: UtrGradeBand[] = [
-	{ min: 9.5, label: 'AAA' },
-	{ min: 9, label: 'AA' },
-	{ min: 8.25, label: 'A' },
-	{ min: 7.25, label: 'BBB' },
-	{ min: 6.25, label: 'BB' },
-	{ min: 5.25, label: 'B' },
-	{ min: -Infinity, label: 'CCC' }
-]
-
-export const UTR_OVERALL_GRADE_BANDS: UtrGradeBand[] = [
-	{ min: 82.5, label: 'AAA' },
-	{ min: 75, label: 'AA' },
-	{ min: 67.5, label: 'A' },
-	{ min: 60, label: 'BBB' },
-	{ min: 50, label: 'BB' },
-	{ min: 40, label: 'B' },
-	{ min: -Infinity, label: 'CCC' }
-]
 
 export type UtrGradeColor = {
 	text: string
@@ -47,13 +22,35 @@ export const UTR_GRADE_COLORS: Record<UtrGradeLabel | 'N/A', UtrGradeColor> = {
 
 export type UtrScoreScale = 100 | 10
 
-export function resolveUtrGrade(score: number | null | undefined, scale: UtrScoreScale = 100): UtrGradeLabel | null {
-	if (score == null || Number.isNaN(score)) return null
-	const bands = scale === 100 ? UTR_OVERALL_GRADE_BANDS : UTR_AXIS_GRADE_BANDS
-	for (const band of bands) {
-		if (score >= band.min) return band.label
+export function parseUtrGrade(value: string | null | undefined): UtrGradeLabel | null {
+	return value && value in UTR_GRADE_COLORS && value !== 'N/A' ? (value as UtrGradeLabel) : null
+}
+
+export function resolveUtrGrade(
+	score: number | null | undefined,
+	scale: UtrGradeScaleEntry[] | null | undefined
+): UtrGradeLabel | null {
+	if (score == null || Number.isNaN(score) || !scale?.length) return null
+	let fallback: UtrGradeLabel | null = null
+	let resolved: { min: number; grade: UtrGradeLabel } | null = null
+	for (const band of scale) {
+		const grade = parseUtrGrade(band.grade)
+		if (!grade) continue
+		if (band.min === null) {
+			fallback = grade
+			continue
+		}
+		if (score >= band.min && (!resolved || band.min > resolved.min)) resolved = { min: band.min, grade }
 	}
-	return null
+	return resolved?.grade ?? fallback
+}
+
+export function resolveUtrGradeOrLabel(
+	score: number | null | undefined,
+	scale: UtrGradeScaleEntry[] | null | undefined,
+	explicitGrade?: string | null
+): UtrGradeLabel | null {
+	return explicitGrade == null ? resolveUtrGrade(score, scale) : parseUtrGrade(explicitGrade)
 }
 
 export function utrGradeColor(grade: UtrGradeLabel | null): UtrGradeColor {

@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { PreTgePerformance } from '../PreTgePerformance'
-import { NoDataPlaceholder } from '../TokenPage'
+import { CantFindTokenBanner, NoDataPlaceholder } from '../TokenPage'
 import { TopMovers } from '../TopMovers'
 
 describe('UTR empty states', () => {
@@ -32,5 +32,14 @@ describe('UTR empty states', () => {
 
 		expect(html).toContain('Strategic')
 		expect(html).toContain('NO DATA YET')
+	})
+
+	it('links the missing-token CTA to the UTR application form without account-creation copy', () => {
+		const html = renderToStaticMarkup(<CantFindTokenBanner />)
+
+		expect(html).toContain('Apply for UTR')
+		expect(html).toContain('/universal-token-rating/join')
+		expect(html).not.toContain('Join Forgd')
+		expect(html).not.toContain('Create an account')
 	})
 })

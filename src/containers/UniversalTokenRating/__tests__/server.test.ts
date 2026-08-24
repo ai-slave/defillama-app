@@ -4,11 +4,67 @@ const fetchJson = vi.fn()
 vi.mock('~/utils/async', () => ({ fetchJson: (...args: unknown[]) => fetchJson(...args) }))
 
 import {
+	exchangeOptionsFromScoringConfig,
 	fetchUtrDisclosureScoreSummaries,
-	fetchUtrExchangeOptions,
 	fetchUtrProjects,
+	fetchUtrScoringConfig,
 	fetchUtrUniverseWithLive
 } from '../server'
+
+const rawScoringConfig = {
+	version: 18,
+	config: {
+		grading: {
+			overall: {
+				description: 'Overall confidence',
+				scale: [
+					{ min: 60, grade: 'AAA', interpretation: 'Highest confidence' },
+					{ min: null, grade: 'CCC', interpretation: 'Very low confidence' }
+				]
+			},
+			disclosure: { description: 'Disclosure quality', scale: [] },
+			performance: { description: 'Performance quality', scale: [] }
+		},
+		disclosure: {
+			categories: [
+				{
+					key: 'core_contributors',
+					label: 'Core Contributors',
+					criteria: [
+						{
+							key: 'team_identities',
+							label: 'Insider Identities Disclosed',
+							weight: 0.05,
+							applicability: 'both',
+							definition: 'Who is on the team.',
+							rubric: ['All named', 'Partially named']
+						}
+					]
+				}
+			]
+		},
+		performance: {
+			categories: [
+				{
+					key: 'total_market',
+					label: 'Total Market',
+					criteria: [
+						{
+							key: 'volume_mcap',
+							label: 'Total Volume',
+							weight: 0.1,
+							applicability: 'postTge'
+						}
+					]
+				}
+			]
+		}
+	},
+	exchanges: {
+		tier1: [{ id: 'binance', displayName: 'Binance', logoUrl: 'https://example.com/binance.png' }],
+		tier2: [{ id: 'kraken', displayName: 'Kraken', logoUrl: null }]
+	}
+}
 
 afterEach(() => {
 	vi.unstubAllEnvs()
@@ -21,18 +77,23 @@ describe('UTR project API', () => {
 		fetchJson
 			.mockResolvedValueOnce([{ arcticId: 'project-1', projectName: 'Ethereum' }])
 			.mockResolvedValueOnce([{ arcticId: 'project-1', disclosureScore: 8.72 }])
-			.mockResolvedValueOnce({
-				exchanges: {
-					tier1: [{ displayName: 'Binance' }],
-					tier2: [{ displayName: 'Kraken' }]
-				}
-			})
+			.mockResolvedValueOnce(rawScoringConfig)
 
 		await expect(fetchUtrProjects()).resolves.toEqual([{ arcticId: 'project-1', projectName: 'Ethereum' }])
 		await expect(fetchUtrDisclosureScoreSummaries()).resolves.toEqual([
 			{ arcticId: 'project-1', disclosureScore: 8.72 }
 		])
-		await expect(fetchUtrExchangeOptions()).resolves.toEqual(['Binance', 'Kraken'])
+		const scoringConfig = await fetchUtrScoringConfig()
+		expect(scoringConfig?.version).toBe(18)
+		expect(scoringConfig?.grading.overall.scale.at(-1)?.min).toBeNull()
+		expect(scoringConfig?.disclosure.categories[0].criteria[0]).toMatchObject({
+			weight: 0.05,
+			applicability: 'both',
+			definition: 'Who is on the team.',
+			rubric: ['All named', 'Partially named']
+		})
+		expect(scoringConfig?.performance.categories[0].criteria[0].applicability).toBe('postTge')
+		expect(exchangeOptionsFromScoringConfig(scoringConfig)).toEqual(['Binance', 'Kraken'])
 		expect(fetchJson).toHaveBeenNthCalledWith(
 			1,
 			'https://dev.quant.api.forgd.com/api/utr/projects',
@@ -55,7 +116,8 @@ describe('UTR project API', () => {
 
 		await expect(fetchUtrProjects()).resolves.toEqual([])
 		await expect(fetchUtrDisclosureScoreSummaries()).resolves.toEqual([])
-		await expect(fetchUtrExchangeOptions()).resolves.toEqual([])
+		await expect(fetchUtrScoringConfig()).resolves.toBeNull()
+		expect(exchangeOptionsFromScoringConfig(null)).toEqual([])
 		await expect(fetchUtrUniverseWithLive()).resolves.toEqual({ rows: [], scoredCount: 0, totalCount: 0 })
 	})
 })

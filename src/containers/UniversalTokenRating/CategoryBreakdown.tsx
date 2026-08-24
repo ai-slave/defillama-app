@@ -1,6 +1,6 @@
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { GradeBadge, ScoreBar } from './grades'
-import type { UtrCategoryBreakdown, UtrRubricScore } from './types'
+import type { UtrCategoryBreakdown, UtrGradeScaleEntry, UtrRubricScore } from './types'
 
 export type BreakdownColumn = {
 	key: string
@@ -69,7 +69,15 @@ function PercentileCell({ percentile }: { percentile: number | null }) {
 	)
 }
 
-export function CategoryBreakdownTable({ title, columns }: { title: string; columns: BreakdownColumn[] }) {
+export function CategoryBreakdownTable({
+	title,
+	columns,
+	gradingScale
+}: {
+	title: string
+	columns: BreakdownColumn[]
+	gradingScale?: UtrGradeScaleEntry[] | null
+}) {
 	return (
 		<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
 			<p className="border-b border-subtle px-4 py-2.5 label-md">{title}</p>
@@ -87,7 +95,7 @@ export function CategoryBreakdownTable({ title, columns }: { title: string; colu
 						<td className="px-4 py-2 text-secondary">Grade</td>
 						{columns.map((column) => (
 							<td key={column.key} className="border-l border-subtle px-4 py-2 text-center">
-								<GradeBadge score={column.score} scale={10} grade={column.grade ?? undefined} />
+								<GradeBadge score={column.score} scale={10} grade={column.grade} gradingScale={gradingScale} />
 							</td>
 						))}
 					</tr>
@@ -106,7 +114,13 @@ export function CategoryBreakdownTable({ title, columns }: { title: string; colu
 												})}
 										<span className="text-tertiary"> /10</span>
 									</span>
-									<ScoreBar score={column.score} scale={10} grade={column.grade ?? undefined} showValue={false} />
+									<ScoreBar
+										score={column.score}
+										scale={10}
+										grade={column.grade}
+										gradingScale={gradingScale}
+										showValue={false}
+									/>
 								</span>
 							</td>
 						))}

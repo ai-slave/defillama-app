@@ -3,7 +3,6 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
-import { Switch } from '~/ui/Switch'
 import { formatNumber } from '~/utils/numberFormat'
 import { FDV_RANGES, LISTING_STATUS_LABELS, UTR_SECTORS } from './constants'
 import { Leaderboard, type UtrSort } from './Leaderboard'
@@ -11,17 +10,16 @@ import { MobileFiltersDrawer } from './MobileFiltersDrawer'
 import { PerformanceMatrix } from './PerformanceMatrix'
 import { CantFindTokenBanner, NoDataPlaceholder } from './TokenPage'
 import { TopMovers } from './TopMovers'
-import type { UtrTopMover, UtrUniverse } from './types'
+import type { UtrScoringConfig, UtrTopMover, UtrUniverse } from './types'
 import { UtrDocsDrawer } from './UtrDocsDrawer'
 
 export type UniversalTokenRatingProps = {
 	universe: UtrUniverse
 	topMovers: UtrTopMover[]
+	scoringConfig?: UtrScoringConfig | null
 }
 
-const PINNED_ASSET = 'access-protocol-8'
-
-export function UniversalTokenRating({ universe, topMovers }: UniversalTokenRatingProps) {
+export function UniversalTokenRating({ universe, topMovers, scoringConfig }: UniversalTokenRatingProps) {
 	const [docsOpen, setDocsOpen] = useState(false)
 
 	const sectorOptions = useMemo(() => {
@@ -35,7 +33,6 @@ export function UniversalTokenRating({ universe, topMovers }: UniversalTokenRati
 	const [fdvRanges, setFdvRanges] = useState<string[]>(() => FDV_RANGES.map((range) => range.key))
 	const [sectors, setSectors] = useState<string[]>(() => sectorOptions)
 	const [listingStatuses, setListingStatuses] = useState<string[]>(() => Object.keys(LISTING_STATUS_LABELS))
-	const [pinMyToken, setPinMyToken] = useState(false)
 	const [sort, setSort] = useState<UtrSort>({ key: 'rank', desc: false })
 	const [filtersOpen, setFiltersOpen] = useState(false)
 
@@ -101,12 +98,6 @@ export function UniversalTokenRating({ universe, topMovers }: UniversalTokenRati
 			return true
 		})
 	}, [universe.rows, fdvRanges, sectors, listingStatuses, sectorOptions])
-
-	const leaderboardRows = useMemo(() => {
-		if (!pinMyToken) return filteredRows
-		const pinned = filteredRows.filter((row) => row.asset === PINNED_ASSET)
-		return [...pinned, ...filteredRows.filter((row) => row.asset !== PINNED_ASSET)]
-	}, [filteredRows, pinMyToken])
 
 	const scoredLabel = (
 		<span className="body-sm text-secondary">
@@ -193,14 +184,18 @@ export function UniversalTokenRating({ universe, topMovers }: UniversalTokenRati
 					<PanelTitle>Performance Matrix</PanelTitle>
 					{scoredLabel}
 				</PanelHeader>
-				<PerformanceMatrix rows={filteredRows} />
+				<PerformanceMatrix rows={filteredRows} grading={scoringConfig?.grading} />
 			</Panel>
 
 			<Panel padding="none" className="lg:hidden">
 				<PanelHeader>
 					<PanelTitle>Top-10 Project Rating Matrix</PanelTitle>
 				</PanelHeader>
-				<PerformanceMatrix rows={filteredRows.slice(0, 10)} className="h-[320px] w-full" />
+				<PerformanceMatrix
+					rows={filteredRows.slice(0, 10)}
+					grading={scoringConfig?.grading}
+					className="h-[320px] w-full"
+				/>
 				<div className="p-3">
 					<div className="flex items-center gap-2 rounded-lg bg-surface-elevated-1 px-3 py-2.5 body-sm text-secondary">
 						<Icon name="circle-help" height={16} width={16} className="shrink-0 text-link" />
@@ -212,22 +207,14 @@ export function UniversalTokenRating({ universe, topMovers }: UniversalTokenRati
 			<Panel padding="none">
 				<PanelHeader className="justify-between">
 					<PanelTitle>Leaderboard Ranking</PanelTitle>
-					<div className="flex items-center gap-4">
-						<Switch
-							label="Pin My Token on Top"
-							value="pin-my-token"
-							checked={pinMyToken}
-							onChange={(e) => setPinMyToken(e.target.checked)}
-						/>
-						{scoredLabel}
-					</div>
+					{scoredLabel}
 				</PanelHeader>
-				<Leaderboard rows={leaderboardRows} sort={sort} setSort={setSort} />
+				<Leaderboard rows={filteredRows} grading={scoringConfig?.grading} sort={sort} setSort={setSort} />
 			</Panel>
 
 			<CantFindTokenBanner />
 
-			<UtrDocsDrawer open={docsOpen} onClose={() => setDocsOpen(false)} />
+			<UtrDocsDrawer open={docsOpen} onClose={() => setDocsOpen(false)} scoringConfig={scoringConfig} />
 			<MobileFiltersDrawer
 				open={filtersOpen}
 				onClose={() => setFiltersOpen(false)}

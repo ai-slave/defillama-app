@@ -1,14 +1,15 @@
 import type { InferGetStaticPropsType } from 'next'
 import { UtrAccessGate } from '~/containers/UniversalTokenRating/AccessGate'
 import { CompareTokens } from '~/containers/UniversalTokenRating/CompareTokens'
-import { fetchUtrUniverseWithLive } from '~/containers/UniversalTokenRating/server'
+import { fetchUtrScoringConfig, fetchUtrUniverseWithLive } from '~/containers/UniversalTokenRating/server'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging('universal-token-rating/compare', async () => {
+	const [universe, scoringConfig] = await Promise.all([fetchUtrUniverseWithLive(), fetchUtrScoringConfig()])
 	return {
-		props: { universe: await fetchUtrUniverseWithLive() },
+		props: { universe, scoringConfig },
 		revalidate: maxAgeForNext([22])
 	}
 })
@@ -22,7 +23,7 @@ export default function UniversalTokenRatingComparePage(props: InferGetStaticPro
 			pageName={['Universal Token Rating', 'Compare']}
 		>
 			<UtrAccessGate>
-				<CompareTokens universe={props.universe} />
+				<CompareTokens universe={props.universe} scoringConfig={props.scoringConfig} />
 			</UtrAccessGate>
 		</Layout>
 	)

@@ -12,17 +12,20 @@ import { LISTING_STATUS_LABELS } from './constants'
 import { GradeBadge, ScoreBar } from './grades'
 import { PerformanceMatrix } from './PerformanceMatrix'
 import { NoDataPlaceholder } from './TokenPage'
-import type { UtrLeaderboardRow, UtrUniverse } from './types'
+import type { UtrGradingConfig, UtrLeaderboardRow, UtrScoringConfig, UtrUniverse } from './types'
 
-function SummaryCard({ row }: { row: UtrLeaderboardRow }) {
+function SummaryCard({ row, grading }: { row: UtrLeaderboardRow; grading?: UtrGradingConfig | null }) {
 	const momText = formatPercentChangeText(row.scores.overallMomChangePct)
 	const rows: [string, React.ReactNode][] = [
 		['Status', <span key="status">{LISTING_STATUS_LABELS[row.listingStatus]}</span>],
-		['Grade', <GradeBadge key="grade" score={row.scores.overall} grade={row.grade} />],
+		[
+			'Grade',
+			<GradeBadge key="grade" score={row.scores.overall} grade={row.grade} gradingScale={grading?.overall.scale} />
+		],
 		[
 			'Overall Score',
 			<span key="overall" className="flex items-center gap-2">
-				<ScoreBar score={row.scores.overall} />
+				<ScoreBar score={row.scores.overall} grade={row.grade} gradingScale={grading?.overall.scale} />
 			</span>
 		],
 		[
@@ -36,8 +39,26 @@ function SummaryCard({ row }: { row: UtrLeaderboardRow }) {
 				{momText ?? 'N/A'}
 			</span>
 		],
-		['Disclosure Score', <ScoreBar key="disclosure" score={row.scores.disclosure} scale={10} />],
-		['Performance Score', <ScoreBar key="performance" score={row.scores.performance} scale={10} />],
+		[
+			'Disclosure Score',
+			<ScoreBar
+				key="disclosure"
+				score={row.scores.disclosure}
+				scale={10}
+				grade={row.disclosureGrade}
+				gradingScale={grading?.disclosure.scale}
+			/>
+		],
+		[
+			'Performance Score',
+			<ScoreBar
+				key="performance"
+				score={row.scores.performance}
+				scale={10}
+				grade={row.performanceGrade}
+				gradingScale={grading?.performance.scale}
+			/>
+		],
 		[
 			'FDV',
 			<span key="fdv" className="font-jetbrains tabular-nums">
@@ -77,12 +98,14 @@ function CompareColumn({
 	universe,
 	selected,
 	exclude,
+	grading,
 	onSelect
 }: {
 	label: string
 	universe: UtrUniverse
 	selected: string | null
 	exclude: string | null
+	grading?: UtrGradingConfig | null
 	onSelect: (asset: string) => void
 }) {
 	const row = selected ? (universe.rows.find((entry) => entry.asset === selected) ?? null) : null
@@ -109,12 +132,20 @@ function CompareColumn({
 			</div>
 			{row && columns ? (
 				<>
-					<SummaryCard row={row} />
+					<SummaryCard row={row} grading={grading} />
 					<Panel padding="none">
-						<PerformanceMatrix rows={[row]} className="h-[300px] w-full" />
+						<PerformanceMatrix rows={[row]} grading={grading} className="h-[300px] w-full" />
 					</Panel>
-					<CategoryBreakdownTable title="Disclosures: Breakdown by Category" columns={columns.disclosure} />
-					<CategoryBreakdownTable title="Performance: Breakdown by Category" columns={columns.performance} />
+					<CategoryBreakdownTable
+						title="Disclosures: Breakdown by Category"
+						columns={columns.disclosure}
+						gradingScale={grading?.disclosure.scale}
+					/>
+					<CategoryBreakdownTable
+						title="Performance: Breakdown by Category"
+						columns={columns.performance}
+						gradingScale={grading?.performance.scale}
+					/>
 				</>
 			) : (
 				<div className="flex min-h-[420px] flex-col items-center justify-center gap-1 rounded-lg border border-subtle bg-surface p-6 text-center">
@@ -127,7 +158,13 @@ function CompareColumn({
 	)
 }
 
-export function CompareTokens({ universe }: { universe: UtrUniverse }) {
+export function CompareTokens({
+	universe,
+	scoringConfig
+}: {
+	universe: UtrUniverse
+	scoringConfig?: UtrScoringConfig | null
+}) {
 	const router = useRouter()
 	const queryToken = typeof router.query.token === 'string' ? router.query.token : null
 	const [tokenAState, setTokenAState] = useState<string | null>(null)
@@ -138,9 +175,23 @@ export function CompareTokens({ universe }: { universe: UtrUniverse }) {
 
 	return (
 		<div className="flex flex-col gap-4 lg:flex-row">
-			<CompareColumn label="Token A" universe={universe} selected={tokenA} exclude={tokenB} onSelect={setTokenAState} />
+			<CompareColumn
+				label="Token A"
+				universe={universe}
+				selected={tokenA}
+				exclude={tokenB}
+				grading={scoringConfig?.grading}
+				onSelect={setTokenAState}
+			/>
 			<div className="hidden w-px bg-(--border-subtle) lg:block" />
-			<CompareColumn label="Token B" universe={universe} selected={tokenB} exclude={tokenA} onSelect={setTokenB} />
+			<CompareColumn
+				label="Token B"
+				universe={universe}
+				selected={tokenB}
+				exclude={tokenA}
+				grading={scoringConfig?.grading}
+				onSelect={setTokenB}
+			/>
 		</div>
 	)
 }

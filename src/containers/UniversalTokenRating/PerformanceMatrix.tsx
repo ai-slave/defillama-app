@@ -9,8 +9,8 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { Icon } from '~/ui/Icon'
 import { formatNumber } from '~/utils/numberFormat'
-import { resolveUtrGrade, utrGradeColor } from './gradeBands'
-import type { UtrLeaderboardRow } from './types'
+import { resolveUtrGradeOrLabel, utrGradeColor } from './gradeBands'
+import type { UtrGradingConfig, UtrLeaderboardRow } from './types'
 
 echarts.use([ScatterChart, GridComponent, TooltipComponent, CanvasRenderer])
 
@@ -76,7 +76,8 @@ export function buildMatrixOption(
 	rows: UtrLeaderboardRow[],
 	axisColor?: string,
 	icons: Record<string, string> = {},
-	isDark = false
+	isDark = false,
+	grading?: UtrGradingConfig | null
 ): EChartsOption {
 	return {
 		grid: { left: 40, right: 20, top: 12, bottom: 26 },
@@ -90,9 +91,15 @@ export function buildMatrixOption(
 			formatter: (params: any) => {
 				const row = rows[params.dataIndex]
 				if (!row) return ''
-				const overallHex = utrGradeColor(resolveUtrGrade(row.scores.overall)).hex || '#9fb242'
-				const disclosureHex = utrGradeColor(resolveUtrGrade(row.scores.disclosure, 10)).hex || '#9fb242'
-				const performanceHex = utrGradeColor(resolveUtrGrade(row.scores.performance, 10)).hex || '#9fb242'
+				const overallHex =
+					utrGradeColor(resolveUtrGradeOrLabel(row.scores.overall, grading?.overall.scale, row.grade)).hex || '#8a8a8a'
+				const disclosureHex =
+					utrGradeColor(resolveUtrGradeOrLabel(row.scores.disclosure, grading?.disclosure.scale, row.disclosureGrade))
+						.hex || '#8a8a8a'
+				const performanceHex =
+					utrGradeColor(
+						resolveUtrGradeOrLabel(row.scores.performance, grading?.performance.scale, row.performanceGrade)
+					).hex || '#8a8a8a'
 				return `<div style="width:272px;">
 					<div style="font-weight:600;">${escapeHtml(row.name)}</div>
 					<div style="display:flex;justify-content:space-between;gap:16px;margin-top:8px;"><span>Rank</span><span>${row.scores.rank ?? '—'}</span></div>
@@ -141,7 +148,9 @@ export function buildMatrixOption(
 						symbol: iconUrl ? `image://${iconUrl}` : 'circle',
 						symbolKeepAspect: true,
 						itemStyle: {
-							color: utrGradeColor(resolveUtrGrade(row.scores.overall)).hex || '#8a8a8a',
+							color:
+								utrGradeColor(resolveUtrGradeOrLabel(row.scores.overall, grading?.overall.scale, row.grade)).hex ||
+								'#8a8a8a',
 							borderColor: '#0b0b12',
 							borderWidth: 2
 						}
@@ -171,9 +180,11 @@ function AxisArrow({ direction }: { direction: 'right' | 'up' }) {
 
 export function PerformanceMatrix({
 	rows,
+	grading,
 	className = 'h-[380px] w-full'
 }: {
 	rows: UtrLeaderboardRow[]
+	grading?: UtrGradingConfig | null
 	className?: string
 }) {
 	const [isDark] = useDarkModeManager()
@@ -185,8 +196,8 @@ export function PerformanceMatrix({
 	const applyOption = useCallback(() => {
 		const instance = chartRef.current
 		if (!instance || instance.isDisposed()) return
-		instance.setOption(buildMatrixOption(rows, axisColor, icons, isDark), { notMerge: true })
-	}, [rows, axisColor, icons, isDark])
+		instance.setOption(buildMatrixOption(rows, axisColor, icons, isDark, grading), { notMerge: true })
+	}, [rows, axisColor, icons, isDark, grading])
 
 	const initializeChart = useCallback(() => {
 		const chartDom = containerRef.current

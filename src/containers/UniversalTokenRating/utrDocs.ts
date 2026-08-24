@@ -1,3 +1,11 @@
+import type {
+	UtrGradeScaleEntry,
+	UtrGradingAxisConfig,
+	UtrScoringCategoryConfig,
+	UtrScoringConfig,
+	UtrScoringCriterionConfig
+} from './types'
+
 export type UtrDocListItem = { text: string; children?: string[]; strong?: boolean }
 
 export type UtrDocBlock =
@@ -16,7 +24,7 @@ export type UtrDocChapter = {
 
 export const UTR_DOCS_TITLE = 'Universal Token Rating Documentation'
 
-export const UTR_DOC_CHAPTERS: UtrDocChapter[] = [
+const UTR_FIGMA_DOC_CHAPTERS: UtrDocChapter[] = [
 	{
 		id: 'preface',
 		label: '1. Preface',
@@ -24,7 +32,7 @@ export const UTR_DOC_CHAPTERS: UtrDocChapter[] = [
 			{ type: 'heading', text: '1,294 Total Tokens Scored' },
 			{
 				type: 'paragraph',
-				text: "Forgd's Token Visibility Standard (“TVS”) provides a structured, continuously updated framework for evaluating the disclosure quality and live market performance of 1,200+ token projects across the digital asset ecosystem. The standard is designed for founders, investors, advisors, and researchers who require a consistent and transparent basis for assessing a project's operational health, not just at launch, but throughout its lifecycle."
+				text: "Forgd's Universal Token Ratings (“UTR”) provide a structured, continuously updated framework for evaluating the disclosure quality and live market performance of 1,200+ token projects across the digital asset ecosystem. The standard is designed for founders, investors, advisors, and researchers who require a consistent and transparent basis for assessing a project's operational health, not just at launch, but throughout its lifecycle."
 			},
 			{ type: 'paragraph', text: 'The TVS combines two independent dimensions into a single composite score:' },
 			{
@@ -58,7 +66,7 @@ export const UTR_DOC_CHAPTERS: UtrDocChapter[] = [
 		blocks: [
 			{
 				type: 'paragraph',
-				text: 'The Token Visibility Standard is organized around two independent scoring axes — Disclosure and Performance — each graded on a standardized 0–10 scale. The two axis scores are then multiplied together to produce the final 0–100 composite TVS score:'
+				text: 'The Universal Token Ratings are organized around two independent scoring axes — Disclosure and Performance — each graded on a standardized 0–10 scale. The two axis scores are then multiplied together to produce the final 0–100 composite UTR score:'
 			},
 			{ type: 'formula', text: 'TVS(t) = D(t) × P(t)' },
 			{
@@ -653,8 +661,44 @@ export const UTR_DOC_CHAPTERS: UtrDocChapter[] = [
 		]
 	},
 	{
+		id: 'appendix',
+		label: '6. Appendix',
+		blocks: [
+			{ type: 'heading', text: '6.1. Exchange Classifications' },
+			{
+				type: 'paragraph',
+				text: "The Disclosure grade reflects the completeness, and ongoing maintenance of a project's disclosures across each of the applicable sub-criteria."
+			},
+			{
+				type: 'table',
+				headers: ['Tier', 'Interpretation', 'Entities Included'],
+				rows: [
+					[
+						'1',
+						'The largest and most established trading venues, with deep liquidity, strong price discovery, large and active user bases, broad asset coverage, and reliable market infrastructure. Liquidity on these venues is generally consistent across a wide range of assets.',
+						'Binance, Coinbase, OKX, Upbit'
+					],
+					[
+						'2',
+						'Well-established exchanges with meaningful liquidity, active users, and broad market coverage, though depth and trading activity can be less consistent than on Tier 1 venues. These exchanges still serve as important sources of liquidity and distribution for a wide range of tokens.',
+						'Bitget, Bithumb, Bybit, Gate, Kraken, KuCoin'
+					],
+					[
+						'3',
+						'All other eligible centralized and decentralized venues that provide secondary-market trading but with less consistent liquidity, user activity, or market depth across their broader asset base. DEXs can still be very liquid for individual tokens, particularly larger assets that already trade with significant volume and liquidity across major CEXs.',
+						'All others'
+					]
+				]
+			},
+			{
+				type: 'paragraph',
+				text: 'In addition, particular exchanges are “blacklisted” from certain Performance calculations that reference trade volume, depth of liquidity, bid-ask spreads, open interest, or funding rate. These entities include AscendEX, LBank, WhiteBit, Ourbit, HTX, CoinUp.io, BTCC, Hotcoin, CoinW, TooBit, DeepCoin, Azbit, Pionex, KCEX, XT.com, GroveX, OrangX, WEEX, and Tapbit.'
+			}
+		]
+	},
+	{
 		id: 'glossary',
-		label: '6. Glossary',
+		label: '7. Glossary',
 		blocks: [
 			{
 				type: 'heading',
@@ -836,3 +880,323 @@ export const UTR_DOC_CHAPTERS: UtrDocChapter[] = [
 		]
 	}
 ]
+
+const CATEGORY_DESCRIPTIONS: Record<string, string> = {
+	core_contributors: 'Evaluates whether the team behind the project is publicly identifiable and verifiably described.',
+	tokenomics_d:
+		"Evaluates the completeness and transparency of the project's token distribution, vesting, and allocation framework.",
+	legal_financial:
+		'Evaluates the degree to which the project discloses its legal structure, financial position, and treasury activity.',
+	service_providers:
+		"Evaluates the transparency of the project's key third-party service relationships, including market makers, smart contract auditors, and exchange listing arrangements.",
+	total_market:
+		"Evaluates overall market activity, liquidity quality, price behavior, and derivatives market conditions relative to the token's market capitalization.",
+	market_makers:
+		"Evaluates the contribution and adherence of engaged market makers to their contractual mandates, as tracked via Forgd's monitoring infrastructure.",
+	liquidity_footprint:
+		"Evaluates how the project's liquidity is distributed across venue types and market segments, including CEX versus DEX and spot versus perpetuals.",
+	tokenomics_p:
+		'Evaluates on-chain tokenomics delivery, including whether observed unlock events match disclosed schedules, FDV, circulating supply dynamics, inflation, and buyback or burn activity.'
+}
+
+function modernizeText(text: string): string {
+	return text
+		.replaceAll('Token Visibility Standard', 'Universal Token Rating')
+		.replaceAll('Visibility Standard', 'Universal Token Rating')
+		.replaceAll('TVS', 'UTR')
+}
+
+function modernizeBlock(block: UtrDocBlock): UtrDocBlock {
+	switch (block.type) {
+		case 'heading':
+		case 'formula':
+			return { ...block, text: modernizeText(block.text) }
+		case 'paragraph':
+			return {
+				...block,
+				text: modernizeText(block.text),
+				lead: block.lead ? modernizeText(block.lead) : undefined
+			}
+		case 'bullets':
+		case 'numbered':
+			return {
+				...block,
+				items: block.items.map((item) => ({
+					...item,
+					text: modernizeText(item.text),
+					children: item.children?.map(modernizeText)
+				}))
+			}
+		case 'table':
+			return {
+				...block,
+				headers: block.headers.map(modernizeText),
+				rows: block.rows.map((row) => row.map(modernizeText))
+			}
+	}
+}
+
+function formatWeight(weight: number): string {
+	return `${(weight * 100).toFixed(2)}%`
+}
+
+function categoryWeight(criteria: UtrScoringCriterionConfig[]): number {
+	return criteria.reduce((total, criterion) => total + criterion.weight, 0)
+}
+
+function criteriaForApplicability(
+	category: UtrScoringCategoryConfig,
+	applicability?: 'preTge' | 'postTge'
+): UtrScoringCriterionConfig[] {
+	if (!applicability) return category.criteria
+	return category.criteria.filter(
+		(criterion) => criterion.applicability === 'both' || criterion.applicability === applicability
+	)
+}
+
+function categoryTableBlocks(
+	categories: UtrScoringCategoryConfig[],
+	applicability?: 'preTge' | 'postTge'
+): UtrDocBlock[] {
+	const applicableCategories = categories.flatMap((category) => {
+		const criteria = criteriaForApplicability(category, applicability)
+		return criteria.length ? [{ category, criteria }] : []
+	})
+	if (!applicableCategories.length) return []
+	const blocks: UtrDocBlock[] = [
+		{
+			type: 'table',
+			headers: ['Category', 'Category Weight'],
+			rows: applicableCategories.map(({ category, criteria }) => [
+				category.label,
+				formatWeight(categoryWeight(criteria))
+			])
+		}
+	]
+	for (const { category, criteria } of applicableCategories) {
+		blocks.push(
+			{
+				type: 'paragraph',
+				lead: `${category.label} (${formatWeight(categoryWeight(criteria))}):`,
+				text:
+					CATEGORY_DESCRIPTIONS[category.key] ??
+					`Includes the currently configured ${applicability === 'preTge' ? 'pre-TGE' : applicability === 'postTge' ? 'post-TGE' : ''} evaluation criteria for this category.`
+			},
+			{
+				type: 'table',
+				headers: ['Criterion', 'Weight'],
+				rows: criteria.map((criterion) => [criterion.label, formatWeight(criterion.weight)])
+			}
+		)
+	}
+	return blocks
+}
+
+function unavailableCoreBlocks(axis: 'Disclosure' | 'Performance'): UtrDocBlock[] {
+	return [
+		{ type: 'heading', text: 'Core Components' },
+		{
+			type: 'paragraph',
+			text: `The ${axis} Axis category and criterion weights are loaded from Forgd's active scoring configuration.`
+		},
+		{
+			type: 'table',
+			headers: ['Category', 'Category Weight'],
+			rows: [['Unavailable', 'Scoring configuration is temporarily unavailable.']]
+		}
+	]
+}
+
+function disclosureCoreBlocks(config: UtrScoringConfig | null): UtrDocBlock[] {
+	if (!config?.disclosure.categories.length) return unavailableCoreBlocks('Disclosure')
+	return [
+		{ type: 'heading', text: 'Core Components' },
+		{
+			type: 'paragraph',
+			text: 'The Disclosure Axis is organized into the categories below. Category weights are calculated from the active sub-criterion weights.'
+		},
+		...categoryTableBlocks(config.disclosure.categories)
+	]
+}
+
+function performanceCoreBlocks(config: UtrScoringConfig | null): UtrDocBlock[] {
+	if (!config?.performance.categories.length) return unavailableCoreBlocks('Performance')
+	const postTge = categoryTableBlocks(config.performance.categories, 'postTge')
+	const preTge = categoryTableBlocks(config.performance.categories, 'preTge')
+	return [
+		{ type: 'heading', text: 'Core Components' },
+		{
+			type: 'paragraph',
+			text: 'The Performance Axis criteria are grouped by their active pre-TGE or post-TGE applicability. Category weights are calculated from the active sub-criterion weights.'
+		},
+		...(postTge.length ? ([{ type: 'heading', text: 'Post-TGE Criteria' }, ...postTge] as UtrDocBlock[]) : []),
+		...(preTge.length ? ([{ type: 'heading', text: 'Pre-TGE Criteria' }, ...preTge] as UtrDocBlock[]) : [])
+	]
+}
+
+function replaceCoreComponents(chapter: UtrDocChapter, blocks: UtrDocBlock[]): UtrDocChapter {
+	const start = chapter.blocks.findIndex((block) => block.type === 'heading' && block.text === 'Core Components')
+	const end = chapter.blocks.findIndex(
+		(block, index) => index > start && block.type === 'heading' && block.text === 'Calculation Methodology'
+	)
+	if (start === -1 || end === -1) return chapter
+	return { ...chapter, blocks: [...chapter.blocks.slice(0, start), ...blocks, ...chapter.blocks.slice(end)] }
+}
+
+function gradeRangeRows(scale: UtrGradeScaleEntry[]): string[][] {
+	const sorted = [...scale].sort((a, b) => {
+		if (a.min === null) return 1
+		if (b.min === null) return -1
+		return b.min - a.min
+	})
+	return sorted.map((entry, index) => {
+		const previousMin = index > 0 ? sorted[index - 1].min : null
+		const range =
+			entry.min === null
+				? previousMin == null
+					? 'All scores'
+					: `<${previousMin.toFixed(2)}`
+				: previousMin == null
+					? `≥${entry.min.toFixed(2)}`
+					: `${entry.min.toFixed(2)}–<${previousMin.toFixed(2)}`
+		return [range, entry.grade, entry.interpretation]
+	})
+}
+
+function gradingAxisBlocks(
+	heading: string,
+	header: string,
+	fallbackDescription: string,
+	axis: UtrGradingAxisConfig | null
+): UtrDocBlock[] {
+	return [
+		{ type: 'heading', text: heading },
+		{ type: 'paragraph', text: axis?.description || fallbackDescription },
+		{
+			type: 'table',
+			headers: [header, 'Grade', 'Interpretation'],
+			rows: axis?.scale.length
+				? gradeRangeRows(axis.scale)
+				: [['Unavailable', 'N/A', 'Scoring configuration is temporarily unavailable.']]
+		}
+	]
+}
+
+function gradingChapter(config: UtrScoringConfig | null): UtrDocChapter {
+	return {
+		id: 'grading-methodology',
+		label: '5. Grading Methodology',
+		blocks: [
+			{
+				type: 'paragraph',
+				text: "The Universal Token Ratings use a familiar letter-grade system (AAA–CCC) to provide a simple, standardized interpretation of a project's Disclosure, Performance, and overall UTR scores."
+			},
+			...gradingAxisBlocks(
+				'Disclosures Axis',
+				'Disclosures Score',
+				"The Disclosure grade reflects the completeness, and ongoing maintenance of a project's disclosures across each of the applicable sub-criteria.",
+				config?.grading.disclosure ?? null
+			),
+			...gradingAxisBlocks(
+				'Performance Axis',
+				'Performance Score',
+				"The Performance grade reflects how consistently a project's observed market activity and operational execution align with the relevant sub-criteria over time.",
+				config?.grading.performance ?? null
+			),
+			...gradingAxisBlocks(
+				'Overall Score',
+				'Overall Score',
+				"The overall UTR grade combines the Disclosure and Performance axes into a single confidence rating that reflects the project's overall transparency and execution.",
+				config?.grading.overall ?? null
+			)
+		]
+	}
+}
+
+function appendixChapter(chapter: UtrDocChapter, config: UtrScoringConfig | null): UtrDocChapter {
+	if (!config) return chapter
+	return {
+		...chapter,
+		blocks: chapter.blocks.map((block) => {
+			if (block.type !== 'table' || block.headers[0] !== 'Tier') return block
+			return {
+				...block,
+				rows: block.rows.map((row) => {
+					if (row[0] === '1')
+						return [row[0], row[1], config.exchanges.tier1.map((entry) => entry.displayName).join(', ')]
+					if (row[0] === '2')
+						return [row[0], row[1], config.exchanges.tier2.map((entry) => entry.displayName).join(', ')]
+					return row
+				})
+			}
+		})
+	}
+}
+
+function glossaryChapter(chapter: UtrDocChapter, config: UtrScoringConfig | null): UtrDocChapter {
+	if (!config) return chapter
+	const categoryByKey = new Map(
+		[...config.disclosure.categories, ...config.performance.categories].map((category) => [category.key, category])
+	)
+	const categoryKeyByHeading: Record<string, string> = {
+		'Liquidity Footprint': 'liquidity_footprint',
+		'Market Makers (Category)': 'market_makers',
+		'Tokenomics (Disclosure Category)': 'tokenomics_d',
+		'Tokenomics (Performance Category)': 'tokenomics_p',
+		'Total Market (Category)': 'total_market'
+	}
+	const describeCategories = (categories: UtrScoringCategoryConfig[]) =>
+		categories.map((category) => `${category.label} (${formatWeight(categoryWeight(category.criteria))})`).join(', ')
+	let heading = ''
+	return {
+		...chapter,
+		blocks: chapter.blocks.map((block) => {
+			if (block.type === 'heading') {
+				heading = block.text
+				return block
+			}
+			if (block.type !== 'paragraph') return block
+			if (heading === 'Disclosure Axis (D)') {
+				return {
+					...block,
+					text: `The axis of the Universal Token Rating that evaluates the completeness, quality, and freshness of information disclosed by the project itself. Scored on a 0–10 scale. The active categories are ${describeCategories(config.disclosure.categories)}.`
+				}
+			}
+			if (heading === 'Performance Axis (P)') {
+				return {
+					...block,
+					text: `The axis of the Universal Token Rating that evaluates whether a project's observed market structure and operational behavior validate its disclosures and commitments over time. Scored on a 0–10 scale using a trailing-window fulfillment ratio methodology. The active categories are ${describeCategories(config.performance.categories)}.`
+				}
+			}
+			if (heading === 'Top-Tier Exchange Coverage') {
+				return {
+					...block,
+					text: `Whether the token is listed and actively traded on Tier-1 or Tier-2 centralized exchanges. Tier 1 is defined as ${config.exchanges.tier1.map((entry) => entry.displayName).join(', ')}. Tier 2 is defined as ${config.exchanges.tier2.map((entry) => entry.displayName).join(', ')}. All other venues are Tier 3.`
+				}
+			}
+			const category = categoryByKey.get(categoryKeyByHeading[heading])
+			if (!category) return block
+			return {
+				...block,
+				text: block.text.replace(
+					/Category weight: [0-9.]+%\./,
+					`Category weight: ${formatWeight(categoryWeight(category.criteria))}.`
+				)
+			}
+		})
+	}
+}
+
+export function buildUtrDocChapters(config: UtrScoringConfig | null): UtrDocChapter[] {
+	return UTR_FIGMA_DOC_CHAPTERS.map((sourceChapter) => ({
+		...sourceChapter,
+		blocks: sourceChapter.blocks.map(modernizeBlock)
+	})).map((chapter) => {
+		if (chapter.id === 'disclosure-axis') return replaceCoreComponents(chapter, disclosureCoreBlocks(config))
+		if (chapter.id === 'performance-axis') return replaceCoreComponents(chapter, performanceCoreBlocks(config))
+		if (chapter.id === 'grading-methodology') return gradingChapter(config)
+		if (chapter.id === 'appendix') return appendixChapter(chapter, config)
+		if (chapter.id === 'glossary') return glossaryChapter(chapter, config)
+		return chapter
+	})
+}

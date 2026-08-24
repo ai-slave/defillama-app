@@ -9,7 +9,8 @@ import type {
 	UtrLeaderboardRow,
 	UtrMomResponse,
 	UtrProject,
-	UtrScoringDocs,
+	UtrScoringCategoryConfig,
+	UtrScoringConfig,
 	UtrUniverse,
 	UtrExchangesResponse,
 	UtrDisclosureScoreSummary
@@ -39,23 +40,6 @@ export async function fetchUtrDisclosureScoreSummaries(): Promise<UtrDisclosureS
 			timeout: 30_000,
 			headers: forgdUtrHeaders()
 		})
-	} catch {
-		return []
-	}
-}
-
-export async function fetchUtrExchangeOptions(): Promise<string[]> {
-	try {
-		const response = await fetchJson<{
-			exchanges: {
-				tier1: { displayName: string }[]
-				tier2: { displayName: string }[]
-			}
-		}>(`${FORGD_HOST}/api/utr/scoring-config`, {
-			timeout: 30_000,
-			headers: forgdUtrHeaders()
-		})
-		return [...response.exchanges.tier1, ...response.exchanges.tier2].map((exchange) => exchange.displayName)
 	} catch {
 		return []
 	}
@@ -96,32 +80,130 @@ export async function fetchUtrAssetExchanges(asset: string): Promise<UtrExchange
 	}
 }
 
-export async function fetchUtrScoringDocs(): Promise<UtrScoringDocs | null> {
-	try {
-		const response = await fetchJson<{
-			config: {
-				disclosure: { categories: UtrScoringDocs['disclosure'] }
-				performance: { categories: UtrScoringDocs['performance'] }
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function stringValue(value: unknown, fallback = ''): string {
+	return typeof value === 'string' ? value : fallback
+}
+
+function nullableString(value: unknown): string | null {
+	return typeof value === 'string' ? value : null
+}
+
+function finiteNumber(value: unknown, fallback = 0): number {
+	return typeof value === 'number' && Number.isFinite(value) ? value : fallback
+}
+
+function normalizeCategories(value: unknown): UtrScoringCategoryConfig[] {
+	if (!isRecord(value) || !Array.isArray(value.categories)) return []
+	return value.categories.flatMap((rawCategory) => {
+		if (!isRecord(rawCategory)) return []
+		const key = stringValue(rawCategory.key)
+		const label = stringValue(rawCategory.label)
+		if (!key || !label) return []
+		const rawCriteria = Array.isArray(rawCategory.criteria) ? rawCategory.criteria : []
+		return [
+			{
+				key,
+				label,
+				criteria: rawCriteria.flatMap((rawCriterion) => {
+					if (!isRecord(rawCriterion)) return []
+					const criterionKey = stringValue(rawCriterion.key)
+					const criterionLabel = stringValue(rawCriterion.label)
+					if (!criterionKey || !criterionLabel) return []
+					const applicability =
+						rawCriterion.applicability === 'preTge' || rawCriterion.applicability === 'postTge'
+							? rawCriterion.applicability
+							: 'both'
+					return [
+						{
+							key: criterionKey,
+							label: criterionLabel,
+							weight: finiteNumber(rawCriterion.weight),
+							applicability,
+							evaluationType: nullableString(rawCriterion.evaluationType),
+							ignoreBlacklistedExchanges:
+								typeof rawCriterion.ignoreBlacklistedExchanges === 'boolean'
+									? rawCriterion.ignoreBlacklistedExchanges
+									: null,
+							expression: nullableString(rawCriterion.expression),
+							bands: Array.isArray(rawCriterion.bands) ? rawCriterion.bands : [],
+							definition: nullableString(rawCriterion.definition),
+							rubric: Array.isArray(rawCriterion.rubric)
+								? rawCriterion.rubric.filter((entry): entry is string => typeof entry === 'string')
+								: []
+						}
+					]
+				})
 			}
-		}>(`${FORGD_HOST}/api/utr/scoring-config`, { timeout: 30_000, headers: forgdUtrHeaders() })
-		const pick = (categories: UtrScoringDocs['disclosure']) =>
-			categories.map((category) => ({
-				key: category.key,
-				label: category.label,
-				criteria: category.criteria.map((criterion) => ({
-					key: criterion.key,
-					label: criterion.label,
-					definition: criterion.definition ?? null,
-					rubric: criterion.rubric ?? []
-				}))
-			}))
-		return {
-			disclosure: pick(response.config.disclosure.categories),
-			performance: pick(response.config.performance.categories)
-		}
+		]
+	})
+}
+
+function normalizeGradingAxis(value: unknown) {
+	const axis = isRecord(value) ? value : {}
+	return {
+		description: stringValue(axis.description),
+		scale: (Array.isArray(axis.scale) ? axis.scale : []).flatMap((rawEntry) => {
+			if (!isRecord(rawEntry)) return []
+			const grade = stringValue(rawEntry.grade)
+			const min = rawEntry.min === null ? null : finiteNumber(rawEntry.min, Number.NaN)
+			if (!grade || (min !== null && Number.isNaN(min))) return []
+			return [{ min, grade, interpretation: stringValue(rawEntry.interpretation) }]
+		})
+	}
+}
+
+function normalizeExchanges(value: unknown) {
+	const exchanges = isRecord(value) ? value : {}
+	const normalizeTier = (tier: unknown) =>
+		(Array.isArray(tier) ? tier : []).flatMap((rawExchange) => {
+			if (!isRecord(rawExchange)) return []
+			const displayName = stringValue(rawExchange.displayName)
+			if (!displayName) return []
+			return [
+				{
+					id: stringValue(rawExchange.id, displayName),
+					displayName,
+					logoUrl: nullableString(rawExchange.logoUrl)
+				}
+			]
+		})
+	return { tier1: normalizeTier(exchanges.tier1), tier2: normalizeTier(exchanges.tier2) }
+}
+
+export function normalizeUtrScoringConfig(value: unknown): UtrScoringConfig | null {
+	if (!isRecord(value) || !isRecord(value.config)) return null
+	const grading = isRecord(value.config.grading) ? value.config.grading : {}
+	return {
+		version: finiteNumber(value.version),
+		grading: {
+			overall: normalizeGradingAxis(grading.overall),
+			disclosure: normalizeGradingAxis(grading.disclosure),
+			performance: normalizeGradingAxis(grading.performance)
+		},
+		disclosure: { categories: normalizeCategories(value.config.disclosure) },
+		performance: { categories: normalizeCategories(value.config.performance) },
+		exchanges: normalizeExchanges(value.exchanges)
+	}
+}
+
+export async function fetchUtrScoringConfig(): Promise<UtrScoringConfig | null> {
+	try {
+		const response = await fetchJson<unknown>(`${FORGD_HOST}/api/utr/scoring-config`, {
+			timeout: 30_000,
+			headers: forgdUtrHeaders()
+		})
+		return normalizeUtrScoringConfig(response)
 	} catch {
 		return null
 	}
+}
+
+export function exchangeOptionsFromScoringConfig(config: UtrScoringConfig | null): string[] {
+	return config ? [...config.exchanges.tier1, ...config.exchanges.tier2].map((exchange) => exchange.displayName) : []
 }
 
 export async function fetchUtrLeaderboardMom(): Promise<UtrMomResponse | null> {
@@ -162,6 +244,8 @@ export function rowFromLeaderboardApiRow(row: UtrLeaderboardApiRow): UtrLeaderbo
 		fdvUsd: row.fdvUsd,
 		coingeckoId: row.coingeckoId,
 		grade: row.grade,
+		disclosureGrade: row.disclosureGrade ?? null,
+		performanceGrade: row.performanceGrade ?? null,
 		breakdown: {
 			disclosure: withEmptyCriteria(row.disclosureCategories ?? []),
 			performance: withEmptyCriteria(row.performanceCategories ?? [])

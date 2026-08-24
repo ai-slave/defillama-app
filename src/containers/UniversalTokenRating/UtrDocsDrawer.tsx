@@ -1,7 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Drawer } from '~/containers/MarketMakers/Drawer'
 import { UTR_GRADE_COLORS, type UtrGradeLabel } from './gradeBands'
-import { UTR_DOC_CHAPTERS, UTR_DOCS_TITLE, type UtrDocBlock, type UtrDocChapter, type UtrDocListItem } from './utrDocs'
+import type { UtrScoringConfig } from './types'
+import {
+	buildUtrDocChapters,
+	UTR_DOCS_TITLE,
+	type UtrDocBlock,
+	type UtrDocChapter,
+	type UtrDocListItem
+} from './utrDocs'
 
 const TH = 'bg-brand px-4 py-2.5 text-left align-middle label-sm text-on-brand'
 const TD = 'border-b border-subtle px-4 py-2 text-left body-sm text-secondary'
@@ -149,16 +156,19 @@ function DocBlock({ block, chapterId }: { block: UtrDocBlock; chapterId: string 
 export function UtrDocsDrawer({
 	open,
 	onClose,
-	initialChapterId
+	initialChapterId,
+	scoringConfig
 }: {
 	open: boolean
 	onClose: () => void
 	initialChapterId?: string
+	scoringConfig?: UtrScoringConfig | null
 }) {
-	const [activeId, setActiveId] = useState(initialChapterId ?? UTR_DOC_CHAPTERS[0].id)
+	const chapters = useMemo(() => buildUtrDocChapters(scoringConfig ?? null), [scoringConfig])
+	const [activeId, setActiveId] = useState(initialChapterId ?? chapters[0].id)
 	const [activeSubId, setActiveSubId] = useState<string | null>(null)
 
-	const activeChapter = UTR_DOC_CHAPTERS.find((chapter) => chapter.id === activeId) ?? UTR_DOC_CHAPTERS[0]
+	const activeChapter = chapters.find((chapter) => chapter.id === activeId) ?? chapters[0]
 	const subsections = chapterSubsections(activeChapter)
 
 	useEffect(() => {
@@ -176,7 +186,7 @@ export function UtrDocsDrawer({
 		if (!open) return
 		let observer: IntersectionObserver | null = null
 		const raf = requestAnimationFrame(() => {
-			const targets = UTR_DOC_CHAPTERS.flatMap((chapter) => {
+			const targets = chapters.flatMap((chapter) => {
 				const section = document.getElementById(`utr-docs-${chapter.id}`)
 				const headings = chapterSubsections(chapter)
 					.slice(1)
@@ -197,7 +207,7 @@ export function UtrDocsDrawer({
 						.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
 					const topId = visible[0]?.target.id
 					if (!topId) return
-					const chapter = UTR_DOC_CHAPTERS.find(
+					const chapter = chapters.find(
 						(entry) => topId === `utr-docs-${entry.id}` || topId.startsWith(`utr-docs-${entry.id}-`)
 					)
 					if (!chapter) return
@@ -212,7 +222,7 @@ export function UtrDocsDrawer({
 			cancelAnimationFrame(raf)
 			observer?.disconnect()
 		}
-	}, [open])
+	}, [open, chapters])
 
 	const scrollToId = (id: string) => {
 		document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -225,7 +235,7 @@ export function UtrDocsDrawer({
 					<div className="md:sticky md:top-0">
 						<p className="border-b border-subtle px-5 py-4 heading-xs">Chapters</p>
 						<ul className="flex flex-col gap-4 border-b border-subtle px-4 py-6">
-							{UTR_DOC_CHAPTERS.map((chapter) => {
+							{chapters.map((chapter) => {
 								const active = chapter.id === activeId
 								return (
 									<li key={chapter.id}>
@@ -276,7 +286,7 @@ export function UtrDocsDrawer({
 				</nav>
 
 				<div className="flex min-w-0 flex-1 flex-col gap-8 p-4">
-					{UTR_DOC_CHAPTERS.map((chapter) => (
+					{chapters.map((chapter) => (
 						<section
 							key={chapter.id}
 							id={`utr-docs-${chapter.id}`}

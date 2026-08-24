@@ -3,7 +3,7 @@ import { Drawer } from '~/containers/MarketMakers/Drawer'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { GradeBadge, ScoreBar } from './grades'
-import type { UtrCriterionBreakdown, UtrCriterionDoc } from './types'
+import type { UtrCriterionBreakdown, UtrCriterionDoc, UtrGradingConfig } from './types'
 
 export type CriteriaDrawerState = {
 	title: string
@@ -42,12 +42,14 @@ export function CriteriaDrawer({
 	state,
 	assetLabel,
 	lastEditedAt,
+	grading,
 	onSelect,
 	onClose
 }: {
 	state: CriteriaDrawerState | null
 	assetLabel?: string
 	lastEditedAt?: string | null
+	grading?: UtrGradingConfig | null
 	onSelect: (key: string) => void
 	onClose: () => void
 }) {
@@ -93,12 +95,22 @@ export function CriteriaDrawer({
 					<div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-subtle bg-surface px-4 py-3">
 						<span className="flex flex-col gap-1">
 							<span className="body-sm text-tertiary">Grade</span>
-							<GradeBadge score={active.score} scale={10} grade={active.grade} />
+							<GradeBadge
+								score={active.score}
+								scale={10}
+								grade={active.grade}
+								gradingScale={grading?.[state.axis].scale}
+							/>
 						</span>
 						<span className="flex flex-col gap-1">
 							<span className="body-sm text-tertiary">Score</span>
 							<span className="flex items-center gap-2">
-								<ScoreBar score={active.score} scale={10} grade={active.grade} />
+								<ScoreBar
+									score={active.score}
+									scale={10}
+									grade={active.grade}
+									gradingScale={grading?.[state.axis].scale}
+								/>
 								<QuestionHelper text="Scored on the standardized 0–10 scale against the published rubric." />
 							</span>
 						</span>

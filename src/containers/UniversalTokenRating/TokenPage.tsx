@@ -6,8 +6,9 @@ import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
-import { resolveUtrGrade, utrGradeColor } from './gradeBands'
+import { resolveUtrGradeOrLabel, utrGradeColor } from './gradeBands'
 import { GradeBadge, ScoreBar } from './grades'
+import type { UtrGradeScaleEntry } from './types'
 
 function formatPercentile(percentile: number | null | undefined): string {
 	return (
@@ -24,11 +25,13 @@ function formatPercentile(percentile: number | null | undefined): string {
 export function GradeFooter({
 	score,
 	grade,
+	gradingScale,
 	percentile,
 	divider = true
 }: {
 	score: number | null
 	grade?: string | null
+	gradingScale?: UtrGradeScaleEntry[] | null
 	percentile?: number | null
 	divider?: boolean
 }) {
@@ -40,12 +43,12 @@ export function GradeFooter({
 		>
 			<span className="flex flex-col gap-1.5 label-sm text-secondary lg:flex-row lg:items-center lg:gap-2">
 				Grade
-				<GradeBadge score={score} scale={10} grade={grade} />
+				<GradeBadge score={score} scale={10} grade={grade ?? undefined} gradingScale={gradingScale} />
 			</span>
 			<span className="flex flex-col gap-1.5 label-sm text-secondary lg:flex-row lg:items-center lg:gap-2">
 				Score
 				<span className="flex items-center gap-2">
-					<ScoreBar score={score} scale={10} grade={grade} />
+					<ScoreBar score={score} scale={10} grade={grade ?? undefined} gradingScale={gradingScale} />
 					<QuestionHelper text="Scored on the standardized 0–10 scale against the published rubric." />
 				</span>
 			</span>
@@ -90,10 +93,12 @@ export function ClaimProfileBanner() {
 export function GradeFooterColumns({
 	score,
 	grade,
+	gradingScale,
 	percentile
 }: {
 	score: number | null
 	grade?: string | null
+	gradingScale?: UtrGradeScaleEntry[] | null
 	percentile?: number | null
 }) {
 	const percentileLabel = formatPercentile(percentile)
@@ -102,13 +107,13 @@ export function GradeFooterColumns({
 		<div className="flex items-start gap-x-2 border-t border-subtle px-4 py-2.5">
 			<div className="flex flex-col gap-1.5">
 				<span className="label-sm text-secondary">Grade</span>
-				<GradeBadge score={score} scale={10} grade={grade} />
+				<GradeBadge score={score} scale={10} grade={grade ?? undefined} gradingScale={gradingScale} />
 			</div>
 			<div className="flex-[2]" />
 			<div className="flex flex-col gap-1.5">
 				<span className="label-sm text-secondary">Score</span>
 				<span className="flex items-center gap-2">
-					<ScoreBar score={score} scale={10} grade={grade} />
+					<ScoreBar score={score} scale={10} grade={grade ?? undefined} gradingScale={gradingScale} />
 					<QuestionHelper text="Scored on the standardized 0–10 scale against the published rubric." />
 				</span>
 			</div>
@@ -129,10 +134,12 @@ export function GradeFooterColumns({
 export function GradeFooterStacked({
 	score,
 	grade,
+	gradingScale,
 	percentile
 }: {
 	score: number | null
 	grade?: string | null
+	gradingScale?: UtrGradeScaleEntry[] | null
 	percentile?: number | null
 }) {
 	const percentileLabel = formatPercentile(percentile)
@@ -141,12 +148,12 @@ export function GradeFooterStacked({
 		<div className="flex flex-col border-t border-subtle px-4 py-1.5">
 			<div className="flex min-h-6 items-center justify-between gap-2">
 				<span className="label-sm text-secondary">Grade</span>
-				<GradeBadge score={score} scale={10} grade={grade} />
+				<GradeBadge score={score} scale={10} grade={grade ?? undefined} gradingScale={gradingScale} />
 			</div>
 			<div className="flex min-h-6 items-center justify-between gap-2">
 				<span className="label-sm text-secondary">Score</span>
 				<span className="flex items-center gap-2">
-					<ScoreBar score={score} scale={10} grade={grade} />
+					<ScoreBar score={score} scale={10} grade={grade ?? undefined} gradingScale={gradingScale} />
 					<QuestionHelper text="Scored on the standardized 0–10 scale against the published rubric." />
 				</span>
 			</div>
@@ -176,19 +183,18 @@ export function CantFindTokenBanner() {
 				<div className="flex flex-col gap-1">
 					<p className="label-lg text-on-brand">Can’t Find Your Token?</p>
 					<p className="body-sm text-on-brand/70">
-						Create an account on Forgd to register your token and submit a request to be added to the Universal Token
-						Rating.
+						Submit your project information to apply for inclusion in the Universal Token Rating.
 					</p>
 					<BasicLink
 						href="/universal-token-rating/join"
 						className={`${forgdCtaSecondaryButtonStyles} mt-2 w-fit lg:hidden`}
 					>
-						Join Forgd
+						Apply for UTR
 					</BasicLink>
 				</div>
 			</div>
 			<BasicLink href="/universal-token-rating/join" className={`${forgdCtaSecondaryButtonStyles} max-lg:hidden`}>
-				Join Forgd
+				Apply for UTR
 			</BasicLink>
 		</div>
 	)
@@ -229,6 +235,7 @@ export function MetricCard({
 	badge,
 	score,
 	grade,
+	gradingScale,
 	percentile,
 	onOpen,
 	children
@@ -237,6 +244,7 @@ export function MetricCard({
 	badge?: ReactNode
 	score: number | null
 	grade?: string | null
+	gradingScale?: UtrGradeScaleEntry[] | null
 	percentile?: number | null
 	onOpen?: () => void
 	children: ReactNode
@@ -255,7 +263,7 @@ export function MetricCard({
 				) : null}
 			</div>
 			<div className="flex flex-1 flex-col gap-3 p-4">{children}</div>
-			<GradeFooter score={score} grade={grade} percentile={percentile} divider={false} />
+			<GradeFooter score={score} grade={grade} gradingScale={gradingScale} percentile={percentile} divider={false} />
 		</Panel>
 	)
 }
@@ -263,14 +271,16 @@ export function MetricCard({
 export function TickScoreStrip({
 	label,
 	score,
-	gradeLabel
+	gradeLabel,
+	gradingScale
 }: {
 	label: string
 	score: number | null
 	gradeLabel?: string | null
+	gradingScale?: UtrGradeScaleEntry[] | null
 }) {
-	const grade = gradeLabel !== undefined ? gradeLabel : resolveUtrGrade(score, 10)
-	const color = utrGradeColor((grade as Parameters<typeof utrGradeColor>[0]) ?? null)
+	const grade = resolveUtrGradeOrLabel(score, gradingScale, gradeLabel ?? undefined)
+	const color = utrGradeColor(grade)
 	return (
 		<div className="flex flex-1 flex-col gap-1.5 px-4 py-3">
 			<div className="flex items-center justify-between gap-2">

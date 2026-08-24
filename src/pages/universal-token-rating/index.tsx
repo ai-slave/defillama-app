@@ -1,13 +1,21 @@
 import type { InferGetStaticPropsType } from 'next'
 import { UniversalTokenRating } from '~/containers/UniversalTokenRating'
 import { UtrAccessGate } from '~/containers/UniversalTokenRating/AccessGate'
-import { fetchUtrLeaderboardMom, fetchUtrUniverseWithLive } from '~/containers/UniversalTokenRating/server'
+import {
+	fetchUtrLeaderboardMom,
+	fetchUtrScoringConfig,
+	fetchUtrUniverseWithLive
+} from '~/containers/UniversalTokenRating/server'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging('universal-token-rating', async () => {
-	const [universe, mom] = await Promise.all([fetchUtrUniverseWithLive(), fetchUtrLeaderboardMom()])
+	const [universe, mom, scoringConfig] = await Promise.all([
+		fetchUtrUniverseWithLive(),
+		fetchUtrLeaderboardMom(),
+		fetchUtrScoringConfig()
+	])
 	const assetByName = new Map(universe.rows.map((row) => [row.name.toLowerCase(), row.asset]))
 	const liveMovers = (mom?.rows ?? [])
 		.filter((row) => row.momChangePct != null)
@@ -20,7 +28,7 @@ export const getStaticProps = withPerformanceLogging('universal-token-rating', a
 			logoUrl: row.logoUrl
 		}))
 	return {
-		props: { universe, topMovers: liveMovers },
+		props: { universe, topMovers: liveMovers, scoringConfig },
 		revalidate: maxAgeForNext([22])
 	}
 })

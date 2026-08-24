@@ -8,7 +8,7 @@ import { Input, inputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formatNumber } from '~/utils/numberFormat'
 import { CLAIM_BLOCKS, type ClaimColumn, type ClaimTableSection } from './claimFormConfig'
-import type { UtrClaimProjectOption } from './types'
+import type { UtrClaimProjectOption, UtrScoringConfig } from './types'
 import { UtrDocsDrawer } from './UtrDocsDrawer'
 
 const ATTACH_HINT = 'Supported formats: PDF, DOCX, XLSX, TXT, MD – Max file size: 10mb'
@@ -242,11 +242,13 @@ function ClaimConfirmation() {
 export function ClaimTokenProfile({
 	variant = 'claim',
 	projects = [],
-	exchangeOptions = []
+	exchangeOptions = [],
+	scoringConfig
 }: {
 	variant?: 'claim' | 'join'
 	projects?: UtrClaimProjectOption[]
 	exchangeOptions?: string[]
+	scoringConfig?: UtrScoringConfig | null
 }) {
 	const [token, setToken] = useState<string>(variant === 'claim' ? (projects[0]?.arcticId ?? '') : '')
 	const [firstName, setFirstName] = useState('')
@@ -317,8 +319,13 @@ export function ClaimTokenProfile({
 		<div className="flex flex-col gap-6">
 			<div className="flex flex-col items-center gap-1 pt-4 text-center">
 				<h1 className="text-xl">
-					<strong className="font-bold">Universal Token Rating</strong>
-					{variant === 'claim' ? ' - Claim Your Token Profile' : ' - Join the Universal Token Rating'}
+					{variant === 'claim' ? (
+						<>
+							<strong className="font-bold">Universal Token Rating</strong> - Claim Your Token Profile
+						</>
+					) : (
+						<strong className="font-bold">Apply for the Universal Token Rating</strong>
+					)}
 				</h1>
 				<p className="body-sm text-tertiary">
 					Provide as much information as possible. All fields are optional unless otherwise noted. Powered by Forgd
@@ -494,6 +501,7 @@ export function ClaimTokenProfile({
 				open={scoringCriteriaOpen}
 				onClose={() => setScoringCriteriaOpen(false)}
 				initialChapterId="disclosure-axis"
+				scoringConfig={scoringConfig}
 			/>
 		</div>
 	)
