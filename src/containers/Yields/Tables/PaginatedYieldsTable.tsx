@@ -1,10 +1,10 @@
 import {
-	type ColumnDef,
 	getCoreRowModel,
 	getPaginationRowModel,
 	getSortedRowModel,
 	type PaginationState,
 	type SortingState,
+	type TableOptions,
 	useReactTable
 } from '@tanstack/react-table'
 import { startTransition, useState } from 'react'
@@ -32,7 +32,7 @@ export function PaginatedYieldsTable<TRow>({
 	loadingLabel,
 	shell = 'default'
 }: IYieldsTableProps<TRow> & {
-	columns: Array<ColumnDef<TRow, unknown>>
+	columns: TableOptions<TRow>['columns']
 	tableClassName: string
 	initialPageSize: number
 	shell?: 'default' | 'none'

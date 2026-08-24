@@ -287,7 +287,6 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 type ProtocolRow = IProtocolTaxonomyPageData['protocols'][0]
 
 const columnHelper = createColumnHelper<ProtocolRow>()
-type ProtocolTaxonomyColumn = ReturnType<(typeof columnHelper)['accessor']>
 type ProtocolMetricValue = number | null | undefined
 
 const sortableNumber = (value: ProtocolMetricValue): number | undefined => value ?? undefined
@@ -815,8 +814,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: '(Total amount supplied / Total value locked) ratio'
 		}
 	})
-	// `satisfies` validates exhaustive keys and helper-produced values without widening each accessor's TValue.
-} satisfies Record<ProtocolCategoryColumn, ProtocolTaxonomyColumn>
+} satisfies Record<ProtocolCategoryColumn, object>
 
 export function getColumnsForCategory(effectiveCategory: string | null) {
 	const columnIds = getProtocolCategoryColumns(effectiveCategory)

@@ -154,7 +154,7 @@ export function useChatExecutionOwner({
 									callbacks,
 									abortSignal: signal,
 									fetchFn: authorizedFetch,
-									from: buffer.receivedEventCount || undefined,
+									...(buffer.receivedEventCount ? { from: buffer.receivedEventCount } : {}),
 									expectedMessageId: activeExecution.messageId,
 									eventCounter
 								})
@@ -271,8 +271,12 @@ export function useChatExecutionOwner({
 			queueItemId: string | null,
 			operation: ExecutionOperation
 		) => {
-			const result: { outcome: QueueAttachOutcome; changedExecution?: AgenticExecutionSnapshot | null } = {
-				outcome: 'error'
+			const result: {
+				outcome: QueueAttachOutcome
+				changedExecution: AgenticExecutionSnapshot | null | undefined
+			} = {
+				outcome: 'error',
+				changedExecution: undefined
 			}
 			let changedExecution: AgenticExecutionSnapshot | null | undefined
 			setViewError(null)
@@ -308,7 +312,7 @@ export function useChatExecutionOwner({
 						fetchFn: authorizedFetch,
 						from: buffer.receivedEventCount,
 						waitMs: QUEUE_ATTACH_WAIT_MS,
-						expectedMessageId: buffer.executionId ?? undefined,
+						...(buffer.executionId ? { expectedMessageId: buffer.executionId } : {}),
 						eventCounter
 					})
 				},

@@ -187,9 +187,11 @@ export function subtractBridgeFromMetricRows(
 		if (!bridgeRow) throw new Error(`RWA bridge TVL history is missing timestamp ${row.timestamp}`)
 		const out: { timestamp: number } & Record<string, number> = { timestamp: row.timestamp }
 		for (const key in row) {
-			if (key === 'timestamp' || !Object.prototype.hasOwnProperty.call(row, key)) continue
+			if (key === 'timestamp') continue
+			const value = row[key]
+			if (value === undefined) continue
 			const bridgeVal = bridgeRow[key] ?? 0
-			out[key] = row[key] - bridgeVal
+			out[key] = value - bridgeVal
 		}
 		return out
 	})

@@ -103,7 +103,9 @@ export function buildRWAPlatformAssetSummary(
 			if (!protocols) continue
 			for (const protocol in protocols) defiActiveTvl += protocols[protocol] ?? 0
 		}
-		for (const chain in asset.bridgeTvl ?? {}) bridgeTvl += asset.bridgeTvl![chain]
+		if (asset.bridgeTvl) {
+			for (const chain in asset.bridgeTvl) bridgeTvl += asset.bridgeTvl[chain] ?? 0
+		}
 
 		const category = getPrimaryRwaCategory(asset.category)
 		if (category) increment(categoryCounts, category)

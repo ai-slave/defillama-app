@@ -863,7 +863,7 @@ export async function stopAgenticExecution(
 > {
 	const response = await fetchFn(`${AI_SERVER}/agentic/stop/${encodeURIComponent(sessionId)}`, {
 		method: 'POST',
-		signal
+		...(signal ? { signal } : {})
 	})
 	if (!response.ok) throw new Error(`Failed to stop execution (${response.status})`)
 	const value = (await response.json()) as { stopped?: unknown; active?: unknown; snapshot?: unknown }

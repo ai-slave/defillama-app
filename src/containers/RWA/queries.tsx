@@ -320,7 +320,7 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 				for (const chain in item.bridgeTvl) {
 					if (!selectedChain || rwaSlug(chain) === selectedChain) {
 						const bridgeValue = item.bridgeTvl[chain]
-						if (bridgeValue === 0) continue
+						if (bridgeValue === undefined || bridgeValue === 0) continue
 						effectiveBridgeTvlByChain[chain] = bridgeValue
 						effectiveBridgeTvl += bridgeValue
 					}
@@ -329,9 +329,12 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 			if (item.bridgeTvlBreakdown) {
 				for (const chain in item.bridgeTvlBreakdown) {
 					if (selectedChain && rwaSlug(chain) !== selectedChain) continue
-					for (const protocol in item.bridgeTvlBreakdown[chain]) {
-						effectiveBridgeTvlByProtocol[protocol] =
-							(effectiveBridgeTvlByProtocol[protocol] ?? 0) + item.bridgeTvlBreakdown[chain][protocol]
+					const protocols = item.bridgeTvlBreakdown[chain]
+					if (!protocols) continue
+					for (const protocol in protocols) {
+						const bridgeValue = protocols[protocol]
+						if (bridgeValue === undefined) continue
+						effectiveBridgeTvlByProtocol[protocol] = (effectiveBridgeTvlByProtocol[protocol] ?? 0) + bridgeValue
 					}
 				}
 			}

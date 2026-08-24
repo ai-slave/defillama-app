@@ -194,7 +194,11 @@ const EarnView = ({
 			) : rowsQuery.isError && !rowsQuery.data ? (
 				<PanelStatus variant="error">Couldn't load pools.</PanelStatus>
 			) : poolsData.length > 0 ? (
-				<PaginatedYieldsPoolTable data={poolsData} median={apyCellMedian} {...tableProps} />
+				<PaginatedYieldsPoolTable
+					data={poolsData}
+					{...(apyCellMedian ? { median: apyCellMedian } : {})}
+					{...tableProps}
+				/>
 			) : (
 				<PanelStatus variant="empty">No pools match current filters.</PanelStatus>
 			)}

@@ -61,7 +61,9 @@ describe('QueueChips', () => {
 	})
 
 	async function render(queueSurface: QueueSurface, quotaResetTime?: string | null) {
-		await act(async () => root.render(<QueueChips surface={queueSurface} quotaResetTime={quotaResetTime} />))
+		await act(async () =>
+			root.render(<QueueChips surface={queueSurface} {...(quotaResetTime === undefined ? {} : { quotaResetTime })} />)
+		)
 	}
 
 	it('keeps an in-flight local row non-interactive', async () => {
@@ -236,8 +238,13 @@ describe('QueueChips', () => {
 		)
 		const dismissButtons = container.querySelectorAll<HTMLButtonElement>('[aria-label="Dismiss"]')
 
-		expect(dismissButtons[0].disabled).toBe(true)
-		expect(dismissButtons[1].disabled).toBe(false)
+		const firstDismiss = dismissButtons[0]
+		const secondDismiss = dismissButtons[1]
+		expect(firstDismiss).toBeDefined()
+		expect(secondDismiss).toBeDefined()
+		if (!firstDismiss || !secondDismiss) throw new Error('Missing dismiss buttons')
+		expect(firstDismiss.disabled).toBe(true)
+		expect(secondDismiss.disabled).toBe(false)
 	})
 
 	it('retries expired image prompts without the old image-loss warning', async () => {

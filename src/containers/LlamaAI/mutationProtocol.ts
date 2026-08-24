@@ -24,9 +24,9 @@ export interface AgenticMutationEnvelope {
 export type AgenticMutationStatus = 'pending' | 'running' | 'applied'
 
 export class AgenticMutationReconcileError extends Error {
-	readonly executionId?: string
-	readonly messageId?: string
-	readonly retryAfterMs?: number
+	readonly executionId: string | undefined
+	readonly messageId: string | undefined
+	readonly retryAfterMs: number | undefined
 	readonly sessionId: string
 	readonly status: AgenticMutationStatus
 

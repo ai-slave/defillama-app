@@ -86,13 +86,13 @@ export function materializeFailedPrompt(request: FailedRequest): Message {
 	const images = request.mutation.images?.map((image) => ({
 		url: image.data,
 		mimeType: image.mimeType,
-		filename: image.filename
+		...(image.filename !== undefined ? { filename: image.filename } : {})
 	}))
 	return {
 		role: 'user',
 		content: request.mutation.message,
-		images: images?.length ? images : undefined,
-		quotedText: request.mutation.quotedText,
+		...(images?.length ? { images } : {}),
+		...(request.mutation.quotedText !== undefined ? { quotedText: request.mutation.quotedText } : {}),
 		id: request.optimisticMessageId
 	}
 }

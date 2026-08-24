@@ -5,13 +5,13 @@ describe('getRankedRwaFilterValues', () => {
 	it('derives every filter key list in ranked option order without mutation', () => {
 		const options = {
 			typeOptions: [
-				{ key: 'Fund', name: 'Fund', help: null },
+				{ key: 'Fund', name: 'Fund' },
 				{ key: 'Bond', name: 'Bond', help: 'Bond help' }
 			],
-			categoriesOptions: [{ key: 'Treasuries', name: 'Treasuries', help: null }],
-			assetClassOptions: [{ key: 'Debt', name: 'Debt', help: null }],
-			rwaClassificationOptions: [{ key: 'RWA', name: 'RWA', help: null }],
-			accessModelOptions: [{ key: 'Permissioned', name: 'Permissioned', help: null }]
+			categoriesOptions: [{ key: 'Treasuries', name: 'Treasuries' }],
+			assetClassOptions: [{ key: 'Debt', name: 'Debt' }],
+			rwaClassificationOptions: [{ key: 'RWA', name: 'RWA' }],
+			accessModelOptions: [{ key: 'Permissioned', name: 'Permissioned' }]
 		}
 		const original = structuredClone(options)
 

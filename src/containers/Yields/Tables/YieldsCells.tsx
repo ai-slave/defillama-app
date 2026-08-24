@@ -127,7 +127,7 @@ export interface EarnApyMedian {
 	apy: number
 }
 
-export function EarnApyCell({ row, median }: { row: IYieldTableRow; median?: EarnApyMedian }) {
+export function EarnApyCell({ row, median }: { row: IYieldTableRow; median: EarnApyMedian | undefined }) {
 	const resolved = row.resolvedApy
 	const total = row.apy
 	if (total == null) {

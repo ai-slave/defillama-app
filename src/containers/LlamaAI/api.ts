@@ -79,7 +79,7 @@ export async function queueMessage(
 	const value = await llamaAIRequest<unknown>(authorizedFetch, '/agentic/queue', {
 		method: 'POST',
 		json: { sessionId, ...payload },
-		signal
+		...(signal ? { signal } : {})
 	})
 	const response = decodeQueueMutationResponse(value)
 	const maxDepth = (value as { maxDepth?: unknown } | null)?.maxDepth
@@ -97,7 +97,7 @@ export async function beginQueuedMessageEdit(
 		await llamaAIRequest<unknown>(
 			authorizedFetch,
 			`/agentic/queue/${encodeURIComponent(sessionId)}/${encodeURIComponent(messageId)}/edit`,
-			{ method: 'POST', signal }
+			{ method: 'POST', ...(signal ? { signal } : {}) }
 		)
 	)
 }
@@ -114,7 +114,7 @@ export async function saveQueuedMessageEdit(
 		await llamaAIRequest<unknown>(
 			authorizedFetch,
 			`/agentic/queue/${encodeURIComponent(sessionId)}/${encodeURIComponent(messageId)}/edit`,
-			{ method: 'PATCH', json: { editLeaseId, ...patch }, signal }
+			{ method: 'PATCH', json: { editLeaseId, ...patch }, ...(signal ? { signal } : {}) }
 		)
 	)
 }
@@ -130,7 +130,7 @@ export async function renewQueuedMessageEdit(
 		await llamaAIRequest<unknown>(
 			authorizedFetch,
 			`/agentic/queue/${encodeURIComponent(sessionId)}/${encodeURIComponent(messageId)}/edit/renew`,
-			{ method: 'POST', json: { editLeaseId }, signal }
+			{ method: 'POST', json: { editLeaseId }, ...(signal ? { signal } : {}) }
 		)
 	)
 }
@@ -146,7 +146,7 @@ export async function cancelQueuedMessageEdit(
 		await llamaAIRequest<unknown>(
 			authorizedFetch,
 			`/agentic/queue/${encodeURIComponent(sessionId)}/${encodeURIComponent(messageId)}/edit`,
-			{ method: 'DELETE', json: { editLeaseId }, signal }
+			{ method: 'DELETE', json: { editLeaseId }, ...(signal ? { signal } : {}) }
 		)
 	)
 }
@@ -161,7 +161,7 @@ export async function cancelQueuedMessage(
 		await llamaAIRequest<unknown>(
 			authorizedFetch,
 			`/agentic/queue/${encodeURIComponent(sessionId)}/${encodeURIComponent(messageId)}`,
-			{ method: 'DELETE', signal }
+			{ method: 'DELETE', ...(signal ? { signal } : {}) }
 		)
 	)
 }
@@ -174,7 +174,7 @@ export async function cancelAllQueuedMessages(
 	return decodeQueueMutationResponse(
 		await llamaAIRequest<unknown>(authorizedFetch, `/agentic/queue/${encodeURIComponent(sessionId)}`, {
 			method: 'DELETE',
-			signal
+			...(signal ? { signal } : {})
 		})
 	)
 }
@@ -187,7 +187,7 @@ export async function continueQueuedMessages(
 	return decodeQueueMutationResponse(
 		await llamaAIRequest<unknown>(authorizedFetch, `/agentic/queue/${encodeURIComponent(sessionId)}/continue`, {
 			method: 'POST',
-			signal
+			...(signal ? { signal } : {})
 		})
 	)
 }
@@ -202,7 +202,7 @@ export async function retryQueuedMessage(
 		await llamaAIRequest<unknown>(
 			authorizedFetch,
 			`/agentic/queue/${encodeURIComponent(sessionId)}/${encodeURIComponent(messageId)}/retry`,
-			{ method: 'POST', signal }
+			{ method: 'POST', ...(signal ? { signal } : {}) }
 		)
 	)
 }

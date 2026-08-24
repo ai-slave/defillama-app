@@ -253,7 +253,9 @@ const AssetHeader = ({
 				{asset.logo ? <TokenLogo src={asset.logo} size={24} /> : null}
 				<span>{displayName}</span>
 				{asset.ticker ? <span className="font-normal text-tertiary">({asset.ticker})</span> : null}
-				{asset.suspicious === true ? <RWASuspiciousWarning reason={asset.suspiciousReason} /> : null}
+				{asset.suspicious === true ? (
+					<RWASuspiciousWarning {...(asset.suspiciousReason !== undefined ? { reason: asset.suspiciousReason } : {})} />
+				) : null}
 			</Tag>
 			<AssetPrimaryValue
 				label={definitions.onChainMcap.label}

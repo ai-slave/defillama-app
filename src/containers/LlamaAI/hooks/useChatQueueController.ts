@@ -144,7 +144,8 @@ function queueControllerReducer(state: QueueControllerState, event: QueueControl
 			const ids = new Set(event.snapshot.queue.map((item) => item.id))
 			const rowStatus: Record<string, QueueRowStatus> = {}
 			for (const id in state.rowStatus) {
-				if (ids.has(id)) rowStatus[id] = state.rowStatus[id]
+				const status = state.rowStatus[id]
+				if (ids.has(id) && status) rowStatus[id] = status
 			}
 			if (event.rememberedEdit && ownsRememberedEdit) {
 				rowStatus[event.rememberedEdit.id] = {
@@ -187,9 +188,13 @@ function queueControllerReducer(state: QueueControllerState, event: QueueControl
 				...state,
 				localBySession: {
 					...state.localBySession,
-					[event.sessionId]: local.map((item) =>
-						item.id === event.id ? { ...item, state: event.state, error: event.error } : item
-					)
+					[event.sessionId]: local.map((item) => {
+						if (item.id !== event.id) return item
+						const next = { ...item, state: event.state }
+						if (event.error === undefined) delete next.error
+						else next.error = event.error
+						return next
+					})
 				}
 			}
 		}
@@ -238,7 +243,11 @@ function queueControllerReducer(state: QueueControllerState, event: QueueControl
 				...state,
 				rowStatus: {
 					...state.rowStatus,
-					[event.id]: { action: null, error: event.error, unsavedDraft: event.unsavedDraft }
+					[event.id]: {
+						action: null,
+						error: event.error,
+						...(event.unsavedDraft !== undefined ? { unsavedDraft: event.unsavedDraft } : {})
+					}
 				}
 			}
 		case 'own_edit':
@@ -536,7 +545,12 @@ export function useChatQueueController({
 					activeSessionIdRef.current === targetSessionId &&
 					!(error instanceof DOMException && error.name === 'AbortError')
 				) {
-					send({ type: 'action_failed', id, error: actionError(action, error), unsavedDraft })
+					send({
+						type: 'action_failed',
+						id,
+						error: actionError(action, error),
+						...(unsavedDraft !== undefined ? { unsavedDraft } : {})
+					})
 				}
 				return null
 			}
@@ -550,7 +564,8 @@ export function useChatQueueController({
 				const result = await beginQueuedMessageEdit(authorizedFetch, targetSessionId, id, signal)
 				return result.snapshot
 			})
-			const reserved = snapshot?.queue.find((item) => item.id === id)
+			if (!snapshot) return
+			const reserved = snapshot.queue.find((item) => item.id === id)
 			const current = latestSnapshotRef.current?.queue.find((item) => item.id === id)
 			if (
 				reserved?.state === 'editing' &&

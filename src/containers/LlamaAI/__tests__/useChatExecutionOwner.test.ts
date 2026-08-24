@@ -140,7 +140,10 @@ describe('useChatExecutionOwner', () => {
 			await attached
 
 			expect(transport.attach).toHaveBeenCalledTimes(2)
-			expect(transport.attach.mock.calls[1][0]).toMatchObject({
+			const secondAttach = transport.attach.mock.calls[1]
+			expect(secondAttach).toBeDefined()
+			if (!secondAttach) throw new Error('Missing second attach call')
+			expect(secondAttach[0]).toMatchObject({
 				expectedMessageId: 'execution-1',
 				from: 2
 			})
@@ -164,7 +167,10 @@ describe('useChatExecutionOwner', () => {
 		await expect(owner.resumeRunningExecution({ targetSessionId: 'session-a' })).resolves.toBe('settled')
 
 		expect(owner.appendMessage).toHaveBeenCalledWith(expect.objectContaining({ content: 'first answer' }))
-		expect(transport.resume.mock.calls[1][0]).toMatchObject({
+		const secondResume = transport.resume.mock.calls[1]
+		expect(secondResume).toBeDefined()
+		if (!secondResume) throw new Error('Missing second resume call')
+		expect(secondResume[0]).toMatchObject({
 			expectedMessageId: 'execution-2',
 			from: 0
 		})

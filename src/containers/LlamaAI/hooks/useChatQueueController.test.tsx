@@ -237,6 +237,8 @@ describe('useChatQueueController', () => {
 		])
 
 		const first = pendingRequests[0]
+		expect(first).toBeDefined()
+		if (!first) throw new Error('Missing first queue request')
 		await act(async () => {
 			first.resolve({
 				snapshot: snapshot(1, [{ ...pending('b'), clientMutationId: first.payload.clientMutationId }]),
@@ -247,7 +249,10 @@ describe('useChatQueueController', () => {
 		})
 
 		expect(queueMessage).toHaveBeenCalledTimes(2)
-		expect(pendingRequests[1].payload.message).toBe('C')
+		const second = pendingRequests[1]
+		expect(second).toBeDefined()
+		if (!second) throw new Error('Missing second queue request')
+		expect(second.payload.message).toBe('C')
 	})
 
 	it('reconciles SSE confirmation when the POST response is lost', async () => {
@@ -282,7 +287,10 @@ describe('useChatQueueController', () => {
 			controller.enqueue({ ...payload, message: 'C' })
 			await Promise.resolve()
 		})
-		const firstRequest = vi.mocked(queueMessage).mock.calls[0][2]
+		const firstCall = vi.mocked(queueMessage).mock.calls[0]
+		expect(firstCall).toBeDefined()
+		if (!firstCall) throw new Error('Missing first queue call')
+		const firstRequest = firstCall[2]
 		await act(async () => {
 			confirm?.({
 				snapshot: snapshot(1, [{ ...pending('confirmed'), clientMutationId: firstRequest.clientMutationId }]),
@@ -308,7 +316,10 @@ describe('useChatQueueController', () => {
 			controller.enqueue(payload)
 			await Promise.resolve()
 		})
-		expect(controller.rows[0].kind).toBe('local')
+		const firstRow = controller.rows[0]
+		expect(firstRow).toBeDefined()
+		if (!firstRow) throw new Error('Missing local queue row')
+		expect(firstRow.kind).toBe('local')
 
 		await act(async () => root.render(<Harness sessionId="session-2" />))
 		expect(controller.rows).toEqual([])
@@ -326,7 +337,10 @@ describe('useChatQueueController', () => {
 			controller.enqueue(payload)
 			await Promise.resolve()
 		})
-		const clientMutationId = vi.mocked(queueMessage).mock.calls[0][2].clientMutationId
+		const initialCall = vi.mocked(queueMessage).mock.calls[0]
+		expect(initialCall).toBeDefined()
+		if (!initialCall) throw new Error('Missing initial queue call')
+		const clientMutationId = initialCall[2].clientMutationId
 
 		await act(async () => {
 			controller.adoptSession('session-1', 'canonical-session')
@@ -336,8 +350,11 @@ describe('useChatQueueController', () => {
 		})
 
 		expect(queueMessage).toHaveBeenCalledTimes(2)
-		expect(vi.mocked(queueMessage).mock.calls[1][1]).toBe('canonical-session')
-		expect(vi.mocked(queueMessage).mock.calls[1][2].clientMutationId).toBe(clientMutationId)
+		const adoptedCall = vi.mocked(queueMessage).mock.calls[1]
+		expect(adoptedCall).toBeDefined()
+		if (!adoptedCall) throw new Error('Missing adopted queue call')
+		expect(adoptedCall[1]).toBe('canonical-session')
+		expect(adoptedCall[2].clientMutationId).toBe(clientMutationId)
 		expect(controller.rows.map((row) => [row.kind, row.state])).toEqual([['local', 'adding']])
 	})
 
@@ -367,11 +384,51 @@ describe('useChatQueueController', () => {
 		)
 
 		await act(async () => {
-			controller.dismiss(controller.rows[0].id)
+			const failedRow = controller.rows[0]
+			expect(failedRow).toBeDefined()
+			if (!failedRow) throw new Error('Missing failed queue row')
+			controller.dismiss(failedRow.id)
 			await Promise.resolve()
 		})
 		expect(queueMessage).toHaveBeenCalledTimes(2)
-		expect(vi.mocked(queueMessage).mock.calls[1][2].message).toBe('C')
+		const retryCall = vi.mocked(queueMessage).mock.calls[1]
+		expect(retryCall).toBeDefined()
+		if (!retryCall) throw new Error('Missing retried queue call')
+		expect(retryCall[2].message).toBe('C')
+	})
+
+	it('clears a failed local error when retrying the prompt', async () => {
+		vi.mocked(queueMessage)
+			.mockRejectedValueOnce(new Error('server rejected the prompt'))
+			.mockImplementationOnce((_fetch, _sessionId, _payload, signal) => {
+				expect(signal).toBeDefined()
+				if (!signal) throw new Error('Missing queue abort signal')
+				return new Promise((_resolve, reject) =>
+					signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
+				)
+			})
+
+		await act(async () => {
+			controller.enqueue(payload)
+			await Promise.resolve()
+		})
+
+		const failedRow = controller.rows[0]
+		expect(failedRow).toMatchObject({ kind: 'local', state: 'failed' })
+		if (!failedRow) throw new Error('Missing failed queue row')
+		expect(failedRow.kind === 'local' ? failedRow.error : undefined).toBe(
+			'Could not add this prompt. Retry or dismiss it.'
+		)
+
+		await act(async () => {
+			await controller.retry(failedRow.id)
+			await Promise.resolve()
+		})
+
+		const retriedRow = controller.rows[0]
+		expect(retriedRow).toMatchObject({ kind: 'local', state: 'adding' })
+		if (!retriedRow) throw new Error('Missing retried queue row')
+		expect(retriedRow.kind === 'local' ? retriedRow.error : undefined).toBeUndefined()
 	})
 
 	it('continues and clears the complete queue through acknowledged snapshots', async () => {

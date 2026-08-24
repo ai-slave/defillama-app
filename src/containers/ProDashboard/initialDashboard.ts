@@ -92,7 +92,7 @@ export function toPublicDashboardResponse(dashboard: Dashboard): Dashboard {
 export function toOwnerDashboardInitialRenderPayload(dashboard: Dashboard): DashboardInitialRenderPayload {
 	return {
 		...publicFields(dashboard),
-		ownerId: dashboard.user,
+		...(dashboard.user !== undefined ? { ownerId: dashboard.user } : {}),
 		data: initialDashboardData(dashboard),
 		visibility: dashboard.visibility ?? 'private'
 	}

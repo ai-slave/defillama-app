@@ -1,4 +1,4 @@
-import { type ColumnDef, createColumnHelper, type SortingState } from '@tanstack/react-table'
+import { createColumnHelper, type SortingState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
@@ -103,12 +103,9 @@ function apyHeader(query: Record<string, unknown>, label: string) {
 	return `${label}${suffix}`
 }
 
-function createEarnColumns(
-	query: Record<string, unknown>,
-	median?: EarnApyMedian
-): Array<ColumnDef<IYieldTableRow, unknown>> {
+function createEarnColumns(query: Record<string, unknown>, median?: EarnApyMedian) {
 	const selected = new Set(parseSelectedEarnColumns(query.column as string | string[] | undefined))
-	const columns: Array<ColumnDef<IYieldTableRow, unknown>> = [
+	const columns = [
 		columnHelper.accessor('pool', {
 			id: 'pool',
 			header: 'Pool',
