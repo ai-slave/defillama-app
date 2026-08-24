@@ -142,12 +142,19 @@ export interface RawBridgeTransaction {
 	token: string
 	amount: string
 	is_deposit: boolean
+	is_usd_volume: boolean
 	chain: string
 	bridge_name: string
 	usd_value: string | null
 }
 
 export type RawBridgeTransactionsResponse = RawBridgeTransaction[]
+
+export interface RawBridgeTransactionsPage {
+	rows: RawBridgeTransactionsResponse
+	hasMore: boolean
+	nextCursor?: string
+}
 
 export interface RawBridgeNetflowEntry {
 	chain: string

@@ -11,9 +11,11 @@ import {
 	createBridgeTransactionSearchIndex,
 	fetchTransactions,
 	matchesBridgeTransactionSearch,
-	toBridgeTransactionCsvCell,
+	toBridgeTransactionCsvRow,
 	type BridgeTransaction
 } from './Transactions'
+
+const unix = (iso: string) => Date.parse(iso) / 1000
 
 const transaction = (hash: string, timestamp: number): BridgeTransaction => ({
 	tx_hash: hash,
@@ -24,103 +26,122 @@ const transaction = (hash: string, timestamp: number): BridgeTransaction => ({
 	token: 'USDC',
 	amount: '1',
 	is_deposit: true,
+	is_usd_volume: false,
 	chain: 'Ethereum',
 	bridge_name: 'Test Bridge',
 	usd_value: '1.25'
 })
 
 const args = {
-	bridges: [{ id: 1, displayName: 'Test Bridge' }],
+	bridge: { id: 1, displayName: 'Test Bridge' },
 	startDate: '2026-01-01',
-	endDate: '2026-01-31',
-	selectedBridge: 'Test Bridge'
-} as Parameters<typeof fetchTransactions>[0]
+	endDate: '2026-01-31'
+} satisfies Parameters<typeof fetchTransactions>[0]
+
+const range = {
+	startTimestamp: unix('2026-01-01T00:00:00.000Z'),
+	endTimestamp: unix('2026-02-01T00:00:00.000Z')
+}
 
 describe('bridge transaction construction behavior fixture', () => {
 	beforeEach(() => vi.clearAllMocks())
 
-	it('deduplicates page boundaries and restores descending order after an anomaly', async () => {
-		const boundaryPage = Array.from({ length: 6000 }, (_, index) => transaction(`0x${index}`, 1_769_000_000 - index))
+	it('uses the opaque cursor and preserves same-second events with repeated hashes', async () => {
+		const boundary = unix('2026-01-20T03:47:25.000Z')
 		fetchBridgeTransactionsClientMock
-			.mockResolvedValueOnce(boundaryPage)
-			.mockResolvedValueOnce([transaction('0x5999', 1_768_994_001), transaction('0xnewer-anomaly', 1_768_999_500)])
+			.mockResolvedValueOnce({
+				rows: [
+					{ ...transaction('repeated', boundary + 1), token: 'FIRST' },
+					transaction('page-one-boundary', boundary)
+				],
+				hasMore: true,
+				nextCursor: 'cursor-page-2'
+			})
+			.mockResolvedValueOnce({
+				rows: [{ ...transaction('repeated', boundary), token: 'SECOND' }, transaction('page-two-boundary', boundary)],
+				hasMore: false
+			})
 
 		const result = await fetchTransactions(args)
 
-		expect(fetchBridgeTransactionsClientMock).toHaveBeenCalledTimes(2)
+		expect(fetchBridgeTransactionsClientMock).toHaveBeenNthCalledWith(
+			1,
+			1,
+			range.startTimestamp,
+			range.endTimestamp,
+			undefined
+		)
 		expect(fetchBridgeTransactionsClientMock).toHaveBeenNthCalledWith(
 			2,
 			1,
-			Math.floor(new Date(args.startDate).getTime() / 1000),
-			1_768_994_000
+			range.startTimestamp,
+			range.endTimestamp,
+			'cursor-page-2'
 		)
-		expect(result.rows).toHaveLength(6001)
-		expect(result.rows[0].tx_hash).toBe('0x0')
-		expect(result.rows[501].tx_hash).toBe('0xnewer-anomaly')
-		expect(new Set(result.rows.map((row) => row.tx_hash)).size).toBe(result.rows.length)
+		expect(result.rows.map((row) => [row.tx_hash, row.token])).toEqual([
+			['repeated', 'FIRST'],
+			['page-one-boundary', 'USDC'],
+			['repeated', 'SECOND'],
+			['page-two-boundary', 'USDC']
+		])
+		expect(result.stats?.total).toBe(4)
+		expect(result.truncated).toBe(false)
 	})
 
-	it('normalizes USD values once while producing exact rows and statistics', () => {
-		const collector = createBridgeTransactionCollector()
+	it('normalizes typed USD strings once while preserving null and measured zero', () => {
+		const collector = createBridgeTransactionCollector(range)
 		collector.addPage([
-			{ ...transaction('missing', 4), usd_value: null },
-			{ ...transaction('invalid', 3), is_deposit: false, usd_value: 'invalid' },
-			{ ...transaction('zero', 2), usd_value: '0' },
-			{ ...transaction('negative', 1), chain: 'Arbitrum', is_deposit: false, usd_value: '-2.5' }
+			{ ...transaction('missing', range.startTimestamp + 4), usd_value: null },
+			{ ...transaction('zero', range.startTimestamp + 3), usd_value: '0' },
+			{ ...transaction('positive', range.startTimestamp + 2), usd_value: '3.5' },
+			{
+				...transaction('negative', range.startTimestamp + 1),
+				chain: 'Arbitrum',
+				is_deposit: false,
+				usd_value: '-2.5'
+			}
 		])
 
-		const result = collector.finish()
+		const result = collector.finish(false)
 
-		expect(result.rows.map((row) => row.usd_value)).toEqual([null, null, 0, -2.5])
-		expect(result.rows[2]).toEqual({
-			timestamp: 2,
-			bridge_name: 'Test Bridge',
-			bridge_slug: 'test-bridge',
-			chain: 'Ethereum',
-			is_deposit: true,
-			token: 'USDC',
-			amount: '1',
-			usd_value: 0,
-			tx_from: '0xfrom',
-			tx_to: '0xto',
-			tx_hash: 'zero'
-		})
+		expect(result.rows.map((row) => row.usd_value)).toEqual([null, 0, 3.5, -2.5])
 		expect(result.stats).toEqual({
 			total: 4,
-			deposits: 2,
-			withdrawals: 2,
-			depositVolume: 0,
+			deposits: 3,
+			withdrawals: 1,
+			depositVolume: 3.5,
 			withdrawalVolume: -2.5,
-			totalVolume: -2.5,
-			unknownValueCount: 2,
+			totalVolume: 1,
+			unknownValueCount: 1,
 			uniqueChains: 2
 		})
 	})
 
-	it('keeps the first encountered duplicate and stable equal-timestamp order during fallback sorting', async () => {
-		fetchBridgeTransactionsClientMock.mockResolvedValueOnce([
-			{ ...transaction('duplicate', 100), token: 'FIRST' },
-			transaction('equal-time', 100),
-			{ ...transaction('duplicate', 99), token: 'SECOND' },
-			transaction('newer-anomaly', 101)
+	it('sorts once after an order anomaly and retains equal-time encounter order', () => {
+		const collector = createBridgeTransactionCollector(range)
+		const timestamp = range.startTimestamp + 100
+		collector.addPage([
+			transaction('first', timestamp),
+			transaction('equal-time', timestamp),
+			transaction('older', timestamp - 1),
+			transaction('newer-anomaly', timestamp + 1)
 		])
 
-		const result = await fetchTransactions(args)
-
-		expect(result.rows.map((row) => [row.tx_hash, row.token])).toEqual([
-			['newer-anomaly', 'USDC'],
-			['duplicate', 'FIRST'],
-			['equal-time', 'USDC']
+		expect(collector.finish(false).rows.map((row) => row.tx_hash)).toEqual([
+			'newer-anomaly',
+			'first',
+			'equal-time',
+			'older'
 		])
 	})
 
 	it('does not sort an already descending multi-page stream', () => {
-		const collector = createBridgeTransactionCollector()
-		collector.addPage([transaction('first', 3), transaction('second', 2)])
-		collector.addPage([transaction('third', 1)])
+		const collector = createBridgeTransactionCollector(range)
+		collector.addPage([transaction('first', range.startTimestamp + 3), transaction('second', range.startTimestamp + 2)])
+		collector.addPage([transaction('third', range.startTimestamp + 1)])
 		const sortSpy = vi.spyOn(Array.prototype, 'sort')
 
-		const result = collector.finish()
+		const result = collector.finish(false)
 		const sortCalls = sortSpy.mock.calls.length
 		sortSpy.mockRestore()
 
@@ -128,40 +149,96 @@ describe('bridge transaction construction behavior fixture', () => {
 		expect(result.rows.map((row) => row.tx_hash)).toEqual(['first', 'second', 'third'])
 	})
 
-	it('returns an empty result for an empty first page', async () => {
-		fetchBridgeTransactionsClientMock.mockResolvedValueOnce([])
+	it('returns a successful empty result without truncation', async () => {
+		fetchBridgeTransactionsClientMock.mockResolvedValueOnce({ rows: [], hasMore: false })
 
-		await expect(fetchTransactions(args)).resolves.toEqual({ rows: [], stats: null })
+		await expect(fetchTransactions(args)).resolves.toEqual({ rows: [], stats: null, truncated: false })
 		expect(fetchBridgeTransactionsClientMock).toHaveBeenCalledTimes(1)
 	})
 
-	it('stops after an empty terminal page at the 6,000-row boundary', async () => {
-		const boundaryPage = Array.from({ length: 6000 }, (_, index) => transaction(`0x${index}`, 1_769_000_000 - index))
-		fetchBridgeTransactionsClientMock.mockResolvedValueOnce(boundaryPage).mockResolvedValueOnce([])
+	it('keeps a first-page request failure unavailable', async () => {
+		fetchBridgeTransactionsClientMock.mockRejectedValueOnce(new Error('upstream unavailable'))
+
+		await expect(fetchTransactions(args)).rejects.toThrow('upstream unavailable')
+	})
+
+	it('stops after one exact 10,000-row terminal page', async () => {
+		const page = Array.from({ length: 10_000 }, (_, index) => transaction(`0x${index}`, range.endTimestamp - index - 1))
+		fetchBridgeTransactionsClientMock.mockResolvedValueOnce({ rows: page, hasMore: false })
 
 		const result = await fetchTransactions(args)
 
-		expect(fetchBridgeTransactionsClientMock).toHaveBeenCalledTimes(2)
-		expect(result.rows).toHaveLength(6000)
-		expect(result.stats?.total).toBe(6000)
+		expect(fetchBridgeTransactionsClientMock).toHaveBeenCalledTimes(1)
+		expect(result.rows).toHaveLength(10_000)
+		expect(result.stats?.total).toBe(10_000)
+		expect(result.truncated).toBe(false)
 	})
 
-	it('preserves CSV cells for table values, including missing and zero USD', () => {
-		expect(
-			[1, 'Test Bridge', 'Ethereum', true, 'USDC', '1', null, '0xfrom', '0xto', '0xhash'].map(
-				toBridgeTransactionCsvCell
-			)
-		).toEqual([1, 'Test Bridge', 'Ethereum', true, 'USDC', '1', '', '0xfrom', '0xto', '0xhash'])
-		expect(toBridgeTransactionCsvCell(0)).toBe(0)
-		expect(toBridgeTransactionCsvCell(-2.5)).toBe(-2.5)
-		expect(toBridgeTransactionCsvCell(Number.NaN)).toBe('')
+	it('rejects continuation without a cursor', async () => {
+		fetchBridgeTransactionsClientMock.mockResolvedValueOnce({
+			rows: [transaction('first', range.startTimestamp + 1)],
+			hasMore: true
+		})
+
+		await expect(fetchTransactions(args)).rejects.toThrow('missing its continuation cursor')
+	})
+
+	it('keeps a later-page failure unavailable instead of returning partial rows', async () => {
+		fetchBridgeTransactionsClientMock
+			.mockResolvedValueOnce({
+				rows: [transaction('first', range.startTimestamp + 2)],
+				hasMore: true,
+				nextCursor: 'cursor-page-2'
+			})
+			.mockRejectedValueOnce(new Error('upstream unavailable'))
+
+		await expect(fetchTransactions(args)).rejects.toThrow('upstream unavailable')
+	})
+
+	it('reports truncation after the approved 50-page limit', async () => {
+		for (let page = 0; page < 50; page++) {
+			fetchBridgeTransactionsClientMock.mockResolvedValueOnce({
+				rows: [transaction(`page-${page}`, range.endTimestamp - page - 1)],
+				hasMore: true,
+				nextCursor: `cursor-${page + 1}`
+			})
+		}
+
+		const result = await fetchTransactions(args)
+
+		expect(fetchBridgeTransactionsClientMock).toHaveBeenCalledTimes(50)
+		expect(result.rows).toHaveLength(50)
+		expect(result.truncated).toBe(true)
+	})
+
+	it('keeps the selected end day and excludes exact next midnight', () => {
+		const collector = createBridgeTransactionCollector(range)
+		collector.addPage([
+			{ ...transaction('last-millisecond', range.endTimestamp - 1), ts: '2026-01-31T23:59:59.999Z' },
+			{ ...transaction('next-midnight', range.endTimestamp), ts: '2026-02-01T00:00:00.000Z' },
+			transaction('before-start', range.startTimestamp - 1)
+		])
+
+		expect(collector.finish(false).rows.map((row) => row.tx_hash)).toEqual(['last-millisecond'])
+	})
+
+	it('projects exact table values to CSV, including null and zero USD', () => {
+		const collector = createBridgeTransactionCollector(range)
+		collector.addPage([{ ...transaction('missing', range.startTimestamp + 2), usd_value: null }])
+		collector.addPage([{ ...transaction('zero', range.startTimestamp + 1), usd_value: '0' }])
+		const rows = collector.finish(false).rows
+
+		expect(rows.map(toBridgeTransactionCsvRow)).toEqual([
+			[range.startTimestamp + 2, 'Test Bridge', 'Ethereum', true, 'USDC', '1', '', '0xfrom', '0xto', 'missing'],
+			[range.startTimestamp + 1, 'Test Bridge', 'Ethereum', true, 'USDC', '1', 0, '0xfrom', '0xto', 'zero']
+		])
 	})
 
 	it('searches the indexed transaction values case-insensitively', () => {
-		const collector = createBridgeTransactionCollector()
+		const collector = createBridgeTransactionCollector(range)
 		collector.addPage([
 			{
-				...transaction('0xUniqueHash', 1_800_000_000),
+				...transaction('0xUniqueHash', range.startTimestamp + 1),
 				bridge_name: 'Across',
 				chain: 'Arbitrum',
 				token: 'WETH',
@@ -171,11 +248,13 @@ describe('bridge transaction construction behavior fixture', () => {
 				tx_to: '0xUniqueTo'
 			}
 		])
-		const row = collector.finish().rows[0]
+		const result = collector.finish(false)
+		const row = result.rows[0]
+		if (!row) throw new Error('Expected the transaction fixture to produce one row')
 		const searchIndex = createBridgeTransactionSearchIndex([row])
 
 		for (const query of [
-			'1800000000',
+			String(range.startTimestamp + 1),
 			'across',
 			'arbitrum',
 			'weth',

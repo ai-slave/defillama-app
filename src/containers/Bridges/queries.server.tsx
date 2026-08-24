@@ -591,7 +591,7 @@ export async function getBridgeOverviewPageData(chain: string, options: { includ
 		netflowsData,
 		bridgeStatsCurrentDay,
 		largeTxsData,
-		chain: chain ?? 'All'
+		chain: chain || 'All'
 	}
 }
 

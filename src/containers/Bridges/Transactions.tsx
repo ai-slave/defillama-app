@@ -33,7 +33,7 @@ import type { RawBridgeInfo, RawBridgeTransaction } from './api.types'
 
 export type BridgeTransaction = RawBridgeTransaction
 
-const MAX_ITERATIONS = 50
+const MAX_TRANSACTION_PAGES = 50
 
 export interface TransformedTransaction {
 	timestamp: number
@@ -84,12 +84,17 @@ export interface BridgeTransactionStats {
 export interface BridgeTransactionResult {
 	rows: TransformedTransaction[]
 	stats: BridgeTransactionStats | null
+	truncated: boolean
+}
+
+interface BridgeTransactionRange {
+	startTimestamp: number
+	endTimestamp: number
 }
 
 const parseTransactionTimestamp = (timestamp: string): number => Math.floor(Date.parse(timestamp) / 1000)
 
 const buildBridgeTransactionRow = (tx: BridgeTransaction, timestamp: number): TransformedTransaction => {
-	const parsedUsdValue = tx.usd_value === null ? null : Number.parseFloat(tx.usd_value)
 	return {
 		timestamp,
 		bridge_name: tx.bridge_name,
@@ -98,16 +103,15 @@ const buildBridgeTransactionRow = (tx: BridgeTransaction, timestamp: number): Tr
 		is_deposit: tx.is_deposit,
 		token: tx.token,
 		amount: tx.amount,
-		usd_value: parsedUsdValue !== null && Number.isFinite(parsedUsdValue) ? parsedUsdValue : null,
+		usd_value: tx.usd_value === null ? null : Number(tx.usd_value),
 		tx_from: tx.tx_from,
 		tx_to: tx.tx_to,
 		tx_hash: tx.tx_hash
 	}
 }
 
-export const createBridgeTransactionCollector = () => {
+export const createBridgeTransactionCollector = ({ startTimestamp, endTimestamp }: BridgeTransactionRange) => {
 	const rows: TransformedTransaction[] = []
-	const seenTransactionHashes = new Set<string>()
 	const uniqueChains = new Set<string>()
 	let previousAcceptedTimestamp = Number.POSITIVE_INFINITY
 	let isDescending = true
@@ -118,13 +122,10 @@ export const createBridgeTransactionCollector = () => {
 	let unknownValueCount = 0
 
 	return {
-		addPage(transactions: BridgeTransaction[]): number | null {
-			let terminalTimestamp: number | null = null
+		addPage(transactions: BridgeTransaction[]): void {
 			for (const tx of transactions) {
 				const timestamp = parseTransactionTimestamp(tx.ts)
-				terminalTimestamp = timestamp
-				if (seenTransactionHashes.has(tx.tx_hash)) continue
-				seenTransactionHashes.add(tx.tx_hash)
+				if (timestamp < startTimestamp || timestamp >= endTimestamp) continue
 
 				const row = buildBridgeTransactionRow(tx, timestamp)
 				if (timestamp > previousAcceptedTimestamp) isDescending = false
@@ -141,15 +142,15 @@ export const createBridgeTransactionCollector = () => {
 					else withdrawalVolume += row.usd_value
 				}
 			}
-			return terminalTimestamp
 		},
-		finish(): BridgeTransactionResult {
+		finish(truncated: boolean): BridgeTransactionResult {
 			if (!isDescending) {
 				// Array sorting is stable, so equal timestamps retain API encounter order as before.
 				rows.sort((left, right) => right.timestamp - left.timestamp)
 			}
 			return {
 				rows,
+				truncated,
 				stats:
 					rows.length === 0
 						? null
@@ -396,18 +397,12 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 ]
 
 interface FetchArgs {
-	bridges: RawBridgeInfo[]
+	bridge: Pick<RawBridgeInfo, 'id' | 'displayName'>
 	startDate: string
 	endDate: string
-	selectedBridge: string
 }
 
-export const fetchTransactions = async ({ bridges, startDate, endDate, selectedBridge }: FetchArgs) => {
-	const selectedBridgeData = bridges.find((bridge) => bridge.displayName === selectedBridge)
-	if (!selectedBridgeData?.id) {
-		throw new Error('Invalid bridge selected')
-	}
-
+export const fetchTransactions = async ({ bridge, startDate, endDate }: FetchArgs) => {
 	const startTimestamp = Math.floor(new Date(startDate).getTime() / 1000)
 	const endTimestamp = Math.floor(new Date(endDate).getTime() / 1000) + 86400
 
@@ -415,41 +410,26 @@ export const fetchTransactions = async ({ bridges, startDate, endDate, selectedB
 		throw new Error('Invalid date range')
 	}
 
-	const bridgeId = selectedBridgeData.id
-	const collector = createBridgeTransactionCollector()
-	let currentEndTimestamp = endTimestamp
-	let iterations = 0
+	const collector = createBridgeTransactionCollector({ startTimestamp, endTimestamp })
+	let cursor: string | undefined
 
-	while (iterations < MAX_ITERATIONS) {
-		const transactions = await fetchBridgeTransactionsClient(bridgeId, startTimestamp, currentEndTimestamp)
+	for (let page = 0; page < MAX_TRANSACTION_PAGES; page++) {
+		const response = await fetchBridgeTransactionsClient(bridge.id, startTimestamp, endTimestamp, cursor)
+		collector.addPage(response.rows)
 
-		if (!transactions?.length) {
-			break
+		if (!response.hasMore) {
+			return collector.finish(false)
 		}
-
-		// The paging API contract is newest-to-oldest with a 6,000-row cap. The collector
-		// verifies accepted rows across pages and sorts once only if that contract is violated.
-		const terminalTimestamp = collector.addPage(transactions)
-
-		if (transactions.length < 6000) {
-			break
+		if (!response.nextCursor) {
+			throw new Error('Bridge transactions response is missing its continuation cursor')
 		}
-
-		if (terminalTimestamp === null || terminalTimestamp >= currentEndTimestamp) {
-			break
-		}
-
-		currentEndTimestamp = terminalTimestamp - 1
-		if (currentEndTimestamp <= startTimestamp) {
-			break
-		}
-		iterations++
+		cursor = response.nextCursor
 	}
 
-	return collector.finish()
+	return collector.finish(true)
 }
 
-const toDateOnly = (date: Date) => date.toISOString().split('T')[0]
+const toDateOnly = (date: Date) => date.toISOString().slice(0, 10)
 
 interface StatCardProps {
 	label: string
@@ -490,13 +470,17 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 	const defaultStartDate = new Date(defaultEndDate)
 	defaultStartDate.setMonth(defaultEndDate.getMonth() - 1)
 
-	const [transactionResult, setTransactionResult] = React.useState<BridgeTransactionResult>({ rows: [], stats: null })
+	const [transactionResult, setTransactionResult] = React.useState<BridgeTransactionResult>({
+		rows: [],
+		stats: null,
+		truncated: false
+	})
 	const [fetchedContext, setFetchedContext] = React.useState<{
 		startDate: string
 		endDate: string
 		bridgeName: string
 	} | null>(null)
-	const [selectedBridge, setSelectedBridge] = React.useState<string[]>([])
+	const [selectedBridgeId, setSelectedBridgeId] = React.useState<string[]>([])
 
 	const { mutate, isPending, error } = useMutation({
 		mutationFn: fetchTransactions,
@@ -505,7 +489,7 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 			setFetchedContext({
 				startDate: variables.startDate,
 				endDate: variables.endDate,
-				bridgeName: variables.selectedBridge
+				bridgeName: variables.bridge.displayName
 			})
 		}
 	})
@@ -522,14 +506,14 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 		() =>
 			[...bridges]
 				.sort((a, b) => (b.last24hVolume ?? 0) - (a.last24hVolume ?? 0))
-				.map((bridge) => ({ key: bridge.displayName, name: bridge.displayName })),
+				.map((bridge) => ({ key: String(bridge.id), name: bridge.displayName })),
 		[bridges]
 	)
+	const selectedBridge = bridges.find((bridge) => String(bridge.id) === selectedBridgeId[0])
 
 	const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
 		e.preventDefault()
-		const bridgeName = selectedBridge[0]
-		if (!bridgeName) {
+		if (!selectedBridge) {
 			return
 		}
 		if (!validateDateRange(startDate, endDate)) {
@@ -538,8 +522,7 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 		mutate({
 			startDate,
 			endDate,
-			selectedBridge: bridgeName,
-			bridges
+			bridge: selectedBridge
 		})
 	}
 
@@ -550,10 +533,10 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 	const stats = transactionResult.stats
 
 	const csvFileName = fetchedContext
-		? `bridge-transactions_${slug(fetchedContext.bridgeName)}_${fetchedContext.startDate}_${fetchedContext.endDate}`
+		? `bridge-transactions_${slug(fetchedContext.bridgeName)}_${fetchedContext.startDate}_${fetchedContext.endDate}${transactionResult.truncated ? '_newest-loaded-truncated' : ''}`
 		: `bridge-transactions_${startDate}_${endDate}`
 
-	const formError = (error as Error | null)?.message ?? dateError ?? null
+	const formError = error?.message ?? dateError ?? null
 	const showEmpty = tableData.length === 0 && !isPending
 
 	return (
@@ -576,10 +559,10 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 					<span className="label-sm text-secondary uppercase">Bridge</span>
 					<SelectWithCombobox
 						allValues={bridgeOptions}
-						selectedValues={selectedBridge}
-						setSelectedValues={setSelectedBridge}
+						selectedValues={selectedBridgeId}
+						setSelectedValues={setSelectedBridgeId}
 						singleSelect
-						label={selectedBridge[0] ?? 'Select a bridge'}
+						label={selectedBridge?.displayName ?? 'Select a bridge'}
 						labelType="none"
 						variant="default"
 						size="sm"
@@ -613,7 +596,7 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 						className={`${inputStyles} cursor-pointer dark:scheme-dark`}
 					/>
 				</label>
-				<Button type="submit" variant="primary" size="md" disabled={isPending || !selectedBridge[0]}>
+				<Button type="submit" variant="primary" size="md" disabled={isPending || !selectedBridge}>
 					{isPending ? (
 						<>
 							Fetching
@@ -706,8 +689,26 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 				</div>
 			) : null}
 
+			{!isPending && transactionResult.truncated ? (
+				<div
+					role="status"
+					className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-sm text-primary"
+				>
+					<Icon name="alert-triangle" height={14} width={14} className="mt-0.5 shrink-0 text-warning" />
+					<p>
+						Results reached the 50-page limit. Counts, statistics, table rows, and CSV cover the newest loaded
+						transactions only. Narrow the date range for a complete result.
+					</p>
+				</div>
+			) : null}
+
 			{!isPending && tableData.length > 0 ? (
-				<TransactionsTable data={tableData} columns={columns} csvFileName={csvFileName} />
+				<TransactionsTable
+					data={tableData}
+					columns={columns}
+					csvFileName={csvFileName}
+					truncated={transactionResult.truncated}
+				/>
 			) : null}
 
 			{showEmpty ? <EmptyState hasFetched={fetchedContext != null} /> : null}
@@ -718,21 +719,44 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 const PAGE_SIZE_OPTIONS = [25, 50, 100, 250, 500] as const
 const DEFAULT_PAGE_SIZE = 100
 
-export const toBridgeTransactionCsvCell = (value: unknown): string | number | boolean => {
-	if (value == null) return ''
-	if (typeof value === 'number') return Number.isFinite(value) ? value : ''
-	if (typeof value === 'string' || typeof value === 'boolean') return value
-	return ''
-}
+type BridgeTransactionCsvCell = string | number | boolean
+
+const BRIDGE_TRANSACTION_CSV_HEADERS: BridgeTransactionCsvCell[] = [
+	'Timestamp',
+	'Bridge',
+	'Chain',
+	'Direction',
+	'Token',
+	'Amount',
+	'USD Value',
+	'From',
+	'To',
+	'Transaction'
+]
+
+export const toBridgeTransactionCsvRow = (row: TransformedTransaction): BridgeTransactionCsvCell[] => [
+	row.timestamp,
+	row.bridge_name,
+	row.chain,
+	row.is_deposit,
+	row.token,
+	row.amount,
+	row.usd_value ?? '',
+	row.tx_from,
+	row.tx_to,
+	row.tx_hash
+]
 
 function TransactionsTable({
 	data,
 	columns,
-	csvFileName
+	csvFileName,
+	truncated
 }: {
 	data: TransformedTransaction[]
 	columns: ReturnType<typeof buildBridgeColumns>
 	csvFileName: string
+	truncated: boolean
 }) {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'timestamp', desc: true }])
 	const [globalFilter, setGlobalFilter] = React.useState('')
@@ -773,24 +797,23 @@ function TransactionsTable({
 	const pageEnd = Math.min(filteredCount, pageStart + pageSize - 1)
 
 	const prepareCsv = React.useCallback(() => {
-		const visibleCols = instance.getVisibleLeafColumns().filter((c) => !c.columnDef.meta?.hidden)
-		const headers = visibleCols.map((column) => {
-			const csvHeader = (column.columnDef.meta as { csvHeader?: unknown } | undefined)?.csvHeader
-			if (typeof csvHeader === 'string' && csvHeader.length > 0) return csvHeader
-			const h = column.columnDef.header
-			return typeof h === 'string' ? h : (column.columnDef.id ?? column.id)
-		})
 		const filteredRows = instance.getPrePaginationRowModel().rows
-		const rows = filteredRows.map((row) =>
-			visibleCols.map((column) => toBridgeTransactionCsvCell(row.getValue(column.id)))
-		)
-		return { filename: csvFileName, rows: [headers, ...rows] }
+		const rows: BridgeTransactionCsvCell[][] = new Array(filteredRows.length + 1)
+		rows[0] = BRIDGE_TRANSACTION_CSV_HEADERS
+		let outputIndex = 1
+		for (const row of filteredRows) {
+			rows[outputIndex++] = toBridgeTransactionCsvRow(row.original)
+		}
+		return { filename: csvFileName, rows }
 	}, [instance, csvFileName])
 
 	return (
 		<Panel padding="none">
 			<TableToolbar className="w-full justify-end">
-				<h2 className="mr-auto label-md">Transactions</h2>
+				<h2 className="mr-auto label-md">
+					Transactions
+					{truncated ? <span className="ml-2 text-warning">· newest loaded rows</span> : null}
+				</h2>
 				<TableToolbarControlGroup>
 					<label className={searchFieldInlineWrapperStyles}>
 						<span className="sr-only">Search transactions</span>
@@ -878,9 +901,19 @@ function TransactionsTable({
 	)
 }
 
-function PagerButton({ children, disabled, onClick, ...rest }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+function PagerButton({
+	children,
+	disabled,
+	onClick,
+	'aria-label': ariaLabel
+}: {
+	children: React.ReactNode
+	disabled: boolean
+	onClick: React.MouseEventHandler<HTMLButtonElement>
+	'aria-label': string
+}) {
 	return (
-		<Button type="button" variant="ghost" size="sm" onClick={onClick} disabled={disabled} square {...rest}>
+		<Button type="button" variant="ghost" size="sm" onClick={onClick} disabled={disabled} aria-label={ariaLabel} square>
 			{children}
 		</Button>
 	)

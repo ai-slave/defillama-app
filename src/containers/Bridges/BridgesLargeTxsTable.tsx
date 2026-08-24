@@ -28,7 +28,10 @@ type LargeTxsData = {
 }
 
 export type BridgesLargeTxsTableHandle = {
-	prepareCsv: () => { filename: string; rows: Array<Array<string | number | boolean>> }
+	prepareCsv: () => {
+		filename: string
+		rows: Array<Array<string | number | boolean | null | undefined>>
+	}
 }
 
 type BridgesLargeTxsTableProps = {

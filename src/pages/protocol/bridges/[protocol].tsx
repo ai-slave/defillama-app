@@ -1,4 +1,4 @@
-import type { GetStaticPropsContext } from 'next'
+import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { BridgeInfo } from '~/containers/Bridges/BridgeProtocolOverview'
 import { getBridgePageDatanew } from '~/containers/Bridges/queries.server'
@@ -11,7 +11,7 @@ import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
 
-const EMPTY_TOGGLE_OPTIONS = []
+const EMPTY_TOGGLE_OPTIONS: Array<{ name: string; key: string }> = []
 
 export const getStaticProps = withPerformanceLogging(
 	'protocol/bridges/[protocol]',
@@ -86,7 +86,7 @@ export const getStaticPaths = () => {
 	return { paths: [], fallback: 'blocking' }
 }
 
-export default function Protocols({ bridgeData, ...props }) {
+export default function Protocols({ bridgeData, ...props }: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<ProtocolOverviewLayout
 			name={props.name}

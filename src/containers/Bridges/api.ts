@@ -11,7 +11,7 @@ import type {
 	RawBridgesResponse,
 	RawBridgesWithChainsResponse,
 	RawBridgeTxCountsResponse,
-	RawBridgeTransactionsResponse,
+	RawBridgeTransactionsPage,
 	RawBridgeVolumeBySlugResponse,
 	RawBridgeVolumeResponse,
 	RawBridgeNetflowsResponse
@@ -22,7 +22,6 @@ const BRIDGEDAYSTATS_API = `${BRIDGES_SERVER_URL}/bridgedaystats`
 const BRIDGES_API = `${BRIDGES_SERVER_URL}/bridges`
 const BRIDGELARGETX_API = `${BRIDGES_SERVER_URL}/largetransactions`
 const BRIDGETXCOUNT_API = `${BRIDGES_SERVER_URL}/bridgetxcounts`
-const BRIDGETX_API = `${BRIDGES_SERVER_URL}/transactions`
 const BRIDGEVOLUME_API = `${BRIDGES_SERVER_URL}/bridgevolume`
 const BRIDGEVOLUME_API_SLUG = `${BRIDGES_SERVER_URL}/bridgevolume/slug`
 const NETFLOWS_API = `${BRIDGES_SERVER_URL}/netflows`
@@ -95,26 +94,20 @@ export function fetchBridgeTxCounts(chain?: string): Promise<RawBridgeTxCountsRe
 	return fetchJson<RawBridgeTxCountsResponse>(url)
 }
 
-export function fetchBridgeTransactions(
-	bridgeId: string | number,
-	startTimestamp: number,
-	endTimestamp: number
-): Promise<RawBridgeTransactionsResponse> {
-	const url = `${BRIDGETX_API}/${encodeURIComponent(String(bridgeId))}?starttimestamp=${encodeURIComponent(String(startTimestamp))}&endtimestamp=${encodeURIComponent(String(endTimestamp))}`
-	return fetchJson<RawBridgeTransactionsResponse>(url)
-}
-
 export function fetchBridgeTransactionsClient(
 	bridgeId: string | number,
 	startTimestamp: number,
-	endTimestamp: number
-): Promise<RawBridgeTransactionsResponse> {
+	endTimestamp: number,
+	cursor?: string
+): Promise<RawBridgeTransactionsPage> {
 	const params = new URLSearchParams({
 		starttimestamp: String(startTimestamp),
-		endtimestamp: String(endTimestamp)
+		endtimestamp: String(endTimestamp),
+		limit: '10000',
+		...(cursor ? { cursor } : {})
 	})
 	const url = `/api/public/bridges/transactions/${encodeURIComponent(String(bridgeId))}?${params.toString()}`
-	return fetchJson<RawBridgeTransactionsResponse>(url)
+	return fetchJson<RawBridgeTransactionsPage>(url)
 }
 
 export function fetchBridgeNetflows(period: BridgeNetflowPeriod): Promise<BridgeNetflowsResponse> {

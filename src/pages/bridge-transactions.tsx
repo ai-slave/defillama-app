@@ -1,3 +1,4 @@
+import type { InferGetStaticPropsType } from 'next'
 import { getBridges } from '~/containers/Bridges/queries.server'
 import { BridgeTransactionsPage } from '~/containers/Bridges/Transactions'
 import Layout from '~/layout'
@@ -15,7 +16,7 @@ export const getStaticProps = withPerformanceLogging('bridge-transactions', asyn
 
 const pageName = ['Bridge Transactions']
 
-export default function BridgeTransactions({ bridges }) {
+export default function BridgeTransactions({ bridges }: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout
 			title={`Bridge Transactions - DefiLlama`}

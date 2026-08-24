@@ -4,8 +4,10 @@ import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
+type BridgesPageData = Awaited<ReturnType<typeof getBridgeOverviewPageData>>
+
 export const getStaticProps = withPerformanceLogging('bridges', async () => {
-	const props = await getBridgeOverviewPageData(null, { includeBridgeTxCounts: true })
+	const props = await getBridgeOverviewPageData('', { includeBridgeTxCounts: true })
 
 	/*
 	const backgroundColor = await getPeggedColor({
@@ -37,7 +39,7 @@ export default function Bridges({
 	bridgeStatsCurrentDay,
 	largeTxsData
 	//backgroundColor
-}) {
+}: BridgesPageData) {
 	return (
 		<Layout
 			title="Bridge Volume Rankings - Cross-Chain Flows - DefiLlama"

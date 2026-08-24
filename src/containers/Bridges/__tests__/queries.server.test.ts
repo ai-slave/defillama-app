@@ -9,6 +9,7 @@ import {
 	fetchBridgeVolumeByChain
 } from '../api'
 import type { BridgeDayStats, RawBridgesWithChainsResponse } from '../api.types'
+import { getBridgeOverviewSummaryTotals } from '../bridgeOverviewChartData'
 import {
 	buildPrevDayDataByChain,
 	buildTableDataByChain,
@@ -136,10 +137,18 @@ describe('getBridgeOverviewPageData', () => {
 
 		const result = await getBridgeOverviewPageData('')
 
+		expect(result.chain).toBe('All')
 		expect(result.chainVolumeData).toEqual([
 			{ date: 1, volume: 7, Deposits: null, Withdrawals: null },
 			{ date: 2, volume: null, Deposits: null, Withdrawals: null }
 		])
+		expect(
+			getBridgeOverviewSummaryTotals({
+				selectedChain: result.chain,
+				bridges: [{ lastDailyVolume: 5, weeklyVolume: 50, monthlyVolume: 500 }],
+				chainVolumeData: result.chainVolumeData
+			})
+		).toEqual({ dayTotalVolume: 5, weekTotalVolume: 50, monthTotalVolume: 500 })
 		expect(result.rawBridgeVolumeData).toHaveLength(2)
 	})
 
@@ -197,12 +206,67 @@ describe('getBridgeOverviewPageData', () => {
 
 		const result = await getBridgeOverviewPageData('Base')
 
+		expect(result.chain).toBe('Base')
 		expect(fetchBridgeVolumeByChain).toHaveBeenCalledTimes(2)
 		expect(fetchBridgeVolumeByChain).toHaveBeenCalledWith('Base', 1)
 		expect(fetchBridgeVolumeByChain).toHaveBeenCalledWith('Base')
 		expect(fetchBridgeVolumeByChain).not.toHaveBeenCalledWith('Base', 2)
 		expect(fetchBridgeDayStats).toHaveBeenCalledWith(expect.any(Number), 'Base', { rollingHours: 24 })
 		expect(result.bridgeNames).toEqual(['Base Bridge'])
+	})
+
+	it('preserves the large-transaction chain perspective on selected-chain pages', async () => {
+		vi.mocked(fetchJson).mockResolvedValue({ chainCoingeckoIds: { Base: ['base'] } })
+		const bridgesResponse: RawBridgesWithChainsResponse = {
+			dataUpdatedAt: '2026-08-24T00:00:00.000Z',
+			bridges: [],
+			chains: [{ name: 'Base', volumePrevDay: 0, gecko_id: 'base', tokenSymbol: null }]
+		}
+		vi.mocked(fetchBridges).mockResolvedValue(bridgesResponse)
+		vi.mocked(fetchBridgeVolumeByChain).mockResolvedValue([])
+		vi.mocked(fetchBridgeDayStats).mockResolvedValue({
+			date: 1,
+			...REQUIRED_DAY_TOTALS,
+			totalTokensDeposited: {},
+			totalTokensWithdrawn: {},
+			totalAddressDeposited: {},
+			totalAddressWithdrawn: {}
+		})
+		vi.mocked(fetchBridgeLargeTransactions).mockResolvedValue([
+			{
+				date: 1,
+				txHash: 'selected-leg',
+				from: 'from',
+				to: 'to',
+				token: 'base:token',
+				symbol: 'USDC',
+				amount: '1',
+				isDeposit: true,
+				bridge: 'Circle',
+				chain: 'Base',
+				usdValue: '1'
+			},
+			{
+				date: 2,
+				txHash: 'opposite-leg',
+				from: 'from',
+				to: 'to',
+				token: 'ethereum:token',
+				symbol: 'USDC',
+				amount: '1',
+				isDeposit: true,
+				bridge: 'Circle',
+				chain: 'Ethereum',
+				usdValue: '1'
+			}
+		])
+
+		const result = await getBridgeOverviewPageData('Base')
+
+		expect(result.largeTxsData.map(({ txHash, isDeposit }) => [txHash, isDeposit])).toEqual([
+			['selected-leg', true],
+			['opposite-leg', false]
+		])
 	})
 })
 

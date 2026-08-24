@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
+import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 
 vi.mock('~/containers/ProtocolOverview/IncomeStatement', () => ({
 	IncomeStatement: ({ name, description }: { name: string; description?: string }) => (
@@ -13,7 +14,7 @@ vi.mock('~/containers/ProtocolOverview/IncomeStatement', () => ({
 import { TokenIncomeStatementSection } from '../TokenIncomeStatementSection'
 
 const incomeStatement = {
-	data: {},
+	data: { monthly: {}, quarterly: {}, yearly: {}, cumulative: {} },
 	labelsByType: {},
 	methodology: {},
 	breakdownMethodology: {},
@@ -23,7 +24,7 @@ const incomeStatement = {
 		{ name: 'Arbitrum Foundation', id: 'parent#arbitrum-foundation', protocolType: 'protocol', module: null },
 		{ name: 'Arbitrum', id: 'chain#arbitrum', protocolType: 'chain', module: 'arbitrum' }
 	]
-}
+} satisfies NonNullable<IProtocolOverviewPageData['incomeStatement']>
 
 describe('TokenIncomeStatementSection', () => {
 	it('uses the token symbol and describes the API components', () => {
