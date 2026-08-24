@@ -499,15 +499,16 @@ export const UpcomingEvent = ({
 			<Ariakit.HovercardProvider timeout={0}>
 				<Ariakit.HovercardAnchor>
 					{timeLeft > 0 ? (
-						<div className="flex min-w-0 items-center gap-3">
-							<div className="flex items-center gap-4">
+						<div className="flex items-center gap-3">
+							{/* fixed-width summary slot keeps the countdown tiles at the same x on every row */}
+							<div className="flex w-[200px] shrink-0 flex-col gap-1">
 								{eventSummaries.length === 0 ? (
-									<span className="min-w-[150px] label-sm text-tertiary">Amount unavailable</span>
+									<span className="label-sm text-tertiary">Amount unavailable</span>
 								) : (
 									eventSummaries.map((summary) => (
-										<div key={summary.label} className="flex min-w-[150px] items-center justify-between gap-4">
-											<div className="flex flex-col items-start">
-												<span className="inline-flex items-baseline gap-1 mono-sm-bold text-primary">
+										<div key={summary.label} className="flex items-center justify-between gap-3">
+											<div className="flex min-w-0 flex-col items-start">
+												<span className="inline-flex items-baseline gap-1 mono-sm-bold whitespace-nowrap text-primary">
 													{summary.usdValue !== null
 														? formatUsd(summary.usdValue, {
 																compact: true,
@@ -520,14 +521,14 @@ export const UpcomingEvent = ({
 															})} ${tokenSymbol}`}
 													{summary.displayUnit ? <span className="label-sm text-tertiary">/ week</span> : null}
 												</span>
-												<span className="label-sm text-tertiary">{summary.label}</span>
+												<span className="truncate label-sm text-tertiary">{summary.label}</span>
 											</div>
 											{summary.percentageFloat !== null ? (
-												<div className="flex flex-col items-end">
+												<div className="flex shrink-0 flex-col items-end">
 													<span className="mono-sm-bold text-primary">
 														{formatPercent(summary.percentageFloat, { input: 'percent', compact: true })}
 													</span>
-													<span className="label-sm text-tertiary">of float</span>
+													<span className="label-sm whitespace-nowrap text-tertiary">of float</span>
 												</div>
 											) : null}
 										</div>
