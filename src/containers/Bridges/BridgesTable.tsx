@@ -88,7 +88,8 @@ const BRIDGES_COLUMNS = [
 			headerHelperText: 'Chains are ordered by bridge volume on each chain'
 		}
 	}),
-	columnHelper.accessor('change_1d', {
+	columnHelper.accessor((row) => row.change_1d ?? undefined, {
+		id: 'change_1d',
 		header: '1d Change',
 		cell: (info) => <PercentChange percent={info.getValue()} />,
 		meta: {
@@ -96,7 +97,8 @@ const BRIDGES_COLUMNS = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('lastDailyVolume', {
+	columnHelper.accessor((row) => row.lastDailyVolume ?? undefined, {
+		id: 'lastDailyVolume',
 		header: 'Completed day',
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
@@ -106,7 +108,8 @@ const BRIDGES_COLUMNS = [
 			headerHelperText: 'Volume during the last completed UTC day'
 		}
 	}),
-	columnHelper.accessor('weeklyVolume', {
+	columnHelper.accessor((row) => row.weeklyVolume ?? undefined, {
+		id: 'weeklyVolume',
 		header: '7 completed days',
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
@@ -116,7 +119,8 @@ const BRIDGES_COLUMNS = [
 			headerHelperText: 'Volume during the last 7 completed UTC days'
 		}
 	}),
-	columnHelper.accessor('monthlyVolume', {
+	columnHelper.accessor((row) => row.monthlyVolume ?? undefined, {
+		id: 'monthlyVolume',
 		header: '30 completed days',
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
@@ -126,7 +130,8 @@ const BRIDGES_COLUMNS = [
 			headerHelperText: 'Volume during the last 30 completed UTC days'
 		}
 	}),
-	columnHelper.accessor('txsPrevDay', {
+	columnHelper.accessor((row) => row.txsPrevDay ?? undefined, {
+		id: 'txsPrevDay',
 		header: '24h # of Txs',
 		meta: {
 			headerClassName: 'w-[124px]',

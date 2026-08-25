@@ -631,7 +631,7 @@ export function buildDirectoryColumns(
 				headerHelperText: definitions.freshness.description
 			}
 		}),
-		columnHelper.accessor((row) => row.warnings.length, {
+		columnHelper.accessor((row) => row.warnings.length ?? undefined, {
 			id: 'warnings',
 			header: definitions.warnings.label,
 			cell: ({ row, getValue }) =>

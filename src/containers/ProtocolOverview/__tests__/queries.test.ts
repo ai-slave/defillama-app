@@ -327,7 +327,7 @@ describe('getProtocolOverviewPageData', () => {
 			{ name: 'Arbitrum Rates', tvl: 1 },
 			{ name: 'Rho X', tvl: 10 }
 		])
-		expect(faqPeers).toEqual(data.competitors.map((peer) => peer.name))
+		expect(faqPeers).toEqual(data.competitors?.map((peer) => peer.name) ?? [])
 	})
 
 	it('distinguishes absent TVL capability from successful empty and explicit-zero TVL responses', async () => {
@@ -626,7 +626,7 @@ describe('getProtocolOverviewPageData', () => {
 		expect(data.oracleTvs).toEqual({ Ethereum: 20, Arbitrum: 5 })
 	})
 
-	it('keeps an oracle provider aggregate unavailable when a canonical member is unmeasured', async () => {
+	it('treats an omitted canonical Oracle member as zero contribution', async () => {
 		fetchOracleMetrics.mockResolvedValueOnce({
 			oracles: { Chainlink: ['Measured', 'Missing'] },
 			chainsByOracle: { Chainlink: ['Ethereum'] },
@@ -651,7 +651,33 @@ describe('getProtocolOverviewPageData', () => {
 			yieldsSnapshot
 		})
 
-		expect(data.oracleTvs).toBeNull()
+		expect(data.oracleTvs).toEqual({ Ethereum: 10 })
+	})
+
+	it('preserves extra-only Oracle measurements while default TVS is zero', async () => {
+		fetchOracleMetrics.mockResolvedValueOnce({
+			oracles: { Chainlink: ['Extra Only'] },
+			chainsByOracle: { Chainlink: ['Ethereum'] },
+			protocolsByOracleChain: { Chainlink: { Ethereum: ['Extra Only'] } },
+			oraclesTVS: { Chainlink: { 'Extra Only': { 'Ethereum-staking': 5 } } }
+		})
+		const { getProtocolOverviewPageData } = await import('../queries')
+
+		const data = await getProtocolOverviewPageData({
+			protocolId: 'chainlink',
+			currentProtocolMetadata: {
+				displayName: 'Chainlink',
+				tvl: true
+			} satisfies IProtocolMetadata,
+			chainMetadata: {},
+			tokenlist: {},
+			cgExchangeIdentifiers: [],
+			emissionsSupplyMetrics: {},
+			protocolLlamaswapDataset: {},
+			yieldsSnapshot
+		})
+
+		expect(data.oracleTvs).toEqual({ 'Ethereum-staking': 5 })
 	})
 
 	it('preserves Oracle identity when its optional measurement request fails', async () => {

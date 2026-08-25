@@ -30,17 +30,19 @@ function indexExtraChartDataByTimestamp(extraBreakdownsByApiKey: Record<string, 
 		for (const dayData of breakdown) {
 			const timestamp = dayData.timestamp
 			const valuesByOracle = indexedByTimestamp.get(timestamp) ?? {}
+			let hasMeasurement = false
 
 			for (const oracleName in dayData) {
 				if (oracleName === 'timestamp') continue
 				const value = dayData[oracleName]
 				if (value === undefined) continue
+				hasMeasurement = true
 				const currentValues = valuesByOracle[oracleName] ?? {}
 				currentValues[apiKey] = value
 				valuesByOracle[oracleName] = currentValues
 			}
 
-			indexedByTimestamp.set(timestamp, valuesByOracle)
+			if (hasMeasurement) indexedByTimestamp.set(timestamp, valuesByOracle)
 		}
 	}
 
@@ -138,9 +140,17 @@ export function buildOraclesByChainDominanceData({
 		: null
 	const dimensions = ['timestamp', ...oracles]
 	const source: Array<Array<number | null>> = []
+	const baseByTimestamp = new Map<number, OraclesByChainPageData['chartData'][number]>()
+	for (const row of chartData) baseByTimestamp.set(row.timestamp, row)
+	const timestamps = new Set<number>()
+	for (const timestamp of baseByTimestamp.keys()) timestamps.add(timestamp)
+	if (extraValuesByTimestamp) {
+		for (const timestamp of extraValuesByTimestamp.keys()) timestamps.add(timestamp)
+	}
+	const sortedTimestamps = Array.from(timestamps).sort((a, b) => a - b)
 
-	for (const baseDayData of chartData) {
-		const timestampInSeconds = baseDayData.timestamp
+	for (const timestampInSeconds of sortedTimestamps) {
+		const baseDayData = baseByTimestamp.get(timestampInSeconds)
 		const extraValuesForTimestamp = extraValuesByTimestamp?.get(timestampInSeconds)
 
 		const point = new Array<number | null>(oracles.length + 1)
@@ -148,13 +158,18 @@ export function buildOraclesByChainDominanceData({
 		let hasValue = false
 		let oracleDimension = 1
 		for (const oracleName of oracles) {
-			const oracleTvs = shouldApplyExtraTvlFormatting
-				? calculateTotalWithOracleExtras({
-						tvl: baseDayData[oracleName] ?? null,
-						extraTvl: extraValuesForTimestamp?.[oracleName],
-						extraTvlsEnabled
-					})
-				: (baseDayData[oracleName] ?? null)
+			const baseTvs = baseDayData?.[oracleName]
+			const extraTvl = extraValuesForTimestamp?.[oracleName]
+			const oracleTvs =
+				baseTvs === undefined && extraTvl === undefined
+					? null
+					: shouldApplyExtraTvlFormatting
+						? calculateTotalWithOracleExtras({
+								tvl: baseTvs ?? 0,
+								extraTvl,
+								extraTvlsEnabled
+							})
+						: (baseTvs ?? null)
 			point[oracleDimension] = oracleTvs
 			if (oracleTvs !== null) hasValue = true
 			oracleDimension++

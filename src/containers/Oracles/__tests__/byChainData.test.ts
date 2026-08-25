@@ -58,7 +58,15 @@ describe('buildOraclesByChainTableAndPieData', () => {
 	})
 
 	it('keeps unavailable TVS out of the pie without converting it to zero', () => {
-		const unavailableTableData = [{ ...tableData[0], tvl: null }]
+		const unavailableTableData = [
+			{
+				name: 'Chainlink',
+				tvl: null,
+				extraTvl: { doublecounted: 30, liquidstaking: 20, dcAndLsOverlap: 10 },
+				protocolsSecured: 3,
+				chains: ['Ethereum']
+			}
+		] satisfies OraclesByChainPageData['tableData']
 		const result = buildOraclesByChainTableAndPieData({
 			tableData: unavailableTableData,
 			extraTvlsEnabled,
@@ -170,5 +178,36 @@ describe('buildOraclesByChainDominanceData', () => {
 		})
 
 		expect(result.dominanceDataset.source).toEqual([[1_000, null, 0]])
+	})
+
+	it('adds extra-only timestamps without zero-filling other Oracle gaps', () => {
+		const result = buildOraclesByChainDominanceData({
+			chartData: [{ timestamp: 1, Chainlink: 100 }],
+			oracles: ['Chainlink', 'Pyth'],
+			oraclesColors: { Chainlink: '#111', Pyth: '#222' },
+			extraBreakdownsByApiKey: {
+				staking: [{ timestamp: 2, Chainlink: 20 }]
+			},
+			extraTvlsEnabled: { staking: true },
+			shouldApplyExtraTvlFormatting: true
+		})
+
+		expect(result.dominanceDataset.source).toEqual([
+			[1_000, 100, null],
+			[2_000, 20, null]
+		])
+	})
+
+	it('does not create coverage from empty extra breakdown rows', () => {
+		const result = buildOraclesByChainDominanceData({
+			chartData: [{ timestamp: 1, Chainlink: 100 }],
+			oracles: ['Chainlink'],
+			oraclesColors: { Chainlink: '#111' },
+			extraBreakdownsByApiKey: { staking: [{ timestamp: 2 }] },
+			extraTvlsEnabled: { staking: true },
+			shouldApplyExtraTvlFormatting: true
+		})
+
+		expect(result.dominanceDataset.source).toEqual([[1_000, 100]])
 	})
 })

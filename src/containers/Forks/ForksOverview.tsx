@@ -13,9 +13,9 @@ import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { FailedDataPopover } from '~/ui/FailedDataPopover'
 import { LoadingDots } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
-import { PanelStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import { getEnabledForkOracleExtraTvlChartApiKeys } from '~/utils/tvlOverlap'
@@ -55,25 +55,32 @@ const forksColumn = [
 			headerClassName: 'w-[min(240px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('forkedProtocols', {
+	columnHelper.accessor((row) => row.forkedProtocols ?? undefined, {
+		id: 'forkedProtocols',
 		header: 'Forked Protocols',
 		meta: {
 			headerClassName: 'w-[150px]',
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('tvl', {
+	columnHelper.accessor((row) => row.tvl ?? undefined, {
+		id: 'tvl',
 		header: 'Forks TVL',
 		cell: (info) =>
 			info.getValue() != null
-				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+				? formatUsd(info.getValue(), {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})
 				: null,
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('ftot', {
+	columnHelper.accessor((row) => row.ftot ?? undefined, {
+		id: 'ftot',
 		header: 'Forks TVL / Original TVL',
 		cell: (info) =>
 			info.getValue() != null
@@ -100,21 +107,27 @@ export const ForksOverview = ({
 		() => getEnabledForkOracleExtraTvlChartApiKeys(extraTvlsEnabled),
 		[extraTvlsEnabled]
 	)
-	const { isFetchingExtraSeries, extraBreakdownByTimestamp } = useForksOverviewExtraSeries({
+	const { failedApiKeys, isFetchingExtraSeries, extraBreakdownByTimestamp } = useForksOverviewExtraSeries({
 		enabledExtraApiKeys
 	})
 
-	const shouldApplyExtraSeries = enabledExtraApiKeys.length > 0 && !isFetchingExtraSeries
-
 	const mergedChartData = React.useMemo(() => {
-		return mergeForkOverviewChartData({ chartData, extraBreakdownByTimestamp, shouldApplyExtraSeries })
-	}, [chartData, extraBreakdownByTimestamp, shouldApplyExtraSeries])
+		if (isFetchingExtraSeries) return chartData
+		return mergeForkOverviewChartData({
+			chartData,
+			extraBreakdownByTimestamp
+		})
+	}, [chartData, extraBreakdownByTimestamp, isFetchingExtraSeries])
 
 	const { tableData, pieSeries, dominanceDataset, dominanceCharts, chartColors } = React.useMemo(() => {
-		return buildForksOverviewDisplayData({ forks, forkColors, baseTableData, chartData: mergedChartData })
+		return buildForksOverviewDisplayData({
+			forks,
+			forkColors,
+			baseTableData,
+			chartData: mergedChartData
+		})
 	}, [baseTableData, forkColors, forks, mergedChartData])
 
-	const isLoading = enabledExtraApiKeys.length > 0 && isFetchingExtraSeries
 	const forkSeries = React.useMemo(() => dominanceCharts.map((chart) => chart.name), [dominanceCharts])
 	const pieSelectableSeries = React.useMemo(() => pieSeries.peers.map((peer) => peer.name), [pieSeries.peers])
 	const { activeSeries, selectedCharts, setSelectedSeries } = useSeriesSelection({ availableSeries: forkSeries })
@@ -151,90 +164,110 @@ export const ForksOverview = ({
 	return (
 		<>
 			<RowLinksWithDropdown links={forkLinks} activeLink="All" />
-			{isLoading ? (
-				<PanelStatus variant="loading" textClassName="flex items-center gap-1">
-					Loading
-					<LoadingDots />
-				</PanelStatus>
-			) : (
-				<>
-					<div className="flex flex-col gap-2 xl:flex-row">
-						<ChartPanel className="isolate flex-1">
-							<ChartPanelToolbar className="justify-end">
-								{pieSelectableSeries.length > 1 ? (
-									<SelectWithCombobox
-										allValues={pieSelectableSeries}
-										selectedValues={activePieSeries}
-										setSelectedValues={setSelectedPieSeries}
-										label="Fork"
-										labelType="smol"
-										variant="filter"
-										size="md"
-									/>
-								) : null}
-								<ChartExportButtons
-									chartInstance={pieChartInstance}
-									filename="forks-tvl-pie"
-									title="Forks TVL Breakdown"
-									csvSource={{
-										type: 'prepare-dataset',
-										prepare: () => buildRuntimePieChartCsvDataset(pieSeries)
-									}}
-								/>
-							</ChartPanelToolbar>
-							<React.Suspense fallback={<ChartPanelBodyFallback />}>
-								<PieChart chartData={visibleTokenTvls} stackColors={chartColors} onReady={handlePieChartReady} />
-							</React.Suspense>
-						</ChartPanel>
-						<ChartPanel className="flex-1">
-							<ChartPanelToolbar className="justify-end">
-								<h2 className="mr-auto heading-xs">Forks TVL Dominance (%)</h2>
-								{forkSeries.length > 1 ? (
-									<SelectWithCombobox
-										allValues={forkSeries}
-										selectedValues={activeSeries}
-										setSelectedValues={setSelectedSeries}
-										label="Fork"
-										labelType="smol"
-										variant="filter"
-										size="md"
-									/>
-								) : null}
-								<ChartExportButtons
-									chartInstance={chartInstance}
-									filename="forks-dominance-chart"
-									title="Forks TVL Dominance (%)"
-									csvSource={selectedDominance.csvSource}
-								/>
-							</ChartPanelToolbar>
-							<React.Suspense fallback={<ChartPanelBodyFallback />}>
-								<MultiSeriesChart
-									dataset={selectedDominance.dataset}
-									charts={selectedDominance.charts}
-									csvSource={selectedDominance.csvSource}
-									stacked={true}
-									expandTo100Percent={true}
-									hideDefaultLegend
-									valueSymbol="%"
-									onReady={handleChartReady}
-								/>
-							</React.Suspense>
-						</ChartPanel>
-					</div>
-					<React.Suspense fallback={<Panel padding="none" style={{ minHeight: `${tableData.length * 50 + 200}px` }} />}>
-						<TableWithSearch
-							data={tableData}
-							columns={forksColumn}
-							placeholder="Search protocols..."
-							columnToSearch="name"
-							header="Protocol Rankings"
-							headingAs="h1"
-							csvFileName="forks-overview"
-							sortingState={DEFAULT_SORTING_STATE}
+			<div className="flex flex-col gap-2 xl:flex-row">
+				<ChartPanel className="isolate flex-1">
+					<ChartPanelToolbar className="justify-end">
+						{pieSelectableSeries.length > 1 ? (
+							<SelectWithCombobox
+								allValues={pieSelectableSeries}
+								selectedValues={activePieSeries}
+								setSelectedValues={setSelectedPieSeries}
+								label="Fork"
+								labelType="smol"
+								variant="filter"
+								size="md"
+							/>
+						) : null}
+						<ChartExportButtons
+							chartInstance={pieChartInstance}
+							filename="forks-tvl-pie"
+							title="Forks TVL Breakdown"
+							csvSource={{
+								type: 'prepare-dataset',
+								prepare: () => buildRuntimePieChartCsvDataset(pieSeries)
+							}}
 						/>
-					</React.Suspense>
-				</>
-			)}
+					</ChartPanelToolbar>
+					{isFetchingExtraSeries ? (
+						<ChartPanelBodyFallback
+							role="status"
+							aria-live="polite"
+							className="my-auto flex items-center justify-center gap-1 text-center body-sm text-tertiary"
+						>
+							Loading
+							<LoadingDots />
+						</ChartPanelBodyFallback>
+					) : (
+						<React.Suspense fallback={<ChartPanelBodyFallback />}>
+							<PieChart chartData={visibleTokenTvls} stackColors={chartColors} onReady={handlePieChartReady} />
+						</React.Suspense>
+					)}
+				</ChartPanel>
+				<ChartPanel className="flex-1">
+					<ChartPanelToolbar className="justify-end">
+						<h2 className="mr-auto heading-xs">Forks TVL Dominance (%)</h2>
+						{forkSeries.length > 1 ? (
+							<SelectWithCombobox
+								allValues={forkSeries}
+								selectedValues={activeSeries}
+								setSelectedValues={setSelectedSeries}
+								label="Fork"
+								labelType="smol"
+								variant="filter"
+								size="md"
+							/>
+						) : null}
+						<ChartExportButtons
+							chartInstance={chartInstance}
+							filename="forks-dominance-chart"
+							title="Forks TVL Dominance (%)"
+							csvSource={selectedDominance.csvSource}
+						/>
+					</ChartPanelToolbar>
+					{isFetchingExtraSeries ? (
+						<ChartPanelBodyFallback
+							role="status"
+							aria-live="polite"
+							className="my-auto flex items-center justify-center gap-1 text-center body-sm text-tertiary"
+						>
+							Loading
+							<LoadingDots />
+						</ChartPanelBodyFallback>
+					) : (
+						<React.Suspense fallback={<ChartPanelBodyFallback />}>
+							<MultiSeriesChart
+								dataset={selectedDominance.dataset}
+								charts={selectedDominance.charts}
+								csvSource={selectedDominance.csvSource}
+								stacked={true}
+								expandTo100Percent={true}
+								hideDefaultLegend
+								valueSymbol="%"
+								onReady={handleChartReady}
+							/>
+						</React.Suspense>
+					)}
+					{!isFetchingExtraSeries ? (
+						<FailedDataPopover
+							items={failedApiKeys}
+							ariaLabel="Show failed Fork TVL sections"
+							title="Failed to load selected TVL data for:"
+						/>
+					) : null}
+				</ChartPanel>
+			</div>
+			<React.Suspense fallback={<Panel padding="none" style={{ minHeight: `${tableData.length * 50 + 200}px` }} />}>
+				<TableWithSearch
+					data={tableData}
+					columns={forksColumn}
+					placeholder="Search protocols..."
+					columnToSearch="name"
+					header="Protocol Rankings"
+					headingAs="h1"
+					csvFileName="forks-overview"
+					sortingState={DEFAULT_SORTING_STATE}
+				/>
+			</React.Suspense>
 		</>
 	)
 }

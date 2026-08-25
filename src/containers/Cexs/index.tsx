@@ -193,7 +193,8 @@ const columns = [
 			headerClassName: 'w-[min(220px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('currentTvl', {
+	columnHelper.accessor((row) => row.currentTvl ?? undefined, {
+		id: 'currentTvl',
 		header: 'Assets',
 		cell: (info) => {
 			if (info.row.original.cexProtocolSlug == null) {
@@ -217,7 +218,8 @@ const columns = [
 				'This excludes IOU assets issued by the CEX that are already counted on another chain, such as Binance-pegged BTC in BSC, which is already counted in Bitcoin chain'
 		}
 	}),
-	columnHelper.accessor('cleanAssetsTvl', {
+	columnHelper.accessor((row) => row.cleanAssetsTvl ?? undefined, {
+		id: 'cleanAssetsTvl',
 		header: 'Clean Assets',
 		cell: (info) => {
 			const coinSymbol = info.row.original.coinSymbol
@@ -247,7 +249,8 @@ const columns = [
 			headerHelperText: 'TVL of the CEX excluding all assets issued by itself, such as their own token'
 		}
 	}),
-	columnHelper.accessor('inflows_24h', {
+	columnHelper.accessor((row) => row.inflows_24h ?? undefined, {
+		id: 'inflows_24h',
 		header: '24h Inflows',
 		cell: (info) => {
 			const value = info.getValue()
@@ -264,7 +267,8 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('inflows_1w', {
+	columnHelper.accessor((row) => row.inflows_1w ?? undefined, {
+		id: 'inflows_1w',
 		header: '7d Inflows',
 		cell: (info) => {
 			const value = info.getValue()
@@ -281,7 +285,8 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('inflows_1m', {
+	columnHelper.accessor((row) => row.inflows_1m ?? undefined, {
+		id: 'inflows_1m',
 		header: '1m Inflows',
 		cell: (info) => {
 			const value = info.getValue()
@@ -298,7 +303,8 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('spotVolume', {
+	columnHelper.accessor((row) => row.spotVolume ?? undefined, {
+		id: 'spotVolume',
 		header: 'Spot Volume',
 		cell: (info) =>
 			info.getValue() != null
@@ -309,7 +315,8 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('oi', {
+	columnHelper.accessor((row) => row.oi ?? undefined, {
+		id: 'oi',
 		header: '24h Open Interest',
 		cell: (info) =>
 			info.getValue() != null
@@ -320,7 +327,8 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('leverage', {
+	columnHelper.accessor((row) => row.leverage ?? undefined, {
+		id: 'leverage',
 		header: 'Avg Leverage',
 		cell: (info) => {
 			const value = info.getValue()
@@ -332,7 +340,8 @@ const columns = [
 			headerHelperText: 'Open Interest / Clean Assets'
 		}
 	}),
-	columnHelper.accessor('customRange', {
+	columnHelper.accessor((row) => row.customRange ?? undefined, {
+		id: 'customRange',
 		header: 'Custom range Inflows',
 		cell: ({ row }) => <CustomRangeCell state={row.original.customRangeState} value={row.original.customRange} />,
 		meta: {
@@ -347,7 +356,8 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('lastAuditDate', {
+	columnHelper.accessor((row) => row.lastAuditDate ?? undefined, {
+		id: 'lastAuditDate',
 		header: 'Last audit date',
 		cell: ({ getValue }) => {
 			const value = getValue()

@@ -127,7 +127,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			align: 'start'
 		}
 	}),
-	columnHelper.accessor('marketCap', {
+	columnHelper.accessor((row) => row.marketCap ?? undefined, {
+		id: 'marketCap',
 		header: defs.marketCap.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -168,7 +169,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			align: 'start'
 		}
 	}),
-	columnHelper.accessor('currentPrice', {
+	columnHelper.accessor((row) => row.currentPrice ?? undefined, {
+		id: 'currentPrice',
 		header: defs.currentPrice.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -177,7 +179,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.currentPrice.description
 		}
 	}),
-	columnHelper.accessor('fiftyTwoWeekHigh', {
+	columnHelper.accessor((row) => row.fiftyTwoWeekHigh ?? undefined, {
+		id: 'fiftyTwoWeekHigh',
 		header: defs.fiftyTwoWeekHigh.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -186,7 +189,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.fiftyTwoWeekHigh.description
 		}
 	}),
-	columnHelper.accessor('fiftyTwoWeekLow', {
+	columnHelper.accessor((row) => row.fiftyTwoWeekLow ?? undefined, {
+		id: 'fiftyTwoWeekLow',
 		header: defs.fiftyTwoWeekLow.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -195,34 +199,38 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.fiftyTwoWeekLow.description
 		}
 	}),
-	columnHelper.accessor('priceChangePercentage1d', {
+	columnHelper.accessor((row) => row.priceChangePercentage1d ?? undefined, {
+		id: 'priceChangePercentage1d',
 		header: defs.priceChangePercentage1d.label,
-		cell: ({ getValue }) => <ChangePercent value={getValue()} />,
+		cell: ({ getValue }) => <ChangePercent value={getValue() ?? null} />,
 		meta: {
 			headerClassName: 'w-[153px] min-w-[153px]',
 			align: 'end',
 			headerHelperText: defs.priceChangePercentage1d.description
 		}
 	}),
-	columnHelper.accessor('priceChangePercentage7d', {
+	columnHelper.accessor((row) => row.priceChangePercentage7d ?? undefined, {
+		id: 'priceChangePercentage7d',
 		header: defs.priceChangePercentage7d.label,
-		cell: ({ getValue }) => <ChangePercent value={getValue()} />,
+		cell: ({ getValue }) => <ChangePercent value={getValue() ?? null} />,
 		meta: {
 			headerClassName: 'w-[156px] min-w-[156px]',
 			align: 'end',
 			headerHelperText: defs.priceChangePercentage7d.description
 		}
 	}),
-	columnHelper.accessor('priceChangePercentage1m', {
+	columnHelper.accessor((row) => row.priceChangePercentage1m ?? undefined, {
+		id: 'priceChangePercentage1m',
 		header: defs.priceChangePercentage1m.label,
-		cell: ({ getValue }) => <ChangePercent value={getValue()} />,
+		cell: ({ getValue }) => <ChangePercent value={getValue() ?? null} />,
 		meta: {
 			headerClassName: 'w-[156px] min-w-[156px]',
 			align: 'end',
 			headerHelperText: defs.priceChangePercentage1m.description
 		}
 	}),
-	columnHelper.accessor('volume', {
+	columnHelper.accessor((row) => row.volume ?? undefined, {
+		id: 'volume',
 		header: defs.volume.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue()) ?? '-',
 		meta: {
@@ -231,16 +239,18 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.volume.description
 		}
 	}),
-	columnHelper.accessor('marketCapChange1d', {
+	columnHelper.accessor((row) => row.marketCapChange1d ?? undefined, {
+		id: 'marketCapChange1d',
 		header: defs.marketCapChange1d.label,
-		cell: ({ getValue }) => <ChangeValue value={getValue()} symbol="$" />,
+		cell: ({ getValue }) => <ChangeValue value={getValue() ?? null} symbol="$" />,
 		meta: {
 			headerClassName: 'w-[196px] min-w-[196px]',
 			align: 'end',
 			headerHelperText: defs.marketCapChange1d.description
 		}
 	}),
-	columnHelper.accessor('circulatingMarketCap', {
+	columnHelper.accessor((row) => row.circulatingMarketCap ?? undefined, {
+		id: 'circulatingMarketCap',
 		header: defs.circulatingMarketCap.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -249,7 +259,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.circulatingMarketCap.description
 		}
 	}),
-	columnHelper.accessor('enterpriseValue', {
+	columnHelper.accessor((row) => row.enterpriseValue ?? undefined, {
+		id: 'enterpriseValue',
 		header: defs.enterpriseValue.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -258,7 +269,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.enterpriseValue.description
 		}
 	}),
-	columnHelper.accessor('trailingPE', {
+	columnHelper.accessor((row) => row.trailingPE ?? undefined, {
+		id: 'trailingPE',
 		header: defs.trailingPE.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue()) ?? '-',
 		meta: {
@@ -267,7 +279,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.trailingPE.description
 		}
 	}),
-	columnHelper.accessor('priceToRevenue', {
+	columnHelper.accessor((row) => row.priceToRevenue ?? undefined, {
+		id: 'priceToRevenue',
 		header: defs.priceToRevenue.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue()) ?? '-',
 		meta: {
@@ -276,7 +289,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.priceToRevenue.description
 		}
 	}),
-	columnHelper.accessor('dividendYield', {
+	columnHelper.accessor((row) => row.dividendYield ?? undefined, {
+		id: 'dividendYield',
 		header: defs.dividendYield.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '%') ?? '-',
 		meta: {
@@ -285,7 +299,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.dividendYield.description
 		}
 	}),
-	columnHelper.accessor('holdersYield', {
+	columnHelper.accessor((row) => row.holdersYield ?? undefined, {
+		id: 'holdersYield',
 		header: defs.holdersYield.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '%') ?? '-',
 		meta: {
@@ -294,7 +309,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.holdersYield.description
 		}
 	}),
-	columnHelper.accessor('priceToBook', {
+	columnHelper.accessor((row) => row.priceToBook ?? undefined, {
+		id: 'priceToBook',
 		header: defs.priceToBook.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue()) ?? '-',
 		meta: {
@@ -303,7 +319,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.priceToBook.description
 		}
 	}),
-	columnHelper.accessor('enterpriseValueToEbitda', {
+	columnHelper.accessor((row) => row.enterpriseValueToEbitda ?? undefined, {
+		id: 'enterpriseValueToEbitda',
 		header: defs.enterpriseValueToEbitda.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue()) ?? '-',
 		meta: {
@@ -312,7 +329,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.enterpriseValueToEbitda.description
 		}
 	}),
-	columnHelper.accessor('operatingProfitMarginTTM', {
+	columnHelper.accessor((row) => row.operatingProfitMarginTTM ?? undefined, {
+		id: 'operatingProfitMarginTTM',
 		header: defs.operatingProfitMarginTTM.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '%') ?? '-',
 		meta: {
@@ -321,7 +339,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.operatingProfitMarginTTM.description
 		}
 	}),
-	columnHelper.accessor('revenueTTM', {
+	columnHelper.accessor((row) => row.revenueTTM ?? undefined, {
+		id: 'revenueTTM',
 		header: defs.revenueTTM.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -330,7 +349,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.revenueTTM.description
 		}
 	}),
-	columnHelper.accessor('grossProfitTTM', {
+	columnHelper.accessor((row) => row.grossProfitTTM ?? undefined, {
+		id: 'grossProfitTTM',
 		header: defs.grossProfitTTM.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -339,7 +359,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.grossProfitTTM.description
 		}
 	}),
-	columnHelper.accessor('earningsTTM', {
+	columnHelper.accessor((row) => row.earningsTTM ?? undefined, {
+		id: 'earningsTTM',
 		header: defs.earningsTTM.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -348,7 +369,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.earningsTTM.description
 		}
 	}),
-	columnHelper.accessor('ebitdaTTM', {
+	columnHelper.accessor((row) => row.ebitdaTTM ?? undefined, {
+		id: 'ebitdaTTM',
 		header: defs.ebitdaTTM.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -357,7 +379,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.ebitdaTTM.description
 		}
 	}),
-	columnHelper.accessor('holdersRevenueTTM', {
+	columnHelper.accessor((row) => row.holdersRevenueTTM ?? undefined, {
+		id: 'holdersRevenueTTM',
 		header: defs.holdersRevenueTTM.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -366,7 +389,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.holdersRevenueTTM.description
 		}
 	}),
-	columnHelper.accessor('holderEarningsTTM', {
+	columnHelper.accessor((row) => row.holderEarningsTTM ?? undefined, {
+		id: 'holderEarningsTTM',
 		header: defs.holderEarningsTTM.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -375,7 +399,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.holderEarningsTTM.description
 		}
 	}),
-	columnHelper.accessor('dividendsTTM', {
+	columnHelper.accessor((row) => row.dividendsTTM ?? undefined, {
+		id: 'dividendsTTM',
 		header: defs.dividendsTTM.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -384,7 +409,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.dividendsTTM.description
 		}
 	}),
-	columnHelper.accessor('stockRepurchaseTTM', {
+	columnHelper.accessor((row) => row.stockRepurchaseTTM ?? undefined, {
+		id: 'stockRepurchaseTTM',
 		header: defs.stockRepurchaseTTM.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -393,7 +419,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.stockRepurchaseTTM.description
 		}
 	}),
-	columnHelper.accessor('stockIssuanceTTM', {
+	columnHelper.accessor((row) => row.stockIssuanceTTM ?? undefined, {
+		id: 'stockIssuanceTTM',
 		header: defs.stockIssuanceTTM.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -402,7 +429,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.stockIssuanceTTM.description
 		}
 	}),
-	columnHelper.accessor('stockBasedCompensationTTM', {
+	columnHelper.accessor((row) => row.stockBasedCompensationTTM ?? undefined, {
+		id: 'stockBasedCompensationTTM',
 		header: defs.stockBasedCompensationTTM.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -411,7 +439,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.stockBasedCompensationTTM.description
 		}
 	}),
-	columnHelper.accessor('cashAndCashEquivalents', {
+	columnHelper.accessor((row) => row.cashAndCashEquivalents ?? undefined, {
+		id: 'cashAndCashEquivalents',
 		header: defs.cashAndCashEquivalents.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -420,7 +449,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.cashAndCashEquivalents.description
 		}
 	}),
-	columnHelper.accessor('totalAssets', {
+	columnHelper.accessor((row) => row.totalAssets ?? undefined, {
+		id: 'totalAssets',
 		header: defs.totalAssets.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -429,7 +459,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.totalAssets.description
 		}
 	}),
-	columnHelper.accessor('totalLiabilities', {
+	columnHelper.accessor((row) => row.totalLiabilities ?? undefined, {
+		id: 'totalLiabilities',
 		header: defs.totalLiabilities.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -438,7 +469,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.totalLiabilities.description
 		}
 	}),
-	columnHelper.accessor('totalShareholdersEquity', {
+	columnHelper.accessor((row) => row.totalShareholdersEquity ?? undefined, {
+		id: 'totalShareholdersEquity',
 		header: defs.totalShareholdersEquity.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -447,7 +479,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.totalShareholdersEquity.description
 		}
 	}),
-	columnHelper.accessor('totalDebt', {
+	columnHelper.accessor((row) => row.totalDebt ?? undefined, {
+		id: 'totalDebt',
 		header: defs.totalDebt.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -456,7 +489,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.totalDebt.description
 		}
 	}),
-	columnHelper.accessor('circulatingSupply', {
+	columnHelper.accessor((row) => row.circulatingSupply ?? undefined, {
+		id: 'circulatingSupply',
 		header: defs.circulatingSupply.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue()) ?? '-',
 		meta: {
@@ -465,7 +499,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.circulatingSupply.description
 		}
 	}),
-	columnHelper.accessor('totalSupply', {
+	columnHelper.accessor((row) => row.totalSupply ?? undefined, {
+		id: 'totalSupply',
 		header: defs.totalSupply.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue()) ?? '-',
 		meta: {
@@ -474,7 +509,8 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 			headerHelperText: defs.totalSupply.description
 		}
 	}),
-	columnHelper.accessor('employeeCount', {
+	columnHelper.accessor((row) => row.employeeCount ?? undefined, {
+		id: 'employeeCount',
 		header: defs.employeeCount.label,
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue()) ?? '-',
 		meta: {

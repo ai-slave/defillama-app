@@ -1,6 +1,6 @@
 import { useQueries } from '@tanstack/react-query'
 import * as React from 'react'
-import { getExtraTvlSeriesSign, shouldSubtractTvlOverlapSeries } from '~/utils/tvlOverlap'
+import { getExtraTvlSeriesSign, getFailedExtraTvlApiKeys, shouldSubtractTvlOverlapSeries } from '~/utils/tvlOverlap'
 import {
 	fetchOracleChainProtocolBreakdownChart,
 	fetchOracleProtocolBreakdownChart,
@@ -18,8 +18,8 @@ export function buildOracleProtocolChainExtraSeries({
 }): Array<[number, number]> {
 	const series: Array<[number, number]> = []
 	for (const row of chainBreakdown) {
-		// Chain-breakdown extra-TVL rows are sparse by chain; a missing chain means zero extra TVS that day.
-		series.push([row.timestamp, row[chain] ?? 0])
+		const value = row[chain]
+		if (value !== undefined) series.push([row.timestamp, value])
 	}
 	return series
 }
@@ -48,7 +48,7 @@ export function useOraclesByChainExtraBreakdowns({
 		for (let index = 0; index < enabledExtraApiKeys.length; index++) {
 			const apiKey = enabledExtraApiKeys[index]
 			const chart = extraBreakdownQueries[index]?.data
-			if (chart) {
+			if (apiKey && chart) {
 				result[apiKey] = chart
 			}
 		}
@@ -56,10 +56,12 @@ export function useOraclesByChainExtraBreakdowns({
 	}, [enabledExtraApiKeys, extraBreakdownQueries])
 
 	const isFetchingExtraBreakdowns = extraBreakdownQueries.some((query) => query.isLoading || query.isFetching)
+	const failedApiKeys = getFailedExtraTvlApiKeys(enabledExtraApiKeys, extraBreakdownQueries)
 
 	return {
 		extraBreakdownsByApiKey,
-		isFetchingExtraBreakdowns
+		isFetchingExtraBreakdowns,
+		failedApiKeys
 	}
 }
 
@@ -96,6 +98,7 @@ export function useOracleOverviewExtraSeries({
 	})
 
 	const isFetchingExtraSeries = extraChartQueries.some((query) => query.isLoading || query.isFetching)
+	const failedApiKeys = getFailedExtraTvlApiKeys(enabledExtraApiKeys, extraChartQueries)
 
 	const extraTvsByTimestamp = React.useMemo(() => {
 		const shouldSubtractOverlapSeries = shouldSubtractTvlOverlapSeries(enabledExtraApiKeys)
@@ -103,8 +106,8 @@ export function useOracleOverviewExtraSeries({
 		for (let index = 0; index < extraChartQueries.length; index++) {
 			const query = extraChartQueries[index]
 			const apiKey = enabledExtraApiKeys[index]
-			if (!apiKey) continue
-			const data = query.data ?? []
+			if (!query || !apiKey || !query.data) continue
+			const data = query.data
 
 			const sign = getExtraTvlSeriesSign({ apiKey, shouldSubtractOverlapSeries })
 
@@ -118,6 +121,7 @@ export function useOracleOverviewExtraSeries({
 
 	return {
 		isFetchingExtraSeries,
+		failedApiKeys,
 		extraTvsByTimestamp
 	}
 }

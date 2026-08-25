@@ -169,7 +169,10 @@ function subtractKnownValue(total: number | null, excluded: number | null): numb
 	return total === null || excluded === null ? null : total - excluded
 }
 
-function aggregateParentTvls(children: StoredChildProtocol[]): ProtocolRankingTvls | null {
+function collectParentTvlContributions(children: StoredChildProtocol[]): {
+	defaultTvl: ProtocolRankingTvlEntry | undefined
+	extraTvls: Partial<Record<ExtraTvlType, ProtocolRankingTvlEntry>>
+} {
 	let defaultTvl: ProtocolRankingTvlEntry | undefined
 	const extraTvls: Partial<Record<ExtraTvlType, ProtocolRankingTvlEntry>> = {}
 
@@ -187,6 +190,12 @@ function aggregateParentTvls(children: StoredChildProtocol[]): ProtocolRankingTv
 		}
 	}
 
+	return { defaultTvl, extraTvls }
+}
+
+function aggregateCanonicalParentTvls(children: StoredChildProtocol[]): ProtocolRankingTvls | null {
+	const { extraTvls, defaultTvl: collectedDefaultTvl } = collectParentTvlContributions(children)
+	let defaultTvl = collectedDefaultTvl
 	if (!defaultTvl) return null
 	const excluded = extraTvls.excludeParent
 	if (excluded) {
@@ -199,6 +208,19 @@ function aggregateParentTvls(children: StoredChildProtocol[]): ProtocolRankingTv
 	}
 
 	return { default: defaultTvl, ...extraTvls }
+}
+
+function aggregateForkParentTvls(children: StoredChildProtocol[]): ProtocolRankingTvls {
+	const { defaultTvl, extraTvls } = collectParentTvlContributions(children)
+	return {
+		default: defaultTvl ?? {
+			tvl: 0,
+			tvlPrevDay: null,
+			tvlPrevWeek: null,
+			tvlPrevMonth: null
+		},
+		...extraTvls
+	}
 }
 
 type AvailableMetricTotal = { value: number; hasValue: boolean }
@@ -620,21 +642,31 @@ export const getProtocolsByChain = async ({
 
 	for (const { protocol, metadata } of eligibleProtocols) {
 		const selectedChainTvl = chain === 'All' ? undefined : protocol.chainTvls[currentChainMetadata.name]
+		const defaultTvl: ProtocolRankingTvlEntry =
+			chain === 'All'
+				? {
+						tvl: protocol.tvl,
+						tvlPrevDay: protocol.tvlPrevDay,
+						tvlPrevWeek: protocol.tvlPrevWeek,
+						tvlPrevMonth: protocol.tvlPrevMonth
+					}
+				: {
+						tvl: selectedChainTvl?.tvl ?? null,
+						tvlPrevDay: selectedChainTvl?.tvlPrevDay ?? null,
+						tvlPrevWeek: selectedChainTvl?.tvlPrevWeek ?? null,
+						tvlPrevMonth: selectedChainTvl?.tvlPrevMonth ?? null
+					}
+		const contributesDefaultTvl = protocol.category !== 'Bridge' && defaultTvl.tvl !== null
 		const tvls: ProtocolRankingTvls = {
 			default:
-				chain === 'All'
+				normalizedFork && defaultTvl.tvl === null
 					? {
-							tvl: protocol.tvl,
-							tvlPrevDay: protocol.tvlPrevDay,
-							tvlPrevWeek: protocol.tvlPrevWeek,
-							tvlPrevMonth: protocol.tvlPrevMonth
+							tvl: 0,
+							tvlPrevDay: defaultTvl.tvlPrevDay,
+							tvlPrevWeek: defaultTvl.tvlPrevWeek,
+							tvlPrevMonth: defaultTvl.tvlPrevMonth
 						}
-					: {
-							tvl: selectedChainTvl?.tvl ?? null,
-							tvlPrevDay: selectedChainTvl?.tvlPrevDay ?? null,
-							tvlPrevWeek: selectedChainTvl?.tvlPrevWeek ?? null,
-							tvlPrevMonth: selectedChainTvl?.tvlPrevMonth ?? null
-						}
+					: defaultTvl
 		}
 
 		const tvlChange =
@@ -667,7 +699,8 @@ export const getProtocolsByChain = async ({
 		const displayName = metadata.displayName
 		const metadataChains = metadata.chains
 		if (!displayName || !metadataChains) continue
-		const hasDisplayTvl = protocol.category !== 'Bridge' && (chain !== 'All' || protocol.tvl != null)
+		const hasDisplayTvl =
+			protocol.category !== 'Bridge' && (chain !== 'All' || protocol.tvl != null || normalizedFork !== null)
 		const childRow: IChildProtocol = {
 			id: protocol.defillamaId,
 			name: displayName,
@@ -748,10 +781,9 @@ export const getProtocolsByChain = async ({
 			const childStore: StoredChildProtocol = {
 				row: childRow,
 				defillamaId: protocol.defillamaId,
-				// A child can report chain-specific extras without a base entry.
-				// Global TVL distinguishes real contributors from metadata-only rows.
-				contributesDefaultTvl: protocol.category !== 'Bridge' && tvls.default.tvl !== null,
-				contributesExtraTvls: protocol.category !== 'Bridge' && protocol.tvl !== null,
+				// Fork members can display default zero without contributing to parent default history.
+				contributesDefaultTvl,
+				contributesExtraTvls: protocol.category !== 'Bridge' && (protocol.tvl !== null || normalizedFork !== null),
 				emissionsMatched
 			}
 			const siblings = parentStore[protocol.parentProtocol]
@@ -786,7 +818,9 @@ export const getProtocolsByChain = async ({
 			continue
 		}
 
-		const parentTvl = aggregateParentTvls(childProtocols)
+		const parentTvl = normalizedFork
+			? aggregateForkParentTvls(childProtocols)
+			: aggregateCanonicalParentTvls(childProtocols)
 		const parentFees = aggregateFees(childProtocols, parentProtocol.mcap)
 		const parentRevenue = aggregateRevenue(childProtocols, parentProtocol.mcap)
 		const parentHoldersRevenue = aggregateHoldersRevenue(childProtocols)

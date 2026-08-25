@@ -246,7 +246,11 @@ Exact protocol-list TVL snapshots preserve producer availability:
 - Within a measured contribution, a present null value makes the required aggregate unavailable.
 - A missing selected-chain entry is unavailable unless the producer supplies explicit coverage metadata proving that the omission means zero.
 - Numeric TVL bounds exclude unavailable rows, and market-cap-to-TVL ratios require a strictly positive TVL denominator.
-- Parent summaries skip metadata-only children whose canonical all-chain TVL is null. Those children remain visible but do not erase measured siblings or their changes. A measured child with a missing required period, or a present-null `excludeParent` subtraction, still makes only that parent period unavailable.
+- Parent summaries decide contribution from the raw producer measurement before any product-specific display coercion.
+  Metadata-only children whose canonical all-chain TVL is null remain visible but do not erase measured siblings or
+  their changes. A product may display a known member as current zero without admitting it to default history. A
+  measured child with a missing required period, or a present-null required `excludeParent` subtraction, still makes
+  only that parent period unavailable.
 
 Category and tag directory totals are a successful-listing summary rather than an exact individual snapshot. A
 metadata-only protocol whose current or comparison TVL is null contributes zero to that aggregate and remains counted
@@ -289,9 +293,11 @@ that child. Multiple remaining children form a parent; a declared member missing
 parent TVL unavailable. The independent `Active Loans` chart remains the producer's borrowed series when additive TVL
 settings change the composite TVL series.
 
-Parent protocol TVL totals subtract each child's exact `chainTvls.excludeParent` snapshot. This applies to current and
-comparison-period totals, including synthetic parents and parents recalculated after table filters. A present-null
-exclusion makes only that parent snapshot unavailable; a child without an `excludeParent` section remains additive.
+Canonical parent protocol TVL totals subtract each contributing child's exact `chainTvls.excludeParent` snapshot. This
+applies to current and comparison-period totals, including synthetic parents recalculated within the same complete
+population. A filtered product population such as one exact Fork or Oracle must not subtract overlap attributed to a
+child or metric outside that population. A present-null required exclusion makes only that canonical parent snapshot
+unavailable; a child without an `excludeParent` section remains additive.
 
 Selected-chain Earnings derives membership from an own chain key in either the 24h or 30d revenue breakdown. Each period
 is evaluated independently: a usable breakdown without the selected chain is zero, while a nonzero aggregate without a
@@ -304,7 +310,18 @@ detail provider fails, the request fails rather than becoming an empty/not-found
 the global Governance overview, and combined Protocol Overview charts require every configured index/provider; any failure
 makes the result unavailable so false 404s and partial project lists, counts, or chart sums are never presented as complete.
 
-Oracle membership and TVS measurement are separate contracts. `/v2/metrics/oracle` `oracles` owns global membership and order, while `protocolsByOracleChain` owns exact chain membership and secured-protocol counts. `oraclesTVS` supplies measurements only. Provider totals sum the available measurements; an unmeasured member remains blank without erasing measured peers, an explicit zero remains zero, and a provider with no measurements remains unavailable. Historical dominance similarly divides each available provider measurement by the available total for that timestamp while preserving missing provider shares as gaps. `chainsByOracle` may order chain links but cannot add or remove membership. Oracle identity is independent of measurement availability, so a metrics outage must not relabel ordinary protocol TVL as TVS. A chain-qualified recognized extra-TVL key contributes its exact extra value; when it is the member's only selected-chain measurement, its base contribution is zero. `/lite/protocols2` only enriches exact Oracle member names with protocol metadata.
+Oracle membership and TVS measurement are separate contracts. `/v2/metrics/oracle` `oracles` owns global membership and
+order, while `protocolsByOracleChain` owns exact chain membership and secured-protocol counts. `oraclesTVS` supplies
+measurements only. Inside a successful current snapshot, an omitted known member contributes zero without erasing
+measured peers; explicit zero remains zero, and a known provider with no current measurements totals zero. Whole-source
+failure remains unavailable. Historical dominance divides each available provider measurement by the available total
+for that timestamp while preserving providers absent from every successful selected section as gaps. When any successful
+selected base or extra section has a point, omitted successful sections contribute zero at that admitted timestamp. A
+failed selected extra section is excluded and disclosed rather than treated as successful zero. `chainsByOracle` may
+order chain links but cannot add or remove membership. Oracle identity is independent of measurement availability, so a
+metrics outage must not relabel ordinary protocol TVL as TVS. A chain-qualified recognized extra-TVL key contributes its
+exact extra value; when it is the member's only selected-chain measurement, its base contribution is zero.
+`/lite/protocols2` only enriches exact Oracle member names with protocol metadata.
 
 Oracle and Fork chart API `key` query params are not the same contract as local TVL setting keys. For valid keys, the chart response shape is stable across keys, but the backend v2 chart routes only accept the protocol/treasury TVL chart keys such as `tvl`, `staking`, `borrowed`, `pool2`, `vesting`, `all`, and `OwnTokens`. Do not send local overlap setting names such as `doublecounted`, `liquidstaking`, or `dcAndLsOverlap` directly as Fork/Oracle chart `key` values.
 

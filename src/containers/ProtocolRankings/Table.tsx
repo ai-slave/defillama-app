@@ -380,7 +380,7 @@ const ChainProtocolsTableInner = ({
 			return columnHelper.accessor(
 				(row) => {
 					const result = evaluate(row)
-					return result.status === 'success' ? getSortableValue(result.value, displayFormat) : null
+					return result.status === 'success' ? (getSortableValue(result.value, displayFormat) ?? undefined) : undefined
 				},
 				{
 					id: columnId,

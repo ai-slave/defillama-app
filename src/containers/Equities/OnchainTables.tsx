@@ -64,7 +64,8 @@ const marketsColumns = [
 			align: 'start'
 		}
 	}),
-	marketsColumnHelper.accessor('price', {
+	marketsColumnHelper.accessor((row) => row.price ?? undefined, {
+		id: 'price',
 		header: 'Price',
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -72,7 +73,8 @@ const marketsColumns = [
 			align: 'end'
 		}
 	}),
-	marketsColumnHelper.accessor('volume24h', {
+	marketsColumnHelper.accessor((row) => row.volume24h ?? undefined, {
+		id: 'volume24h',
 		header: '24h Volume',
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -80,7 +82,8 @@ const marketsColumns = [
 			align: 'end'
 		}
 	}),
-	marketsColumnHelper.accessor('openInterest', {
+	marketsColumnHelper.accessor((row) => row.openInterest ?? undefined, {
+		id: 'openInterest',
 		header: 'Open Interest',
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -88,9 +91,10 @@ const marketsColumns = [
 			align: 'end'
 		}
 	}),
-	marketsColumnHelper.accessor('annualizedFundingRate', {
+	marketsColumnHelper.accessor((row) => row.annualizedFundingRate ?? undefined, {
+		id: 'annualizedFundingRate',
 		header: 'Funding APR',
-		cell: ({ getValue }) => formatFundingRate(getValue()),
+		cell: ({ getValue }) => formatFundingRate(getValue() ?? null),
 		meta: {
 			headerClassName: 'w-[124px]',
 			align: 'end'
@@ -188,7 +192,8 @@ const tokensColumns = [
 			align: 'start'
 		}
 	}),
-	tokensColumnHelper.accessor('price', {
+	tokensColumnHelper.accessor((row) => row.price ?? undefined, {
+		id: 'price',
 		header: 'Price',
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {
@@ -196,7 +201,8 @@ const tokensColumns = [
 			align: 'end'
 		}
 	}),
-	tokensColumnHelper.accessor('activeMarketcap', {
+	tokensColumnHelper.accessor((row) => row.activeMarketcap ?? undefined, {
+		id: 'activeMarketcap',
 		header: 'Active Market Cap',
 		cell: ({ getValue }) => formatEquitiesCompactValue(getValue(), '$') ?? '-',
 		meta: {

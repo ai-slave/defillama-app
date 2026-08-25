@@ -35,3 +35,8 @@ export interface ForkByProtocolPageData {
 	protocolTableData: Array<IProtocol>
 	chartData: ForkProtocolChartData
 }
+
+export type ForkByProtocolPageResult =
+	| { status: 'success'; data: ForkByProtocolPageData }
+	| { status: 'not-found' }
+	| { status: 'unavailable' }

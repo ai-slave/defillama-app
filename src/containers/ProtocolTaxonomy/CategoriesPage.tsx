@@ -28,8 +28,6 @@ import type { IProtocolsCategoriesChartData, IProtocolsCategoriesPageData, IProt
 
 const DEFAULT_SORTING_STATE = [{ id: 'tvl', desc: true }]
 const columnHelper = createColumnHelper<IProtocolsCategoriesTableRow>()
-const sortableNumber = (value: number | null): number | undefined => value ?? undefined
-
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const categoriesColumns = [
@@ -75,14 +73,15 @@ const categoriesColumns = [
 			)
 		}
 	}),
-	columnHelper.accessor('protocols', {
+	columnHelper.accessor((row) => row.protocols ?? undefined, {
+		id: 'protocols',
 		header: 'Protocols',
 		meta: {
 			headerClassName: 'w-[100px]',
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor((row) => sortableNumber(row.tvl), {
+	columnHelper.accessor((row) => row.tvl ?? undefined, {
 		id: 'tvl',
 		header: 'Combined TVL',
 		meta: {
@@ -94,7 +93,7 @@ const categoriesColumns = [
 			return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 		}
 	}),
-	columnHelper.accessor((row) => sortableNumber(row.change_1d), {
+	columnHelper.accessor((row) => row.change_1d ?? undefined, {
 		id: 'change_1d',
 		header: '1d TVL Change',
 		meta: {
@@ -103,7 +102,7 @@ const categoriesColumns = [
 		},
 		cell: ({ getValue }) => <PercentChange percent={getValue()} />
 	}),
-	columnHelper.accessor((row) => sortableNumber(row.change_7d), {
+	columnHelper.accessor((row) => row.change_7d ?? undefined, {
 		id: 'change_7d',
 		header: '7d TVL Change',
 		meta: {
@@ -112,7 +111,7 @@ const categoriesColumns = [
 		},
 		cell: ({ getValue }) => <PercentChange percent={getValue()} />
 	}),
-	columnHelper.accessor((row) => sortableNumber(row.change_1m), {
+	columnHelper.accessor((row) => row.change_1m ?? undefined, {
 		id: 'change_1m',
 		header: '1m TVL Change',
 		meta: {
@@ -121,7 +120,7 @@ const categoriesColumns = [
 		},
 		cell: ({ getValue }) => <PercentChange percent={getValue()} />
 	}),
-	columnHelper.accessor((row) => sortableNumber(row.revenue), {
+	columnHelper.accessor((row) => row.revenue ?? undefined, {
 		id: 'revenue',
 		header: 'Combined 24h Revenue',
 		meta: {

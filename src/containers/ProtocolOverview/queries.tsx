@@ -126,21 +126,6 @@ type IProtocolTvlChartSeedResult = {
 	failed: boolean
 }
 
-function isOracleExtraTvlBreakdownKey(key: string): boolean {
-	if (TVL_SETTINGS_KEYS_SET.has(key) || key === 'dcAndLsOverlap') return true
-	for (const extraKey of TVL_SETTINGS_KEYS_SET) {
-		if (key.endsWith(`-${extraKey}`)) return true
-	}
-	return key.endsWith('-dcAndLsOverlap')
-}
-
-function hasOracleBaseMeasurement(breakdown: Record<string, number>): boolean {
-	for (const key in breakdown) {
-		if (!isOracleExtraTvlBreakdownKey(key)) return true
-	}
-	return false
-}
-
 export const getProtocolOverviewPageData = async ({
 	protocolId,
 	currentProtocolMetadata,
@@ -532,14 +517,14 @@ export const getProtocolOverviewPageData = async ({
 
 							for (const memberName of memberNames) {
 								const chainTvs = protocolTvsByOracle[memberName]
-								if (!chainTvs || !hasOracleBaseMeasurement(chainTvs)) return null
+								if (!chainTvs) continue
 								for (const chain in chainTvs) {
 									const nestedValue = chainTvs[chain]
 									if (nestedValue === undefined) continue
 									tvs[chain] = (tvs[chain] ?? 0) + nestedValue
 								}
 							}
-							return Object.keys(tvs).length > 0 ? tvs : null
+							return tvs
 						}),
 					null
 				)

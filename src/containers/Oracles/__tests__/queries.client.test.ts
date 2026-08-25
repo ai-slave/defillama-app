@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { buildOracleProtocolChainExtraSeries } from '../queries.client'
 
 describe('buildOracleProtocolChainExtraSeries', () => {
-	it('treats sparse chain rows as zero for the selected chain', () => {
+	it('keeps only actual selected-chain points so other chains do not create coverage', () => {
 		expect(
 			buildOracleProtocolChainExtraSeries({
 				chain: 'BSC',
@@ -14,7 +14,6 @@ describe('buildOracleProtocolChainExtraSeries', () => {
 			})
 		).toEqual([
 			[1, 10],
-			[2, 0],
 			[3, 0]
 		])
 	})

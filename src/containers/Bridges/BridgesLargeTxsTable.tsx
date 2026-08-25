@@ -53,7 +53,8 @@ export const BridgesLargeTxsTable = React.forwardRef<BridgesLargeTxsTableHandle,
 
 		const columns = React.useMemo(
 			() => [
-				columnHelper.accessor('date', {
+				columnHelper.accessor((row) => row.date ?? undefined, {
+					id: 'date',
 					header: 'Timestamp',
 					cell: (info) => (
 						<span className="whitespace-nowrap">
@@ -128,7 +129,8 @@ export const BridgesLargeTxsTable = React.forwardRef<BridgesLargeTxsTableHandle,
 						align: 'end'
 					}
 				}),
-				columnHelper.accessor('usdValue', {
+				columnHelper.accessor((row) => row.usdValue ?? undefined, {
+					id: 'usdValue',
 					header: 'Value',
 					cell: (info) =>
 						formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),

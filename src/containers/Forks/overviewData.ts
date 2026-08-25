@@ -13,39 +13,33 @@ interface ForksOverviewDisplayRow {
 	ftot: number | null
 }
 
-function getFiniteForkTvl(entry: ForkBreakdownChartData[number] | null | undefined, forkName: string): number | null {
-	const value = entry?.[forkName]
-	// Fork charts are API data plus optional extra-TVL chart data; non-finite values should not corrupt dominance math.
-	return Number.isFinite(value) ? value : null
-}
-
 export function mergeForkOverviewChartData({
 	chartData,
-	extraBreakdownByTimestamp,
-	shouldApplyExtraSeries
+	extraBreakdownByTimestamp
 }: {
 	chartData: ForkBreakdownChartData
 	extraBreakdownByTimestamp: Map<number, Record<string, number>>
-	shouldApplyExtraSeries: boolean
 }): ForkBreakdownChartData {
-	if (!shouldApplyExtraSeries) return chartData
+	if (extraBreakdownByTimestamp.size === 0) return chartData
 
 	const mergedRowsByTimestamp = new Map<number, ForkBreakdownChartData[number]>()
 
 	for (const row of chartData) {
-		const clone = { timestamp: row.timestamp } as { timestamp: number } & Record<string, number>
-		for (const key of Object.keys(row)) clone[key] = row[key]
+		const clone: ForkBreakdownChartData[number] = { timestamp: row.timestamp }
+		for (const key in row) {
+			if (key === 'timestamp') continue
+			const value = row[key]
+			if (value !== undefined) clone[key] = value
+		}
 		mergedRowsByTimestamp.set(row.timestamp, clone)
 	}
 
 	for (const [timestamp, extraRow] of extraBreakdownByTimestamp) {
-		const mergedRow =
-			mergedRowsByTimestamp.get(timestamp) ??
-			({ timestamp: timestamp } as { timestamp: number } & Record<string, number>)
+		const mergedRow: ForkBreakdownChartData[number] = mergedRowsByTimestamp.get(timestamp) ?? { timestamp }
 
 		for (const key in extraRow) {
 			const value = extraRow[key]
-			if (!Number.isFinite(value)) continue
+			if (value === undefined) continue
 			mergedRow[key] = (mergedRow[key] ?? 0) + value
 		}
 
@@ -66,16 +60,14 @@ export function buildForksOverviewDisplayData({
 	baseTableData: ForkOverviewPageData['tableData']
 	chartData: ForkBreakdownChartData
 }) {
-	const latestData = chartData.length > 0 ? chartData[chartData.length - 1] : null
+	const latestData = chartData.at(-1) ?? null
 	const chartForkKeys = new Set(forks)
 	for (const entry of chartData) {
 		for (const key in entry) {
 			if (key !== 'timestamp') chartForkKeys.add(key)
 		}
 	}
-	const sortedChartForks = Array.from(chartForkKeys).sort(
-		(a, b) => (getFiniteForkTvl(latestData, b) ?? 0) - (getFiniteForkTvl(latestData, a) ?? 0)
-	)
+	const sortedChartForks = Array.from(chartForkKeys).sort((a, b) => (latestData?.[b] ?? 0) - (latestData?.[a] ?? 0))
 
 	const tableDataByName = new Map<string, ForkOverviewPageData['tableData'][number]>()
 	for (const row of baseTableData) {
@@ -85,7 +77,7 @@ export function buildForksOverviewDisplayData({
 	const tableData: ForksOverviewDisplayRow[] = []
 	for (const name of sortedChartForks) {
 		const baseRow = tableDataByName.get(name)
-		const tvl = getFiniteForkTvl(latestData, name) ?? 0
+		const tvl = latestData?.[name] ?? 0
 		const parentTvl = baseRow?.parentTvl ?? null
 
 		tableData.push({
@@ -103,8 +95,8 @@ export function buildForksOverviewDisplayData({
 	if (latestData) {
 		for (const name in latestData) {
 			if (name === 'timestamp') continue
-			const value = getFiniteForkTvl(latestData, name)
-			if (value == null) continue
+			const value = latestData[name]
+			if (value === undefined || value <= 0) continue
 			tvls.push({ name, value })
 		}
 	}
@@ -114,8 +106,9 @@ export function buildForksOverviewDisplayData({
 
 	for (let index = 0; index < sortedChartForks.length; index++) {
 		const name = sortedChartForks[index]
+		if (name === undefined) continue
 		if (!chartColors[name]) {
-			chartColors[name] = CHART_COLORS[index % CHART_COLORS.length]
+			chartColors[name] = CHART_COLORS.at(index % CHART_COLORS.length) ?? CHART_COLORS[0]
 		}
 	}
 
@@ -123,11 +116,13 @@ export function buildForksOverviewDisplayData({
 	for (const entry of chartData) {
 		const row = new Array<number | undefined>(sortedChartForks.length + 1)
 		row[0] = entry.timestamp * 1000
+		const isLatest = entry === latestData
 		for (let forkIndex = 0; forkIndex < sortedChartForks.length; forkIndex++) {
 			const forkName = sortedChartForks[forkIndex]
-			const value = getFiniteForkTvl(entry, forkName)
-			if (value == null || value <= 0) continue
-			row[forkIndex + 1] = value
+			if (forkName === undefined) continue
+			const value = entry[forkName]
+			if (value !== undefined) row[forkIndex + 1] = value
+			else if (isLatest) row[forkIndex + 1] = 0
 		}
 
 		dominanceSource.push(row)
@@ -142,11 +137,12 @@ export function buildForksOverviewDisplayData({
 	}> = []
 	for (let index = 0; index < sortedChartForks.length; index++) {
 		const name = sortedChartForks[index]
+		if (name === undefined) continue
 		dominanceCharts.push({
 			type: 'line',
 			name,
 			encode: { x: 0, y: index + 1 },
-			color: chartColors[name] ?? CHART_COLORS[index % CHART_COLORS.length],
+			color: chartColors[name] ?? CHART_COLORS.at(index % CHART_COLORS.length) ?? CHART_COLORS[0],
 			stack: 'dominance'
 		})
 	}

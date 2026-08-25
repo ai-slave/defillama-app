@@ -40,7 +40,9 @@ export const getStaticProps = withPerformanceLogging(
 
 		const protocolData = await fetchProtocolOverviewMetrics(canonicalProtocol)
 		const { getForksByProtocolPageData } = await import('~/containers/Forks/queries')
-		const forksData = await getForksByProtocolPageData({ fork: protocolData.name })
+		const forksResult = await getForksByProtocolPageData({
+			fork: protocolData.name
+		})
 
 		const metrics = getProtocolMetricFlags({ protocolData, metadata })
 		const seoTitle = `${protocolData.name} Protocol Forks & Derivatives - DefiLlama`
@@ -52,7 +54,7 @@ export const getStaticProps = withPerformanceLogging(
 				otherProtocols: protocolData?.otherProtocols ?? [],
 				category: protocolData?.category ?? null,
 				metrics,
-				forksData,
+				forksData: forksResult.status === 'success' ? forksResult.data : null,
 				warningBanners: getProtocolWarningBanners(protocolData),
 				seoTitle,
 				seoDescription

@@ -70,7 +70,8 @@ export function BridgeTokensTable({ data }: { data: BridgeTokenTableRow[] }) {
 					align: 'end'
 				}
 			}),
-			columnHelper.accessor('deposited', {
+			columnHelper.accessor((row) => row.deposited ?? undefined, {
+				id: 'deposited',
 				header: 'Deposited',
 				cell: (info) =>
 					info.getValue() == null
@@ -85,7 +86,8 @@ export function BridgeTokensTable({ data }: { data: BridgeTokenTableRow[] }) {
 					align: 'end'
 				}
 			}),
-			columnHelper.accessor('withdrawn', {
+			columnHelper.accessor((row) => row.withdrawn ?? undefined, {
+				id: 'withdrawn',
 				header: 'Withdrawn',
 				cell: (info) =>
 					info.getValue() == null
@@ -100,7 +102,8 @@ export function BridgeTokensTable({ data }: { data: BridgeTokenTableRow[] }) {
 					align: 'end'
 				}
 			}),
-			columnHelper.accessor('volume', {
+			columnHelper.accessor((row) => row.volume ?? undefined, {
+				id: 'volume',
 				header: 'Total Volume',
 				cell: (info) =>
 					info.getValue() == null

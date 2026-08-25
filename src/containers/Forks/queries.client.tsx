@@ -1,6 +1,6 @@
 import { useQueries } from '@tanstack/react-query'
 import * as React from 'react'
-import { getExtraTvlSeriesSign, shouldSubtractTvlOverlapSeries } from '~/utils/tvlOverlap'
+import { getExtraTvlSeriesSign, getFailedExtraTvlApiKeys, shouldSubtractTvlOverlapSeries } from '~/utils/tvlOverlap'
 import { fetchForkProtocolBreakdownChart, fetchForkProtocolChart } from './api'
 
 export function useForksOverviewExtraSeries({ enabledExtraApiKeys }: { enabledExtraApiKeys: string[] }) {
@@ -13,6 +13,7 @@ export function useForksOverviewExtraSeries({ enabledExtraApiKeys }: { enabledEx
 		}))
 	})
 
+	const failedApiKeys = getFailedExtraTvlApiKeys(enabledExtraApiKeys, extraChartQueries)
 	const isFetchingExtraSeries = extraChartQueries.some((query) => query.isLoading || query.isFetching)
 
 	const extraBreakdownByTimestamp = React.useMemo(() => {
@@ -22,10 +23,14 @@ export function useForksOverviewExtraSeries({ enabledExtraApiKeys }: { enabledEx
 		for (let index = 0; index < extraChartQueries.length; index++) {
 			const query = extraChartQueries[index]
 			const apiKey = enabledExtraApiKeys[index]
-			if (!apiKey) continue
-			const data = query.data ?? []
+			if (!query || !apiKey) continue
+			const data = query.data
+			if (!data) continue
 
-			const sign = getExtraTvlSeriesSign({ apiKey, shouldSubtractOverlapSeries })
+			const sign = getExtraTvlSeriesSign({
+				apiKey,
+				shouldSubtractOverlapSeries
+			})
 
 			for (const row of data) {
 				const current = result.get(row.timestamp) ?? {}
@@ -33,6 +38,7 @@ export function useForksOverviewExtraSeries({ enabledExtraApiKeys }: { enabledEx
 				for (const key in row) {
 					if (key === 'timestamp') continue
 					const value = row[key]
+					if (value === undefined) continue
 					current[key] = (current[key] ?? 0) + value * sign
 				}
 
@@ -44,6 +50,7 @@ export function useForksOverviewExtraSeries({ enabledExtraApiKeys }: { enabledEx
 	}, [enabledExtraApiKeys, extraChartQueries])
 
 	return {
+		failedApiKeys,
 		isFetchingExtraSeries,
 		extraBreakdownByTimestamp
 	}
@@ -54,21 +61,18 @@ export function useForkByProtocolExtraSeries({
 	protocol
 }: {
 	enabledExtraApiKeys: string[]
-	protocol: string | null
+	protocol: string
 }) {
 	const extraChartQueries = useQueries({
 		queries: enabledExtraApiKeys.map((key) => ({
-			queryKey: ['forks', 'protocol', 'chart', protocol ?? 'unknown', key],
-			queryFn: async () => {
-				if (!protocol) return []
-				return fetchForkProtocolChart({ protocol, key })
-			},
-			enabled: Boolean(protocol),
+			queryKey: ['forks', 'protocol', 'chart', protocol, key],
+			queryFn: () => fetchForkProtocolChart({ protocol, key }),
 			staleTime: 5 * 60 * 1_000,
 			refetchOnWindowFocus: false
 		}))
 	})
 
+	const failedApiKeys = getFailedExtraTvlApiKeys(enabledExtraApiKeys, extraChartQueries)
 	const isFetchingExtraSeries = extraChartQueries.some((query) => query.isLoading || query.isFetching)
 
 	const extraTvsByTimestamp = React.useMemo(() => {
@@ -78,10 +82,14 @@ export function useForkByProtocolExtraSeries({
 		for (let index = 0; index < extraChartQueries.length; index++) {
 			const query = extraChartQueries[index]
 			const apiKey = enabledExtraApiKeys[index]
-			if (!apiKey) continue
-			const data = query.data ?? []
+			if (!query || !apiKey) continue
+			const data = query.data
+			if (!data) continue
 
-			const sign = getExtraTvlSeriesSign({ apiKey, shouldSubtractOverlapSeries })
+			const sign = getExtraTvlSeriesSign({
+				apiKey,
+				shouldSubtractOverlapSeries
+			})
 
 			for (const [timestampInSeconds, value] of data) {
 				const current = result.get(timestampInSeconds) ?? 0
@@ -93,6 +101,7 @@ export function useForkByProtocolExtraSeries({
 	}, [enabledExtraApiKeys, extraChartQueries])
 
 	return {
+		failedApiKeys,
 		isFetchingExtraSeries,
 		extraTvsByTimestamp
 	}

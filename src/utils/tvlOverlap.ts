@@ -56,6 +56,42 @@ export function getExtraTvlSeriesSign({
 	return apiKey.toLowerCase() === 'dcandlsoverlap' && shouldSubtractOverlapSeries ? -1 : 1
 }
 
+export function getFailedExtraTvlApiKeys<T>(
+	enabledApiKeys: ReadonlyArray<string>,
+	queries: ReadonlyArray<{ data: T | undefined; isError: boolean }>
+): string[] {
+	const failedApiKeys: string[] = []
+	for (let index = 0; index < queries.length; index++) {
+		const query = queries[index]
+		const apiKey = enabledApiKeys[index]
+		if (query?.isError && query.data === undefined && apiKey) failedApiKeys.push(apiKey)
+	}
+	return failedApiKeys
+}
+
+/** Both inputs are successful measurements. Missing values contribute zero at the other input's timestamp. */
+export function mergeBaseAndExtraTvlHistory({
+	base,
+	extra
+}: {
+	base: ReadonlyArray<readonly [number, number]>
+	extra: ReadonlyMap<number, number>
+}): ReadonlyArray<readonly [number, number]> {
+	if (extra.size === 0) return base
+
+	const valuesByTimestamp = new Map<number, number>()
+	for (const [timestamp, value] of base) valuesByTimestamp.set(timestamp, value)
+
+	for (const [timestamp, value] of extra) {
+		valuesByTimestamp.set(timestamp, (valuesByTimestamp.get(timestamp) ?? 0) + value)
+	}
+
+	const history: Array<[number, number]> = []
+	for (const point of valuesByTimestamp) history.push(point)
+	history.sort((a, b) => a[0] - b[0])
+	return history
+}
+
 export function calculateTotalWithExtraToggles({
 	values,
 	extraTvlsEnabled

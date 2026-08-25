@@ -178,7 +178,8 @@ const truncateMiddle = (value: string, lead = 6, tail = 4) => {
 }
 
 const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplorers>['data']) => [
-	columnHelper.accessor('timestamp', {
+	columnHelper.accessor((row) => row.timestamp ?? undefined, {
+		id: 'timestamp',
 		header: 'Timestamp',
 		cell: ({ getValue }) => (
 			<span className="whitespace-nowrap text-secondary">
@@ -271,7 +272,8 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 			headerClassName: 'w-[140px]'
 		}
 	}),
-	columnHelper.accessor('amount', {
+	columnHelper.accessor((row) => row.amount ?? undefined, {
+		id: 'amount',
 		header: 'Amount',
 		cell: ({ getValue }) => (
 			<span className="block max-w-[120px] truncate text-right" title={getValue()}>
@@ -283,7 +285,8 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 			align: 'end' as const
 		}
 	}),
-	columnHelper.accessor('usd_value', {
+	columnHelper.accessor((row) => row.usd_value ?? undefined, {
+		id: 'usd_value',
 		header: 'USD Value',
 		cell: ({ getValue }) => {
 			const value = getValue()

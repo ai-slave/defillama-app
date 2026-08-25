@@ -148,12 +148,12 @@ function aggregateOracleMembers({
 }): { tvl: number | null; extraTvl: Record<string, number> } {
 	if (memberNames.length === 0) return { tvl: null, extraTvl: {} }
 
-	let tvl: number | null = null
+	let tvl = 0
 	const extraTvl: Record<string, number> = {}
 
 	for (const protocolName of memberNames) {
 		const protocolBreakdown = aggregateTvlFromBreakdown({ data: oracleProtocols[protocolName], chain })
-		if (protocolBreakdown.tvl !== null) tvl = (tvl ?? 0) + protocolBreakdown.tvl
+		if (protocolBreakdown.tvl !== null) tvl += protocolBreakdown.tvl
 		for (const extraKey in protocolBreakdown.extraTvl) {
 			const extraValue = protocolBreakdown.extraTvl[extraKey]
 			if (extraValue === undefined) continue
@@ -276,14 +276,14 @@ export async function getOracleDetailPageData({
 	}
 
 	let chartData: OracleChartData = []
-	let protocols: Array<ProtocolLite> = []
+	let protocolsResponse: Awaited<ReturnType<typeof fetchProtocols>>
 
 	if (canonicalChain) {
-		const [fetchedOracleChainBreakdown, { protocols: fetchedProtocols }] = await Promise.all([
+		const [fetchedOracleChainBreakdown, fetchedProtocolsResponse] = await Promise.all([
 			fetchOracleProtocolChainBreakdownChart({ protocol: canonicalOracle }),
 			fetchProtocols()
 		])
-		protocols = fetchedProtocols
+		protocolsResponse = fetchedProtocolsResponse
 		chartData = fetchedOracleChainBreakdown.reduce<OracleChartData>((acc, dayData) => {
 			const chainValue = dayData[canonicalChain]
 			if (typeof chainValue !== 'number') return acc
@@ -294,11 +294,11 @@ export async function getOracleDetailPageData({
 			return acc
 		}, [])
 	} else {
-		const [oracleChart, { protocols: fetchedProtocols }] = await Promise.all([
+		const [oracleChart, fetchedProtocolsResponse] = await Promise.all([
 			fetchOracleProtocolChart({ protocol: canonicalOracle }),
 			fetchProtocols()
 		])
-		protocols = fetchedProtocols
+		protocolsResponse = fetchedProtocolsResponse
 		chartData = oracleChart.map(([timestamp, value]) => ({
 			timestamp,
 			[canonicalOracle]: value
@@ -308,7 +308,9 @@ export async function getOracleDetailPageData({
 	const oracleProtocols = oraclesTVS[canonicalOracle]
 	if (!oracleProtocols) throw new Error(`Oracle metrics is missing TVS measurements for ${canonicalOracle}`)
 	const protocolsByName = new Map<string, ProtocolLite>()
-	for (const protocol of protocols) protocolsByName.set(protocol.name, protocol)
+	for (const protocol of protocolsResponse.protocols) protocolsByName.set(protocol.name, protocol)
+	const parentProtocolsById = new Map<string, (typeof protocolsResponse.parentProtocols)[number]>()
+	for (const parent of protocolsResponse.parentProtocols) parentProtocolsById.set(parent.id, parent)
 	const orderedOracleProtocolNames = canonicalChain
 		? metrics.protocolsByOracleChain[canonicalOracle]?.[canonicalChain]
 		: oracleProtocolNamesByOracle[canonicalOracle]
@@ -322,7 +324,9 @@ export async function getOracleDetailPageData({
 		oracleProtocols,
 		chain: canonicalChain
 	})
-	const protocolTableData: Array<OracleProtocolWithBreakdown> = []
+	const protocolRowsByName = new Map<string, OracleProtocolWithBreakdown>()
+	const parentIdByProtocolName = new Map<string, string>()
+	const childRowsByParentId = new Map<string, Array<OracleProtocolWithBreakdown>>()
 	for (const protocolName of orderedOracleProtocolNames) {
 		// Oracle metrics owns membership. The lite response only enriches rows with public metadata;
 		// without an exact name match there is no identity payload to render safely.
@@ -334,15 +338,67 @@ export async function getOracleDetailPageData({
 			chain: canonicalChain
 		})
 
-		protocolTableData.push({
-			...protocolData,
-			tvl: protocolTvl,
+		const row: OracleProtocolWithBreakdown = {
+			name: protocolData.name,
+			logo: protocolData.logo,
+			category: protocolData.category,
+			tvl: protocolTvl ?? 0,
 			extraTvl: protocolExtraTvl,
 			strikeTvl: toStrikeTvl(protocolData, {
 				liquidstaking: protocolExtraTvl.liquidstaking !== undefined,
 				doublecounted: protocolExtraTvl.doublecounted !== undefined
 			})
-		})
+		}
+		if (protocolData.deprecated) row.deprecated = true
+		protocolRowsByName.set(protocolName, row)
+		if (protocolData.parentProtocol && parentProtocolsById.has(protocolData.parentProtocol)) {
+			parentIdByProtocolName.set(protocolName, protocolData.parentProtocol)
+			const childRows = childRowsByParentId.get(protocolData.parentProtocol)
+			if (childRows) childRows.push(row)
+			else childRowsByParentId.set(protocolData.parentProtocol, [row])
+		}
+	}
+
+	const protocolTableData: Array<OracleProtocolWithBreakdown> = []
+	const emittedParentIds = new Set<string>()
+	for (const protocolName of orderedOracleProtocolNames) {
+		const row = protocolRowsByName.get(protocolName)
+		if (!row) continue
+		const parentId = parentIdByProtocolName.get(protocolName)
+		const childRows = parentId ? childRowsByParentId.get(parentId) : undefined
+		const parent = parentId ? parentProtocolsById.get(parentId) : undefined
+		if (!parentId || !parent || !childRows || childRows.length < 2) {
+			protocolTableData.push(row)
+			continue
+		}
+		if (emittedParentIds.has(parentId)) continue
+		emittedParentIds.add(parentId)
+
+		let parentTvl = 0
+		let parentCategory: string | null = childRows[0]?.category ?? null
+		let parentStrikeTvl = false
+		const parentExtraTvl: Record<string, number> = {}
+		for (const child of childRows) {
+			parentTvl += child.tvl ?? 0
+			if (child.category !== parentCategory) parentCategory = null
+			if (child.strikeTvl) parentStrikeTvl = true
+			for (const extraKey in child.extraTvl) {
+				const value = child.extraTvl[extraKey]
+				if (value !== undefined) parentExtraTvl[extraKey] = (parentExtraTvl[extraKey] ?? 0) + value
+			}
+		}
+
+		const parentRow: OracleProtocolWithBreakdown = {
+			name: parent.name,
+			logo: parent.logo,
+			category: parentCategory,
+			tvl: parentTvl,
+			extraTvl: parentExtraTvl,
+			strikeTvl: parentStrikeTvl,
+			childProtocols: childRows
+		}
+		if (parent.deprecated) parentRow.deprecated = true
+		protocolTableData.push(parentRow)
 	}
 
 	const chainLinks = [{ label: 'All', to: `/oracles/${slug(canonicalOracle)}` }].concat(

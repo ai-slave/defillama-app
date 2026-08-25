@@ -4,6 +4,8 @@ import {
 	getEnabledExtraTvlApiKeys,
 	getEnabledForkOracleExtraTvlChartApiKeys,
 	getExtraTvlSeriesSign,
+	getFailedExtraTvlApiKeys,
+	mergeBaseAndExtraTvlHistory,
 	shouldSubtractTvlOverlapSeries
 } from '../tvlOverlap'
 
@@ -94,5 +96,39 @@ describe('Oracle and Fork TVL overlap helpers', () => {
 
 		expect(shouldSubtractOverlapSeries).toBe(false)
 		expect(getExtraTvlSeriesSign({ apiKey: 'dcAndLsOverlap', shouldSubtractOverlapSeries })).toBe(1)
+	})
+
+	it('reports only failed requests without successful data', () => {
+		expect(
+			getFailedExtraTvlApiKeys(
+				['staking', 'borrowed', 'pool2'],
+				[
+					{ data: undefined, isError: true },
+					{ data: [], isError: false },
+					{ data: [], isError: true }
+				]
+			)
+		).toEqual(['staking'])
+	})
+
+	it('unions successful base and extra histories without filling uncovered timestamps', () => {
+		expect(
+			mergeBaseAndExtraTvlHistory({
+				base: [
+					[1, 10],
+					[3, 30]
+				],
+				extra: new Map([
+					[2, 5],
+					[3, 7],
+					[4, 4]
+				])
+			})
+		).toEqual([
+			[1, 10],
+			[2, 5],
+			[3, 37],
+			[4, 4]
+		])
 	})
 })

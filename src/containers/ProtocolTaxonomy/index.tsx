@@ -287,10 +287,6 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 type ProtocolRow = IProtocolTaxonomyPageData['protocols'][0]
 
 const columnHelper = createColumnHelper<ProtocolRow>()
-type ProtocolMetricValue = number | null | undefined
-
-const sortableNumber = (value: ProtocolMetricValue): number | undefined => value ?? undefined
-
 export function getProtocolMcapTvlRatio(mcap: number | null, tvl: number | null): number | undefined {
 	return mcap !== null && tvl !== null && tvl > 0 ? mcap / tvl : undefined
 }
@@ -361,7 +357,7 @@ const COLUMN_REGISTRY = {
 			headerClassName: 'w-[min(280px,40vw)]'
 		}
 	}),
-	tvl: columnHelper.accessor((p) => sortableNumber(p.tvl), {
+	tvl: columnHelper.accessor((p) => p.tvl ?? undefined, {
 		id: 'tvl',
 		header: 'TVL',
 		cell: (info) =>
@@ -374,7 +370,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: 'Sum of value of all coins held in smart contracts of the protocol'
 		}
 	}),
-	'mcap/tvl': columnHelper.accessor((p) => getProtocolMcapTvlRatio(p.mcap, p.tvl), {
+	'mcap/tvl': columnHelper.accessor((p) => getProtocolMcapTvlRatio(p.mcap, p.tvl) ?? undefined, {
 		id: 'mcap/tvl',
 		header: 'Mcap/TVL',
 		cell: (info) => formatRatio(info.getValue()),
@@ -384,7 +380,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: 'Market cap / TVL ratio'
 		}
 	}),
-	fees_7d: columnHelper.accessor((p) => sortableNumber(p.fees?.total7d), {
+	fees_7d: columnHelper.accessor((p) => p.fees?.total7d ?? undefined, {
 		id: 'fees_7d',
 		header: 'Fees 7d',
 		cell: (info) =>
@@ -397,7 +393,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.fees.protocol['7d']
 		}
 	}),
-	revenue_7d: columnHelper.accessor((p) => sortableNumber(p.revenue?.total7d), {
+	revenue_7d: columnHelper.accessor((p) => p.revenue?.total7d ?? undefined, {
 		id: 'revenue_7d',
 		header: 'Revenue 7d',
 		cell: (info) =>
@@ -410,7 +406,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.revenue.protocol['7d']
 		}
 	}),
-	fees_30d: columnHelper.accessor((p) => sortableNumber(p.fees?.total30d), {
+	fees_30d: columnHelper.accessor((p) => p.fees?.total30d ?? undefined, {
 		id: 'fees_30d',
 		header: 'Fees 30d',
 		cell: (info) =>
@@ -423,7 +419,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.fees.protocol['30d']
 		}
 	}),
-	revenue_30d: columnHelper.accessor((p) => sortableNumber(p.revenue?.total30d), {
+	revenue_30d: columnHelper.accessor((p) => p.revenue?.total30d ?? undefined, {
 		id: 'revenue_30d',
 		header: 'Revenue 30d',
 		cell: (info) =>
@@ -436,7 +432,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.revenue.protocol['30d']
 		}
 	}),
-	fees_24h: columnHelper.accessor((p) => sortableNumber(p.fees?.total24h), {
+	fees_24h: columnHelper.accessor((p) => p.fees?.total24h ?? undefined, {
 		id: 'fees_24h',
 		header: 'Fees 24h',
 		cell: (info) =>
@@ -449,7 +445,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.fees.protocol['24h']
 		}
 	}),
-	revenue_24h: columnHelper.accessor((p) => sortableNumber(p.revenue?.total24h), {
+	revenue_24h: columnHelper.accessor((p) => p.revenue?.total24h ?? undefined, {
 		id: 'revenue_24h',
 		header: 'Revenue 24h',
 		cell: (info) =>
@@ -462,7 +458,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.revenue.protocol['24h']
 		}
 	}),
-	perp_volume_24h: columnHelper.accessor((p) => sortableNumber(p.perpVolume?.total24h), {
+	perp_volume_24h: columnHelper.accessor((p) => p.perpVolume?.total24h ?? undefined, {
 		id: 'perp_volume_24h',
 		header: 'Perp Volume 24h',
 		cell: (info) => perpVolumeCell(info),
@@ -472,7 +468,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.perps.protocol['24h']
 		}
 	}),
-	perp_volume_7d: columnHelper.accessor((p) => sortableNumber(p.perpVolume?.total7d), {
+	perp_volume_7d: columnHelper.accessor((p) => p.perpVolume?.total7d ?? undefined, {
 		id: 'perp_volume_7d',
 		header: 'Perp Volume 7d',
 		cell: (info) => perpVolumeCell(info),
@@ -482,7 +478,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.perps.protocol['7d']
 		}
 	}),
-	perp_volume_30d: columnHelper.accessor((p) => sortableNumber(p.perpVolume?.total30d), {
+	perp_volume_30d: columnHelper.accessor((p) => p.perpVolume?.total30d ?? undefined, {
 		id: 'perp_volume_30d',
 		header: 'Perp Volume 30d',
 		cell: (info) => perpVolumeCell(info),
@@ -492,7 +488,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.perps.protocol['30d']
 		}
 	}),
-	openInterest: columnHelper.accessor((p) => sortableNumber(p.openInterest?.total24h), {
+	openInterest: columnHelper.accessor((p) => p.openInterest?.total24h ?? undefined, {
 		id: 'openInterest',
 		header: 'Open Interest',
 		cell: (info) =>
@@ -505,7 +501,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.openInterest.protocol
 		}
 	}),
-	dex_volume_7d: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total7d), {
+	dex_volume_7d: columnHelper.accessor((p) => p.dexVolume?.total7d ?? undefined, {
 		id: 'dex_volume_7d',
 		header: 'DEX Volume 7d',
 		cell: (info) =>
@@ -518,7 +514,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.dexs.protocol['7d']
 		}
 	}),
-	dex_volume_30d: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total30d), {
+	dex_volume_30d: columnHelper.accessor((p) => p.dexVolume?.total30d ?? undefined, {
 		id: 'dex_volume_30d',
 		header: 'DEX Volume 30d',
 		cell: (info) =>
@@ -531,7 +527,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.dexs.protocol['30d']
 		}
 	}),
-	dex_volume_24h: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total24h), {
+	dex_volume_24h: columnHelper.accessor((p) => p.dexVolume?.total24h ?? undefined, {
 		id: 'dex_volume_24h',
 		header: 'DEX Volume 24h',
 		cell: (info) =>
@@ -544,7 +540,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.dexs.protocol['24h']
 		}
 	}),
-	dex_aggregator_volume_7d: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total7d), {
+	dex_aggregator_volume_7d: columnHelper.accessor((p) => p.dexVolume?.total7d ?? undefined, {
 		id: 'dex_aggregator_volume_7d',
 		header: 'DEX Aggregator Volume 7d',
 		cell: (info) =>
@@ -557,7 +553,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.dexs.protocol['7d']
 		}
 	}),
-	dex_aggregator_volume_30d: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total30d), {
+	dex_aggregator_volume_30d: columnHelper.accessor((p) => p.dexVolume?.total30d ?? undefined, {
 		id: 'dex_aggregator_volume_30d',
 		header: 'DEX Aggregator Volume 30d',
 		cell: (info) =>
@@ -570,7 +566,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.dexs.protocol['30d']
 		}
 	}),
-	dex_aggregator_volume_24h: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total24h), {
+	dex_aggregator_volume_24h: columnHelper.accessor((p) => p.dexVolume?.total24h ?? undefined, {
 		id: 'dex_aggregator_volume_24h',
 		header: 'DEX Aggregator Volume 24h',
 		cell: (info) =>
@@ -583,7 +579,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.dexs.protocol['24h']
 		}
 	}),
-	prediction_volume_7d: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total7d), {
+	prediction_volume_7d: columnHelper.accessor((p) => p.dexVolume?.total7d ?? undefined, {
 		id: 'prediction_volume_7d',
 		header: 'Prediction Volume 7d',
 		cell: (info) =>
@@ -596,7 +592,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.dexs.protocol['7d']
 		}
 	}),
-	prediction_volume_30d: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total30d), {
+	prediction_volume_30d: columnHelper.accessor((p) => p.dexVolume?.total30d ?? undefined, {
 		id: 'prediction_volume_30d',
 		header: 'Prediction Volume 30d',
 		cell: (info) =>
@@ -609,7 +605,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.dexs.protocol['30d']
 		}
 	}),
-	prediction_volume_24h: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total24h), {
+	prediction_volume_24h: columnHelper.accessor((p) => p.dexVolume?.total24h ?? undefined, {
 		id: 'prediction_volume_24h',
 		header: 'Prediction Volume 24h',
 		cell: (info) =>
@@ -622,7 +618,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.dexs.protocol['24h']
 		}
 	}),
-	payment_volume_7d: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total7d), {
+	payment_volume_7d: columnHelper.accessor((p) => p.dexVolume?.total7d ?? undefined, {
 		id: 'payment_volume_7d',
 		header: 'Payment Volume 7d',
 		cell: (info) =>
@@ -635,7 +631,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.dexs.protocol['7d']
 		}
 	}),
-	payment_volume_30d: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total30d), {
+	payment_volume_30d: columnHelper.accessor((p) => p.dexVolume?.total30d ?? undefined, {
 		id: 'payment_volume_30d',
 		header: 'Payment Volume 30d',
 		cell: (info) =>
@@ -648,7 +644,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.dexs.protocol['30d']
 		}
 	}),
-	payment_volume_24h: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total24h), {
+	payment_volume_24h: columnHelper.accessor((p) => p.dexVolume?.total24h ?? undefined, {
 		id: 'payment_volume_24h',
 		header: 'Payment Volume 24h',
 		cell: (info) =>
@@ -661,7 +657,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.dexs.protocol['24h']
 		}
 	}),
-	spot_volume_7d: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total7d), {
+	spot_volume_7d: columnHelper.accessor((p) => p.dexVolume?.total7d ?? undefined, {
 		id: 'spot_volume_7d',
 		header: 'Spot Volume 7d',
 		cell: (info) =>
@@ -674,7 +670,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.dexs.protocol['7d']
 		}
 	}),
-	spot_volume_30d: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total30d), {
+	spot_volume_30d: columnHelper.accessor((p) => p.dexVolume?.total30d ?? undefined, {
 		id: 'spot_volume_30d',
 		header: 'Spot Volume 30d',
 		cell: (info) =>
@@ -687,7 +683,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.dexs.protocol['30d']
 		}
 	}),
-	spot_volume_24h: columnHelper.accessor((p) => sortableNumber(p.dexVolume?.total24h), {
+	spot_volume_24h: columnHelper.accessor((p) => p.dexVolume?.total24h ?? undefined, {
 		id: 'spot_volume_24h',
 		header: 'Spot Volume 24h',
 		cell: (info) =>
@@ -700,7 +696,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.dexs.protocol['24h']
 		}
 	}),
-	options_premium_7d: columnHelper.accessor((p) => sortableNumber(p.optionsPremium?.total7d), {
+	options_premium_7d: columnHelper.accessor((p) => p.optionsPremium?.total7d ?? undefined, {
 		id: 'options_premium_7d',
 		header: 'Premium Volume 7d',
 		cell: (info) =>
@@ -713,7 +709,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.optionsPremium.protocol['7d']
 		}
 	}),
-	options_premium_30d: columnHelper.accessor((p) => sortableNumber(p.optionsPremium?.total30d), {
+	options_premium_30d: columnHelper.accessor((p) => p.optionsPremium?.total30d ?? undefined, {
 		id: 'options_premium_30d',
 		header: 'Premium Volume 30d',
 		cell: (info) =>
@@ -726,7 +722,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.optionsPremium.protocol['30d']
 		}
 	}),
-	options_premium_24h: columnHelper.accessor((p) => sortableNumber(p.optionsPremium?.total24h), {
+	options_premium_24h: columnHelper.accessor((p) => p.optionsPremium?.total24h ?? undefined, {
 		id: 'options_premium_24h',
 		header: 'Premium Volume 24h',
 		cell: (info) =>
@@ -739,7 +735,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.optionsPremium.protocol['24h']
 		}
 	}),
-	options_notional_7d: columnHelper.accessor((p) => sortableNumber(p.optionsNotional?.total7d), {
+	options_notional_7d: columnHelper.accessor((p) => p.optionsNotional?.total7d ?? undefined, {
 		id: 'options_notional_7d',
 		header: 'Notional Volume 7d',
 		cell: (info) =>
@@ -752,7 +748,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.optionsNotional.protocol['7d']
 		}
 	}),
-	options_notional_30d: columnHelper.accessor((p) => sortableNumber(p.optionsNotional?.total30d), {
+	options_notional_30d: columnHelper.accessor((p) => p.optionsNotional?.total30d ?? undefined, {
 		id: 'options_notional_30d',
 		header: 'Notional Volume 30d',
 		cell: (info) =>
@@ -765,7 +761,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.optionsNotional.protocol['30d']
 		}
 	}),
-	options_notional_24h: columnHelper.accessor((p) => sortableNumber(p.optionsNotional?.total24h), {
+	options_notional_24h: columnHelper.accessor((p) => p.optionsNotional?.total24h ?? undefined, {
 		id: 'options_notional_24h',
 		header: 'Notional Volume 24h',
 		cell: (info) =>
@@ -778,7 +774,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: definitions.optionsNotional.protocol['24h']
 		}
 	}),
-	borrowed: columnHelper.accessor((p) => sortableNumber(p.borrowed), {
+	borrowed: columnHelper.accessor((p) => p.borrowed ?? undefined, {
 		id: 'borrowed',
 		header: 'Active Loans',
 		cell: (info) =>
@@ -791,7 +787,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: 'Total amount currently borrowed from the protocol'
 		}
 	}),
-	supplied: columnHelper.accessor((p) => sortableNumber(p.supplied), {
+	supplied: columnHelper.accessor((p) => p.supplied ?? undefined, {
 		id: 'supplied',
 		header: 'Supplied',
 		cell: (info) =>
@@ -804,7 +800,7 @@ const COLUMN_REGISTRY = {
 			headerHelperText: 'Total amount supplied to the protocol'
 		}
 	}),
-	'supplied/tvl': columnHelper.accessor((p) => sortableNumber(p.suppliedTvl), {
+	'supplied/tvl': columnHelper.accessor((p) => p.suppliedTvl ?? undefined, {
 		id: 'supplied/tvl',
 		header: 'Supplied/TVL',
 		cell: (info) => formatRatio(info.getValue()),

@@ -346,6 +346,94 @@ describe('getProtocolsByChain parent aggregation', () => {
 		).toBe(true)
 	})
 
+	it('uses current Fork relationships before grouping and preserves extra-only children', async () => {
+		fetchAdapterChainMetricsMock.mockResolvedValue({ protocols: [] })
+		getAdapterChainOverviewMock.mockResolvedValue({ protocols: [] })
+		const forkProtocols = protocolsResponse({
+			parentProtocols: [parentProtocol({ id: 'parent#alpha', name: 'Alpha Parent' })],
+			protocols: [
+				liteProtocol({
+					defillamaId: 'child-alpha-one',
+					name: 'Alpha One Raw',
+					parentProtocol: 'parent#alpha',
+					forkedFrom: ['Aave V3'],
+					tvl: 10,
+					tvlPrevDay: 9,
+					tvlPrevWeek: 8,
+					tvlPrevMonth: 7,
+					chainTvls: {
+						staking: tvlEntry(1, 1, 1, 1),
+						excludeParent: tvlEntry(4, 3, 2, 1)
+					}
+				}),
+				liteProtocol({
+					defillamaId: 'child-alpha-two',
+					name: 'Alpha Two Raw',
+					parentProtocol: 'parent#alpha',
+					forkedFrom: ['Aave V3'],
+					tvl: null,
+					tvlPrevDay: null,
+					tvlPrevWeek: null,
+					tvlPrevMonth: null,
+					chainTvls: { staking: tvlEntry(5, 4, 3, 2) }
+				}),
+				liteProtocol({
+					defillamaId: 'solo-protocol',
+					name: 'Solo Raw',
+					parentProtocol: 'parent#alpha',
+					forkedFrom: ['Curve'],
+					tvl: 100
+				})
+			]
+		})
+		fetchProtocolsMock.mockResolvedValue(forkProtocols)
+
+		const mixed = await getProtocolsByChain({
+			chain: 'All',
+			chainMetadata,
+			protocolMetadata,
+			fork: 'Aave V3'
+		})
+		expect(mixed?.protocols).toHaveLength(1)
+		const mixedParent = mixed?.protocols[0]
+		expect(mixedParent).toMatchObject({
+			name: 'Alpha Parent',
+			tvl: {
+				default: tvlEntry(10, 9, 8, 7),
+				staking: tvlEntry(6, 5, 4, 3),
+				excludeParent: tvlEntry(4, 3, 2, 1)
+			}
+		})
+		expect(
+			mixedParent?.childProtocols?.map((child) => [child.name, child.tvl?.default.tvl, child.tvl?.staking?.tvl])
+		).toEqual([
+			['Alpha One', 10, 1],
+			['Alpha Two', 0, 5]
+		])
+
+		fetchProtocolsMock.mockResolvedValueOnce({
+			...forkProtocols,
+			protocols: forkProtocols.protocols.map((protocol) => ({
+				...protocol,
+				tvl: protocol.name === 'Solo Raw' ? protocol.tvl : null,
+				tvlPrevDay: null,
+				tvlPrevWeek: null,
+				tvlPrevMonth: null
+			}))
+		})
+		const allExtra = await getProtocolsByChain({
+			chain: 'All',
+			chainMetadata,
+			protocolMetadata,
+			fork: 'Aave V3'
+		})
+		expect(allExtra?.protocols[0]?.tvl).toMatchObject({
+			default: tvlEntry(0, null, null, null),
+			staking: tvlEntry(6, 5, 4, 3)
+		})
+		expect(allExtra?.protocols[0]?.tvl).not.toHaveProperty('excludeParent')
+	})
+
 	it('keeps a parent emissions period unavailable when a matched child period is null', async () => {
 		getProtocolEmissionsLookupFromAggregatedMock.mockResolvedValue({
 			'child-alpha-one': {

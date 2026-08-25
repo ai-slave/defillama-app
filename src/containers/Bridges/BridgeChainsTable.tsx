@@ -46,7 +46,8 @@ const bridgeChainsColumn = [
 			headerClassName: 'w-[160px] min-[480px]:w-[180px]'
 		}
 	}),
-	columnHelper.accessor('prevDayNetFlow', {
+	columnHelper.accessor((row) => row.prevDayNetFlow ?? undefined, {
+		id: 'prevDayNetFlow',
 		header: '24h Net Flow',
 		cell: (info) => {
 			const value = info.getValue()
@@ -63,7 +64,8 @@ const bridgeChainsColumn = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('prevDayUsdDeposits', {
+	columnHelper.accessor((row) => row.prevDayUsdDeposits ?? undefined, {
+		id: 'prevDayUsdDeposits',
 		header: '24h Deposits',
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
@@ -72,7 +74,8 @@ const bridgeChainsColumn = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('prevDayUsdWithdrawals', {
+	columnHelper.accessor((row) => row.prevDayUsdWithdrawals ?? undefined, {
+		id: 'prevDayUsdWithdrawals',
 		header: '24h Withdrawals',
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
@@ -81,7 +84,8 @@ const bridgeChainsColumn = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('prevWeekNetFlow', {
+	columnHelper.accessor((row) => row.prevWeekNetFlow ?? undefined, {
+		id: 'prevWeekNetFlow',
 		header: '7d Net Flow',
 		cell: (info) => {
 			const value = info.getValue()
@@ -98,7 +102,8 @@ const bridgeChainsColumn = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('prevWeekUsdDeposits', {
+	columnHelper.accessor((row) => row.prevWeekUsdDeposits ?? undefined, {
+		id: 'prevWeekUsdDeposits',
 		header: '7d Deposits',
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
@@ -107,7 +112,8 @@ const bridgeChainsColumn = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('prevWeekUsdWithdrawals', {
+	columnHelper.accessor((row) => row.prevWeekUsdWithdrawals ?? undefined, {
+		id: 'prevWeekUsdWithdrawals',
 		header: '7d Withdrawals',
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),

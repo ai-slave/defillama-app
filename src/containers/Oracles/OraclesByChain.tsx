@@ -13,6 +13,7 @@ import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { FailedDataPopover } from '~/ui/FailedDataPopover'
 import { LoadingDots } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
 import { slug } from '~/utils'
@@ -44,7 +45,7 @@ export const OraclesByChain = ({
 	)
 	const hasEnabledExtras = enabledExtraApiKeys.length > 0
 
-	const { extraBreakdownsByApiKey, isFetchingExtraBreakdowns } = useOraclesByChainExtraBreakdowns({
+	const { extraBreakdownsByApiKey, isFetchingExtraBreakdowns, failedApiKeys } = useOraclesByChainExtraBreakdowns({
 		enabledExtraApiKeys: enabledExtraChartApiKeys,
 		chain
 	})
@@ -183,6 +184,13 @@ export const OraclesByChain = ({
 							/>
 						</React.Suspense>
 					)}
+					{!isFetchingExtraBreakdowns ? (
+						<FailedDataPopover
+							items={failedApiKeys}
+							ariaLabel="Show failed Oracle TVL sections"
+							title="Failed to load selected TVL data for:"
+						/>
+					) : null}
 				</ChartPanel>
 			</div>
 
@@ -242,7 +250,8 @@ const columns = [
 			headerHelperText: 'Chains secured by the oracle'
 		}
 	}),
-	columnHelper.accessor('protocolsSecured', {
+	columnHelper.accessor((row) => row.protocolsSecured ?? undefined, {
+		id: 'protocolsSecured',
 		header: 'Protocols',
 		meta: {
 			headerClassName: 'w-[100px]',

@@ -5,14 +5,14 @@ import { CHART_COLORS } from '~/constants/colors'
 import { ChainProtocolsTable } from '~/containers/ProtocolRankings/Table'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { FailedDataPopover } from '~/ui/FailedDataPopover'
 import { LoadingDots } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
-import { PanelStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { getTokenDominance, slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
-import { getEnabledForkOracleExtraTvlChartApiKeys } from '~/utils/tvlOverlap'
+import { getEnabledForkOracleExtraTvlChartApiKeys, mergeBaseAndExtraTvlHistory } from '~/utils/tvlOverlap'
 import { useForkByProtocolExtraSeries } from './queries.client'
 import type { ForkByProtocolPageData } from './types'
 
@@ -24,21 +24,26 @@ export const ForksByProtocol = ({ fork, forkLinks, protocolTableData, chartData 
 		() => getEnabledForkOracleExtraTvlChartApiKeys(extraTvlsEnabled),
 		[extraTvlsEnabled]
 	)
-	const { isFetchingExtraSeries, extraTvsByTimestamp } = useForkByProtocolExtraSeries({
+	const { failedApiKeys, isFetchingExtraSeries, extraTvsByTimestamp } = useForkByProtocolExtraSeries({
 		enabledExtraApiKeys,
 		protocol: fork
 	})
 
 	const { totalValue, topProtocol, dataset, charts } = useMemo(() => {
 		const topProtocol = protocolTableData[0] ?? null
+		const history = isFetchingExtraSeries
+			? chartData
+			: mergeBaseAndExtraTvlHistory({
+					base: chartData,
+					extra: extraTvsByTimestamp
+				})
+		const source: Array<[number, number]> = []
+		for (const [timestampInSeconds, value] of history) source.push([timestampInSeconds * 1000, value])
 		const dataset = {
-			source: chartData.map(([timestampInSeconds, baseValue]) => {
-				const extraValue = enabledExtraApiKeys.length > 0 ? (extraTvsByTimestamp.get(timestampInSeconds) ?? 0) : 0
-				return [timestampInSeconds * 1000, baseValue + extraValue]
-			}),
+			source,
 			dimensions: ['timestamp', 'TVL']
 		}
-		const totalValue = (dataset.source[dataset.source.length - 1]?.[1] as number | undefined) ?? 0
+		const totalValue = source.at(-1)?.[1] ?? 0
 
 		const charts = [
 			{
@@ -51,68 +56,83 @@ export const ForksByProtocol = ({ fork, forkLinks, protocolTableData, chartData 
 		]
 
 		return { totalValue, topProtocol, dataset, charts }
-	}, [chartData, enabledExtraApiKeys.length, extraTvsByTimestamp, protocolTableData])
+	}, [chartData, extraTvsByTimestamp, isFetchingExtraSeries, protocolTableData])
 
 	const dominance = topProtocol ? getTokenDominance({ tvl: topProtocol.tvl?.default?.tvl ?? 0 }, totalValue) : null
 	const dominanceText = dominance == null ? null : String(dominance)
 	const chartTitle = `${fork} Forks`
 	const chartFilenameTitle = `${fork} Forks TVL`
 
-	const isLoading = enabledExtraApiKeys.length > 0 && isFetchingExtraSeries
 	return (
 		<>
 			<RowLinksWithDropdown links={forkLinks} activeLink={fork} alternativeOthersText="Others" />
-			{isLoading ? (
-				<PanelStatus variant="loading" textClassName="flex items-center gap-1">
-					Loading
-					<LoadingDots />
-				</PanelStatus>
-			) : (
-				<>
-					<SummaryCardGrid>
-						<SummaryStatsCard>
-							<h1 className="flex items-center gap-2 heading-sm">
-								<TokenLogo name={fork} kind="token" size={24} alt={`Logo of ${fork}`} />
-								{fork}
-							</h1>
-							<StatItem
-								label="TVL in Forks (USD)"
-								value={formatUsd(totalValue, {
-									compact: true,
-									minimumCompactValue: 1_000_000,
-									compactSuffix: 'lowercase'
-								})}
-							/>
-							<StatItem
-								label={<>{topProtocol?.name ?? 'Top Protocol'} Dominance</>}
-								value={dominanceText == null ? 'N/A' : formatPercent(dominanceText, { input: 'percent' })}
-							/>
-						</SummaryStatsCard>
+			<SummaryCardGrid>
+				<SummaryStatsCard>
+					<h1 className="flex items-center gap-2 heading-sm">
+						<TokenLogo name={fork} kind="token" size={24} alt={`Logo of ${fork}`} />
+						{fork}
+					</h1>
+					<StatItem
+						label="TVL in Forks (USD)"
+						value={formatUsd(totalValue, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
+					/>
+					<StatItem
+						label={<>{topProtocol?.name ?? 'Top Protocol'} Dominance</>}
+						value={dominanceText == null ? 'N/A' : formatPercent(dominanceText, { input: 'percent' })}
+					/>
+				</SummaryStatsCard>
 
-						<ChartPanel className="col-span-2">
-							<Suspense fallback={<ChartPanelExportShellFallback />}>
-								<MultiSeriesChart
-									dataset={dataset}
-									charts={charts}
-									alwaysShowTooltip
-									exportButtons={{
-										png: true,
-										csv: true,
-										filename: slug(chartFilenameTitle),
-										pngTitle: chartTitle,
-										pngIconUrl: tokenIconUrl(fork)
-									}}
-								/>
-							</Suspense>
-						</ChartPanel>
-					</SummaryCardGrid>
-					<Suspense
-						fallback={<Panel padding="none" style={{ minHeight: `${protocolTableData.length * 50 + 200}px` }} />}
-					>
-						<ChainProtocolsTable protocols={protocolTableData} useStickyHeader={false} />
-					</Suspense>
-				</>
-			)}
+				<ChartPanel className="col-span-2">
+					{isFetchingExtraSeries ? (
+						<ChartPanelExportShellFallback
+							role="status"
+							aria-live="polite"
+							className="my-auto flex items-center justify-center gap-1 text-center body-sm text-tertiary"
+						>
+							Loading
+							<LoadingDots />
+						</ChartPanelExportShellFallback>
+					) : (
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
+							<MultiSeriesChart
+								dataset={dataset}
+								charts={charts}
+								alwaysShowTooltip
+								exportButtons={{
+									png: true,
+									csv: true,
+									filename: slug(chartFilenameTitle),
+									pngTitle: chartTitle,
+									pngIconUrl: tokenIconUrl(fork)
+								}}
+							/>
+						</Suspense>
+					)}
+					{!isFetchingExtraSeries ? (
+						<FailedDataPopover
+							items={failedApiKeys}
+							ariaLabel="Show failed Fork TVL sections"
+							title="Failed to load selected TVL data for:"
+						/>
+					) : null}
+				</ChartPanel>
+			</SummaryCardGrid>
+			<Suspense
+				fallback={
+					<Panel
+						padding="none"
+						style={{
+							minHeight: `${protocolTableData.length * 50 + 200}px`
+						}}
+					/>
+				}
+			>
+				<ChainProtocolsTable protocols={protocolTableData} useStickyHeader={false} />
+			</Suspense>
 		</>
 	)
 }

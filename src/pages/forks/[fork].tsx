@@ -16,14 +16,16 @@ export const getStaticProps = withPerformanceLogging('forks/[fork]', async ({ pa
 	}
 
 	const forkParam = Array.isArray(params.fork) ? params.fork[0] : params.fork
-	const data = await getForksByProtocolPageData({ fork: forkParam })
+	if (!forkParam) return { notFound: true }
+	const result = await getForksByProtocolPageData({ fork: forkParam })
 
-	if (!data) {
+	if (result.status === 'not-found') {
 		return { notFound: true, revalidate: maxAgeForNext([22]) }
 	}
+	if (result.status === 'unavailable') throw new Error(`Failed to load Forks data for ${forkParam}`)
 
 	return {
-		props: data,
+		props: result.data,
 		revalidate: maxAgeForNext([22])
 	}
 })

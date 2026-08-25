@@ -3,10 +3,12 @@ import type { ProtocolLite } from '~/containers/ProtocolLists/api.types'
 export type OracleBreakdownItem = { timestamp: number } & Record<string, number>
 export type OracleChartData = Array<OracleBreakdownItem>
 
-export type OracleProtocolWithBreakdown = ProtocolLite & {
+export type OracleProtocolWithBreakdown = Pick<ProtocolLite, 'name' | 'logo' | 'deprecated'> & {
+	category: string | null
 	tvl: number | null
 	extraTvl: Record<string, number>
 	strikeTvl: boolean
+	childProtocols?: Array<OracleProtocolWithBreakdown>
 }
 
 interface OracleLink {

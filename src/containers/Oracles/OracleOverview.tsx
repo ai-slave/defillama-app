@@ -8,6 +8,8 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { FailedDataPopover } from '~/ui/FailedDataPopover'
+import { Icon } from '~/ui/Icon'
 import { LoadingDots } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
@@ -18,7 +20,8 @@ import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import {
 	calculateTotalWithExtraToggles,
 	getEnabledExtraTvlApiKeys,
-	getEnabledForkOracleExtraTvlChartApiKeys
+	getEnabledForkOracleExtraTvlChartApiKeys,
+	mergeBaseAndExtraTvlHistory
 } from '~/utils/tvlOverlap'
 import { getTopMeasuredOracleProtocol } from './byChainData'
 import { useOracleOverviewExtraSeries } from './queries.client'
@@ -69,7 +72,15 @@ export const OracleOverview = ({
 				cell: ({ getValue, row }) => {
 					const name = getValue()
 					return (
-						<span className="flex items-center gap-2">
+						<span className={`relative flex items-center gap-2 ${row.depth > 0 ? 'pl-8' : 'pl-4'}`}>
+							{row.subRows.length > 0 ? (
+								<button type="button" className="absolute -left-0.5" onClick={row.getToggleExpandedHandler()}>
+									<Icon name={row.getIsExpanded() ? 'chevron-down' : 'chevron-right'} height={16} width={16} />
+									<span className="sr-only">
+										{row.getIsExpanded() ? 'Hide child protocols' : 'View child protocols'}
+									</span>
+								</button>
+							) : null}
 							<span className="vf-row-index shrink-0" aria-hidden="true" />
 
 							<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${name}`} />
@@ -132,7 +143,7 @@ export const OracleOverview = ({
 		[extraTvlsEnabled]
 	)
 
-	const { isFetchingExtraSeries, extraTvsByTimestamp } = useOracleOverviewExtraSeries({
+	const { isFetchingExtraSeries, failedApiKeys, extraTvsByTimestamp } = useOracleOverviewExtraSeries({
 		enabledExtraApiKeys: enabledExtraChartApiKeys,
 		oracle,
 		chain
@@ -149,29 +160,38 @@ export const OracleOverview = ({
 							extraTvlsEnabled
 						})
 
-		const tableData: Array<IProtocolTableRow> =
-			enabledExtraApiKeys.length === 0
-				? protocolTableData
-				: protocolTableData
-						.map((protocol) => {
-							const protocolTvl =
-								protocol.tvl === null
-									? null
-									: calculateTotalWithExtraToggles({
-											values: { tvl: protocol.tvl, ...protocol.extraTvl },
-											extraTvlsEnabled
-										})
-
-							return {
-								...protocol,
-								tvl: protocolTvl
-							}
-						})
-						.sort((a, b) => {
-							if (a.tvl === null) return b.tvl === null ? 0 : 1
-							if (b.tvl === null) return -1
-							return b.tvl - a.tvl
-						})
+		let tableData = protocolTableData
+		if (enabledExtraApiKeys.length > 0) {
+			const applyExtraTvls = (protocol: IProtocolTableRow): IProtocolTableRow => {
+				const childProtocols: Array<IProtocolTableRow> = []
+				for (const child of protocol.childProtocols ?? []) childProtocols.push(applyExtraTvls(child))
+				const protocolTvl =
+					protocol.tvl === null
+						? null
+						: calculateTotalWithExtraToggles({
+								values: { tvl: protocol.tvl, ...protocol.extraTvl },
+								extraTvlsEnabled
+							})
+				const row: IProtocolTableRow = {
+					name: protocol.name,
+					logo: protocol.logo,
+					category: protocol.category,
+					tvl: protocolTvl,
+					extraTvl: protocol.extraTvl,
+					strikeTvl: protocol.strikeTvl
+				}
+				if (protocol.deprecated) row.deprecated = true
+				if (childProtocols.length > 0) row.childProtocols = childProtocols
+				return row
+			}
+			tableData = []
+			for (const protocol of protocolTableData) tableData.push(applyExtraTvls(protocol))
+			tableData.sort((a, b) => {
+				if (a.tvl === null) return b.tvl === null ? 0 : 1
+				if (b.tvl === null) return -1
+				return b.tvl - a.tvl
+			})
+		}
 
 		return {
 			tableData,
@@ -190,18 +210,18 @@ export const OracleOverview = ({
 			}
 		}
 		const selectedOracle = oracle ?? firstOracle
-		const shouldApplyExtraSeries = enabledExtraChartApiKeys.length > 0 && !isFetchingExtraSeries
-
-		const datasetSource: Array<[number, number | null]> = []
+		const baseHistory: Array<[number, number]> = []
 
 		for (const point of chartBreakdownByTimestamp) {
-			const timestampInSeconds = point.timestamp
-			const baseTvs = selectedOracle ? (point[selectedOracle] ?? null) : null
-			const extraTvs = shouldApplyExtraSeries ? (extraTvsByTimestamp.get(timestampInSeconds) ?? 0) : 0
-			const tvsValue = baseTvs === null ? null : baseTvs + extraTvs
-
-			datasetSource.push([timestampInSeconds * 1e3, tvsValue])
+			const baseTvs = selectedOracle ? point[selectedOracle] : undefined
+			if (baseTvs !== undefined) baseHistory.push([point.timestamp, baseTvs])
 		}
+		const history = mergeBaseAndExtraTvlHistory({
+			base: baseHistory,
+			extra: extraTvsByTimestamp
+		})
+		const datasetSource: Array<[number, number]> = []
+		for (const [timestampInSeconds, value] of history) datasetSource.push([timestampInSeconds * 1e3, value])
 		return {
 			dataset: {
 				source: datasetSource,
@@ -217,7 +237,7 @@ export const OracleOverview = ({
 				}
 			]
 		}
-	}, [chartData, enabledExtraChartApiKeys.length, extraTvsByTimestamp, isFetchingExtraSeries, oracle])
+	}, [chartData, extraTvsByTimestamp, oracle])
 
 	const topProtocol = getTopMeasuredOracleProtocol(tableData)
 	const dominance =
@@ -279,6 +299,13 @@ export const OracleOverview = ({
 							/>
 						</Suspense>
 					)}
+					{!isFetchingExtraSeries ? (
+						<FailedDataPopover
+							items={failedApiKeys}
+							ariaLabel="Show failed Oracle TVL sections"
+							title="Failed to load selected TVL data for:"
+						/>
+					) : null}
 				</ChartPanel>
 			</SummaryCardGrid>
 
@@ -286,6 +313,7 @@ export const OracleOverview = ({
 				<TableWithSearch
 					data={tableData}
 					columns={protocolColumns}
+					getSubRows={(row) => row.childProtocols}
 					columnToSearch="name"
 					placeholder="Search protocols..."
 					header="Protocols"

@@ -65,7 +65,8 @@ export function BridgeAddressesTable({ data }: { data: BridgeAddressTableRow[] }
 					align: 'end'
 				}
 			}),
-			columnHelper.accessor('deposited', {
+			columnHelper.accessor((row) => row.deposited ?? undefined, {
+				id: 'deposited',
 				header: 'Deposited',
 				cell: (info) =>
 					info.getValue() != null
@@ -76,7 +77,8 @@ export function BridgeAddressesTable({ data }: { data: BridgeAddressTableRow[] }
 					align: 'end'
 				}
 			}),
-			columnHelper.accessor('withdrawn', {
+			columnHelper.accessor((row) => row.withdrawn ?? undefined, {
+				id: 'withdrawn',
 				header: 'Withdrawn',
 				cell: (info) =>
 					info.getValue() != null
@@ -87,7 +89,8 @@ export function BridgeAddressesTable({ data }: { data: BridgeAddressTableRow[] }
 					align: 'end'
 				}
 			}),
-			columnHelper.accessor('txs', {
+			columnHelper.accessor((row) => row.txs ?? undefined, {
+				id: 'txs',
 				header: 'Total Transactions',
 				meta: {
 					headerClassName: 'w-[120px]',
