@@ -4,6 +4,7 @@ import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
 import type { PreIpoRaise } from './api.types'
+import { preIpoDefinitions } from './definitions'
 
 function formatMoney(value: number | null | undefined): string {
 	return (
@@ -33,15 +34,23 @@ const columns = [
 	}),
 	columnHelper.accessor((row) => row.amountRaised ?? undefined, {
 		id: 'amountRaised',
-		header: 'Amount Raised',
+		header: preIpoDefinitions.fundingRound.amountRaised.label,
 		cell: ({ getValue }) => formatMoney(getValue()),
-		meta: { headerClassName: 'w-[150px]', align: 'end' }
+		meta: {
+			headerClassName: 'w-[150px]',
+			align: 'end',
+			headerHelperText: preIpoDefinitions.fundingRound.amountRaised.description
+		}
 	}),
 	columnHelper.accessor((row) => row.valuation ?? undefined, {
 		id: 'valuation',
-		header: 'Round Valuation',
+		header: preIpoDefinitions.fundingRound.valuation.label,
 		cell: ({ getValue }) => formatMoney(getValue()),
-		meta: { headerClassName: 'w-[160px]', align: 'end' }
+		meta: {
+			headerClassName: 'w-[160px]',
+			align: 'end',
+			headerHelperText: preIpoDefinitions.fundingRound.valuation.description
+		}
 	})
 ]
 

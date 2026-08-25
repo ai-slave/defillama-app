@@ -5,6 +5,7 @@ import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { PreIpoPerpIntegration, PreIpoTokenIssuerIntegration } from './api.types'
+import { preIpoDefinitions } from './definitions'
 
 function formatMoney(value: number | null | undefined): string {
 	return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, maximumFractionDigits: 2 }) ?? '-'
@@ -44,46 +45,74 @@ const perpColumns = [
 		meta: { headerClassName: 'w-[150px]', align: 'start' }
 	}),
 	perpColumnHelper.accessor('exchangeType', {
-		header: 'Type',
+		header: preIpoDefinitions.perpetualMarket.type.label,
 		enableSorting: false,
-		meta: { headerClassName: 'w-[80px]', align: 'start' }
+		meta: {
+			headerClassName: 'w-[80px]',
+			align: 'start',
+			headerHelperText: preIpoDefinitions.perpetualMarket.type.description
+		}
 	}),
 	perpColumnHelper.accessor('defillamaContract', {
-		header: 'Contract',
+		header: preIpoDefinitions.perpetualMarket.contract.label,
 		enableSorting: false,
 		cell: ({ getValue, row }) => <IntegrationLink href={row.original.tradeUrl} label={getValue()} />,
-		meta: { headerClassName: 'w-[240px] min-w-[240px]', align: 'start' }
+		meta: {
+			headerClassName: 'w-[240px] min-w-[240px]',
+			align: 'start',
+			headerHelperText: preIpoDefinitions.perpetualMarket.contract.description
+		}
 	}),
 	perpColumnHelper.accessor((row) => row.price ?? undefined, {
 		id: 'price',
-		header: 'Price',
+		header: preIpoDefinitions.perpetualMarket.price.label,
 		cell: ({ getValue }) => formatUsd(getValue(), { maximumFractionDigits: 4 }) ?? '-',
-		meta: { headerClassName: 'w-[110px]', align: 'end' }
+		meta: {
+			headerClassName: 'w-[110px]',
+			align: 'end',
+			headerHelperText: preIpoDefinitions.perpetualMarket.price.description
+		}
 	}),
 	perpColumnHelper.accessor((row) => row.volume ?? undefined, {
 		id: 'volume',
-		header: 'Volume',
+		header: preIpoDefinitions.perpetualMarket.volume.label,
 		cell: ({ getValue }) => formatMoney(getValue()),
-		meta: { headerClassName: 'w-[120px]', align: 'end' }
+		meta: {
+			headerClassName: 'w-[120px]',
+			align: 'end',
+			headerHelperText: preIpoDefinitions.perpetualMarket.volume.description
+		}
 	}),
 	perpColumnHelper.accessor((row) => row.openInterest ?? undefined, {
 		id: 'openInterest',
-		header: 'Open Interest',
+		header: preIpoDefinitions.perpetualMarket.openInterest.label,
 		cell: ({ getValue }) => formatMoney(getValue()),
-		meta: { headerClassName: 'w-[140px]', align: 'end' }
+		meta: {
+			headerClassName: 'w-[140px]',
+			align: 'end',
+			headerHelperText: preIpoDefinitions.perpetualMarket.openInterest.description
+		}
 	}),
 	perpColumnHelper.accessor((row) => row.annualizedFundingRate ?? undefined, {
 		id: 'annualizedFundingRate',
-		header: 'Annualized Funding',
+		header: preIpoDefinitions.perpetualMarket.annualizedFunding.label,
 		cell: ({ getValue }) =>
 			formatPercent(getValue(), { input: 'percent', maximumFractionDigits: 2, signDisplay: 'exceptZero' }) ?? '-',
-		meta: { headerClassName: 'w-[170px]', align: 'end' }
+		meta: {
+			headerClassName: 'w-[170px]',
+			align: 'end',
+			headerHelperText: preIpoDefinitions.perpetualMarket.annualizedFunding.description
+		}
 	}),
 	perpColumnHelper.accessor((row) => row.estimatedValuation ?? undefined, {
 		id: 'estimatedValuation',
-		header: 'Estimated Valuation',
+		header: preIpoDefinitions.perpetualMarket.estimatedValuation.label,
 		cell: ({ getValue }) => formatMoney(getValue()),
-		meta: { headerClassName: 'w-[170px]', align: 'end' }
+		meta: {
+			headerClassName: 'w-[170px]',
+			align: 'end',
+			headerHelperText: preIpoDefinitions.perpetualMarket.estimatedValuation.description
+		}
 	}),
 	perpColumnHelper.accessor('tradeUrl', {
 		header: 'Trade URL',
@@ -95,33 +124,53 @@ const perpColumns = [
 const issuerColumnHelper = createColumnHelper<PreIpoTokenIssuerIntegration>()
 const issuerColumns = [
 	issuerColumnHelper.accessor('issuerName', {
-		header: 'Issuer',
+		header: preIpoDefinitions.tokenIssuer.issuer.label,
 		enableSorting: false,
 		cell: ({ getValue, row }) => <IntegrationLink href={row.original.productUrl} label={getValue()} />,
-		meta: { headerClassName: 'w-[180px]', align: 'start' }
+		meta: {
+			headerClassName: 'w-[180px]',
+			align: 'start',
+			headerHelperText: preIpoDefinitions.tokenIssuer.issuer.description
+		}
 	}),
 	issuerColumnHelper.accessor('backing', {
-		header: 'Backing',
+		header: preIpoDefinitions.tokenIssuer.backing.label,
 		enableSorting: false,
-		meta: { headerClassName: 'w-[160px]', align: 'start' }
+		meta: {
+			headerClassName: 'w-[160px]',
+			align: 'start',
+			headerHelperText: preIpoDefinitions.tokenIssuer.backing.description
+		}
 	}),
 	issuerColumnHelper.accessor((row) => row.price ?? undefined, {
 		id: 'price',
-		header: 'Price',
+		header: preIpoDefinitions.tokenIssuer.price.label,
 		cell: ({ getValue }) => formatUsd(getValue(), { maximumFractionDigits: 4 }) ?? '-',
-		meta: { headerClassName: 'w-[110px]', align: 'end' }
+		meta: {
+			headerClassName: 'w-[110px]',
+			align: 'end',
+			headerHelperText: preIpoDefinitions.tokenIssuer.price.description
+		}
 	}),
 	issuerColumnHelper.accessor((row) => row.marketCap ?? undefined, {
 		id: 'marketCap',
-		header: 'Market Cap',
+		header: preIpoDefinitions.tokenIssuer.marketCap.label,
 		cell: ({ getValue }) => formatMoney(getValue()),
-		meta: { headerClassName: 'w-[140px]', align: 'end' }
+		meta: {
+			headerClassName: 'w-[140px]',
+			align: 'end',
+			headerHelperText: preIpoDefinitions.tokenIssuer.marketCap.description
+		}
 	}),
 	issuerColumnHelper.accessor((row) => row.estimatedValuation ?? undefined, {
 		id: 'estimatedValuation',
-		header: 'Estimated Valuation',
+		header: preIpoDefinitions.tokenIssuer.estimatedValuation.label,
 		cell: ({ getValue }) => formatMoney(getValue()),
-		meta: { headerClassName: 'w-[170px]', align: 'end' }
+		meta: {
+			headerClassName: 'w-[170px]',
+			align: 'end',
+			headerHelperText: preIpoDefinitions.tokenIssuer.estimatedValuation.description
+		}
 	}),
 	issuerColumnHelper.accessor('productUrl', {
 		header: 'Product URL',

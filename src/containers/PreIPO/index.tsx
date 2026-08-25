@@ -23,6 +23,7 @@ import { formatDateTime } from '~/utils/dateFormat'
 import { preIpoIconUrl } from '~/utils/icons'
 import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { PreIpoCompanyListItem } from './api.types'
+import { preIpoDefinitions } from './definitions'
 import { filterPreIpoCompanies, getPreIpoSectors } from './overviewData'
 import { getSelectedPreIpoSectors, PRE_IPO_EXCLUDE_SECTOR_QUERY_KEY, PRE_IPO_SECTOR_QUERY_KEY } from './queryState'
 import type { PreIpoOverviewPageProps } from './types'
@@ -30,6 +31,8 @@ import type { PreIpoOverviewPageProps } from './types'
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const
 const DEFAULT_PAGINATION: PaginationState = { pageIndex: 0, pageSize: 50 }
 const DEFAULT_SORTING: SortingState = [{ id: 'latestEstimatedValuation', desc: true }]
+const DAYS_PER_YEAR = 365
+const DAYS_PER_MONTH = DAYS_PER_YEAR / 12
 
 function formatMoney(value: number | null | undefined): string {
 	return (
@@ -51,9 +54,11 @@ function formatPercentage(value: number | null | undefined): string {
 	)
 }
 
-function formatAge(value: number | null | undefined): string {
+function formatAgeInLargestUnit(value: number | null | undefined): string {
 	if (value == null) return '-'
-	return `${formatNumber(value)} ${value === 1 ? 'day' : 'days'}`
+	if (value < DAYS_PER_MONTH) return `${formatNumber(value)}D`
+	if (value < DAYS_PER_YEAR) return `${formatNumber(Math.floor(value / DAYS_PER_MONTH))}MO`
+	return `${formatNumber(value / DAYS_PER_YEAR, { maximumFractionDigits: 1 })}Y`
 }
 
 function CompanyCell({ row }: { row: { id: string; original: PreIpoCompanyListItem } }) {
@@ -105,13 +110,17 @@ const columns = [
 	}),
 	columnHelper.accessor((row) => row.latestEstimatedValuation ?? undefined, {
 		id: 'latestEstimatedValuation',
-		header: 'Estimated Valuation',
+		header: preIpoDefinitions.company.estimatedValuation.label,
 		cell: ({ getValue }) => formatMoney(getValue()),
-		meta: { headerClassName: 'w-[168px] min-w-[168px]', align: 'end' }
+		meta: {
+			headerClassName: 'w-[168px] min-w-[168px]',
+			align: 'end',
+			headerHelperText: preIpoDefinitions.company.estimatedValuation.description
+		}
 	}),
 	columnHelper.accessor((row) => row.valuationChange1YPercentage ?? undefined, {
 		id: 'valuationChange1YPercentage',
-		header: '1Y Change',
+		header: preIpoDefinitions.company.valuationChange1Y.label,
 		cell: ({ getValue }) => {
 			const value = getValue()
 			return (
@@ -120,29 +129,45 @@ const columns = [
 				</span>
 			)
 		},
-		meta: { headerClassName: 'w-[112px] min-w-[112px]', align: 'end' }
+		meta: {
+			headerClassName: 'w-[112px] min-w-[112px]',
+			align: 'end',
+			headerHelperText: preIpoDefinitions.company.valuationChange1Y.description
+		}
 	}),
 	columnHelper.accessor((row) => row.latestRaise ?? undefined, {
 		id: 'latestRaise',
-		header: 'Latest Raise',
+		header: preIpoDefinitions.company.latestRaise.label,
 		cell: ({ getValue }) => formatMoney(getValue()),
-		meta: { headerClassName: 'w-[132px] min-w-[132px]', align: 'end' }
+		meta: {
+			headerClassName: 'w-[132px] min-w-[132px]',
+			align: 'end',
+			headerHelperText: preIpoDefinitions.company.latestRaise.description
+		}
 	}),
 	columnHelper.accessor((row) => row.latestFundingValuation ?? undefined, {
 		id: 'latestFundingValuation',
-		header: 'Latest Funding Valuation',
+		header: preIpoDefinitions.company.latestFundingValuation.label,
 		cell: ({ getValue }) => formatMoney(getValue()),
-		meta: { headerClassName: 'w-[200px] min-w-[200px]', align: 'end' }
+		meta: {
+			headerClassName: 'w-[200px] min-w-[200px]',
+			align: 'end',
+			headerHelperText: preIpoDefinitions.company.latestFundingValuation.description
+		}
 	}),
 	columnHelper.accessor((row) => row.totalRaised ?? undefined, {
 		id: 'totalRaised',
-		header: 'Total Raised',
+		header: preIpoDefinitions.company.totalRaised.label,
 		cell: ({ getValue }) => formatMoney(getValue()),
-		meta: { headerClassName: 'w-[132px] min-w-[132px]', align: 'end' }
+		meta: {
+			headerClassName: 'w-[132px] min-w-[132px]',
+			align: 'end',
+			headerHelperText: preIpoDefinitions.company.totalRaised.description
+		}
 	}),
 	columnHelper.accessor((row) => row.premiumVsLatestFundingPercentage ?? undefined, {
 		id: 'premiumVsLatestFundingPercentage',
-		header: 'Premium vs Funding',
+		header: preIpoDefinitions.company.premiumVsFunding.label,
 		cell: ({ getValue }) => {
 			const value = getValue()
 			return (
@@ -151,19 +176,21 @@ const columns = [
 				</span>
 			)
 		},
-		meta: { headerClassName: 'w-[172px] min-w-[172px]', align: 'end' }
+		meta: {
+			headerClassName: 'w-[172px] min-w-[172px]',
+			align: 'end',
+			headerHelperText: preIpoDefinitions.company.premiumVsFunding.description
+		}
 	}),
 	columnHelper.accessor((row) => row.daysSinceLatestFunding ?? undefined, {
 		id: 'daysSinceLatestFunding',
-		header: 'Funding Age',
-		cell: ({ getValue }) => formatAge(getValue()),
-		meta: { headerClassName: 'w-[132px] min-w-[132px]', align: 'end' }
-	}),
-	columnHelper.accessor((row) => row.daysSinceLastValuation ?? undefined, {
-		id: 'daysSinceLastValuation',
-		header: 'Valuation Age',
-		cell: ({ getValue }) => formatAge(getValue()),
-		meta: { headerClassName: 'w-[140px] min-w-[140px]', align: 'end' }
+		header: preIpoDefinitions.company.fundingAge.label,
+		cell: ({ getValue }) => formatAgeInLargestUnit(getValue()),
+		meta: {
+			headerClassName: 'w-[132px] min-w-[132px]',
+			align: 'end',
+			headerHelperText: preIpoDefinitions.company.fundingAge.description
+		}
 	})
 ]
 

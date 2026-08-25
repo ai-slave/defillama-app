@@ -10,6 +10,7 @@ import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { preIpoIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
+import { preIpoDefinitions } from './definitions'
 import type { PreIpoCompanyPageProps } from './types'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -62,10 +63,22 @@ export function PreIpoCompanyPage({
 						</div>
 					</div>
 					<div className="flex flex-col">
-						<MetricRow label="Estimated Valuation" value={formatMoney(summary.latestEstimatedValuation)} />
-						<MetricRow label="Latest Raise" value={formatMoney(summary.latestRaise?.amountRaised ?? null)} />
+						<MetricRow
+							label={preIpoDefinitions.company.estimatedValuation.label}
+							tooltip={preIpoDefinitions.company.estimatedValuation.description}
+							value={formatMoney(summary.latestEstimatedValuation)}
+						/>
+						<MetricRow
+							label={preIpoDefinitions.company.latestRaise.label}
+							tooltip={preIpoDefinitions.company.latestRaise.description}
+							value={formatMoney(summary.latestRaise?.amountRaised ?? null)}
+						/>
 						<MetricRow label="Latest Round" value={summary.latestRaise?.series ?? '-'} />
-						<MetricRow label="Latest Funding Valuation" value={formatMoney(summary.latestRaise?.valuation ?? null)} />
+						<MetricRow
+							label={preIpoDefinitions.company.latestFundingValuation.label}
+							tooltip={preIpoDefinitions.company.latestFundingValuation.description}
+							value={formatMoney(summary.latestRaise?.valuation ?? null)}
+						/>
 						<MetricRow
 							label="Latest Funding Date"
 							value={summary.latestRaise ? (formatDate(summary.latestRaise.date) ?? '-') : '-'}
