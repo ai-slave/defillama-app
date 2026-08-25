@@ -21,7 +21,7 @@ import { Panel } from '~/ui/Panel'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formatDateTime } from '~/utils/dateFormat'
 import { preIpoIconUrl } from '~/utils/icons'
-import { formatPercent, formatUsd } from '~/utils/numberFormat'
+import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { PreIpoCompanyListItem } from './api.types'
 import { filterPreIpoCompanies, getPreIpoSectors } from './overviewData'
 import { getSelectedPreIpoSectors, PRE_IPO_EXCLUDE_SECTOR_QUERY_KEY, PRE_IPO_SECTOR_QUERY_KEY } from './queryState'
@@ -53,7 +53,7 @@ function formatPercentage(value: number | null | undefined): string {
 
 function formatAge(value: number | null | undefined): string {
 	if (value == null) return '-'
-	return `${value.toLocaleString()} ${value === 1 ? 'day' : 'days'}`
+	return `${formatNumber(value)} ${value === 1 ? 'day' : 'days'}`
 }
 
 function CompanyCell({ row }: { row: { id: string; original: PreIpoCompanyListItem } }) {

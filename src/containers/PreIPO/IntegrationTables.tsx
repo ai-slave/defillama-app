@@ -1,6 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
+import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
-import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -10,12 +10,18 @@ function formatMoney(value: number | null | undefined): string {
 	return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, maximumFractionDigits: 2 }) ?? '-'
 }
 
-function ExternalLink({ href, label }: { href: string; label: string }) {
+function IntegrationLink({ href, label }: { href: string; label: string }) {
 	return (
-		<Button as="a" href={href} target="_blank" rel="noopener noreferrer" size="sm">
-			{label}
-			<Icon name="arrow-up-right" height={14} width={14} />
-		</Button>
+		<BasicLink
+			href={href}
+			target="_blank"
+			rel="noopener noreferrer"
+			title={label}
+			className="inline-flex max-w-full items-center gap-1 text-link hover:underline"
+		>
+			<span className="truncate">{label}</span>
+			<Icon name="arrow-up-right" height={14} width={14} className="shrink-0" aria-hidden="true" />
+		</BasicLink>
 	)
 }
 
@@ -45,7 +51,8 @@ const perpColumns = [
 	perpColumnHelper.accessor('defillamaContract', {
 		header: 'Contract',
 		enableSorting: false,
-		meta: { headerClassName: 'w-[170px]', cellClassName: 'truncate', align: 'start' }
+		cell: ({ getValue, row }) => <IntegrationLink href={row.original.tradeUrl} label={getValue()} />,
+		meta: { headerClassName: 'w-[240px] min-w-[240px]', align: 'start' }
 	}),
 	perpColumnHelper.accessor((row) => row.price ?? undefined, {
 		id: 'price',
@@ -79,10 +86,9 @@ const perpColumns = [
 		meta: { headerClassName: 'w-[170px]', align: 'end' }
 	}),
 	perpColumnHelper.accessor('tradeUrl', {
-		header: 'Market',
+		header: 'Trade URL',
 		enableSorting: false,
-		cell: ({ getValue }) => <ExternalLink href={getValue()} label="Trade" />,
-		meta: { headerClassName: 'w-[90px]', align: 'end', csvHeader: 'Trade URL' }
+		meta: { hidden: true, csvOnly: true }
 	})
 ]
 
@@ -91,7 +97,8 @@ const issuerColumns = [
 	issuerColumnHelper.accessor('issuerName', {
 		header: 'Issuer',
 		enableSorting: false,
-		meta: { headerClassName: 'w-[160px]', align: 'start' }
+		cell: ({ getValue, row }) => <IntegrationLink href={row.original.productUrl} label={getValue()} />,
+		meta: { headerClassName: 'w-[180px]', align: 'start' }
 	}),
 	issuerColumnHelper.accessor('backing', {
 		header: 'Backing',
@@ -117,10 +124,9 @@ const issuerColumns = [
 		meta: { headerClassName: 'w-[170px]', align: 'end' }
 	}),
 	issuerColumnHelper.accessor('productUrl', {
-		header: 'Product',
+		header: 'Product URL',
 		enableSorting: false,
-		cell: ({ getValue }) => <ExternalLink href={getValue()} label="View" />,
-		meta: { headerClassName: 'w-[90px]', align: 'end', csvHeader: 'Product URL' }
+		meta: { hidden: true, csvOnly: true }
 	})
 ]
 
