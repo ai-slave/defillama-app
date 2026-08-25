@@ -75,7 +75,6 @@ function CompanyCell({ row }: { row: { id: string; original: PreIpoCompanyListIt
 				<BasicLink href={`/pre-ipo/${row.original.id}`} className="truncate font-medium text-link">
 					{row.original.name}
 				</BasicLink>
-				<span className="truncate text-xs text-secondary">{row.original.id}</span>
 			</span>
 		</span>
 	)
