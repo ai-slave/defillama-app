@@ -1,7 +1,8 @@
 export interface ICex {
 	name: string
-	defillamaCexSlug?: string
-	exchangeSlug?: string
+	cexProtocolSlug?: string
+	exchangeProfileSlug?: string
+	tokensToExclude: string[]
 	coin?: string
 	coinSymbol?: string
 	walletsLink?: string
@@ -19,4 +20,9 @@ export interface ICex {
 	oi: number | null
 	derivVolume: number | null
 	leverage: number | null
+}
+
+export interface CexInflowsRequest {
+	cexProtocolSlug: string
+	tokensToExclude: string[]
 }

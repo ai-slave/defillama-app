@@ -45,7 +45,7 @@ describe('/api/private/cex/inflows', () => {
 		const req = {
 			method: 'POST',
 			headers: {},
-			query: { slug: 'Binance', start: '1', end: '2' }
+			query: { cexProtocolSlug: 'binance-cex', start: '1', end: '3602' }
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
@@ -85,7 +85,7 @@ describe('/api/private/cex/inflows', () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
-			query: { slug: 'Binance', start: '1' }
+			query: { cexProtocolSlug: 'binance-cex', start: '1' }
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
@@ -94,7 +94,7 @@ describe('/api/private/cex/inflows', () => {
 		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer ok')
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
 		expect(res.status).toHaveBeenCalledWith(400)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Missing required parameters: slug, start, end' })
+		expect(res.json).toHaveBeenCalledWith({ error: 'Missing required parameters: cexProtocolSlug, start, end' })
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
@@ -102,7 +102,7 @@ describe('/api/private/cex/inflows', () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
-			query: { slug: 'Binance', start: 'bad', end: '2' }
+			query: { cexProtocolSlug: 'binance-cex', start: 'bad', end: '2' }
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
@@ -115,6 +115,36 @@ describe('/api/private/cex/inflows', () => {
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
+	it('rejects a single inflow interval of exactly one hour', async () => {
+		const req = {
+			method: 'GET',
+			headers: { authorization: 'Bearer ok' },
+			query: { cexProtocolSlug: 'binance-cex', start: '1', end: '3601' }
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await inflowsHandler(req, res)
+
+		expect(res.status).toHaveBeenCalledWith(400)
+		expect(res.json).toHaveBeenCalledWith({ error: 'end must be more than one hour after start' })
+		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+	})
+
+	it('rejects repeated tokensToExclude query parameters', async () => {
+		const req = {
+			method: 'GET',
+			headers: { authorization: 'Bearer ok' },
+			query: { cexProtocolSlug: 'binance-cex', start: '1', end: '3602', tokensToExclude: ['BNB', 'BUSD'] }
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await inflowsHandler(req, res)
+
+		expect(res.status).toHaveBeenCalledWith(400)
+		expect(res.json).toHaveBeenCalledWith({ error: 'tokensToExclude must be a comma-separated string' })
+		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+	})
+
 	it('authenticates before revealing unknown CEX slugs', async () => {
 		validateSubscriptionMock.mockResolvedValue({
 			valid: false,
@@ -124,7 +154,7 @@ describe('/api/private/cex/inflows', () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer bad' },
-			query: { slug: 'unknown', start: '1', end: '2' }
+			query: { cexProtocolSlug: 'unknown', start: '1', end: '3602' }
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
@@ -141,7 +171,7 @@ describe('/api/private/cex/inflows', () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
-			query: { slug: 'unknown', start: '1', end: '2' }
+			query: { cexProtocolSlug: 'unknown', start: '1', end: '3602' }
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
@@ -158,7 +188,7 @@ describe('/api/private/cex/inflows', () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
-			query: { slug: 'Binance', start: '1000', end: '2000', tokensToExclude: 'BNB' }
+			query: { cexProtocolSlug: 'binance-cex', start: '1000', end: '5000', tokensToExclude: 'BNB' }
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
@@ -166,7 +196,7 @@ describe('/api/private/cex/inflows', () => {
 
 		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer ok')
 		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith(
-			'https://api.example.com/inflows/binance-cex/1000?end=2000&tokensToExclude=BNB'
+			'https://api.example.com/inflows/binance-cex/1000?end=5000&tokensToExclude=BNB'
 		)
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
 		expect(res.status).toHaveBeenCalledWith(200)
@@ -178,14 +208,14 @@ describe('/api/private/cex/inflows', () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
-			query: { slug: 'Binance', start: '1000', end: '2000' }
+			query: { cexProtocolSlug: 'binance-cex', start: '1000', end: '5000' }
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
 		await inflowsHandler(req, res)
 
 		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith(
-			'https://api.example.com/inflows/binance-cex/1000?end=2000&tokensToExclude='
+			'https://api.example.com/inflows/binance-cex/1000?end=5000&tokensToExclude='
 		)
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
 		expect(res.status).toHaveBeenCalledWith(502)
@@ -198,7 +228,7 @@ describe('/api/private/cex/inflows', () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer bad' },
-			query: { slug: 'Binance', start: '1', end: '2' }
+			query: { cexProtocolSlug: 'binance-cex', start: '1', end: '3602' }
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
@@ -217,7 +247,7 @@ describe('/api/private/cex/inflows', () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
-			query: { slug: 'Binance', start: '1', end: '2' }
+			query: { cexProtocolSlug: 'binance-cex', start: '1', end: '3602' }
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
@@ -235,7 +265,7 @@ describe('/api/private/cex/inflows/batch', () => {
 		const req = {
 			method: 'GET',
 			headers: {},
-			body: { cexs: [{ slug: 'Binance' }], start: 1, end: 2 }
+			body: { cexs: [{ cexProtocolSlug: 'binance-cex', tokensToExclude: [] }], start: 1, end: 3602 }
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
@@ -275,7 +305,7 @@ describe('/api/private/cex/inflows/batch', () => {
 		const req = {
 			method: 'POST',
 			headers: { authorization: 'Bearer ok' },
-			body: { cexs: [{ slug: 'Binance' }], start: 'bad', end: 2 }
+			body: { cexs: [{ cexProtocolSlug: 'binance-cex', tokensToExclude: [] }], start: 'bad', end: 2 }
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
@@ -288,11 +318,46 @@ describe('/api/private/cex/inflows/batch', () => {
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
+	it('rejects a non-object request body after successful auth', async () => {
+		const req = {
+			method: 'POST',
+			headers: { authorization: 'Bearer ok' },
+			body: null
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await batchHandler(req, res)
+
+		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer ok')
+		expect(res.status).toHaveBeenCalledWith(400)
+		expect(res.json).toHaveBeenCalledWith({ error: 'Request body must be an object' })
+		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+	})
+
+	it('rejects a batch inflow interval of exactly one hour', async () => {
+		const req = {
+			method: 'POST',
+			headers: { authorization: 'Bearer ok' },
+			body: {
+				cexs: [{ cexProtocolSlug: 'binance-cex', tokensToExclude: [] }],
+				start: 1,
+				end: 3601
+			}
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await batchHandler(req, res)
+
+		expect(res.status).toHaveBeenCalledWith(400)
+		expect(res.json).toHaveBeenCalledWith({ error: 'end must be more than one hour after start' })
+		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+	})
+
 	it('returns existing empty CEX array errors after successful auth', async () => {
 		const req = {
 			method: 'POST',
 			headers: { authorization: 'Bearer ok' },
-			body: { cexs: [], start: 1, end: 2 }
+			body: { cexs: [], start: 1, end: 3602 }
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
@@ -309,7 +374,7 @@ describe('/api/private/cex/inflows/batch', () => {
 		const req = {
 			method: 'POST',
 			headers: { authorization: 'Bearer ok' },
-			body: { cexs: [{ slug: 123 }], start: 1, end: 2 }
+			body: { cexs: [{ cexProtocolSlug: 123, tokensToExclude: [] }], start: 1, end: 3602 }
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
@@ -318,7 +383,67 @@ describe('/api/private/cex/inflows/batch', () => {
 		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer ok')
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
 		expect(res.status).toHaveBeenCalledWith(400)
-		expect(res.json).toHaveBeenCalledWith({ error: 'cexs must include slug values' })
+		expect(res.json).toHaveBeenCalledWith({ error: 'cexs must include protocol slugs and token exclusions' })
+		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+	})
+
+	it('requires exact string-array token exclusions', async () => {
+		const req = {
+			method: 'POST',
+			headers: { authorization: 'Bearer ok' },
+			body: {
+				cexs: [{ cexProtocolSlug: 'binance-cex', tokensToExclude: 'BNB' }],
+				start: 1,
+				end: 3602
+			}
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await batchHandler(req, res)
+
+		expect(res.status).toHaveBeenCalledWith(400)
+		expect(res.json).toHaveBeenCalledWith({ error: 'tokensToExclude must be string arrays' })
+		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+	})
+
+	it('rejects more than 100 batch entries', async () => {
+		const req = {
+			method: 'POST',
+			headers: { authorization: 'Bearer ok' },
+			body: {
+				cexs: Array.from({ length: 101 }, () => ({ cexProtocolSlug: 'binance-cex', tokensToExclude: [] })),
+				start: 1,
+				end: 3602
+			}
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await batchHandler(req, res)
+
+		expect(res.status).toHaveBeenCalledWith(413)
+		expect(res.json).toHaveBeenCalledWith({ error: 'cexs must contain at most 100 entries' })
+		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+	})
+
+	it('rejects aliases that resolve to the same CEX protocol', async () => {
+		const req = {
+			method: 'POST',
+			headers: { authorization: 'Bearer ok' },
+			body: {
+				cexs: [
+					{ cexProtocolSlug: 'binance', tokensToExclude: [] },
+					{ cexProtocolSlug: 'binance-cex', tokensToExclude: [] }
+				],
+				start: 1,
+				end: 3602
+			}
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await batchHandler(req, res)
+
+		expect(res.status).toHaveBeenCalledWith(400)
+		expect(res.json).toHaveBeenCalledWith({ error: 'Duplicate CEX: binance-cex' })
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
@@ -331,7 +456,7 @@ describe('/api/private/cex/inflows/batch', () => {
 		const req = {
 			method: 'POST',
 			headers: { authorization: 'Bearer bad' },
-			body: { cexs: [{ slug: 'unknown' }], start: 1, end: 2 }
+			body: { cexs: [{ cexProtocolSlug: 'unknown', tokensToExclude: [] }], start: 1, end: 3602 }
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
@@ -348,7 +473,7 @@ describe('/api/private/cex/inflows/batch', () => {
 		const req = {
 			method: 'POST',
 			headers: { authorization: 'Bearer ok' },
-			body: { cexs: [{ slug: 'unknown' }], start: 1, end: 2 }
+			body: { cexs: [{ cexProtocolSlug: 'unknown', tokensToExclude: [] }], start: 1, end: 3602 }
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
@@ -365,7 +490,11 @@ describe('/api/private/cex/inflows/batch', () => {
 		const req = {
 			method: 'POST',
 			headers: { authorization: 'Bearer ok' },
-			body: { cexs: [{ slug: 'Binance', tokensToExclude: 'BNB' }], start: 1000, end: 2000 }
+			body: {
+				cexs: [{ cexProtocolSlug: 'binance-cex', tokensToExclude: ['BNB', 'BUSD'] }],
+				start: 1000,
+				end: 5000
+			}
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
@@ -376,9 +505,9 @@ describe('/api/private/cex/inflows/batch', () => {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
-				protocols: [{ protocol: 'binance-cex', tokensToExclude: ['BNB'] }],
+				protocols: [{ protocol: 'binance-cex', tokensToExclude: ['BNB', 'BUSD'] }],
 				startTimestamp: 1000,
-				endTimestamp: 2000
+				endTimestamp: 5000
 			})
 		})
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
@@ -391,7 +520,7 @@ describe('/api/private/cex/inflows/batch', () => {
 		const req = {
 			method: 'POST',
 			headers: { authorization: 'Bearer ok' },
-			body: { cexs: [{ slug: 'Binance' }], start: 1000, end: 2000 }
+			body: { cexs: [{ cexProtocolSlug: 'binance-cex', tokensToExclude: [] }], start: 1000, end: 5000 }
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
@@ -403,7 +532,7 @@ describe('/api/private/cex/inflows/batch', () => {
 			body: JSON.stringify({
 				protocols: [{ protocol: 'binance-cex', tokensToExclude: [] }],
 				startTimestamp: 1000,
-				endTimestamp: 2000
+				endTimestamp: 5000
 			})
 		})
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
@@ -417,7 +546,7 @@ describe('/api/private/cex/inflows/batch', () => {
 		const req = {
 			method: 'POST',
 			headers: { authorization: 'Bearer bad' },
-			body: { cexs: [{ slug: 'Binance' }], start: 1, end: 2 }
+			body: { cexs: [{ cexProtocolSlug: 'binance-cex', tokensToExclude: [] }], start: 1, end: 3602 }
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
@@ -436,7 +565,7 @@ describe('/api/private/cex/inflows/batch', () => {
 		const req = {
 			method: 'POST',
 			headers: { authorization: 'Bearer ok' },
-			body: { cexs: [{ slug: 'Binance' }], start: 1, end: 2 }
+			body: { cexs: [{ cexProtocolSlug: 'binance-cex', tokensToExclude: [] }], start: 1, end: 3602 }
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 

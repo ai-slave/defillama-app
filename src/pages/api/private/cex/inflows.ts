@@ -4,9 +4,9 @@ import { withSubscriptionJsonRoute } from '~/server/api/withSubscriptionJsonRout
 import { fetchWithPoolingOnServer } from '~/utils/http-client'
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-	const { slug, start, end, tokensToExclude } = req.query
-	if (typeof slug !== 'string' || typeof start !== 'string' || typeof end !== 'string') {
-		return res.status(400).json({ error: 'Missing required parameters: slug, start, end' })
+	const { cexProtocolSlug, start, end, tokensToExclude } = req.query
+	if (typeof cexProtocolSlug !== 'string' || typeof start !== 'string' || typeof end !== 'string') {
+		return res.status(400).json({ error: 'Missing required parameters: cexProtocolSlug, start, end' })
 	}
 
 	const startNum = Number(start)
@@ -14,17 +14,27 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 	if (!Number.isFinite(startNum) || !Number.isFinite(endNum)) {
 		return res.status(400).json({ error: 'start and end must be valid numbers' })
 	}
+	if (!(startNum < endNum - 3600)) {
+		return res.status(400).json({ error: 'end must be more than one hour after start' })
+	}
+	let tokenExclusions = ''
+	if (tokensToExclude !== undefined) {
+		if (typeof tokensToExclude !== 'string') {
+			return res.status(400).json({ error: 'tokensToExclude must be a comma-separated string' })
+		}
+		tokenExclusions = tokensToExclude
+	}
 
 	const [{ default: metadataCache }, { resolveCexParamFromMetadata }] = await Promise.all([
 		import('~/utils/metadata'),
 		import('~/containers/Cexs/server/routes')
 	])
-	const cexRoute = resolveCexParamFromMetadata(slug, metadataCache)
+	const cexRoute = resolveCexParamFromMetadata(cexProtocolSlug, metadataCache)
 	if (!cexRoute) {
 		return res.status(404).json({ error: 'CEX not found' })
 	}
 
-	const upstreamUrl = `${SERVER_URL}/inflows/${encodeURIComponent(cexRoute.canonicalSlug)}/${startNum}?end=${endNum}&tokensToExclude=${encodeURIComponent(typeof tokensToExclude === 'string' ? tokensToExclude : '')}`
+	const upstreamUrl = `${SERVER_URL}/inflows/${encodeURIComponent(cexRoute.canonicalSlug)}/${startNum}?end=${endNum}&tokensToExclude=${encodeURIComponent(tokenExclusions)}`
 	const upstream = await fetchWithPoolingOnServer(upstreamUrl)
 
 	if (!upstream.ok) {

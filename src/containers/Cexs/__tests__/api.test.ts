@@ -23,49 +23,101 @@ beforeEach(() => {
 describe('cex api', () => {
 	it('requests exchange inflows through the batch proxy', async () => {
 		const api = await import('../api')
-		const authorizedFetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ Binance: { outflows: 100 } })))
+		const response = {
+			'binance-cex': { outflows: 100, oldTokens: { tvl: {} }, currentTokens: { tvl: {} } }
+		}
+		const authorizedFetch = vi.fn().mockResolvedValue(new Response(JSON.stringify(response)))
 
 		await expect(
-			api.fetchCexInflowsBatchProxy([{ slug: 'Binance', tokensToExclude: 'BNB' }], 1000, 2000, authorizedFetch)
-		).resolves.toEqual({ Binance: { outflows: 100 } })
+			api.fetchCexInflowsBatchProxy(
+				[{ cexProtocolSlug: 'binance-cex', tokensToExclude: ['BNB', 'BUSD'] }],
+				1000,
+				5000,
+				authorizedFetch
+			)
+		).resolves.toEqual(response)
 
 		expect(authorizedFetch).toHaveBeenCalledWith('/api/private/cex/inflows/batch', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ cexs: [{ slug: 'Binance', tokensToExclude: 'BNB' }], start: 1000, end: 2000 })
+			body: JSON.stringify({
+				cexs: [{ cexProtocolSlug: 'binance-cex', tokensToExclude: ['BNB', 'BUSD'] }],
+				start: 1000,
+				end: 5000
+			})
 		})
 	})
 
-	it('falls back to per-exchange inflows when the batch proxy is not deployed upstream', async () => {
+	it('keeps a failed batch unavailable without issuing per-exchange requests', async () => {
 		const api = await import('../api')
 		const authorizedFetch = vi
 			.fn()
-			.mockResolvedValueOnce(new Response(JSON.stringify({ error: 'not found' }), { status: 404 }))
-			.mockResolvedValueOnce(new Response(JSON.stringify({ outflows: 100 })))
-			.mockResolvedValueOnce(new Response(JSON.stringify({ outflows: -25 })))
+			.mockResolvedValue(new Response(JSON.stringify({ error: 'not found' }), { status: 404 }))
 
 		await expect(
 			api.fetchCexInflowsBatchProxy(
 				[
-					{ slug: 'Binance', tokensToExclude: 'BNB' },
-					{ slug: 'OKX', tokensToExclude: '' }
+					{ cexProtocolSlug: 'binance-cex', tokensToExclude: ['BNB'] },
+					{ cexProtocolSlug: 'okx', tokensToExclude: ['OKB'] }
 				],
 				1000,
-				2000,
+				5000,
 				authorizedFetch
 			)
-		).resolves.toEqual({
-			Binance: { outflows: 100 },
-			OKX: { outflows: -25 }
+		).rejects.toThrow('Inflows batch API returned 404')
+
+		expect(authorizedFetch).toHaveBeenCalledTimes(1)
+	})
+
+	it('splits more than 100 CEXs and merges every successful batch', async () => {
+		const api = await import('../api')
+		const cexs = Array.from({ length: 101 }, (_, index) => ({
+			cexProtocolSlug: `cex-${index}`,
+			tokensToExclude: []
+		}))
+		const firstResponse = {
+			'cex-0': { outflows: 100, oldTokens: { tvl: {} }, currentTokens: { tvl: {} } }
+		}
+		const secondResponse = {
+			'cex-100': { outflows: 0, oldTokens: { tvl: {} }, currentTokens: { tvl: {} } }
+		}
+		const authorizedFetch = vi
+			.fn()
+			.mockResolvedValueOnce(new Response(JSON.stringify(firstResponse)))
+			.mockResolvedValueOnce(new Response(JSON.stringify(secondResponse)))
+
+		await expect(api.fetchCexInflowsBatchProxy(cexs, 1000, 5000, authorizedFetch)).resolves.toEqual({
+			...firstResponse,
+			...secondResponse
 		})
 
-		expect(authorizedFetch).toHaveBeenNthCalledWith(
-			2,
-			'/api/private/cex/inflows?slug=Binance&start=1000&end=2000&tokensToExclude=BNB'
+		expect(authorizedFetch).toHaveBeenCalledTimes(2)
+		expect(authorizedFetch).toHaveBeenNthCalledWith(1, '/api/private/cex/inflows/batch', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ cexs: cexs.slice(0, 100), start: 1000, end: 5000 })
+		})
+		expect(authorizedFetch).toHaveBeenNthCalledWith(2, '/api/private/cex/inflows/batch', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ cexs: cexs.slice(100), start: 1000, end: 5000 })
+		})
+	})
+
+	it('keeps all chunked inflows unavailable when one batch fails', async () => {
+		const api = await import('../api')
+		const cexs = Array.from({ length: 101 }, (_, index) => ({
+			cexProtocolSlug: `cex-${index}`,
+			tokensToExclude: []
+		}))
+		const authorizedFetch = vi
+			.fn()
+			.mockResolvedValueOnce(new Response(JSON.stringify({})))
+			.mockResolvedValueOnce(new Response(JSON.stringify({ error: 'failed' }), { status: 502 }))
+
+		await expect(api.fetchCexInflowsBatchProxy(cexs, 1000, 5000, authorizedFetch)).rejects.toThrow(
+			'Inflows batch API returned 502'
 		)
-		expect(authorizedFetch).toHaveBeenNthCalledWith(
-			3,
-			'/api/private/cex/inflows?slug=OKX&start=1000&end=2000&tokensToExclude='
-		)
+		expect(authorizedFetch).toHaveBeenCalledTimes(2)
 	})
 })

@@ -6,49 +6,88 @@ import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Icon } from '~/ui/Icon'
 import { QuestionHelper } from '~/ui/QuestionHelper'
+import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { formatDate } from '~/utils/dateFormat'
 import { letterLogoDataUri } from '~/utils/icons'
 import { formatUsd, roundNumber } from '~/utils/numberFormat'
 import { fetchCexInflowsBatchProxy } from './api'
-import { DateFilter } from './DateFilter'
-import type { ICex } from './types'
+import type { RawCexInflowsResponse } from './api.types'
+import { DateFilter, getCexDateRangeState } from './DateFilter'
+import type { CexInflowsRequest, ICex } from './types'
 
-type CexRow = ICex & { customRange: number | null; customRangeEnabled: boolean; customRangeLoading: boolean }
+type CustomRangeState = 'disabled' | 'loading' | 'failed' | 'missing' | 'measured'
+type CexRow = ICex & { customRange: number | null; customRangeState: CustomRangeState }
 
 const DEFAULT_SORTING_STATE = [{ id: 'cleanAssetsTvl', desc: true }]
 
 const getDateTimestamp = (dateString: string | string[] | undefined): number | null => {
 	if (!dateString || typeof dateString !== 'string') return null
-	return Number.isNaN(Number(dateString)) ? null : Number(dateString)
+	const timestamp = Number(dateString)
+	return Number.isFinite(timestamp) ? timestamp : null
 }
 
-function CustomRangeCell({
+export function getCexCustomRangeState({
 	enabled,
+	hasMeasuredAssets,
 	isLoading,
-	value
+	isError,
+	measurement
 }: {
 	enabled: boolean
+	hasMeasuredAssets: boolean
 	isLoading: boolean
-	value: number | null
-}) {
-	if (!enabled) return null
-	if (isLoading) {
-		return (
-			<span className="relative ml-auto block h-4 w-16 overflow-hidden rounded-sm bg-black/5 dark:bg-white/12">
-				<span className="pointer-events-none absolute inset-y-0 -right-1/2 -left-1/2 animate-shimmer bg-[linear-gradient(99.97deg,transparent,rgba(0,0,0,0.08),transparent)] dark:bg-[linear-gradient(99.97deg,transparent,rgba(255,255,255,0.08),transparent)]" />
-			</span>
-		)
-	}
+	isError: boolean
+	measurement: RawCexInflowsResponse | undefined
+}): CustomRangeState {
+	if (!enabled) return 'disabled'
+	if (isLoading) return 'loading'
+	if (isError) return hasMeasuredAssets ? 'failed' : 'disabled'
+	return measurement ? 'measured' : 'missing'
+}
 
-	return (
-		<span className={value == null ? '' : value < 0 ? 'text-data-down' : value > 0 ? 'text-data-up' : ''}>
-			{value != null
-				? formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-				: ''}
-		</span>
-	)
+function CustomRangeCell({ state, value }: { state: CustomRangeState; value: number | null }) {
+	switch (state) {
+		case 'disabled':
+			return null
+		case 'loading':
+			return (
+				<span className="relative ml-auto block h-4 w-16 overflow-hidden rounded-sm bg-black/5 dark:bg-white/12">
+					<span className="pointer-events-none absolute inset-y-0 -right-1/2 -left-1/2 animate-shimmer bg-[linear-gradient(99.97deg,transparent,rgba(0,0,0,0.08),transparent)] dark:bg-[linear-gradient(99.97deg,transparent,rgba(255,255,255,0.08),transparent)]" />
+				</span>
+			)
+		case 'failed': {
+			const message = 'Failed to fetch inflows for this date range'
+			return (
+				<Tooltip content={message} className="ml-auto text-error">
+					<Icon name="alert-triangle" height={14} width={14} aria-hidden="true" />
+					<span className="sr-only">{message}</span>
+				</Tooltip>
+			)
+		}
+		case 'missing':
+			return (
+				<Tooltip content="No inflow data available for this date range">
+					<span className="text-tertiary">N/A</span>
+				</Tooltip>
+			)
+		case 'measured':
+			return (
+				<span
+					className={value != null && value < 0 ? 'text-data-down' : value != null && value > 0 ? 'text-data-up' : ''}
+				>
+					{value == null
+						? null
+						: formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+				</span>
+			)
+		default: {
+			const exhaustiveState: never = state
+			return exhaustiveState
+		}
+	}
 }
 
 export const Cexs = ({ cexs }: { cexs: Array<ICex> }) => {
@@ -57,17 +96,23 @@ export const Cexs = ({ cexs }: { cexs: Array<ICex> }) => {
 
 	const startDate = getDateTimestamp(router.query.startDate)
 	const endDate = getDateTimestamp(router.query.endDate)
-	const customRangeCexs = useMemo(
-		() =>
-			cexs
-				.filter((c): c is ICex & { defillamaCexSlug: string } => typeof c.defillamaCexSlug === 'string')
-				.map((c) => ({ slug: c.defillamaCexSlug, tokensToExclude: c.coin ?? '' })),
-		[cexs]
-	)
+	const customRangeCexs = useMemo(() => {
+		const requests: CexInflowsRequest[] = []
+		for (const cex of cexs) {
+			if (!cex.cexProtocolSlug) continue
+			requests.push({ cexProtocolSlug: cex.cexProtocolSlug, tokensToExclude: cex.tokensToExclude })
+		}
+		return requests
+	}, [cexs])
 
 	const isSubscribed = !loaders.userLoading && isAuthenticated && hasActiveSubscription
-	const customRangeEnabled = isSubscribed && !!startDate && !!endDate && customRangeCexs.length > 0
-	const { data: customRangeData, isLoading: customRangeLoading } = useQuery({
+	const customRangeEnabled =
+		isSubscribed && getCexDateRangeState(startDate, endDate) === 'valid' && customRangeCexs.length > 0
+	const {
+		data: customRangeData,
+		isLoading: customRangeLoading,
+		isError: customRangeError
+	} = useQuery({
 		queryKey: ['cex-inflows-batch', customRangeCexs, startDate, endDate],
 		queryFn: () => fetchCexInflowsBatchProxy(customRangeCexs, startDate! / 1e3, endDate! / 1e3, authorizedFetch),
 		staleTime: 60 * 60 * 1000,
@@ -76,16 +121,24 @@ export const Cexs = ({ cexs }: { cexs: Array<ICex> }) => {
 		retry: false
 	})
 
-	const enrichedData = useMemo<CexRow[]>(
-		() =>
-			cexs.map((c) => ({
-				...c,
-				customRange: c.defillamaCexSlug ? (customRangeData?.[c.defillamaCexSlug]?.outflows ?? null) : null,
-				customRangeEnabled: customRangeEnabled && !!c.defillamaCexSlug,
-				customRangeLoading: customRangeEnabled && customRangeLoading
-			})),
-		[cexs, customRangeData, customRangeEnabled, customRangeLoading]
-	)
+	const enrichedData = useMemo<CexRow[]>(() => {
+		const rows: CexRow[] = []
+		for (const cex of cexs) {
+			const measurement = cex.cexProtocolSlug ? customRangeData?.[cex.cexProtocolSlug] : undefined
+			rows.push({
+				...cex,
+				customRange: measurement?.outflows ?? null,
+				customRangeState: getCexCustomRangeState({
+					enabled: customRangeEnabled && cex.cexProtocolSlug != null,
+					hasMeasuredAssets: cex.currentTvl != null,
+					isLoading: customRangeLoading,
+					isError: customRangeError,
+					measurement
+				})
+			})
+		}
+		return rows
+	}, [cexs, customRangeData, customRangeEnabled, customRangeError, customRangeLoading])
 
 	return (
 		<TableWithSearch<CexRow>
@@ -116,20 +169,20 @@ const columns = [
 		enableSorting: false,
 		cell: ({ getValue, row }) => {
 			const name = getValue()
-			const cexSlug = row.original.defillamaCexSlug
+			const cexProtocolSlug = row.original.cexProtocolSlug
 			return (
 				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<TokenLogo
-						name={row.original.exchangeSlug ?? slug(name)}
+						name={row.original.exchangeProfileSlug ?? slug(name)}
 						kind="exchange"
 						fallbackSrc={letterLogoDataUri(name)}
 						alt={`${name} logo`}
 					/>
-					{cexSlug == null ? (
+					{cexProtocolSlug == null ? (
 						name
 					) : (
-						<BasicLink href={`/cex/${slug(cexSlug)}`} className="truncate label-md text-link hover:underline">
+						<BasicLink href={`/cex/${cexProtocolSlug}`} className="truncate label-md text-link hover:underline">
 							{name}
 						</BasicLink>
 					)}
@@ -143,7 +196,7 @@ const columns = [
 	columnHelper.accessor('currentTvl', {
 		header: 'Assets',
 		cell: (info) => {
-			if (info.row.original.defillamaCexSlug == null) {
+			if (info.row.original.cexProtocolSlug == null) {
 				return (
 					<QuestionHelper text="This CEX has not published a list of all hot and cold wallets" className="ml-auto" />
 				)
@@ -168,7 +221,7 @@ const columns = [
 		header: 'Clean Assets',
 		cell: (info) => {
 			const coinSymbol = info.row.original.coinSymbol
-			if (info.row.original.defillamaCexSlug == null) {
+			if (info.row.original.cexProtocolSlug == null) {
 				return (
 					<QuestionHelper text="This CEX has not published a list of all hot and cold wallets" className="ml-auto" />
 				)
@@ -281,13 +334,7 @@ const columns = [
 	}),
 	columnHelper.accessor('customRange', {
 		header: 'Custom range Inflows',
-		cell: ({ row }) => (
-			<CustomRangeCell
-				enabled={row.original.customRangeEnabled}
-				isLoading={row.original.customRangeLoading}
-				value={row.original.customRange}
-			/>
-		),
+		cell: ({ row }) => <CustomRangeCell state={row.original.customRangeState} value={row.original.customRange} />,
 		meta: {
 			headerClassName: 'w-[min(200px,40vw)]',
 			align: 'end'

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getStaticProps as getCexStaticProps } from '~/pages/cex/[cex]'
 import { getStaticProps as getCexAssetsStaticProps } from '~/pages/cex/assets/[cex]'
 import { getStaticProps as getCexStablecoinsStaticProps } from '~/pages/cex/stablecoins/[cex]'
+import { resolveCexParamFromMetadata } from '../server/routes'
 import { cryptoComCexMetadataCache } from './metadataFixture'
 
 vi.mock('~/constants', async (importOriginal) => {
@@ -74,5 +75,21 @@ describe('CEX routes', () => {
 		await expect(getCexStablecoinsStaticProps({ params: { cex: 'Crypto.com' } } as never)).resolves.toEqual({
 			redirect: { destination: '/cex/stablecoins/crypto-com', permanent: true }
 		})
+	})
+
+	it('keeps a metadata-only CEX route valid without list presentation metadata', () => {
+		const metadataCache = {
+			...cryptoComCexMetadataCache,
+			cexRouteIdBySlug: { ...cryptoComCexMetadataCache.cexRouteIdBySlug, websea: 'websea' },
+			protocolMetadata: {
+				...cryptoComCexMetadataCache.protocolMetadata,
+				websea: { name: 'websea', displayName: 'Websea', tvl: true, stablecoins: true, cex: true }
+			}
+		}
+
+		const route = resolveCexParamFromMetadata('websea', metadataCache as never)
+
+		expect(route).toMatchObject({ id: 'websea', canonicalSlug: 'websea', metadata: { name: 'websea' } })
+		expect(route).not.toHaveProperty('cexMetadata')
 	})
 })

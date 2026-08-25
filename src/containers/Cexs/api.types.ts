@@ -1,17 +1,17 @@
-interface RawCex {
+export interface RawCex {
 	name: string
 	slug?: string
 	coin?: string | null
-	coinSymbol?: string
+	coinSymbol?: string | null
 	walletsLink?: string | null
 	cgId?: string | null
-	cgDeriv?: string
-	cgSpotId?: string
+	cgDeriv?: string | null
+	cgSpotId?: string | null
 	lastAuditDate?: number
 	auditor?: string | null
-	auditLink?: string
-	url?: string
-	ownTokens?: string[]
+	auditLink?: string | null
+	url?: string | null
+	ownTokens?: string[] | null
 	currentTvl?: number
 	cleanAssetsTvl?: number
 	inflows_24h?: number
@@ -28,9 +28,17 @@ export interface RawCexsResponse {
 	cg_volume_cexs: string[]
 }
 
-export interface RawCexInflowsResponse {
-	outflows?: number | null
+export interface RawCexInflowsTokenSnapshot {
+	tvl: Record<string, number>
 }
+
+export interface RawCexInflowsResponse {
+	outflows: number
+	oldTokens: RawCexInflowsTokenSnapshot
+	currentTokens: RawCexInflowsTokenSnapshot
+}
+
+export type RawCexInflowsBatchResponse = Partial<Record<string, RawCexInflowsResponse>>
 
 export type CexAnalyticsView = 'summary' | 'comparison' | 'spot-vs-derivatives' | 'market-share'
 export type CexAnalyticsMetric = 'spot' | 'derivatives'

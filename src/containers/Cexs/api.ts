@@ -1,8 +1,10 @@
 import { SERVER_URL } from '~/constants'
 import { fetchJson } from '~/utils/async'
-import type { RawCexInflowsResponse, RawCexsResponse } from './api.types'
+import type { RawCexInflowsBatchResponse, RawCexsResponse } from './api.types'
+import type { CexInflowsRequest } from './types'
 
 const CEXS_API_URL = `${SERVER_URL}/cexs`
+const CEX_INFLOW_BATCH_SIZE = 100
 
 /**
  * Fetch centralized exchange summary data.
@@ -10,50 +12,33 @@ const CEXS_API_URL = `${SERVER_URL}/cexs`
 export async function fetchCexs(): Promise<RawCexsResponse> {
 	return fetchJson<RawCexsResponse>(CEXS_API_URL)
 }
-/**
- * Fetch inflow/outflow data client-side via the authenticated proxy route.
- */
-export async function fetchCexInflowsProxy(
-	cexSlug: string,
-	startTime: number,
-	endTime: number,
-	tokensToExclude: string,
-	authorizedFetch: (url: string) => Promise<Response | null>
-): Promise<RawCexInflowsResponse> {
-	const url = `/api/private/cex/inflows?slug=${encodeURIComponent(cexSlug)}&start=${startTime}&end=${endTime}&tokensToExclude=${encodeURIComponent(tokensToExclude)}`
-	const res = await authorizedFetch(url)
-	if (!res || !res.ok) {
-		throw new Error(`Inflows API returned ${res?.status ?? 'no response'}`)
-	}
-	return res.json()
-}
-
 export async function fetchCexInflowsBatchProxy(
-	cexs: Array<{ slug: string; tokensToExclude: string }>,
+	cexs: CexInflowsRequest[],
 	startTime: number,
 	endTime: number,
 	authorizedFetch: (url: string, options?: RequestInit) => Promise<Response | null>
-): Promise<Record<string, RawCexInflowsResponse>> {
-	const res = await authorizedFetch('/api/private/cex/inflows/batch', {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ cexs, start: startTime, end: endTime })
-	})
-	if (res && (res.status === 404 || res.status === 405)) {
-		const entries = await Promise.all(
-			cexs.map(async (cex) => {
-				try {
-					const inflows = await fetchCexInflowsProxy(cex.slug, startTime, endTime, cex.tokensToExclude, authorizedFetch)
-					return [cex.slug, inflows] as const
-				} catch {
-					return null
+): Promise<RawCexInflowsBatchResponse> {
+	const requests: Array<Promise<RawCexInflowsBatchResponse>> = []
+	for (let index = 0; index < cexs.length; index += CEX_INFLOW_BATCH_SIZE) {
+		const batch = cexs.slice(index, index + CEX_INFLOW_BATCH_SIZE)
+		requests.push(
+			authorizedFetch('/api/private/cex/inflows/batch', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ cexs: batch, start: startTime, end: endTime })
+			}).then((res) => {
+				if (!res || !res.ok) {
+					throw new Error(`Inflows batch API returned ${res?.status ?? 'no response'}`)
 				}
+				return res.json()
 			})
 		)
-		return Object.fromEntries(entries.filter((entry): entry is NonNullable<typeof entry> => entry !== null))
 	}
-	if (!res || !res.ok) {
-		throw new Error(`Inflows batch API returned ${res?.status ?? 'no response'}`)
+
+	const responses = await Promise.all(requests)
+	const inflows: RawCexInflowsBatchResponse = {}
+	for (const response of responses) {
+		for (const cexProtocolSlug in response) inflows[cexProtocolSlug] = response[cexProtocolSlug]
 	}
-	return res.json()
+	return inflows
 }

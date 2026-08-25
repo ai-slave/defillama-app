@@ -1,11 +1,16 @@
 export const binanceCexMetadataCache = {
-	cexs: [{ name: 'Binance', slug: 'binance-cex', coin: 'BNB' }],
+	cexs: [
+		{ name: 'Binance', slug: 'binance-cex', coin: 'BNB' },
+		{ name: 'OKX', slug: 'okx', coin: 'OKB' }
+	],
 	cexRouteIdBySlug: {
 		binance: 'binance',
-		'binance-cex': 'binance'
+		'binance-cex': 'binance',
+		okx: 'okx'
 	},
 	cexMetadataBySlug: {
-		'binance-cex': { name: 'Binance', slug: 'binance-cex', coin: 'BNB' }
+		'binance-cex': { name: 'Binance', slug: 'binance-cex', coin: 'BNB' },
+		okx: { name: 'OKX', slug: 'okx', coin: 'OKB' }
 	},
 	protocolMetadata: {
 		binance: {
@@ -14,7 +19,8 @@ export const binanceCexMetadataCache = {
 			tvl: true,
 			stablecoins: true,
 			cex: true
-		}
+		},
+		okx: { name: 'okx', displayName: 'OKX', tvl: true, stablecoins: true, cex: true }
 	}
 }
 

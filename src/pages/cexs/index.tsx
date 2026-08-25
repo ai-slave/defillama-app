@@ -1,7 +1,7 @@
 import { Cexs } from '~/containers/Cexs'
+import { attachExchangeProfileSlugs } from '~/containers/Cexs/exchangeProfile'
 import { getCexsPageData } from '~/containers/Cexs/queries'
 import type { ICex } from '~/containers/Cexs/types'
-import { resolveExchangeByDefillamaCexSlug } from '~/containers/Markets/server/dataset.index'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -9,13 +9,8 @@ import { withPerformanceLogging } from '~/utils/perf'
 export const getStaticProps = withPerformanceLogging('cexs/index', async () => {
 	const { fetchCexExchangeSlugIndex } = await import('~/containers/Markets/server/dataset.server')
 	const [data, cexIndex] = await Promise.all([getCexsPageData(), fetchCexExchangeSlugIndex()])
-	const cexs = data.cexs.map((cex): ICex => {
-		if (!cex.defillamaCexSlug) return cex
-		const exchange = resolveExchangeByDefillamaCexSlug(cexIndex, cex.defillamaCexSlug)
-		return exchange ? { ...cex, exchangeSlug: exchange.exchange } : cex
-	})
 	return {
-		props: { cexs },
+		props: { cexs: attachExchangeProfileSlugs(data.cexs, cexIndex) },
 		revalidate: maxAgeForNext([22])
 	}
 })

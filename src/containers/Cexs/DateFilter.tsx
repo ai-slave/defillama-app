@@ -13,6 +13,14 @@ import { popoverMobileDismissStyles, popoverMobileWrapperClassName, popoverSurfa
 
 dayjs.extend(utc)
 
+export const CEX_RANGE_ERROR = 'End time must be more than one hour after start time'
+
+export function getCexDateRangeState(startDate: number | null, endDate: number | null) {
+	if (startDate == null && endDate == null) return 'inactive'
+	if (startDate == null || endDate == null || startDate >= endDate - 3_600_000) return 'invalid'
+	return 'valid'
+}
+
 const SubscribeProModal = lazy(() =>
 	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
 		default: m.SubscribeProModal
@@ -67,11 +75,16 @@ export const DateFilter = ({
 	const [localEndDate, setLocalEndDate] = useState(() => formatDateForInput(endDate))
 	const [localStartHour, setLocalStartHour] = useState(() => getHourFromTimestamp(startDate))
 	const [localEndHour, setLocalEndHour] = useState(() => getHourFromTimestamp(endDate))
+	const appliedRangeState = getCexDateRangeState(startDate, endDate)
+	const [rangeError, setRangeError] = useState<string | null>(() =>
+		appliedRangeState === 'invalid' ? CEX_RANGE_ERROR : null
+	)
 	const maxDate = getTodayString()
 
 	const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const newStartDate = e.target.value
 		setLocalStartDate(newStartDate)
+		setRangeError(null)
 
 		// If new start date is after current end date, reset end date
 		if (newStartDate && localEndDate && newStartDate > localEndDate) {
@@ -83,6 +96,7 @@ export const DateFilter = ({
 	const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const newEndDate = e.target.value
 		setLocalEndDate(newEndDate)
+		setRangeError(null)
 
 		// If new end date is before current start date, reset start date
 		if (newEndDate && localStartDate && newEndDate < localStartDate) {
@@ -93,10 +107,12 @@ export const DateFilter = ({
 
 	const handleStartHourChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
 		setLocalStartHour(e.target.value)
+		setRangeError(null)
 	}
 
 	const handleEndHourChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
 		setLocalEndHour(e.target.value)
+		setRangeError(null)
 	}
 
 	const handleReset = () => {
@@ -104,6 +120,7 @@ export const DateFilter = ({
 		setLocalEndDate('')
 		setLocalStartHour('0')
 		setLocalEndHour('0')
+		setRangeError(null)
 		void router.push(
 			{
 				pathname: router.pathname
@@ -133,6 +150,11 @@ export const DateFilter = ({
 						<span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full border border-medium bg-surface shadow-xs">
 							<LoadingSpinner size={12} />
 							<span className="sr-only">Loading custom range inflows</span>
+						</span>
+					) : null}
+					{appliedRangeState === 'invalid' ? (
+						<span className="text-warning" title={CEX_RANGE_ERROR} aria-label={CEX_RANGE_ERROR}>
+							<Icon name="alert-triangle" className="size-3.5" aria-hidden="true" />
 						</span>
 					) : null}
 					<span>Custom Range Inflows</span>
@@ -182,6 +204,15 @@ export const DateFilter = ({
 									`${startDateInput}T${startHour.toString().padStart(2, '0')}:00:00Z`
 								).getTime()
 								const endTimestamp = new Date(`${endDateInput}T${endHour.toString().padStart(2, '0')}:00:00Z`).getTime()
+								if (
+									!Number.isFinite(startTimestamp) ||
+									!Number.isFinite(endTimestamp) ||
+									getCexDateRangeState(startTimestamp, endTimestamp) !== 'valid'
+								) {
+									setRangeError(CEX_RANGE_ERROR)
+									return
+								}
+								setRangeError(null)
 
 								void router.push(
 									{
@@ -251,6 +282,12 @@ export const DateFilter = ({
 									))}
 								</select>
 							</label>
+							{rangeError ? (
+								<p role="alert" className="flex items-center gap-1.5 body-sm text-error">
+									<Icon name="alert-triangle" className="size-3.5 shrink-0" />
+									{rangeError}
+								</p>
+							) : null}
 							<div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row">
 								<Button type="reset" variant="secondary" size="md" className="w-full sm:w-auto sm:flex-1">
 									Clear

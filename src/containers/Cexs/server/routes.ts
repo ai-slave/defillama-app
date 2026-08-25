@@ -18,12 +18,16 @@ export function resolveCexParamFromMetadata(cex: string, metadataCache: Metadata
 	if (!protocolId) return null
 
 	const metadata = metadataCache.protocolMetadata[protocolId]
+	if (!metadata?.name) {
+		throw new Error(`CEX route metadata is missing for ${protocolId}`)
+	}
 	const canonicalSlug = slug(metadata.name)
+	const cexMetadata = metadataCache.cexMetadataBySlug[canonicalSlug]
 	return {
 		id: protocolId,
 		metadata,
-		cexMetadata: metadataCache.cexMetadataBySlug[canonicalSlug],
-		canonicalSlug
+		canonicalSlug,
+		...(cexMetadata ? { cexMetadata } : {})
 	}
 }
 
@@ -31,7 +35,7 @@ export function getCanonicalCexSlugsFromMetadata(metadataCache: MetadataCache): 
 	const slugs = new Set<string>()
 	for (const protocolId in metadataCache.protocolMetadata) {
 		const metadata = metadataCache.protocolMetadata[protocolId]
-		if (!metadata.cex || !metadata.name) continue
+		if (!metadata?.cex || !metadata.name) continue
 		slugs.add(slug(metadata.name))
 	}
 	return [...slugs]

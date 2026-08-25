@@ -1,4 +1,6 @@
+import { getMetadataCache } from '~/server/routeRegistry/common'
 import { fetchCexs } from './api'
+import { resolveCexParamFromMetadata } from './server/routes'
 import type { ICex } from './types'
 
 interface CexsPageData {
@@ -6,11 +8,21 @@ interface CexsPageData {
 }
 
 export async function getCexsPageData(): Promise<CexsPageData> {
-	const data = await fetchCexs()
+	const [data, metadataCache] = await Promise.all([fetchCexs(), getMetadataCache()])
+	const cexs: ICex[] = []
 
-	const cexs: ICex[] = data.cexs.map((c) => {
+	for (const c of data.cexs) {
+		const cexRoute = c.slug ? resolveCexParamFromMetadata(c.slug, metadataCache) : null
+		const tokensToExclude: string[] = []
+		if (c.coinSymbol) tokensToExclude.push(c.coinSymbol)
+		if (c.ownTokens) {
+			for (const token of c.ownTokens) {
+				if (!tokensToExclude.includes(token)) tokensToExclude.push(token)
+			}
+		}
 		const normalizedCex: ICex = {
 			name: c.name,
+			tokensToExclude,
 			currentTvl: c.currentTvl ?? null,
 			cleanAssetsTvl: c.cleanAssetsTvl ?? null,
 			inflows_24h: c.inflows_24h ?? null,
@@ -20,7 +32,7 @@ export async function getCexsPageData(): Promise<CexsPageData> {
 			oi: c.oi ?? null,
 			derivVolume: c.derivVolume ?? null,
 			leverage: c.leverage ?? null,
-			...(c.slug != null ? { defillamaCexSlug: c.slug } : {}),
+			...(cexRoute ? { cexProtocolSlug: cexRoute.canonicalSlug } : {}),
 			...(c.coin != null ? { coin: c.coin } : {}),
 			...(c.coinSymbol != null ? { coinSymbol: c.coinSymbol } : {}),
 			...(c.walletsLink != null ? { walletsLink: c.walletsLink } : {}),
@@ -31,8 +43,8 @@ export async function getCexsPageData(): Promise<CexsPageData> {
 			...(c.auditLink != null ? { auditLink: c.auditLink } : {})
 		}
 
-		return normalizedCex
-	})
+		cexs.push(normalizedCex)
+	}
 
 	return {
 		cexs: cexs.sort((a, b) => (b.cleanAssetsTvl ?? 0) - (a.cleanAssetsTvl ?? 0))
