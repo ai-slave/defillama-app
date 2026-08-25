@@ -310,7 +310,6 @@ export function buildPairColumns(
 				meta: {
 					hidden: true,
 					csvOnly: true,
-					headerClassName: 'w-[105px]',
 					align: 'end',
 					headerHelperText: definitions.maxLeverage.description
 				}

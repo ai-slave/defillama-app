@@ -95,8 +95,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 		id: 'searchPriority',
 		header: 'Search Priority',
 		meta: {
-			hidden: true,
-			headerClassName: 'w-[0px] min-w-[0px]'
+			hidden: true
 		}
 	}),
 	columnHelper.accessor('ticker', {

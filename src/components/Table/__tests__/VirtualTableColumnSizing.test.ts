@@ -78,6 +78,13 @@ function hasMetaProperty(config: AstNode, property: string): boolean {
 	return Boolean(meta && meta.type === 'ObjectExpression' && hasObjectProperty(meta, property))
 }
 
+function hasLiteralMetaFlag(config: AstNode, property: string): boolean {
+	const meta = getObjectProperty(config, 'meta')
+	if (!meta || meta.type !== 'ObjectExpression') return false
+	const value = getObjectProperty(meta, property)
+	return value?.type === 'Literal' && value.value === true
+}
+
 function compactNodeText(source: string, node: AstNode | undefined): string {
 	return node ? source.slice(node.start, node.end).replace(/\s+/g, ' ').slice(0, 120) : ''
 }
@@ -106,6 +113,8 @@ describe('VirtualTable column sizing', () => {
 				const callArguments = node.arguments as AstNode[]
 				const config = callArguments[callArguments.length - 1]
 				if (!config || config.type !== 'ObjectExpression') return
+				// Hidden export-only columns never participate in table layout.
+				if (hasLiteralMetaFlag(config, 'hidden')) return
 
 				const id = compactNodeText(source, getObjectProperty(config, 'id') ?? callArguments[0])
 				const header = compactNodeText(source, getObjectProperty(config, 'header'))
