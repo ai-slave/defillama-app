@@ -112,8 +112,9 @@ async function enrichExchangeProfile(profile: ExchangeProfileModel): Promise<Exc
 
 /**
  * Reserve charts exist only for venues whose DefiLlama cex link resolves in
- * the protocol metadata cache with tracked wallet assets — the same gating the
- * legacy /cex tabs use.
+ * the protocol metadata cache with tracked wallet assets. Every such CEX keeps
+ * both asset and stablecoin views available; transient chart failure is not
+ * product absence.
  */
 async function resolveProfileReserves(defillamaCexSlug: string | null): Promise<ExchangeProfileModel['reserves']> {
 	if (!defillamaCexSlug) return null
@@ -125,7 +126,6 @@ async function resolveProfileReserves(defillamaCexSlug: string | null): Promise<
 	if (!cexRoute || !cexRoute.metadata.tvl) return null
 	return {
 		protocolSlug: cexRoute.canonicalSlug,
-		hasStablecoins: Boolean(cexRoute.metadata.stablecoins),
 		ownToken: cexRoute.cexMetadata?.coin ?? null
 	}
 }

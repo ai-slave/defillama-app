@@ -55,9 +55,7 @@ export function ProfileReserves({
 	reserves: ExchangeReservesModel
 }) {
 	const router = useRouter()
-	const requestedView = getProfileReservesView(router.query)
-	const view: ProfileReservesView =
-		requestedView === 'stablecoins' && reserves.hasStablecoins ? 'stablecoins' : 'assets'
+	const view = getProfileReservesView(router.query)
 
 	const setView = (nextView: ProfileReservesView) => {
 		void pushShallowQuery(router, {
@@ -69,28 +67,24 @@ export function ProfileReserves({
 
 	return (
 		<div className="flex flex-col gap-2">
-			{reserves.hasStablecoins || showOwnTokensSwitch ? (
-				<div className="flex flex-wrap items-center justify-between gap-2">
-					{reserves.hasStablecoins ? (
-						<SegmentedControl
-							value={view}
-							onValueChange={setView}
-							options={[
-								{ value: 'assets', label: 'Assets' },
-								{ value: 'stablecoins', label: 'Stablecoins' }
-							]}
-							label="Reserves view"
-							variant="responsive"
-							size="md"
-						/>
-					) : null}
-					{showOwnTokensSwitch && reserves.ownToken ? (
-						<span className="ml-auto">
-							<IncludeOwnTokensSwitch ownToken={reserves.ownToken} />
-						</span>
-					) : null}
-				</div>
-			) : null}
+			<div className="flex flex-wrap items-center justify-between gap-2">
+				<SegmentedControl
+					value={view}
+					onValueChange={setView}
+					options={[
+						{ value: 'assets', label: 'Assets' },
+						{ value: 'stablecoins', label: 'Stablecoins' }
+					]}
+					label="Reserves view"
+					variant="responsive"
+					size="md"
+				/>
+				{showOwnTokensSwitch && reserves.ownToken ? (
+					<span className="ml-auto">
+						<IncludeOwnTokensSwitch ownToken={reserves.ownToken} />
+					</span>
+				) : null}
+			</div>
 			{view === 'stablecoins' ? (
 				<ReserveStablecoinCharts protocol={reserves.protocolSlug} displayName={profile.name} />
 			) : (

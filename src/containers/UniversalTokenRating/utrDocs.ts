@@ -1,3 +1,4 @@
+import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import type {
 	UtrGradeScaleEntry,
 	UtrGradingAxisConfig,
@@ -937,7 +938,12 @@ function modernizeBlock(block: UtrDocBlock): UtrDocBlock {
 }
 
 function formatWeight(weight: number): string {
-	return `${(weight * 100).toFixed(2)}%`
+	return formatPercent(weight, {
+		input: 'fraction',
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2,
+		useGrouping: false
+	})
 }
 
 function categoryWeight(criteria: UtrScoringCriterionConfig[]): number {
@@ -1044,6 +1050,8 @@ function replaceCoreComponents(chapter: UtrDocChapter, blocks: UtrDocBlock[]): U
 }
 
 function gradeRangeRows(scale: UtrGradeScaleEntry[]): string[][] {
+	const formatScore = (score: number) =>
+		formatNumber(score, { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })
 	const sorted = [...scale].sort((a, b) => {
 		if (a.min === null) return 1
 		if (b.min === null) return -1
@@ -1055,10 +1063,10 @@ function gradeRangeRows(scale: UtrGradeScaleEntry[]): string[][] {
 			entry.min === null
 				? previousMin == null
 					? 'All scores'
-					: `<${previousMin.toFixed(2)}`
+					: `<${formatScore(previousMin)}`
 				: previousMin == null
-					? `≥${entry.min.toFixed(2)}`
-					: `${entry.min.toFixed(2)}–<${previousMin.toFixed(2)}`
+					? `≥${formatScore(entry.min)}`
+					: `${formatScore(entry.min)}–<${formatScore(previousMin)}`
 		return [range, entry.grade, entry.interpretation]
 	})
 }

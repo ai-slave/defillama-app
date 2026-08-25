@@ -46,7 +46,7 @@ export const getStaticProps = withPerformanceLogging(
 				otherProtocols: protocolData.otherProtocols ?? EMPTY_OTHER_PROTOCOLS,
 				category: protocolData.category ?? null,
 				metrics: {
-					stablecoins: Boolean(cexRoute.metadata.stablecoins),
+					stablecoins: Boolean(cexRoute.metadata.tvl),
 					tvl: Boolean(cexRoute.metadata.tvl),
 					dexs: false,
 					perps: false,

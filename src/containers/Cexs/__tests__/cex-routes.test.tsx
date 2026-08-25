@@ -59,10 +59,16 @@ describe('CEX routes', () => {
 		expect(overview).toMatchObject({ props: { name: 'crypto-com' }, revalidate: 123 })
 
 		const assets = await getCexAssetsStaticProps({ params: { cex: 'crypto-com' } } as never)
-		expect(assets).toMatchObject({ props: { name: 'crypto-com' }, revalidate: 123 })
+		expect(assets).toMatchObject({
+			props: { name: 'crypto-com', metrics: { tvl: true, stablecoins: true } },
+			revalidate: 123
+		})
 
 		const stablecoins = await getCexStablecoinsStaticProps({ params: { cex: 'crypto-com' } } as never)
-		expect(stablecoins).toMatchObject({ props: { name: 'crypto-com' }, revalidate: 123 })
+		expect(stablecoins).toMatchObject({
+			props: { name: 'crypto-com', metrics: { tvl: true, stablecoins: true } },
+			revalidate: 123
+		})
 	})
 
 	it('redirects CEX aliases to canonical slugs', async () => {

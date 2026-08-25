@@ -16,6 +16,7 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { CexChartPanel, cexChartFallback } from '~/containers/Cexs/CexChartPanel'
 import {
 	buildReserveStablecoinChartData,
+	getReserveStablecoinViewState,
 	type ReserveStablecoinChartData
 } from '~/containers/Cexs/reserveStablecoinChartData'
 import { fetchProtocolTvlTokenBreakdownChart } from '~/containers/ProtocolOverview/api'
@@ -111,7 +112,7 @@ function MultiSeriesChartCard({
 					dataset={presentation.dataset}
 					charts={presentation.charts}
 					csvSource={presentation.csvSource}
-					valueSymbol={valueSymbol}
+					{...(valueSymbol ? { valueSymbol } : {})}
 					hideDefaultLegend={false}
 					onReady={handleChartReady}
 				/>
@@ -188,8 +189,9 @@ function useStablecoinData(protocolName: string) {
 	const {
 		data: tokenBreakdownData,
 		isLoading: isTokenBreakdownLoading,
+		isError: tokenBreakdownFailed,
 		dataUpdatedAt: tokenBreakdownDataUpdatedAt
-	} = useQuery<IProtocolTokenBreakdownChart | null>({
+	} = useQuery<IProtocolTokenBreakdownChart>({
 		queryKey: ['cex', protocolName, 'stablecoins', 'token-breakdown'],
 		queryFn: () => fetchProtocolTvlTokenBreakdownChart({ protocol: protocolName }),
 		staleTime: 60 * 60 * 1000,
@@ -200,6 +202,7 @@ function useStablecoinData(protocolName: string) {
 	const {
 		data: stablecoinsList,
 		isLoading: isStablecoinsListLoading,
+		isError: stablecoinListFailed,
 		dataUpdatedAt: stablecoinsListUpdatedAt
 	} = useQuery({
 		queryKey: ['cex', 'stablecoins', 'list', 'v1'],
@@ -211,7 +214,11 @@ function useStablecoinData(protocolName: string) {
 
 	const peggedAssets = stablecoinsList?.peggedAssets ?? []
 
-	const { data, isLoading } = useQuery<ReserveStablecoinChartData | null>({
+	const {
+		data,
+		isLoading,
+		isError: chartDataFailed
+	} = useQuery<ReserveStablecoinChartData | null>({
 		queryKey: [
 			'cex',
 			protocolName,
@@ -223,7 +230,7 @@ function useStablecoinData(protocolName: string) {
 		],
 		queryFn: () => {
 			if (!tokenBreakdownData || tokenBreakdownData.length === 0) return null
-			if (!peggedAssets || peggedAssets.length === 0) return null
+			if (peggedAssets.length === 0) return null
 
 			return buildReserveStablecoinChartData(tokenBreakdownData, peggedAssets)
 		},
@@ -233,7 +240,13 @@ function useStablecoinData(protocolName: string) {
 		retry: 0
 	})
 
-	return { data, isLoading: isLoading || isTokenBreakdownLoading || isStablecoinsListLoading }
+	return getReserveStablecoinViewState({
+		data: data ?? undefined,
+		isLoading: isLoading || isTokenBreakdownLoading || isStablecoinsListLoading,
+		tokenBreakdownFailed,
+		stablecoinListFailed,
+		chartDataFailed
+	})
 }
 
 /**
@@ -242,15 +255,18 @@ function useStablecoinData(protocolName: string) {
  * e.g. "binance-cex"); `displayName` only drives labels and export titles.
  */
 export function ReserveStablecoinCharts({ protocol, displayName }: { protocol: string; displayName: string }) {
-	const { data, isLoading } = useStablecoinData(protocol)
+	const state = useStablecoinData(protocol)
 
 	const exchangeSlug = slug(displayName || 'cex')
 	const buildFilename = (suffix: string) => `${exchangeSlug}-${slug(suffix)}`
 	const stablecoinsExportTitle = displayName ? `${displayName} Stablecoins` : 'Stablecoins'
 	const exchangeLogoUrl = exchangeIconUrl(exchangeSlug)
 
-	if (isLoading) return <PanelLoadingStatus />
-	if (!data) return <PanelStatus variant="empty">No stablecoin data available for this exchange</PanelStatus>
+	if (state.status === 'loading') return <PanelLoadingStatus />
+	if (state.status === 'unavailable')
+		return <PanelStatus variant="error">Failed to load stablecoin reserve data</PanelStatus>
+	if (state.status === 'empty')
+		return <PanelStatus variant="empty">No stablecoin data available for this exchange</PanelStatus>
 
 	const {
 		currentTotal,
@@ -259,8 +275,10 @@ export function ReserveStablecoinCharts({ protocol, displayName }: { protocol: s
 		totalStablecoins,
 		stablecoinsByPegMechanism,
 		stablecoinsByPegType,
-		stablecoinsByToken
-	} = data
+		stablecoinsByToken,
+		currentStablecoinCount
+	} = state.data
+	const dominantBacking = stablecoinBreakdown[0]
 
 	return (
 		<>
@@ -268,16 +286,17 @@ export function ReserveStablecoinCharts({ protocol, displayName }: { protocol: s
 				items={[
 					{
 						label: 'Total Stablecoin in CEX',
-						value: currentTotal
-							? formatUsd(currentTotal, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-							: '-'
+						value:
+							currentTotal != null
+								? formatUsd(currentTotal, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+								: '-'
 					},
-					...(stablecoinBreakdown.length > 0
+					...(dominantBacking
 						? [
 								{
 									label: 'Dominant Backing Type',
-									value: <span className="capitalize">{stablecoinBreakdown[0].mechanism.replace('-', ' ')}</span>,
-									change: `(${formatPercent(stablecoinBreakdown[0].percentage, { input: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })})`,
+									value: <span className="capitalize">{dominantBacking.mechanism.replace('-', ' ')}</span>,
+									change: `(${formatPercent(dominantBacking.percentage, { input: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })})`,
 									changeClassName: 'text-tertiary'
 								},
 								{
@@ -289,13 +308,13 @@ export function ReserveStablecoinCharts({ protocol, displayName }: { protocol: s
 											maximumFractionDigits: 1,
 											useGrouping: false
 										}) ?? '0%'
-								},
-								{
-									label: 'Number of Stablecoins',
-									value: data.stablecoinTokensUnique?.length || 0
 								}
 							]
-						: [])
+						: []),
+					{
+						label: 'Number of Stablecoins',
+						value: currentStablecoinCount
+					}
 				]}
 			/>
 

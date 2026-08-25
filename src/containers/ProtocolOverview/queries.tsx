@@ -96,7 +96,7 @@ export const getProtocolMetricFlags = ({
 		dexAggregators: !!metadata.dexAggregators,
 		perpsAggregators: !!metadata.perpsAggregators,
 		bridgeAggregators: !!metadata.bridgeAggregators,
-		stablecoins: !!metadata.stablecoins,
+		stablecoins: !!metadata.stablecoins || (!!metadata.cex && !!metadata.tvl),
 		bridge: !!metadata.bridge,
 		treasury: !!metadata.treasury,
 		unlocks: !!metadata.emissions,

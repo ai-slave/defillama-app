@@ -43,7 +43,6 @@ export const cryptoComCexMetadataCache = {
 			name: 'crypto-com',
 			displayName: 'Crypto.com',
 			tvl: true,
-			stablecoins: true,
 			cex: true
 		},
 		'no-markets': {

@@ -1,6 +1,4 @@
-import { getMetadataCache } from '~/server/routeRegistry/common'
 import { fetchCexs } from './api'
-import { resolveCexParamFromMetadata } from './server/routes'
 import type { ICex } from './types'
 
 interface CexsPageData {
@@ -8,6 +6,10 @@ interface CexsPageData {
 }
 
 export async function getCexsPageData(): Promise<CexsPageData> {
+	const [{ getMetadataCache }, { resolveCexParamFromMetadata }] = await Promise.all([
+		import('~/server/routeRegistry/common'),
+		import('./server/routes')
+	])
 	const [data, metadataCache] = await Promise.all([fetchCexs(), getMetadataCache()])
 	const cexs: ICex[] = []
 

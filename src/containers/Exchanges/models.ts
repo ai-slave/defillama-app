@@ -360,7 +360,6 @@ export interface ExchangePromotionModel {
 export interface ExchangeReservesModel {
 	/** DefiLlama protocol slug powering the reserve charts, e.g. "binance-cex". */
 	protocolSlug: string
-	hasStablecoins: boolean
 	ownToken: string | null
 }
 
