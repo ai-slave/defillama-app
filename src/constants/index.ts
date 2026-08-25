@@ -33,6 +33,9 @@ export const COINS_SERVER_URL =
 export const EQUITIES_SERVER_URL =
 	getDirectUrlEnv('EQUITIES_SERVER_URL') ??
 	(API_KEY ? `${PRO_API_BASE_URL}/${API_KEY}/equities/v1` : 'https://api.llama.fi/equities/v1')
+export const PRE_IPO_SERVER_URL =
+	getDirectUrlEnv('PRE_IPO_SERVER_URL') ??
+	(API_KEY ? `${PRO_API_BASE_URL}/${API_KEY}/pre-ipo/v1` : 'https://pre-ipo.llama.fi/v1')
 export const ETF_SERVER_URL =
 	getDirectUrlEnv('ETF_SERVER_URL') ?? (API_KEY ? `${PRO_API_BASE_URL}/${API_KEY}/etfs` : 'https://etfs.llama.fi')
 export const FDV_SERVER_URL =

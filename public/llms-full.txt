@@ -188,6 +188,7 @@ Common usage examples:
 - [Digital Asset Treasuries (DATs)](https://defillama.com/digital-asset-treasuries): Institutions that own cryptocurrencies as part of their corporate treasury Category: Equities, ETFs & DATs.
 - [Exchange Traded Funds (ETFs)](https://defillama.com/etfs): AUM, Flows, Volume metrics of all ETFs Category: Equities, ETFs & DATs.
 - [Equities](https://defillama.com/equities): Live company rankings by market cap, price, volume, and price change Category: Equities, ETFs & DATs.
+- [Pre-IPO](https://defillama.com/pre-ipo): Private-company valuations, funding rounds, and tradable pre-IPO markets Category: Equities, ETFs & DATs.
 - [Raises: Overview](https://defillama.com/raises): Total amount of capital raised by a project Category: Raises.
 - [Investors](https://defillama.com/raises/investors): List of investors that have invested in a project Category: Raises.
 - [Treasuries](https://defillama.com/treasuries): Value of tokens owned by a protocol, including its own token and breakdown of assets held Category: Treasury.

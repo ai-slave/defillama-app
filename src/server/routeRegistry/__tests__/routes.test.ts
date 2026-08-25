@@ -101,7 +101,9 @@ function metadataFixture(): MetadataCache {
 		stablecoinPeggedAssetSlugs: [],
 		stablecoinPeggedAssetSlugsSet: new Set(),
 		equitiesCompanyRoutes: [],
-		equitiesCompanySlugsSet: new Set()
+		equitiesCompanySlugsSet: new Set(),
+		preIpoCompanyIds: [],
+		preIpoCompanyIdsSet: new Set()
 	}
 }
 

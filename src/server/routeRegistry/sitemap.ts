@@ -6,6 +6,7 @@ import { getExchangeSitemapRoutes } from '~/containers/Exchanges/server/routes'
 import { getLiquidationsSitemapRoutes } from '~/containers/LiquidationsV2/server/routes'
 import { getNarrativeSitemapRoutes } from '~/containers/NarrativeTracker/server/routes'
 import { getOracleSitemapRoutes } from '~/containers/Oracles/server/routes'
+import { getPreIpoSitemapRoutes } from '~/containers/PreIPO/server/routes'
 import { getProDashboardSitemapEntries } from '~/containers/ProDashboard/server/routes'
 import {
 	getProtocolSitemapRoutes,
@@ -31,6 +32,7 @@ export const SITEMAP_SECTION_IDS = [
 	'bridges',
 	'rwa',
 	'dat',
+	'pre-ipo',
 	'oracles',
 	'liquidations',
 	'unlocks',
@@ -64,7 +66,8 @@ let sitemapSectionCache: SitemapSectionCache | null = null
 let sitemapSectionRefreshPromise: Promise<void> | null = null
 
 function stripQuery(route: string): string {
-	return route.split('?')[0]
+	const queryIndex = route.indexOf('?')
+	return queryIndex === -1 ? route : route.slice(0, queryIndex)
 }
 
 function toEntries(routes: string[]): SitemapUrlEntry[] {
@@ -137,6 +140,8 @@ async function buildBaseSitemapSection(
 			return { id: sectionId, entries: toEntries(getRWASitemapRoutes(metadataCache)) }
 		case 'dat':
 			return { id: sectionId, entries: toEntries(getDATSitemapRoutes(metadataCache)) }
+		case 'pre-ipo':
+			return { id: sectionId, entries: toEntries(getPreIpoSitemapRoutes(metadataCache)) }
 		case 'oracles':
 			return { id: sectionId, entries: toEntries(getOracleSitemapRoutes(metadataCache)) }
 		case 'liquidations':

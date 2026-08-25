@@ -54,6 +54,8 @@ export type MultiSeriesChartSeriesConfig = {
 	hideAreaStyle?: boolean
 	/** Stroke overrides for a line series, e.g. a dashed overlay. Merged over the resolved series colour. */
 	lineStyle?: LineSeriesOption['lineStyle']
+	/** Render a line as a step series while retaining the canonical dataset contract. */
+	step?: LineSeriesOption['step']
 	areaStyle?: LineSeriesOption['areaStyle']
 	markLine?: LineSeriesOption['markLine']
 	markArea?: LineSeriesOption['markArea']

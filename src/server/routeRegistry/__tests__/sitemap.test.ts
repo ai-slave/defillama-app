@@ -87,7 +87,9 @@ const metadataCache = vi.hoisted(
 		stablecoinPeggedAssetSlugs: ['tether'],
 		stablecoinPeggedAssetSlugsSet: new Set(['tether']),
 		equitiesCompanyRoutes: [],
-		equitiesCompanySlugsSet: new Set()
+		equitiesCompanySlugsSet: new Set(),
+		preIpoCompanyIds: ['anthropic', 'commonwealth-fusion'],
+		preIpoCompanyIdsSet: new Set(['anthropic', 'commonwealth-fusion'])
 	})
 )
 
@@ -186,6 +188,9 @@ describe('cache-backed sitemap sections', () => {
 		expect(getSitemapSectionPath('protocols-by-category')).toBe('sitemap/protocols-by-category.xml')
 		expect(entriesBySection.get('dat')).toEqual(
 			expect.arrayContaining(['digital-asset-treasury/MSTR', 'digital-asset-treasuries/bitcoin'])
+		)
+		expect(entriesBySection.get('pre-ipo')).toEqual(
+			expect.arrayContaining(['pre-ipo/anthropic', 'pre-ipo/commonwealth-fusion'])
 		)
 		expect(entriesBySection.get('rwa')).toEqual(
 			expect.arrayContaining(['rwa/asset/ondo%2Fusdy', 'rwa/perps/contract/xyz%3Asp500', 'rwa/perps/forex'])

@@ -54,7 +54,8 @@ function createPayload(): CoreMetadataPayload {
 		oracleRoutes: { oracleNameBySlug: {}, chainNameBySlug: {}, chainSlugsByOracleSlug: {} },
 		digitalAssetTreasuryRoutes: { assetSlugs: [], companySlugs: [] },
 		stablecoinPeggedAssetSlugs: [],
-		equitiesCompanyRoutes: []
+		equitiesCompanyRoutes: [],
+		preIpoCompanyIds: []
 	}
 }
 

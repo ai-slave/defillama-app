@@ -33,6 +33,10 @@ export function equityIconUrl(symbol: string, country: string, size: number = 48
 	return `${ICONS_CDN}/equities/${encodeURIComponent(country.toUpperCase())}/${encodeURIComponent(symbol.toUpperCase())}?w=${size}&h=${size}`
 }
 
+export function preIpoIconUrl(companyId: string, size: number = 48): string {
+	return `${ICONS_CDN}/pre-ipo/${encodeURIComponent(companyId)}?w=${size}&h=${size}`
+}
+
 export function equityCountryFlagUrl(country: string, size: number = 48): string {
 	return `${ICONS_CDN}/equities/${encodeURIComponent(country.toUpperCase())}/flag?w=${size}&h=${size}`
 }

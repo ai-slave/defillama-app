@@ -60,6 +60,7 @@ function createPayload(overrides: Partial<CoreMetadataPayload> = {}): CoreMetada
 		digitalAssetTreasuryRoutes: { assetSlugs: ['bitcoin'], companySlugs: ['MSTR'] },
 		stablecoinPeggedAssetSlugs: ['tether'],
 		equitiesCompanyRoutes: [{ ticker: 'NVDA', country: 'US' }],
+		preIpoCompanyIds: ['anthropic'],
 		...overrides
 	}
 }
@@ -115,6 +116,7 @@ describe('metadata artifact contract', () => {
 		expect(metadata.digitalAssetTreasuryCompanyRouteBySlug.mstr).toBe('MSTR')
 		expect(metadata.stablecoinPeggedAssetSlugsSet.has('tether')).toBe(true)
 		expect(metadata.equitiesCompanySlugsSet.has('NVDA:US')).toBe(true)
+		expect(metadata.preIpoCompanyIdsSet.has('anthropic')).toBe(true)
 	})
 
 	it('applies refresh payloads directly', () => {

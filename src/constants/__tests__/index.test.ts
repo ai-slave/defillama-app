@@ -55,6 +55,7 @@ describe('server URL constants', () => {
 		expect(constants.BRIDGES_SERVER_URL).toBe('https://bridges.llama.fi')
 		expect(constants.COINS_SERVER_URL).toBe('https://coins.llama.fi')
 		expect(constants.EQUITIES_SERVER_URL).toBe('https://api.llama.fi/equities/v1')
+		expect(constants.PRE_IPO_SERVER_URL).toBe('https://pre-ipo.llama.fi/v1')
 		expect(constants.ETF_SERVER_URL).toBe('https://etfs.llama.fi')
 		expect(constants.FDV_SERVER_URL).toBe('https://fdv-server.llama.fi')
 		expect(constants.RWA_SERVER_URL).toBe('https://api.llama.fi/rwa')
@@ -78,6 +79,7 @@ describe('server URL constants', () => {
 			ETF_SERVER_URL: 'https://etfs.example.com/',
 			FDV_SERVER_URL: 'https://fdv.example.com/',
 			LIQUIDATIONS_SERVER_URL_V2: 'https://liquidations.example.com/',
+			PRE_IPO_SERVER_URL: 'https://pre-ipo.example.com/v1/',
 			RISK_SERVER_URL: 'https://risks.example.com/',
 			RWA_PERPS_SERVER_URL: 'https://rwa-perps.example.com/',
 			RWA_SERVER_URL: 'https://rwa.example.com/',
@@ -94,6 +96,7 @@ describe('server URL constants', () => {
 		expect(constants.BRIDGES_SERVER_URL).toBe('https://bridges.example.com')
 		expect(constants.COINS_SERVER_URL).toBe('https://coins.example.com')
 		expect(constants.EQUITIES_SERVER_URL).toBe('https://equities.example.com/v1')
+		expect(constants.PRE_IPO_SERVER_URL).toBe('https://pre-ipo.example.com/v1')
 		expect(constants.ETF_SERVER_URL).toBe('https://etfs.example.com')
 		expect(constants.FDV_SERVER_URL).toBe('https://fdv.example.com')
 		expect(constants.RWA_SERVER_URL).toBe('https://rwa.example.com')

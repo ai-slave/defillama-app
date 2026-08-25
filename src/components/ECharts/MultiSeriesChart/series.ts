@@ -6,8 +6,8 @@ import { isIconUrlValid } from '../shared/icon'
 import type { buildHallmarksMarkLine } from './hallmarks'
 import type { IMultiSeriesChartProps } from './types'
 
-type NamedLineSeriesOption = LineSeriesOption & { name: string; type: 'line' }
-type NamedBarSeriesOption = BarSeriesOption & { name: string; type: 'bar' }
+type NamedLineSeriesOption = Omit<LineSeriesOption, 'type'> & { name: string; type: 'line' }
+type NamedBarSeriesOption = Omit<BarSeriesOption, 'type'> & { name: string; type: 'bar' }
 
 type MultiSeriesRenderSeries = NamedLineSeriesOption | NamedBarSeriesOption
 type ChartInstanceRef = { current: echarts.ECharts | null }
@@ -151,6 +151,7 @@ export function buildMultiSeries({
 		}
 
 		if (series.type === 'line' && chart.hideAreaStyle) delete series.areaStyle
+		if (series.type === 'line' && chart.step != null) series.step = chart.step
 		if (series.type === 'line' && chart.lineStyle) {
 			series.lineStyle = { ...(series.lineStyle ?? {}), ...chart.lineStyle }
 		}

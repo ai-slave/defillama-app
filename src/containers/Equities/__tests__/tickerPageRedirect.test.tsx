@@ -24,7 +24,9 @@ function setupPageModule({
 		},
 		emissionsProtocolBySlug: { nvda: 'nvda' },
 		equitiesCompanyRoutes: routes,
-		equitiesCompanySlugsSet: new Set(routes.map((route) => `${route.ticker}:${route.country}`))
+		equitiesCompanySlugsSet: new Set(routes.map((route) => `${route.ticker}:${route.country}`)),
+		preIpoCompanyIds: [],
+		preIpoCompanyIdsSet: new Set()
 	}
 
 	vi.doMock('~/constants', () => ({

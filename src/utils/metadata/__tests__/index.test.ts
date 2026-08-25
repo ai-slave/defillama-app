@@ -103,6 +103,7 @@ function createMetadataPayload(overrides: Partial<CoreMetadataPayload> = {}): Co
 		digitalAssetTreasuryRoutes: { assetSlugs: [], companySlugs: [] },
 		stablecoinPeggedAssetSlugs: [],
 		equitiesCompanyRoutes: [],
+		preIpoCompanyIds: [],
 		...overrides
 	}
 }

@@ -69,7 +69,9 @@ const {
 		stablecoinPeggedAssetSlugs: [],
 		stablecoinPeggedAssetSlugsSet: new Set<string>(),
 		equitiesCompanyRoutes: [],
-		equitiesCompanySlugsSet: new Set<string>()
+		equitiesCompanySlugsSet: new Set<string>(),
+		preIpoCompanyIds: [],
+		preIpoCompanyIdsSet: new Set<string>()
 	}
 	return {
 		fetchChainMock: vi.fn(),

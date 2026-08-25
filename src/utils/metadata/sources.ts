@@ -4,6 +4,7 @@ import type { RawCexsResponse } from '~/containers/Cexs/api.types'
 import type { IEquitiesCompanyRoute } from '~/containers/Equities/api.types'
 import { fetchEquitiesCompanyRouteMetadata } from '~/containers/Equities/server/metadata'
 import type { RawAllLiquidationsResponse } from '~/containers/LiquidationsV2/api.types'
+import { fetchPreIpoCompanyIds } from '~/containers/PreIPO/server/metadata'
 import type { RWAPlatformsIndex } from '~/containers/RWA/PlatformPage/api.types'
 import { fetchEmissionsProtocolsList, normalizeProtocolEmissions } from '~/containers/Unlocks/api'
 import type {
@@ -44,6 +45,7 @@ export type CoreMetadataSources = {
 	emissionsSupplyMetrics: ProtocolEmissionSupplyMetricsMap
 	emissions: ProtocolEmission[]
 	equitiesCompanyRoutes: IEquitiesCompanyRoute[]
+	preIpoCompanyIds: string[]
 }
 
 async function fetchNamedMetadataSource<T>(name: string, promise: Promise<T>): Promise<T> {
@@ -76,7 +78,8 @@ export async function fetchCoreMetadataSources(): Promise<CoreMetadataSources> {
 		emissionsProtocolsList,
 		emissionsSupplyMetrics,
 		emissions,
-		equitiesCompanyRoutes
+		equitiesCompanyRoutes,
+		preIpoCompanyIds
 	] = await Promise.all([
 		fetchNamedMetadataSource(
 			'protocols API',
@@ -134,7 +137,8 @@ export async function fetchCoreMetadataSources(): Promise<CoreMetadataSources> {
 			'emissions API',
 			fetchMetadataJson<RawProtocolEmission[]>(`${coreApiBase}/emissions`).then(normalizeProtocolEmissions)
 		),
-		fetchNamedMetadataSource('equities company routes API', fetchEquitiesCompanyRouteMetadata())
+		fetchNamedMetadataSource('equities company routes API', fetchEquitiesCompanyRouteMetadata()),
+		fetchNamedMetadataSource('pre-IPO company routes API', fetchPreIpoCompanyIds())
 	])
 
 	return {
@@ -153,6 +157,7 @@ export async function fetchCoreMetadataSources(): Promise<CoreMetadataSources> {
 		emissionsProtocolsList,
 		emissionsSupplyMetrics,
 		emissions,
-		equitiesCompanyRoutes
+		equitiesCompanyRoutes,
+		preIpoCompanyIds
 	}
 }

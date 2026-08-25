@@ -765,6 +765,19 @@
       ]
     },
     {
+      "name": "Pre-IPO",
+      "route": "/pre-ipo",
+      "category": "Equities, ETFs & DATs",
+      "description": "Private-company valuations, funding rounds, and tradable pre-IPO markets",
+      "isNew": true,
+      "searchKeywords": [
+        "pre ipo",
+        "pre-ipo",
+        "private companies",
+        "private company valuations"
+      ]
+    },
+    {
       "name": "Raises: Overview",
       "route": "/raises",
       "category": "Raises",
@@ -1087,6 +1100,17 @@
       "name": "Equities",
       "route": "/equities",
       "icon": "trending-up"
+    },
+    {
+      "name": "Pre-IPO",
+      "route": "/pre-ipo",
+      "icon": "briefcase-business",
+      "isNew": true,
+      "searchKeywords": [
+        "pre ipo",
+        "pre-ipo",
+        "private companies"
+      ]
     },
     {
       "name": "Market Makers",

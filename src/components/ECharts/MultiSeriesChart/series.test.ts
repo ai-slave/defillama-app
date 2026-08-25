@@ -6,6 +6,16 @@ import { buildMultiSeries } from './series'
 
 const chartTheme = getChartTheme(false)
 
+function requireSeries(series: ReturnType<typeof buildMultiSeries>[number] | undefined) {
+	if (!series) throw new Error('Expected a chart series')
+	return series
+}
+
+function requireLineSeries(series: ReturnType<typeof buildMultiSeries>[number] | undefined) {
+	if (!series || series.type !== 'line') throw new Error('Expected a line series')
+	return series
+}
+
 describe('MultiSeriesChart series construction', () => {
 	it('keeps stacked bars out of ECharts large mode and normalizes explicit axes', () => {
 		const series = buildMultiSeries({
@@ -24,23 +34,24 @@ describe('MultiSeriesChart series construction', () => {
 	})
 
 	it('uses TBD presentation when inconsistent external metadata marks both projection states', () => {
-		const [series] = buildMultiSeries({
-			charts: [
-				{
-					name: 'Projection',
-					type: 'line',
-					encode: { x: 'timestamp', y: 'Projection' },
-					isTBD: true,
-					isForecast: true
-				}
-			],
-			selectedCharts: undefined,
-			expandTo100Percent: false,
-			solidChartAreaStyle: false,
-			chartTheme
-		})
+		const series = requireLineSeries(
+			buildMultiSeries({
+				charts: [
+					{
+						name: 'Projection',
+						type: 'line',
+						encode: { x: 'timestamp', y: 'Projection' },
+						isTBD: true,
+						isForecast: true
+					}
+				],
+				selectedCharts: undefined,
+				expandTo100Percent: false,
+				solidChartAreaStyle: false,
+				chartTheme
+			})[0]
+		)
 
-		if (series.type !== 'line') throw new Error('Expected a line series')
 		expect(series.endLabel).toMatchObject({ formatter: 'TBD', offset: [-40, 10] })
 	})
 
@@ -51,23 +62,24 @@ describe('MultiSeriesChart series construction', () => {
 				convertToPixel: (_finder: unknown, value: number) => value * 2
 			} as unknown as ECharts
 		}
-		const [series] = buildMultiSeries({
-			charts: [
-				{
-					name: 'Forecast',
-					type: 'line',
-					encode: { x: 0, y: 1 },
-					isForecast: true
-				}
-			],
-			selectedCharts: undefined,
-			expandTo100Percent: false,
-			solidChartAreaStyle: false,
-			chartTheme,
-			chartRef
-		})
+		const series = requireLineSeries(
+			buildMultiSeries({
+				charts: [
+					{
+						name: 'Forecast',
+						type: 'line',
+						encode: { x: 0, y: 1 },
+						isForecast: true
+					}
+				],
+				selectedCharts: undefined,
+				expandTo100Percent: false,
+				solidChartAreaStyle: false,
+				chartTheme,
+				chartRef
+			})[0]
+		)
 
-		if (series.type !== 'line') throw new Error('Expected a line series')
 		expect(series.itemStyle).toMatchObject({ opacity: 0.5 })
 		expect(series.lineStyle).toMatchObject({ type: 'dashed', opacity: 0.5 })
 		expect(series.endLabel).toMatchObject({ offset: [-80, 15] })
@@ -78,17 +90,33 @@ describe('MultiSeriesChart series construction', () => {
 	})
 
 	it('keeps fallback colors stable when an earlier series is filtered out', () => {
-		const [series] = buildMultiSeries({
-			charts: [
-				{ name: 'First', type: 'line', encode: { x: 0, y: 1 } },
-				{ name: 'Second', type: 'line', encode: { x: 0, y: 2 } }
-			],
-			selectedCharts: new Set(['Second']),
-			expandTo100Percent: false,
-			solidChartAreaStyle: false,
-			chartTheme
-		})
+		const series = requireSeries(
+			buildMultiSeries({
+				charts: [
+					{ name: 'First', type: 'line', encode: { x: 0, y: 1 } },
+					{ name: 'Second', type: 'line', encode: { x: 0, y: 2 } }
+				],
+				selectedCharts: new Set(['Second']),
+				expandTo100Percent: false,
+				solidChartAreaStyle: false,
+				chartTheme
+			})[0]
+		)
 
 		expect(series.itemStyle).toMatchObject({ color: CHART_COLORS[1] })
+	})
+
+	it('passes a typed step mode to line series', () => {
+		const series = requireLineSeries(
+			buildMultiSeries({
+				charts: [{ name: 'Rounds', type: 'line', encode: { x: 0, y: 1 }, step: 'end' }],
+				selectedCharts: undefined,
+				expandTo100Percent: false,
+				solidChartAreaStyle: false,
+				chartTheme
+			})[0]
+		)
+
+		expect(series).toMatchObject({ type: 'line', step: 'end' })
 	})
 })

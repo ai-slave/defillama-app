@@ -8,6 +8,7 @@ export const DIRECT_URL_ENV_NAMES = [
 	'FDV_SERVER_URL',
 	'LIQUIDATIONS_SERVER_URL_V2',
 	'MARKETS_SERVER_URL',
+	'PRE_IPO_SERVER_URL',
 	'RISK_SERVER_URL',
 	'RWA_PERPS_SERVER_URL',
 	'RWA_SERVER_URL',
@@ -87,6 +88,8 @@ export function getDirectUrlEnv(name: DirectUrlEnvName): string | undefined {
 			return normalizeDirectUrlEnv(process.env.LIQUIDATIONS_SERVER_URL_V2)
 		case 'MARKETS_SERVER_URL':
 			return normalizeDirectUrlEnv(process.env.MARKETS_SERVER_URL)
+		case 'PRE_IPO_SERVER_URL':
+			return normalizeDirectUrlEnv(process.env.PRE_IPO_SERVER_URL)
 		case 'RISK_SERVER_URL':
 			return normalizeDirectUrlEnv(process.env.RISK_SERVER_URL)
 		case 'RWA_PERPS_SERVER_URL':

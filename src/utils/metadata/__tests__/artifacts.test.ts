@@ -35,7 +35,8 @@ function createPayload(): CoreMetadataPayload {
 		oracleRoutes: { oracleNameBySlug: {}, chainNameBySlug: {}, chainSlugsByOracleSlug: {} },
 		digitalAssetTreasuryRoutes: { assetSlugs: [], companySlugs: [] },
 		stablecoinPeggedAssetSlugs: [],
-		equitiesCompanyRoutes: []
+		equitiesCompanyRoutes: [],
+		preIpoCompanyIds: []
 	}
 }
 
@@ -57,7 +58,7 @@ describe('metadata artifact loader', () => {
 		const artifacts = loadMetadataArtifactsFromDisk(cacheDir)
 
 		expect(artifacts.manifest?.pulledAt).toBe(123)
-		expect(artifacts.payload.protocols['parent#aave'].displayName).toBe('Aave')
+		expect(artifacts.payload.protocols['parent#aave']).toMatchObject({ displayName: 'Aave' })
 		expect(artifacts.payload.chainCategories).toEqual(['EVM'])
 		expect(artifacts.payload.rwaPlatformsIndex).toEqual({ generatedAt: 0, byPid: {}, platforms: {} })
 	})

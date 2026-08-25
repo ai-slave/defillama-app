@@ -52,6 +52,7 @@ export type CoreMetadataPayload = {
 	digitalAssetTreasuryRoutes: DigitalAssetTreasuryRoutesMetadata
 	stablecoinPeggedAssetSlugs: string[]
 	equitiesCompanyRoutes: IEquitiesCompanyRoute[]
+	preIpoCompanyIds: string[]
 }
 
 // Serialized artifacts intentionally differ from this runtime shape: the cache
@@ -99,6 +100,8 @@ export type MetadataCache = {
 	stablecoinPeggedAssetSlugsSet: Set<string>
 	equitiesCompanyRoutes: IEquitiesCompanyRoute[]
 	equitiesCompanySlugsSet: Set<string>
+	preIpoCompanyIds: string[]
+	preIpoCompanyIdsSet: Set<string>
 }
 
 export type MetadataArtifactKey = keyof CoreMetadataPayload
@@ -259,6 +262,11 @@ export const METADATA_ARTIFACT_REGISTRY = defineMetadataArtifactRegistry({
 		file: 'equitiesCompanyRoutes.json',
 		stub: [],
 		parse: parseArtifact<IEquitiesCompanyRoute[]>
+	},
+	preIpoCompanyIds: {
+		file: 'preIpoCompanyIds.json',
+		stub: [],
+		parse: parseArtifact<string[]>
 	}
 })
 
@@ -342,7 +350,9 @@ export function hydrateMetadataCache(payload: CoreMetadataPayload): MetadataCach
 		stablecoinPeggedAssetSlugs: payload.stablecoinPeggedAssetSlugs,
 		stablecoinPeggedAssetSlugsSet: new Set(payload.stablecoinPeggedAssetSlugs),
 		equitiesCompanyRoutes: payload.equitiesCompanyRoutes,
-		equitiesCompanySlugsSet: new Set(payload.equitiesCompanyRoutes.map(getEquityCompanySlug))
+		equitiesCompanySlugsSet: new Set(payload.equitiesCompanyRoutes.map(getEquityCompanySlug)),
+		preIpoCompanyIds: payload.preIpoCompanyIds,
+		preIpoCompanyIdsSet: new Set(payload.preIpoCompanyIds)
 	}
 }
 
