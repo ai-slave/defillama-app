@@ -13,7 +13,7 @@ type MultiSeriesRenderSeries = NamedLineSeriesOption | NamedBarSeriesOption
 type ChartInstanceRef = { current: echarts.ECharts | null }
 
 const MIN_PROJECTION_LABEL_HEIGHT_PX = 16
-const BLURRED_SERIES_OPACITY = 0.5
+const EMPHASIS_COLOR_LIFT = 0.25
 
 function createHatchPattern(color: string, opacity: number): { image: HTMLCanvasElement; repeat: 'repeat' } | null {
 	if (typeof document === 'undefined') return null
@@ -92,11 +92,12 @@ export function buildMultiSeries({
 		if (chart.yAxisIndex != null) hasExplicitYAxis = true
 
 		const color = chart.color ?? CHART_COLORS[index % CHART_COLORS.length]!
+		const emphasisColor = echarts.color.lift(color, EMPHASIS_COLOR_LIFT)
 		const common = {
 			name: chart.name,
 			encode: chart.encode,
 			...(chart.data ? { data: chart.data } : {}),
-			emphasis: { focus: 'series' as const, shadowBlur: 10 },
+			emphasis: { itemStyle: { color: emphasisColor } },
 			itemStyle: { color },
 			...(chart.legendIconUrl && isIconUrlValid(chart.legendIconUrl)
 				? { legendIcon: `image://${chart.legendIconUrl}` }
@@ -109,11 +110,6 @@ export function buildMultiSeries({
 			series = {
 				...common,
 				type: 'line',
-				blur: {
-					itemStyle: { opacity: BLURRED_SERIES_OPACITY },
-					lineStyle: { opacity: BLURRED_SERIES_OPACITY },
-					areaStyle: { opacity: BLURRED_SERIES_OPACITY }
-				},
 				symbol: showSymbol ? (chart.symbol ?? 'circle') : 'none',
 				showSymbol,
 				...(showSymbol ? { symbolSize: chart.symbolSize ?? 6 } : {}),
@@ -124,7 +120,6 @@ export function buildMultiSeries({
 			series = {
 				...common,
 				type: 'bar',
-				blur: { itemStyle: { opacity: BLURRED_SERIES_OPACITY } },
 				large: chart.large ?? chart.stack == null,
 				...(chart.barMinWidth != null ? { barMinWidth: chart.barMinWidth } : {}),
 				...(chart.barMaxWidth != null ? { barMaxWidth: chart.barMaxWidth } : {})

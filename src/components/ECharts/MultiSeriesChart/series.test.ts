@@ -1,4 +1,5 @@
 import type { ECharts } from 'echarts'
+import * as echarts from 'echarts/core'
 import { describe, expect, it } from 'vitest'
 import { CHART_COLORS } from '~/constants/colors'
 import { getChartTheme } from '../shared/chartTheme'
@@ -17,11 +18,11 @@ function requireLineSeries(series: ReturnType<typeof buildMultiSeries>[number] |
 }
 
 describe('MultiSeriesChart series construction', () => {
-	it('focuses hovered stacked bars while keeping their peers visible', () => {
+	it('brightens emphasized series without dimming their peers', () => {
 		const series = buildMultiSeries({
 			charts: [
-				{ name: 'First', type: 'bar', stack: 'total', encode: { x: 0, y: 1 } },
-				{ name: 'Second', type: 'bar', stack: 'total', encode: { x: 0, y: 2 } }
+				{ name: 'First', type: 'bar', stack: 'total', encode: { x: 'timestamp', y: 'First' } },
+				{ name: 'Second', type: 'bar', stack: 'total', encode: { x: 'timestamp', y: 'Second' } }
 			],
 			selectedCharts: undefined,
 			expandTo100Percent: false,
@@ -29,20 +30,16 @@ describe('MultiSeriesChart series construction', () => {
 			chartTheme
 		})
 
-		expect(series[0]).toMatchObject({
-			emphasis: { focus: 'series', shadowBlur: 10 },
-			blur: { itemStyle: { opacity: 0.5 } }
-		})
-		expect(series[1]).toMatchObject({
-			emphasis: { focus: 'series', shadowBlur: 10 },
-			blur: { itemStyle: { opacity: 0.5 } }
-		})
+		expect(series[0]?.emphasis).toEqual({ itemStyle: { color: echarts.color.lift(CHART_COLORS[0]!, 0.25) } })
+		expect(series[1]?.emphasis).toEqual({ itemStyle: { color: echarts.color.lift(CHART_COLORS[1]!, 0.25) } })
+		expect(series[0]?.blur).toBeUndefined()
+		expect(series[1]?.blur).toBeUndefined()
 	})
 
-	it('keeps blurred line and area context visible', () => {
+	it('keeps line emphasis local to visible point symbols', () => {
 		const series = requireLineSeries(
 			buildMultiSeries({
-				charts: [{ name: 'Line', type: 'line', encode: { x: 0, y: 1 } }],
+				charts: [{ name: 'Line', type: 'line', encode: { x: 'timestamp', y: 'Line' } }],
 				selectedCharts: undefined,
 				expandTo100Percent: false,
 				solidChartAreaStyle: false,
@@ -50,11 +47,9 @@ describe('MultiSeriesChart series construction', () => {
 			})[0]
 		)
 
-		expect(series.blur).toEqual({
-			itemStyle: { opacity: 0.5 },
-			lineStyle: { opacity: 0.5 },
-			areaStyle: { opacity: 0.5 }
-		})
+		const emphasisColor = echarts.color.lift(CHART_COLORS[0]!, 0.25)
+		expect(series.emphasis).toEqual({ itemStyle: { color: emphasisColor } })
+		expect(series.blur).toBeUndefined()
 	})
 
 	it('keeps stacked bars out of ECharts large mode and normalizes explicit axes', () => {
