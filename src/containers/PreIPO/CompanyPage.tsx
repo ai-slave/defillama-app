@@ -4,7 +4,7 @@ import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { FundingRoundsTable } from '~/containers/PreIPO/FundingRoundsTable'
 import { PerpetualMarketsTable, TokenIssuersTable } from '~/containers/PreIPO/IntegrationTables'
 import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
@@ -14,6 +14,7 @@ import { preIpoDefinitions } from './definitions'
 import type { PreIpoCompanyPageProps } from './types'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
+const HISTORY_CHART_TITLE = 'Valuation & Funding History'
 
 function formatMoney(value: number | null): string {
 	return (
@@ -24,8 +25,6 @@ function formatMoney(value: number | null): string {
 		}) ?? '-'
 	)
 }
-
-const EMPTY_CHART_DATASET = { dimensions: ['timestamp'], source: [] }
 
 export function PreIpoCompanyPage({
 	summary,
@@ -92,33 +91,32 @@ export function PreIpoCompanyPage({
 					</div>
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
-					<Suspense fallback={<ChartPanelExportShellFallback />}>
-						<div className="relative">
+					{chart ? (
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart
-								dataset={chart?.dataset ?? EMPTY_CHART_DATASET}
-								charts={chart?.charts ?? []}
+								dataset={chart.dataset}
+								charts={chart.charts}
 								valueSymbol="$"
 								hideDefaultLegend={false}
-								title="Valuation History"
-								hideDataZoom={chart == null}
-								exportButtons={
-									chart
-										? {
-												png: true,
-												csv: true,
-												filename: `${summary.id}-valuation-history`,
-												pngTitle: `${summary.name} Valuation History`
-											}
-										: 'hidden'
-								}
+								title={HISTORY_CHART_TITLE}
+								exportButtons={{
+									png: true,
+									csv: true,
+									filename: `${summary.id}-valuation-history`,
+									pngTitle: `${summary.name} ${HISTORY_CHART_TITLE}`
+								}}
 							/>
-							{chart == null ? (
-								<p className="pointer-events-none absolute inset-0 flex items-center justify-center body-md text-secondary">
-									No valuation history available
-								</p>
-							) : null}
-						</div>
-					</Suspense>
+						</Suspense>
+					) : (
+						<>
+							<ChartPanelToolbar className="justify-end">
+								<h2 className="mr-auto heading-xs">{HISTORY_CHART_TITLE}</h2>
+							</ChartPanelToolbar>
+							<ChartPanelBodyFallback className="body-md text-secondary">
+								No valuation history available
+							</ChartPanelBodyFallback>
+						</>
+					)}
 				</ChartPanel>
 			</SummaryCardGrid>
 
