@@ -12,11 +12,11 @@ export type PreIpoCompanyListItem = {
 	latestEstimatedValuation: number | null
 	latestRaise: number | null
 	latestFundingValuation: number | null
+	latestFundingDate: string | null
+	lastValuationDate: string | null
 	totalRaised: number | null
 	valuationChange1YPercentage: number | null
 	premiumVsLatestFundingPercentage: number | null
-	daysSinceLatestFunding: number | null
-	daysSinceLastValuation: number | null
 }
 
 export type PreIpoValuation = {
@@ -39,6 +39,7 @@ export type PreIpoCompanySummary = {
 	website: string
 	sector: string
 	latestEstimatedValuation: number | null
+	lastValuationDate: string | null
 	latestRaise: PreIpoRaise | null
 }
 

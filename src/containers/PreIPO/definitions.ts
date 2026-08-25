@@ -26,10 +26,13 @@ export const preIpoDefinitions = {
 			description:
 				'Percentage difference between the latest estimated valuation and the latest funding-round valuation.'
 		},
-		fundingAge: {
-			label: 'Funding Age',
-			description:
-				'Time since the latest tracked funding round. D means days, MO means months, and Y means years; month and year displays are approximate.'
+		latestFundingDate: {
+			label: 'Latest Funding Date',
+			description: 'Date of the latest tracked funding round.'
+		},
+		valuationAsOf: {
+			label: 'Valuation As Of',
+			description: 'Most recent valuation observation date from any tracked source.'
 		}
 	},
 	fundingRound: {

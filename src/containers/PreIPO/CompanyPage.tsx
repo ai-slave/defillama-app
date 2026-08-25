@@ -69,6 +69,11 @@ export function PreIpoCompanyPage({
 							value={formatMoney(summary.latestEstimatedValuation)}
 						/>
 						<MetricRow
+							label={preIpoDefinitions.company.valuationAsOf.label}
+							tooltip={preIpoDefinitions.company.valuationAsOf.description}
+							value={formatDate(summary.lastValuationDate) ?? '-'}
+						/>
+						<MetricRow
 							label={preIpoDefinitions.company.latestRaise.label}
 							tooltip={preIpoDefinitions.company.latestRaise.description}
 							value={formatMoney(summary.latestRaise?.amountRaised ?? null)}
@@ -80,7 +85,8 @@ export function PreIpoCompanyPage({
 							value={formatMoney(summary.latestRaise?.valuation ?? null)}
 						/>
 						<MetricRow
-							label="Latest Funding Date"
+							label={preIpoDefinitions.company.latestFundingDate.label}
+							tooltip={preIpoDefinitions.company.latestFundingDate.description}
 							value={summary.latestRaise ? (formatDate(summary.latestRaise.date) ?? '-') : '-'}
 						/>
 					</div>

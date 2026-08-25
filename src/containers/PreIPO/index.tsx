@@ -19,9 +19,9 @@ import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
-import { formatDateTime } from '~/utils/dateFormat'
+import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { preIpoIconUrl } from '~/utils/icons'
-import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { PreIpoCompanyListItem } from './api.types'
 import { preIpoDefinitions } from './definitions'
 import { filterPreIpoCompanies, getPreIpoSectors } from './overviewData'
@@ -31,8 +31,6 @@ import type { PreIpoOverviewPageProps } from './types'
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const
 const DEFAULT_PAGINATION: PaginationState = { pageIndex: 0, pageSize: 50 }
 const DEFAULT_SORTING: SortingState = [{ id: 'latestEstimatedValuation', desc: true }]
-const DAYS_PER_YEAR = 365
-const DAYS_PER_MONTH = DAYS_PER_YEAR / 12
 
 function formatMoney(value: number | null | undefined): string {
 	return (
@@ -52,13 +50,6 @@ function formatPercentage(value: number | null | undefined): string {
 			maximumFractionDigits: 2
 		}) ?? '-'
 	)
-}
-
-function formatAgeInLargestUnit(value: number | null | undefined): string {
-	if (value == null) return '-'
-	if (value < DAYS_PER_MONTH) return `${formatNumber(value)}D`
-	if (value < DAYS_PER_YEAR) return `${formatNumber(Math.floor(value / DAYS_PER_MONTH))}MO`
-	return `${formatNumber(value / DAYS_PER_YEAR, { maximumFractionDigits: 1 })}Y`
 }
 
 function CompanyCell({ row }: { row: { id: string; original: PreIpoCompanyListItem } }) {
@@ -182,14 +173,24 @@ const columns = [
 			headerHelperText: preIpoDefinitions.company.premiumVsFunding.description
 		}
 	}),
-	columnHelper.accessor((row) => row.daysSinceLatestFunding ?? undefined, {
-		id: 'daysSinceLatestFunding',
-		header: preIpoDefinitions.company.fundingAge.label,
-		cell: ({ getValue }) => formatAgeInLargestUnit(getValue()),
+	columnHelper.accessor((row) => row.latestFundingDate ?? undefined, {
+		id: 'latestFundingDate',
+		header: preIpoDefinitions.company.latestFundingDate.label,
+		cell: ({ getValue }) => formatDate(getValue()) ?? '-',
 		meta: {
-			headerClassName: 'w-[132px] min-w-[132px]',
+			headerClassName: 'w-[164px] min-w-[164px]',
 			align: 'end',
-			headerHelperText: preIpoDefinitions.company.fundingAge.description
+			headerHelperText: preIpoDefinitions.company.latestFundingDate.description
+		}
+	}),
+	columnHelper.accessor((row) => row.lastValuationDate ?? undefined, {
+		id: 'lastValuationDate',
+		header: preIpoDefinitions.company.valuationAsOf.label,
+		cell: ({ getValue }) => formatDate(getValue()) ?? '-',
+		meta: {
+			headerClassName: 'w-[148px] min-w-[148px]',
+			align: 'end',
+			headerHelperText: preIpoDefinitions.company.valuationAsOf.description
 		}
 	})
 ]

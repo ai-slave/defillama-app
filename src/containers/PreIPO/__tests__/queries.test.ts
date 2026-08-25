@@ -24,11 +24,11 @@ const company = {
 	latestEstimatedValuation: 1_000,
 	latestRaise: 100,
 	latestFundingValuation: 900,
+	latestFundingDate: '2026-08-24',
+	lastValuationDate: '2026-08-25',
 	totalRaised: 500,
 	valuationChange1YPercentage: 10,
-	premiumVsLatestFundingPercentage: 11.11,
-	daysSinceLatestFunding: 1,
-	daysSinceLastValuation: 0
+	premiumVsLatestFundingPercentage: 11.11
 } satisfies PreIpoCompanyListItem
 const summary = {
 	id: 'anthropic',
@@ -38,6 +38,7 @@ const summary = {
 	website: 'https://anthropic.com',
 	sector: 'Artificial Intelligence',
 	latestEstimatedValuation: null,
+	lastValuationDate: null,
 	latestRaise: null
 } satisfies PreIpoCompanySummary
 const integrations = {

@@ -12,11 +12,11 @@ const companies: PreIpoCompanyListItem[] = [
 		latestEstimatedValuation: 1,
 		latestRaise: 1,
 		latestFundingValuation: null,
+		latestFundingDate: '2026-08-25',
+		lastValuationDate: '2026-08-24',
 		totalRaised: 1,
 		valuationChange1YPercentage: 0,
-		premiumVsLatestFundingPercentage: null,
-		daysSinceLatestFunding: 0,
-		daysSinceLastValuation: 1
+		premiumVsLatestFundingPercentage: null
 	},
 	{
 		id: 'commonwealth-fusion',
@@ -27,11 +27,11 @@ const companies: PreIpoCompanyListItem[] = [
 		latestEstimatedValuation: null,
 		latestRaise: null,
 		latestFundingValuation: null,
+		latestFundingDate: null,
+		lastValuationDate: null,
 		totalRaised: null,
 		valuationChange1YPercentage: null,
-		premiumVsLatestFundingPercentage: null,
-		daysSinceLatestFunding: null,
-		daysSinceLastValuation: null
+		premiumVsLatestFundingPercentage: null
 	}
 ]
 
