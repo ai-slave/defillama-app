@@ -17,6 +17,46 @@ function requireLineSeries(series: ReturnType<typeof buildMultiSeries>[number] |
 }
 
 describe('MultiSeriesChart series construction', () => {
+	it('focuses hovered stacked bars while keeping their peers visible', () => {
+		const series = buildMultiSeries({
+			charts: [
+				{ name: 'First', type: 'bar', stack: 'total', encode: { x: 0, y: 1 } },
+				{ name: 'Second', type: 'bar', stack: 'total', encode: { x: 0, y: 2 } }
+			],
+			selectedCharts: undefined,
+			expandTo100Percent: false,
+			solidChartAreaStyle: false,
+			chartTheme
+		})
+
+		expect(series[0]).toMatchObject({
+			emphasis: { focus: 'series', shadowBlur: 10 },
+			blur: { itemStyle: { opacity: 0.5 } }
+		})
+		expect(series[1]).toMatchObject({
+			emphasis: { focus: 'series', shadowBlur: 10 },
+			blur: { itemStyle: { opacity: 0.5 } }
+		})
+	})
+
+	it('keeps blurred line and area context visible', () => {
+		const series = requireLineSeries(
+			buildMultiSeries({
+				charts: [{ name: 'Line', type: 'line', encode: { x: 0, y: 1 } }],
+				selectedCharts: undefined,
+				expandTo100Percent: false,
+				solidChartAreaStyle: false,
+				chartTheme
+			})[0]
+		)
+
+		expect(series.blur).toEqual({
+			itemStyle: { opacity: 0.5 },
+			lineStyle: { opacity: 0.5 },
+			areaStyle: { opacity: 0.5 }
+		})
+	})
+
 	it('keeps stacked bars out of ECharts large mode and normalizes explicit axes', () => {
 		const series = buildMultiSeries({
 			charts: [
