@@ -113,7 +113,8 @@ describe('ProtocolOverview API chart fetchers', () => {
 					targetType: 'DeFi Protocol',
 					returnedFunds: 862_000,
 					defillamaId: '1599',
-					language: null
+					language: null,
+					source: ''
 				}
 			]
 		} satisfies IProtocolMetricsV2Api

@@ -24,9 +24,13 @@ const columns = [
 
 					<TokenLogo name={row.original.slug} kind="token" data-lgonly alt={`Logo of ${row.original.slug}`} />
 
-					<BasicLink href={row.original.route} className="truncate text-sm font-medium text-link hover:underline">
-						{name}
-					</BasicLink>
+					{row.original.route ? (
+						<BasicLink href={row.original.route} className="truncate text-sm font-medium text-link hover:underline">
+							{name}
+						</BasicLink>
+					) : (
+						<span className="truncate text-sm font-medium">{name}</span>
+					)}
 				</span>
 			)
 		},
@@ -34,7 +38,7 @@ const columns = [
 			headerClassName: 'w-[min(240px,40vw)]'
 		}
 	}),
-	columnHelper.accessor((row) => row.totalHackedUsd, {
+	columnHelper.accessor((row) => row.totalHackedUsd ?? undefined, {
 		id: 'Total Hacked',
 		header: 'Total Hacked',
 		cell: (info) =>
@@ -44,7 +48,7 @@ const columns = [
 			align: 'center'
 		}
 	}),
-	columnHelper.accessor((row) => row.returnedFundsUsd, {
+	columnHelper.accessor((row) => row.returnedFundsUsd ?? undefined, {
 		id: 'Returned Funds',
 		header: 'Returned Funds',
 		cell: (info) =>

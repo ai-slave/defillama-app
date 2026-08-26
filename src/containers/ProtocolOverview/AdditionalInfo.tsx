@@ -446,7 +446,7 @@ function Yields(props: IProtocolOverviewPageData) {
 	)
 }
 
-const Hacks = (props: IProtocolOverviewPageData) => {
+export const Hacks = (props: Pick<IProtocolOverviewPageData, 'hacks' | 'id' | 'name'>) => {
 	if (!props.hacks?.length) return null
 	return (
 		<Card as="section" padding="sm" className="col-span-1 flex flex-col gap-3 body-md">
@@ -457,7 +457,7 @@ const Hacks = (props: IProtocolOverviewPageData) => {
 						key={`${props.name}-hack-${hack.date}`}
 						className="flex flex-col gap-1 border-b border-subtle py-2 first:pt-0 last:border-none last:pb-0"
 					>
-						{hack.date ? (
+						{hack.date !== null ? (
 							<p>
 								<span>Date: </span>
 								<span>{formatDate(hack.date, { input: 'seconds' })}</span>
@@ -469,7 +469,7 @@ const Hacks = (props: IProtocolOverviewPageData) => {
 								<span>{hack.name}</span>
 							</p>
 						) : null}
-						{hack.amountUsd ? (
+						{hack.amountUsd !== null ? (
 							<p>
 								<span>Amount: </span>
 								<span>
@@ -497,7 +497,7 @@ const Hacks = (props: IProtocolOverviewPageData) => {
 								<span>{hack.targetType}</span>
 							</p>
 						) : null}
-						{hack.returnedFundsUsd ? (
+						{hack.returnedFundsUsd !== null ? (
 							<p>
 								<span>Returned Funds: </span>
 								<span>

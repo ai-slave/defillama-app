@@ -10,7 +10,7 @@ const pageName = ['Protocols', 'ranked by', 'Total Value Lost in Hacks']
 export const getStaticProps = withPerformanceLogging('protocols/total-value-lost-in-hacks', async () => {
 	const metadataCache = await import('~/utils/metadata').then((m) => m.default)
 	const data = await getTotalValueLostInHacksByProtocol({
-		protocolMetadata: metadataCache.protocolMetadata
+		metadataCache
 	})
 	return {
 		props: data,

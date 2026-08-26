@@ -23,7 +23,8 @@ describe('Hacks API', () => {
 				targetType: 'CEX',
 				returnedFunds: 1_400_000_000,
 				defillamaId: '2286',
-				language: null
+				language: null,
+				source: ''
 			}
 		])
 

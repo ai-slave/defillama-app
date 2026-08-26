@@ -1,18 +1,20 @@
-import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+
+export interface IHackRow {
+	chains: string[]
+	classification: string
+	date: number | null
+	target: string | null
+	amountUsd: number | null
+	name: string
+	technique: string
+	bridge: boolean
+	language: string
+}
 
 export interface IHacksPageData {
-	data: Array<{
-		chains: string[]
-		classification: string
-		date: number
-		target: string
-		amountUsd: number
-		name: string
-		technique: string
-		bridge: boolean
-		language: string
-	}>
-	monthlyHacksChartData: { dataset: MultiSeriesChartDataset; charts: IMultiSeriesChartProps['charts'] }
+	data: IHackRow[]
+	monthlyHacksChartData: { dataset: MultiSeriesChartDataset; charts: MultiSeriesChartSeriesConfig[] }
 	totalHacked: string
 	totalHackedDefi: string
 	totalRugs: string
@@ -23,5 +25,11 @@ export interface IHacksPageData {
 }
 
 export interface IProtocolTotalValueLostInHacksByProtocol {
-	protocols: Array<{ name: string; slug: string; route: string; totalHackedUsd: number; returnedFundsUsd: number }>
+	protocols: Array<{
+		name: string
+		slug: string
+		route: string | null
+		totalHackedUsd: number
+		returnedFundsUsd: number
+	}>
 }

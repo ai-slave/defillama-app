@@ -12,13 +12,11 @@ import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { preparePieChartData } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
-import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
@@ -28,10 +26,10 @@ import { TagGroup } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
-import { firstDayOfMonth } from '~/utils'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
 import { isParamNone, parseArrayParam, parseExcludeParam, parseNumberQueryParam } from '~/utils/routerQuery'
+import { buildFilteredHacksSummary, filterHacksRows } from './data'
 import { HacksFilters } from './Filters'
 import type { IHacksPageData } from './types'
 
@@ -119,59 +117,6 @@ const getTimeSinceSeconds = (timeQuery: string | undefined, nowSec: number): num
 	}
 }
 
-const applyFilters = (
-	data: IHacksPageData['data'],
-	filters: {
-		techKeys?: Set<string>
-		classKeys?: Set<string>
-		chainKeys?: Set<string>
-		techIncludeNone?: boolean
-		classIncludeNone?: boolean
-		chainIncludeNone?: boolean
-		since?: number | null
-		minLost?: number | null
-		maxLost?: number | null
-	}
-) => {
-	const toFilterKey = (value: string) => value.trim()
-
-	return data.filter((row) => {
-		if (filters.chainKeys && (filters.chainKeys.size > 0 || filters.chainIncludeNone)) {
-			const chains = row.chains ?? []
-			const matchesNone = Boolean(filters.chainIncludeNone) && chains.length === 0
-			let matchesAny = false
-			if (filters.chainKeys.size > 0) {
-				for (const c of chains) {
-					if (filters.chainKeys.has(toFilterKey(c))) {
-						matchesAny = true
-						break
-					}
-				}
-			}
-			if (!matchesNone && !matchesAny) return false
-		}
-
-		if (filters.techKeys && (filters.techKeys.size > 0 || filters.techIncludeNone)) {
-			const techKey = toFilterKey(row.technique)
-			const matchesNone = Boolean(filters.techIncludeNone) && techKey === ''
-			const matchesAny = filters.techKeys.size > 0 && filters.techKeys.has(techKey)
-			if (!matchesNone && !matchesAny) return false
-		}
-
-		if (filters.classKeys && (filters.classKeys.size > 0 || filters.classIncludeNone)) {
-			const classKey = toFilterKey(row.classification)
-			const matchesNone = Boolean(filters.classIncludeNone) && classKey === ''
-			const matchesAny = filters.classKeys.size > 0 && filters.classKeys.has(classKey)
-			if (!matchesNone && !matchesAny) return false
-		}
-
-		if (filters.since != null && row.date < filters.since) return false
-		if (filters.minLost != null && row.amountUsd < filters.minLost) return false
-		if (filters.maxLost != null && row.amountUsd > filters.maxLost) return false
-		return true
-	})
-}
-
 export const HacksContainer = ({
 	data,
 	monthlyHacksChartData,
@@ -245,7 +190,7 @@ export const HacksContainer = ({
 		const classKeys = classFilterEnabled ? new Set(selectedClassifications) : undefined
 		const since = getTimeSinceSeconds(typeof timeQ === 'string' ? timeQ : undefined, nowSec)
 
-		return applyFilters(data ?? [], {
+		return filterHacksRows(data, {
 			chainKeys,
 			techKeys,
 			classKeys,
@@ -275,66 +220,7 @@ export const HacksContainer = ({
 
 	const derivedStats = React.useMemo(() => {
 		if (!hasActiveFilters) return null
-
-		const monthlyHacks = new Map<number, number>()
-		const techniqueTotals = new Map<string, number>()
-		let totalHackedRaw = 0
-		let totalHackedDefiRaw = 0
-		let totalBridgeHackRaw = 0
-
-		for (const row of filteredData) {
-			const monthTsMs = firstDayOfMonth(row.date) * 1e3
-			monthlyHacks.set(monthTsMs, (monthlyHacks.get(monthTsMs) ?? 0) + row.amountUsd)
-
-			totalHackedRaw += row.amountUsd
-			if (row.target === 'DeFi Protocol') totalHackedDefiRaw += row.amountUsd
-			if (row.bridge) totalBridgeHackRaw += row.amountUsd
-
-			if (row.technique) {
-				techniqueTotals.set(row.technique, (techniqueTotals.get(row.technique) ?? 0) + row.amountUsd)
-			}
-		}
-
-		const monthlySeries = Array.from(monthlyHacks.entries())
-			.sort((a, b) => a[0] - b[0])
-			.map(([date, value]) => [date, value] as [number, number])
-
-		return {
-			totalHacked: formatUsd(totalHackedRaw, {
-				compact: true,
-				minimumCompactValue: 1_000_000,
-				compactSuffix: 'lowercase'
-			}),
-			totalHackedDefi: formatUsd(totalHackedDefiRaw, {
-				compact: true,
-				minimumCompactValue: 1_000_000,
-				compactSuffix: 'lowercase'
-			}),
-			totalRugs: formatUsd(totalBridgeHackRaw, {
-				compact: true,
-				minimumCompactValue: 1_000_000,
-				compactSuffix: 'lowercase'
-			}),
-			monthlyHacksChartData: {
-				dataset: {
-					source: monthlySeries,
-					dimensions: ['timestamp', 'Total Value Hacked']
-				},
-				charts: [
-					{
-						type: 'bar' as const,
-						name: 'Total Value Hacked',
-						encode: { x: 0, y: 1 },
-						color: CHART_COLORS[0],
-						stack: 'Total Value Hacked'
-					}
-				]
-			},
-			pieChartData: preparePieChartData({
-				data: Array.from(techniqueTotals.entries()).map(([name, value]) => ({ name, value })),
-				limit: 15
-			})
-		}
+		return buildFilteredHacksSummary(filteredData)
 	}, [filteredData, hasActiveFilters])
 
 	const displayTotalHacked = derivedStats?.totalHacked ?? totalHacked
@@ -348,7 +234,7 @@ export const HacksContainer = ({
 		const totals = new Map<string, number>()
 		for (const row of filteredData) {
 			if (!row.technique) continue
-			totals.set(row.technique, (totals.get(row.technique) ?? 0) + row.amountUsd)
+			totals.set(row.technique, (totals.get(row.technique) ?? 0) + (row.amountUsd ?? 0))
 		}
 		const source = Array.from(totals, ([name, value]) => [name, value] as [string, number])
 		source.sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
@@ -425,19 +311,28 @@ const hacksColumns = [
 			headerClassName: 'w-[min(200px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('date', {
-		cell: ({ getValue }) => formatDate(getValue(), { input: 'seconds' }),
+	columnHelper.accessor((row) => row.date ?? undefined, {
+		id: 'date',
+		cell: ({ getValue }) => {
+			const value = getValue()
+			return value === undefined ? <span className="text-tertiary">N/A</span> : formatDate(value, { input: 'seconds' })
+		},
 		meta: {
 			headerClassName: 'w-[120px]'
 		},
 		header: 'Date'
 	}),
-	columnHelper.accessor('amountUsd', {
+	columnHelper.accessor((row) => row.amountUsd ?? undefined, {
+		id: 'amountUsd',
 		header: 'Amount lost',
-		cell: (info) =>
-			info.getValue() != null
-				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-				: null,
+		cell: (info) => {
+			const value = info.getValue()
+			return value === undefined ? (
+				<span className="text-tertiary">N/A</span>
+			) : (
+				formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+			)
+		},
 		meta: {
 			headerClassName: 'w-[140px]'
 		}
