@@ -6,6 +6,7 @@ import { Icon } from '~/ui/Icon'
 import {
 	accentFor,
 	badgeFor,
+	citationHeadline,
 	citedRowDate,
 	computedSummaryLabel,
 	defaultTierVisible,
@@ -14,13 +15,13 @@ import {
 	findCitedCell,
 	formatMetricValue,
 	formatOutputValue,
-	friendlyToolName,
 	hiddenRowsLabel,
 	humanizeColumn,
 	iconFor,
 	isPrivacySentinel,
 	metricLabel,
 	mismatchLabel,
+	panelViewFor,
 	parseRefNumber,
 	sanitizeExcerpt,
 	shouldFlagMismatch,
@@ -84,17 +85,25 @@ function AdvancedDisclosure({
 function SourceMiniCard({ reference }: { reference: UnifiedCitationReference }) {
 	const safeUrl = openUrl(reference)
 	const hasRows = !!reference.rows && reference.rows.length > 0
+	const domain = domainFromUrl(reference.url)
 	return (
-		<div className="rounded-sm border border-ai-line bg-ai-surface p-1.5">
+		<div className="flex flex-col gap-1 rounded-sm border border-ai-line bg-ai-surface p-1.5">
 			<div className="flex items-center gap-1.5">
-				<span className="text-[10px] font-medium tracking-wide text-ai-accent-blue uppercase">
+				<span className="shrink-0 text-[10px] font-medium tracking-wide text-ai-accent-blue uppercase">
 					{badgeFor(reference.sourceType)}
 				</span>
-				{reference.label ? <span className="text-[11px] text-ai-tertiary">{reference.label}</span> : null}
+				{domain ? <span className="truncate text-[10px] text-ai-muted">{domain}</span> : null}
 				{reference.value ? (
-					<span className="ml-auto text-[11px] font-medium text-ai-primary">{reference.value}</span>
+					<span className="ml-auto shrink-0 text-[11px] font-medium text-ai-primary">{reference.value}</span>
 				) : null}
 			</div>
+			{reference.label ? (
+				safeUrl ? (
+					<ExternalLink href={safeUrl}>{reference.label} ↗</ExternalLink>
+				) : (
+					<span className="text-[11px] text-ai-tertiary">{reference.label}</span>
+				)
+			) : null}
 			{reference.excerpt ? <p className="m-0 mt-1 body-sm text-ai-secondary">{reference.excerpt}</p> : null}
 			{hasRows ? (
 				<details className="group mt-1">
@@ -104,7 +113,7 @@ function SourceMiniCard({ reference }: { reference: UnifiedCitationReference }) 
 					<CitationRowsTable rows={reference.rows} columns={reference.columns} />
 				</details>
 			) : null}
-			{safeUrl ? <ExternalLink href={safeUrl}>Open source ↗</ExternalLink> : null}
+			{safeUrl && !reference.label ? <ExternalLink href={safeUrl}>Open source ↗</ExternalLink> : null}
 		</div>
 	)
 }
@@ -358,7 +367,7 @@ export function PillBody({
 	advancedProvenance: boolean
 }) {
 	let typeBody: ReactNode
-	switch (reference.sourceType) {
+	switch (panelViewFor(reference)) {
 		case 'data':
 			typeBody = <DataView reference={reference} citedCell={citedCell} advancedProvenance={advancedProvenance} />
 			break
@@ -369,11 +378,7 @@ export function PillBody({
 			typeBody = <WebView reference={reference} />
 			break
 		case 'x':
-			typeBody = reference.url ? (
-				<XView reference={reference} />
-			) : (
-				<DataView reference={reference} citedCell={citedCell} advancedProvenance={advancedProvenance} />
-			)
+			typeBody = <XView reference={reference} />
 			break
 		case 'tool':
 			typeBody = <ToolView reference={reference} />
@@ -392,18 +397,12 @@ export function PillBody({
 	)
 }
 
-function headlineFor(reference: UnifiedCitationReference): string | undefined {
-	if (reference.sourceType === 'x') return xHandleLabel(reference.label) ?? reference.label
-	if (reference.sourceType === 'tool') return friendlyToolName(reference)
-	return reference.value ?? reference.checked ?? reference.label
-}
-
 export function CitationPill({ reference }: CitationPillProps) {
 	const id = reference.id
 	const hovercard = Ariakit.useHovercardStore({ placement: 'top', showTimeout: 120, hideTimeout: 180 })
 	const badge = badgeFor(reference.sourceType)
 	const iconName = iconFor(reference.sourceType)
-	const headline = headlineFor(reference)
+	const headline = citationHeadline(reference)
 	const mismatch = shouldFlagMismatch(reference.verification)
 	const unverified = !mismatch && shouldFlagUnverified(reference.verification)
 	const citedCell = useMemo(

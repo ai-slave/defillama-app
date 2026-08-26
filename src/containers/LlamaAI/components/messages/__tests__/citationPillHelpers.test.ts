@@ -6,13 +6,70 @@ import {
 	domainFromUrl,
 	friendlyToolName,
 	isPrivacySentinel,
+	citationHeadline,
 	metricLabel,
+	panelViewFor,
 	sanitizeExcerpt,
 	shouldFlagMismatch,
 	shouldFlagUnverified,
 	toolArgRows,
 	xHandleLabel
 } from '../citationPillHelpers'
+
+const panelRef = (over: Partial<UnifiedCitationReference>) =>
+	({ id: 1, label: 'x', ...over }) as UnifiedCitationReference
+
+describe('citationHeadline', () => {
+	it('headlines a search-result set with its query, never the loose value beside the marker', () => {
+		// `value` is scraped from the prose next to the marker, so for a whole-search citation it is
+		// an unrelated token — it rendered as a giant "$0" above the list of articles.
+		const searchSet = panelRef({
+			sourceType: 'web',
+			value: '$0',
+			label: 'Web search: EigenLayer slashing adoption',
+			sources: [{ id: 1, sourceType: 'web', label: 'Slashing Goes Live', url: 'https://blog.eigenlayer.xyz/s' }]
+		})
+		expect(citationHeadline(searchSet)).toBe('Web search: EigenLayer slashing adoption')
+	})
+
+	it('still headlines a figure-bearing data citation with the figure', () => {
+		expect(citationHeadline(panelRef({ sourceType: 'data', value: '$328.6M', rows: [{ tvl: 1 }] }))).toBe('$328.6M')
+	})
+
+	it('keeps the value for a web citation bound to one article', () => {
+		expect(citationHeadline(panelRef({ sourceType: 'web', value: '$4.2M', url: 'https://protos.com/a' }))).toBe('$4.2M')
+	})
+})
+
+describe('panelViewFor', () => {
+	it('falls back to the data view for web/x refs that carry sources instead of their own url', () => {
+		// web_search citations that could not be bound to one result row have no url of their own —
+		// their links live in `sources`, which only the data view renders. Routing them to the web
+		// view left the detail panel blank and the sources unreachable.
+		const websearch = panelRef({
+			sourceType: 'web',
+			sources: [{ id: 1, sourceType: 'web', label: 'Protos', url: 'https://protos.com' }]
+		})
+		expect(panelViewFor(websearch)).toBe('data')
+		expect(panelViewFor(panelRef({ sourceType: 'x', rows: [{ text: 'gm' }] }))).toBe('data')
+	})
+
+	it('keeps the link view when the ref has its own url', () => {
+		expect(panelViewFor(panelRef({ sourceType: 'web', url: 'https://protos.com' }))).toBe('web')
+		expect(panelViewFor(panelRef({ sourceType: 'x', url: 'https://x.com/a/1' }))).toBe('x')
+	})
+
+	it('renders nothing rather than an empty data view when there is no payload at all', () => {
+		expect(panelViewFor(panelRef({ sourceType: 'web' }))).toBe(null)
+		expect(panelViewFor(panelRef({ sourceType: 'unknown' }))).toBe(null)
+	})
+
+	it('passes every other source type straight through', () => {
+		for (const t of ['data', 'computed', 'tool', 'file'] as const) {
+			expect(panelViewFor(panelRef({ sourceType: t }))).toBe(t)
+		}
+	})
+})
 
 describe('metricLabel', () => {
 	it('labels ratios and identity metrics', () => {

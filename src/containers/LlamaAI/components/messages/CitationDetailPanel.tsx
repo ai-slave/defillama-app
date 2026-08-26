@@ -6,6 +6,7 @@ import { PillBody } from './CitationPill'
 import {
 	accentFor,
 	badgeFor,
+	citationHeadline,
 	citedRowDate,
 	describeFigure,
 	findCitedCell,
@@ -56,7 +57,7 @@ export function CitationDetailPanel({
 	const accent = accentFor(activeRef.sourceType)
 	const badge = badgeFor(activeRef.sourceType)
 	const iconName = iconFor(activeRef.sourceType)
-	const headline = activeRef.value ?? activeRef.label
+	const headline = citationHeadline(activeRef)
 	const description = activeRef.sourceType === 'data' ? describeFigure(activeRef, citedCell) : null
 	const citedRow = citedCell && activeRef.rows ? activeRef.rows[citedCell.rowIndex] : null
 	const citedDate =

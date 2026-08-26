@@ -63,6 +63,42 @@ export function mismatchLabel(reference: UnifiedCitationReference): string {
 	return `Couldn't confirm this figure${shown}`
 }
 
+export type PanelView = 'data' | 'computed' | 'web' | 'x' | 'tool' | 'file' | null
+
+export function panelViewFor(reference: UnifiedCitationReference): PanelView {
+	switch (reference.sourceType) {
+		case 'web':
+			if (reference.url) return 'web'
+			break
+		case 'x':
+			if (reference.url) return 'x'
+			break
+		case 'data':
+			return 'data'
+		case 'computed':
+			return 'computed'
+		case 'tool':
+			return 'tool'
+		case 'file':
+			return 'file'
+		default:
+			return null
+	}
+	return (reference.sources?.length ?? 0) > 0 || (reference.rows?.length ?? 0) > 0 ? 'data' : null
+}
+
+export function citationHeadline(reference: UnifiedCitationReference): string | undefined {
+	if (reference.sourceType === 'x') return xHandleLabel(reference.label) ?? reference.label
+	if (reference.sourceType === 'tool') return friendlyToolName(reference)
+	// A search-result set has no single figure behind it. `value` is whatever token happened to sit
+	// next to the marker in the prose, so headlining it renders junk like "$0" over a list of
+	// articles. The query label is the only honest headline for these.
+	if (panelViewFor(reference) === 'data' && reference.sourceType !== 'data' && reference.sourceType !== 'computed') {
+		return reference.label
+	}
+	return reference.value ?? reference.checked ?? reference.label
+}
+
 export function expandLabel(sourceType?: string): string {
 	if (sourceType === 'computed') return 'How this was calculated'
 	return 'See the data'
