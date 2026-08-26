@@ -1,4 +1,4 @@
-import type { GetStaticPropsContext } from 'next'
+import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import GovernanceProject from '~/containers/Governance/GovernanceProject'
 import { getGovernanceDetailsPageData } from '~/containers/Governance/queries'
@@ -39,18 +39,22 @@ export const getStaticPaths = () => {
 	return { paths: [], fallback: 'blocking' }
 }
 
-export default function GovernanceProjectPage({ projectName, governanceData, governanceTypes }) {
+export default function GovernanceProjectPage({
+	projectName,
+	governanceData,
+	governanceTypes
+}: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout
 			title={`${projectName} Governance - DefiLlama`}
 			description={`Track ${projectName} governance proposals, voting activity, and DAO decisions on DefiLlama.`}
 			canonicalUrl={`/governance/${slug(projectName)}`}
 		>
-			{governanceData?.length ? (
+			{governanceData.length ? (
 				<GovernanceProject
 					projectName={projectName}
 					governanceData={governanceData}
-					governanceTypes={governanceTypes ?? []}
+					governanceTypes={governanceTypes}
 				/>
 			) : null}
 		</Layout>

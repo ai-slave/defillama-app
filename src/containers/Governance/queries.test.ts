@@ -2,12 +2,33 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({ fetchJson: vi.fn() }))
 
+vi.mock('~/constants', () => ({ DATASETS_SERVER_URL: 'https://datasets.example.com' }))
 vi.mock('~/utils/async', () => ({ fetchJson: mocks.fetchJson }))
 
+import { governanceIdToApiUrl, governanceIdsToApis } from './api'
 import { getGovernanceDetailsPageData, getGovernancePageData } from './queries'
+
+const PUBLIC_GOVERNANCE_URL = 'https://defillama-datasets.llama.fi/governance-cache'
 
 beforeEach(() => {
 	vi.clearAllMocks()
+})
+
+describe('Governance API identity', () => {
+	it('maps each producer ID to its exact provider cache path', () => {
+		expect(governanceIdsToApis(['snapshot:Curve.ETH', 'compound:Ethereum:0xABC', 'eip155:1:0xDEF'])).toEqual([
+			`${PUBLIC_GOVERNANCE_URL}/snapshot/curve.eth.json`,
+			`${PUBLIC_GOVERNANCE_URL}/compound/ethereum/0xabc.json`,
+			`${PUBLIC_GOVERNANCE_URL}/tally/eip155/1/0xdef.json`
+		])
+	})
+
+	it('supports the explicit Tally prefix and preserves producer cache punctuation', () => {
+		expect(governanceIdToApiUrl(' tally:eip155:1:0xABC ')).toBe(`${PUBLIC_GOVERNANCE_URL}/tally/eip155/1/0xabc.json`)
+		expect(governanceIdToApiUrl('snapshot:JPEG’d.eth')).toBe(`${PUBLIC_GOVERNANCE_URL}/snapshot/jpeg’d.eth.json`)
+		expect(governanceIdToApiUrl("snapshot:Maker's.eth")).toBe(`${PUBLIC_GOVERNANCE_URL}/snapshot/maker's.eth.json`)
+		expect(governanceIdToApiUrl('   ')).toBeNull()
+	})
 })
 
 describe('getGovernancePageData', () => {

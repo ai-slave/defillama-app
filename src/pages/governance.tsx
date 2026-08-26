@@ -1,3 +1,4 @@
+import type { InferGetStaticPropsType } from 'next'
 import Governance from '~/containers/Governance'
 import { getGovernancePageData } from '~/containers/Governance/queries'
 import Layout from '~/layout'
@@ -14,7 +15,7 @@ export const getStaticProps = withPerformanceLogging('governance', async () => {
 
 const pageName = ['Governance']
 
-export default function GovernancePage({ data }) {
+export default function GovernancePage({ data }: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout
 			title="DeFi Governance & DAO Proposals - DefiLlama"
