@@ -33,7 +33,7 @@ describe('ClaimTokenProfile', () => {
 		expect(html).toContain('Kraken')
 		expect(html).toContain('13/13 criteria scored')
 		expect(html).toContain('Disclosure 8.72/10')
-		expect(html).toContain('NO DATA YET')
+		expect(html).not.toContain('NO DATA YET')
 		expect(html).not.toContain('Fableborne (FAB)')
 		expect(html).not.toContain('Alice Adams')
 		expect(html).not.toContain('Selini')

@@ -11,7 +11,6 @@ import { CategoryBreakdownTable, rowBreakdownColumns } from './CategoryBreakdown
 import { LISTING_STATUS_LABELS } from './constants'
 import { GradeBadge, ScoreBar } from './grades'
 import { PerformanceMatrix } from './PerformanceMatrix'
-import { NoDataPlaceholder } from './TokenPage'
 import type { UtrGradingConfig, UtrLeaderboardRow, UtrScoringConfig, UtrUniverse } from './types'
 
 function SummaryCard({ row, grading }: { row: UtrLeaderboardRow; grading?: UtrGradingConfig | null }) {
@@ -171,7 +170,7 @@ export function CompareTokens({
 	const [tokenB, setTokenB] = useState<string | null>(null)
 	const tokenA = tokenAState ?? queryToken
 
-	if (!universe.rows.length) return <NoDataPlaceholder />
+	if (!universe.rows.length) return null
 
 	return (
 		<div className="flex flex-col gap-4 lg:flex-row">

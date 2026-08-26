@@ -31,7 +31,6 @@ import {
 	GradeFooterStacked,
 	KvTable,
 	MetricCard,
-	NoDataPlaceholder,
 	TickScoreStrip
 } from './TokenPage'
 import type {
@@ -157,6 +156,10 @@ function summaryFooter(summary: UtrChartSummary | null | undefined) {
 		grade: summary?.grade ?? null,
 		percentile: summary?.percentile ?? null
 	}
+}
+
+function hasAnyValue(...values: unknown[]): boolean {
+	return values.some((value) => value != null)
 }
 
 function VenueList({ title, venues }: { title: string; venues: { displayName: string; logoUrl: string | null }[] }) {
@@ -392,23 +395,26 @@ export function TokenPageLive({
 		{
 			title: 'Market Cap vs. FDV (Ratio)',
 			value:
-				metrics?.marketCapUsd && metrics?.fdvUsd
+				metrics?.marketCapUsd != null && metrics.fdvUsd != null && metrics.fdvUsd !== 0
 					? `${formatNumber(metrics.marketCapUsd / metrics.fdvUsd, {
 							minimumFractionDigits: 2,
 							maximumFractionDigits: 2,
 							useGrouping: false
 						})}:1`
 					: 'N/A',
+			hasData: metrics?.marketCapUsd != null && metrics.fdvUsd != null && metrics.fdvUsd !== 0,
 			criterion: findTokenomicsCriterion('mcap_vs_fdv')
 		},
 		{
 			title: 'Fully Diluted Valuation (FDV) (USD)',
 			value: usd(metrics?.fdvUsd),
+			hasData: metrics?.fdvUsd != null,
 			criterion: findTokenomicsCriterion('fdv')
 		},
 		{
 			title: 'Annualized Rate of Inflation',
 			value: pct(metrics?.annualizedInflationPct),
+			hasData: metrics?.annualizedInflationPct != null,
 			criterion: findTokenomicsCriterion('inflation')
 		},
 		{
@@ -417,9 +423,20 @@ export function TokenPageLive({
 				metrics?.cumulativeBuybackTokens != null || metrics?.cumulativeBurnTokens != null
 					? `${formatNumber(Math.round((metrics.cumulativeBuybackTokens ?? 0) + (metrics.cumulativeBurnTokens ?? 0)))} tokens`
 					: 'N/A',
+			hasData: metrics?.cumulativeBuybackTokens != null || metrics?.cumulativeBurnTokens != null,
 			criterion: findTokenomicsCriterion('buyback')
 		}
 	]
+	const visibleTokenomicsCards = tokenomicsCards.filter((card) => card.hasData)
+	const hasVestingData = hasAnyValue(
+		vestingCriterion?.raw,
+		metrics?.vestingAmountVariancePct,
+		metrics?.vestingTimingVarianceDays,
+		legacy?.tokenomics.vestingActualVsDisclosed
+	)
+	const hasTokenomicsData = Boolean(
+		tokenomicsCategory && (visibleTokenomicsCards.length || hasVestingData || metrics?.undisclosedUnlockDetected)
+	)
 
 	const footprintCharts = [
 		{
@@ -451,6 +468,57 @@ export function TokenPageLive({
 			colors: DEPTH_STACK_COLORS
 		}
 	]
+	const visibleFootprintCharts = footprintCharts.filter((entry) => {
+		const chart = entry.chart
+		if (!chart) return false
+		if (chart.points.length) return true
+		return 'cexAvgUsd' in chart
+			? hasAnyValue(chart.cexAvgUsd, chart.dexAvgUsd, chart.cexSharePct)
+			: hasAnyValue(chart.spotAvgUsd, chart.perpsAvgUsd, chart.spotSharePct)
+	})
+	const hasVolumeMarketQuality = Boolean(
+		marketQuality &&
+		(marketQuality.series.length ||
+			hasAnyValue(
+				marketQuality.volumeMcap.avgUsd,
+				marketQuality.volumeMcap.avgMarketCapUsd,
+				marketQuality.volumeMcap.ratioPct
+			))
+	)
+	const hasDepthMarketQuality = Boolean(
+		marketQuality &&
+		(marketQuality.series.length ||
+			hasAnyValue(
+				marketQuality.depthMcap.avgUsd,
+				marketQuality.depthMcap.avgMarketCapUsd,
+				marketQuality.depthMcap.ratioPct
+			))
+	)
+	const hasSpreadData = Boolean(
+		spread && (spread.exchanges.length || hasAnyValue(spread.tightestExchange, spread.vwasPct))
+	)
+	const hasPriceData = Boolean(
+		priceChart &&
+		(priceChart.candles.length ||
+			hasAnyValue(priceChart.changePct, priceChart.greenCandles, priceChart.redCandles, priceChart.winRatePct))
+	)
+	const hasOpenInterestData = Boolean(
+		openInterest && (openInterest.venues.length || hasAnyValue(openInterest.totalOiUsd, openInterest.oiMcapRatioPct))
+	)
+	const hasFundingData = Boolean(funding && (funding.exchanges.length || hasAnyValue(funding.oiWeightedFundingPct)))
+	const hasMarketQualityData =
+		hasVolumeMarketQuality ||
+		hasDepthMarketQuality ||
+		hasSpreadData ||
+		hasPriceData ||
+		hasOpenInterestData ||
+		hasFundingData
+	const visibleMarketMakerCriteria = marketMakerCriteria.filter((entry) => entry.raw != null)
+	const hasMarketMakerSummary = Boolean(
+		asset.hasMmData && hasAnyValue(metrics?.mmDepthPct, metrics?.mmVolumePct, metrics?.mmUptimePct)
+	)
+	const hasLiquidityProviderData = hasMarketMakerSummary || visibleMarketMakerCriteria.length > 0
+	const hasLiquidityFootprintData = tier1Covered != null || visibleFootprintCharts.length > 0
 
 	return (
 		<div className="flex flex-col gap-4">
@@ -526,625 +594,630 @@ export function TokenPageLive({
 
 			<ClaimProfileBanner />
 
-			<h2 className="heading-sm">Disclosures Overview</h2>
-			{asset.disclosure ? (
-				<Panel padding="none">
-					<div className="grid grid-cols-1 lg:grid-cols-2">
-						{disclosureCategories.map((entry, index) => (
-							<div
-								key={entry.key}
-								className={`flex flex-col gap-3 p-4 ${index > 0 ? 'border-t border-subtle' : ''} ${
-									index === 1 ? 'lg:border-t-0' : ''
-								} ${index % 2 === 1 ? 'lg:border-l lg:border-subtle' : ''}`}
-							>
-								<div className="flex items-center justify-between gap-2">
-									<h3 className="label-lg">{disclosureCategoryTitle(entry)}</h3>
-									<Button
-										type="button"
-										size="sm"
-										square
-										aria-label={`Open ${disclosureCategoryTitle(entry)} details`}
-										onClick={() =>
-											openCriteria(
-												disclosureCategoryTitle(entry),
-												'disclosure',
-												entry.key,
-												withDisclosureTitles(entry.criteria),
-												null
-											)
-										}
-									>
-										<Icon name="arrow-right" height={14} width={14} />
-									</Button>
-								</div>
-								<div className="flex flex-col overflow-hidden rounded-lg border border-subtle">
-									{entry.criteria.map((item) => (
-										<button
-											key={item.key}
+			{disclosureCategories.length ? (
+				<>
+					<h2 className="heading-sm">Disclosures Overview</h2>
+					<Panel padding="none">
+						<div className="grid grid-cols-1 lg:grid-cols-2">
+							{disclosureCategories.map((entry, index) => (
+								<div
+									key={entry.key}
+									className={`flex flex-col gap-3 p-4 ${index > 0 ? 'border-t border-subtle' : ''} ${
+										index === 1 ? 'lg:border-t-0' : ''
+									} ${index % 2 === 1 ? 'lg:border-l lg:border-subtle' : ''}`}
+								>
+									<div className="flex items-center justify-between gap-2">
+										<h3 className="label-lg">{disclosureCategoryTitle(entry)}</h3>
+										<Button
 											type="button"
+											size="sm"
+											square
+											aria-label={`Open ${disclosureCategoryTitle(entry)} details`}
 											onClick={() =>
 												openCriteria(
 													disclosureCategoryTitle(entry),
 													'disclosure',
 													entry.key,
 													withDisclosureTitles(entry.criteria),
-													item.key
+													null
 												)
 											}
-											className="flex cursor-pointer items-center justify-between gap-3 border-b border-subtle px-3 py-2 text-left last:border-b-0 hover:bg-hover-row"
 										>
-											<span className="body-sm text-primary">
-												{DISCLOSURE_CRITERION_TITLES[item.key] ?? item.label}
-											</span>
-											<span className="flex items-center gap-2">
-												<GradeBadge
-													score={item.score}
-													scale={10}
-													grade={item.grade}
-													gradingScale={scoringConfig?.grading.disclosure.scale}
-												/>
-												<span className="min-w-[8ch] text-right mono-sm tabular-nums">
-													{item.score == null
-														? 'N/A'
-														: formatNumber(item.score, {
-																minimumFractionDigits: 1,
-																maximumFractionDigits: 1,
-																useGrouping: false
-															})}
-													<span className="text-tertiary"> /10</span>
+											<Icon name="arrow-right" height={14} width={14} />
+										</Button>
+									</div>
+									<div className="flex flex-col overflow-hidden rounded-lg border border-subtle">
+										{entry.criteria.map((item) => (
+											<button
+												key={item.key}
+												type="button"
+												onClick={() =>
+													openCriteria(
+														disclosureCategoryTitle(entry),
+														'disclosure',
+														entry.key,
+														withDisclosureTitles(entry.criteria),
+														item.key
+													)
+												}
+												className="flex cursor-pointer items-center justify-between gap-3 border-b border-subtle px-3 py-2 text-left last:border-b-0 hover:bg-hover-row"
+											>
+												<span className="body-sm text-primary">
+													{DISCLOSURE_CRITERION_TITLES[item.key] ?? item.label}
 												</span>
-											</span>
-										</button>
-									))}
+												<span className="flex items-center gap-2">
+													<GradeBadge
+														score={item.score}
+														scale={10}
+														grade={item.grade}
+														gradingScale={scoringConfig?.grading.disclosure.scale}
+													/>
+													<span className="min-w-[8ch] text-right mono-sm tabular-nums">
+														{item.score == null
+															? 'N/A'
+															: formatNumber(item.score, {
+																	minimumFractionDigits: 1,
+																	maximumFractionDigits: 1,
+																	useGrouping: false
+																})}
+														<span className="text-tertiary"> /10</span>
+													</span>
+												</span>
+											</button>
+										))}
+									</div>
 								</div>
-							</div>
-						))}
-					</div>
-				</Panel>
-			) : (
-				<NoDataPlaceholder />
-			)}
+							))}
+						</div>
+					</Panel>
+				</>
+			) : null}
 
 			{asset.tgeStatus === 'post' ? (
 				<>
-					<h2 className="heading-sm">Performance Overview: Market Quality</h2>
-					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-						<MetricCard
-							title="Total Volume (as % of Market Cap)"
-							onOpen={() => openTotalMarket(marketQuality?.volumeMcap.criterionKey)}
-							gradingScale={scoringConfig?.grading.performance.scale}
-							{...summaryFooter(marketQuality?.volumeMcap)}
-						>
-							{marketQuality?.series.length ? (
-								<>
-									<div className="flex h-[320px] flex-col gap-3">
-										<ChartCaption>Market Cap (USD)</ChartCaption>
-										<SimpleChart
-											className="min-h-0 w-full flex-1"
-											option={buildSeriesOption(
+					{hasMarketQualityData ? (
+						<>
+							<h2 className="heading-sm">Performance Overview: Market Quality</h2>
+							<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+								{hasVolumeMarketQuality ? (
+									<MetricCard
+										title="Total Volume (as % of Market Cap)"
+										onOpen={() => openTotalMarket(marketQuality?.volumeMcap.criterionKey)}
+										gradingScale={scoringConfig?.grading.performance.scale}
+										{...summaryFooter(marketQuality?.volumeMcap)}
+									>
+										{marketQuality?.series.length ? (
+											<>
+												<div className="flex h-[320px] flex-col gap-3">
+													<ChartCaption>Market Cap (USD)</ChartCaption>
+													<SimpleChart
+														className="min-h-0 w-full flex-1"
+														option={buildSeriesOption(
+															[
+																{
+																	name: 'Market Cap (USD)',
+																	type: 'area',
+																	color: MARKET_CAP_COLOR,
+																	data: marketQuality.series.map((point) => [
+																		toTime(point.date),
+																		point.marketCapUsd ?? 0
+																	])
+																}
+															],
+															axisColor
+														)}
+													/>
+													<CardDivider />
+													<ChartCaption>Trade Volume (USD)</ChartCaption>
+													<SimpleChart
+														className="min-h-0 w-full flex-1"
+														option={buildSeriesOption(
+															[
+																{
+																	name: 'Trade Volume (USD)',
+																	type: 'bar',
+																	color: VOLUME_COLOR,
+																	data: marketQuality.series.map((point) => [
+																		toTime(point.date),
+																		point.tradeVolumeUsd ?? 0
+																	])
+																}
+															],
+															axisColor,
+															'usd',
+															2
+														)}
+													/>
+												</div>
+												<CardDivider />
+											</>
+										) : null}
+										<KvTable
+											rows={[
 												[
-													{
-														name: 'Market Cap (USD)',
-														type: 'area',
-														color: MARKET_CAP_COLOR,
-														data: marketQuality.series.map((point) => [toTime(point.date), point.marketCapUsd ?? 0])
-													}
+													`Trade Volume (prev. ${marketQuality?.windowDays ?? 30}D avg.)`,
+													usd(marketQuality?.volumeMcap.avgUsd)
 												],
-												axisColor
-											)}
-										/>
-										<CardDivider />
-										<ChartCaption>Trade Volume (USD)</ChartCaption>
-										<SimpleChart
-											className="min-h-0 w-full flex-1"
-											option={buildSeriesOption(
-												[
-													{
-														name: 'Trade Volume (USD)',
-														type: 'bar',
-														color: VOLUME_COLOR,
-														data: marketQuality.series.map((point) => [toTime(point.date), point.tradeVolumeUsd ?? 0])
-													}
-												],
-												axisColor,
-												'usd',
-												2
-											)}
-										/>
-									</div>
-									<CardDivider />
-								</>
-							) : (
-								<NoDataPlaceholder />
-							)}
-							<KvTable
-								rows={[
-									[
-										`Trade Volume (prev. ${marketQuality?.windowDays ?? 30}D avg.)`,
-										usd(marketQuality?.volumeMcap.avgUsd)
-									],
-									['Market Capitalization (prev. 30D avg.)', usd(marketQuality?.volumeMcap.avgMarketCapUsd)],
-									['Trade Volume / Market Capitalization', pct(marketQuality?.volumeMcap.ratioPct)]
-								]}
-							/>
-						</MetricCard>
-						<MetricCard
-							title="Depth +/- 2% (as a % of Market Capitalization)"
-							onOpen={() => openTotalMarket(marketQuality?.depthMcap.criterionKey)}
-							gradingScale={scoringConfig?.grading.performance.scale}
-							{...summaryFooter(marketQuality?.depthMcap)}
-						>
-							{marketQuality?.series.length ? (
-								<>
-									<div className="flex h-[320px] flex-col gap-3">
-										<ChartCaption>Depth +/- 2% (USD) | Market Cap (USD)</ChartCaption>
-										<SimpleChart
-											className="min-h-0 w-full flex-1"
-											option={buildDualAxisOption(
-												{
-													name: 'Depth (+/- 2%)',
-													type: 'line',
-													color: DEPTH_COLOR,
-													data: marketQuality.series.map((point) => [toTime(point.date), point.depthUsd ?? 0])
-												},
-												{
-													name: 'Market Cap',
-													type: 'line',
-													color: DEPTH_MC_COLOR,
-													data: marketQuality.series.map((point) => [toTime(point.date), point.marketCapUsd ?? 0])
-												},
-												axisColor
-											)}
-										/>
-										<ChartLegend
-											items={[
-												{ label: 'Depth (+/- 2%)', color: DEPTH_COLOR },
-												{ label: 'Market Cap', color: DEPTH_MC_COLOR }
+												['Market Capitalization (prev. 30D avg.)', usd(marketQuality?.volumeMcap.avgMarketCapUsd)],
+												['Trade Volume / Market Capitalization', pct(marketQuality?.volumeMcap.ratioPct)]
 											]}
 										/>
-									</div>
-									<CardDivider />
-								</>
-							) : (
-								<NoDataPlaceholder />
-							)}
-							<KvTable
-								rows={[
-									[
-										`Depth +/- 2% (prev. ${marketQuality?.windowDays ?? 30}D avg.)`,
-										usd(marketQuality?.depthMcap.avgUsd)
-									],
-									['Market Capitalization (prev. 30D avg.)', usd(marketQuality?.depthMcap.avgMarketCapUsd)],
-									['Depth / Market Capitalization', pct(marketQuality?.depthMcap.ratioPct)]
-								]}
-							/>
-						</MetricCard>
-						<MetricCard
-							title="Bid / Ask Spread (Volume weighted spreads)"
-							onOpen={() => openTotalMarket(spread?.criterionKey)}
-							gradingScale={scoringConfig?.grading.performance.scale}
-							{...summaryFooter(spread)}
-						>
-							{spread?.exchanges.length ? (
-								<>
-									<ChartCaption>Bid / Ask Spread (%)</ChartCaption>
-									<SimpleChart
-										option={buildSeriesOption(
-											spread.exchanges.map((exchange, index) => ({
-												name: exchangeLabel(exchange.exchangeId),
-												type: 'line' as const,
-												color: CHART_COLORS[index % CHART_COLORS.length],
-												data: exchange.points.map((point) => [toTime(point.date), point.spreadPct ?? 0])
-											})),
-											axisColor,
-											'pct'
-										)}
-									/>
-									<ChartLegend
-										items={spread.exchanges.map((exchange, index) => ({
-											label: exchangeLabel(exchange.exchangeId),
-											color: CHART_COLORS[index % CHART_COLORS.length]
-										}))}
-									/>
-									<CardDivider />
-								</>
-							) : (
-								<NoDataPlaceholder />
-							)}
-							<KvTable
-								rows={[
-									[
-										'Exchange with Tightest Spreads',
-										spread?.tightestExchange ? (
-											<ExchangeCell key={spread.tightestExchange} id={spread.tightestExchange} />
-										) : (
-											'N/A'
-										)
-									],
-									['Volume Weighted Bid / Ask Spread (prev. 30 days)', pct(spread?.vwasPct, 4)]
-								]}
-							/>
-						</MetricCard>
-						<MetricCard
-							title="Price Performance"
-							onOpen={() => openTotalMarket(priceChart?.criterionKey)}
-							gradingScale={scoringConfig?.grading.performance.scale}
-							badge={
-								priceChart?.changePct == null ? null : (
-									<AccentBadge className="h-6">
-										{priceChart.windowDays ?? 30}D Change: {pct(priceChart.changePct)}
-									</AccentBadge>
-								)
-							}
-							{...summaryFooter(priceChart)}
-						>
-							{priceChart?.candles.length ? (
-								<>
-									<ChartCaption>Price (USD)</ChartCaption>
-									<SimpleChart
-										option={buildCandleOption(
-											priceChart.candles.map((candle) => ({
-												time: toTime(candle.date),
-												open: candle.openUsd,
-												close: candle.closeUsd,
-												low: candle.lowUsd,
-												high: candle.highUsd
-											})),
-											axisColor
-										)}
-									/>
-									<CardDivider />
-								</>
-							) : (
-								<NoDataPlaceholder />
-							)}
-							<KvTable
-								rows={[
-									['Count Green Candles', String(priceChart?.greenCandles ?? 'N/A')],
-									['Count Red Candles', String(priceChart?.redCandles ?? 'N/A')],
-									['Candle "Win Rate"', pct(priceChart?.winRatePct)]
-								]}
-							/>
-						</MetricCard>
-						<MetricCard
-							title="Open Interest (as a % of Market Capitalization)"
-							onOpen={() => openTotalMarket(openInterest?.criterionKey)}
-							gradingScale={scoringConfig?.grading.performance.scale}
-							{...summaryFooter(openInterest)}
-						>
-							<div className="flex flex-1 flex-col gap-3">
-								<h4 className="label-md">Top Venues by OI (prev. 30D avg.)</h4>
-								<KvTable
-									rows={[
-										...(openInterest?.venues.map(
-											(venue) =>
-												[<ExchangeCell key={venue.exchangeId} id={venue.exchangeId} />, usd(venue.avgOiUsd)] as [
-													ReactNode,
-													ReactNode
-												]
-										) ?? []),
-										['Total (All Exchanges)', usd(openInterest?.totalOiUsd)]
-									]}
-								/>
-							</div>
-							<CardDivider />
-							<KvTable rows={[['Open Interest / Market Capitalization', pct(openInterest?.oiMcapRatioPct)]]} />
-						</MetricCard>
-						<MetricCard
-							title="Funding Rate"
-							onOpen={() => openTotalMarket(funding?.criterionKey)}
-							gradingScale={scoringConfig?.grading.performance.scale}
-							{...summaryFooter(funding)}
-						>
-							{funding?.exchanges.length ? (
-								<>
-									<div className="flex flex-1 flex-col gap-3">
-										<ChartCaption>Funding Rate (%)</ChartCaption>
-										<SimpleChart
-											className="h-[120px] w-full"
-											option={buildSeriesOption(
-												funding.exchanges.map((exchange, index) => ({
-													name: exchangeLabel(exchange.exchangeId),
-													type: 'line' as const,
-													color: CHART_COLORS[index % CHART_COLORS.length],
-													data: exchange.points.map((point) => [toTime(point.date), point.fundingPct ?? 0])
-												})),
-												axisColor,
-												'pct'
-											)}
-										/>
-										<ChartLegend
-											items={funding.exchanges.map((exchange, index) => ({
-												label: exchangeLabel(exchange.exchangeId),
-												color: CHART_COLORS[index % CHART_COLORS.length]
-											}))}
-										/>
-									</div>
-									<CardDivider />
-								</>
-							) : (
-								<NoDataPlaceholder />
-							)}
-							<KvTable rows={[['Open Interest-Weighted Funding Rate', pct(funding?.oiWeightedFundingPct, 4)]]} />
-						</MetricCard>
-					</div>
-
-					<h2 className="heading-sm">Performance Overview: Liquidity Providers</h2>
-					{asset.hasMmData ? (
-						<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-							<LpPerformanceInsights
-								mmDepthPct={metrics?.mmDepthPct ?? null}
-								mmVolumePct={metrics?.mmVolumePct ?? null}
-								avgSpreadPct={metrics?.vwasBps == null ? null : metrics.vwasBps / 100}
-							/>
-							<Panel padding="md">
-								<NoDataPlaceholder />
-							</Panel>
-						</div>
-					) : (
-						<Panel padding="md">
-							<NoDataPlaceholder />
-						</Panel>
-					)}
-					{marketMakerCriteria.length ? (
-						<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-							{marketMakerCriteria.map((entry) => (
-								<Panel key={entry.key} padding="none">
-									<div className="flex items-center justify-between gap-2 px-4 py-3">
-										<div className="flex flex-col gap-0.5">
-											<h3 className="body-sm text-secondary">{MM_CRITERION_TITLES[entry.key] ?? entry.label}</h3>
-											<span className={`label-lg ${entry.raw == null ? 'text-tertiary' : ''}`}>
-												{pct(marketMakerCriterionRawPercent(entry.raw))}
-											</span>
-										</div>
-										<Button
-											type="button"
-											size="sm"
-											square
-											aria-label={`Open ${entry.label} details`}
-											onClick={() =>
-												openCriteria(
-													'Performance Overview: Market Makers',
-													'performance',
-													'market_makers',
-													marketMakerCriteria,
-													entry.key
-												)
-											}
-										>
-											<Icon name="arrow-right" height={14} width={14} />
-										</Button>
-									</div>
-									<GradeFooterColumns
-										score={entry.score}
-										grade={entry.grade}
+									</MetricCard>
+								) : null}
+								{hasDepthMarketQuality ? (
+									<MetricCard
+										title="Depth +/- 2% (as a % of Market Capitalization)"
+										onOpen={() => openTotalMarket(marketQuality?.depthMcap.criterionKey)}
 										gradingScale={scoringConfig?.grading.performance.scale}
-										percentile={entry.percentile}
-									/>
-								</Panel>
-							))}
-						</div>
+										{...summaryFooter(marketQuality?.depthMcap)}
+									>
+										{marketQuality?.series.length ? (
+											<>
+												<div className="flex h-[320px] flex-col gap-3">
+													<ChartCaption>Depth +/- 2% (USD) | Market Cap (USD)</ChartCaption>
+													<SimpleChart
+														className="min-h-0 w-full flex-1"
+														option={buildDualAxisOption(
+															{
+																name: 'Depth (+/- 2%)',
+																type: 'line',
+																color: DEPTH_COLOR,
+																data: marketQuality.series.map((point) => [toTime(point.date), point.depthUsd ?? 0])
+															},
+															{
+																name: 'Market Cap',
+																type: 'line',
+																color: DEPTH_MC_COLOR,
+																data: marketQuality.series.map((point) => [toTime(point.date), point.marketCapUsd ?? 0])
+															},
+															axisColor
+														)}
+													/>
+													<ChartLegend
+														items={[
+															{ label: 'Depth (+/- 2%)', color: DEPTH_COLOR },
+															{ label: 'Market Cap', color: DEPTH_MC_COLOR }
+														]}
+													/>
+												</div>
+												<CardDivider />
+											</>
+										) : null}
+										<KvTable
+											rows={[
+												[
+													`Depth +/- 2% (prev. ${marketQuality?.windowDays ?? 30}D avg.)`,
+													usd(marketQuality?.depthMcap.avgUsd)
+												],
+												['Market Capitalization (prev. 30D avg.)', usd(marketQuality?.depthMcap.avgMarketCapUsd)],
+												['Depth / Market Capitalization', pct(marketQuality?.depthMcap.ratioPct)]
+											]}
+										/>
+									</MetricCard>
+								) : null}
+								{hasSpreadData ? (
+									<MetricCard
+										title="Bid / Ask Spread (Volume weighted spreads)"
+										onOpen={() => openTotalMarket(spread?.criterionKey)}
+										gradingScale={scoringConfig?.grading.performance.scale}
+										{...summaryFooter(spread)}
+									>
+										{spread?.exchanges.length ? (
+											<>
+												<ChartCaption>Bid / Ask Spread (%)</ChartCaption>
+												<SimpleChart
+													option={buildSeriesOption(
+														spread.exchanges.map((exchange, index) => ({
+															name: exchangeLabel(exchange.exchangeId),
+															type: 'line' as const,
+															color: CHART_COLORS[index % CHART_COLORS.length],
+															data: exchange.points.map((point) => [toTime(point.date), point.spreadPct ?? 0])
+														})),
+														axisColor,
+														'pct'
+													)}
+												/>
+												<ChartLegend
+													items={spread.exchanges.map((exchange, index) => ({
+														label: exchangeLabel(exchange.exchangeId),
+														color: CHART_COLORS[index % CHART_COLORS.length]
+													}))}
+												/>
+												<CardDivider />
+											</>
+										) : null}
+										<KvTable
+											rows={[
+												[
+													'Exchange with Tightest Spreads',
+													spread?.tightestExchange ? (
+														<ExchangeCell key={spread.tightestExchange} id={spread.tightestExchange} />
+													) : (
+														'N/A'
+													)
+												],
+												['Volume Weighted Bid / Ask Spread (prev. 30 days)', pct(spread?.vwasPct, 4)]
+											]}
+										/>
+									</MetricCard>
+								) : null}
+								{hasPriceData ? (
+									<MetricCard
+										title="Price Performance"
+										onOpen={() => openTotalMarket(priceChart?.criterionKey)}
+										gradingScale={scoringConfig?.grading.performance.scale}
+										badge={
+											priceChart?.changePct == null ? null : (
+												<AccentBadge className="h-6">
+													{priceChart.windowDays ?? 30}D Change: {pct(priceChart.changePct)}
+												</AccentBadge>
+											)
+										}
+										{...summaryFooter(priceChart)}
+									>
+										{priceChart?.candles.length ? (
+											<>
+												<ChartCaption>Price (USD)</ChartCaption>
+												<SimpleChart
+													option={buildCandleOption(
+														priceChart.candles.map((candle) => ({
+															time: toTime(candle.date),
+															open: candle.openUsd,
+															close: candle.closeUsd,
+															low: candle.lowUsd,
+															high: candle.highUsd
+														})),
+														axisColor
+													)}
+												/>
+												<CardDivider />
+											</>
+										) : null}
+										<KvTable
+											rows={[
+												['Count Green Candles', String(priceChart?.greenCandles ?? 'N/A')],
+												['Count Red Candles', String(priceChart?.redCandles ?? 'N/A')],
+												['Candle "Win Rate"', pct(priceChart?.winRatePct)]
+											]}
+										/>
+									</MetricCard>
+								) : null}
+								{hasOpenInterestData ? (
+									<MetricCard
+										title="Open Interest (as a % of Market Capitalization)"
+										onOpen={() => openTotalMarket(openInterest?.criterionKey)}
+										gradingScale={scoringConfig?.grading.performance.scale}
+										{...summaryFooter(openInterest)}
+									>
+										<div className="flex flex-1 flex-col gap-3">
+											<h4 className="label-md">Top Venues by OI (prev. 30D avg.)</h4>
+											<KvTable
+												rows={[
+													...(openInterest?.venues.map(
+														(venue) =>
+															[<ExchangeCell key={venue.exchangeId} id={venue.exchangeId} />, usd(venue.avgOiUsd)] as [
+																ReactNode,
+																ReactNode
+															]
+													) ?? []),
+													['Total (All Exchanges)', usd(openInterest?.totalOiUsd)]
+												]}
+											/>
+										</div>
+										<CardDivider />
+										<KvTable rows={[['Open Interest / Market Capitalization', pct(openInterest?.oiMcapRatioPct)]]} />
+									</MetricCard>
+								) : null}
+								{hasFundingData ? (
+									<MetricCard
+										title="Funding Rate"
+										onOpen={() => openTotalMarket(funding?.criterionKey)}
+										gradingScale={scoringConfig?.grading.performance.scale}
+										{...summaryFooter(funding)}
+									>
+										{funding?.exchanges.length ? (
+											<>
+												<div className="flex flex-1 flex-col gap-3">
+													<ChartCaption>Funding Rate (%)</ChartCaption>
+													<SimpleChart
+														className="h-[120px] w-full"
+														option={buildSeriesOption(
+															funding.exchanges.map((exchange, index) => ({
+																name: exchangeLabel(exchange.exchangeId),
+																type: 'line' as const,
+																color: CHART_COLORS[index % CHART_COLORS.length],
+																data: exchange.points.map((point) => [toTime(point.date), point.fundingPct ?? 0])
+															})),
+															axisColor,
+															'pct'
+														)}
+													/>
+													<ChartLegend
+														items={funding.exchanges.map((exchange, index) => ({
+															label: exchangeLabel(exchange.exchangeId),
+															color: CHART_COLORS[index % CHART_COLORS.length]
+														}))}
+													/>
+												</div>
+												<CardDivider />
+											</>
+										) : null}
+										<KvTable rows={[['Open Interest-Weighted Funding Rate', pct(funding?.oiWeightedFundingPct, 4)]]} />
+									</MetricCard>
+								) : null}
+							</div>
+						</>
 					) : null}
 
-					<h2 className="heading-sm">Performance Overview: Liquidity Footprint</h2>
-					<Panel padding="none">
-						<div className="flex items-center justify-between gap-2 border-b border-subtle px-4 py-3">
-							<h3 className="label-lg">Top-Tier Exchange Coverage</h3>
-							<Button
-								type="button"
-								size="sm"
-								square
-								aria-label="Open exchange coverage details"
-								onClick={() => openFootprint(tier1Criterion?.key)}
-							>
-								<Icon name="arrow-right" height={14} width={14} />
-							</Button>
-						</div>
-						<div className="flex flex-col divide-y divide-(--border-subtle) md:flex-row md:items-stretch md:divide-x md:divide-y-0">
-							<div className="flex flex-1 flex-col gap-2 px-4 py-2.5 lg:flex-row lg:flex-wrap lg:items-center">
-								{tier1Covered ? (
-									<>
-										<span className="label-lg">
-											{tier1Covered.length} out of {TIER1_EXCHANGE_IDS.length} (
-											{Math.round((tier1Covered.length / TIER1_EXCHANGE_IDS.length) * 100)}
-											%)
-										</span>
-										<span className="flex flex-wrap items-center gap-2">
-											{TIER1_EXCHANGE_IDS.map((exchange) => {
-												const covered = tier1Covered.includes(exchange)
-												return (
-													<StatusBadge
-														key={exchange}
-														status={covered ? 'full' : 'not-listed'}
-														className="gap-1.5 px-2.5 py-1"
-														label={
-															<>
-																<span className={covered ? 'flex' : 'flex opacity-50 grayscale'}>
-																	<TokenLogo name={exchangeIconSlug(exchange)} kind="exchange" size={14} />
-																</span>
-																{exchangeLabel(exchange)}
-																{covered ? <Icon name="check-circle" height={12} width={12} /> : null}
-															</>
-														}
-													/>
-												)
-											})}
-										</span>
-									</>
-								) : (
-									<span className="body-sm text-tertiary">Exchange coverage data is not available.</span>
-								)}
-							</div>
-							<div className="md:flex md:w-1/2 md:shrink-0 md:flex-col md:justify-center">
-								<GradeFooter
-									score={tier1Criterion?.score ?? null}
-									grade={tier1Criterion?.grade}
-									gradingScale={scoringConfig?.grading.performance.scale}
-									percentile={tier1Criterion?.percentile}
-									divider={false}
-								/>
-							</div>
-						</div>
-					</Panel>
-					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-						{footprintCharts.map((entry) => (
-							<MetricCard
-								title={entry.title}
-								key={entry.title}
-								onOpen={() => openFootprint(entry.chart?.criterionKey)}
-								gradingScale={scoringConfig?.grading.performance.scale}
-								{...summaryFooter(entry.chart)}
-							>
-								{entry.chart?.points.length ? (
-									<>
-										<ChartCaption>{entry.title.includes('Depth') ? '+/- 2% Depth (USD)' : 'Volume (USD)'}</ChartCaption>
-										<SimpleChart
-											option={buildSeriesOption(
-												(entry.kind === 'cexdex'
-													? [
-															{ name: entry.names[0], key: 'cexUsd' as const },
-															{ name: entry.names[1], key: 'dexUsd' as const }
-														]
-													: [
-															{ name: entry.names[0], key: 'spotUsd' as const },
-															{ name: entry.names[1], key: 'perpsUsd' as const }
-														]
-												).map((series, index) => ({
-													name: series.name,
-													type: 'bar' as const,
-													stack: 'total',
-													color: entry.colors[index],
-													data: entry.chart!.points.map(
-														(point) =>
-															[
-																toTime(point.date),
-																(point as Record<string, any>)[series.key] ?? 0
-															] as SimpleSeries['data'][number]
-													)
-												})),
-												axisColor
-											)}
-										/>
-									</>
-								) : (
-									<NoDataPlaceholder />
-								)}
-								<KvTable
-									rows={[
-										[
-											`${entry.names[0]} (avg)`,
-											usd(entry.kind === 'cexdex' ? entry.chart?.cexAvgUsd : entry.chart?.spotAvgUsd)
-										],
-										[
-											`${entry.names[1]} (avg)`,
-											usd(entry.kind === 'cexdex' ? entry.chart?.dexAvgUsd : entry.chart?.perpsAvgUsd)
-										],
-										[
-											`${entry.names[0]} share`,
-											pct(entry.kind === 'cexdex' ? entry.chart?.cexSharePct : entry.chart?.spotSharePct)
-										]
-									]}
-								/>
-							</MetricCard>
-						))}
-					</div>
-
-					{tokenomicsCategory ? (
+					{hasLiquidityProviderData ? (
 						<>
-							<h2 className="heading-sm">Performance Overview: Tokenomics</h2>
-							<Panel padding="none">
-								<div className="flex items-center justify-between gap-2 border-b border-subtle px-4 py-3">
-									<span className="flex flex-wrap items-center gap-2">
-										<h3 className="label-lg">Disclosed Token Vesting vs Actual Vesting</h3>
-										{metrics?.undisclosedUnlockDetected ? (
-											<StatusBadge status="none" label="Undisclosed unlock detected" className="px-2.5 py-0.5" />
-										) : null}
-									</span>
-									{vestingCriterion ? (
-										<Button
-											type="button"
-											size="sm"
-											square
-											aria-label="Open vesting details"
-											onClick={() =>
-												tokenomicsCategory &&
-												vestingCriterion &&
-												openCriteria(
-													'Performance Overview: Tokenomics',
-													'performance',
-													'tokenomics_p',
-													tokenomicsCategory.criteria,
-													vestingCriterion.key
-												)
-											}
-										>
-											<Icon name="arrow-right" height={14} width={14} />
-										</Button>
-									) : null}
-								</div>
-								<div className="flex flex-col lg:flex-row">
-									<div className="flex min-w-0 flex-1 flex-col">
-										<div className="grid grid-cols-2 gap-px border-b border-subtle bg-(--border-subtle) sm:grid-cols-4">
-											{(
-												[
-													['Disclosed TGE Date', 'N/A'],
-													['Disclosed Duration', 'N/A'],
-													['Disclosed Total Groups', 'N/A'],
-													[
-														'Disclosed Max. Supply',
-														legacy?.tokenomics.maxSupply == null
-															? 'N/A'
-															: `${formatCompactNumber(legacy.tokenomics.maxSupply)} ${asset.symbol.toUpperCase()}`
-													]
-												] as [string, string][]
-											).map(([label, value]) => (
-												<div key={label} className="flex flex-col gap-2 bg-surface px-4 py-4">
-													<span className="body-sm text-tertiary">{label}</span>
-													<span className="label-md">{value}</span>
+							<h2 className="heading-sm">Performance Overview: Liquidity Providers</h2>
+							{hasMarketMakerSummary ? (
+								<LpPerformanceInsights
+									mmDepthPct={metrics?.mmDepthPct ?? null}
+									mmVolumePct={metrics?.mmVolumePct ?? null}
+									avgSpreadPct={metrics?.vwasBps == null ? null : metrics.vwasBps / 100}
+								/>
+							) : null}
+							{visibleMarketMakerCriteria.length ? (
+								<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+									{visibleMarketMakerCriteria.map((entry) => (
+										<Panel key={entry.key} padding="none">
+											<div className="flex items-center justify-between gap-2 px-4 py-3">
+												<div className="flex flex-col gap-0.5">
+													<h3 className="body-sm text-secondary">{MM_CRITERION_TITLES[entry.key] ?? entry.label}</h3>
+													<span className="label-lg">{pct(marketMakerCriterionRawPercent(entry.raw))}</span>
 												</div>
-											))}
-										</div>
-										<div className="flex-1 p-4">
-											<NoDataPlaceholder />
-										</div>
-									</div>
-									<div className="flex flex-col border-t border-subtle lg:w-[460px] lg:shrink-0 lg:border-t-0 lg:border-l">
-										<div className="flex flex-1 flex-col gap-2 p-4">
-											<p className="body-sm text-tertiary">Commentary versus actual token vesting</p>
-											<p className="text-xl leading-relaxed text-tertiary">N/A</p>
-											{vestingCriterion ? (
 												<Button
 													type="button"
-													size="md"
-													className="mt-auto w-fit"
+													size="sm"
+													square
+													aria-label={`Open ${entry.label} details`}
 													onClick={() =>
-														tokenomicsCategory &&
-														vestingCriterion &&
 														openCriteria(
-															'Performance Overview: Tokenomics',
+															'Performance Overview: Market Makers',
 															'performance',
-															'tokenomics_p',
-															tokenomicsCategory.criteria,
-															vestingCriterion.key
+															'market_makers',
+															visibleMarketMakerCriteria,
+															entry.key
 														)
 													}
 												>
-													Vesting Details
 													<Icon name="arrow-right" height={14} width={14} />
 												</Button>
-											) : null}
-										</div>
-										<GradeFooter
-											score={vestingCriterion?.score ?? null}
-											grade={vestingCriterion?.grade}
-											gradingScale={scoringConfig?.grading.performance.scale}
-											percentile={vestingCriterion?.percentile}
-										/>
-									</div>
+											</div>
+											<GradeFooterColumns
+												score={entry.score}
+												grade={entry.grade}
+												gradingScale={scoringConfig?.grading.performance.scale}
+												percentile={entry.percentile}
+											/>
+										</Panel>
+									))}
 								</div>
-							</Panel>
+							) : null}
+						</>
+					) : null}
+
+					{hasLiquidityFootprintData ? (
+						<>
+							<h2 className="heading-sm">Performance Overview: Liquidity Footprint</h2>
+							{tier1Covered != null ? (
+								<Panel padding="none">
+									<div className="flex items-center justify-between gap-2 border-b border-subtle px-4 py-3">
+										<h3 className="label-lg">Top-Tier Exchange Coverage</h3>
+										<Button
+											type="button"
+											size="sm"
+											square
+											aria-label="Open exchange coverage details"
+											onClick={() => openFootprint(tier1Criterion?.key)}
+										>
+											<Icon name="arrow-right" height={14} width={14} />
+										</Button>
+									</div>
+									<div className="flex flex-col divide-y divide-(--border-subtle) md:flex-row md:items-stretch md:divide-x md:divide-y-0">
+										<div className="flex flex-1 flex-col gap-2 px-4 py-2.5 lg:flex-row lg:flex-wrap lg:items-center">
+											<span className="label-lg">
+												{tier1Covered.length} out of {TIER1_EXCHANGE_IDS.length} (
+												{Math.round((tier1Covered.length / TIER1_EXCHANGE_IDS.length) * 100)}%)
+											</span>
+											<span className="flex flex-wrap items-center gap-2">
+												{TIER1_EXCHANGE_IDS.map((exchange) => {
+													const covered = tier1Covered.includes(exchange)
+													return (
+														<StatusBadge
+															key={exchange}
+															status={covered ? 'full' : 'not-listed'}
+															className="gap-1.5 px-2.5 py-1"
+															label={
+																<>
+																	<span className={covered ? 'flex' : 'flex opacity-50 grayscale'}>
+																		<TokenLogo name={exchangeIconSlug(exchange)} kind="exchange" size={14} />
+																	</span>
+																	{exchangeLabel(exchange)}
+																	{covered ? <Icon name="check-circle" height={12} width={12} /> : null}
+																</>
+															}
+														/>
+													)
+												})}
+											</span>
+										</div>
+										<div className="md:flex md:w-1/2 md:shrink-0 md:flex-col md:justify-center">
+											<GradeFooter
+												score={tier1Criterion?.score ?? null}
+												grade={tier1Criterion?.grade}
+												gradingScale={scoringConfig?.grading.performance.scale}
+												percentile={tier1Criterion?.percentile}
+												divider={false}
+											/>
+										</div>
+									</div>
+								</Panel>
+							) : null}
+							<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+								{visibleFootprintCharts.map((entry) => (
+									<MetricCard
+										title={entry.title}
+										key={entry.title}
+										onOpen={() => openFootprint(entry.chart?.criterionKey)}
+										gradingScale={scoringConfig?.grading.performance.scale}
+										{...summaryFooter(entry.chart)}
+									>
+										{entry.chart?.points.length ? (
+											<>
+												<ChartCaption>
+													{entry.title.includes('Depth') ? '+/- 2% Depth (USD)' : 'Volume (USD)'}
+												</ChartCaption>
+												<SimpleChart
+													option={buildSeriesOption(
+														(entry.kind === 'cexdex'
+															? [
+																	{ name: entry.names[0], key: 'cexUsd' as const },
+																	{ name: entry.names[1], key: 'dexUsd' as const }
+																]
+															: [
+																	{ name: entry.names[0], key: 'spotUsd' as const },
+																	{ name: entry.names[1], key: 'perpsUsd' as const }
+																]
+														).map((series, index) => ({
+															name: series.name,
+															type: 'bar' as const,
+															stack: 'total',
+															color: entry.colors[index],
+															data: entry.chart!.points.map(
+																(point) =>
+																	[
+																		toTime(point.date),
+																		(point as Record<string, any>)[series.key] ?? 0
+																	] as SimpleSeries['data'][number]
+															)
+														})),
+														axisColor
+													)}
+												/>
+											</>
+										) : null}
+										<KvTable
+											rows={[
+												[
+													`${entry.names[0]} (avg)`,
+													usd(entry.kind === 'cexdex' ? entry.chart?.cexAvgUsd : entry.chart?.spotAvgUsd)
+												],
+												[
+													`${entry.names[1]} (avg)`,
+													usd(entry.kind === 'cexdex' ? entry.chart?.dexAvgUsd : entry.chart?.perpsAvgUsd)
+												],
+												[
+													`${entry.names[0]} share`,
+													pct(entry.kind === 'cexdex' ? entry.chart?.cexSharePct : entry.chart?.spotSharePct)
+												]
+											]}
+										/>
+									</MetricCard>
+								))}
+							</div>
+						</>
+					) : null}
+
+					{hasTokenomicsData ? (
+						<>
+							<div className="flex flex-wrap items-center gap-2">
+								<h2 className="heading-sm">Performance Overview: Tokenomics</h2>
+								{metrics?.undisclosedUnlockDetected ? (
+									<StatusBadge status="none" label="Undisclosed unlock detected" className="px-2.5 py-0.5" />
+								) : null}
+							</div>
+							{hasVestingData ? (
+								<Panel padding="none">
+									<div className="flex items-center justify-between gap-2 border-b border-subtle px-4 py-3">
+										<span className="flex flex-wrap items-center gap-2">
+											<h3 className="label-lg">Disclosed Token Vesting vs Actual Vesting</h3>
+										</span>
+										{vestingCriterion ? (
+											<Button
+												type="button"
+												size="sm"
+												square
+												aria-label="Open vesting details"
+												onClick={() =>
+													tokenomicsCategory &&
+													vestingCriterion &&
+													openCriteria(
+														'Performance Overview: Tokenomics',
+														'performance',
+														'tokenomics_p',
+														tokenomicsCategory.criteria,
+														vestingCriterion.key
+													)
+												}
+											>
+												<Icon name="arrow-right" height={14} width={14} />
+											</Button>
+										) : null}
+									</div>
+									<div className="flex flex-col lg:flex-row">
+										<div className="flex min-w-0 flex-1 flex-col">
+											<div className="grid grid-cols-2 gap-px border-b border-subtle bg-(--border-subtle) sm:grid-cols-4">
+												{(
+													[
+														['Disclosed TGE Date', 'N/A'],
+														['Disclosed Duration', 'N/A'],
+														['Disclosed Total Groups', 'N/A'],
+														[
+															'Disclosed Max. Supply',
+															legacy?.tokenomics.maxSupply == null
+																? 'N/A'
+																: `${formatCompactNumber(legacy.tokenomics.maxSupply)} ${asset.symbol.toUpperCase()}`
+														]
+													] as [string, string][]
+												).map(([label, value]) => (
+													<div key={label} className="flex flex-col gap-2 bg-surface px-4 py-4">
+														<span className="body-sm text-tertiary">{label}</span>
+														<span className="label-md">{value}</span>
+													</div>
+												))}
+											</div>
+										</div>
+										<div className="flex flex-col border-t border-subtle lg:w-[460px] lg:shrink-0 lg:border-t-0 lg:border-l">
+											<div className="flex flex-1 flex-col gap-2 p-4">
+												<p className="body-sm text-tertiary">Commentary versus actual token vesting</p>
+												<p className="text-xl leading-relaxed text-tertiary">N/A</p>
+												{vestingCriterion ? (
+													<Button
+														type="button"
+														size="md"
+														className="mt-auto w-fit"
+														onClick={() =>
+															tokenomicsCategory &&
+															vestingCriterion &&
+															openCriteria(
+																'Performance Overview: Tokenomics',
+																'performance',
+																'tokenomics_p',
+																tokenomicsCategory.criteria,
+																vestingCriterion.key
+															)
+														}
+													>
+														Vesting Details
+														<Icon name="arrow-right" height={14} width={14} />
+													</Button>
+												) : null}
+											</div>
+											<GradeFooter
+												score={vestingCriterion?.score ?? null}
+												grade={vestingCriterion?.grade}
+												gradingScale={scoringConfig?.grading.performance.scale}
+												percentile={vestingCriterion?.percentile}
+											/>
+										</div>
+									</div>
+								</Panel>
+							) : null}
 							<div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
-								{tokenomicsCards.map((card) => (
+								{visibleTokenomicsCards.map((card) => (
 									<Panel key={card.title} padding="none">
 										<div className="flex items-center justify-between gap-2 px-4 py-3">
 											<div className="flex flex-col gap-0.5">

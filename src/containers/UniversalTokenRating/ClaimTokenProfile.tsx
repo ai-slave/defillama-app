@@ -90,7 +90,7 @@ function CellInput({
 				disabled={!options.length}
 				onChange={(e) => onChange(e.target.value)}
 			>
-				<option value="">{options.length ? '' : 'NO DATA YET'}</option>
+				<option value="" />
 				{options.map((option) => (
 					<option key={option} value={option}>
 						{option}

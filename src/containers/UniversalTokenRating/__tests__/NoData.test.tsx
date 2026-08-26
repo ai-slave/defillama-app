@@ -1,16 +1,12 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { PreTgePerformance } from '../PreTgePerformance'
-import { CantFindTokenBanner, NoDataPlaceholder } from '../TokenPage'
+import { CantFindTokenBanner } from '../TokenPage'
 import { TopMovers } from '../TopMovers'
 
 describe('UTR empty states', () => {
-	it('renders NO DATA YET for empty metric sections', () => {
-		expect(renderToStaticMarkup(<NoDataPlaceholder />)).toContain('NO DATA YET')
-	})
-
-	it('renders NO DATA YET when MoM data is unavailable', () => {
-		expect(renderToStaticMarkup(<TopMovers movers={[]} />)).toContain('NO DATA YET')
+	it('hides Top Movers when MoM data is unavailable', () => {
+		expect(renderToStaticMarkup(<TopMovers movers={[]} />)).toBe('')
 	})
 
 	it('keeps explicit mover signs while using canonical percent formatting', () => {
@@ -27,11 +23,16 @@ describe('UTR empty states', () => {
 		expect(html).toContain('-1.23%')
 	})
 
-	it('keeps available fundraising metadata and marks missing metrics', () => {
+	it('keeps available fundraising metadata without empty cards', () => {
 		const html = renderToStaticMarkup(<PreTgePerformance hasFundraising lastRound="Strategic" />)
 
 		expect(html).toContain('Strategic')
-		expect(html).toContain('NO DATA YET')
+		expect(html).not.toContain('NO DATA YET')
+		expect(html).not.toContain('Total Amount Fundraised')
+	})
+
+	it('hides pre-TGE performance when no metrics are available', () => {
+		expect(renderToStaticMarkup(<PreTgePerformance hasFundraising={null} lastRound={null} />)).toBe('')
 	})
 
 	it('links the missing-token CTA to the UTR application form without account-creation copy', () => {

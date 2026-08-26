@@ -200,16 +200,6 @@ export function CantFindTokenBanner() {
 	)
 }
 
-export function NoDataPlaceholder() {
-	return (
-		<div className="flex min-h-[260px] flex-col items-center justify-center gap-1 rounded-lg bg-surface-elevated-1 p-6 text-center">
-			<Icon name="bar-chart-2" height={24} width={24} className="text-tertiary" />
-			<p className="label-md text-secondary">NO DATA YET</p>
-			<p className="body-sm text-tertiary">Data will appear here once available.</p>
-		</div>
-	)
-}
-
 export function CardDivider() {
 	return <div className="-mx-4 border-t border-subtle" />
 }
