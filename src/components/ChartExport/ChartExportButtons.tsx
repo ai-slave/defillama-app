@@ -12,7 +12,7 @@ interface ChartExportButtonsProps {
 	smol?: boolean | undefined
 	showCsv?: boolean | undefined
 	showPng?: boolean | undefined
-	/** Explicitly declares whether CSV uses rendered, complete, lazy, or specialized data. */
+	/** Explicitly declares whether CSV reads the rendered chart, a lazy dataset, or specialized rows. */
 	csvSource: ChartCsvSource | null
 	pngProfile?: PngExportProfile | undefined
 	onCsvExport?: ((info: { filename: string }) => void) | undefined

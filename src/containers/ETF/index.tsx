@@ -104,7 +104,7 @@ export const ETFOverview = ({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 							chartInstance={chartInstance}
 							filename="etf-flows"
 							title="ETF Flows"
-							csvSource={{ type: 'dataset', dataset: finalCharts.dataset }}
+							csvSource={{ type: 'dataset', prepare: () => finalCharts.dataset }}
 						/>
 					</ChartPanelToolbar>
 					<React.Suspense fallback={<ChartPanelBodyFallback />}>

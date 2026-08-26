@@ -75,7 +75,7 @@ function LiquidationsDistributionChartCard({
 	chartOptions,
 	chartState,
 	deferredChartModel,
-	exportDataset,
+	prepareExportDataset,
 	displayOptions,
 	onChartReady,
 	setBreakdownMode,
@@ -96,7 +96,7 @@ function LiquidationsDistributionChartCard({
 	chartOptions: NonNullable<IMultiSeriesChartProps['chartOptions']>
 	chartState: LiquidationsChartState
 	deferredChartModel: { dataset: MultiSeriesChartDataset; charts: NonNullable<IMultiSeriesChartProps['charts']> }
-	exportDataset: MultiSeriesChartDataset
+	prepareExportDataset: () => MultiSeriesChartDataset
 	displayOptions: {
 		hideTokenSelector: boolean
 		shouldHideDataZoom: boolean
@@ -214,7 +214,7 @@ function LiquidationsDistributionChartCard({
 						.filter(Boolean)
 						.join(' - ')}
 					iconUrl={iconUrl}
-					csvSource={{ type: 'dataset', dataset: exportDataset }}
+					csvSource={{ type: 'dataset', prepare: prepareExportDataset }}
 					smol
 				/>
 			</ChartPanelToolbar>
@@ -601,7 +601,7 @@ export function LiquidationsDistributionChart({
 			charts
 		}
 	}, [chartState.metric, selectedChartView.bins, selectedChartView.series])
-	const exportDataset = React.useMemo(
+	const prepareExportDataset = React.useCallback(
 		() => buildLiquidationsChartExportDataset(selectedChartView, chartState.metric, selectedCharts),
 		[chartState.metric, selectedChartView, selectedCharts]
 	)
@@ -692,7 +692,7 @@ export function LiquidationsDistributionChart({
 			chartOptions={chartOptions}
 			chartState={chartState}
 			deferredChartModel={deferredChartModel}
-			exportDataset={exportDataset}
+			prepareExportDataset={prepareExportDataset}
 			displayOptions={{ hideTokenSelector, shouldHideDataZoom, showBreakdownLegend, showBreakdownSelector }}
 			onChartReady={onChartReady}
 			setBreakdownMode={setBreakdownMode}

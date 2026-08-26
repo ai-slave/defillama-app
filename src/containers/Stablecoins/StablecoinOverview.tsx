@@ -337,10 +337,10 @@ export const PeggedAssetInfo = ({
 	const activeSelectedCharts =
 		seriesSelectorLabel && selectableSeries.length > 1 ? selectedChartsWithHelpers : undefined
 	const csvSource: ChartCsvSource | null = marketCapSeries
-		? { type: 'prepare-dataset', prepare: () => buildStablecoinMarketCapCsvDataset(marketCapSeries) }
+		? { type: 'dataset', prepare: () => buildStablecoinMarketCapCsvDataset(marketCapSeries) }
 		: activeSelectedCharts && volumeChartKind != null
 			? {
-					type: 'prepare-dataset',
+					type: 'dataset',
 					prepare: () =>
 						fetchCompleteStablecoinVolumeCsvDataset(
 							{ scope: 'token', token: volumeToken, chart: volumeChartKind },
@@ -349,7 +349,7 @@ export const PeggedAssetInfo = ({
 				}
 			: activeSelectedCharts && selectedSeriesChart != null
 				? {
-						type: 'prepare-dataset',
+						type: 'dataset',
 						prepare: () =>
 							fetchCompleteStablecoinSeriesCsvDataset(
 								{
@@ -362,7 +362,7 @@ export const PeggedAssetInfo = ({
 							)
 					}
 				: selectedPayload
-					? { type: 'dataset', dataset: selectedPayload.dataset }
+					? { type: 'dataset', prepare: () => selectedPayload.dataset }
 					: null
 
 	const hasInfo =

@@ -128,7 +128,7 @@ export function buildSelectedPercentageChart({
 	return {
 		...projectPercentageChart({ dataset, charts, selectedCharts, missingValuePolicy }),
 		csvSource: {
-			type: 'prepare-dataset',
+			type: 'dataset',
 			prepare: () => buildCompletePercentageChartDataset({ dataset, charts, missingValuePolicy })
 		}
 	}
@@ -181,7 +181,7 @@ export function buildSelectedAdditiveChart({
 		return {
 			dataset,
 			charts: selectedSeries,
-			csvSource: { type: 'dataset', dataset }
+			csvSource: { type: 'dataset', prepare: () => dataset }
 		}
 	}
 	const visibleSeries = selectedSeries.slice(0, namedLimit)
@@ -249,6 +249,6 @@ export function buildSelectedAdditiveChart({
 	return {
 		dataset: { dimensions, source },
 		charts: outputCharts,
-		csvSource: { type: 'dataset', dataset }
+		csvSource: { type: 'dataset', prepare: () => dataset }
 	}
 }

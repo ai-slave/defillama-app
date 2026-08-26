@@ -212,8 +212,8 @@ export function BridgesOverviewByChain({
 	const selectedChainIconUrl = selectedChain !== 'All' ? chainIconUrl(selectedChain) : undefined
 	const activeChartCsvSource: ChartCsvSource | null = activeChart
 		? 'dataset' in activeChart
-			? { type: 'dataset', dataset: activeChart.dataset }
-			: { type: 'prepare-dataset', prepare: () => buildRuntimePieChartCsvDataset(activeChart.series) }
+			? { type: 'dataset', prepare: () => activeChart.dataset }
+			: { type: 'dataset', prepare: () => buildRuntimePieChartCsvDataset(activeChart.series) }
 		: null
 	const prepareCsv = () => {
 		const resolvedFilteredBridges = filteredBridges ?? EMPTY_PROTOCOLS

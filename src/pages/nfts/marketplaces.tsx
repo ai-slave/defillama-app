@@ -107,7 +107,7 @@ function Marketplaces({
 							title="Volume"
 							dataset={relativeData?.relativeVolumeDataset ?? presentation.absoluteVolumeDataset}
 							csvSource={{
-								type: 'prepare-dataset',
+								type: 'dataset',
 								prepare: () =>
 									buildNFTMarketplaceCsvDataset({
 										canonical: canonicalChartData,
@@ -137,7 +137,7 @@ function Marketplaces({
 							title="Trades"
 							dataset={relativeData?.relativeTradesDataset ?? presentation.absoluteTradesDataset}
 							csvSource={{
-								type: 'prepare-dataset',
+								type: 'dataset',
 								prepare: () =>
 									buildNFTMarketplaceCsvDataset({
 										canonical: canonicalChartData,

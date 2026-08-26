@@ -196,7 +196,7 @@ export function AdvancedTvlChartTab({
 	const canonicalDataset = chartType === 'tvl' ? resolvedBasicTvlDataset : advancedDataset
 	const csvSource = isRuntimeBreakdown
 		? runtimePresentation.csvSource
-		: { type: 'dataset' as const, dataset: canonicalDataset }
+		: { type: 'dataset' as const, prepare: () => canonicalDataset }
 
 	const chartTypeOptions = useMemo(
 		() =>

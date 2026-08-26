@@ -347,7 +347,7 @@ function MNAVChart({
 					chartInstance={chartInstance}
 					filename={`${metadata.name}-${title}`}
 					title={`${metadata.name} ${title}`}
-					csvSource={{ type: 'dataset', dataset: data.dataset }}
+					csvSource={{ type: 'dataset', prepare: () => data.dataset }}
 				/>
 			</ChartPanelToolbar>
 			<Suspense fallback={<ChartPanelBodyFallback />}>

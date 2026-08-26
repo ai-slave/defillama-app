@@ -386,9 +386,9 @@ export const HacksContainer = ({
 							title="Total Value Hacked"
 							csvSource={
 								chartType === 'Monthly Sum'
-									? { type: 'dataset', dataset: deferredMonthlyHacksChartData.dataset }
+									? { type: 'dataset', prepare: () => deferredMonthlyHacksChartData.dataset }
 									: {
-											type: 'prepare-dataset',
+											type: 'dataset',
 											prepare: prepareCompleteTechniqueDataset
 										}
 							}

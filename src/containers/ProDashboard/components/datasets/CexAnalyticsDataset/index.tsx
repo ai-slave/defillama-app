@@ -493,7 +493,7 @@ function VenueMarketShareChart({
 						chartInstance={chartInstance}
 						filename={`cex-${metric}-market-share`}
 						title={title}
-						csvSource={{ type: 'dataset', dataset }}
+						csvSource={{ type: 'dataset', prepare: () => dataset }}
 						smol
 					/>
 				</div>

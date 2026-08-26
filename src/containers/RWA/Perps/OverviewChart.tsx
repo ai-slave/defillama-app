@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useMemo } from 'react'
+import { lazy, Suspense, useCallback, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { groupMultiSeriesBarChartDataset } from '~/components/ECharts/MultiSeriesChart/groupDataset'
 import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
@@ -255,7 +255,7 @@ export function RWAPerpsOverviewChart({
 			? groupMultiSeriesBarChartDataset({ dataset: canonicalDataset, groupBy: volumeGroupBy })
 			: canonicalDataset
 	}, [chartType, selectedRawDataset, volumeGroupBy])
-	const csvDataset = useMemo(() => {
+	const prepareCsvDataset = useCallback(() => {
 		const canonicalDataset = toRwaMultiSeriesChartDataset(ungroupedDataset)
 		return chartType === 'volume24h'
 			? groupMultiSeriesBarChartDataset({ dataset: canonicalDataset, groupBy: volumeGroupBy })
@@ -339,7 +339,7 @@ export function RWAPerpsOverviewChart({
 					filename={`rwa-perps-overview-breakdown-${breakdown}-${chartType}-${timeSeriesMode}`}
 					title={`RWA Perps ${CHART_TYPE_OPTIONS.find((option) => option.key === chartType)?.label ?? 'Breakdown'}`}
 					smol
-					csvSource={{ type: 'dataset', dataset: csvDataset }}
+					csvSource={{ type: 'dataset', prepare: prepareCsvDataset }}
 				/>
 			</ChartPanelToolbar>
 			{error ? (

@@ -624,9 +624,9 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 								title={assetChartExportTitle}
 								csvSource={
 									flowChart
-										? { type: 'dataset', dataset: flowChart.dataset }
+										? { type: 'dataset', prepare: () => flowChart.dataset }
 										: assetChartDataset
-											? { type: 'dataset', dataset: assetChartDataset }
+											? { type: 'dataset', prepare: () => assetChartDataset }
 											: null
 								}
 							/>
@@ -1048,7 +1048,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 									chartInstance={nativeYieldChartInstance}
 									filename={nativeYieldExportFilename}
 									title={nativeYieldExportTitle}
-									csvSource={nativeYieldDataset ? { type: 'dataset', dataset: nativeYieldDataset } : null}
+									csvSource={nativeYieldDataset ? { type: 'dataset', prepare: () => nativeYieldDataset } : null}
 								/>
 							</ChartPanelToolbar>
 

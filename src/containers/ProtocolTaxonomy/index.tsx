@@ -254,7 +254,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 									: `${categoryPresentation.headingLabel} on ${props.chain}`
 							}
 							iconUrl={props.chain && props.chain !== 'All' ? chainIconUrl(props.chain) : undefined}
-							csvSource={{ type: 'dataset', dataset: deferredGroupedCharts.dataset }}
+							csvSource={{ type: 'dataset', prepare: () => deferredGroupedCharts.dataset }}
 						/>
 					</ChartPanelToolbar>
 					<Suspense fallback={<ChartPanelBodyFallback />}>

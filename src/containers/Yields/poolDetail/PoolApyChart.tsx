@@ -414,7 +414,7 @@ export function PoolApyChart({
 					<ChartExportButtons
 						chartInstance={() => chartRef.current}
 						filename={`yields-${poolId}-${kind}`}
-						csvSource={{ type: 'dataset', dataset }}
+						csvSource={{ type: 'dataset', prepare: () => dataset }}
 					/>
 				</div>
 			</PanelHeader>

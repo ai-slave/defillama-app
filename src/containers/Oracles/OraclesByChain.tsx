@@ -131,7 +131,7 @@ export const OraclesByChain = ({
 							filename="oracles-tvs-pie"
 							title="Oracles TVS"
 							csvSource={{
-								type: 'prepare-dataset',
+								type: 'dataset',
 								prepare: () => buildRuntimePieChartCsvDataset(tableAndPieData.pieSeries)
 							}}
 						/>

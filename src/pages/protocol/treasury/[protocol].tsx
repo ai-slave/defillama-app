@@ -102,7 +102,7 @@ function TokensBreakdownPieChartCard({
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
-					csvSource={{ type: 'prepare-dataset', prepare: () => buildRuntimePieChartCsvDataset(series) }}
+					csvSource={{ type: 'dataset', prepare: () => buildRuntimePieChartCsvDataset(series) }}
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
@@ -141,7 +141,7 @@ function HistoricalTreasuryChartCard({
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
-					csvSource={{ type: 'dataset', dataset }}
+					csvSource={{ type: 'dataset', prepare: () => dataset }}
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>

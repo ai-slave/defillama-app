@@ -609,7 +609,7 @@ export const AdapterByChainChart = ({
 							filename={`${chain}-${adapterType}-${chartName}`}
 							title={chain === 'All' ? 'All Chains' : chain}
 							iconUrl={chain !== 'All' ? chainIconUrl(chain) : undefined}
-							csvSource={{ type: 'dataset', dataset: deferredCombinedFinalCharts.dataset }}
+							csvSource={{ type: 'dataset', prepare: () => deferredCombinedFinalCharts.dataset }}
 						/>
 					)}
 				</div>
@@ -675,7 +675,7 @@ export const AdapterByChainChart = ({
 					<MultiSeriesChart
 						dataset={deferredCombinedFinalCharts.dataset}
 						charts={deferredCombinedFinalCharts.charts}
-						csvSource={{ type: 'dataset', dataset: deferredCombinedFinalCharts.dataset }}
+						csvSource={{ type: 'dataset', prepare: () => deferredCombinedFinalCharts.dataset }}
 						hideDefaultLegend={deferredCombinedFinalCharts.charts.length === 1}
 						groupBy={combinedChartInterval}
 						onReady={handleChartReady}

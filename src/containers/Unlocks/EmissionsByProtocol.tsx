@@ -975,7 +975,7 @@ const ChartContainer = ({
 								title={`${data.name} Unlock Schedule`}
 								csvSource={{
 									type: 'dataset',
-									dataset: deferredScheduleChartData.dataset
+									prepare: () => deferredScheduleChartData.dataset
 								}}
 							/>
 						</ChartPanelToolbar>

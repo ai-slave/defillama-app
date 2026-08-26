@@ -200,7 +200,7 @@ export function ChainsByCategory({
 								filename="chains-tvl-pie"
 								title="Chains TVL"
 								csvSource={{
-									type: 'prepare-dataset',
+									type: 'dataset',
 									prepare: () => buildRuntimePieChartCsvDataset(pieSeries)
 								}}
 							/>

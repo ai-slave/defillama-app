@@ -2158,7 +2158,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 							filename={timeSeriesFilename}
 							title={`${pageLabel} ${chartMetricLabel}`}
 							smol
-							csvSource={{ type: 'dataset', dataset: selectedTimeSeriesDataset }}
+							csvSource={{ type: 'dataset', prepare: () => selectedTimeSeriesDataset }}
 						/>
 					</ChartPanelToolbar>
 					{isTimeSeriesQueryEnabled && timeSeriesQuery.error ? (
@@ -2232,9 +2232,9 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 							smol
 							csvSource={
 								chartState.view === 'treemap'
-									? { type: 'prepare-dataset', prepare: () => buildTreemapCsvDataset(treemapTreeData) }
+									? { type: 'dataset', prepare: () => buildTreemapCsvDataset(treemapTreeData) }
 									: {
-											type: 'prepare-dataset',
+											type: 'dataset',
 											prepare: () => ({
 												dimensions: ['Name', 'Value'],
 												source: snapshotBreakdownRows.map(({ name, value }) => [name, value])

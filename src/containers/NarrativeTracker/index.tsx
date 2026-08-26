@@ -310,7 +310,7 @@ export const CategoryPerformanceContainer = ({
 						showCsv={tab !== 'heatmap'}
 						filename={`category-performance-${tab}`}
 						title={`Category Performance ${tab}`}
-						csvSource={{ type: 'dataset', dataset: deferredChartData.dataset }}
+						csvSource={{ type: 'dataset', prepare: () => deferredChartData.dataset }}
 					/>
 				</div>
 

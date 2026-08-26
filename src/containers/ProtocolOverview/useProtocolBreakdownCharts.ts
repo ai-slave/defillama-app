@@ -341,7 +341,7 @@ export const buildProtocolBreakdownPresentation = ({
 	stack?: string
 }): { dataset: TimestampDataset | null; charts: MultiSeriesCharts; csvSource: ChartCsvSource } => {
 	const csvSource: ChartCsvSource = {
-		type: 'prepare-dataset',
+		type: 'dataset',
 		prepare: () =>
 			buildCompleteProtocolBreakdownDataset({
 				breakdown,

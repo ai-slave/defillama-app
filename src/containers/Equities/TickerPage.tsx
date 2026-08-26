@@ -338,7 +338,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 									chartInstance={priceChartInstance}
 									filename={exportFilename}
 									title={exportTitle}
-									csvSource={{ type: 'dataset', dataset: activePriceHistoryChart.dataset }}
+									csvSource={{ type: 'dataset', prepare: () => activePriceHistoryChart.dataset }}
 								/>
 							</ChartPanelToolbar>
 							<Suspense fallback={<ChartPanelBodyFallback />}>
@@ -399,7 +399,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 								chartInstance={fundamentalsChartInstance}
 								filename={fundamentalsExportFilename}
 								title={fundamentalsExportTitle}
-								csvSource={{ type: 'dataset', dataset: activeFundamentalsChart.dataset }}
+								csvSource={{ type: 'dataset', prepare: () => activeFundamentalsChart.dataset }}
 							/>
 						</div>
 					</ChartPanelToolbar>

@@ -174,7 +174,7 @@ function TokensBreakdownPieChartCard({
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
-					csvSource={{ type: 'prepare-dataset', prepare: () => buildRuntimePieChartCsvDataset(series) }}
+					csvSource={{ type: 'dataset', prepare: () => buildRuntimePieChartCsvDataset(series) }}
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>

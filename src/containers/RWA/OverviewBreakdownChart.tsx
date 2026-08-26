@@ -437,10 +437,10 @@ export function RWAOverviewBreakdownChart({
 								}
 							: isFlowChart
 								? {
-										type: 'prepare-dataset',
+										type: 'dataset',
 										prepare: () => buildRWAFlowRotationChart(flowData ?? [], flowFrequency, { allSeries: true }).dataset
 									}
-								: { type: 'dataset', dataset }
+								: { type: 'dataset', prepare: () => dataset }
 					}
 					pngProfile={isFlowHeatmap ? 'treemapNormalized' : undefined}
 				/>

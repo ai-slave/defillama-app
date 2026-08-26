@@ -247,7 +247,7 @@ export function BridgedTVLByChain({
 							filename={`${slug(chainName)}-bridged-tvl-${chartType}`}
 							title={exportTitle}
 							iconUrl={chainIconUrl(chain)}
-							csvSource={{ type: 'prepare-dataset', prepare: () => buildRuntimePieChartCsvDataset(pieSeries) }}
+							csvSource={{ type: 'dataset', prepare: () => buildRuntimePieChartCsvDataset(pieSeries) }}
 						/>
 					</ChartPanelToolbar>
 					<React.Suspense fallback={<ChartPanelBodyFallback />}>

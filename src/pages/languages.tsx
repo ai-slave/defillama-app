@@ -154,7 +154,7 @@ function LanguageSeriesChart({
 						selectedCharts,
 						missingValuePolicy: 'require-complete'
 					})
-				: { dataset, charts, csvSource: { type: 'dataset' as const, dataset } },
+				: { dataset, charts, csvSource: { type: 'dataset' as const, prepare: () => dataset } },
 		[charts, dataset, expandTo100Percent, selectedCharts]
 	)
 	const { chartInstance, handleChartReady } = useGetChartInstance()

@@ -415,10 +415,10 @@ export function StablecoinsByChain({
 		[chartType, chartView, inflowsTooltipFormatter, selectedChartsWithHelpers.size]
 	)
 	const csvSource: ChartCsvSource | null = marketCapSeries
-		? { type: 'prepare-dataset', prepare: () => buildStablecoinMarketCapCsvDataset(marketCapSeries) }
+		? { type: 'dataset', prepare: () => buildStablecoinMarketCapCsvDataset(marketCapSeries) }
 		: activeSelectedCharts && volumeChartKind != null
 			? {
-					type: 'prepare-dataset',
+					type: 'dataset',
 					prepare: () =>
 						fetchCompleteStablecoinVolumeCsvDataset(
 							selectedChain === 'All'
@@ -429,7 +429,7 @@ export function StablecoinsByChain({
 				}
 			: activeSelectedCharts && overviewChartType != null
 				? {
-						type: 'prepare-dataset',
+						type: 'dataset',
 						prepare: () =>
 							fetchCompleteStablecoinSeriesCsvDataset(
 								{
@@ -442,7 +442,7 @@ export function StablecoinsByChain({
 							)
 					}
 				: activeChartData
-					? { type: 'dataset', dataset: activeChartData.dataset }
+					? { type: 'dataset', prepare: () => activeChartData.dataset }
 					: null
 
 	return (

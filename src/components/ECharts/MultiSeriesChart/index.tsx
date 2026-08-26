@@ -524,7 +524,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	const exportFilename = exportButtonsConfig?.filename || (title ? slug(title) : 'multi-series-chart')
 	const exportTitle = exportButtonsConfig?.pngTitle || title
 	const defaultCsvSource = useMemo(() => {
-		if (!renderedCharts.some((chart) => chart.data)) return { type: 'dataset' as const, dataset }
+		if (!renderedCharts.some((chart) => chart.data)) return { type: 'dataset' as const, prepare: () => dataset }
 		return {
 			type: 'prepare-csv' as const,
 			prepare: () => {

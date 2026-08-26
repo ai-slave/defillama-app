@@ -301,8 +301,7 @@ export type PrepareChartCsvDataset = () => ChartCsvDataset | Promise<ChartCsvDat
 
 export type ChartCsvSource =
 	| 'rendered-chart'
-	| { type: 'dataset'; dataset: ChartCsvDataset }
-	| { type: 'prepare-dataset'; prepare: PrepareChartCsvDataset }
+	| { type: 'dataset'; prepare: PrepareChartCsvDataset }
 	| { type: 'prepare-csv'; prepare: PrepareCsv }
 
 interface ChartCsvExportButtonProps {
@@ -331,12 +330,6 @@ export function ChartCsvExportButton({
 			if (!instance) throw new Error('Failed to get chart instance')
 			result = buildCsvFromChart({ instance, filenameBase: filename })
 		} else if (source.type === 'dataset') {
-			result = buildCsvFromDataset({
-				dimensions: source.dataset.dimensions,
-				source: source.dataset.source,
-				filenameBase: filename
-			})
-		} else if (source.type === 'prepare-dataset') {
 			const dataset = await source.prepare()
 			result = buildCsvFromDataset({
 				dimensions: dataset.dimensions,

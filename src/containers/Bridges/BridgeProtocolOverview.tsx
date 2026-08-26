@@ -187,11 +187,11 @@ export const BridgeInfo = ({
 	const chartFilename = `${slug(displayName)}-${isAllChains ? 'all-chains' : slug(currentChain)}-${chartType === 'Volume' ? 'volume' : chartType === 'Inflows' ? 'inflows' : chartType === 'Tokens To' ? 'tokens-to' : 'tokens-from'}`
 	const csvSource: ChartCsvSource | null =
 		chartType === 'Volume' && isAllChains
-			? { type: 'dataset', dataset: volumeDataset }
+			? { type: 'dataset', prepare: () => volumeDataset }
 			: chartType === 'Inflows' && !isAllChains
-				? { type: 'dataset', dataset: inflowsDataset }
+				? { type: 'dataset', prepare: () => inflowsDataset }
 				: activeTokenSeries
-					? { type: 'prepare-dataset', prepare: () => buildRuntimePieChartCsvDataset(activeTokenSeries) }
+					? { type: 'dataset', prepare: () => buildRuntimePieChartCsvDataset(activeTokenSeries) }
 					: null
 
 	return (

@@ -348,7 +348,7 @@ const ChartByType = ({
 					filename={exportFilename}
 					title={exportTitle}
 					iconUrl={tokenIconUrl(exportProtocolName)}
-					csvSource={{ type: 'dataset', dataset: deferredMainChartData.dataset }}
+					csvSource={{ type: 'dataset', prepare: () => deferredMainChartData.dataset }}
 				/>
 				{chartBuilderConfig ? <AddToDashboardButton chartConfig={chartBuilderConfig} smol /> : null}
 			</ChartPanelToolbar>

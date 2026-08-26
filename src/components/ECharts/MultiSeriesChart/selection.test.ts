@@ -17,7 +17,7 @@ it('ranks additive peers by peak absolute value with stable ties', () => {
 })
 
 describe('buildSelectedAdditiveChart', () => {
-	it('keeps selected peers visible and folds only the selected tail into fixed-color Others', () => {
+	it('keeps selected peers visible and folds only the selected tail into fixed-color Others', async () => {
 		const names = Array.from({ length: 5 }, (_, index) => `Series${index + 1}`)
 		const dataset = { dimensions: ['timestamp', ...names], source: [[1, 50, 40, 30, 20, 10]] }
 		const charts = names.map((name, index) => ({
@@ -46,7 +46,10 @@ describe('buildSelectedAdditiveChart', () => {
 			['Others', '#AAAAAA', 4]
 		])
 		expect(result.charts.every((chart) => chart.type === 'bar' && chart.stack === 'A')).toBe(true)
-		expect(result.csvSource).toEqual({ type: 'dataset', dataset })
+		if (result.csvSource === 'rendered-chart' || result.csvSource.type !== 'dataset') {
+			throw new Error('Expected a dataset export')
+		}
+		expect(await result.csvSource.prepare()).toBe(dataset)
 	})
 
 	it('keeps Others unavailable when any selected remainder member is unavailable', () => {
@@ -133,7 +136,7 @@ describe('buildSelectedPercentageChart', () => {
 			{ ...charts[1], encode: { x: 0, y: 2 } }
 		])
 		expect(dataset.source[0]).toEqual([1, 60, 30, 10])
-		if (result.csvSource === 'rendered-chart' || result.csvSource.type !== 'prepare-dataset') {
+		if (result.csvSource === 'rendered-chart' || result.csvSource.type !== 'dataset') {
 			throw new Error('Expected a prepared complete export')
 		}
 		expect(await result.csvSource.prepare()).toEqual({

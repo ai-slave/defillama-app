@@ -229,7 +229,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 							chartInstance={chartInstance}
 							filename={`${props.name}-holdings`}
 							title={holdingsExportTitle}
-							csvSource={chartData ? { type: 'dataset', dataset: chartData.holdingsChart.dataset } : null}
+							csvSource={chartData ? { type: 'dataset', prepare: () => chartData.holdingsChart.dataset } : null}
 						/>
 					</ChartPanelToolbar>
 					<Suspense fallback={<ChartPanelBodyFallback />}>

@@ -363,7 +363,7 @@ export const LSTOverview = ({
 										filename="lst-breakdown"
 										title="LST Breakdown"
 										csvSource={{
-											type: 'prepare-dataset',
+											type: 'dataset',
 											prepare: () => buildRuntimePieChartCsvDataset(pieSeries)
 										}}
 									/>

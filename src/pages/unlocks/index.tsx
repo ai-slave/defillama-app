@@ -241,7 +241,7 @@ function UpcomingUnlockVolumeChart({ series }: { series: UpcomingUnlockChartSeri
 						csvSource={
 							selectedBreakdown?.csvSource ?? {
 								type: 'dataset',
-								dataset: deferredChartData.dataset
+								prepare: () => deferredChartData.dataset
 							}
 						}
 					/>

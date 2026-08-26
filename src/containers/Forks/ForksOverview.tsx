@@ -183,7 +183,7 @@ export const ForksOverview = ({
 							filename="forks-tvl-pie"
 							title="Forks TVL Breakdown"
 							csvSource={{
-								type: 'prepare-dataset',
+								type: 'dataset',
 								prepare: () => buildRuntimePieChartCsvDataset(pieSeries)
 							}}
 						/>

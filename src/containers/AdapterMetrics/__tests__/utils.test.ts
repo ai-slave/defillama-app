@@ -665,7 +665,7 @@ describe('buildChainsByAdapterChartPresentation', () => {
 				expect.objectContaining({ name: 'Others', value: 15, share: expect.closeTo((15 / 555) * 100) })
 			])
 		)
-		if (presentation.csvSource === 'rendered-chart' || presentation.csvSource.type !== 'prepare-dataset') {
+		if (presentation.csvSource === 'rendered-chart' || presentation.csvSource.type !== 'dataset') {
 			throw new Error('Expected a prepared complete export')
 		}
 		const csvDataset = await presentation.csvSource.prepare()

@@ -970,7 +970,7 @@ function buildBarPresentation({
 	return {
 		kind: 'bar',
 		csvSource: {
-			type: 'prepare-dataset',
+			type: 'dataset',
 			prepare: () => buildAdapterMetricsCsvDataset({ chartData, state })
 		},
 		dataset: finalDataset,
@@ -1016,7 +1016,7 @@ function buildDominancePresentation({
 	return {
 		kind: 'dominance',
 		csvSource: {
-			type: 'prepare-dataset',
+			type: 'dataset',
 			prepare: () => buildAdapterMetricsCsvDataset({ chartData, state })
 		},
 		dataset: relativeDataset,
@@ -1343,7 +1343,7 @@ export function buildChainsByAdapterChartPresentation({
 			return {
 				kind: 'treemap',
 				csvSource: {
-					type: 'prepare-dataset',
+					type: 'dataset',
 					prepare: () =>
 						buildLatestValuesCsvDataset({
 							chartData,
@@ -1368,7 +1368,7 @@ export function buildChainsByAdapterChartPresentation({
 			return {
 				kind: 'hbar',
 				csvSource: {
-					type: 'prepare-dataset',
+					type: 'dataset',
 					prepare: () =>
 						buildLatestValuesCsvDataset({
 							chartData,
@@ -1583,7 +1583,7 @@ export function buildAdapterByChainLatestValuePresentation({
 		return {
 			kind: 'treemap',
 			csvSource: {
-				type: 'prepare-dataset',
+				type: 'dataset',
 				prepare: () => buildLatestValuesCsvDataset({ chartData, groupBy, entityDimension: 'Protocol' })
 			},
 			data: buildTreemapPresentation({
@@ -1598,7 +1598,7 @@ export function buildAdapterByChainLatestValuePresentation({
 	return {
 		kind: 'hbar',
 		csvSource: {
-			type: 'prepare-dataset',
+			type: 'dataset',
 			prepare: () => buildLatestValuesCsvDataset({ chartData, groupBy, entityDimension: 'Protocol' })
 		},
 		data: buildHBarPresentation({

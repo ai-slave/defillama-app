@@ -274,16 +274,16 @@ export function ChainsWithStablecoins({
 		}
 	}, [chartType, chartView])
 	const csvSource: ChartCsvSource | null = marketCapSeries
-		? { type: 'prepare-dataset', prepare: () => buildStablecoinMarketCapCsvDataset(marketCapSeries) }
+		? { type: 'dataset', prepare: () => buildStablecoinMarketCapCsvDataset(marketCapSeries) }
 		: activeSelectedCharts && volumeChartKind != null
 			? {
-					type: 'prepare-dataset',
+					type: 'dataset',
 					prepare: () =>
 						fetchCompleteStablecoinVolumeCsvDataset({ scope: 'global', chart: volumeChartKind }, volumeGroupBy)
 				}
 			: activeSelectedCharts && selectedSeriesChart != null
 				? {
-						type: 'prepare-dataset',
+						type: 'dataset',
 						prepare: () =>
 							fetchCompleteStablecoinSeriesCsvDataset(
 								{
@@ -295,7 +295,7 @@ export function ChainsWithStablecoins({
 							)
 					}
 				: selectedPayload
-					? { type: 'dataset', dataset: selectedPayload.dataset }
+					? { type: 'dataset', prepare: () => selectedPayload.dataset }
 					: null
 
 	return (

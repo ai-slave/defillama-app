@@ -93,7 +93,7 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 						chartInstance={chartInstance}
 						filename="digital-asset-treasuries-inflows-by-asset"
 						title="DAT Inflows by Asset"
-						csvSource={{ type: 'dataset', dataset: deferredChartData.dataset }}
+						csvSource={{ type: 'dataset', prepare: () => deferredChartData.dataset }}
 					/>
 				</ChartPanelToolbar>
 				<Suspense fallback={<ChartPanelBodyFallback />}>

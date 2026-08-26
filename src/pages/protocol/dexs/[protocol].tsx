@@ -270,7 +270,7 @@ export default function Protocols(props: DexProtocolPageProps) {
 							filename={`${props.name}-dex-volume`}
 							title={props.name}
 							iconUrl={tokenIconUrl(props.name)}
-							csvSource={{ type: 'dataset', dataset: deferredFinalCharts.dataset }}
+							csvSource={{ type: 'dataset', prepare: () => deferredFinalCharts.dataset }}
 						/>
 					</ChartPanelToolbar>
 					<Suspense fallback={<ChartPanelBodyFallback />}>

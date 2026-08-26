@@ -253,7 +253,7 @@ function TokensBreakdownPieChartCard({
 						title={exportTitle}
 						iconUrl={reserveExchangeIconUrl(protocolName)}
 						csvSource={{
-							type: 'prepare-dataset',
+							type: 'dataset',
 							prepare: () => buildRuntimePieChartCsvDataset(tokenBreakdownPieSeries)
 						}}
 					/>
@@ -358,7 +358,7 @@ function USDInflowsChartCard({ protocolName, dataset }: { protocolName: string; 
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={reserveExchangeIconUrl(protocolName)}
-					csvSource={{ type: 'dataset', dataset }}
+					csvSource={{ type: 'dataset', prepare: () => dataset }}
 				/>
 			}
 		>

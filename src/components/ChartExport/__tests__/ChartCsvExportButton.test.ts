@@ -32,21 +32,25 @@ async function prepareCsv(instance: ECharts) {
 
 async function prepareCsvFromDataset(instance: ECharts) {
 	mocks.prepareCsv = undefined
+	const prepareDataset = vi.fn(() => ({
+		dimensions: ['timestamp', 'Solana', 'Ethereum'],
+		source: [[Date.UTC(2024, 0, 1), 50, 100]]
+	}))
 	renderToStaticMarkup(
 		createElement(ChartCsvExportButton, {
 			chartInstance: () => instance,
 			filename: 'app-revenue',
 			source: {
 				type: 'dataset',
-				dataset: {
-					dimensions: ['timestamp', 'Solana', 'Ethereum'],
-					source: [[Date.UTC(2024, 0, 1), 50, 100]]
-				}
+				prepare: prepareDataset
 			}
 		})
 	)
 	if (!mocks.prepareCsv) throw new Error('CSV preparer was not rendered')
-	return await mocks.prepareCsv()
+	expect(prepareDataset).not.toHaveBeenCalled()
+	const result = await mocks.prepareCsv()
+	expect(prepareDataset).toHaveBeenCalledOnce()
+	return result
 }
 
 describe('ChartCsvExportButton', () => {
@@ -124,7 +128,7 @@ describe('ChartCsvExportButton', () => {
 				chartInstance: () => null,
 				filename: 'complete-data',
 				source: {
-					type: 'prepare-dataset',
+					type: 'dataset',
 					prepare: async () => ({ dimensions: ['Value'], source: [[1]] })
 				},
 				onExport

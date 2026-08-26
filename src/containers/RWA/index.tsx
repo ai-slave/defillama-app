@@ -1152,7 +1152,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 							source={
 								chartView === 'treemap'
 									? {
-											type: 'prepare-dataset',
+											type: 'dataset',
 											prepare: () =>
 												buildTreemapCsvDataset(
 													buildCompleteRwaTreemapTreeData({
@@ -1163,7 +1163,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 												)
 										}
 									: {
-											type: 'prepare-dataset',
+											type: 'dataset',
 											prepare: () => ({
 												dimensions: ['Name', 'Value'],
 												source: completePieChartData.map(({ name, value }) => [name, value])
@@ -1385,7 +1385,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 												})
 										}
 									: {
-											type: 'prepare-dataset',
+											type: 'dataset',
 											prepare: () =>
 												buildRWAFlowRotationChart(flowRotationData ?? [], flowRotationFrequency, {
 													allSeries: true

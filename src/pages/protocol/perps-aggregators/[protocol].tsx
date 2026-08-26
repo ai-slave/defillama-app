@@ -216,7 +216,7 @@ export default function Protocols(props: PerpsAggregatorProtocolPageProps) {
 							filename={`${props.name}-perp-aggregator-volume`}
 							title={props.name}
 							iconUrl={tokenIconUrl(props.name)}
-							csvSource={{ type: 'dataset', dataset: deferredFinalCharts.dataset }}
+							csvSource={{ type: 'dataset', prepare: () => deferredFinalCharts.dataset }}
 						/>
 					</ChartPanelToolbar>
 					<Suspense fallback={<ChartPanelBodyFallback />}>

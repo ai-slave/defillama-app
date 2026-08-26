@@ -856,7 +856,7 @@ describe('ProtocolOverview breakdown chart computation', () => {
 		})
 		expect(datasetValue(chains.dataset, 0, 'Others')).toBe(25)
 		expect(datasetValue(tokens.dataset, 1, 'Others')).toBe(30)
-		if (tokens.csvSource === 'rendered-chart' || tokens.csvSource.type !== 'prepare-dataset') {
+		if (tokens.csvSource === 'rendered-chart' || tokens.csvSource.type !== 'dataset') {
 			throw new Error('Expected a prepared complete export')
 		}
 		expect(await tokens.csvSource.prepare()).toEqual({
@@ -1018,7 +1018,7 @@ describe('ProtocolOverview breakdown chart computation', () => {
 			tailSelection.charts.find((chart) => chart.name === 'TOKEN_5')?.color
 		)
 		expect(subset.dataset?.dimensions).not.toContain('Others')
-		if (subset.csvSource === 'rendered-chart' || subset.csvSource.type !== 'prepare-dataset') {
+		if (subset.csvSource === 'rendered-chart' || subset.csvSource.type !== 'dataset') {
 			throw new Error('Expected a prepared complete export')
 		}
 		const csvDataset = await subset.csvSource.prepare()
