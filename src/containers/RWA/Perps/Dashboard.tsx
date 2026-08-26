@@ -328,7 +328,7 @@ const overviewColumns = [
 				''
 			),
 		meta: {
-			headerClassName: 'w-[136px]',
+			headerClassName: 'w-[168px] min-w-[168px]',
 			headerHelperText: d.assetGroup.description
 		}
 	}),
@@ -337,7 +337,7 @@ const overviewColumns = [
 		header: d.baseAsset.label,
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[140px]',
+			headerClassName: 'w-[180px] min-w-[180px]',
 			headerHelperText: d.baseAsset.description
 		}
 	}),
@@ -419,7 +419,7 @@ const overviewColumns = [
 				compactSuffix: 'lowercase'
 			}),
 		meta: {
-			headerClassName: 'w-[88px]',
+			headerClassName: 'w-[120px] min-w-[120px]',
 			align: 'end',
 			headerHelperText: d.price.description
 		}
@@ -749,7 +749,7 @@ const venueColumns = [
 		header: d.baseAsset.label,
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[140px]',
+			headerClassName: 'w-[180px] min-w-[180px]',
 			headerHelperText: d.baseAsset.description
 		}
 	}),
@@ -769,7 +769,7 @@ const venueColumns = [
 				''
 			),
 		meta: {
-			headerClassName: 'w-[136px]',
+			headerClassName: 'w-[168px] min-w-[168px]',
 			headerHelperText: d.assetGroup.description
 		}
 	}),
@@ -887,7 +887,7 @@ const venueColumns = [
 				compactSuffix: 'lowercase'
 			}),
 		meta: {
-			headerClassName: 'w-[88px]',
+			headerClassName: 'w-[120px] min-w-[120px]',
 			align: 'end',
 			headerHelperText: d.price.description
 		}
