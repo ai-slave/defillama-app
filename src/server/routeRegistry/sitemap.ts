@@ -89,7 +89,6 @@ function getNavRoutes(): string[] {
 		for (const page of defillamaPages[category as keyof typeof defillamaPages]) {
 			if (typeof page.route !== 'string') continue
 			if ('requireLlama' in page && page.requireLlama) continue
-			if ('requireForgdPreview' in page && page.requireForgdPreview) continue
 			if (page.route.startsWith('https://') || page.route.startsWith('http://')) continue
 			const route = normalizeSitemapRoute(stripQuery(page.route))
 			if (route != null) routes.push(route)

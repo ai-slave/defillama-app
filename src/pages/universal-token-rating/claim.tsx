@@ -1,5 +1,4 @@
 import type { InferGetStaticPropsType } from 'next'
-import { UtrAccessGate } from '~/containers/UniversalTokenRating/AccessGate'
 import { ClaimTokenProfile } from '~/containers/UniversalTokenRating/ClaimTokenProfile'
 import {
 	fetchUtrDisclosureScoreSummaries,
@@ -55,9 +54,7 @@ export default function UniversalTokenRatingClaimPage({
 			canonicalUrl="/universal-token-rating/claim"
 			pageName={['Universal Token Rating', 'Claim']}
 		>
-			<UtrAccessGate>
-				<ClaimTokenProfile projects={projects} exchangeOptions={exchangeOptions} scoringConfig={scoringConfig} />
-			</UtrAccessGate>
+			<ClaimTokenProfile projects={projects} exchangeOptions={exchangeOptions} scoringConfig={scoringConfig} />
 		</Layout>
 	)
 }

@@ -1,5 +1,4 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
-import { UtrAccessGate } from '~/containers/UniversalTokenRating/AccessGate'
 import {
 	fetchIconDataUrl,
 	fetchUtrAssetExchanges,
@@ -50,15 +49,13 @@ export default function UniversalTokenRatingTokenPage({
 			canonicalUrl={`/universal-token-rating/token/${asset}`}
 			pageName={['Universal Token Rating', name]}
 		>
-			<UtrAccessGate>
-				<TokenPageLive
-					asset={live}
-					legacy={legacy}
-					exchanges={exchanges}
-					scoringConfig={scoringConfig}
-					iconDataUrl={iconDataUrl}
-				/>
-			</UtrAccessGate>
+			<TokenPageLive
+				asset={live}
+				legacy={legacy}
+				exchanges={exchanges}
+				scoringConfig={scoringConfig}
+				iconDataUrl={iconDataUrl}
+			/>
 		</Layout>
 	)
 }

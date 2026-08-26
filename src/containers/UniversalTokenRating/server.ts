@@ -16,7 +16,7 @@ import type {
 	UtrDisclosureScoreSummary
 } from './types'
 
-const FORGD_HOST = process.env.FORGD_API_URL ?? 'https://dev.quant.api.forgd.com'
+const FORGD_HOST = 'https://quant.forgd.com'
 
 function forgdUtrHeaders(): Record<string, string> | undefined {
 	const key = process.env.API_KEY_FORGD?.trim()

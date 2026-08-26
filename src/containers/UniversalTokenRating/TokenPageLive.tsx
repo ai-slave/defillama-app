@@ -43,6 +43,7 @@ import type {
 	UtrLeaderboardRow,
 	UtrScoringConfig
 } from './types'
+import { marketMakerCriterionRawPercent } from './units'
 
 const EXCHANGE_LABELS: Record<string, string> = {
 	binance_futures: 'Binance (Futures)',
@@ -892,7 +893,9 @@ export function TokenPageLive({
 									<div className="flex items-center justify-between gap-2 px-4 py-3">
 										<div className="flex flex-col gap-0.5">
 											<h3 className="body-sm text-secondary">{MM_CRITERION_TITLES[entry.key] ?? entry.label}</h3>
-											<span className={`label-lg ${entry.raw == null ? 'text-tertiary' : ''}`}>{pct(entry.raw)}</span>
+											<span className={`label-lg ${entry.raw == null ? 'text-tertiary' : ''}`}>
+												{pct(marketMakerCriterionRawPercent(entry.raw))}
+											</span>
 										</div>
 										<Button
 											type="button"

@@ -1,5 +1,4 @@
 import type { InferGetStaticPropsType } from 'next'
-import { UtrAccessGate } from '~/containers/UniversalTokenRating/AccessGate'
 import { ClaimTokenProfile } from '~/containers/UniversalTokenRating/ClaimTokenProfile'
 import { exchangeOptionsFromScoringConfig, fetchUtrScoringConfig } from '~/containers/UniversalTokenRating/server'
 import Layout from '~/layout'
@@ -25,9 +24,7 @@ export default function UniversalTokenRatingJoinPage({
 			canonicalUrl="/universal-token-rating/join"
 			pageName={['Universal Token Rating', 'Apply for the Universal Token Rating']}
 		>
-			<UtrAccessGate>
-				<ClaimTokenProfile variant="join" exchangeOptions={exchangeOptions} scoringConfig={scoringConfig} />
-			</UtrAccessGate>
+			<ClaimTokenProfile variant="join" exchangeOptions={exchangeOptions} scoringConfig={scoringConfig} />
 		</Layout>
 	)
 }

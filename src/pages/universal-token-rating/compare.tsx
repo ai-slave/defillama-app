@@ -1,5 +1,4 @@
 import type { InferGetStaticPropsType } from 'next'
-import { UtrAccessGate } from '~/containers/UniversalTokenRating/AccessGate'
 import { CompareTokens } from '~/containers/UniversalTokenRating/CompareTokens'
 import { fetchUtrScoringConfig, fetchUtrUniverseWithLive } from '~/containers/UniversalTokenRating/server'
 import Layout from '~/layout'
@@ -22,9 +21,7 @@ export default function UniversalTokenRatingComparePage(props: InferGetStaticPro
 			canonicalUrl="/universal-token-rating/compare"
 			pageName={['Universal Token Rating', 'Compare']}
 		>
-			<UtrAccessGate>
-				<CompareTokens universe={props.universe} scoringConfig={props.scoringConfig} />
-			</UtrAccessGate>
+			<CompareTokens universe={props.universe} scoringConfig={props.scoringConfig} />
 		</Layout>
 	)
 }

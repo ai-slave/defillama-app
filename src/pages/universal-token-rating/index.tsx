@@ -1,6 +1,5 @@
 import type { InferGetStaticPropsType } from 'next'
 import { UniversalTokenRating } from '~/containers/UniversalTokenRating'
-import { UtrAccessGate } from '~/containers/UniversalTokenRating/AccessGate'
 import {
 	fetchUtrLeaderboardMom,
 	fetchUtrScoringConfig,
@@ -41,9 +40,7 @@ export default function UniversalTokenRatingPage(props: InferGetStaticPropsType<
 			canonicalUrl="/universal-token-rating"
 			pageName={['Universal Token Rating']}
 		>
-			<UtrAccessGate>
-				<UniversalTokenRating {...props} />
-			</UtrAccessGate>
+			<UniversalTokenRating {...props} />
 		</Layout>
 	)
 }
