@@ -61,6 +61,43 @@ export function formatRWAChainFlowSummary(summary: RWAChainFlowSummary): string 
 	}
 }
 
+export function getRWAFlowDrivenCopy(summary: RWAFlowVsPriceSummary): { label: string; tooltip: string } | null {
+	if (summary.flowDrivenPct == null) return null
+
+	const percentage = formatPercent(Math.abs(summary.flowDrivenPct), {
+		input: 'percent',
+		maximumFractionDigits: 0
+	})
+	const decomposition = 'The market-cap change is split into measured flows and the price-and-unattributed remainder.'
+
+	if (summary.netCapital === 0) {
+		return {
+			label: `${percentage} flow-driven`,
+			tooltip: `Measured capital flows did not contribute to this asset's market-cap change over this period. ${decomposition}`
+		}
+	}
+
+	const isGrowth = summary.mcapChange > 0
+	const isInflow = summary.netCapital > 0
+	const move = isGrowth ? 'growth' : 'decline'
+
+	if (isGrowth === isInflow) {
+		return {
+			label: `${percentage} ${isInflow ? 'inflow' : 'outflow'}-driven`,
+			tooltip: `${percentage} of this asset's ${move} over this period came from capital ${
+				isInflow ? 'entering' : 'exiting'
+			}. ${decomposition}`
+		}
+	}
+
+	return {
+		label: `${percentage} ${isInflow ? 'inflow' : 'outflow'} offset`,
+		tooltip: `Capital ${isInflow ? 'inflows' : 'outflows'} offset this asset's ${move} by an amount equal to ${percentage} of its net market-cap ${
+			isGrowth ? 'increase' : 'decrease'
+		}. ${decomposition}`
+	}
+}
+
 export function RWAFlowSummaryTooltip({
 	description,
 	summary
@@ -143,15 +180,14 @@ export function RWAFlowVsPriceStrip({
 	summary: RWAFlowVsPriceSummary
 	breakdown?: RWAFlowVsPriceAssetSummary[]
 }) {
+	const flowDrivenCopy = getRWAFlowDrivenCopy(summary)
+
 	return (
 		<p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 px-2 pt-2 body-sm">
-			{summary.flowDrivenPct != null ? (
+			{flowDrivenCopy ? (
 				<>
-					<Tooltip
-						content={`${formatPercent(summary.flowDrivenPct, { input: 'percent', maximumFractionDigits: 0 })} of this asset's growth over this period came from real money entering, not from price going up. The marketcap change always splits into two parts: measured flows, and price plus unmeasured days.`}
-						className="font-medium underline decoration-dotted"
-					>
-						{formatPercent(summary.flowDrivenPct, { input: 'percent', maximumFractionDigits: 0 })} flow-driven
+					<Tooltip content={flowDrivenCopy.tooltip} className="font-medium underline decoration-dotted">
+						{flowDrivenCopy.label}
 					</Tooltip>
 					<span aria-hidden className="text-tertiary">
 						·
