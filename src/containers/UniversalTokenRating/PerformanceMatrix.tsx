@@ -8,8 +8,10 @@ import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { Icon } from '~/ui/Icon'
+import { LoadingIndicator } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
 import { resolveUtrGradeOrLabel, utrGradeColor } from './gradeBands'
+import { areMatrixIconsReady, type MatrixIconMap } from './performanceMatrixIcons'
 import type { UtrGradingConfig, UtrLeaderboardRow } from './types'
 
 echarts.use([ScatterChart, GridComponent, TooltipComponent, CanvasRenderer])
@@ -21,6 +23,7 @@ function circularIcon(url: string): Promise<string | null> {
 	if (!cached) {
 		cached = new Promise<string | null>((resolve) => {
 			const image = new Image()
+			image.decoding = 'sync'
 			image.crossOrigin = 'anonymous'
 			image.onload = () => {
 				try {
@@ -37,7 +40,12 @@ function circularIcon(url: string): Promise<string | null> {
 					context.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2)
 					context.clip()
 					context.drawImage(image, 0, 0, size, size)
-					resolve(canvas.toDataURL())
+					const dataUrl = canvas.toDataURL()
+					const decodedIcon = new Image()
+					decodedIcon.decoding = 'sync'
+					decodedIcon.onload = () => resolve(dataUrl)
+					decodedIcon.onerror = () => resolve(null)
+					decodedIcon.src = dataUrl
 				} catch {
 					resolve(null)
 				}
@@ -75,11 +83,12 @@ function scoreRow(label: string, value: number | null, hex: string, max: number)
 export function buildMatrixOption(
 	rows: UtrLeaderboardRow[],
 	axisColor?: string,
-	icons: Record<string, string> = {},
+	icons: MatrixIconMap = {},
 	isDark = false,
 	grading?: UtrGradingConfig | null
 ): EChartsOption {
 	return {
+		animation: false,
 		grid: { left: 40, right: 20, top: 12, bottom: 26 },
 		tooltip: {
 			trigger: 'item',
@@ -178,6 +187,18 @@ function AxisArrow({ direction }: { direction: 'right' | 'up' }) {
 	)
 }
 
+function MatrixLoadingState() {
+	return (
+		<div
+			role="status"
+			aria-live="polite"
+			className="pointer-events-none absolute inset-0 flex items-center justify-center"
+		>
+			<LoadingIndicator label="Loading chart" />
+		</div>
+	)
+}
+
 export function PerformanceMatrix({
 	rows,
 	grading,
@@ -191,23 +212,27 @@ export function PerformanceMatrix({
 	const axisColor = useChartTheme(isDark).axisLabel
 	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
-	const [icons, setIcons] = useState<Record<string, string>>({})
+	const [icons, setIcons] = useState<MatrixIconMap>({})
+	const [chartReady, setChartReady] = useState(false)
+	const iconsReady = areMatrixIconsReady(rows, icons)
+	const showLoadingState = !iconsReady || !chartReady
 
 	const applyOption = useCallback(() => {
 		const instance = chartRef.current
-		if (!instance || instance.isDisposed()) return
+		if (!iconsReady || !instance || instance.isDisposed()) return
 		instance.setOption(buildMatrixOption(rows, axisColor, icons, isDark, grading), { notMerge: true })
-	}, [rows, axisColor, icons, isDark, grading])
+		setChartReady(true)
+	}, [rows, axisColor, icons, iconsReady, isDark, grading])
 
 	const initializeChart = useCallback(() => {
 		const chartDom = containerRef.current
-		if (!chartDom?.isConnected) return
+		if (!iconsReady || !chartDom?.isConnected) return
 		if (chartRef.current && !chartRef.current.isDisposed()) return
 		if (chartDom.clientWidth <= 0 || chartDom.clientHeight <= 0) return
 		const instance = echarts.init(chartDom, null, { renderer: 'canvas' })
 		chartRef.current = instance
 		applyOption()
-	}, [applyOption])
+	}, [applyOption, iconsReady])
 
 	useChartResize(chartRef, containerRef, {
 		onVisibilityChange: (isVisible) => {
@@ -222,7 +247,7 @@ export function PerformanceMatrix({
 		Promise.all(pending.map(async (row) => [row.asset, await circularIcon(row.iconDataUrl!)] as const)).then(
 			(entries) => {
 				if (cancelled) return
-				const loaded = Object.fromEntries(entries.filter(([, dataUrl]) => dataUrl != null) as [string, string][])
+				const loaded = Object.fromEntries(entries)
 				setIcons((current) => ({ ...current, ...loaded }))
 			}
 		)
@@ -258,7 +283,10 @@ export function PerformanceMatrix({
 					<span className="rotate-180 [writing-mode:vertical-rl]">Worst</span>
 				</div>
 				<div className="flex min-w-0 flex-1 flex-col">
-					<div ref={containerRef} className="min-h-[200px] w-full flex-1" />
+					<div className="relative min-h-[200px] w-full flex-1">
+						<div ref={containerRef} className={`absolute inset-0 ${showLoadingState ? 'invisible' : ''}`} />
+						{showLoadingState ? <MatrixLoadingState /> : null}
+					</div>
 					<div className="flex items-center gap-2 pr-5 pb-2 pl-10 label-xs text-tertiary">
 						<span>Worst</span>
 						<AxisArrow direction="right" />
