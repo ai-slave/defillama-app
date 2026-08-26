@@ -13,9 +13,7 @@ afterEach(() => {
 describe('buildForgdUrl', () => {
 	it('joins base + path and appends only defined query params', () => {
 		const url = buildForgdUrl('/market-maker/leaderboard/volume', { start_date: '2026-05-30', end_date: undefined })
-		expect(url).toBe(
-			'https://dev.quant.api.forgd.com/api/v1/public/market-maker/leaderboard/volume?start_date=2026-05-30'
-		)
+		expect(url).toBe('https://quant.forgd.com/api/v1/public/market-maker/leaderboard/volume?start_date=2026-05-30')
 	})
 })
 
@@ -26,7 +24,7 @@ describe('forgdFetch', () => {
 		const out = await forgdFetch('/whoami')
 		expect(out).toEqual({ ok: true })
 		expect(fetchJson).toHaveBeenCalledWith(
-			'https://dev.quant.api.forgd.com/api/v1/public/whoami',
+			'https://quant.forgd.com/api/v1/public/whoami',
 			expect.objectContaining({ headers: { Authorization: 'Bearer pk_test_123' } })
 		)
 	})
@@ -37,7 +35,7 @@ describe('forgdFetch', () => {
 		const out = await forgdFetch('/whoami')
 		expect(out).toEqual({ ok: true })
 		expect(fetchJson).toHaveBeenCalledWith(
-			'https://dev.quant.api.forgd.com/api/v1/public/whoami',
+			'https://quant.forgd.com/api/v1/public/whoami',
 			expect.objectContaining({ headers: undefined })
 		)
 	})

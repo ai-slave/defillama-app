@@ -76,20 +76,24 @@ export type RWAPerpsChartTarget =
 	| RWAPerpsAssetClassChartTarget
 	| RWAPerpsExcludeAssetClassChartTarget
 
-export interface IRWAPerpsOverviewBreakdownRequest {
-	key: RWAPerpsChartMetricKey
+export type RWAPerpsMarketBreakdownTarget = RWAPerpsChartTarget
+
+interface IRWAPerpsChartScope {
 	target: RWAPerpsChartTarget
+	includeCex: boolean
+}
+
+export interface IRWAPerpsOverviewBreakdownRequest extends IRWAPerpsChartScope {
+	key: RWAPerpsChartMetricKey
 	breakdown: Exclude<RWAPerpsOverviewBreakdown, 'contract'>
 }
 
-export interface IRWAPerpsContractBreakdownRequest {
+export interface IRWAPerpsContractBreakdownRequest extends IRWAPerpsChartScope {
 	key: RWAPerpsChartMetricKey
-	target: RWAPerpsChartTarget
 }
 
-export interface IRWAPerpsMarketBreakdownRequest {
+export interface IRWAPerpsMarketBreakdownRequest extends IRWAPerpsChartScope {
 	key: RWAPerpsChartMetricKey
-	target: RWAPerpsAllChartTarget | RWAPerpsAssetClassChartTarget | RWAPerpsExcludeAssetClassChartTarget
 }
 
 export interface IRWAPerpsOverviewPageData {
@@ -147,6 +151,7 @@ export interface IRWAPerpsVenuesOverviewRow {
 
 export interface IRWAPerpsVenuesOverview {
 	rows: IRWAPerpsVenuesOverviewRow[]
+	dexRows: IRWAPerpsVenuesOverviewRow[]
 	initialChartDataset: RWAChartDataset
 }
 
@@ -161,5 +166,6 @@ export interface IRWAPerpsAssetGroupsOverviewRow {
 
 export interface IRWAPerpsAssetGroupsOverview {
 	rows: IRWAPerpsAssetGroupsOverviewRow[]
+	dexRows: IRWAPerpsAssetGroupsOverviewRow[]
 	initialChartDataset: RWAChartDataset
 }

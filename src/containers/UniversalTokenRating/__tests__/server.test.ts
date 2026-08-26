@@ -96,17 +96,17 @@ describe('UTR project API', () => {
 		expect(exchangeOptionsFromScoringConfig(scoringConfig)).toEqual(['Binance', 'Kraken'])
 		expect(fetchJson).toHaveBeenNthCalledWith(
 			1,
-			'https://dev.quant.api.forgd.com/api/utr/projects',
+			'https://quant.forgd.com/api/utr/projects',
 			expect.objectContaining({ headers: { Authorization: 'Bearer qk_test_123' } })
 		)
 		expect(fetchJson).toHaveBeenNthCalledWith(
 			2,
-			'https://dev.quant.api.forgd.com/api/utr/projects/disclosure-scores',
+			'https://quant.forgd.com/api/utr/projects/disclosure-scores',
 			expect.objectContaining({ headers: { Authorization: 'Bearer qk_test_123' } })
 		)
 		expect(fetchJson).toHaveBeenNthCalledWith(
 			3,
-			'https://dev.quant.api.forgd.com/api/utr/scoring-config',
+			'https://quant.forgd.com/api/utr/scoring-config',
 			expect.objectContaining({ headers: { Authorization: 'Bearer qk_test_123' } })
 		)
 	})

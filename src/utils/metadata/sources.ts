@@ -110,7 +110,7 @@ export async function fetchCoreMetadataSources(): Promise<CoreMetadataSources> {
 		),
 		fetchNamedMetadataSource(
 			'RWA perps metadata API',
-			fetchMetadataJson<IRWAPerpsList>(`${getMetadataUpstreamBase('rwa-perps')}/list?zz=18`)
+			fetchMetadataJson<IRWAPerpsList>(`${getMetadataUpstreamBase('rwa-perps')}/list?includeCex=true&zz=18`)
 		),
 		fetchNamedMetadataSource(
 			'token list API',

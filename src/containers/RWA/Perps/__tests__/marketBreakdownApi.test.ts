@@ -20,7 +20,7 @@ beforeEach(() => {
 })
 
 describe('parseMarketBreakdownRequest', () => {
-	it('accepts all, asset-class, and asset-class exclusion targets', () => {
+	it('accepts every bounded backend target', () => {
 		expect(
 			parseMarketBreakdownRequest({
 				query: {
@@ -29,7 +29,35 @@ describe('parseMarketBreakdownRequest', () => {
 			})
 		).toEqual({
 			key: 'openInterest',
-			target: { kind: 'all' }
+			target: { kind: 'all' },
+			includeCex: false
+		})
+
+		expect(
+			parseMarketBreakdownRequest({
+				query: {
+					venue: 'xyz',
+					key: 'openInterest'
+				}
+			})
+		).toEqual({
+			key: 'openInterest',
+			target: { kind: 'venue', slug: 'xyz' },
+			includeCex: false
+		})
+
+		expect(
+			parseMarketBreakdownRequest({
+				query: {
+					assetGroup: 'Equities',
+					includeCex: 'true',
+					key: 'openInterest'
+				}
+			})
+		).toEqual({
+			key: 'openInterest',
+			target: { kind: 'assetGroup', slug: 'Equities' },
+			includeCex: true
 		})
 
 		expect(
@@ -41,7 +69,8 @@ describe('parseMarketBreakdownRequest', () => {
 			})
 		).toEqual({
 			key: 'markets',
-			target: { kind: 'assetClass', slug: 'Forex Perps' }
+			target: { kind: 'assetClass', slug: 'Forex Perps' },
+			includeCex: false
 		})
 
 		expect(
@@ -53,11 +82,12 @@ describe('parseMarketBreakdownRequest', () => {
 			})
 		).toEqual({
 			key: 'volume24h',
-			target: { kind: 'excludeAssetClass', slug: 'Forex Perps' }
+			target: { kind: 'excludeAssetClass', slug: 'Forex Perps' },
+			includeCex: false
 		})
 	})
 
-	it('rejects invalid metrics and unsupported targets', () => {
+	it('rejects invalid metrics and conflicting targets', () => {
 		expect(
 			parseMarketBreakdownRequest({
 				query: {
@@ -69,7 +99,8 @@ describe('parseMarketBreakdownRequest', () => {
 		expect(
 			parseMarketBreakdownRequest({
 				query: {
-					venue: 'xyz',
+					assetClass: 'Forex Perps',
+					excludeAssetClass: 'Forex Perps',
 					key: 'openInterest'
 				}
 			})
@@ -79,6 +110,7 @@ describe('parseMarketBreakdownRequest', () => {
 			parseMarketBreakdownRequest({
 				query: {
 					assetGroup: 'Equities',
+					includeCex: 'yes',
 					key: 'openInterest'
 				}
 			})
@@ -88,7 +120,7 @@ describe('parseMarketBreakdownRequest', () => {
 			parseMarketBreakdownRequest({
 				query: {
 					assetClass: 'Forex Perps',
-					excludeAssetClass: 'Forex Perps',
+					includeCex: ['true'],
 					key: 'openInterest'
 				}
 			})

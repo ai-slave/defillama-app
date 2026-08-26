@@ -20,9 +20,14 @@ import type {
 	IRWAPerpsMarketChartPoint
 } from './api.types'
 import { toRWAPerpsBreakdownChartDataset } from './breakdownDataset'
-import { getRWAPerpsOverviewSnapshotBreakdownLabel, getRWAPerpsVenueSnapshotBreakdownLabel } from './breakdownLabels'
+import {
+	getRWAPerpsAssetGroupBreakdownLabel,
+	getRWAPerpsOverviewSnapshotBreakdownLabel,
+	getRWAPerpsVenueSnapshotBreakdownLabel
+} from './breakdownLabels'
 import { getDefaultRWAPerpsChartBreakdown, getDefaultRWAPerpsChartView } from './chartState'
 import type { RWAPerpsTimeSeriesBreakdown } from './chartState'
+import { getRWAPerpsIncludedRows } from './dashboardData'
 import type {
 	IRWAPerpsAssetGroupPageData,
 	IRWAPerpsAssetGroupsOverview,
@@ -54,6 +59,12 @@ type SnapshotBreakdown =
 	| RWAPerpsAssetGroupSnapshotBreakdown
 
 type BreakdownLabelResolver<TRow, TBreakdown extends string> = (row: TRow, breakdown: TBreakdown) => string
+
+type RWAPerpsOverviewBucket = {
+	openInterest: number
+	volume24h: number
+	markets: number
+}
 
 const EMPTY_CHART_DATASET: RWAChartDataset = { source: [], dimensions: ['timestamp'] }
 
@@ -383,14 +394,16 @@ async function getInitialTimeSeriesDataset({
 	if (defaultBreakdown === 'contract') {
 		return getRWAPerpsContractBreakdownChartDataset({
 			key: 'openInterest',
-			target
+			target,
+			includeCex: false
 		})
 	}
 
 	return getRWAPerpsBreakdownChartDataset({
 		breakdown: defaultBreakdown,
 		key: 'openInterest',
-		target
+		target,
+		includeCex: false
 	})
 }
 
@@ -403,7 +416,7 @@ export async function getRWAPerpsOverview({
 	target?: RWAPerpsAllChartTarget | RWAPerpsAssetClassChartTarget | RWAPerpsExcludeAssetClassChartTarget
 	defaultTimeSeriesBreakdown?: RWAPerpsOverviewTimeSeriesBreakdown
 } = {}): Promise<IRWAPerpsOverviewPageData> {
-	const [stats, current] = await Promise.all([fetchRWAPerpsStats(), fetchRWAPerpsCurrent()])
+	const [stats, current] = await Promise.all([fetchRWAPerpsStats(true), fetchRWAPerpsCurrent(true)])
 
 	const initialChartDataset = shouldPreloadInitialChartDataset(activeView)
 		? await getInitialTimeSeriesDataset({
@@ -437,7 +450,7 @@ export async function getRWAPerpsVenuePage({
 	venue: string
 	activeView?: RWAPerpsChartView
 }): Promise<IRWAPerpsVenuePageData | null> {
-	const [list, stats] = await Promise.all([fetchRWAPerpsList(), fetchRWAPerpsStats()])
+	const [list, stats] = await Promise.all([fetchRWAPerpsList(true), fetchRWAPerpsStats(true)])
 
 	const resolvedVenue = findByRwaSlug(venue, list.venues)
 	if (!resolvedVenue) return null
@@ -476,33 +489,58 @@ export async function getRWAPerpsVenuePage({
 }
 
 export async function getRWAPerpsVenuesOverview(): Promise<IRWAPerpsVenuesOverview> {
-	const [stats, initialChartDataset] = await Promise.all([
-		fetchRWAPerpsStats(),
+	const [markets, initialChartDataset] = await Promise.all([
+		fetchRWAPerpsCurrent(true),
 		getRWAPerpsBreakdownChartDataset({
 			breakdown: 'venue',
 			key: 'openInterest',
-			target: { kind: 'all' }
+			target: { kind: 'all' },
+			includeCex: false
 		})
 	])
+	const dexMarkets = markets.filter((market) => market.venueType !== 'CEX')
+
+	return {
+		rows: buildRWAPerpsVenuesOverviewRows(markets),
+		dexRows: buildRWAPerpsVenuesOverviewRows(dexMarkets),
+		initialChartDataset
+	}
+}
+
+export function buildRWAPerpsVenuesOverviewRows(markets: IRWAPerpsMarket[]): IRWAPerpsVenuesOverviewRow[] {
+	const eligibleMarkets = getRWAPerpsIncludedRows(markets, 'overview')
+	const totalOpenInterest = sumMarketMetric(eligibleMarkets, 'openInterest')
+	const totalVolume24h = sumMarketMetric(eligibleMarkets, 'volume24h')
+	const totalsByVenue = new Map<string, RWAPerpsOverviewBucket>()
+
+	for (const market of markets) {
+		const bucket = totalsByVenue.get(market.venue)
+		if (bucket) {
+			bucket.openInterest += market.openInterest
+			bucket.volume24h += market.volume24h
+			bucket.markets++
+		} else {
+			totalsByVenue.set(market.venue, {
+				openInterest: market.openInterest,
+				volume24h: market.volume24h,
+				markets: 1
+			})
+		}
+	}
 
 	const rows: IRWAPerpsVenuesOverviewRow[] = []
-	for (const venue in stats.byVenue) {
-		const bucket = stats.byVenue[venue]
-		if (!bucket) continue
+	for (const [venue, bucket] of totalsByVenue) {
 		rows.push({
 			venue,
 			openInterest: bucket.openInterest,
-			openInterestShare: safeRatio(bucket.openInterest, stats.totalOpenInterest),
+			openInterestShare: safeRatio(bucket.openInterest, totalOpenInterest),
 			volume24h: bucket.volume24h,
-			volume24hShare: safeRatio(bucket.volume24h, stats.totalVolume24h),
+			volume24hShare: safeRatio(bucket.volume24h, totalVolume24h),
 			markets: bucket.markets
 		})
 	}
 
-	return {
-		rows: rows.sort((a, b) => b.openInterest - a.openInterest),
-		initialChartDataset
-	}
+	return rows.sort((a, b) => b.openInterest - a.openInterest)
 }
 
 export async function getRWAPerpsAssetGroupPage({
@@ -512,12 +550,12 @@ export async function getRWAPerpsAssetGroupPage({
 	assetGroup: string
 	activeView?: RWAPerpsChartView
 }): Promise<IRWAPerpsAssetGroupPageData | null> {
-	const [list, stats] = await Promise.all([fetchRWAPerpsList(), fetchRWAPerpsStats()])
+	const [list, stats] = await Promise.all([fetchRWAPerpsList(true), fetchRWAPerpsStats(true)])
 
 	const resolvedAssetGroup = findByRwaSlug(assetGroup, list.assetGroups)
 	if (!resolvedAssetGroup) return null
 
-	const markets = await fetchRWAPerpsMarketsByAssetGroup(resolvedAssetGroup).catch(() => null)
+	const markets = await fetchRWAPerpsMarketsByAssetGroup(resolvedAssetGroup, true).catch(() => null)
 	if (!markets?.length) return null
 
 	const initialChartDataset = shouldPreloadInitialChartDataset(activeView)
@@ -551,31 +589,57 @@ export async function getRWAPerpsAssetGroupPage({
 }
 
 export async function getRWAPerpsAssetGroupsOverview(): Promise<IRWAPerpsAssetGroupsOverview> {
-	const [stats, initialChartDataset] = await Promise.all([
-		fetchRWAPerpsStats(),
+	const [markets, initialChartDataset] = await Promise.all([
+		fetchRWAPerpsCurrent(true),
 		getRWAPerpsBreakdownChartDataset({
 			breakdown: 'assetGroup',
 			key: 'openInterest',
-			target: { kind: 'all' }
+			target: { kind: 'all' },
+			includeCex: false
 		})
 	])
+	const dexMarkets = markets.filter((market) => market.venueType !== 'CEX')
+
+	return {
+		rows: buildRWAPerpsAssetGroupsOverviewRows(markets),
+		dexRows: buildRWAPerpsAssetGroupsOverviewRows(dexMarkets),
+		initialChartDataset
+	}
+}
+
+export function buildRWAPerpsAssetGroupsOverviewRows(markets: IRWAPerpsMarket[]): IRWAPerpsAssetGroupsOverviewRow[] {
+	const eligibleMarkets = getRWAPerpsIncludedRows(markets, 'assetGroup')
+	const totalOpenInterest = sumMarketMetric(eligibleMarkets, 'openInterest')
+	const totalVolume24h = sumMarketMetric(eligibleMarkets, 'volume24h')
+	const totalsByAssetGroup = new Map<string, RWAPerpsOverviewBucket>()
+
+	for (const market of eligibleMarkets) {
+		const assetGroup = getRWAPerpsAssetGroupBreakdownLabel(market)
+		const bucket = totalsByAssetGroup.get(assetGroup)
+		if (bucket) {
+			bucket.openInterest += market.openInterest
+			bucket.volume24h += market.volume24h
+			bucket.markets++
+		} else {
+			totalsByAssetGroup.set(assetGroup, {
+				openInterest: market.openInterest,
+				volume24h: market.volume24h,
+				markets: 1
+			})
+		}
+	}
 
 	const rows: IRWAPerpsAssetGroupsOverviewRow[] = []
-	for (const assetGroup in stats.byAssetGroup) {
-		const bucket = stats.byAssetGroup[assetGroup]
-		if (!bucket) continue
+	for (const [assetGroup, bucket] of totalsByAssetGroup) {
 		rows.push({
 			assetGroup,
 			openInterest: bucket.openInterest,
-			openInterestShare: safeRatio(bucket.openInterest, stats.totalOpenInterest),
+			openInterestShare: safeRatio(bucket.openInterest, totalOpenInterest),
 			volume24h: bucket.volume24h,
-			volume24hShare: safeRatio(bucket.volume24h, stats.totalVolume24h),
+			volume24hShare: safeRatio(bucket.volume24h, totalVolume24h),
 			markets: bucket.markets
 		})
 	}
 
-	return {
-		rows: rows.sort((a, b) => b.openInterest - a.openInterest),
-		initialChartDataset
-	}
+	return rows.sort((a, b) => b.openInterest - a.openInterest)
 }

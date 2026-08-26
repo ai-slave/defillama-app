@@ -49,11 +49,12 @@ export function materializeRwaIndependentChartDataset(dataset: RWAPositionalChar
 
 /** Materialize the named public RWA API contract once before a Cartesian renderer consumes it. */
 export function toRwaMultiSeriesChartDataset(dataset: RWAChartDataset): MultiSeriesTimeSeriesDataset {
-	const dimensions: MultiSeriesTimeSeriesDataset['dimensions'] = ['timestamp', ...dataset.dimensions.slice(1)]
+	const seriesDimensions = dataset.dimensions.slice(1)
+	const dimensions: MultiSeriesTimeSeriesDataset['dimensions'] = ['timestamp', ...seriesDimensions]
 	const source: MultiSeriesTimeSeriesDataset['source'] = []
 	for (const input of dataset.source) {
 		const row: MultiSeriesTimeSeriesDataset['source'][number] = [input.timestamp]
-		for (const dimension of dimensions.slice(1)) {
+		for (const dimension of seriesDimensions) {
 			row.push(input[dimension] ?? null)
 		}
 		source.push(row)

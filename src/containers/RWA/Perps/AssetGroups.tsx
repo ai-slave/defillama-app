@@ -1,10 +1,14 @@
 import { createColumnHelper } from '@tanstack/react-table'
+import { useRouter } from 'next/router'
 import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import type {} from '~/components/Table/utils'
 import type { RWAChartDataset } from '~/containers/RWA/chartDataset'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
+import { Card } from '~/ui/Card'
+import { Checkbox } from '~/ui/Checkbox'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
+import { isTrueQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import { perpsDefinitions as d } from './definitions'
 import { RWAPerpsOverviewChart } from './OverviewChart'
 import type { IRWAPerpsAssetGroupsOverviewRow } from './types'
@@ -90,20 +94,35 @@ const columns = [
 ]
 export function RWAPerpsAssetGroupsOverview({
 	assetGroups,
+	dexAssetGroups,
 	initialChartDataset
 }: {
 	assetGroups: IRWAPerpsAssetGroupsOverviewRow[]
+	dexAssetGroups: IRWAPerpsAssetGroupsOverviewRow[]
 	initialChartDataset: RWAChartDataset
 }) {
+	const router = useRouter()
+	const includeCex = isTrueQueryParam(router.query.includeCex)
+	const rows = includeCex ? assetGroups : dexAssetGroups
+	const onToggleIncludeCex = () => {
+		void pushShallowQuery(router, { includeCex: includeCex ? undefined : 'true' })
+	}
+
 	return (
 		<div className="flex flex-col gap-2">
+			<Card padding="sm" className="flex flex-wrap items-center gap-2">
+				<Checkbox variant="filter" value="includeCex" checked={includeCex} onChange={onToggleIncludeCex}>
+					<span className="whitespace-nowrap">CEX Venues</span>
+				</Checkbox>
+			</Card>
 			<RWAPerpsOverviewChart
 				breakdown="assetGroup"
 				initialChartDataset={initialChartDataset}
+				includeCex={includeCex}
 				stackLabel={d.assetGroup.label}
 			/>
 			<TableWithSearch
-				data={assetGroups}
+				data={rows}
 				columns={columns}
 				placeholder="Search asset groups..."
 				columnToSearch="assetGroup"

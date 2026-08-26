@@ -8,7 +8,7 @@ afterEach(() => {
 
 function setupPageModule({
 	assetGroups = ['US Equities'],
-	data = { rows: [], initialChartDataset: { source: [], dimensions: ['timestamp'] } }
+	data = { rows: [], dexRows: [], initialChartDataset: { source: [], dimensions: ['timestamp'] } }
 }: {
 	assetGroups?: string[]
 	data?: unknown
@@ -57,6 +57,7 @@ describe('rwa perps asset-groups page', () => {
 		await expect(page.getStaticProps(context)).resolves.toEqual({
 			props: {
 				assetGroups: [],
+				dexAssetGroups: [],
 				initialChartDataset: { source: [], dimensions: ['timestamp'] },
 				assetGroupLinks: [
 					{ label: 'All', to: '/rwa/perps/asset-groups' },

@@ -284,10 +284,11 @@ const SOURCES = {
 	rwaChains: async () => ((await fetchJson('https://api.llama.fi/rwa/list')).chains || []).map(sluggify),
 	rwaPlatforms: async () => ((await fetchJson('https://api.llama.fi/rwa/list')).platforms || []).map(sluggify),
 	rwaPerpsAssetGroups: async () =>
-		((await fetchJson('https://api.llama.fi/rwa-perps/list')).assetGroups || []).map(sluggify),
+		((await fetchJson('https://api.llama.fi/rwa-perps/list?includeCex=true')).assetGroups || []).map(sluggify),
 	rwaPerpsContracts: async () =>
-		((await fetchJson('https://api.llama.fi/rwa-perps/list')).contracts || []).map(sluggify),
-	rwaPerpsVenues: async () => ((await fetchJson('https://api.llama.fi/rwa-perps/list')).venues || []).map(sluggify),
+		((await fetchJson('https://api.llama.fi/rwa-perps/list?includeCex=true')).contracts || []).map(sluggify),
+	rwaPerpsVenues: async () =>
+		((await fetchJson('https://api.llama.fi/rwa-perps/list?includeCex=true')).venues || []).map(sluggify),
 	digitalAssetCompanies: async () => {
 		const r = await fetchJson('https://api.llama.fi/dat/institutions')
 		const slugs = new Set()

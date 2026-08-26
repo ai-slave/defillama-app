@@ -72,7 +72,7 @@ function responseForUrl(url: string): unknown {
 	if (url.includes('/rwa/rwa/platforms') || url === 'https://rwa.example.com/rwa/platforms') {
 		return { generatedAt: 0, byPid: {}, platforms: {} }
 	}
-	if (url.includes('/rwa-perps/list') || url === 'https://rwa-perps.example.com/list') {
+	if (url.includes('/rwa-perps/list') || url.startsWith('https://rwa-perps.example.com/list')) {
 		return {
 			contracts: [],
 			venues: [],
@@ -190,7 +190,7 @@ describe('metadata source adapters', () => {
 		expectMetadataRequest('https://core.example.com/api/config/smol/appMetadata-protocols.json')
 		expectMetadataRequest('https://rwa.example.com/list')
 		expectMetadataRequest('https://rwa.example.com/rwa/platforms')
-		expectMetadataRequest('https://rwa-perps.example.com/list')
+		expectMetadataRequest('https://rwa-perps.example.com/list?includeCex=true')
 		expectMetadataRequest('https://datasets.example.com/tokenlist/rankings.json')
 		expectMetadataRequest('https://liquidations.example.com/all')
 		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith(

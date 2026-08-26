@@ -10,6 +10,8 @@ import { withPerformanceLogging } from '~/utils/perf'
 export const getStaticProps = withPerformanceLogging(`rwa/perps/index`, async () => {
 	const data = await getRWAPerpsOverview({
 		activeView: getDefaultRWAPerpsChartView('overview'),
+		// CEX venues materially change the headline totals, so the overview starts
+		// with the producer's DEX series and lets users include CEX markets explicitly.
 		target: { kind: 'excludeAssetClass', slug: 'Forex Perps' }
 	})
 

@@ -9,7 +9,7 @@ import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging(`rwa/perps/asset-groups`, async () => {
-	const [metadataCache, { rows: assetGroups, initialChartDataset }] = await Promise.all([
+	const [metadataCache, { rows: assetGroups, dexRows: dexAssetGroups, initialChartDataset }] = await Promise.all([
 		import('~/utils/metadata').then((m) => m.default),
 		getRWAPerpsAssetGroupsOverview()
 	])
@@ -17,6 +17,7 @@ export const getStaticProps = withPerformanceLogging(`rwa/perps/asset-groups`, a
 	return {
 		props: {
 			assetGroups,
+			dexAssetGroups,
 			initialChartDataset,
 			assetGroupLinks: [
 				{ label: 'All', to: '/rwa/perps/asset-groups' },
@@ -34,6 +35,7 @@ const pageName = ['RWA Perps']
 
 export default function RWAPerpsAssetGroupsPage({
 	assetGroups,
+	dexAssetGroups,
 	initialChartDataset,
 	assetGroupLinks
 }: InferGetStaticPropsType<typeof getStaticProps>) {
@@ -46,7 +48,11 @@ export default function RWAPerpsAssetGroupsPage({
 		>
 			<RWAPerpsTabNav active="assetGroups" />
 			<RowLinksWithDropdown links={assetGroupLinks} activeLink="All" />
-			<RWAPerpsAssetGroupsOverview assetGroups={assetGroups} initialChartDataset={initialChartDataset} />
+			<RWAPerpsAssetGroupsOverview
+				assetGroups={assetGroups}
+				dexAssetGroups={dexAssetGroups}
+				initialChartDataset={initialChartDataset}
+			/>
 		</Layout>
 	)
 }

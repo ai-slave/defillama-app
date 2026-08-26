@@ -22,7 +22,12 @@ function encodeRWAPerpsPathSegment(value: string): string {
 	return encodeURIComponent(value)
 }
 
-export function setRWAPerpsChartTarget(searchParams: URLSearchParams, target: RWAPerpsChartTarget): void {
+export function setRWAPerpsChartScope(
+	searchParams: URLSearchParams,
+	scope: { target: RWAPerpsChartTarget; includeCex: boolean }
+): void {
+	if (scope.includeCex) searchParams.set('includeCex', 'true')
+	const target = scope.target
 	switch (target.kind) {
 		case 'all':
 			return
@@ -39,6 +44,12 @@ export function setRWAPerpsChartTarget(searchParams: URLSearchParams, target: RW
 			searchParams.set('excludeAssetClass', target.slug)
 			return
 	}
+}
+
+function createRWAPerpsScopedUrl(path: string, includeCex: boolean): string {
+	const searchParams = new URLSearchParams({ zz: '18' })
+	if (includeCex) searchParams.set('includeCex', 'true')
+	return `${RWA_PERPS_SERVER_URL}/${path}?${searchParams.toString()}`
 }
 
 function createRWAPerpsFundingHistoryUrl(id: string, params?: IRWAPerpsFundingHistoryParams): string {
@@ -59,24 +70,24 @@ function createRWAPerpsFundingHistoryUrl(id: string, params?: IRWAPerpsFundingHi
 }
 
 /**
- * Fetch all markets from the latest snapshot.
+ * Fetch the latest DEX snapshot, optionally including CEX markets.
  */
-export async function fetchRWAPerpsCurrent(): Promise<IRWAPerpsMarket[]> {
-	return fetchJson<IRWAPerpsMarket[]>(`${RWA_PERPS_SERVER_URL}/current?zz=18`)
+export async function fetchRWAPerpsCurrent(includeCex: boolean): Promise<IRWAPerpsMarket[]> {
+	return fetchJson<IRWAPerpsMarket[]>(createRWAPerpsScopedUrl('current', includeCex))
 }
 
 /**
- * Fetch the available contracts, venues, and categories.
+ * Fetch the DEX filter options, optionally including CEX options.
  */
-export async function fetchRWAPerpsList(): Promise<IRWAPerpsListResponse> {
-	return fetchJson<IRWAPerpsListResponse>(`${RWA_PERPS_SERVER_URL}/list?zz=18`)
+export async function fetchRWAPerpsList(includeCex: boolean): Promise<IRWAPerpsListResponse> {
+	return fetchJson<IRWAPerpsListResponse>(createRWAPerpsScopedUrl('list', includeCex))
 }
 
 /**
- * Fetch aggregate totals by venue and category.
+ * Fetch DEX aggregate totals, optionally including CEX totals.
  */
-export async function fetchRWAPerpsStats(): Promise<IRWAPerpsStatsResponse> {
-	return fetchJson<IRWAPerpsStatsResponse>(`${RWA_PERPS_SERVER_URL}/stats?zz=18`)
+export async function fetchRWAPerpsStats(includeCex: boolean): Promise<IRWAPerpsStatsResponse> {
+	return fetchJson<IRWAPerpsStatsResponse>(createRWAPerpsScopedUrl('stats', includeCex))
 }
 /**
  * Fetch a single market by its venue:contract ID.
@@ -105,9 +116,12 @@ export async function fetchRWAPerpsMarketsByVenue(venue: string): Promise<IRWAPe
 /**
  * Fetch all markets for an asset group.
  */
-export async function fetchRWAPerpsMarketsByAssetGroup(assetGroup: string): Promise<IRWAPerpsMarket[]> {
+export async function fetchRWAPerpsMarketsByAssetGroup(
+	assetGroup: string,
+	includeCex: boolean
+): Promise<IRWAPerpsMarket[]> {
 	const encodedAssetGroup = encodeRWAPerpsPathSegment(assetGroup)
-	return fetchJson<IRWAPerpsMarket[]>(`${RWA_PERPS_SERVER_URL}/assetGroup/${encodedAssetGroup}?zz=18`)
+	return fetchJson<IRWAPerpsMarket[]>(createRWAPerpsScopedUrl(`assetGroup/${encodedAssetGroup}`, includeCex))
 }
 
 /**
@@ -134,7 +148,7 @@ export async function fetchRWAPerpsOverviewBreakdownChartData(
 		key: params.key
 	})
 
-	setRWAPerpsChartTarget(searchParams, params.target)
+	setRWAPerpsChartScope(searchParams, params)
 
 	return fetchJson<IRWAPerpsBreakdownChartResponse>(
 		`${RWA_PERPS_SERVER_URL}/chart/overview-breakdown?${searchParams.toString()}`
@@ -151,7 +165,7 @@ export async function fetchRWAPerpsContractBreakdownChartData(
 		key: params.key
 	})
 
-	setRWAPerpsChartTarget(searchParams, params.target)
+	setRWAPerpsChartScope(searchParams, params)
 
 	return fetchJson<IRWAPerpsBreakdownChartResponse>(
 		`${RWA_PERPS_SERVER_URL}/chart/contract-breakdown?${searchParams.toString()}`
@@ -168,7 +182,7 @@ export async function fetchRWAPerpsMarketBreakdownChartData(
 		key: params.key
 	})
 
-	setRWAPerpsChartTarget(searchParams, params.target)
+	setRWAPerpsChartScope(searchParams, params)
 
 	return fetchJson<IRWAPerpsBreakdownChartResponse>(
 		`${RWA_PERPS_SERVER_URL}/chart/market-breakdown?${searchParams.toString()}`

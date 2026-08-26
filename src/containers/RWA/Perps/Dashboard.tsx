@@ -53,7 +53,7 @@ import {
 	pushShallowQuery,
 	toNonEmptyArrayParam
 } from '~/utils/routerQuery'
-import { setRWAPerpsChartTarget } from './api'
+import { setRWAPerpsChartScope } from './api'
 import type { IRWAPerpsMarket } from './api.types'
 import { getRWAPerpsAssetGroupBreakdownLabel, getRWAPerpsBaseAssetBreakdownLabel } from './breakdownLabels'
 import {
@@ -106,7 +106,7 @@ import type {
 	IRWAPerpsOverviewPageData,
 	IRWAPerpsVenuePageData,
 	RWAPerpsAssetGroupTimeSeriesBreakdown,
-	RWAPerpsChartTarget,
+	RWAPerpsMarketBreakdownTarget,
 	RWAPerpsOverviewTimeSeriesBreakdown,
 	RWAPerpsVenueTimeSeriesBreakdown
 } from './types'
@@ -116,7 +116,10 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 const HBarChart = lazy(() => import('~/components/ECharts/HBarChart')) as React.FC<IHBarChartProps>
 const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<TreemapChartProps>
 
-const EMPTY_DATASET: RWAChartDataset = { source: [], dimensions: ['timestamp'] }
+const EMPTY_DATASET: RWAChartDataset = {
+	source: [],
+	dimensions: ['timestamp']
+}
 const EMPTY_SNAPSHOT_BREAKDOWN_ROWS: Array<{ name: string; value: number }> = []
 const PIE_CHART_RADIUS = ['50%', '70%'] as [string, string]
 const FOREX_ASSET_CLASS = 'Forex Perps'
@@ -149,6 +152,11 @@ type RWAPerpsMarketFilterState = RWAPerpsMarketFilterDefinition & {
 	active: boolean
 	enabled: boolean
 }
+
+type RWAPerpsTimeSeriesRequest =
+	| ({ source: 'market-breakdown' } & IRWAPerpsMarketBreakdownRequest)
+	| ({ source: 'contract-breakdown' } & IRWAPerpsContractBreakdownRequest)
+	| ({ source: 'overview-breakdown' } & IRWAPerpsOverviewBreakdownRequest)
 
 const PERPS_MARKET_FILTER_DEFINITIONS: RWAPerpsMarketFilterDefinition[] = [
 	{
@@ -355,7 +363,11 @@ const overviewColumns = [
 		id: 'openInterest',
 		header: d.openInterest.label,
 		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			formatUsd(info.getValue(), {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 		meta: {
 			headerClassName: 'w-[136px]',
 			align: 'end',
@@ -376,7 +388,11 @@ const overviewColumns = [
 		id: 'volume24h',
 		header: d.volume24h.label,
 		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			formatUsd(info.getValue(), {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 		meta: {
 			headerClassName: 'w-[126px]',
 			align: 'end',
@@ -397,7 +413,11 @@ const overviewColumns = [
 		id: 'price',
 		header: d.price.label,
 		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			formatUsd(info.getValue(), {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 		meta: {
 			headerClassName: 'w-[88px]',
 			align: 'end',
@@ -540,7 +560,11 @@ const overviewColumns = [
 		id: 'cumulativeFunding',
 		header: d.cumulativeFunding.label,
 		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			formatUsd(info.getValue(), {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 		meta: {
 			headerClassName: 'w-[168px]',
 			align: 'end',
@@ -551,7 +575,11 @@ const overviewColumns = [
 		id: 'oraclePx',
 		header: d.oraclePx.label,
 		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			formatUsd(info.getValue(), {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 		meta: {
 			headerClassName: 'w-[92px]',
 			align: 'end',
@@ -562,7 +590,11 @@ const overviewColumns = [
 		id: 'midPx',
 		header: d.midPx.label,
 		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			formatUsd(info.getValue(), {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 		meta: {
 			headerClassName: 'w-[88px]',
 			align: 'end',
@@ -573,7 +605,11 @@ const overviewColumns = [
 		id: 'prevDayPx',
 		header: d.prevDayPx.label,
 		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			formatUsd(info.getValue(), {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 		meta: {
 			headerClassName: 'w-[116px]',
 			align: 'end',
@@ -584,7 +620,11 @@ const overviewColumns = [
 		id: 'volume7d',
 		header: d.volume7d.label,
 		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			formatUsd(info.getValue(), {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 		meta: {
 			headerClassName: 'w-[118px]',
 			align: 'end',
@@ -595,7 +635,11 @@ const overviewColumns = [
 		id: 'volume30d',
 		header: d.volume30d.label,
 		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			formatUsd(info.getValue(), {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 		meta: {
 			headerClassName: 'w-[126px]',
 			align: 'end',
@@ -606,7 +650,11 @@ const overviewColumns = [
 		id: 'volumeAllTime',
 		header: d.volumeAllTime.label,
 		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			formatUsd(info.getValue(), {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 		meta: {
 			headerClassName: 'w-[146px]',
 			align: 'end',
@@ -617,7 +665,11 @@ const overviewColumns = [
 		id: 'estimatedProtocolFees24h',
 		header: d.estimatedProtocolFees24h.label,
 		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			formatUsd(info.getValue(), {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 		meta: {
 			headerClassName: 'w-[min(188px,40vw)]',
 			align: 'end',
@@ -628,7 +680,11 @@ const overviewColumns = [
 		id: 'estimatedProtocolFees7d',
 		header: d.estimatedProtocolFees7d.label,
 		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			formatUsd(info.getValue(), {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 		meta: {
 			headerClassName: 'w-[min(188px,40vw)]',
 			align: 'end',
@@ -639,7 +695,11 @@ const overviewColumns = [
 		id: 'estimatedProtocolFees30d',
 		header: d.estimatedProtocolFees30d.label,
 		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			formatUsd(info.getValue(), {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 		meta: {
 			headerClassName: 'w-[min(188px,40vw)]',
 			align: 'end',
@@ -650,7 +710,11 @@ const overviewColumns = [
 		id: 'estimatedProtocolFeesAllTime',
 		header: d.estimatedProtocolFeesAllTime.label,
 		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			formatUsd(info.getValue(), {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 		meta: {
 			headerClassName: 'w-[min(210px,40vw)]',
 			align: 'end',
@@ -767,7 +831,11 @@ const venueColumns = [
 		id: 'openInterest',
 		header: d.openInterest.label,
 		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			formatUsd(info.getValue(), {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 		meta: {
 			headerClassName: 'w-[136px]',
 			align: 'end',
@@ -788,7 +856,11 @@ const venueColumns = [
 		id: 'volume24h',
 		header: d.volume24h.label,
 		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			formatUsd(info.getValue(), {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 		meta: {
 			headerClassName: 'w-[126px]',
 			align: 'end',
@@ -809,7 +881,11 @@ const venueColumns = [
 		id: 'price',
 		header: d.price.label,
 		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			formatUsd(info.getValue(), {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 		meta: {
 			headerClassName: 'w-[88px]',
 			align: 'end',
@@ -903,7 +979,11 @@ const venueColumns = [
 		id: 'cumulativeFunding',
 		header: d.cumulativeFunding.label,
 		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			formatUsd(info.getValue(), {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 		meta: {
 			headerClassName: 'w-[168px]',
 			align: 'end',
@@ -914,7 +994,11 @@ const venueColumns = [
 		id: 'estimatedProtocolFees24h',
 		header: d.estimatedProtocolFees24h.label,
 		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			formatUsd(info.getValue(), {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 		meta: {
 			headerClassName: 'w-[min(188px,40vw)]',
 			align: 'end',
@@ -1093,7 +1177,10 @@ function addRWAPerpsDraftFilter(draft: RWAPerpsFilterDraft, filter: RWAPerpsMark
 }
 
 function removeRWAPerpsDraftFilter(draft: RWAPerpsFilterDraft, id: string): RWAPerpsFilterDraft {
-	return { ...draft, activeIds: draft.activeIds.filter((activeId) => activeId !== id) }
+	return {
+		...draft,
+		activeIds: draft.activeIds.filter((activeId) => activeId !== id)
+	}
 }
 
 function getRWAPerpsSelectDraftQueryUpdates(
@@ -1209,20 +1296,25 @@ function RWAPerpsMarketFilters({
 	filters,
 	showForexToggle,
 	includeForex,
+	includeCex,
+	onToggleIncludeCex,
 	onToggleIncludeForex
 }: {
 	filters: RWAPerpsMarketFilterState[]
 	showForexToggle: boolean
 	includeForex: boolean
+	includeCex: boolean
+	onToggleIncludeCex: () => void
 	onToggleIncludeForex: () => void
 }) {
 	const router = useRouter()
 
-	if (filters.length === 0 && !showForexToggle) return null
-
 	const activeFilterPills = getRWAPerpsActiveFilterPills(filters, router)
 	const selectedFilterCount = createRWAPerpsFilterDraft(filters).activeIds.length
-	const hasActiveFilters = hasResettableRWAPerpsFilterQueryParam(router.query, showForexToggle && includeForex)
+	const hasActiveFilters = hasResettableRWAPerpsFilterQueryParam(
+		router.query,
+		(showForexToggle && includeForex) || includeCex
+	)
 
 	return (
 		<Card padding="sm" className="flex flex-col gap-2">
@@ -1242,10 +1334,15 @@ function RWAPerpsMarketFilters({
 						<span className="whitespace-nowrap">Forex Perps</span>
 					</Checkbox>
 				) : null}
+				<Checkbox variant="filter" value="includeCex" checked={includeCex} onChange={onToggleIncludeCex}>
+					<span className="whitespace-nowrap">CEX Venues</span>
+				</Checkbox>
 				<Button
 					type="button"
 					size="md"
-					onClick={() => clearRWAPerpsFilterQueryKeys(router, [...PERPS_MARKET_FILTER_QUERY_KEYS, 'includeForex'])}
+					onClick={() =>
+						clearRWAPerpsFilterQueryKeys(router, [...PERPS_MARKET_FILTER_QUERY_KEYS, 'includeForex', 'includeCex'])
+					}
 					disabled={!hasActiveFilters}
 				>
 					Reset filters
@@ -1522,7 +1619,7 @@ function fetchOverviewTimeSeriesDataset(request: IRWAPerpsOverviewBreakdownReque
 		breakdown: request.breakdown,
 		key: request.key
 	})
-	setRWAPerpsChartTarget(searchParams, request.target)
+	setRWAPerpsChartScope(searchParams, request)
 
 	return fetchJson<RWAChartDataset>(`/api/public/rwa/perps/overview-breakdown?${searchParams.toString()}`)
 }
@@ -1531,7 +1628,7 @@ function fetchContractTimeSeriesDataset(request: IRWAPerpsContractBreakdownReque
 	const searchParams = new URLSearchParams({
 		key: request.key
 	})
-	setRWAPerpsChartTarget(searchParams, request.target)
+	setRWAPerpsChartScope(searchParams, request)
 
 	return fetchJson<RWAChartDataset>(`/api/public/rwa/perps/contract-breakdown?${searchParams.toString()}`)
 }
@@ -1540,7 +1637,7 @@ function fetchMarketTimeSeriesDataset(request: IRWAPerpsMarketBreakdownRequest):
 	const searchParams = new URLSearchParams({
 		key: request.key
 	})
-	setRWAPerpsChartTarget(searchParams, request.target)
+	setRWAPerpsChartScope(searchParams, request)
 
 	return fetchJson<RWAChartDataset>(`/api/public/rwa/perps/market-breakdown?${searchParams.toString()}`)
 }
@@ -1592,7 +1689,10 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	const isPieView = chartState.view === 'pie'
 	const isHBarView = chartState.view === 'hbar'
 	const isTreemapView = chartState.view === 'treemap'
-	const chartBreakdownOptions = getRWAPerpsChartBreakdownOptions({ ...chartState, labels: d })
+	const chartBreakdownOptions = getRWAPerpsChartBreakdownOptions({
+		...chartState,
+		labels: d
+	})
 	const timeSeriesBreakdownOptions =
 		chartState.view === 'timeSeries'
 			? ([{ key: 'total', name: 'Total' }, ...chartBreakdownOptions] as const)
@@ -1613,15 +1713,18 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	const assetClassFilter = props.assetClassFilter
 	const showForexToggle = isOverviewMode && assetClassFilter == null
 	const includeForex = showForexToggle ? isTrueQueryParam(router.query.includeForex) : true
+	const includeCexByDefault = props.mode === 'venue' && props.data.markets.every((market) => market.venueType === 'CEX')
+	const includeCex = router.query.includeCex == null ? includeCexByDefault : isTrueQueryParam(router.query.includeCex)
 	const rowsBeforeUserFilters = useMemo(() => {
+		const markets = includeCex ? props.data.markets : props.data.markets.filter((market) => market.venueType !== 'CEX')
 		if (assetClassFilter != null) {
-			return props.data.markets.filter((market) => market.assetClass?.[0] === assetClassFilter)
+			return markets.filter((market) => market.assetClass?.[0] === assetClassFilter)
 		}
 		if (showForexToggle && !includeForex) {
-			return props.data.markets.filter((market) => market.assetClass?.[0] !== FOREX_ASSET_CLASS)
+			return markets.filter((market) => market.assetClass?.[0] !== FOREX_ASSET_CLASS)
 		}
-		return props.data.markets
-	}, [assetClassFilter, includeForex, props.data.markets, showForexToggle])
+		return markets
+	}, [assetClassFilter, includeCex, includeForex, props.data.markets, showForexToggle])
 	const venuesQuery = router.query.venues
 	const excludeVenuesQuery = router.query.excludeVenues
 	const baseAssetsQuery = router.query.baseAssets
@@ -1724,10 +1827,16 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 		[includedRows, isTotalsPopulationFiltered]
 	)
 	const displayTotals = computedTotals ?? props.data.totals
-	const timeSeriesAssetClass = assetClassFilter
-	const timeSeriesExcludeAssetClass = showForexToggle && !includeForex ? FOREX_ASSET_CLASS : undefined
 	const onToggleIncludeForex = () => {
-		void pushShallowQuery(router, { includeForex: includeForex ? undefined : 'true' })
+		void pushShallowQuery(router, {
+			includeForex: includeForex ? undefined : 'true'
+		})
+	}
+	const onToggleIncludeCex = () => {
+		const nextIncludeCex = !includeCex
+		void pushShallowQuery(router, {
+			includeCex: nextIncludeCex === includeCexByDefault ? undefined : nextIncludeCex ? 'true' : 'false'
+		})
 	}
 	const initialChartDataset = props.data.initialChartDataset
 	const venueLabel = props.mode === 'venue' ? props.data.venue : null
@@ -1737,23 +1846,28 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 		if (assetGroupLabel !== null) return { mode: 'assetGroup', scopeLabel: assetGroupLabel } as const
 		return { mode: 'overview' } as const
 	}, [assetGroupLabel, venueLabel])
-	const targetQueryValue = isVenueMode ? props.data.venue : isAssetGroupMode ? props.data.assetGroup : 'all'
-	const timeSeriesSource = hasActiveMarketFilters
-		? 'market-breakdown'
-		: chartState.breakdown === 'contract'
-			? 'contract-breakdown'
-			: 'overview-breakdown'
-	const timeSeriesClassTarget: RWAPerpsChartTarget | null = timeSeriesAssetClass
-		? { kind: 'assetClass', slug: timeSeriesAssetClass }
-		: timeSeriesExcludeAssetClass
-			? { kind: 'excludeAssetClass', slug: timeSeriesExcludeAssetClass }
+	const timeSeriesClassTarget: RWAPerpsMarketBreakdownTarget | null = assetClassFilter
+		? { kind: 'assetClass', slug: assetClassFilter }
+		: showForexToggle && !includeForex
+			? { kind: 'excludeAssetClass', slug: FOREX_ASSET_CLASS }
 			: null
-	const pageTarget: RWAPerpsChartTarget = isVenueMode
+	const pageTarget: RWAPerpsMarketBreakdownTarget = isVenueMode
 		? { kind: 'venue', slug: props.data.venue }
 		: isAssetGroupMode
 			? { kind: 'assetGroup', slug: props.data.assetGroup }
 			: { kind: 'all' }
-	const timeSeriesTarget = timeSeriesClassTarget ?? pageTarget
+	const shouldProjectMarketBreakdown = hasActiveMarketFilters
+	const timeSeriesRequest: RWAPerpsTimeSeriesRequest = (() => {
+		if (shouldProjectMarketBreakdown) {
+			const target = timeSeriesClassTarget ?? pageTarget
+			return { source: 'market-breakdown', key: chartState.metric, target, includeCex }
+		}
+
+		const target = timeSeriesClassTarget ?? pageTarget
+		return chartState.breakdown === 'contract'
+			? { source: 'contract-breakdown', key: chartState.metric, target, includeCex }
+			: { source: 'overview-breakdown', key: chartState.metric, breakdown: chartState.breakdown, target, includeCex }
+	})()
 	const isDefaultTimeSeriesState =
 		chartState.view === 'timeSeries' &&
 		chartState.metric === 'openInterest' &&
@@ -1761,45 +1875,43 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	const hasPreloadedTimeSeriesDataset =
 		initialChartDataset.source.length > 0 ||
 		initialChartDataset.dimensions.some((dimension) => dimension !== 'timestamp')
-	const canUseInitialTimeSeriesDataset = !hasActiveMarketFilters && (!showForexToggle || !includeForex)
+	const canUseInitialTimeSeriesDataset =
+		timeSeriesRequest.source !== 'market-breakdown' &&
+		(!showForexToggle || !includeForex) &&
+		includeCex === includeCexByDefault
 	const shouldUseInitialTimeSeriesDataset =
 		isDefaultTimeSeriesState && hasPreloadedTimeSeriesDataset && canUseInitialTimeSeriesDataset
 	const timeSeriesQueryFn =
 		chartState.view === 'timeSeries'
 			? () => {
-					if (hasActiveMarketFilters) {
-						return fetchMarketTimeSeriesDataset({
-							key: chartState.metric,
-							target: timeSeriesClassTarget ?? { kind: 'all' }
-						})
+					switch (timeSeriesRequest.source) {
+						case 'market-breakdown':
+							return fetchMarketTimeSeriesDataset({
+								key: timeSeriesRequest.key,
+								target: timeSeriesRequest.target,
+								includeCex: timeSeriesRequest.includeCex
+							})
+						case 'contract-breakdown':
+							return fetchContractTimeSeriesDataset({
+								key: timeSeriesRequest.key,
+								target: timeSeriesRequest.target,
+								includeCex: timeSeriesRequest.includeCex
+							})
+						case 'overview-breakdown':
+							return fetchOverviewTimeSeriesDataset({
+								breakdown: timeSeriesRequest.breakdown,
+								key: timeSeriesRequest.key,
+								target: timeSeriesRequest.target,
+								includeCex: timeSeriesRequest.includeCex
+							})
 					}
-					if (chartState.breakdown === 'contract') {
-						return fetchContractTimeSeriesDataset({
-							key: chartState.metric,
-							target: timeSeriesTarget
-						})
-					}
-					return fetchOverviewTimeSeriesDataset({
-						breakdown: chartState.breakdown,
-						key: chartState.metric,
-						target: timeSeriesTarget
-					})
 				}
 			: skipToken
 	const isTimeSeriesQueryEnabled =
 		chartState.view === 'timeSeries' && !shouldUseInitialTimeSeriesDataset && includedRows.length > 0
 
 	const timeSeriesQuery = useQuery({
-		queryKey: [
-			'rwa-perps-chart',
-			props.mode,
-			chartState.metric,
-			chartState.breakdown,
-			targetQueryValue,
-			timeSeriesAssetClass,
-			timeSeriesExcludeAssetClass,
-			timeSeriesSource
-		],
+		queryKey: ['rwa-perps-chart', timeSeriesRequest],
 		queryFn: timeSeriesQueryFn,
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
@@ -1813,7 +1925,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 			: (timeSeriesQuery.data ?? EMPTY_DATASET)
 	const rawTimeSeriesDataset = useMemo(() => {
 		if (chartState.view !== 'timeSeries') return EMPTY_DATASET
-		return hasActiveMarketFilters
+		return timeSeriesRequest.source === 'market-breakdown'
 			? buildRWAPerpsTimeSeriesDatasetForRows({
 					dataset: fetchedTimeSeriesDataset,
 					rows: includedRows,
@@ -1821,7 +1933,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 					seriesKey: 'id'
 				})
 			: fetchedTimeSeriesDataset
-	}, [chartState, includedRows, fetchedTimeSeriesDataset, hasActiveMarketFilters])
+	}, [chartState, includedRows, fetchedTimeSeriesDataset, timeSeriesRequest.source])
 	const shouldShowTotalOverlay = chartState.timeSeriesMode === 'breakdown' && chartState.metric !== 'volume24h'
 	const ungroupedTimeSeriesDataset = useMemo(() => {
 		if (!isTimeSeriesView) return EMPTY_DATASET
@@ -1998,8 +2110,15 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	const timeSeriesMetricSwitch = (
 		<SegmentedControl
 			value={chartState.metric}
-			onValueChange={(key) => void pushShallowQuery(router, { chartType: getRWAPerpsChartMetricQueryValue(key) })}
-			options={chartMetricOptions.map(({ key, name }) => ({ value: key, label: name }))}
+			onValueChange={(key) =>
+				void pushShallowQuery(router, {
+					chartType: getRWAPerpsChartMetricQueryValue(key)
+				})
+			}
+			options={chartMetricOptions.map(({ key, name }) => ({
+				value: key,
+				label: name
+			}))}
 			label="Chart metric"
 			variant="default"
 			size="md"
@@ -2103,8 +2222,9 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 					<Card padding="sm" className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
 						<p className="body-sm text-tertiary">
 							The RWA Perpetuals Dashboard only covers real world assets such as stocks, RWA tokens, forex, and other
-							significant financial indices on decentralized exchanges. This excludes digital assets such as BTC or ETH
-							perpetual contracts and all RWA perpetual contracts on centralized exchanges.
+							significant financial indices. This excludes digital assets such as BTC or ETH perpetual contracts. RWA
+							perpetual contracts on centralized exchanges are excluded by default and can be included with the CEX
+							Venues filter.
 						</p>
 					</Card>
 				</>
@@ -2114,6 +2234,8 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 				showForexToggle={showForexToggle}
 				includeForex={includeForex}
 				onToggleIncludeForex={onToggleIncludeForex}
+				includeCex={includeCex}
+				onToggleIncludeCex={onToggleIncludeCex}
 			/>
 			<div className="flex flex-col gap-2 md:flex-row md:items-center">
 				{statCards.map((card) => (
@@ -2149,7 +2271,9 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 								value={volumeGroupBy}
 								options={DWM_GROUPING_OPTIONS_LOWERCASE}
 								onValueChange={(nextGroupBy) => {
-									void pushShallowQuery(router, { groupBy: getRWAPerpsVolumeGroupByQueryValue(nextGroupBy) })
+									void pushShallowQuery(router, {
+										groupBy: getRWAPerpsVolumeGroupByQueryValue(nextGroupBy)
+									})
 								}}
 							/>
 						) : null}

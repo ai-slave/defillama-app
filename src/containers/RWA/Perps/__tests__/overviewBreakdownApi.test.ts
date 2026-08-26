@@ -31,7 +31,8 @@ describe('parseOverviewBreakdownRequest', () => {
 		).toEqual({
 			breakdown: 'assetGroup',
 			key: 'openInterest',
-			target: { kind: 'all' }
+			target: { kind: 'all' },
+			includeCex: false
 		})
 	})
 
@@ -47,7 +48,8 @@ describe('parseOverviewBreakdownRequest', () => {
 		).toEqual({
 			breakdown: 'baseAsset',
 			key: 'volume24h',
-			target: { kind: 'venue', slug: 'xyz' }
+			target: { kind: 'venue', slug: 'xyz' },
+			includeCex: false
 		})
 	})
 
@@ -56,6 +58,7 @@ describe('parseOverviewBreakdownRequest', () => {
 			parseOverviewBreakdownRequest({
 				query: {
 					assetGroup: 'US Equities',
+					includeCex: 'true',
 					breakdown: 'venue',
 					key: 'markets'
 				}
@@ -63,7 +66,8 @@ describe('parseOverviewBreakdownRequest', () => {
 		).toEqual({
 			breakdown: 'venue',
 			key: 'markets',
-			target: { kind: 'assetGroup', slug: 'US Equities' }
+			target: { kind: 'assetGroup', slug: 'US Equities' },
+			includeCex: true
 		})
 	})
 
@@ -72,6 +76,7 @@ describe('parseOverviewBreakdownRequest', () => {
 			parseOverviewBreakdownRequest({
 				query: {
 					assetClass: 'Forex Perps',
+					includeCex: 'true',
 					breakdown: 'assetGroup',
 					key: 'openInterest'
 				}
@@ -79,7 +84,8 @@ describe('parseOverviewBreakdownRequest', () => {
 		).toEqual({
 			breakdown: 'assetGroup',
 			key: 'openInterest',
-			target: { kind: 'assetClass', slug: 'Forex Perps' }
+			target: { kind: 'assetClass', slug: 'Forex Perps' },
+			includeCex: true
 		})
 	})
 
@@ -95,8 +101,21 @@ describe('parseOverviewBreakdownRequest', () => {
 		).toEqual({
 			breakdown: 'assetGroup',
 			key: 'openInterest',
-			target: { kind: 'excludeAssetClass', slug: 'Forex Perps' }
+			target: { kind: 'excludeAssetClass', slug: 'Forex Perps' },
+			includeCex: false
 		})
+	})
+
+	it('rejects the retired venueType query', () => {
+		expect(
+			parseOverviewBreakdownRequest({
+				query: {
+					breakdown: 'assetGroup',
+					key: 'openInterest',
+					venueType: 'DEX'
+				}
+			})
+		).toBeNull()
 	})
 
 	it('rejects contract breakdowns and invalid target combinations', () => {
@@ -105,6 +124,17 @@ describe('parseOverviewBreakdownRequest', () => {
 				query: {
 					breakdown: 'contract',
 					key: 'markets'
+				}
+			})
+		).toBeNull()
+
+		expect(
+			parseOverviewBreakdownRequest({
+				query: {
+					assetGroup: 'US Equities',
+					includeCex: 'yes',
+					breakdown: 'venue',
+					key: 'openInterest'
 				}
 			})
 		).toBeNull()

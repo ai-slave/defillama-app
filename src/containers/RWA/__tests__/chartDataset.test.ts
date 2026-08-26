@@ -2,8 +2,29 @@ import { describe, expect, it } from 'vitest'
 import {
 	limitRwaHorizontalBarData,
 	materializeRwaIndependentChartDataset,
-	mergeRwaPositionalChartDatasets
+	mergeRwaPositionalChartDatasets,
+	toRwaMultiSeriesChartDataset
 } from '../chartDataset'
+
+describe('toRwaMultiSeriesChartDataset', () => {
+	it('preserves dimension order, zero values, and missing values', () => {
+		expect(
+			toRwaMultiSeriesChartDataset({
+				dimensions: ['timestamp', 'Beta', 'Alpha'],
+				source: [
+					{ timestamp: 1, Alpha: 10, Beta: 20 },
+					{ timestamp: 2, Beta: 0 }
+				]
+			})
+		).toEqual({
+			dimensions: ['timestamp', 'Beta', 'Alpha'],
+			source: [
+				[1, 20, 10],
+				[2, 0, null]
+			]
+		})
+	})
+})
 
 describe('limitRwaHorizontalBarData', () => {
 	it('clamps invalid maxBars to one bucket before limiting bars', () => {

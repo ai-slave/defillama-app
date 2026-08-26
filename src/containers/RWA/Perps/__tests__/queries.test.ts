@@ -59,6 +59,7 @@ const baseMarket = {
 	timestamp: 1775011512,
 	contract: 'xyz:META',
 	venue: 'xyz',
+	venueType: 'DEX' as const,
 	openInterest: 100,
 	openInterestChange24h: 25,
 	volume24h: 50,
@@ -143,6 +144,7 @@ beforeEach(() => {
 			contract: 'flx:GOLD',
 			venue: 'flx',
 			openInterest: 20,
+			referenceAssetGroup: 'Commodities',
 			category: ['Gold & Commodities'],
 			assetClass: ['Commodity Perp']
 		},
@@ -488,7 +490,8 @@ describe('perps overview queries', () => {
 		expect(fetchRWAPerpsOverviewBreakdownChartData).toHaveBeenCalledWith({
 			breakdown: 'assetGroup',
 			key: 'openInterest',
-			target: { kind: 'assetClass', slug: 'Forex Perps' }
+			target: { kind: 'assetClass', slug: 'Forex Perps' },
+			includeCex: false
 		})
 		expect(result.initialChartDataset).toEqual({
 			source: [
@@ -509,7 +512,8 @@ describe('perps overview queries', () => {
 		expect(fetchRWAPerpsOverviewBreakdownChartData).toHaveBeenCalledWith({
 			breakdown: 'baseAsset',
 			key: 'openInterest',
-			target: { kind: 'assetClass', slug: 'Forex Perps' }
+			target: { kind: 'assetClass', slug: 'Forex Perps' },
+			includeCex: false
 		})
 		expect(result.initialChartDataset).toEqual({
 			source: [
@@ -529,7 +533,8 @@ describe('perps overview queries', () => {
 		expect(fetchRWAPerpsOverviewBreakdownChartData).toHaveBeenCalledWith({
 			breakdown: 'assetGroup',
 			key: 'openInterest',
-			target: { kind: 'excludeAssetClass', slug: 'Forex Perps' }
+			target: { kind: 'excludeAssetClass', slug: 'Forex Perps' },
+			includeCex: false
 		})
 		expect(result.initialChartDataset).toEqual({
 			source: [
@@ -545,7 +550,8 @@ describe('perps overview queries', () => {
 			getRWAPerpsBreakdownChartDataset({
 				breakdown: 'assetClass',
 				key: 'openInterest',
-				target: { kind: 'all' }
+				target: { kind: 'all' },
+				includeCex: false
 			})
 		).resolves.toEqual({
 			source: [
@@ -561,7 +567,8 @@ describe('perps overview queries', () => {
 			getRWAPerpsBreakdownChartDataset({
 				breakdown: 'assetGroup',
 				key: 'openInterest',
-				target: { kind: 'all' }
+				target: { kind: 'all' },
+				includeCex: false
 			})
 		).resolves.toEqual({
 			source: [
@@ -577,7 +584,8 @@ describe('perps overview queries', () => {
 			getRWAPerpsBreakdownChartDataset({
 				breakdown: 'baseAsset',
 				key: 'markets',
-				target: { kind: 'all' }
+				target: { kind: 'all' },
+				includeCex: false
 			})
 		).resolves.toEqual({
 			source: [
@@ -592,7 +600,8 @@ describe('perps overview queries', () => {
 		await expect(
 			getRWAPerpsContractBreakdownChartDataset({
 				key: 'markets',
-				target: { kind: 'all' }
+				target: { kind: 'all' },
+				includeCex: false
 			})
 		).resolves.toEqual({
 			source: [
@@ -717,6 +726,12 @@ describe('perps overview queries', () => {
 			]
 		})
 		expect(result?.totals.openInterestChange24h).toBe(25)
+		expect(fetchRWAPerpsOverviewBreakdownChartData).toHaveBeenCalledWith({
+			breakdown: 'baseAsset',
+			key: 'openInterest',
+			target: { kind: 'assetGroup', slug: 'Equities' },
+			includeCex: false
+		})
 		expect(result?.initialChartDataset).toEqual({
 			source: [
 				{ timestamp: 1774483200000, Meta: 120 },
@@ -728,80 +743,94 @@ describe('perps overview queries', () => {
 })
 
 describe('perps overview helpers', () => {
-	it('keeps successful empty venue and asset-group stats as empty results', async () => {
-		const emptyStats = {
-			totalMarkets: 0,
-			totalOpenInterest: 0,
-			totalVolume24h: 0,
-			totalCumulativeFunding: 0,
-			byVenue: {},
-			byCategory: {},
-			byAssetGroup: {},
-			lastUpdated: '2026-04-01T00:00:00.000Z'
-		}
-
-		fetchRWAPerpsStats.mockResolvedValueOnce(emptyStats)
+	it('keeps successful empty venue and asset-group snapshots as empty results', async () => {
+		fetchRWAPerpsCurrent.mockResolvedValueOnce([])
 		fetchRWAPerpsOverviewBreakdownChartData.mockResolvedValueOnce([])
 		await expect(getRWAPerpsVenuesOverview()).resolves.toEqual({
 			rows: [],
+			dexRows: [],
 			initialChartDataset: { source: [], dimensions: ['timestamp'] }
 		})
 
-		fetchRWAPerpsStats.mockResolvedValueOnce(emptyStats)
+		fetchRWAPerpsCurrent.mockResolvedValueOnce([])
 		fetchRWAPerpsOverviewBreakdownChartData.mockResolvedValueOnce([])
 		await expect(getRWAPerpsAssetGroupsOverview()).resolves.toEqual({
 			rows: [],
+			dexRows: [],
 			initialChartDataset: { source: [], dimensions: ['timestamp'] }
 		})
 	})
 
-	it('maps venue stats into rows sorted by open interest', async () => {
+	it('aggregates venue rows from the classified market snapshot', async () => {
 		await expect(getRWAPerpsVenuesOverview()).resolves.toMatchObject({
 			rows: [
 				{
 					venue: 'xyz',
-					openInterest: 250,
-					openInterestShare: 250 / 350,
-					volume24h: 160,
-					volume24hShare: 160 / 200,
+					openInterest: 330,
+					openInterestShare: 330 / 350,
+					volume24h: 100,
+					volume24hShare: 100 / 150,
 					markets: 2
 				},
 				{
 					venue: 'flx',
-					openInterest: 100,
-					openInterestShare: 100 / 350,
-					volume24h: 40,
-					volume24hShare: 40 / 200,
+					openInterest: 20,
+					openInterestShare: 20 / 350,
+					volume24h: 50,
+					volume24hShare: 50 / 150,
 					markets: 1
 				}
 			],
+			dexRows: expect.any(Array),
 			initialChartDataset: {
 				dimensions: ['timestamp', 'xyz', 'flx']
 			}
 		})
 	})
 
-	it('maps asset-group stats into rows sorted by open interest', async () => {
+	it('aggregates asset-group rows from the classified market snapshot', async () => {
 		await expect(getRWAPerpsAssetGroupsOverview()).resolves.toMatchObject({
 			rows: [
 				{
 					assetGroup: 'Equities',
-					openInterest: 250,
-					openInterestShare: 250 / 350,
-					volume24h: 160,
-					volume24hShare: 160 / 200,
+					openInterest: 330,
+					openInterestShare: 330 / 350,
+					volume24h: 100,
+					volume24hShare: 100 / 150,
 					markets: 2
 				},
 				{
 					assetGroup: 'Commodities',
-					openInterest: 100,
-					openInterestShare: 100 / 350,
-					volume24h: 40,
-					volume24hShare: 40 / 200,
+					openInterest: 20,
+					openInterestShare: 20 / 350,
+					volume24h: 50,
+					volume24hShare: 50 / 150,
 					markets: 1
 				}
 			]
 		})
+	})
+
+	it('keeps separate DEX and all-venue rows for aggregate pages', async () => {
+		const dexMarket = { ...baseMarket, id: 'xyz:meta' }
+		const cexMarket = {
+			...baseMarket,
+			id: 'binance:meta',
+			contract: 'binance:METAUSDT',
+			venue: 'binance',
+			venueType: 'CEX' as const,
+			openInterest: 400
+		}
+
+		fetchRWAPerpsCurrent.mockResolvedValueOnce([dexMarket, cexMarket])
+		const venues = await getRWAPerpsVenuesOverview()
+		expect(venues.rows.map((row) => row.venue)).toEqual(['binance', 'xyz'])
+		expect(venues.dexRows.map((row) => row.venue)).toEqual(['xyz'])
+
+		fetchRWAPerpsCurrent.mockResolvedValueOnce([dexMarket, cexMarket])
+		const assetGroups = await getRWAPerpsAssetGroupsOverview()
+		expect(assetGroups.rows[0]?.openInterest).toBe(500)
+		expect(assetGroups.dexRows[0]?.openInterest).toBe(100)
 	})
 
 	it('aggregates overview chart rows by timestamp into a multi-series dataset', () => {
@@ -1033,7 +1062,8 @@ describe('perps overview helpers', () => {
 			getRWAPerpsBreakdownChartDataset({
 				breakdown: 'assetGroup',
 				key: 'openInterest',
-				target: { kind: 'venue', slug: 'xyz' }
+				target: { kind: 'venue', slug: 'xyz' },
+				includeCex: false
 			})
 		).resolves.toEqual({
 			source: [
@@ -1047,7 +1077,8 @@ describe('perps overview helpers', () => {
 			getRWAPerpsBreakdownChartDataset({
 				breakdown: 'baseAsset',
 				key: 'openInterest',
-				target: { kind: 'venue', slug: 'xyz' }
+				target: { kind: 'venue', slug: 'xyz' },
+				includeCex: false
 			})
 		).resolves.toEqual({
 			source: [
@@ -1060,7 +1091,8 @@ describe('perps overview helpers', () => {
 		await expect(
 			getRWAPerpsContractBreakdownChartDataset({
 				key: 'openInterest',
-				target: { kind: 'venue', slug: 'xyz' }
+				target: { kind: 'venue', slug: 'xyz' },
+				includeCex: false
 			})
 		).resolves.toEqual({
 			source: [

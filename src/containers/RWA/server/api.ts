@@ -19,7 +19,7 @@ import {
 	fetchRWAPerpsContractBreakdownChartData,
 	fetchRWAPerpsMarketBreakdownChartData,
 	fetchRWAPerpsOverviewBreakdownChartData,
-	setRWAPerpsChartTarget
+	setRWAPerpsChartScope
 } from '~/containers/RWA/Perps/api'
 import { toRWAPerpsBreakdownChartDataset } from '~/containers/RWA/Perps/breakdownDataset'
 import {
@@ -308,6 +308,10 @@ async function hasKnownPerpsTarget(target: RWAPerpsChartTarget): Promise<boolean
 const RWA_PERPS_OVERVIEW_BREAKDOWNS = ['venue', 'assetClass', 'assetGroup', 'baseAsset'] as const
 
 function parsePerpsChartTarget(query: ApiQuery): RWAPerpsChartTarget | null {
+	// venueType belonged to the pre-rollout API. Reject it so callers cannot
+	// silently get the DEX default when they intended a different scope.
+	if (query.venueType !== undefined) return null
+
 	const venue = parseOptionalTarget(query.venue)
 	const assetGroup = parseOptionalTarget(query.assetGroup)
 	const assetClass = parseOptionalTarget(query.assetClass)
@@ -315,12 +319,14 @@ function parsePerpsChartTarget(query: ApiQuery): RWAPerpsChartTarget | null {
 	if (venue === null || assetGroup === null || assetClass === null || excludeAssetClass === null) return null
 
 	if (!hasExactlyOneTarget([venue, assetGroup, assetClass, excludeAssetClass])) {
-		return venue || assetGroup || assetClass || excludeAssetClass ? null : { kind: 'all' }
+		if (venue || assetGroup || assetClass || excludeAssetClass) return null
+		return { kind: 'all' }
 	}
 	if (venue) return { kind: 'venue', slug: venue }
 	if (assetGroup) return { kind: 'assetGroup', slug: assetGroup }
 	if (assetClass) return { kind: 'assetClass', slug: assetClass }
-	return excludeAssetClass ? { kind: 'excludeAssetClass', slug: excludeAssetClass } : null
+	if (!excludeAssetClass) return null
+	return { kind: 'excludeAssetClass', slug: excludeAssetClass }
 }
 
 export function parsePerpsOverviewBreakdownRequest(req: { query: ApiQuery }): IRWAPerpsOverviewBreakdownRequest | null {
@@ -329,19 +335,20 @@ export function parsePerpsOverviewBreakdownRequest(req: { query: ApiQuery }): IR
 	if (breakdown == null || key == null) return null
 
 	const target = parsePerpsChartTarget(req.query)
-	if (target == null) return null
+	const includeCex = parseBooleanQueryFlag(req.query.includeCex, false)
+	if (target == null || includeCex == null) return null
 	if (target.kind === 'venue') {
-		return breakdown === 'venue' ? null : { breakdown, key, target }
+		return breakdown === 'venue' ? null : { breakdown, key, target, includeCex }
 	}
 	if (target.kind === 'assetGroup') {
-		return breakdown === 'assetGroup' ? null : { breakdown, key, target }
+		return breakdown === 'assetGroup' ? null : { breakdown, key, target, includeCex }
 	}
-	return { breakdown, key, target }
+	return { breakdown, key, target, includeCex }
 }
 
 function buildPerpsOverviewBreakdownCacheKey(request: IRWAPerpsOverviewBreakdownRequest): string {
 	const searchParams = new URLSearchParams({ breakdown: request.breakdown, key: request.key })
-	setRWAPerpsChartTarget(searchParams, request.target)
+	setRWAPerpsChartScope(searchParams, request)
 	return `/api/public/rwa/perps/overview-breakdown?${searchParams.toString()}`
 }
 
@@ -385,12 +392,13 @@ export function parsePerpsContractBreakdownRequest(req: { query: ApiQuery }): IR
 	if (key == null) return null
 
 	const target = parsePerpsChartTarget(req.query)
-	return target == null ? null : { key, target }
+	const includeCex = parseBooleanQueryFlag(req.query.includeCex, false)
+	return target == null || includeCex == null ? null : { key, target, includeCex }
 }
 
 function buildPerpsContractBreakdownCacheKey(request: IRWAPerpsContractBreakdownRequest): string {
 	const searchParams = new URLSearchParams({ key: request.key })
-	setRWAPerpsChartTarget(searchParams, request.target)
+	setRWAPerpsChartScope(searchParams, request)
 	return `/api/public/rwa/perps/contract-breakdown?${searchParams.toString()}`
 }
 
@@ -434,13 +442,13 @@ export function parsePerpsMarketBreakdownRequest(req: { query: ApiQuery }): IRWA
 	if (key == null) return null
 
 	const target = parsePerpsChartTarget(req.query)
-	if (target == null || target.kind === 'venue' || target.kind === 'assetGroup') return null
-	return { key, target }
+	const includeCex = parseBooleanQueryFlag(req.query.includeCex, false)
+	return target == null || includeCex == null ? null : { key, target, includeCex }
 }
 
 function buildPerpsMarketBreakdownCacheKey(request: IRWAPerpsMarketBreakdownRequest): string {
 	const searchParams = new URLSearchParams({ key: request.key })
-	setRWAPerpsChartTarget(searchParams, request.target)
+	setRWAPerpsChartScope(searchParams, request)
 	return `/api/public/rwa/perps/market-breakdown?${searchParams.toString()}`
 }
 
@@ -455,6 +463,10 @@ export const rwaPerpsMarketBreakdown = defineApiRoute({
 		}
 
 		try {
+			if (!(await hasKnownPerpsTarget(request.target))) {
+				return notFound('RWA perps target not found')
+			}
+
 			const result = await cachedJsonResult(
 				'rwa-perps-market-breakdown',
 				buildPerpsMarketBreakdownCacheKey(request),

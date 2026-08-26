@@ -145,7 +145,7 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 			IRWAPerpsBreakdownChartResponse | null
 		] = await Promise.all([
 			fetchRWAActiveTVLs(),
-			fetchRWAPerpsCurrent().catch(() => []),
+			fetchRWAPerpsCurrent(false).catch(() => []),
 			selectedPlatform
 				? Promise.resolve(undefined)
 				: fetchRWAChartMetricDataByAsset({
@@ -156,7 +156,11 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 					}),
 			selectedChain
 				? Promise.resolve(null)
-				: fetchRWAPerpsContractBreakdownChartData({ key: 'openInterest', target: { kind: 'all' } })
+				: fetchRWAPerpsContractBreakdownChartData({
+						key: 'openInterest',
+						target: { kind: 'all' },
+						includeCex: false
+					})
 		])
 
 		const filteredData = data.filter(

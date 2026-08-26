@@ -1,38 +1,21 @@
 import type { RWAChartDataset, RWAChartRow } from '../chartDataset'
 import type { IRWAPerpsBreakdownChartResponse } from './api.types'
 
-export function normalizeRWAPerpsBreakdownChartRows(
-	rows: IRWAPerpsBreakdownChartResponse | null
-): RWAChartDataset['source'] {
-	const normalizedRows: RWAChartDataset['source'] = []
-
-	for (const row of rows ?? []) {
-		const normalizedRow: RWAChartRow = {
-			timestamp: row.timestamp * 1e3
-		}
-
-		for (const key in row) {
-			if (key === 'timestamp') continue
-			normalizedRow[key] = row[key]
-		}
-
-		normalizedRows.push(normalizedRow)
-	}
-
-	return normalizedRows
-}
-
 export function toRWAPerpsBreakdownChartDataset(rows: IRWAPerpsBreakdownChartResponse | null): RWAChartDataset {
 	if (!rows || rows.length === 0) return { source: [], dimensions: ['timestamp'] }
 
-	const source = normalizeRWAPerpsBreakdownChartRows(rows)
+	const source: RWAChartDataset['source'] = []
 	const latestValueBySeries = new Map<string, number>()
 
-	for (const row of source) {
+	for (const row of rows) {
+		const normalizedRow: RWAChartRow = { timestamp: row.timestamp * 1e3 }
 		for (const series in row) {
 			if (series === 'timestamp') continue
-			latestValueBySeries.set(series, row[series] ?? 0)
+			const value = row[series]
+			normalizedRow[series] = value
+			latestValueBySeries.set(series, value ?? 0)
 		}
+		source.push(normalizedRow)
 	}
 
 	const sortedSeries = Array.from(latestValueBySeries.entries())

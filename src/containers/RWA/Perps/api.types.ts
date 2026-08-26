@@ -1,8 +1,12 @@
+export const RWA_PERPS_VENUE_TYPES = ['DEX', 'CEX'] as const
+export type RWAPerpsVenueType = (typeof RWA_PERPS_VENUE_TYPES)[number]
+
 export interface IRWAPerpsMarket {
 	id: string
 	timestamp: number
 	contract: string
 	venue: string
+	venueType: RWAPerpsVenueType
 	openInterest: number
 	openInterestChange24h: number | null
 	volume24h: number

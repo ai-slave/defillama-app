@@ -31,33 +31,42 @@ describe('rwa perps api urls', () => {
 	it('encodes contract, venue, and market ids in request paths', async () => {
 		const api = await import('../api')
 
+		await api.fetchRWAPerpsCurrent(false)
+		await api.fetchRWAPerpsList(true)
+		await api.fetchRWAPerpsStats(true)
 		await api.fetchRWAPerpsMarketById('xyz:META/2026')
 		await api.fetchRWAPerpsMarketsByContract('xyz:META/2026')
 		await api.fetchRWAPerpsMarketsByVenue('my venue')
-		await api.fetchRWAPerpsMarketsByAssetGroup('US Equities')
+		await api.fetchRWAPerpsMarketsByAssetGroup('US Equities', true)
 		await api.fetchRWAPerpsVenueChart('venue/one')
 		await api.fetchRWAPerpsOverviewBreakdownChartData({
 			breakdown: 'assetGroup',
 			key: 'openInterest',
-			target: { kind: 'venue', slug: 'xyz' }
+			target: { kind: 'venue', slug: 'xyz' },
+			includeCex: false
 		})
 		await api.fetchRWAPerpsContractBreakdownChartData({
 			key: 'markets',
-			target: { kind: 'assetGroup', slug: 'US Equities' }
+			target: { kind: 'assetGroup', slug: 'US Equities' },
+			includeCex: true
 		})
 		await api.fetchRWAPerpsMarketBreakdownChartData({
 			key: 'openInterest',
-			target: { kind: 'excludeAssetClass', slug: 'Forex Perps' }
+			target: { kind: 'excludeAssetClass', slug: 'Forex Perps' },
+			includeCex: false
 		})
 
 		expect(callsWithoutCacheVersion()).toEqual([
+			['https://example.com/rwa-perps/current'],
+			['https://example.com/rwa-perps/list?includeCex=true'],
+			['https://example.com/rwa-perps/stats?includeCex=true'],
 			['https://example.com/rwa-perps/market/xyz%3AMETA%2F2026'],
 			['https://example.com/rwa-perps/contract/xyz%3AMETA%2F2026'],
 			['https://example.com/rwa-perps/venue/my%20venue'],
-			['https://example.com/rwa-perps/assetGroup/US%20Equities'],
+			['https://example.com/rwa-perps/assetGroup/US%20Equities?includeCex=true'],
 			['https://example.com/rwa-perps/chart/venue/venue%2Fone'],
 			['https://example.com/rwa-perps/chart/overview-breakdown?breakdown=assetGroup&key=openInterest&venue=xyz'],
-			['https://example.com/rwa-perps/chart/contract-breakdown?key=markets&assetGroup=US+Equities'],
+			['https://example.com/rwa-perps/chart/contract-breakdown?key=markets&includeCex=true&assetGroup=US+Equities'],
 			['https://example.com/rwa-perps/chart/market-breakdown?key=openInterest&excludeAssetClass=Forex+Perps']
 		])
 	})

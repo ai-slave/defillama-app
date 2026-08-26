@@ -20,6 +20,7 @@ import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
 import { pushShallowQuery, readSingleQueryValue, toNonEmptyArrayParam } from '~/utils/routerQuery'
 import { toRwaMultiSeriesChartDataset, type RWAChartDataset } from '../chartDataset'
+import { setRWAPerpsChartScope } from './api'
 import { getRWAPerpsVolumeGroupByQueryValue, parseRWAPerpsVolumeGroupBy } from './chartState'
 import { perpsDefinitions as d } from './definitions'
 import {
@@ -142,6 +143,7 @@ function fetchOverviewBreakdownDataset(request: IRWAPerpsOverviewBreakdownReques
 		breakdown: request.breakdown,
 		key: request.key
 	})
+	setRWAPerpsChartScope(searchParams, request)
 
 	return fetchJson<RWAChartDataset>(`/api/public/rwa/perps/overview-breakdown?${searchParams.toString()}`)
 }
@@ -187,10 +189,12 @@ export function buildRWAPerpsOverviewChartSeries({
 export function RWAPerpsOverviewChart({
 	breakdown,
 	initialChartDataset,
+	includeCex,
 	stackLabel
 }: {
 	breakdown: IRWAPerpsOverviewBreakdownRequest['breakdown']
 	initialChartDataset: RWAChartDataset
+	includeCex: boolean
 	stackLabel: string
 }) {
 	const router = useRouter()
@@ -198,15 +202,16 @@ export function RWAPerpsOverviewChart({
 	const timeSeriesMode = getRWAPerpsOverviewTimeSeriesMode(readSingleQueryValue(router.query.timeSeriesMode))
 	const volumeGroupBy = parseRWAPerpsVolumeGroupBy(router.query.groupBy)
 	const isDefaultState = chartType === DEFAULT_CHART_TYPE
+	const target: IRWAPerpsOverviewBreakdownRequest['target'] = { kind: 'all' }
 	const { data, isLoading, error } = useQuery({
-		queryKey: ['rwa-perps-overview-breakdown', breakdown, chartType],
-		queryFn: () => fetchOverviewBreakdownDataset({ breakdown, key: chartType, target: { kind: 'all' } }),
+		queryKey: ['rwa-perps-overview-breakdown', breakdown, chartType, includeCex],
+		queryFn: () => fetchOverviewBreakdownDataset({ breakdown, key: chartType, target, includeCex }),
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: 1,
-		enabled: !isDefaultState
+		enabled: !isDefaultState || includeCex
 	})
-	const rawDataset = isDefaultState ? initialChartDataset : (data ?? EMPTY_DATASET)
+	const rawDataset = isDefaultState && !includeCex ? initialChartDataset : (data ?? EMPTY_DATASET)
 	const stackOptions = useMemo(
 		() => rawDataset.dimensions.filter((dimension) => dimension !== 'timestamp'),
 		[rawDataset]
@@ -221,7 +226,7 @@ export function RWAPerpsOverviewChart({
 					: rawDataset,
 		[rawDataset, shouldShowTotalOverlay, timeSeriesMode]
 	)
-	const showLoadingState = !isDefaultState && isLoading
+	const showLoadingState = (!isDefaultState || includeCex) && isLoading
 	const chartSeries = useMemo<Array<MultiSeriesChartSeriesConfig>>(
 		() =>
 			buildRWAPerpsOverviewChartSeries({

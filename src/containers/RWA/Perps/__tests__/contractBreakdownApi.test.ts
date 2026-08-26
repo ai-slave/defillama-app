@@ -29,7 +29,8 @@ describe('parseContractBreakdownRequest', () => {
 			})
 		).toEqual({
 			key: 'markets',
-			target: { kind: 'all' }
+			target: { kind: 'all' },
+			includeCex: false
 		})
 	})
 
@@ -43,31 +44,36 @@ describe('parseContractBreakdownRequest', () => {
 			})
 		).toEqual({
 			key: 'openInterest',
-			target: { kind: 'venue', slug: 'xyz' }
+			target: { kind: 'venue', slug: 'xyz' },
+			includeCex: false
 		})
 
 		expect(
 			parseContractBreakdownRequest({
 				query: {
 					assetGroup: 'US Equities',
+					includeCex: 'true',
 					key: 'volume24h'
 				}
 			})
 		).toEqual({
 			key: 'volume24h',
-			target: { kind: 'assetGroup', slug: 'US Equities' }
+			target: { kind: 'assetGroup', slug: 'US Equities' },
+			includeCex: true
 		})
 
 		expect(
 			parseContractBreakdownRequest({
 				query: {
 					assetClass: 'Forex Perps',
+					includeCex: 'true',
 					key: 'markets'
 				}
 			})
 		).toEqual({
 			key: 'markets',
-			target: { kind: 'assetClass', slug: 'Forex Perps' }
+			target: { kind: 'assetClass', slug: 'Forex Perps' },
+			includeCex: true
 		})
 
 		expect(
@@ -79,7 +85,8 @@ describe('parseContractBreakdownRequest', () => {
 			})
 		).toEqual({
 			key: 'markets',
-			target: { kind: 'excludeAssetClass', slug: 'Forex Perps' }
+			target: { kind: 'excludeAssetClass', slug: 'Forex Perps' },
+			includeCex: false
 		})
 	})
 
@@ -89,6 +96,16 @@ describe('parseContractBreakdownRequest', () => {
 				query: {
 					venue: ['xyz'],
 					key: 'openInterest'
+				}
+			})
+		).toBeNull()
+
+		expect(
+			parseContractBreakdownRequest({
+				query: {
+					assetClass: 'Forex Perps',
+					includeCex: 'yes',
+					key: 'markets'
 				}
 			})
 		).toBeNull()

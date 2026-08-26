@@ -13,6 +13,7 @@ const baseMarket: IRWAPerpsMarket = {
 	timestamp: 1775011512,
 	contract: 'xyz:META',
 	venue: 'xyz',
+	venueType: 'DEX',
 	openInterest: 100,
 	openInterestChange24h: null,
 	volume24h: 50,

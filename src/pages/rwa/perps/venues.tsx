@@ -9,7 +9,7 @@ import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging(`rwa/perps/venues`, async () => {
-	const [metadataCache, { rows: venues, initialChartDataset }] = await Promise.all([
+	const [metadataCache, { rows: venues, dexRows: dexVenues, initialChartDataset }] = await Promise.all([
 		import('~/utils/metadata').then((m) => m.default),
 		getRWAPerpsVenuesOverview()
 	])
@@ -17,6 +17,7 @@ export const getStaticProps = withPerformanceLogging(`rwa/perps/venues`, async (
 	return {
 		props: {
 			venues,
+			dexVenues,
 			initialChartDataset,
 			venueLinks: [
 				{ label: 'All', to: '/rwa/perps/venues' },
@@ -34,6 +35,7 @@ const pageName = ['RWA Perps']
 
 export default function RWAPerpsVenuesPage({
 	venues,
+	dexVenues,
 	initialChartDataset,
 	venueLinks
 }: InferGetStaticPropsType<typeof getStaticProps>) {
@@ -46,7 +48,7 @@ export default function RWAPerpsVenuesPage({
 		>
 			<RWAPerpsTabNav active="venues" />
 			<RowLinksWithDropdown links={venueLinks} activeLink="All" />
-			<RWAPerpsVenuesOverview venues={venues} initialChartDataset={initialChartDataset} />
+			<RWAPerpsVenuesOverview venues={venues} dexVenues={dexVenues} initialChartDataset={initialChartDataset} />
 		</Layout>
 	)
 }
