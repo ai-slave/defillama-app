@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => {
 })
 
 vi.mock('echarts/core', () => ({
+	color: { lift: (value: string) => value },
 	graphic: { LinearGradient: class {} },
 	init: mocks.init,
 	use: mocks.use
