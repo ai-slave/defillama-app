@@ -20,7 +20,7 @@ export default function UniversalTokenRatingJoinPage({
 	return (
 		<Layout
 			title="Apply for the Universal Token Rating - DefiLlama"
-			description="Apply for the Universal Token Rating by submitting your token's disclosure and project information."
+			description="Apply for the Universal Token Rating by submitting your project affiliation details."
 			canonicalUrl="/universal-token-rating/join"
 			pageName={['Universal Token Rating', 'Apply for the Universal Token Rating']}
 		>

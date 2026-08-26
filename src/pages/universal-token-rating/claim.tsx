@@ -50,7 +50,7 @@ export default function UniversalTokenRatingClaimPage({
 	return (
 		<Layout
 			title="Claim Your Token Profile - Universal Token Rating - DefiLlama"
-			description="Claim your token profile in the Universal Token Rating to add information and improve your scores."
+			description="Submit your affiliation details to claim a token profile in the Universal Token Rating."
 			canonicalUrl="/universal-token-rating/claim"
 			pageName={['Universal Token Rating', 'Claim']}
 		>

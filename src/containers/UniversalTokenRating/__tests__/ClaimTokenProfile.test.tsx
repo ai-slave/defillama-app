@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { ClaimTokenProfile } from '../ClaimTokenProfile'
@@ -23,16 +24,27 @@ const projects = [
 	}
 ]
 
+function renderClaim(props: Parameters<typeof ClaimTokenProfile>[0]) {
+	const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } })
+	return renderToStaticMarkup(
+		<QueryClientProvider client={queryClient}>
+			<ClaimTokenProfile {...props} />
+		</QueryClientProvider>
+	)
+}
+
 describe('ClaimTokenProfile', () => {
 	it('renders live project options and disclosure coverage', () => {
-		const html = renderToStaticMarkup(<ClaimTokenProfile projects={projects} exchangeOptions={['Binance', 'Kraken']} />)
+		const html = renderClaim({ projects, exchangeOptions: ['Binance', 'Kraken'] })
 
 		expect(html).toContain('Ethereum (ETH)')
 		expect(html).toContain('Upcoming (UP)')
-		expect(html).toContain('Binance')
-		expect(html).toContain('Kraken')
 		expect(html).toContain('13/13 criteria scored')
 		expect(html).toContain('Disclosure 8.72/10')
+		expect(html).toContain('Submit Claim Request')
+		expect(html).toContain('Do you have direct contact with a Forgd team member?')
+		expect(html).not.toContain('Attach Documents')
+		expect(html).not.toContain('Disclosures Details')
 		expect(html).not.toContain('NO DATA YET')
 		expect(html).not.toContain('Fableborne (FAB)')
 		expect(html).not.toContain('Alice Adams')
@@ -40,14 +52,14 @@ describe('ClaimTokenProfile', () => {
 	})
 
 	it('renders an unavailable state without falling back to mock tokens', () => {
-		const html = renderToStaticMarkup(<ClaimTokenProfile projects={[]} />)
+		const html = renderClaim({ projects: [] })
 
 		expect(html).toContain('Token list unavailable')
 		expect(html).not.toContain('Abeezee (ABC)')
 	})
 
 	it('uses application language for the join variant', () => {
-		const html = renderToStaticMarkup(<ClaimTokenProfile variant="join" />)
+		const html = renderClaim({ variant: 'join' })
 
 		expect(html).toContain('Apply for the Universal Token Rating')
 		expect(html).not.toContain('Join the Universal Token Rating')
