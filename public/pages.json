@@ -519,7 +519,6 @@
       "route": "/mica",
       "category": "Exchanges",
       "description": "MiCA-regulated crypto exchanges in the EU: liquidity, trading fees, perps availability, and KYC requirements",
-      "isNew": true,
       "searchKeywords": [
         "mica",
         "mica licensed exchanges",
@@ -769,7 +768,6 @@
       "route": "/pre-ipo",
       "category": "Equities, ETFs & DATs",
       "description": "Private-company valuations, funding rounds, and tradable pre-IPO markets",
-      "isNew": true,
       "searchKeywords": [
         "pre ipo",
         "pre-ipo",
@@ -1088,8 +1086,7 @@
     {
       "name": "MiCA",
       "route": "/mica",
-      "icon": "clipboard-check",
-      "isNew": true
+      "icon": "clipboard-check"
     },
     {
       "name": "Tokens",
@@ -1105,7 +1102,6 @@
       "name": "Pre-IPO",
       "route": "/pre-ipo",
       "icon": "briefcase-business",
-      "isNew": true,
       "searchKeywords": [
         "pre ipo",
         "pre-ipo",

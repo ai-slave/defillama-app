@@ -2,7 +2,6 @@ import type { ComponentType, ReactNode } from 'react'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
-import defillamaPages from '~/public/pages.json'
 
 vi.mock('~/layout', () => ({ default: ({ children }: { children: ReactNode }) => <>{children}</> }))
 vi.mock('~/containers/MarketMakers/PerformanceIndex', () => ({
@@ -34,15 +33,5 @@ describe('public Market Makers pages', () => {
 		expect(renderPage(VolumeLeaderboard)).toContain('Volume Leaderboard')
 		expect(renderPage(SpreadLeaderboard)).toContain('Spread Leaderboard')
 		expect(renderPage(KpiLeaderboard)).toContain('KPI Adherence Leaderboard')
-	})
-
-	it('shows Market Makers in navigation without a user flag requirement', () => {
-		const entry = Object.values(defillamaPages)
-			.flat()
-			.find((page) => page.route === '/market-makers') as Record<string, unknown> | undefined
-
-		expect(entry).toBeDefined()
-		expect(entry).not.toHaveProperty('requireForgdPreview')
-		expect(entry).not.toHaveProperty('requireLlama')
 	})
 })

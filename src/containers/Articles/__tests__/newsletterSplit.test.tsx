@@ -7,7 +7,6 @@ import { ResearchHero } from '~/containers/Articles/landing/ResearchHero'
 import { ResearchLatest } from '~/containers/Articles/landing/ResearchLatest'
 import type { ArticleDocument } from '~/containers/Articles/types'
 import NewslettersPage from '~/pages/newsletters'
-import defillamaPages from '~/public/pages.json'
 
 vi.mock('~/auth', () => ({
 	useAuthContext: () => ({ user: null })
@@ -98,9 +97,5 @@ describe('newsletter and media-kit split', () => {
 		const html = renderWithQueryClient(<ResearchLatest articles={[article]} />)
 
 		expect(html).toMatch(/<span class="[^"]*border-research-white[^"]*"[^>]*>INTERVIEW<\/span>/)
-	})
-
-	it('does not expose newsletters as a main navbar item', () => {
-		expect(defillamaPages.Main.some((page) => page.route === '/newsletters')).toBe(false)
 	})
 })

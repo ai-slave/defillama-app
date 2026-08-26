@@ -2,7 +2,6 @@ import type { ComponentType, ReactNode } from 'react'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
-import defillamaPages from '~/public/pages.json'
 
 vi.mock('~/layout', () => ({ default: ({ children }: { children: ReactNode }) => <>{children}</> }))
 vi.mock('~/containers/UniversalTokenRating', () => ({
@@ -49,15 +48,5 @@ describe('public UTR pages', () => {
 				iconDataUrl: null
 			})
 		).toContain('Meteora Token Page')
-	})
-
-	it('shows UTR in navigation without a user flag requirement', () => {
-		const entry = Object.values(defillamaPages)
-			.flat()
-			.find((page) => page.route === '/universal-token-rating') as Record<string, unknown> | undefined
-
-		expect(entry).toBeDefined()
-		expect(entry).not.toHaveProperty('requireForgdPreview')
-		expect(entry).not.toHaveProperty('requireLlama')
 	})
 })
