@@ -18,6 +18,26 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+.utr-nav-glint {
+	animation: utr-nav-glint-sweep 4.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes utr-nav-glint-sweep {
+	0% {
+		transform: translateX(-14px);
+	}
+	12%,
+	100% {
+		transform: translateX(26px);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.utr-nav-glint {
+		animation: none;
+	}
+}
+
 /* ----------------------------- Theme Tokens ----------------------------- */
 @theme {
 	--font-inter: Inter var, 'Inter-fallback', sans-serif;
