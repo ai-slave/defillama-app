@@ -1,7 +1,9 @@
+import * as Ariakit from '@ariakit/react'
 import Head from 'next/head'
 import { BasicLink } from '~/components/Link'
 import { LinkPreviewCard, SEO } from '~/components/SEO'
 import SheetsContainer from '~/containers/Sheets'
+import { Icon } from '~/ui/Icon'
 
 export default function Sheets() {
 	return (
@@ -23,7 +25,7 @@ export default function Sheets() {
 							<span className="text-[15px] font-bold tracking-[-0.02em]">DefiLlama</span>
 						</BasicLink>
 
-						<nav className="flex items-center gap-1.5">
+						<nav aria-label="Sheets navigation" className="hidden items-center gap-1.5 sm:flex">
 							<BasicLink
 								href="https://docs.llama.fi/spreadsheet-functions/function-reference"
 								data-umami-event="sheets-functions-reference-click"
@@ -44,6 +46,51 @@ export default function Sheets() {
 							>
 								Return to Main Page
 							</BasicLink>
+						</nav>
+
+						<nav aria-label="Sheets navigation" className="sm:hidden">
+							<Ariakit.MenuProvider placement="bottom-end">
+								<Ariakit.MenuButton
+									aria-label="Open navigation menu"
+									className="flex size-11 items-center justify-center rounded-lg text-sub-text-soft transition-colors hover:bg-sub-dark-card hover:text-on-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+								>
+									<Icon name="menu" height={20} width={20} />
+								</Ariakit.MenuButton>
+								<Ariakit.Menu
+									aria-label="Sheets navigation"
+									className="z-50 min-w-[220px] rounded-lg border border-sub-line bg-sub-dark-card py-1.5"
+									gutter={8}
+								>
+									<Ariakit.MenuItem
+										className="flex min-h-11 cursor-pointer items-center px-4 text-sm text-sub-text-soft transition-colors hover:bg-sub-dark-card-raised hover:text-on-brand focus:bg-sub-dark-card-raised focus:text-on-brand focus:outline-hidden"
+										render={
+											<BasicLink
+												href="https://docs.llama.fi/spreadsheet-functions/function-reference"
+												data-umami-event="sheets-functions-reference-click"
+											/>
+										}
+									>
+										Functions Reference
+									</Ariakit.MenuItem>
+									<Ariakit.MenuItem
+										className="flex min-h-11 cursor-pointer items-center px-4 text-sm text-sub-text-soft transition-colors hover:bg-sub-dark-card-raised hover:text-on-brand focus:bg-sub-dark-card-raised focus:text-on-brand focus:outline-hidden"
+										render={
+											<BasicLink
+												href="https://docs.llama.fi/spreadsheet-functions/templates"
+												data-umami-event="sheets-templates-click-header"
+											/>
+										}
+									>
+										Templates
+									</Ariakit.MenuItem>
+									<Ariakit.MenuItem
+										className="flex min-h-11 cursor-pointer items-center px-4 text-sm text-sub-text-soft transition-colors hover:bg-sub-dark-card-raised hover:text-on-brand focus:bg-sub-dark-card-raised focus:text-on-brand focus:outline-hidden"
+										render={<BasicLink href="/" />}
+									>
+										Return to Main Page
+									</Ariakit.MenuItem>
+								</Ariakit.Menu>
+							</Ariakit.MenuProvider>
 						</nav>
 					</div>
 				</header>
