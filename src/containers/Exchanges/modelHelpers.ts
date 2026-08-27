@@ -1,6 +1,7 @@
 import { resolveCountryAvailability } from './countryAvailability'
 import type { MasterExchangeRegionCatalogResponse } from './master.types'
 import type {
+	ExchangeDepthLadder,
 	ExchangeDirectoryRowModel,
 	ExchangeNormalizedVolume,
 	ExchangeSegment,
@@ -8,6 +9,7 @@ import type {
 	ExchangeVenueKind
 } from './models'
 import { EXCHANGE_SEGMENT_LABELS, EXCHANGE_SEGMENTS } from './models'
+import { DIRECTORY_ALL_SEGMENTS, type DirectoryScope } from './queryState'
 
 /**
  * Right-aligned element-wise sum of two trailing-daily spark series. Each
@@ -40,6 +42,7 @@ export function combineNormalizedVolume(
 		reported,
 		normalized,
 		activeLiquidity: base.activeLiquidity + add.activeLiquidity,
+		activeLiquidityForCap: base.activeLiquidityForCap + add.activeLiquidityForCap,
 		discountFraction: reported > 0 ? 1 - normalized / reported : 0,
 		unverifiedFraction:
 			reported > 0 ? (base.unverifiedFraction * base.reported + add.unverifiedFraction * add.reported) / reported : 0,
@@ -49,21 +52,29 @@ export function combineNormalizedVolume(
 
 export type DirectoryKind = 'all' | ExchangeVenueKind
 
+/** The segments a scope covers: itself, or spot + USD perps for the merged view. */
+export function scopeSegments(scope: DirectoryScope): readonly ExchangeSegment[] {
+	return scope === 'all' ? DIRECTORY_ALL_SEGMENTS : [scope]
+}
+
 export function filterDirectoryRows(
 	rows: ExchangeDirectoryRowModel[],
 	filters: {
 		kind: DirectoryKind
-		scope: ExchangeSegment
+		scope: DirectoryScope
 		country?: string | null
 		catalog?: MasterExchangeRegionCatalogResponse | null
 	}
 ): ExchangeDirectoryRowModel[] {
+	const segments = scopeSegments(filters.scope)
 	const result: ExchangeDirectoryRowModel[] = []
 	for (const row of rows) {
 		if (filters.kind !== 'all' && row.kind !== filters.kind) continue
 		// Tracked venues must have tracked activity in the scope; a regional
-		// variant advertising a segment does not waive this gate.
-		if (row.tracked && activityForScope(row, filters.scope) === null) continue
+		// variant advertising a segment does not waive this gate. In the merged view
+		// any covered segment qualifies, so a COIN-perp-only venue is left out —
+		// there is nothing for it to fill a column with.
+		if (row.tracked && !segments.some((segment) => activityForScope(row, segment) !== null)) continue
 		if (!filters.country || !filters.catalog) {
 			result.push(row)
 			continue
@@ -71,7 +82,14 @@ export function filterDirectoryRows(
 		if (!row.regional) continue
 
 		const availability = resolveCountryAvailability(filters.catalog, row.regional, filters.country)
-		if (availability.availability === 'unavailable' || !availability.segments.includes(filters.scope)) continue
+		// Available in ANY segment the scope covers — a venue offering only spot in a
+		// country still belongs in the merged view, with its perp cells empty.
+		if (
+			availability.availability === 'unavailable' ||
+			!segments.some((segment) => availability.segments.includes(segment))
+		) {
+			continue
+		}
 		result.push({
 			...row,
 			selectedCountry: filters.country,
@@ -125,10 +143,36 @@ function brandSegmentActivity(activity: ExchangeSegmentActivity): ExchangeSegmen
 		depthBidUsd: activity.depthBidUsd,
 		depthAskUsd: activity.depthAskUsd,
 		depthPartial: activity.depthPartial,
+		depthLadder: activity.depthLadder ? [...activity.depthLadder] : null,
 		volumeUpdatedAt: null,
 		supportsOpenInterest: activity.supportsOpenInterest,
 		supportsDepth: activity.supportsDepth
 	}
+}
+
+/** Band-wise sum of two ladders, matching how the ±2% depth column already adds a
+ *  child's own book into its brand row. Coverage is volume-weighted, the same
+ *  definition the backend uses across a segment's pairs, so a shallow child can't
+ *  make a deep parent's band read unmeasured. */
+function addDepthLadder(base: ExchangeSegmentActivity, added: ExchangeSegmentActivity): ExchangeDepthLadder | null {
+	if (!base.depthLadder) return added.depthLadder ? [...added.depthLadder] : null
+	if (!added.depthLadder) return [...base.depthLadder]
+	if (base.depthLadder.length !== added.depthLadder.length) return [...base.depthLadder]
+	const baseWeight = base.volume24h ?? 0
+	const addedWeight = added.volume24h ?? 0
+	const totalWeight = baseWeight + addedWeight
+	return base.depthLadder.map((band, index) => {
+		const other = added.depthLadder![index]
+		return {
+			band: band.band,
+			bidUsd: sumNullable([band.bidUsd, other.bidUsd]),
+			askUsd: sumNullable([band.askUsd, other.askUsd]),
+			coverage:
+				totalWeight > 0
+					? (band.coverage * baseWeight + other.coverage * addedWeight) / totalWeight
+					: (band.coverage + other.coverage) / 2
+		}
+	})
 }
 
 /** Sum a child's own-book contribution into a brand-row segment; identity fields stay the parent's. */
@@ -143,6 +187,7 @@ function addSegmentActivity(base: ExchangeSegmentActivity, added: ExchangeSegmen
 		depthBidUsd: sumNullable([base.depthBidUsd, added.depthBidUsd]),
 		depthAskUsd: sumNullable([base.depthAskUsd, added.depthAskUsd]),
 		depthPartial: base.depthPartial || added.depthPartial,
+		depthLadder: addDepthLadder(base, added),
 		volumeUpdatedAt: null,
 		supportsOpenInterest: base.supportsOpenInterest || added.supportsOpenInterest,
 		supportsDepth: base.supportsDepth || added.supportsDepth
@@ -245,7 +290,7 @@ export function nestDirectoryRows(rows: ExchangeDirectoryRowModel[]): DirectoryT
 /**
  * Per-segment order-book relationship of a child venue to its parent, built
  * generically from liquidity modes and shared coverage — e.g. "Spot: shares
- * OKX's order book (subset of pairs — volume also counted under OKX). Linear
+ * OKX's order book (subset of pairs, volume also counted under OKX). Linear
  * Perps: operates its own order book, separate from OKX."
  */
 export function describeChildLiquidity(row: ExchangeDirectoryRowModel): string | null {
@@ -259,7 +304,7 @@ export function describeChildLiquidity(row: ExchangeDirectoryRowModel): string |
 			parts.push(
 				relation.coverage === 'full'
 					? `${label}: presents ${relation.source.name}'s order book.`
-					: `${label}: shares ${relation.source.name}'s order book (subset of pairs — volume also counted under ${relation.source.name}).`
+					: `${label}: shares ${relation.source.name}'s order book (subset of pairs, volume also counted under ${relation.source.name}).`
 			)
 		} else {
 			parts.push(`${label}: operates its own order book, separate from ${row.parent.name}.`)

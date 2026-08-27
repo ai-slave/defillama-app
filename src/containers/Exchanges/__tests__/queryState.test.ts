@@ -17,15 +17,20 @@ import {
 describe('Exchanges URL query state', () => {
 	it('uses canonical defaults when parameters are absent or invalid', () => {
 		expect(getDirectoryQueryState({})).toEqual({
-			scope: 'spot',
+			scope: 'all',
 			kind: 'all',
 			group: 'activity'
 		})
 		expect(getDirectoryQueryState({ scope: 'perp', venue: 'hybrid', view: 'summary' })).toEqual({
-			scope: 'spot',
+			scope: 'all',
 			kind: 'all',
 			group: 'activity'
 		})
+		// Every exact segment still round-trips, including COIN perps, which the merged
+		// view leaves out — the segment tables are unchanged.
+		for (const scope of ['spot', 'linear_perp', 'inverse_perp'] as const) {
+			expect(getDirectoryQueryState({ scope }).scope).toBe(scope)
+		}
 		expect(getDirectoryOverviewTab({ chartView: 'depth' })).toBe('total')
 		expect(getMicaFilter({ product: 'options' })).toBe('all')
 		expect(getProfileTab({ section: 'news' })).toBe('markets')
@@ -33,8 +38,11 @@ describe('Exchanges URL query state', () => {
 		expect(getProfileSegment({ segment: 'options' })).toBeNull()
 		expect(parseExchangeCountry({ country: 'europe' })).toBeNull()
 		expect(getVenueHistoryMetric({ history: 'funding' })).toBeNull()
-		expect(getResearchRange({ range: '7d' })).toBe('1y')
-		expect(getResearchRange({ range: 'all' })).toBe('all')
+		// Full history is the default: a window that hides when a metric started
+		// collecting is how a coverage step gets read as a market move.
+		expect(getResearchRange({ range: '7d' })).toBe('all')
+		expect(getResearchRange({})).toBe('all')
+		expect(getResearchRange({ range: '90d' })).toBe('90d')
 	})
 
 	it('reads directory and overview selections directly from the first query value', () => {

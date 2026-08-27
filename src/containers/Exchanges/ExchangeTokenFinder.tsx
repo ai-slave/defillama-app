@@ -30,8 +30,8 @@ const SEGMENTS: ExchangeSegment[] = ['spot', 'linear_perp', 'inverse_perp']
 const EMPTY_TOKEN_LISTINGS: TokenExchangeListing[] = []
 const SEGMENT_LABELS: Record<ExchangeSegment, string> = {
 	spot: 'Spot',
-	linear_perp: 'Linear Perps',
-	inverse_perp: 'Inverse Perps'
+	linear_perp: 'USD Perps',
+	inverse_perp: 'COIN Perps'
 }
 
 interface FinderRow {

@@ -1,5 +1,6 @@
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { EXCHANGE_SEGMENT_LABELS, EXCHANGE_SEGMENTS, type ExchangeProfileModel, type ExchangeSegment } from './models'
+import { EXCHANGE_SEGMENT_LABELS, EXCHANGE_SEGMENTS, type ExchangeProfileModel } from './models'
+import type { ProfileSegmentSelection } from './queryState'
 import { SegmentToggleLabel } from './segmentPresentation'
 
 export function ProfileSegmentTabs({
@@ -8,10 +9,10 @@ export function ProfileSegmentTabs({
 	onValueChange
 }: {
 	profile: ExchangeProfileModel
-	value: ExchangeSegment
-	onValueChange: (segment: ExchangeSegment) => void
+	value: ProfileSegmentSelection
+	onValueChange: (segment: ProfileSegmentSelection) => void
 }) {
-	const options = EXCHANGE_SEGMENTS.flatMap((segmentId) => {
+	const segmentOptions = EXCHANGE_SEGMENTS.flatMap((segmentId) => {
 		const segment = profile.segments[segmentId]
 		return segment
 			? [
@@ -23,7 +24,10 @@ export function ProfileSegmentTabs({
 				]
 			: []
 	})
-	if (options.length === 0) return null
+	if (segmentOptions.length === 0) return null
+	// `All` leads: it is the per-token rollup, and the exact segment tables sit behind
+	// it unchanged for anyone who wants one book at a time.
+	const options = [{ value: 'all' as const, label: 'All', ariaLabel: 'All markets by token' }, ...segmentOptions]
 	return (
 		<SegmentedControl
 			value={value}

@@ -163,6 +163,7 @@ function directoryVenue(patch: Partial<MasterDirectoryVenue> = {}): MasterDirect
 				depth_2pct_bid_usd: null,
 				depth_2pct_ask_usd: null,
 				depth_partial: false,
+				depth_ladder: null,
 				freshness: FRESHNESS
 			},
 			linear_perp: {
@@ -175,6 +176,7 @@ function directoryVenue(patch: Partial<MasterDirectoryVenue> = {}): MasterDirect
 				depth_2pct_bid_usd: null,
 				depth_2pct_ask_usd: null,
 				depth_partial: false,
+				depth_ladder: null,
 				freshness: FRESHNESS
 			}
 		},
@@ -263,6 +265,7 @@ function totals(patch: Partial<MasterDirectoryTotals> = {}): MasterDirectoryTota
 function directoryResponse(venues: MasterDirectoryVenue[]): MasterDirectoryResponse {
 	return {
 		venues,
+		depth_bands: [0.02],
 		totals: {
 			...totals({ venues: venues.length, tracked: venues.filter((venue) => venue.tracked).length }),
 			cex: totals(),
@@ -369,6 +372,7 @@ function pair(patch: Partial<MasterExchangePair> = {}): MasterExchangePair {
 			reported: 1_000,
 			normalized: 700,
 			active_liquidity: 350,
+			active_liquidity_measured: 350,
 			band: 0.02,
 			daily_vol: 0.03,
 			coverage: 0.04,
@@ -777,10 +781,19 @@ describe('master directory mapper', () => {
 		expect(required(measured.rows[0]).execution).toEqual({
 			assets: ['BTC'],
 			hoursCovered: 24,
+			// Cost is published on a narrower basket than fill quality, so the row names
+			// both: two columns on one row can describe different markets.
+			costAssets: ['BTC'],
 			costToTradeBps: 4,
+			effectiveSpreadBps: 2,
 			realizedSlippage10kBps: 1,
 			predictedSlippage10kBps: 1.5,
-			markout1mBps: 0.3
+			// The size ladder and the second horizon median over the SAME pairs as the
+			// headline figures, so a row can never mix baskets across its own columns.
+			realizedSlippage100kBps: 2,
+			predictedSlippage100kBps: 2.5,
+			markout1mBps: 0.3,
+			markout5mBps: 0.4
 		})
 	})
 
@@ -794,6 +807,7 @@ describe('master directory mapper', () => {
 								reported: 100,
 								normalized: 70,
 								active_liquidity: 40,
+								active_liquidity_measured: 30,
 								discount_pct: 0.3,
 								unverified_pct: 0.1,
 								flag: null
@@ -810,7 +824,10 @@ describe('master directory mapper', () => {
 			spot: {
 				reported: 100,
 				normalized: 70,
-				activeLiquidity: 40,
+				// Displayed liquidity is the observed figure; the extrapolated one the cap
+				// used stays available but off screen.
+				activeLiquidity: 30,
+				activeLiquidityForCap: 40,
 				discountFraction: 0.3,
 				unverifiedFraction: 0.1,
 				flag: null
@@ -872,27 +889,16 @@ describe('master directory mapper', () => {
 	})
 
 	it('indexes columnar history, skips unsupported null columns, and fails on misalignment', () => {
+		// Built from the key axis, not a hand-counted list: the two must stay the same
+		// length, and a fixture that pins a count silently rots when a metric is added.
+		const observed: Partial<Record<(typeof MASTER_AGGREGATE_SERIES_KEYS)[number], Array<number | null>>> = {
+			total_spot_volume: [100, 110],
+			total_linear_perp_volume: [200, 210]
+		}
 		const payload: MasterAggregateSeriesResponse = {
 			days: [1, 2],
 			key: MASTER_AGGREGATE_SERIES_KEYS,
-			series: [
-				null,
-				null,
-				null,
-				null,
-				null,
-				null,
-				null,
-				null,
-				null,
-				null,
-				[100, 110],
-				[200, 210],
-				null,
-				null,
-				null,
-				null
-			],
+			series: MASTER_AGGREGATE_SERIES_KEYS.map((key) => observed[key] ?? null),
 			last_updated: '2026-07-14T00:00:00Z'
 		}
 		const mapped = mapMasterDirectoryOverview(payload)
@@ -904,9 +910,183 @@ describe('master directory mapper', () => {
 		expect(() =>
 			mapMasterDirectoryOverview({
 				...payload,
-				series: payload.series.map((column, index) => (index === 11 ? [200] : column))
+				series: payload.series.map((column, index) =>
+					MASTER_AGGREGATE_SERIES_KEYS[index] === 'total_linear_perp_volume' ? [200] : column
+				)
 			})
 		).toThrow('Series column total_linear_perp_volume does not match the day axis')
+	})
+})
+
+describe('execution basket', () => {
+	// Two venues, uneven coverage: the deep one measures BTC+ETH, the thin one only
+	// BTC. Before the shared basket, the deep venue's columns were a BTC/ETH median
+	// while the thin venue's were BTC alone — different markets, same column.
+	function unevenExecution(): MasterExecutionQualityResponse {
+		const base = executionResponse()
+		const btc = required(base.venues.venue).pairs.BTC
+		const eth = { ...required(btc), asset: 'ETH', symbol: 'ETH/USDT', cost_to_trade_bps: 40, markout_bps_1m: 9 }
+		return {
+			...base,
+			basket: ['BTC', 'ETH'],
+			venues: {
+				deep: {
+					...required(base.venues.venue),
+					assets: ['BTC', 'ETH'],
+					pair_count: 2,
+					pairs: { BTC: required(btc), ETH: eth }
+				},
+				thin: required(base.venues.venue)
+			}
+		}
+	}
+
+	it('restricts every venue to the assets all of them cover', () => {
+		const directory = mapMasterDirectory(
+			directoryResponse([directoryVenue({ slug: 'deep' }), directoryVenue({ slug: 'thin' })]),
+			unevenExecution()
+		)
+		expect(directory.executionBasket).toEqual(['BTC'])
+		for (const row of directory.rows) {
+			expect(row.execution?.assets).toEqual(['BTC'])
+			// ETH's 40bps cost is excluded, so the deep venue is not penalised for
+			// measuring more markets than its peer.
+			expect(row.execution?.costToTradeBps).toBe(4)
+			expect(row.execution?.markout1mBps).toBe(0.3)
+		}
+	})
+
+	// Cost is published on BTC/ETH, fill quality on the top five. Both narrow to what
+	// every measured venue covers, so each column still compares like for like down the
+	// table even though the two describe different markets.
+	it('measures cost on a narrower basket than fill quality', () => {
+		const base = executionResponse()
+		const btc = required(required(base.venues.venue).pairs.BTC)
+		const withAssets = (assets: string[]) => ({
+			...required(base.venues.venue),
+			assets,
+			pair_count: assets.length,
+			pairs: Object.fromEntries(
+				assets.map((asset) => [
+					asset,
+					// SOL is deliberately worse: if it leaked into cost, the cost median moves.
+					{
+						...btc,
+						asset,
+						cost_to_trade_bps: asset === 'SOL' ? 40 : 4,
+						realized_slippage_bps_10k: asset === 'SOL' ? 9 : 1
+					}
+				])
+			)
+		})
+		const execution = {
+			...base,
+			basket: ['BTC', 'ETH', 'SOL'],
+			venues: { a: withAssets(['BTC', 'ETH', 'SOL']), b: withAssets(['BTC', 'ETH', 'SOL']) }
+		}
+		const directory = mapMasterDirectory(
+			directoryResponse([directoryVenue({ slug: 'a' }), directoryVenue({ slug: 'b' })]),
+			execution
+		)
+		expect(directory.executionCostBasket).toEqual(['BTC', 'ETH'])
+		expect(directory.executionFillBasket).toEqual(['BTC', 'ETH', 'SOL'])
+
+		const row = required(directory.rows[0])
+		expect(row.execution?.costAssets).toEqual(['BTC', 'ETH'])
+		expect(row.execution?.assets).toEqual(['BTC', 'ETH', 'SOL'])
+		// Cost excludes SOL entirely; fill quality includes it.
+		expect(row.execution?.costToTradeBps).toBe(4)
+		expect(row.execution?.realizedSlippage10kBps).toBe(1)
+	})
+
+	it('widens to the full shared basket once every venue covers it', () => {
+		const execution = unevenExecution()
+		execution.venues.thin = required(execution.venues.deep)
+		const directory = mapMasterDirectory(
+			directoryResponse([directoryVenue({ slug: 'deep' }), directoryVenue({ slug: 'thin' })]),
+			execution
+		)
+		expect(directory.executionBasket).toEqual(['BTC', 'ETH'])
+		expect(directory.rows[0]?.execution?.costToTradeBps).toBe(22) // median(4, 40)
+	})
+
+	it('reports the weakest pair’s coverage, not the strongest', () => {
+		const execution = unevenExecution()
+		execution.venues.thin = required(execution.venues.deep)
+		execution.venues.deep = {
+			...required(execution.venues.deep),
+			pairs: {
+				BTC: { ...required(required(execution.venues.deep).pairs.BTC), hours_covered: 720 },
+				ETH: { ...required(required(execution.venues.deep).pairs.ETH), hours_covered: 80 }
+			}
+		}
+		const directory = mapMasterDirectory(directoryResponse([directoryVenue({ slug: 'deep' })]), execution)
+		expect(directory.rows[0]?.execution?.hoursCovered).toBe(80)
+	})
+
+	it('falls back to each venue’s own aggregate when no asset is shared', () => {
+		const execution = unevenExecution()
+		execution.venues.thin = { ...required(execution.venues.thin), assets: ['SOL'], pairs: {} }
+		const directory = mapMasterDirectory(
+			directoryResponse([directoryVenue({ slug: 'deep' }), directoryVenue({ slug: 'thin' })]),
+			execution
+		)
+		expect(directory.executionBasket).toEqual([])
+		expect(directory.rows.find((row) => row.slug === 'thin')?.execution?.assets).toEqual(['SOL'])
+	})
+})
+
+describe('depth ladders', () => {
+	it('zips a pair ladder onto the band axis and marks bands the book did not reach', () => {
+		// Fixture book reaches min(0.03, 0.04) = ±3%, so both ±0.5% and ±2% are measured.
+		const ladder = required(
+			required(mapMasterProfile(indexResponse(), metadataResponse()).segments.linear_perp).pairs[0]
+		).depthLadder
+		expect(ladder).toEqual([
+			{ band: 0.005, bidUsd: 10, askUsd: 12, coverage: 1 },
+			{ band: 0.02, bidUsd: 20, askUsd: 24, coverage: 1 }
+		])
+	})
+
+	it('a band beyond the pair reach is uncovered, and an unknown reach never counts as covered', () => {
+		const shallow = indexResponse()
+		shallow.segments.linear_perp!.pairs = [pair({ depth_bid_max_dist: 0.01, depth_ask_max_dist: 0.01 })]
+		const bands = required(
+			required(mapMasterProfile(shallow, metadataResponse()).segments.linear_perp).pairs[0]
+		).depthLadder
+		expect(bands?.map((entry) => entry.coverage)).toEqual([1, 0])
+
+		const unknown = indexResponse()
+		unknown.segments.linear_perp!.pairs = [pair({ depth_bid_max_dist: null })]
+		const unknownBands = required(
+			required(mapMasterProfile(unknown, metadataResponse()).segments.linear_perp).pairs[0]
+		).depthLadder
+		expect(unknownBands?.map((entry) => entry.coverage)).toEqual([0, 0])
+	})
+
+	it('a ladder that does not align to the band axis is rejected rather than mis-plotted', () => {
+		const misaligned = indexResponse()
+		misaligned.segments.linear_perp!.pairs = [pair({ depth_ask_usd: [12] })]
+		expect(() => mapMasterProfile(misaligned, metadataResponse())).toThrow(/does not match depth_bands|for 2 bands/)
+	})
+
+	// Displayed active liquidity is the observed figure, so the share is bounded by the
+	// captured book — the extrapolated figure never reaches a surface.
+	it('active-liquidity share is measured against the whole captured book', () => {
+		const covered = indexResponse()
+		covered.segments.linear_perp!.pairs = [
+			pair({ nvol: { ...required(pair().nvol), active_liquidity: 999, active_liquidity_measured: 22 } })
+		]
+		const share = required(required(mapMasterProfile(covered, metadataResponse()).segments.linear_perp).pairs[0])
+			.normalizedVolume?.activeLiquidityShare
+		expect(share).toBeCloseTo(0.5, 8) // 22 of the 44 captured across both sides
+
+		const noBook = indexResponse()
+		noBook.segments.linear_perp!.pairs = [pair({ depth_bid_usd: null, depth_ask_usd: null })]
+		expect(
+			required(required(mapMasterProfile(noBook, metadataResponse()).segments.linear_perp).pairs[0]).normalizedVolume
+				?.activeLiquidityShare
+		).toBeNull()
 	})
 })
 
@@ -1209,10 +1389,10 @@ describe('canonical research charts', () => {
 		expect(venues.at(-1)?.values).toEqual([3, 3])
 		expect(venues.find((line) => line.id === 'venue-9')?.label).toBe('Venue 9')
 		expect(types).toEqual([
-			{ id: 'cex-linear_perp', label: 'CEX · Linear Perps', values: [45, 45] },
-			{ id: 'cex-inverse_perp', label: 'CEX · Inverse Perps', values: [0, 0] },
-			{ id: 'dex-linear_perp', label: 'DEX · Linear Perps', values: [10, 10] },
-			{ id: 'dex-inverse_perp', label: 'DEX · Inverse Perps', values: [0, 0] }
+			{ id: 'cex-linear_perp', label: 'CEX · USD Perps', values: [45, 45] },
+			{ id: 'cex-inverse_perp', label: 'CEX · COIN Perps', values: [0, 0] },
+			{ id: 'dex-linear_perp', label: 'DEX · USD Perps', values: [10, 10] },
+			{ id: 'dex-inverse_perp', label: 'DEX · COIN Perps', values: [0, 0] }
 		])
 	})
 
@@ -1251,9 +1431,9 @@ describe('canonical research charts', () => {
 		])
 		expect(report.views.find((view) => view.id === 'volume-types')?.chart.lines).toEqual([
 			{ id: 'cex-spot', label: 'CEX · Spot', values: [10, 11] },
-			{ id: 'cex-linear_perp', label: 'CEX · Linear Perps', values: [100, 110] },
-			{ id: 'cex-inverse_perp', label: 'CEX · Inverse Perps', values: [1, null] },
-			{ id: 'dex-linear_perp', label: 'DEX · Linear Perps', values: [20, 21] }
+			{ id: 'cex-linear_perp', label: 'CEX · USD Perps', values: [100, 110] },
+			{ id: 'cex-inverse_perp', label: 'CEX · COIN Perps', values: [1, null] },
+			{ id: 'dex-linear_perp', label: 'DEX · USD Perps', values: [20, 21] }
 		])
 		// The combined perp figure (101 = 100 + 1) must not appear on any line of any view.
 		for (const view of report.views) {
@@ -1292,7 +1472,7 @@ describe('canonical research charts', () => {
 
 		expect(report.views.find((view) => view.id === 'normalized-segments')?.chart.lines).toEqual([
 			{ id: 'spot', label: 'Spot', values: [30, 0] },
-			{ id: 'linear_perp', label: 'Linear Perps', values: [25, 10] }
+			{ id: 'linear_perp', label: 'USD Perps', values: [25, 10] }
 		])
 	})
 

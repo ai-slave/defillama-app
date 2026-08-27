@@ -15,8 +15,8 @@ export type ExchangeSegment = (typeof EXCHANGE_SEGMENTS)[number]
 /** Exact segment vocabulary: perpetual classes are never combined into a "perp" figure. */
 export const EXCHANGE_SEGMENT_LABELS: Record<ExchangeSegment, string> = {
 	spot: 'Spot',
-	linear_perp: 'Linear Perps',
-	inverse_perp: 'Inverse Perps'
+	linear_perp: 'USD Perps',
+	inverse_perp: 'COIN Perps'
 }
 export type ExchangeVenueKind = 'cex' | 'dex'
 export type ExchangeRegionStatus = 'available' | 'restricted' | 'leaving' | 'unavailable'
@@ -36,6 +36,19 @@ export interface ExchangeDoubleCountNote {
 	depth?: string
 }
 
+/** One band of a depth ladder: cumulative USD on each side at ±`band` of mid, and
+ *  whether the venue's book actually reached out that far (`coverage` = share of the
+ *  segment's volume that did). Bands past the reach are forward-filled upstream, so
+ *  a low coverage means "not measured", never "no liquidity". */
+export interface ExchangeDepthBand {
+	band: number
+	bidUsd: number | null
+	askUsd: number | null
+	coverage: number
+}
+
+export type ExchangeDepthLadder = ExchangeDepthBand[]
+
 export interface ExchangeSegmentActivity {
 	marketCount: number
 	coinCount: number | null
@@ -46,6 +59,9 @@ export interface ExchangeSegmentActivity {
 	depthBidUsd: number | null
 	depthAskUsd: number | null
 	depthPartial: boolean
+	/** Cumulative depth across every band, for the depth-profile chart. `coverage`
+	 *  marks which bands are measured rather than forward-filled at the fetch limit. */
+	depthLadder: ExchangeDepthLadder | null
 	volumeUpdatedAt: string | null
 	doubleCount?: ExchangeDoubleCountNote
 	supportsOpenInterest: boolean
@@ -55,7 +71,13 @@ export interface ExchangeSegmentActivity {
 export interface ExchangeNormalizedVolume {
 	reported: number
 	normalized: number
+	/** Observed depth inside the volatility band — no extrapolated component. This is
+	 *  the displayed figure: shown liquidity must be liquidity that exists. */
 	activeLiquidity: number
+	/** The extrapolated figure the normalized-volume cap was computed against. Kept
+	 *  off screen; a venue must not be discounted for how far our snapshot reached,
+	 *  but nor should that projection be presented as depth. */
+	activeLiquidityForCap: number
 	discountFraction: number
 	unverifiedFraction: number
 	flag: string | null
@@ -167,15 +189,23 @@ export interface ExchangeDirectoryRowModel {
 	selectedCountry: string | null
 	selectedCountryStatus: ExchangeRegionStatus | null
 	normalizedVolume: Record<ExchangeSegment, ExchangeNormalizedVolume | null> | null
-	/** Measured execution quality on the shared perp basket (linear perps only today):
+	/** Measured execution quality on the shared perp basket (USD perps only today):
 	 * tick-level fills, not venue claims. Null for uncovered venues — never zero. */
 	execution: {
+		/** Assets behind the fill-quality figures (slippage, markout). */
 		assets: string[]
+		/** Assets behind cost to trade, which is published on a narrower set. */
+		costAssets: string[]
 		hoursCovered: number
 		costToTradeBps: number | null
+		/** The spread half of cost to trade, shown beside it. */
+		effectiveSpreadBps: number | null
 		realizedSlippage10kBps: number | null
 		predictedSlippage10kBps: number | null
+		realizedSlippage100kBps: number | null
+		predictedSlippage100kBps: number | null
 		markout1mBps: number | null
+		markout5mBps: number | null
 	} | null
 	/** Internal quality rank — rendered as the tier chip + within-kind position beside
 	 * the venue name, and the directory's default sort. `components` is the breakdown,
@@ -217,6 +247,14 @@ export interface ExchangeDirectoryModel {
 	summary: ExchangeDirectorySummaryModel
 	updatedAt: string
 	executionAvailable: boolean
+	/** The assets every measured venue covers. The published columns narrow further,
+	 *  per metric, so each stays comparable across rows. Empty when no shared asset
+	 *  exists and each row discloses its own basket instead. */
+	executionBasket: string[]
+	/** Assets behind the cost-to-trade column. */
+	executionCostBasket: string[]
+	/** Assets behind the slippage and markout columns. */
+	executionFillBasket: string[]
 }
 
 export interface ExchangePairModel {
@@ -253,8 +291,18 @@ export interface ExchangePairModel {
 		normalized: number
 		activeLiquidity: number
 		discountFraction: number
+		/** The ±band volatility picked for this pair (fraction of mid). */
+		band: number
+		/** Active liquidity as a share of the pair's whole captured book, 0–1. Null
+		 *  when there is no book to compare against. Exactly 1 means the volatility
+		 *  band reached at least as far as our snapshot did, so the band figure IS
+		 *  the whole visible book. */
+		activeLiquidityShare: number | null
 		status: string
 	} | null
+	/** Cumulative depth per band for this pair — summed across a segment's pairs to
+	 *  draw the venue's book profile. */
+	depthLadder: ExchangeDepthLadder | null
 }
 
 export interface ExchangeProfileSegmentModel {
@@ -418,7 +466,7 @@ export interface ExchangeExecutionFeedHealth {
 }
 
 /** Measured execution quality for the profile's Execution tab: tick-level fills on
- * the shared perp basket (linear perps only today). Null = venue not covered. */
+ * the shared perp basket (USD perps only today). Null = venue not covered. */
 export interface ExchangeExecutionModel {
 	assets: string[]
 	hoursCovered: number

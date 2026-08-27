@@ -4,9 +4,22 @@ import type { DirectoryKind } from './modelHelpers'
 import type { ExchangeResearchView, ExchangeSegment } from './models'
 
 export type DirectoryColumnGroup = 'activity' | 'transparency' | 'fees' | 'funding' | 'compliance'
+/**
+ * The listing's market scope. `all` is the default cross-segment view: one row per
+ * venue with spot and USD perps side by side. COIN perps are deliberately absent from
+ * it — too few venues run one for the columns to compare, and folding them into the
+ * perp columns would mix coin-settled and quote-settled books. The three exact
+ * segment scopes keep their own tables unchanged, so anyone wanting per-segment
+ * detail (COIN perps included) still has it.
+ */
+export type DirectoryScope = 'all' | ExchangeSegment
+/** The segments the `all` view merges, in render order. */
+export const DIRECTORY_ALL_SEGMENTS = ['spot', 'linear_perp'] as const satisfies readonly ExchangeSegment[]
 export type DirectoryOverviewTab = 'total' | ExchangeSegment
 export type ExchangeResearchPart = 'volume' | 'oi' | 'depth' | 'nvol'
-export type ExchangeResearchRange = '30d' | '90d' | '1y' | '2y' | 'all'
+/** Chart windows, in the order the control renders them. */
+export const RESEARCH_RANGES = ['30d', '90d', '1y', '2y', 'all'] as const
+export type ExchangeResearchRange = (typeof RESEARCH_RANGES)[number]
 export type MicaFilter = 'all' | 'spot' | 'perp' | 'fiat'
 export type ProfileTab = 'markets' | 'execution' | 'reserves' | 'information' | 'history'
 export type ProfileReservesView = 'assets' | 'stablecoins'
@@ -30,11 +43,13 @@ export const EXCHANGES_QUERY_KEYS = {
 } as const
 
 export const DEFAULT_DIRECTORY_QUERY_STATE = {
-	scope: 'spot',
+	// Cross-segment by default: the metrics worth leading with are the measured ones,
+	// and behind a scope tab almost nobody sees them.
+	scope: 'all',
 	kind: 'all',
 	group: 'activity'
 } as const satisfies {
-	scope: ExchangeSegment
+	scope: DirectoryScope
 	kind: DirectoryKind
 	group: DirectoryColumnGroup
 }
@@ -43,13 +58,14 @@ export const DEFAULT_DIRECTORY_OVERVIEW_TAB: DirectoryOverviewTab = 'total'
 export const DEFAULT_MICA_FILTER: MicaFilter = 'all'
 export const DEFAULT_PROFILE_TAB: ProfileTab = 'markets'
 export const DEFAULT_PROFILE_RESERVES_VIEW: ProfileReservesView = 'assets'
-export const DEFAULT_RESEARCH_RANGE: ExchangeResearchRange = '1y'
+// Full history by default: these series are short enough to read whole, and a window
+// that hides when a metric started collecting is how a coverage step gets mistaken for
+// a market move.
+export const DEFAULT_RESEARCH_RANGE: ExchangeResearchRange = 'all'
 
 export function getResearchRange(query: ParsedUrlQuery): ExchangeResearchRange {
 	const value = readSingleQueryValue(query[EXCHANGES_QUERY_KEYS.researchRange])
-	return value === '30d' || value === '90d' || value === '1y' || value === '2y' || value === 'all'
-		? value
-		: DEFAULT_RESEARCH_RANGE
+	return RESEARCH_RANGES.find((range) => range === value) ?? DEFAULT_RESEARCH_RANGE
 }
 
 export function getTokenFinderTokens(query: ParsedUrlQuery): string[] {
@@ -69,7 +85,7 @@ export function getTokenFinderMode(query: ParsedUrlQuery): TokenFinderMode {
 }
 
 export function getDirectoryQueryState(query: ParsedUrlQuery): {
-	scope: ExchangeSegment
+	scope: DirectoryScope
 	kind: DirectoryKind
 	group: DirectoryColumnGroup
 } {
@@ -77,7 +93,8 @@ export function getDirectoryQueryState(query: ParsedUrlQuery): {
 	const kindQuery = readSingleQueryValue(query[EXCHANGES_QUERY_KEYS.directoryKind])
 	const groupQuery = readSingleQueryValue(query[EXCHANGES_QUERY_KEYS.directoryGroup])
 
-	const scope: ExchangeSegment = scopeQuery === 'linear_perp' || scopeQuery === 'inverse_perp' ? scopeQuery : 'spot'
+	const scope: DirectoryScope =
+		scopeQuery === 'spot' || scopeQuery === 'linear_perp' || scopeQuery === 'inverse_perp' ? scopeQuery : 'all'
 	const kind: DirectoryKind = kindQuery === 'cex' || kindQuery === 'dex' ? kindQuery : 'all'
 	const group: DirectoryColumnGroup =
 		groupQuery === 'transparency' || groupQuery === 'fees' || groupQuery === 'funding' || groupQuery === 'compliance'
@@ -112,9 +129,13 @@ export function getProfileReservesView(query: ParsedUrlQuery): ProfileReservesVi
 		: DEFAULT_PROFILE_RESERVES_VIEW
 }
 
-export function getProfileSegment(query: ParsedUrlQuery): ExchangeSegment | null {
+/** `all` is the per-token rollup across segments; the rest are the exact segment
+ *  tables, unchanged. Null means "no selection", which resolves to the default. */
+export type ProfileSegmentSelection = 'all' | ExchangeSegment
+
+export function getProfileSegment(query: ParsedUrlQuery): ProfileSegmentSelection | null {
 	const value = readSingleQueryValue(query[EXCHANGES_QUERY_KEYS.profileSegment])
-	return value === 'spot' || value === 'linear_perp' || value === 'inverse_perp' ? value : null
+	return value === 'all' || value === 'spot' || value === 'linear_perp' || value === 'inverse_perp' ? value : null
 }
 
 export function parseExchangeCountry(query: ParsedUrlQuery): string | null {

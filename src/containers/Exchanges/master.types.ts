@@ -99,14 +99,34 @@ export interface MasterSegmentStats {
 	depth_2pct_bid_usd: number | null
 	depth_2pct_ask_usd: number | null
 	depth_partial: boolean
+	depth_ladder: MasterDepthLadder | null
 	freshness: MasterFreshness
 	doublecount?: MasterDoubleCount
+}
+
+/**
+ * Cumulative USD depth per `MasterDirectoryResponse.depth_bands`, summed over the
+ * segment's pairs. `coverage[i]` is the share of the segment's volume whose book
+ * genuinely reached that band — past a pair's reach the upstream sums are
+ * forward-filled, so a ladder flattens at the fetch limit and the flat part must
+ * be drawn as unmeasured, not as thin liquidity.
+ */
+export interface MasterDepthLadder {
+	bid_usd: Array<number | null>
+	ask_usd: Array<number | null>
+	coverage: number[]
 }
 
 export interface MasterSegmentNormalizedVolume {
 	reported: number
 	normalized: number
+	/** Volatility-band depth INCLUDING the extrapolated part past our snapshot's
+	 *  reach. This is what `normalized` was capped against; it is not displayed. */
 	active_liquidity: number
+	/** The same band with the extrapolation stripped — observed depth only. This is
+	 *  the figure surfaces show, because a displayed liquidity number has to be
+	 *  liquidity that exists. */
+	active_liquidity_measured: number
 	discount_pct: number
 	unverified_pct: number
 	flag: string | null
@@ -261,7 +281,7 @@ interface MasterExecutionMeasurements {
 }
 
 /** Measured execution quality (tick-level fills on the shared perp basket) —
- * `exchanges/execution-quality.json`. Linear perps only today. */
+ * `exchanges/execution-quality.json`. USD perps only today. */
 export interface MasterExecutionPairMetrics extends MasterExecutionMeasurements {
 	asset: string
 	symbol: string
@@ -289,6 +309,12 @@ export interface MasterExecutionVenueMetrics extends MasterExecutionMeasurements
 	n_trades: number
 	feed?: MasterExecutionFeedHealth
 	pairs: Record<string, MasterExecutionPairMetrics>
+}
+
+/** The trimmed slippage feed the token order-book chart reads: two numbers per
+ *  venue-asset, keyed by venue slug then uppercase asset. */
+export interface MasterExecutionSlippageResponse {
+	venues: Record<string, Record<string, { predictedBps: number | null; realizedBps: number | null }>>
 }
 
 export interface MasterExecutionQualityResponse {
@@ -340,6 +366,8 @@ export interface MasterDirectoryTotals {
 
 export interface MasterDirectoryResponse {
 	venues: MasterDirectoryVenue[]
+	/** One band axis (fractions of mid) for every venue's `depth_ladder`. */
+	depth_bands: number[]
 	totals: MasterDirectoryTotals & { cex: MasterDirectoryTotals; dex: MasterDirectoryTotals }
 	freshness: MasterFreshness
 	last_updated: string
@@ -363,7 +391,15 @@ export const MASTER_AGGREGATE_SERIES_KEYS = [
 	'total_inverse_perp_volume',
 	'total_linear_perp_oi',
 	'total_inverse_perp_oi',
-	'total_trading_volume'
+	'total_trading_volume',
+	// Observed active liquidity (extrapolation stripped). Spot and USD perps only —
+	// the segments normalized volume supports.
+	'cex_spot_active_liquidity',
+	'cex_linear_perp_active_liquidity',
+	'dex_spot_active_liquidity',
+	'dex_linear_perp_active_liquidity',
+	'total_spot_active_liquidity',
+	'total_linear_perp_active_liquidity'
 ] as const
 
 export const MASTER_VENUE_SERIES_KEYS = [
@@ -418,6 +454,7 @@ export interface MasterPairNormalizedVolume {
 	reported: number
 	normalized: number
 	active_liquidity: number
+	active_liquidity_measured: number
 	band: number
 	daily_vol: number
 	coverage: number

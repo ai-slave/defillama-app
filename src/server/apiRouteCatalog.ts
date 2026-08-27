@@ -98,6 +98,7 @@ export const allApiRoutePaths = [
 	'exchanges/[exchange]/history',
 	'exchanges/[exchange]/metadata',
 	'exchanges/charts/[part]',
+	'exchanges/execution-slippage',
 	'exchanges/regions',
 	'exchanges/series',
 	'flare/fAssets',

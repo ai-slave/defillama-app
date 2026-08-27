@@ -6,6 +6,8 @@ import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar }
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
 import { pushShallowQuery } from '~/utils/routerQuery'
+import { collectionHallmarks, hallmarkMetricsForKeys } from './chartHallmarks'
+import { ChartRangeControl } from './ChartRangeControl'
 import type { ExchangeOverviewChartModel } from './models'
 import {
 	DEFAULT_RESEARCH_RANGE,
@@ -62,8 +64,8 @@ const VENUE_TABS: MetricTab[] = [
 		stack: 'volume',
 		series: [
 			{ key: 'spot_volume', label: 'Spot', color: SEGMENT_COLORS.spot },
-			{ key: 'linear_perp_volume', label: 'Linear Perps', color: SEGMENT_COLORS.linear },
-			{ key: 'inverse_perp_volume', label: 'Inverse Perps', color: SEGMENT_COLORS.inverse }
+			{ key: 'linear_perp_volume', label: 'USD Perps', color: SEGMENT_COLORS.linear },
+			{ key: 'inverse_perp_volume', label: 'COIN Perps', color: SEGMENT_COLORS.inverse }
 		]
 	},
 	{
@@ -72,8 +74,8 @@ const VENUE_TABS: MetricTab[] = [
 		valueSymbol: '$',
 		type: 'line',
 		series: [
-			{ key: 'linear_perp_oi', label: 'Linear Perps', color: SEGMENT_COLORS.linear },
-			{ key: 'inverse_perp_oi', label: 'Inverse Perps', color: SEGMENT_COLORS.inverse }
+			{ key: 'linear_perp_oi', label: 'USD Perps', color: SEGMENT_COLORS.linear },
+			{ key: 'inverse_perp_oi', label: 'COIN Perps', color: SEGMENT_COLORS.inverse }
 		]
 	},
 	{
@@ -83,8 +85,8 @@ const VENUE_TABS: MetricTab[] = [
 		type: 'line',
 		series: [
 			{ key: 'spot_depth_2pct', label: 'Spot', color: SEGMENT_COLORS.spot },
-			{ key: 'linear_perp_depth_2pct', label: 'Linear Perps', color: SEGMENT_COLORS.linear },
-			{ key: 'inverse_perp_depth_2pct', label: 'Inverse Perps', color: SEGMENT_COLORS.inverse }
+			{ key: 'linear_perp_depth_2pct', label: 'USD Perps', color: SEGMENT_COLORS.linear },
+			{ key: 'inverse_perp_depth_2pct', label: 'COIN Perps', color: SEGMENT_COLORS.inverse }
 		]
 	},
 	{
@@ -95,8 +97,8 @@ const VENUE_TABS: MetricTab[] = [
 		stack: 'nvol',
 		series: [
 			{ key: 'spot_normalized_volume', label: 'Spot', color: SEGMENT_COLORS.spot },
-			{ key: 'linear_perp_normalized_volume', label: 'Linear Perps', color: SEGMENT_COLORS.linear },
-			{ key: 'inverse_perp_normalized_volume', label: 'Inverse Perps', color: SEGMENT_COLORS.inverse }
+			{ key: 'linear_perp_normalized_volume', label: 'USD Perps', color: SEGMENT_COLORS.linear },
+			{ key: 'inverse_perp_normalized_volume', label: 'COIN Perps', color: SEGMENT_COLORS.inverse }
 		]
 	},
 	{
@@ -106,8 +108,8 @@ const VENUE_TABS: MetricTab[] = [
 		type: 'line',
 		series: [
 			{ key: 'spot_market_count', label: 'Spot', color: SEGMENT_COLORS.spot },
-			{ key: 'linear_perp_market_count', label: 'Linear Perps', color: SEGMENT_COLORS.linear },
-			{ key: 'inverse_perp_market_count', label: 'Inverse Perps', color: SEGMENT_COLORS.inverse }
+			{ key: 'linear_perp_market_count', label: 'USD Perps', color: SEGMENT_COLORS.linear },
+			{ key: 'inverse_perp_market_count', label: 'COIN Perps', color: SEGMENT_COLORS.inverse }
 		]
 	}
 ]
@@ -185,6 +187,12 @@ function VenueChartView({
 	)
 	const requestedMetric = getVenueHistoryMetric(router.query)
 	const active = tabs.find((tab) => tab.id === requestedMetric) ?? tabs[0]
+	// Same collection notes as the listing: a coverage step looks like a market move on
+	// a venue chart too.
+	const hallmarks = React.useMemo(
+		() => collectionHallmarks(hallmarkMetricsForKeys((active?.series ?? []).map(({ spec }) => spec.key))),
+		[active]
+	)
 	const chartModel = React.useMemo(
 		() =>
 			buildAlignedCartesianChartModel(
@@ -240,6 +248,7 @@ function VenueChartView({
 						height="360px"
 						hideDefaultLegend={false}
 						exportButtons="hidden"
+						hallmarks={hallmarks}
 					/>
 				</ChartPanelBody>
 			</React.Suspense>
@@ -280,18 +289,7 @@ function VenueChartFrame({
 						size="md"
 					/>
 				) : null}
-				<SegmentedControl<ExchangeResearchRange>
-					value={range}
-					onValueChange={(nextRange) => {
-						void pushShallowQuery(router, {
-							[EXCHANGES_QUERY_KEYS.researchRange]: nextRange === DEFAULT_RESEARCH_RANGE ? undefined : nextRange
-						})
-					}}
-					options={(['30d', '90d', '1y', '2y', 'all'] as const).map((value) => ({ value, label: value }))}
-					label="Chart range"
-					variant="default"
-					size="md"
-				/>
+				<ChartRangeControl range={range} />
 			</ChartPanelToolbar>
 			{children}
 			<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-2 pt-0 pb-2 body-sm text-tertiary">

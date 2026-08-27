@@ -3,8 +3,10 @@ import type {
 	MasterChartMetric,
 	MasterChartPart,
 	MasterColumnarSeriesResponse,
+	MasterDepthLadder,
 	MasterDirectoryResponse,
 	MasterExecutionPairMetrics,
+	MasterExecutionVenueMetrics,
 	MasterExecutionQualityResponse,
 	MasterQualityRanksResponse,
 	MasterRankMethodologyResponse,
@@ -30,6 +32,7 @@ import { MASTER_SEGMENTS } from './master.types'
 import { sumNullable } from './modelHelpers'
 import {
 	EXCHANGE_SEGMENTS,
+	type ExchangeDepthLadder,
 	type ExchangeDirectoryModel,
 	type ExchangeDirectoryRowModel,
 	type ExchangeEeaOrderbookOwnership,
@@ -51,6 +54,7 @@ import {
 	type ExchangeSegment,
 	type MicaVenueModel
 } from './models'
+import { clipSeriesValues, clipToNativeHistory } from './nativeHistory'
 import { getResearchPresentation } from './researchPresentation'
 
 /** Index a columnar `{ days, key, series }` payload into a `key -> values` map aligned to `days`.
@@ -170,17 +174,161 @@ function mapNormalizedVolume(nvol: MasterSegmentNormalizedVolume | null): Exchan
 	return {
 		reported: nvol.reported,
 		normalized: nvol.normalized,
-		activeLiquidity: nvol.active_liquidity,
+		// Falls back to the pre-contract extrapolated figure on stale payloads: an
+		// undefined here fails Next's getStaticProps serialization for the whole page.
+		activeLiquidity: nvol.active_liquidity_measured ?? nvol.active_liquidity,
+		activeLiquidityForCap: nvol.active_liquidity,
 		discountFraction: nvol.discount_pct,
 		unverifiedFraction: nvol.unverified_pct,
 		flag: nvol.flag
 	}
 }
 
+/** Zip the wire's parallel arrays into one band per entry — keeping three arrays in
+ *  step is exactly the kind of alignment bug a chart shows silently. */
+export function mapDepthLadder(ladder: MasterDepthLadder | null, bands: number[]): ExchangeDepthLadder | null {
+	if (!ladder) return null
+	if (ladder.bid_usd.length !== bands.length || ladder.ask_usd.length !== bands.length) {
+		throw new Error(
+			`Depth ladder has ${ladder.bid_usd.length}/${ladder.ask_usd.length} values for ${bands.length} bands`
+		)
+	}
+	return bands.map((band, index) => ({
+		band,
+		bidUsd: ladder.bid_usd[index] ?? null,
+		askUsd: ladder.ask_usd[index] ?? null,
+		coverage: ladder.coverage[index] ?? 0
+	}))
+}
+
+function median(values: number[]): number | null {
+	if (values.length === 0) return null
+	const sorted = [...values].sort((a, b) => a - b)
+	const middle = Math.floor(sorted.length / 2)
+	return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2
+}
+
+/**
+ * What each published metric is measured on.
+ *
+ * Cost to trade stays on the two deepest perps: it is the number a reader feels
+ * directly, and on a thinner market it is driven more by the venue's fee schedule than
+ * by its book. Fill quality spans the top five, where a single market's quirks matter
+ * less than the pattern across several.
+ *
+ * These are narrower than the collected basket on purpose. Collecting ten and showing
+ * five is not waste: the wider set feeds the venue profile and keeps the option of
+ * widening a column later without waiting for coverage to build.
+ *
+ * The trade this makes: a row's cost column and its slippage column now describe
+ * different markets, so the two are not comparable against each other on one row. They
+ * remain comparable DOWN each column, which is the comparison the listing is for, and
+ * each header states its own scope.
+ */
+const METRIC_BASKETS = {
+	cost: ['BTC', 'ETH'],
+	// Fixed, not the current top of the collected basket: a self-ranking list would
+	// change what the column means whenever listings rotate. Widen it deliberately.
+	fill: ['BTC', 'ETH', 'SOL', 'HYPE', 'BNB']
+} as const satisfies Record<string, readonly string[]>
+
+/**
+ * The assets EVERY measured venue covers. The listing publishes cost, slippage and
+ * markout side by side, and a venue's own basket is whatever the collector reached
+ * for it — comparing a two-asset median against a five-asset one puts different
+ * markets in the same column, which is how a venue's cost could read below its own
+ * slippage. Restricting all of them to the shared basket costs coverage and buys
+ * comparability, and it widens on its own as collection catches up.
+ *
+ * Empty (no venue measured, or no asset common to all) → callers keep the venue's
+ * own aggregate and disclose each row's basket instead.
+ */
+export function commonExecutionBasket(execution: MasterExecutionQualityResponse | null): string[] {
+	const venues = Object.values(execution?.venues ?? {})
+	if (venues.length === 0) return []
+	let shared: string[] | null = null
+	for (const venue of venues) {
+		const own = new Set(venue.assets)
+		shared = shared === null ? [...venue.assets] : shared.filter((asset) => own.has(asset))
+	}
+	// Publish in the upstream basket's order so the label reads BTC, ETH, … not by venue.
+	const order = execution?.basket ?? []
+	return (shared ?? []).sort((a, b) => order.indexOf(a) - order.indexOf(b))
+}
+
+/**
+ * The assets a metric is actually medianed over: its configured basket, narrowed to
+ * what every measured venue covers.
+ *
+ * Both halves matter. The configured basket fixes the scope so it does not drift with
+ * coverage; intersecting with the common set keeps venues comparable, because a venue
+ * missing one of the five would otherwise be medianed over four while its peers use
+ * five.
+ */
+function basketFor(metric: keyof typeof METRIC_BASKETS, common: string[]): string[] {
+	return METRIC_BASKETS[metric].filter((asset) => common.includes(asset))
+}
+
+/** One row's displayed execution figures, each metric over its own stated basket. */
+function directoryExecution(
+	metrics: MasterExecutionVenueMetrics | null,
+	basket: string[]
+): ExchangeDirectoryRowModel['execution'] {
+	if (!metrics) return null
+	if (basket.length === 0) {
+		return {
+			assets: metrics.assets,
+			costAssets: metrics.assets,
+			hoursCovered: metrics.hours_covered,
+			costToTradeBps: metrics.cost_to_trade_bps,
+			effectiveSpreadBps: metrics.effective_spread_bps,
+			realizedSlippage10kBps: metrics.realized_slippage_bps_10k,
+			predictedSlippage10kBps: metrics.predicted_slippage_bps_10k,
+			realizedSlippage100kBps: metrics.realized_slippage_bps_100k,
+			predictedSlippage100kBps: metrics.predicted_slippage_bps_100k,
+			markout1mBps: metrics.markout_bps_1m,
+			markout5mBps: metrics.markout_bps_5m
+		}
+	}
+	const pairsFor = (metric: keyof typeof METRIC_BASKETS) =>
+		basketFor(metric, basket)
+			.map((asset) => metrics.pairs[asset])
+			.filter((pair) => pair !== undefined)
+	const costPairs = pairsFor('cost')
+	const fillPairs = pairsFor('fill')
+	if (costPairs.length === 0 && fillPairs.length === 0) return null
+
+	const over = (pairs: MasterExecutionPairMetrics[]) => (pick: (pair: MasterExecutionPairMetrics) => number | null) =>
+		median(pairs.map(pick).filter((value): value is number => value != null))
+	const overCost = over(costPairs)
+	// Slippage and markout share one basket: both are fill quality, and splitting them
+	// would put two scopes side by side for no gain.
+	const overFill = over(fillPairs)
+	const allPairs = [...new Set([...costPairs, ...fillPairs])]
+
+	return {
+		assets: fillPairs.map((pair) => pair.asset),
+		costAssets: costPairs.map((pair) => pair.asset),
+		// The weakest pair bounds the row: claiming the deepest pair's coverage for a
+		// basket median would overstate what the number rests on.
+		hoursCovered: allPairs.length ? Math.min(...allPairs.map((pair) => pair.hours_covered)) : 0,
+		costToTradeBps: overCost((pair) => pair.cost_to_trade_bps),
+		effectiveSpreadBps: overCost((pair) => pair.effective_spread_bps),
+		realizedSlippage10kBps: overFill((pair) => pair.realized_slippage_bps_10k),
+		predictedSlippage10kBps: overFill((pair) => pair.predicted_slippage_bps_10k),
+		realizedSlippage100kBps: overFill((pair) => pair.realized_slippage_bps_100k),
+		predictedSlippage100kBps: overFill((pair) => pair.predicted_slippage_bps_100k),
+		markout1mBps: overFill((pair) => pair.markout_bps_1m),
+		markout5mBps: overFill((pair) => pair.markout_bps_5m)
+	}
+}
+
 function mapDirectoryVenue(
 	venue: MasterDirectoryVenue,
 	venuesBySlug: Map<string, MasterDirectoryVenue>,
-	execution: MasterExecutionQualityResponse | null
+	execution: MasterExecutionQualityResponse | null,
+	depthBands: number[],
+	executionBasket: string[]
 ): ExchangeDirectoryRowModel {
 	const executionMetrics = execution?.venues[venue.slug] ?? null
 	const segments: ExchangeDirectoryRowModel['segments'] = {}
@@ -205,6 +353,7 @@ function mapDirectoryVenue(
 			depthBidUsd: stats.depth_2pct_bid_usd,
 			depthAskUsd: stats.depth_2pct_ask_usd,
 			depthPartial: stats.depth_partial,
+			depthLadder: mapDepthLadder(stats.depth_ladder, depthBands),
 			volumeUpdatedAt: stats.freshness.volume,
 			...(doubleCount ? { doubleCount } : null),
 			supportsOpenInterest: capability.oi,
@@ -306,16 +455,7 @@ function mapDirectoryVenue(
 					inverse_perp: mapNormalizedVolume(venue.nvol.inverse_perp)
 				}
 			: null,
-		execution: executionMetrics
-			? {
-					assets: executionMetrics.assets,
-					hoursCovered: executionMetrics.hours_covered,
-					costToTradeBps: executionMetrics.cost_to_trade_bps,
-					realizedSlippage10kBps: executionMetrics.realized_slippage_bps_10k,
-					predictedSlippage10kBps: executionMetrics.predicted_slippage_bps_10k,
-					markout1mBps: executionMetrics.markout_bps_1m
-				}
-			: null,
+		execution: directoryExecution(executionMetrics, executionBasket),
 		quality: venue.rank ?? null
 	}
 }
@@ -357,10 +497,11 @@ export function mapMasterDirectory(
 	const venuesBySlug = new Map<string, MasterDirectoryVenue>()
 	for (const venue of response.venues) venuesBySlug.set(venue.slug, venue)
 	const rows = new Array<ExchangeDirectoryRowModel>(response.venues.length)
+	const executionBasket = commonExecutionBasket(execution)
 	for (let index = 0; index < response.venues.length; index++) {
 		const venue = response.venues[index]
 		if (!venue) throw new Error(`Missing directory venue at index ${index}`)
-		rows[index] = mapDirectoryVenue(venue, venuesBySlug, execution)
+		rows[index] = mapDirectoryVenue(venue, venuesBySlug, execution, response.depth_bands, executionBasket)
 	}
 	rows.sort(byQualityRank)
 	const volumeSplit = (totals: {
@@ -392,7 +533,10 @@ export function mapMasterDirectory(
 			}
 		},
 		updatedAt: response.last_updated,
-		executionAvailable: execution !== null
+		executionAvailable: execution !== null,
+		executionBasket,
+		executionCostBasket: basketFor('cost', executionBasket),
+		executionFillBasket: basketFor('fill', executionBasket)
 	}
 }
 
@@ -409,6 +553,17 @@ function spreadFraction(pair: MasterExchangePair): number | null {
 	return mid > 0 ? (pair.best_ask - pair.best_bid) / mid : null
 }
 
+/** Everything the pair's captured book holds, on both sides. The widest band is the
+ *  full-book sum by construction (bands past the book's reach inherit it upstream),
+ *  so this is the denominator for "the volatility band holds X% of what we can see". */
+function capturedBookUsd(pair: MasterExchangePair): number | null {
+	const last = (values: Array<number | null> | null) => (values?.length ? values[values.length - 1] : null)
+	const bid = last(pair.depth_bid_usd)
+	const ask = last(pair.depth_ask_usd)
+	if (bid == null && ask == null) return null
+	return (bid ?? 0) + (ask ?? 0)
+}
+
 export function mapExchangePair(
 	pair: MasterExchangePair,
 	depthBands: number[],
@@ -416,6 +571,7 @@ export function mapExchangePair(
 ): ExchangePairModel {
 	const twoPercentIndex = depthBands.indexOf(0.02)
 	if (twoPercentIndex < 0) throw new Error('Profile depth_bands omits the required ±2% band')
+	const capturedBook = capturedBookUsd(pair)
 	return {
 		pairUrl: pair.pair_url,
 		symbol: pair.symbol,
@@ -448,17 +604,42 @@ export function mapExchangePair(
 		depthAsk2Usd: depthAt(pair.depth_ask_usd, twoPercentIndex, pair.market_id),
 		depthBidMaxDistance: pair.depth_bid_max_dist,
 		depthAskMaxDistance: pair.depth_ask_max_dist,
+		depthLadder: mapDepthLadder(
+			pair.depth_bid_usd && pair.depth_ask_usd
+				? { bid_usd: pair.depth_bid_usd, ask_usd: pair.depth_ask_usd, coverage: pairCoverage(pair, depthBands) }
+				: null,
+			depthBands
+		),
 		normalizedVolume:
 			segment !== 'inverse_perp' && pair.nvol
 				? {
 						reported: pair.nvol.reported,
 						normalized: pair.nvol.normalized,
-						activeLiquidity: pair.nvol.active_liquidity,
+						// Falls back to the pre-contract extrapolated figure on stale payloads: an
+						// undefined here fails Next's getStaticProps serialization for the whole page.
+						activeLiquidity: pair.nvol.active_liquidity_measured ?? pair.nvol.active_liquidity,
 						discountFraction: (pair.nvol.reported - pair.nvol.normalized) / pair.nvol.reported,
+						// The ±band the volatility picked, and how much of the visible book it
+						// spans — the two facts that explain the active-liquidity figure.
+						// Measured against the observed figure, so the share cannot exceed 1.
+						band: pair.nvol.band,
+						activeLiquidityShare:
+							capturedBook != null && capturedBook > 0
+								? (pair.nvol.active_liquidity_measured ?? pair.nvol.active_liquidity) / capturedBook
+								: null,
 						status: pair.nvol.status
 					}
 				: null
 	}
+}
+
+/** Per-pair coverage is binary per band: its own book either reached that far or it
+ *  didn't, so `min(bid, ask) reach >= band` gives 1 or 0 in the same shape the
+ *  venue-level volume-weighted coverage uses. */
+function pairCoverage(pair: MasterExchangePair, depthBands: number[]): number[] {
+	if (pair.depth_bid_max_dist == null || pair.depth_ask_max_dist == null) return depthBands.map(() => 0)
+	const reach = Math.min(pair.depth_bid_max_dist, pair.depth_ask_max_dist)
+	return depthBands.map((band) => (reach >= band ? 1 : 0))
 }
 
 function mapMetadataField(field: MasterMetadataField): ExchangeMetadataFieldModel {
@@ -767,10 +948,13 @@ export function mapMasterProfile(
 }
 
 export function mapMasterDirectoryOverview(response: MasterColumnarSeriesResponse): ExchangeOverviewChartModel {
+	// Clipped at the mapper so every consumer of this model — listing overview and
+	// venue history alike — shows the same era. See nativeHistory.ts for why.
+	const clipped = clipToNativeHistory(response.days, parseColumnarSeries(response))
 	return {
-		days: response.days,
+		days: clipped.days,
 		lastUpdated: response.last_updated,
-		series: parseColumnarSeries(response)
+		series: clipped.series
 	}
 }
 
@@ -786,8 +970,8 @@ interface ChartSegmentSpec {
 
 const CHART_SEGMENTS = [
 	{ metric: 'spot', reported: 'reported_spot', label: 'Spot' },
-	{ metric: 'linear_perp', reported: 'reported_linear_perp', label: 'Linear Perps' },
-	{ metric: 'inverse_perp', reported: 'reported_inverse_perp', label: 'Inverse Perps' }
+	{ metric: 'linear_perp', reported: 'reported_linear_perp', label: 'USD Perps' },
+	{ metric: 'inverse_perp', reported: 'reported_inverse_perp', label: 'COIN Perps' }
 ] as const satisfies readonly ChartSegmentSpec[]
 
 const PERP_CHART_SEGMENTS = CHART_SEGMENTS.filter((spec) => spec.metric !== 'spot')
@@ -815,14 +999,17 @@ function researchChart(
 	lines: ExchangeResearchChartModel['lines']
 ): ExchangeResearchChartModel {
 	const presentation = getResearchPresentation(part, view)
+	// Same cutoff as every other chart: before it, coverage was third-party backfill
+	// and the step up to our own collection reads as a jump in activity.
+	const clippedLines = clipSeriesValues(response.days, lines)
 	return {
 		metric: presentation.metric,
 		segment: presentation.segment,
 		grouping: presentation.grouping,
 		title: presentation.title,
 		description: presentation.description,
-		days: response.days,
-		lines,
+		days: clippedLines.days,
+		lines: clippedLines.series,
 		valueSymbol: presentation.valueSymbol,
 		builtAt: response.built_at ?? response.last_updated ?? null
 	}
@@ -935,7 +1122,7 @@ function summedOther(dayCount: number) {
 		)
 }
 
-/** One line per venue type × exact segment (e.g. "CEX · Linear Perps"); segments stay separate. */
+/** One line per venue type × exact segment (e.g. "CEX · USD Perps"); segments stay separate. */
 function typeSegmentLines(
 	exchanges: DecodedChartExchange[],
 	dayCount: number,

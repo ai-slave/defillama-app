@@ -55,7 +55,7 @@ describe('exchange compliance and depth tooltips', () => {
 		[{ mode: 'shared' }, 'Shares the global orderbook.'],
 		[
 			{ mode: 'mixed', sharedSegments: ['spot'], dedicatedSegments: ['linear_perp'] },
-			'Shared: Spot. Dedicated: Linear Perps.'
+			'Shared: Spot. Dedicated: USD Perps.'
 		]
 	])('renders %s EEA ownership details', (eeaOrderbookOwnership, expected) => {
 		const html = renderToStaticMarkup(

@@ -16,6 +16,8 @@ import {
 	type MasterExchangeRegionCatalogResponse,
 	type MasterExchangeRegionManifestResponse,
 	type MasterExchangeRegionalMetadataResponse,
+	type MasterExecutionQualityResponse,
+	type MasterExecutionSlippageResponse,
 	type MasterVenueSeriesResponse
 } from '../master.types'
 import { getResearchRange, type ExchangeResearchRange } from '../queryState'
@@ -26,7 +28,8 @@ import {
 	fetchMasterExchangeRegionCatalogFromNetwork,
 	fetchMasterExchangeRegionManifestFromNetwork,
 	fetchMasterExchangeRegionalMetadataFromNetwork,
-	fetchMasterExchangeSeriesFromNetwork
+	fetchMasterExchangeSeriesFromNetwork,
+	fetchMasterExecutionQualityFromNetwork
 } from './master.upstream'
 
 const MASTER_RESPONSE_CACHE_TTL_MS = 5 * 60 * 1000
@@ -134,6 +137,45 @@ export const masterExchangeRegions = defineApiRoute({
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Failed to load exchange regions')
+		}
+	}
+})
+
+/**
+ * Per-venue, per-asset measured slippage: what the book promised a $10k fill would
+ * cost against what those fills paid.
+ *
+ * Trimmed to those two numbers on purpose. The full execution payload is large and the
+ * only consumer here is the token order-book chart, which uses it to discount a
+ * displayed book and to decide which venues have measured fills at all.
+ */
+export const masterExchangeExecutionSlippage = defineApiRoute({
+	route: '/api/public/exchanges/execution-slippage',
+	cacheControl: MARKETS_CACHE_CONTROL,
+	handle: async () => {
+		try {
+			const execution = await cachedResult<MasterExecutionQualityResponse>(
+				'exchanges-master-execution-slippage-source',
+				`${MARKETS_SERVER_URL}/exchanges/execution-quality.json`,
+				{ ttlMs: MASTER_RESPONSE_CACHE_TTL_MS, ttlJitter: 0.2 },
+				() => fetchMasterExecutionQualityFromNetwork()
+			)
+			const venues: MasterExecutionSlippageResponse['venues'] = {}
+			for (const [slug, venue] of Object.entries(execution.venues)) {
+				for (const [asset, pair] of Object.entries(venue.pairs)) {
+					// A venue-asset with neither number measured is not evidence of anything,
+					// so it is left out rather than published as a pair of nulls.
+					if (pair.predicted_slippage_bps_10k == null && pair.realized_slippage_bps_10k == null) continue
+					;(venues[slug] ??= {})[asset.toUpperCase()] = {
+						predictedBps: pair.predicted_slippage_bps_10k,
+						realizedBps: pair.realized_slippage_bps_10k
+					}
+				}
+			}
+			return ok({ venues } satisfies MasterExecutionSlippageResponse)
+		} catch (error) {
+			recordRouteRuntimeError(error, 'apiRoute')
+			return upstreamError('Failed to load execution slippage')
 		}
 	}
 })

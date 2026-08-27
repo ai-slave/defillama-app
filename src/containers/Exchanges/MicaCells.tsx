@@ -19,7 +19,7 @@ const MICA_PRODUCT_LABELS: Record<MicaProduct, string> = {
 	spot: 'Spot',
 	margin: 'Margin',
 	linear_perp: 'Perps',
-	inverse_perp: 'Inverse perps',
+	inverse_perp: 'COIN perps',
 	futures: 'Futures',
 	options: 'Options'
 }

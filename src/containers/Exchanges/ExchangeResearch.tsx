@@ -1,12 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
+import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { pushShallowQuery } from '~/utils/routerQuery'
+import { ChartRangeControl } from './ChartRangeControl'
+import type { DepthCurveRow } from './depthCurve'
+import { DepthCurveChart } from './DepthCurveChart'
 import type { ExchangeResearchReportModel, ExchangeResearchView } from './models'
 import {
-	DEFAULT_RESEARCH_RANGE,
-	EXCHANGES_QUERY_KEYS,
 	getResearchRange,
 	getResearchView,
 	getResearchViewQueryKey,
@@ -30,28 +32,34 @@ const RESEARCH_SECTIONS: Array<{ title: string; description: string; charts: Exc
 ]
 
 export function ExchangeResearch({
-	loadReport
+	loadReport,
+	depthRows = []
 }: {
 	loadReport: (part: ExchangeResearchPart, range: ExchangeResearchRange) => Promise<ExchangeResearchReportModel>
+	/** Venue rows carrying only what the depth curve reads. Empty means no snapshots. */
+	depthRows?: DepthCurveRow[]
 }) {
 	const router = useRouter()
 	const range = getResearchRange(router.query)
 	return (
 		<div className="flex flex-1 flex-col gap-3">
 			<div className="flex justify-end">
-				<SegmentedControl<ExchangeResearchRange>
-					value={range}
-					onValueChange={(nextRange) => {
-						void pushShallowQuery(router, {
-							[EXCHANGES_QUERY_KEYS.researchRange]: nextRange === DEFAULT_RESEARCH_RANGE ? undefined : nextRange
-						})
-					}}
-					options={(['30d', '90d', '1y', '2y', 'all'] as const).map((value) => ({ value, label: value }))}
-					label="Chart range"
-					variant="default"
-					size="md"
-				/>
+				<ChartRangeControl range={range} />
 			</div>
+			{depthRows.length > 0 ? (
+				<section className="flex flex-col gap-2">
+					<div className="flex flex-col gap-0.5 px-1">
+						<h2 className="heading-xs">Order book</h2>
+						<p className="body-sm text-secondary">
+							The current book by distance from mid, per segment and per exchange. A snapshot, so the range control
+							above does not apply to it.
+						</p>
+					</div>
+					<Panel padding="none">
+						<DepthCurveChart rows={depthRows} />
+					</Panel>
+				</section>
+			) : null}
 			{RESEARCH_SECTIONS.map((section) => (
 				<section key={section.title} className="flex flex-col gap-2">
 					<div className="flex flex-col gap-0.5 px-1">

@@ -46,14 +46,14 @@ describe('research chart presentation', () => {
 		})
 	})
 
-	it('labels segment views with the exact vocabulary: Spot | Linear Perps | Inverse Perps', () => {
+	it('labels segment views with the exact vocabulary: Spot | USD Perps | COIN Perps', () => {
 		for (const part of ['volume', 'depth', 'nvol'] as const) {
 			const labels = RESEARCH_VIEWS[part].map((view) => view.label)
 			expect(labels).toContain('Spot')
-			expect(labels).toContain('Linear Perps')
-			expect(labels).toContain('Inverse Perps')
+			expect(labels).toContain('USD Perps')
+			expect(labels).toContain('COIN Perps')
 		}
-		expect(RESEARCH_VIEWS.oi.map((view) => view.label)).toEqual(['Linear Perps', 'Inverse Perps', 'CEX vs DEX'])
+		expect(RESEARCH_VIEWS.oi.map((view) => view.label)).toEqual(['USD Perps', 'COIN Perps', 'CEX vs DEX'])
 		// No view presents a combined "perp" segment.
 		for (const views of Object.values(RESEARCH_VIEWS)) {
 			for (const view of views) {

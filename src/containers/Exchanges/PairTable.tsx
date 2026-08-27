@@ -152,7 +152,33 @@ export function buildPairColumns(
 				headerHelperText: definitions.priceChange24h.description
 			}
 		}),
-		// Depth leads the liquidity metrics, matching the exchanges directory.
+		// Active liquidity leads the liquidity metrics, matching the exchanges directory.
+		columnHelper.accessor((row) => row.normalizedVolume?.activeLiquidity ?? undefined, {
+			id: 'activeLiquidity',
+			header: definitions.activeLiquidity.label,
+			cell: ({ row, getValue }) => {
+				if (segment === 'inverse_perp') return <UnsupportedMetric />
+				const nvol = row.original.normalizedVolume
+				if (!nvol) return '–'
+				// Observed depth only, so the share never exceeds the whole captured book.
+				// 100% means the band reached at least as far as our snapshot did.
+				const share =
+					nvol.activeLiquidityShare == null ? null : `${percentage(nvol.activeLiquidityShare)} of the visible book`
+				return (
+					<Tooltip
+						content={[`Band ±${percentage(nvol.band)} of mid`, share].filter(Boolean).join(' · ')}
+						className="ms-auto w-fit"
+					>
+						<span className="underline decoration-dotted">{money(getValue())}</span>
+					</Tooltip>
+				)
+			},
+			meta: {
+				headerClassName: 'w-[125px]',
+				align: 'end',
+				headerHelperText: definitions.activeLiquidity.description
+			}
+		}),
 		columnHelper.accessor((row) => pairDepthTotal(row.depthBid2Usd, row.depthAsk2Usd) ?? undefined, {
 			id: 'depth2Usd',
 			header: definitions.depth2Usd.label,

@@ -5,13 +5,18 @@ import type {
 	MasterChartPart,
 	MasterAggregateSeriesResponse,
 	MasterExchangeRegionCatalogResponse,
-	MasterExchangeRegionalMetadataResponse
+	MasterExchangeRegionalMetadataResponse,
+	MasterExecutionSlippageResponse
 } from './master.types'
 import type { ExchangeOverviewChartModel, ExchangeRegionalMetadataModel, ExchangeResearchReportModel } from './models'
-import type { ExchangeResearchRange } from './queryState'
+import { DEFAULT_RESEARCH_RANGE, type ExchangeResearchRange } from './queryState'
 
-export async function fetchExchangeDirectoryOverview(): Promise<ExchangeOverviewChartModel> {
-	const response = await fetchJson<MasterAggregateSeriesResponse>('/api/public/exchanges/series?range=1y')
+export async function fetchExchangeDirectoryOverview(
+	range: ExchangeResearchRange = DEFAULT_RESEARCH_RANGE
+): Promise<ExchangeOverviewChartModel> {
+	const response = await fetchJson<MasterAggregateSeriesResponse>(
+		`/api/public/exchanges/series?range=${encodeURIComponent(range)}`
+	)
 	return mapMasterDirectoryOverview(response)
 }
 
@@ -23,6 +28,11 @@ export function fetchExchangeVenueSeries(
 	return fetchJson<ExchangeOverviewChartModel>(
 		`/api/public/exchanges/${encodeURIComponent(exchange)}/history?range=${range}`
 	)
+}
+
+/** Measured $10k slippage per venue per asset: promised against delivered. */
+export function fetchExchangeExecutionSlippage(): Promise<MasterExecutionSlippageResponse> {
+	return fetchJson<MasterExecutionSlippageResponse>('/api/public/exchanges/execution-slippage')
 }
 
 export function fetchExchangeRegionCatalog(): Promise<MasterExchangeRegionCatalogResponse> {

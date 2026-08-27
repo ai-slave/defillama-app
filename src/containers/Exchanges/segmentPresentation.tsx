@@ -9,7 +9,7 @@ export const SEGMENT_DEFINITIONS: Record<ExchangeSegment, ExchangeDefinition> = 
 }
 
 /**
- * Exact segment toggle label — Spot | Linear Perps | Inverse Perps — with a (?)
+ * Exact segment toggle label — Spot | USD Perps | COIN Perps — with a (?)
  * definition tooltip on the perpetual classes.
  */
 export function SegmentToggleLabel({ segment, suffix }: { segment: ExchangeSegment; suffix?: string }) {

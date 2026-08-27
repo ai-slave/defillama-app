@@ -10,13 +10,14 @@ export const exchangeDefinitions = {
 			description: 'Markets where the base asset itself is bought and sold for immediate settlement.'
 		},
 		linearPerps: {
-			label: 'Linear Perps',
-			description: 'Perpetual contracts margined and settled in a quote asset such as USDT or USDC.'
+			label: 'USD Perps',
+			description:
+				'Perpetual contracts margined and settled in a quote asset such as USDT or USDC. Also called linear perps.'
 		},
 		inversePerps: {
-			label: 'Inverse Perps',
+			label: 'COIN Perps',
 			description:
-				'Perpetual contracts margined and settled in the underlying coin (collateral and PnL denominated in that coin).'
+				'Perpetual contracts margined and settled in the underlying coin, so collateral and PnL are denominated in that coin. Also called inverse perps.'
 		}
 	},
 	summary: {
@@ -38,12 +39,12 @@ export const exchangeDefinitions = {
 			description: 'USD spot-market volume over the latest 24-hour observation.'
 		},
 		linearPerp: {
-			label: 'Linear Perps',
+			label: 'USD Perps',
 			description:
 				'USD volume in perpetual contracts margined and settled in a quote asset such as USDT or USDC, over the latest 24-hour observation.'
 		},
 		inversePerp: {
-			label: 'Inverse Perps',
+			label: 'COIN Perps',
 			description:
 				'USD volume in perpetual contracts margined and settled in the underlying coin (collateral and PnL denominated in that coin), over the latest 24-hour observation.'
 		},
@@ -52,22 +53,22 @@ export const exchangeDefinitions = {
 			description: 'Total USD spot trading volume across tracked venues.'
 		},
 		linearPerpVolume24h: {
-			label: 'Linear perp volume 24h',
+			label: 'USD perp volume 24h',
 			description:
-				'Total USD linear perpetual trading volume across tracked venues. Linear perps are perpetual contracts margined and settled in a quote asset such as USDT or USDC.'
+				'Total USD volume in USD-margined perpetuals across tracked venues. USD perps (also called linear perps) are margined and settled in a quote asset such as USDT or USDC.'
 		},
 		inversePerpVolume24h: {
-			label: 'Inverse perp volume 24h',
+			label: 'COIN perp volume 24h',
 			description:
-				'Total USD inverse perpetual trading volume across tracked venues. Inverse perps are perpetual contracts margined and settled in the underlying coin (collateral and PnL denominated in that coin).'
+				'Total USD volume in coin-margined perpetuals across tracked venues. COIN perps (also called inverse perps) are margined and settled in the underlying coin, so collateral and PnL are denominated in that coin.'
 		},
 		linearPerpOpenInterest: {
-			label: 'Linear perp open interest',
-			description: 'Total USD value of outstanding positions across tracked linear perpetual markets.'
+			label: 'USD perp open interest',
+			description: 'Total USD value of outstanding positions across tracked USD perp markets.'
 		},
 		inversePerpOpenInterest: {
-			label: 'Inverse perp open interest',
-			description: 'Total USD value of outstanding positions across tracked inverse perpetual markets.'
+			label: 'COIN perp open interest',
+			description: 'Total USD value of outstanding positions across tracked COIN perp markets.'
 		},
 		reserves: {
 			label: 'Reserves',
@@ -93,17 +94,17 @@ export const exchangeDefinitions = {
 		execCostToTrade: {
 			label: 'Cost to trade',
 			description:
-				'Measured all-in cost of a $10k market order, in dollars: base-tier taker fee plus half the effective spread, from tick-level fills on the shared perp basket. VIP fee tiers can lower the fee part. Linear perps only for now; venues without tick coverage show a dash, never a zero.'
+				'What a $10k market order costs all in: taker fee plus half the spread you cross, measured from real fills. VIP tiers can lower the fee part.'
 		},
 		execSlippage10k: {
 			label: 'Slippage $10k',
 			description:
-				'Slippage on fills of at least $10k, in dollars for a $10k trade: predicted first (what walking the pre-trade order book for each fill’s own size promised), then what fills actually paid. Actual far above predicted means displayed depth moves before fills land. Fill prices exclude trading fees, which venues charge separately after the fill.'
+				'What $10k fills actually paid beyond the mid price, with what the order book promised shown first. Actual far above predicted means displayed depth moves before fills land.'
 		},
 		execMarkout1m: {
 			label: 'Markout 1m',
 			description:
-				'Where the price went one minute after a fill, in dollars per $10k traded. Lower is better: positive (red) means the price kept moving against the taker — a sign of trading against faster, better-informed flow; negative (green) means it came back in their favour.'
+				'Where the price went one minute after a fill, per $10k traded. Positive (red) means it kept moving against the taker, a sign of trading against faster flow. Lower is better.'
 		},
 		kind: {
 			label: 'Type',
@@ -126,12 +127,12 @@ export const exchangeDefinitions = {
 		volumeToOi: {
 			label: 'Vol / OI',
 			description:
-				'24-hour volume divided by open interest — how many times the outstanding position base turned over in a day. Very high values can indicate wash-like churn or a thin real position base; interpret alongside the double-count note. Perpetual scopes only.'
+				'24h volume divided by open interest: how many times the open position base turned over in a day. Very high values can mean wash-like churn or a thin real position base. Perpetual scopes only.'
 		},
 		volumeToDepth: {
 			label: 'Vol / Depth',
 			description:
-				'24-hour volume divided by combined ±2% order-book depth — daily turnover relative to resting liquidity. Very high values mean volume dwarfs the visible book. Requires order-book depth for the venue.'
+				'24h volume divided by ±2% depth: daily turnover against resting liquidity. Very high values mean volume dwarfs the visible book.'
 		},
 		openInterestChange24h: {
 			label: 'OI Δ',
@@ -150,10 +151,39 @@ export const exchangeDefinitions = {
 			description:
 				'Reported 24-hour volume constrained by the amount of visible order-book liquidity that could plausibly support it. Always less than or equal to reported volume. On a brand row it sums the parent and each own-book regional entity.'
 		},
+		activeLiquidity: {
+			label: 'Active liquidity',
+			description:
+				"Bid plus ask depth inside each market's own daily price range, instead of a fixed ±2%. Observed depth only, never projected."
+		},
 		depth2Usd: {
 			label: 'Depth ±2%',
 			description:
-				'Combined USD bid and ask depth available within 2% of the order-book mid price. A dotted value carries a double-count note when the book is shared with another venue.'
+				'Bid plus ask depth within a fixed 2% of mid. Active liquidity is the volatility-adjusted version of this.'
+		},
+		spotActiveLiquidity: {
+			label: 'Spot liq.',
+			description: 'Active liquidity across the venue’s spot markets. N/A means it runs no spot market.'
+		},
+		perpActiveLiquidity: {
+			label: 'Perp liq.',
+			description:
+				'Active liquidity across the venue’s perpetual markets. Hover for the split by class. Computed for USD perps only; COIN perps have no figure.'
+		},
+		perpOpenInterest: {
+			label: 'Perp OI',
+			description:
+				'USD value of open positions across the venue’s perpetual markets, USD and COIN perps added together. Hover for the split by class.'
+		},
+		spotNormalizedVolume: {
+			label: 'Spot n. vol',
+			description:
+				'24h spot volume capped at what the visible book could plausibly support. Where we have no book to judge against, reported volume is shown instead and marked.'
+		},
+		perpNormalizedVolume: {
+			label: 'Perp n. vol',
+			description:
+				'24h perpetual volume capped at what the visible book could plausibly support. COIN perps have no normalized figure and contribute their reported volume. A * means a USD perp book was missing too.'
 		},
 		sparkline: {
 			label: 'Volume trend',
@@ -208,14 +238,14 @@ export const exchangeDefinitions = {
 			description: 'Regular-tier spot maker and taker fees, before VIP or fee-token discounts.'
 		},
 		linearPerpFee: {
-			label: 'Linear Perps fees',
+			label: 'USD Perps fees',
 			description:
-				'Regular-tier linear perpetual maker and taker fees, before VIP or fee-token discounts. Linear perps are perpetual contracts margined and settled in a quote asset such as USDT or USDC.'
+				'Regular-tier USD perp maker and taker fees, before VIP or fee-token discounts. USD perps (also called linear perps) are margined and settled in a quote asset such as USDT or USDC.'
 		},
 		inversePerpFee: {
-			label: 'Inverse Perps fees',
+			label: 'COIN Perps fees',
 			description:
-				'Regular-tier inverse perpetual maker and taker fees, before VIP or fee-token discounts. Inverse perps are perpetual contracts margined and settled in the underlying coin (collateral and PnL denominated in that coin).'
+				'Regular-tier COIN perp maker and taker fees, before VIP or fee-token discounts. COIN perps (also called inverse perps) are margined and settled in the underlying coin, so collateral and PnL are denominated in that coin.'
 		},
 		feeToken: {
 			label: 'Fee Token',
@@ -299,9 +329,14 @@ export const exchangeDefinitions = {
 			description:
 				'Reported 24-hour volume constrained by the amount of visible order-book liquidity that could plausibly support it. Always less than or equal to reported volume.'
 		},
+		activeLiquidity: {
+			label: 'Active liquidity',
+			description:
+				"Combined USD bid and ask depth inside this market's own volatility band rather than a fixed ±2%: the band is its typical daily range (floor 2%, ceiling 25%), so the figure covers the depth actually reachable on a day like today. Observed depth only, never projected past what the snapshot captured. Hover for the band and how much of the market's visible book it spans."
+		},
 		depth2Usd: {
 			label: 'Depth ±2%',
-			description: 'Combined USD bid and ask depth available within 2% of the order-book mid price.'
+			description: 'Combined USD bid and ask depth available within a fixed 2% of the order-book mid price.'
 		},
 		spreadFraction: {
 			label: 'Spread',

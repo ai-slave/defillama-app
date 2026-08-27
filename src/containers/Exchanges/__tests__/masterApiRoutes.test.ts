@@ -61,7 +61,7 @@ describe('master Exchanges API routes', () => {
 
 		const response = await masterExchangeHistory.handle({ ...request, query: { exchange: 'coinbase' } })
 
-		expect(fetchJsonMock).toHaveBeenCalledWith('https://master-routes.example.com/exchanges/coinbase/series/1y.json')
+		expect(fetchJsonMock).toHaveBeenCalledWith('https://master-routes.example.com/exchanges/coinbase/series/all.json')
 		expect('serializedJson' in response && JSON.parse(response.serializedJson)).toMatchObject({
 			series: { spot_volume: [10, 30] }
 		})

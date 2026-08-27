@@ -14,6 +14,7 @@ function activity(patch: Partial<ExchangeSegmentActivity> = {}): ExchangeSegment
 		depthBidUsd: null,
 		depthAskUsd: null,
 		depthPartial: false,
+		depthLadder: null,
 		volumeUpdatedAt: '2026-07-14T12:00:00Z',
 		supportsOpenInterest: false,
 		supportsDepth: false,

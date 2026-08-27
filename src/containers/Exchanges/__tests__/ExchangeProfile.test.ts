@@ -63,11 +63,20 @@ function profile(slug: string, segments: ExchangeSegment[]): ExchangeProfileMode
 
 describe('profile navigation segment resolution', () => {
 	it('replaces a stale segment selection when navigation reuses the dynamic route', () => {
-		const previousSelection = resolveProfileSegment(profile('perps', ['linear_perp']), null)
+		// A perps-only venue's selection carried onto a spot-only venue must not stick.
+		const previousSelection = resolveProfileSegment(profile('perps', ['linear_perp']), 'linear_perp')
 		const nextSelection = resolveProfileSegment(profile('spot', ['spot']), previousSelection)
 
 		expect(previousSelection).toBe('linear_perp')
-		expect(nextSelection).toBe('spot')
+		// The rollup is the fallback: every venue can serve it, whatever it trades.
+		expect(nextSelection).toBe('all')
+	})
+
+	it('lands on the rollup with no selection, and honours one the venue can serve', () => {
+		expect(resolveProfileSegment(profile('spot', ['spot']), null)).toBe('all')
+		expect(resolveProfileSegment(profile('both', ['spot', 'linear_perp']), 'linear_perp')).toBe('linear_perp')
+		// A venue with no markets at all has nothing to show, not even the rollup.
+		expect(resolveProfileSegment(profile('empty', []), 'all')).toBeNull()
 	})
 })
 

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Card } from '~/ui/Card'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -5,7 +6,7 @@ import type { ExchangeExecutionFeedHealth, ExchangeExecutionModel, ExchangeExecu
 
 // Execution metrics are one-way bps figures; 1bp of $10k is exactly $1, so bps values
 // render as dollars at the reference size — the framing regular users reason in.
-const usd = (bps: number | null, digits = 2) =>
+export const executionUsd = (bps: number | null, digits = 2) =>
 	bps == null ? 'n/a' : formatUsd(bps, { minimumFractionDigits: digits, maximumFractionDigits: digits })
 
 // Spreads read most naturally as a percentage of price, not dollars.
@@ -16,19 +17,21 @@ const pctOfBps = (bps: number | null) => {
 	return formatPercent(pct, { input: 'percent', minimumFractionDigits: digits, maximumFractionDigits: digits })
 }
 
-const NA = <span className="text-tertiary">n/a</span>
+export const NA = <span className="text-tertiary">n/a</span>
 
-function SlippagePair({ predicted, actual }: { predicted: number | null; actual: number | null }) {
+export function SlippagePair({ predicted, actual }: { predicted: number | null; actual: number | null }) {
 	if (actual == null) return NA
 	return (
 		<span className="flex flex-nowrap items-center justify-end gap-1 whitespace-nowrap">
-			{predicted == null ? null : <span className="whitespace-nowrap text-tertiary">{`p ${usd(predicted)} →`}</span>}
-			<span className="whitespace-nowrap">{usd(actual)}</span>
+			{predicted == null ? null : (
+				<span className="whitespace-nowrap text-tertiary">{`p ${executionUsd(predicted)} →`}</span>
+			)}
+			<span className="whitespace-nowrap">{executionUsd(actual)}</span>
 		</span>
 	)
 }
 
-function Markout({ value }: { value: number | null }) {
+export function Markout({ value }: { value: number | null }) {
 	if (value == null) return NA
 	return (
 		<span className={value > 0 ? 'text-data-down' : 'text-data-up'}>
@@ -37,11 +40,88 @@ function Markout({ value }: { value: number | null }) {
 	)
 }
 
+/**
+ * A size ladder or a set of horizons in one column, each rung labelled. A column apiece
+ * would push the liquidity figures off the row; one unlabelled line would not say which
+ * size or horizon it meant.
+ */
+function StackedRows({ rows }: { rows: Array<{ label: string; value: ReactNode }> }) {
+	return (
+		<span className="flex flex-col items-end gap-0.5 leading-tight">
+			{rows.map((row) => (
+				<span key={row.label} className="flex items-center justify-end gap-1.5 whitespace-nowrap">
+					<span className="label-sm text-tertiary">{row.label}</span>
+					{row.value}
+				</span>
+			))}
+		</span>
+	)
+}
+
+/** bps at a reference size, read at a multiple of it: $100k is ten $10k units. */
+const scaleBps = (bps: number | null, units: number) => (bps == null ? null : bps * units)
+
+/** The slippage fields both the listing row and the per-token row carry. */
+interface SlippageLadderValues {
+	predictedSlippage10kBps: number | null
+	realizedSlippage10kBps: number | null
+	predictedSlippage100kBps: number | null
+	realizedSlippage100kBps: number | null
+}
+
+/**
+ * $10k and $100k rungs of the same measurement. bps are per unit of notional, so the
+ * $100k rung is the same bps read at ten times the size; dollars at each rung's own
+ * size is what makes the two lines comparable for someone thinking in order size.
+ */
+export function SlippageLadder({ execution }: { execution: SlippageLadderValues | null }) {
+	return (
+		<StackedRows
+			rows={[
+				{
+					label: '$10k',
+					value: (
+						<SlippagePair
+							predicted={execution?.predictedSlippage10kBps ?? null}
+							actual={execution?.realizedSlippage10kBps ?? null}
+						/>
+					)
+				},
+				{
+					label: '$100k',
+					value: (
+						<SlippagePair
+							predicted={scaleBps(execution?.predictedSlippage100kBps ?? null, 10)}
+							actual={scaleBps(execution?.realizedSlippage100kBps ?? null, 10)}
+						/>
+					)
+				}
+			]}
+		/>
+	)
+}
+
+/** Markout at one and five minutes, the two horizons both listing surfaces show. */
+export function MarkoutHorizons({
+	execution
+}: {
+	execution: { markout1mBps: number | null; markout5mBps: number | null } | null
+}) {
+	return (
+		<StackedRows
+			rows={[
+				{ label: '1m', value: <Markout value={execution?.markout1mBps ?? null} /> },
+				{ label: '5m', value: <Markout value={execution?.markout5mBps ?? null} /> }
+			]}
+		/>
+	)
+}
+
 function summarySentences(execution: ExchangeExecutionModel): string[] {
 	const sentences: string[] = []
 	if (execution.costToTradeBps != null) {
 		sentences.push(
-			`A $10k market order here costs about ${usd(execution.costToTradeBps)} all-in: base-tier taker fee plus spread. VIP fee tiers can lower the fee part; the slippage figures below exclude fees entirely, since venues charge fees separately after the fill.`
+			`A $10k market order here costs about ${executionUsd(execution.costToTradeBps)} all-in: base-tier taker fee plus spread. VIP fee tiers can lower the fee part; the slippage figures below exclude fees entirely, since venues charge fees separately after the fill.`
 		)
 	}
 	const actual = execution.realizedSlippage10kBps
@@ -50,19 +130,19 @@ function summarySentences(execution: ExchangeExecutionModel): string[] {
 		const gap = actual - predicted
 		sentences.push(
 			gap <= 0.05
-				? `The book delivers what it promises: it predicted ${usd(predicted)} of slippage on a $10k fill, and fills actually cost ${usd(actual)}.`
-				: `The book promised ${usd(predicted)} of slippage on a $10k fill; fills actually cost ${usd(actual)}, which is ${usd(gap)} more, so displayed depth partly moves before fills land.`
+				? `The book delivers what it promises: it predicted ${executionUsd(predicted)} of slippage on a $10k fill, and fills actually cost ${executionUsd(actual)}.`
+				: `The book promised ${executionUsd(predicted)} of slippage on a $10k fill; fills actually cost ${executionUsd(actual)}, which is ${executionUsd(gap)} more, so displayed depth partly moves before fills land.`
 		)
 	}
 	if (execution.markout1mBps != null) {
 		sentences.push(
 			execution.markout1mBps > 0
-				? `In the minute after a $10k fill the price keeps moving against the taker by about ${usd(Math.abs(execution.markout1mBps))} on average.`
-				: `In the minute after a fill the price tends to come back about ${usd(Math.abs(execution.markout1mBps))} (per $10k) in the taker's favour.`
+				? `In the minute after a $10k fill the price keeps moving against the taker by about ${executionUsd(Math.abs(execution.markout1mBps))} on average.`
+				: `In the minute after a fill the price tends to come back about ${executionUsd(Math.abs(execution.markout1mBps))} (per $10k) in the taker's favour.`
 		)
 	}
 	sentences.push(
-		`Measured from ${execution.hoursCovered}h of tick-level fills across ${execution.pairs.length} pair${execution.pairs.length === 1 ? '' : 's'} (${execution.assets.join(', ')}): actual trades, not venue claims. Linear perps only for now.`
+		`Measured from ${execution.hoursCovered}h of tick-level fills across ${execution.pairs.length} pair${execution.pairs.length === 1 ? '' : 's'} (${execution.assets.join(', ')}): actual trades, not venue claims. USD perps only for now.`
 	)
 	return sentences
 }
@@ -137,7 +217,7 @@ function PairRow({ pair }: { pair: ExchangeExecutionPairModel }) {
 					NA
 				) : (
 					<>
-						{usd(pair.costToTradeBps)} <span className="text-tertiary">/$10k</span>
+						{executionUsd(pair.costToTradeBps)} <span className="text-tertiary">/$10k</span>
 					</>
 				)}
 			</td>

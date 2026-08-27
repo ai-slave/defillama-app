@@ -6,12 +6,15 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
 import { formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
+import { collectionHallmarks, hallmarkMetricsForKeys } from './chartHallmarks'
+import { ChartRangeControl } from './ChartRangeControl'
 import type { ExchangeOverviewChartModel } from './models'
 import {
 	DEFAULT_DIRECTORY_OVERVIEW_TAB,
 	EXCHANGES_QUERY_KEYS,
 	getDirectoryOverviewTab,
-	type DirectoryOverviewTab
+	type DirectoryOverviewTab,
+	type ExchangeResearchRange
 } from './queryState'
 import { SegmentToggleLabel } from './segmentPresentation'
 
@@ -30,42 +33,68 @@ interface SeriesSpec {
 const TAB_OPTIONS = [
 	{ value: 'total', label: 'Total' },
 	{ value: 'spot', label: <SegmentToggleLabel segment="spot" />, ariaLabel: 'Spot' },
-	{ value: 'linear_perp', label: <SegmentToggleLabel segment="linear_perp" />, ariaLabel: 'Linear Perps' },
-	{ value: 'inverse_perp', label: <SegmentToggleLabel segment="inverse_perp" />, ariaLabel: 'Inverse Perps' }
+	{ value: 'linear_perp', label: <SegmentToggleLabel segment="linear_perp" />, ariaLabel: 'USD Perps' },
+	{ value: 'inverse_perp', label: <SegmentToggleLabel segment="inverse_perp" />, ariaLabel: 'COIN Perps' }
 ] as const
 
 const LINEAR_PERP_OI: SeriesSpec = {
 	key: 'total_linear_perp_oi',
-	label: 'Linear perp OI',
+	label: 'USD perp OI',
 	color: '#e48b52',
 	type: 'line',
 	right: true
 }
 const INVERSE_PERP_OI: SeriesSpec = {
 	key: 'total_inverse_perp_oi',
-	label: 'Inverse perp OI',
+	label: 'COIN perp OI',
 	color: '#d76184',
 	type: 'line',
 	right: true
 }
 
-// Volume series stack as bars; open interest is a line on the right axis.
+const LIQUIDITY_COLORS = { spot: '#5c9cf5', perp: '#9b7cf7', cex: '#9b7cf7', dex: '#33b38f' }
+
+const ACTIVE_LIQUIDITY: Record<'spot' | 'linear_perp', SeriesSpec> = {
+	spot: {
+		key: 'total_spot_active_liquidity',
+		label: 'Spot liquidity',
+		color: LIQUIDITY_COLORS.spot,
+		type: 'line',
+		right: true
+	},
+	linear_perp: {
+		key: 'total_linear_perp_active_liquidity',
+		label: 'Perp liquidity',
+		color: LIQUIDITY_COLORS.perp,
+		type: 'line',
+		right: true
+	}
+}
+
+// Volume stacks as bars; open interest and active liquidity are lines on the right
+// axis. Liquidity shares this tab rather than getting its own: reported volume is read
+// against the liquidity backing it, and splitting them made that comparison a click.
+// COIN perps carry no liquidity line because no band is computed for them.
 const TAB_SERIES: Record<DirectoryOverviewTab, SeriesSpec[]> = {
 	total: [
 		{ key: 'total_spot_volume', label: 'Spot volume', color: '#5c9cf5', type: 'bar', stack: 'volume' },
-		{ key: 'total_linear_perp_volume', label: 'Linear perp volume', color: '#9b7cf7', type: 'bar', stack: 'volume' },
-		{ key: 'total_inverse_perp_volume', label: 'Inverse perp volume', color: '#33b38f', type: 'bar', stack: 'volume' },
+		{ key: 'total_linear_perp_volume', label: 'USD perp volume', color: '#9b7cf7', type: 'bar', stack: 'volume' },
+		{ key: 'total_inverse_perp_volume', label: 'COIN perp volume', color: '#33b38f', type: 'bar', stack: 'volume' },
 		LINEAR_PERP_OI,
-		INVERSE_PERP_OI
+		INVERSE_PERP_OI,
+		ACTIVE_LIQUIDITY.spot,
+		ACTIVE_LIQUIDITY.linear_perp
 	],
 	spot: [
 		{ key: 'cex_spot_volume', label: 'CEX', color: '#9b7cf7', type: 'bar', stack: 'volume' },
-		{ key: 'dex_spot_volume', label: 'DEX', color: '#33b38f', type: 'bar', stack: 'volume' }
+		{ key: 'dex_spot_volume', label: 'DEX', color: '#33b38f', type: 'bar', stack: 'volume' },
+		ACTIVE_LIQUIDITY.spot
 	],
 	linear_perp: [
 		{ key: 'cex_linear_perp_volume', label: 'CEX', color: '#9b7cf7', type: 'bar', stack: 'volume' },
 		{ key: 'dex_linear_perp_volume', label: 'DEX', color: '#33b38f', type: 'bar', stack: 'volume' },
-		LINEAR_PERP_OI
+		LINEAR_PERP_OI,
+		ACTIVE_LIQUIDITY.linear_perp
 	],
 	inverse_perp: [
 		{ key: 'cex_inverse_perp_volume', label: 'CEX', color: '#9b7cf7', type: 'bar', stack: 'volume' },
@@ -102,11 +131,14 @@ function overviewAriaLabel(chart: ExchangeOverviewChartModel, resolved: Resolved
 	return `Exchange trading activity. ${parts.join(' ')}`
 }
 
-type DirectoryChartProps =
+type DirectoryChartProps = { range: ExchangeResearchRange } & (
 	| { chart: ExchangeOverviewChartModel; status?: never; showGlobalDataNotice: boolean }
 	| { chart: null; status: 'loading' | 'error'; showGlobalDataNotice: boolean }
+)
 
-export function DirectoryChart({ chart, status, showGlobalDataNotice }: DirectoryChartProps) {
+// Liquidity and Volume are daily histories; Order book is the current book by
+// distance from mid. The captions below carry that difference so the labels stay short.
+export function DirectoryChart({ chart, range, status, showGlobalDataNotice }: DirectoryChartProps) {
 	const router = useRouter()
 	const tab = getDirectoryOverviewTab(router.query)
 	const resolved = React.useMemo(
@@ -118,6 +150,10 @@ export function DirectoryChart({ chart, status, showGlobalDataNotice }: Director
 					})
 				: [],
 		[tab, chart]
+	)
+	const hallmarks = React.useMemo(
+		() => collectionHallmarks(hallmarkMetricsForKeys(resolved.map(({ spec }) => spec.key))),
+		[resolved]
 	)
 	const chartModel = React.useMemo(
 		() =>
@@ -141,6 +177,7 @@ export function DirectoryChart({ chart, status, showGlobalDataNotice }: Director
 		<ChartPanel>
 			<ChartPanelToolbar className="justify-end">
 				<h2 className="mr-auto heading-xs">Trading activity</h2>
+				<ChartRangeControl range={range} />
 				<SegmentedControl<DirectoryOverviewTab>
 					value={tab}
 					onValueChange={(nextTab) => {
@@ -172,6 +209,7 @@ export function DirectoryChart({ chart, status, showGlobalDataNotice }: Director
 							height="360px"
 							hideDefaultLegend={false}
 							exportButtons="hidden"
+							hallmarks={hallmarks}
 						/>
 					</ChartPanelBody>
 				</React.Suspense>
@@ -185,6 +223,7 @@ export function DirectoryChart({ chart, status, showGlobalDataNotice }: Director
 				</ChartPanelBodyFallback>
 			)}
 			<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-2 pt-0 pb-2 body-sm text-tertiary">
+				<p>Daily volume, open positions and the liquidity backing them, summed across venues.</p>
 				{showGlobalDataNotice ? <p>Totals and chart show global data</p> : null}
 				{/* Reserve the timestamp line while data loads so only the 360px chart body swaps. */}
 				<p aria-hidden={chart ? undefined : true} className={`ml-auto ${chart ? '' : 'invisible'}`.trim()}>

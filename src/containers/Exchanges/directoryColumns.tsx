@@ -30,9 +30,10 @@ import {
 	volumeToDepth,
 	volumeToOpenInterest
 } from './modelHelpers'
-import type { ExchangeDirectoryRowModel, ExchangeSegment, ExchangeVenueKind } from './models'
+import type { ExchangeDirectoryRowModel, ExchangeNormalizedVolume, ExchangeSegment, ExchangeVenueKind } from './models'
 import { EXCHANGE_SEGMENT_LABELS } from './models'
-import { withCountryParam } from './queryState'
+import { executionUsd, MarkoutHorizons, NA, SlippageLadder } from './ProfileExecution'
+import { withCountryParam, type DirectoryScope } from './queryState'
 import { selectVenueDestination } from './venueLinks'
 
 const columnHelper = createColumnHelper<ExchangeDirectoryRowModel>()
@@ -74,11 +75,6 @@ function KindBadge({ kind }: { kind: ExchangeVenueKind }) {
 
 export const formatScore = (score: number) =>
 	formatNumber(score, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
-
-// 1bp of $10k = $1, so execution bps figures render as dollars at the $10k reference size.
-const execUsd = (bps: number) => formatUsd(bps, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-const execUsdSigned = (bps: number) =>
-	formatUsd(bps, { signDisplay: 'always', minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 // Quality tier chip — the public summary of the measured quality score.
 // Fixed bands: S ≥85 (requires measured execution), A ≥70, B ≥55, C ≥40, else D.
@@ -177,11 +173,161 @@ function linkedMetric(value: React.ReactNode, note: string | undefined) {
 	)
 }
 
+function normalizedVolumeNote(nvol: ExchangeNormalizedVolume | null): string | undefined {
+	if (!nvol) return undefined
+	return `${percentage(nvol.discountFraction)} below ${money(nvol.reported)} reported${nvol.flag ? ` · ${nvol.flag}` : ''}`
+}
+
+/**
+ * Normalized volume for a segment, falling back to reported volume when there is no
+ * book to normalize against (nvol is dropped entirely for a segment we captured no
+ * depth for). A blank cell was hiding real activity, but a reported figure sitting
+ * unmarked in a column headed "normalized" is the silent substitution this metric
+ * exists to prevent, so the fallback is flagged in the cell and named in the tooltip.
+ */
+export function normalizedOrReported(
+	row: ExchangeDirectoryRowModel,
+	segment: ExchangeSegment
+): { value: number | null; reported: boolean } {
+	const normalized = row.normalizedVolume?.[segment]?.normalized
+	if (normalized != null) return { value: normalized, reported: false }
+	return { value: row.segments[segment]?.volume24h ?? null, reported: true }
+}
+
+const REPORTED_NOTE =
+	'Reported volume: no order book captured for this segment, so there is nothing to normalize against.'
+
+/**
+ * One segment-qualified money column for the merged view.
+ *
+ * A venue that does not run the segment renders N/A, distinct from a venue that runs
+ * it and has no observation yet ("–"). In a table mixing spot-only and perp venues
+ * that difference is the whole point of the cell.
+ */
+function segmentColumn(spec: {
+	id: string
+	segment: ExchangeSegment
+	definition: { label: string; description: string }
+	value: (row: ExchangeDirectoryRowModel) => number | undefined
+	note?: (row: ExchangeDirectoryRowModel) => string | undefined
+	/** Marks a value that is not what the header says, e.g. a reported-volume fallback. */
+	suffix?: (row: ExchangeDirectoryRowModel) => string
+}): ColumnDef<ExchangeDirectoryRowModel, any> {
+	return columnHelper.accessor(spec.value, {
+		id: spec.id,
+		header: spec.definition.label,
+		cell: ({ row, getValue }) => {
+			if (!row.original.segments[spec.segment]) return <UnsupportedMetric />
+			return linkedMetric(`${money(getValue())}${spec.suffix?.(row.original) ?? ''}`, spec.note?.(row.original))
+		},
+		meta: {
+			headerClassName: 'w-[112px] min-w-[112px]',
+			align: 'end',
+			headerHelperText: spec.definition.description
+		}
+	})
+}
+
+const PERP_SEGMENTS = ['linear_perp', 'inverse_perp'] as const satisfies readonly ExchangeSegment[]
+
+/** Segments normalized volume is computed for. A COIN perp has no normalized figure by
+ *  design, so its reported volume standing in is the expected case, not a caveat worth
+ *  marking on the row: flagging it put a star on nearly every venue that runs one. */
+const NVOL_SEGMENTS = ['spot', 'linear_perp'] as const satisfies readonly ExchangeSegment[]
+
+const fellBackWithBook = (row: ExchangeDirectoryRowModel, segments: readonly ExchangeSegment[]) =>
+	segments.some(
+		(segment) =>
+			(NVOL_SEGMENTS as readonly ExchangeSegment[]).includes(segment) &&
+			row.segments[segment] &&
+			normalizedOrReported(row, segment).reported
+	)
+
+/**
+ * A "Perp" column in the merged view: both perpetual classes added together, with the
+ * split always available on hover.
+ *
+ * Summing them is safe because every figure here is already USD-denominated — a COIN
+ * perp's open interest is valued in dollars like any other. What is NOT safe is a
+ * total that hides which classes are in it, because the two settle differently and
+ * only some venues run both; hence the breakdown, on every cell, even when only one
+ * class contributed. Metrics that exist for only one class (normalized volume and
+ * active liquidity are not computed for COIN perps) simply say so there.
+ */
+function perpColumn(spec: {
+	id: string
+	definition: { label: string; description: string }
+	pick: (row: ExchangeDirectoryRowModel, segment: ExchangeSegment) => number | null
+	extraNote?: (row: ExchangeDirectoryRowModel) => string | undefined
+	/** Marks a value that is not what the header says, e.g. a reported-volume fallback. */
+	suffix?: (row: ExchangeDirectoryRowModel) => string
+}): ColumnDef<ExchangeDirectoryRowModel, any> {
+	const parts = (row: ExchangeDirectoryRowModel) =>
+		PERP_SEGMENTS.filter((segment) => row.segments[segment]).map((segment) => ({
+			segment,
+			value: spec.pick(row, segment)
+		}))
+	const total = (row: ExchangeDirectoryRowModel) => {
+		const values = parts(row)
+			.map((part) => part.value)
+			.filter((value): value is number => value != null)
+		return values.length ? values.reduce((sum, value) => sum + value, 0) : undefined
+	}
+	return columnHelper.accessor(total, {
+		id: spec.id,
+		header: spec.definition.label,
+		cell: ({ row, getValue }) => {
+			const present = parts(row.original)
+			if (present.length === 0) return <UnsupportedMetric />
+			const breakdown = present
+				.map(({ segment, value }) => `${EXCHANGE_SEGMENT_LABELS[segment]}: ${money(value)}`)
+				.join(' · ')
+			return linkedMetric(
+				`${money(getValue())}${spec.suffix?.(row.original) ?? ''}`,
+				[breakdown, spec.extraNote?.(row.original)].filter(Boolean).join(' · ')
+			)
+		},
+		meta: {
+			headerClassName: 'w-[112px] min-w-[112px]',
+			align: 'end',
+			headerHelperText: spec.definition.description
+		}
+	})
+}
+
+/**
+ * Each execution column states the basket it is measured on, in its header helper.
+ *
+ * They no longer share one: cost to trade is published on the two deepest perps, fill
+ * quality across the top five. Every column is still the same basket on every row, so
+ * a column compares like for like down the table — but two columns on ONE row now
+ * describe different markets, and the only honest fix for that is to say so where a
+ * reader looks for what a number means.
+ */
+function executionScopeNote(basket: string[]): string {
+	if (basket.length === 0) return 'Measured on each venue’s own covered perps.'
+	if (basket.length === 1) {
+		return `Measured on the ${basket[0]} perp on every venue, so rows compare like for like.`
+	}
+	return `Median across the ${basket.join(', ')} perps on every venue, so rows compare like for like.`
+}
+
 export function buildDirectoryColumns(
-	scope: ExchangeSegment,
-	executionAvailable: boolean
+	scope: DirectoryScope,
+	executionAvailable: boolean,
+	executionCostBasket: string[] = [],
+	executionFillBasket: string[] = []
 ): ColumnDef<ExchangeDirectoryRowModel, any>[] {
 	const definitions = exchangeDefinitions.directory
+	// Every exact-segment column reads through these. The merged `all` view has no
+	// single segment to read, so they resolve to nothing rather than silently picking
+	// one: those columns are hidden there, and an empty CSV cell beats a cell whose
+	// header never says which segment it came from.
+	const scopedActivity = (row: ExchangeDirectoryRowModel) => (scope === 'all' ? null : activityForScope(row, scope))
+	const scopedNvol = (row: ExchangeDirectoryRowModel) => (scope === 'all' ? null : normalizedVolumeForScope(row, scope))
+	const scopedSpark = (row: ExchangeDirectoryRowModel) => (scope === 'all' ? [] : sparklineForScope(row, scope))
+	const costNote = executionScopeNote(executionCostBasket)
+	const fillNote = executionScopeNote(executionFillBasket)
 	const columns: ColumnDef<ExchangeDirectoryRowModel, any>[] = [
 		columnHelper.accessor((row) => `${row.name} ${row.slug} ${row.profile?.nativeToken ?? ''}`, {
 			id: 'name',
@@ -314,12 +460,81 @@ export function buildDirectoryColumns(
 			cell: ({ getValue }) => <KindBadge kind={getValue()} />,
 			meta: { headerClassName: 'w-[71px] min-w-[71px]', headerHelperText: definitions.kind.description }
 		}),
-		// Depth leads the activity view: it is the liquidity fact volume is judged against.
-		columnHelper.accessor((row) => depthTotal(activityForScope(row, scope)) ?? undefined, {
+		// ── merged `all` view ────────────────────────────────────────────────────
+		// Segment-qualified twins of the scoped columns above. They exist so one row can
+		// carry spot and USD perps at once; each names its segment in the header, because
+		// the whole failure mode of a merged table is a number whose market is unstated.
+		// Hidden outside the `all` scope, where the scoped versions serve instead.
+		segmentColumn({
+			id: 'spotActiveLiquidity',
+			segment: 'spot',
+			definition: definitions.spotActiveLiquidity,
+			value: (row) => row.normalizedVolume?.spot?.activeLiquidity ?? undefined,
+			note: (row) => row.segments.spot?.doubleCount?.depth
+		}),
+		perpColumn({
+			id: 'perpActiveLiquidity',
+			definition: definitions.perpActiveLiquidity,
+			pick: (row, segment) => row.normalizedVolume?.[segment]?.activeLiquidity ?? null
+		}),
+		perpColumn({
+			id: 'perpOpenInterest',
+			definition: definitions.perpOpenInterest,
+			pick: (row, segment) => row.segments[segment]?.openInterestUsd ?? null,
+			extraNote: (row) => row.segments.linear_perp?.doubleCount?.openInterest
+		}),
+		segmentColumn({
+			id: 'spotNormalizedVolume',
+			segment: 'spot',
+			definition: definitions.spotNormalizedVolume,
+			value: (row) => normalizedOrReported(row, 'spot').value ?? undefined,
+			suffix: (row) => (fellBackWithBook(row, ['spot']) ? '*' : ''),
+			note: (row) =>
+				normalizedOrReported(row, 'spot').reported
+					? REPORTED_NOTE
+					: normalizedVolumeNote(row.normalizedVolume?.spot ?? null)
+		}),
+		perpColumn({
+			id: 'perpNormalizedVolume',
+			definition: definitions.perpNormalizedVolume,
+			pick: (row, segment) => normalizedOrReported(row, segment).value,
+			suffix: (row) => (fellBackWithBook(row, PERP_SEGMENTS) ? '*' : ''),
+			extraNote: (row) =>
+				fellBackWithBook(row, PERP_SEGMENTS)
+					? REPORTED_NOTE
+					: normalizedVolumeNote(row.normalizedVolume?.linear_perp ?? null)
+		}),
+		// Active liquidity leads the activity view: it is the liquidity fact volume is
+		// judged against, and unlike the fixed ±2% column its band tracks how far the
+		// day's price actually moves — on a market ranging 10% a day, the depth that
+		// matters is nowhere near ±2%.
+		columnHelper.accessor((row) => scopedNvol(row)?.activeLiquidity ?? undefined, {
+			id: 'activeLiquidity',
+			header: definitions.activeLiquidity.label,
+			cell: ({ row, getValue }) => {
+				const nvol = scopedNvol(row.original)
+				if (!nvol) return <span className="text-tertiary">–</span>
+				const fixedDepth = depthTotal(scopedActivity(row.original))
+				// Observed depth only. Where the band ran past what our snapshot captured,
+				// this is the whole captured book rather than a projection of it — a
+				// displayed liquidity figure has to be liquidity that exists.
+				const notes = [
+					fixedDepth != null ? `Fixed ±2% depth: ${money(fixedDepth)}` : null,
+					scopedActivity(row.original)?.doubleCount?.depth
+				].filter(Boolean)
+				return linkedMetric(money(getValue()), notes.join(' · '))
+			},
+			meta: {
+				headerClassName: 'w-[124px] min-w-[124px]',
+				align: 'end',
+				headerHelperText: definitions.activeLiquidity.description
+			}
+		}),
+		columnHelper.accessor((row) => depthTotal(scopedActivity(row)) ?? undefined, {
 			id: 'depth2Usd',
 			header: definitions.depth2Usd.label,
 			cell: ({ row, getValue }) => {
-				const activity = activityForScope(row.original, scope)
+				const activity = scopedActivity(row.original)
 				const metric = depthMetricState(activity)
 				if (metric.state === 'unsupported') return <UnsupportedMetric />
 				if (metric.state === 'missing') return <span className="text-tertiary">–</span>
@@ -334,11 +549,10 @@ export function buildDirectoryColumns(
 				headerHelperText: definitions.depth2Usd.description
 			}
 		}),
-		columnHelper.accessor((row) => activityForScope(row, scope)?.volume24h ?? undefined, {
+		columnHelper.accessor((row) => scopedActivity(row)?.volume24h ?? undefined, {
 			id: 'volume24h',
 			header: definitions.volume24h.label,
-			cell: ({ row, getValue }) =>
-				linkedMetric(money(getValue()), activityForScope(row.original, scope)?.doubleCount?.volume),
+			cell: ({ row, getValue }) => linkedMetric(money(getValue()), scopedActivity(row.original)?.doubleCount?.volume),
 			meta: {
 				headerClassName: 'w-[124px] min-w-[124px]',
 				align: 'end',
@@ -347,7 +561,7 @@ export function buildDirectoryColumns(
 		}),
 		columnHelper.accessor(
 			(row) => {
-				const activity = activityForScope(row, scope)
+				const activity = scopedActivity(row)
 				return fractionChange(activity?.volume24h, activity?.volumePrevious24h) ?? undefined
 			},
 			{
@@ -361,11 +575,11 @@ export function buildDirectoryColumns(
 				}
 			}
 		),
-		columnHelper.accessor((row) => activityForScope(row, scope)?.openInterestUsd ?? undefined, {
+		columnHelper.accessor((row) => scopedActivity(row)?.openInterestUsd ?? undefined, {
 			id: 'openInterestUsd',
 			header: definitions.openInterestUsd.label,
 			cell: ({ row, getValue }) => {
-				const activity = activityForScope(row.original, scope)
+				const activity = scopedActivity(row.original)
 				if (!activity?.supportsOpenInterest) return <UnsupportedMetric />
 				return linkedMetric(money(getValue()), activity.doubleCount?.openInterest)
 			},
@@ -377,18 +591,14 @@ export function buildDirectoryColumns(
 		}),
 		columnHelper.accessor(
 			(row) => {
-				const activity = activityForScope(row, scope)
+				const activity = scopedActivity(row)
 				return fractionChange(activity?.openInterestUsd, activity?.openInterestPreviousUsd) ?? undefined
 			},
 			{
 				id: 'openInterestChange24h',
 				header: definitions.openInterestChange24h.label,
 				cell: ({ row, getValue }) =>
-					activityForScope(row.original, scope)?.supportsOpenInterest ? (
-						<Change value={getValue()} />
-					) : (
-						<UnsupportedMetric />
-					),
+					scopedActivity(row.original)?.supportsOpenInterest ? <Change value={getValue()} /> : <UnsupportedMetric />,
 				meta: {
 					headerClassName: 'w-[89px] min-w-[89px]',
 					align: 'end',
@@ -405,21 +615,29 @@ export function buildDirectoryColumns(
 			sortDescFirst: false,
 			cell: ({ row, getValue }) => {
 				const cost = getValue()
-				if (cost == null) return <span className="text-tertiary">n/a</span>
+				if (cost == null) return NA
 				const execution = row.original.execution
+				// One number. Showing the effective spread beside it read as a breakdown, but
+				// the all-in figure carries HALF the spread, so the two never added up to
+				// anything and invited arithmetic that does not hold. The split belongs in the
+				// tooltip, where it can say so.
 				return (
 					<Tooltip
-						content={`${formatNumber(cost, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} bps, median across ${execution?.assets?.join(', ') ?? 'the measured'} perps over ${execution?.hoursCovered ?? 'n/a'}h of tick data. Base-tier taker fee plus half the effective spread; VIP tiers can lower the fee part.`}
+						content={`Base-tier taker fee plus half the effective spread of ${executionUsd(
+							execution?.effectiveSpreadBps ?? null
+						)}. Median across ${execution?.costAssets?.join(', ') ?? 'the measured'} perps over ${
+							execution?.hoursCovered ?? 'n/a'
+						}h of tick data; VIP tiers can lower the fee part.`}
 						className="ms-auto w-fit"
 					>
-						<span className="underline decoration-dotted">{`${execUsd(cost)} /$10k`}</span>
+						<span className="underline decoration-dotted">{executionUsd(cost)}</span>
 					</Tooltip>
 				)
 			},
 			meta: {
-				headerClassName: 'w-[124px] min-w-[124px]',
+				headerClassName: 'w-[118px] min-w-[118px]',
 				align: 'end',
-				headerHelperText: definitions.execCostToTrade.description,
+				headerHelperText: `${definitions.execCostToTrade.description} ${costNote}`,
 				csvValue: (row) =>
 					row.execution?.costToTradeBps == null ? '' : String(roundNumber(row.execution.costToTradeBps, 2))
 			}
@@ -428,21 +646,11 @@ export function buildDirectoryColumns(
 			id: 'execSlippage10k',
 			header: definitions.execSlippage10k.label,
 			sortDescFirst: false,
-			cell: ({ row, getValue }) => {
-				const actual = getValue()
-				if (actual == null) return <span className="text-tertiary">n/a</span>
-				const predicted = row.original.execution?.predictedSlippage10kBps
-				return (
-					<span className="flex items-center justify-end gap-1">
-						{predicted == null ? null : <span className="text-tertiary">{`p ${execUsd(predicted)} →`}</span>}
-						<span>{execUsd(actual)}</span>
-					</span>
-				)
-			},
+			cell: ({ row, getValue }) => (getValue() == null ? NA : <SlippageLadder execution={row.original.execution} />),
 			meta: {
-				headerClassName: 'w-[139px] min-w-[139px]',
+				headerClassName: 'w-[186px] min-w-[186px]',
 				align: 'end',
-				headerHelperText: definitions.execSlippage10k.description,
+				headerHelperText: `${definitions.execSlippage10k.description} ${fillNote}`,
 				csvValue: (row) =>
 					row.execution?.realizedSlippage10kBps == null
 						? ''
@@ -453,27 +661,23 @@ export function buildDirectoryColumns(
 			id: 'execMarkout1m',
 			header: definitions.execMarkout1m.label,
 			sortDescFirst: false,
-			cell: ({ getValue }) => {
-				const markout = getValue()
-				if (markout == null) return <span className="text-tertiary">n/a</span>
-				return <span className={markout > 0 ? 'text-data-down' : 'text-data-up'}>{execUsdSigned(markout)}</span>
-			},
+			cell: ({ row, getValue }) => (getValue() == null ? NA : <MarkoutHorizons execution={row.original.execution} />),
 			meta: {
-				headerClassName: 'w-[114px] min-w-[114px]',
+				headerClassName: 'w-[140px] min-w-[140px]',
 				align: 'end',
-				headerHelperText: definitions.execMarkout1m.description,
+				headerHelperText: `${definitions.execMarkout1m.description} ${fillNote}`,
 				csvValue: (row) =>
 					row.execution?.markout1mBps == null ? '' : String(roundNumber(row.execution.markout1mBps, 2))
 			}
 		}),
-		columnHelper.accessor((row) => normalizedVolumeForScope(row, scope)?.normalized ?? undefined, {
+		columnHelper.accessor((row) => scopedNvol(row)?.normalized ?? undefined, {
 			id: 'normalizedVolume',
 			header: definitions.normalizedVolume.label,
 			cell: ({ row, getValue }) => {
-				const nvol = normalizedVolumeForScope(row.original, scope)
+				const nvol = scopedNvol(row.original)
 				return nvol ? (
 					<Tooltip
-						content={`${percentage(nvol.discountFraction)} below reported · ${percentage(nvol.unverifiedFraction)} unverified${nvol.flag ? ` · ${nvol.flag}` : ''}`}
+						content={`${percentage(nvol.discountFraction)} below reported · ${percentage(nvol.unverifiedFraction)} judged against estimated depth${nvol.flag ? ` · ${nvol.flag}` : ''}`}
 						className="ms-auto w-fit"
 					>
 						<span className="underline decoration-dotted">{money(getValue())}</span>
@@ -488,29 +692,29 @@ export function buildDirectoryColumns(
 				headerHelperText: definitions.normalizedVolume.description
 			}
 		}),
-		columnHelper.accessor((row) => volumeToOpenInterest(activityForScope(row, scope)) ?? undefined, {
+		columnHelper.accessor((row) => volumeToOpenInterest(scopedActivity(row)) ?? undefined, {
 			id: 'volumeToOi',
 			header: definitions.volumeToOi.label,
 			cell: ({ row, getValue }) =>
-				activityForScope(row.original, scope)?.supportsOpenInterest ? ratio(getValue()) : <UnsupportedMetric />,
+				scopedActivity(row.original)?.supportsOpenInterest ? ratio(getValue()) : <UnsupportedMetric />,
 			meta: {
 				headerClassName: 'w-[96px] min-w-[96px]',
 				align: 'end',
 				headerHelperText: definitions.volumeToOi.description
 			}
 		}),
-		columnHelper.accessor((row) => volumeToDepth(activityForScope(row, scope)) ?? undefined, {
+		columnHelper.accessor((row) => volumeToDepth(scopedActivity(row)) ?? undefined, {
 			id: 'volumeToDepth',
 			header: definitions.volumeToDepth.label,
 			cell: ({ row, getValue }) =>
-				activityForScope(row.original, scope)?.supportsDepth ? ratio(getValue()) : <UnsupportedMetric />,
+				scopedActivity(row.original)?.supportsDepth ? ratio(getValue()) : <UnsupportedMetric />,
 			meta: {
 				headerClassName: 'w-[110px] min-w-[110px]',
 				align: 'end',
 				headerHelperText: definitions.volumeToDepth.description
 			}
 		}),
-		columnHelper.accessor((row) => activityForScope(row, scope)?.marketCount ?? undefined, {
+		columnHelper.accessor((row) => scopedActivity(row)?.marketCount ?? undefined, {
 			id: 'marketCount',
 			header: definitions.marketCount.label,
 			cell: ({ getValue }) => getValue() ?? '–',
@@ -520,7 +724,7 @@ export function buildDirectoryColumns(
 				headerHelperText: definitions.marketCount.description
 			}
 		}),
-		columnHelper.accessor((row) => activityForScope(row, scope)?.coinCount ?? undefined, {
+		columnHelper.accessor((row) => scopedActivity(row)?.coinCount ?? undefined, {
 			id: 'coinCount',
 			header: definitions.coinCount.label,
 			cell: ({ getValue }) => getValue() ?? '–',
@@ -530,7 +734,7 @@ export function buildDirectoryColumns(
 				headerHelperText: definitions.coinCount.description
 			}
 		}),
-		columnHelper.accessor((row) => sparklineForScope(row, scope), {
+		columnHelper.accessor((row) => scopedSpark(row), {
 			id: 'sparkline',
 			header: definitions.sparkline.label,
 			enableSorting: false,
@@ -621,7 +825,7 @@ export function buildDirectoryColumns(
 				headerHelperText: definitions.auditor.description
 			}
 		}),
-		columnHelper.accessor((row) => activityForScope(row, scope)?.volumeUpdatedAt, {
+		columnHelper.accessor((row) => scopedActivity(row)?.volumeUpdatedAt, {
 			id: 'freshness',
 			header: definitions.freshness.label,
 			cell: ({ getValue }) => getValue()?.slice(0, 10) ?? '–',

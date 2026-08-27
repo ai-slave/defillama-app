@@ -68,13 +68,13 @@ describe('surface model selection', () => {
 	})
 
 	it('labels inverse perpetual support without claiming linear perps', () => {
-		expect(micaProductLabel(['inverse_perp'])).toBe('Inverse perps')
-		expect(micaProductLabel(['linear_perp', 'inverse_perp'])).toBe('Perps · Inverse perps')
+		expect(micaProductLabel(['inverse_perp'])).toBe('COIN perps')
+		expect(micaProductLabel(['linear_perp', 'inverse_perp'])).toBe('Perps · COIN perps')
 	})
 
 	it('labels every canonical MiCA product in stable wire order', () => {
 		expect(micaProductLabel(['spot', 'margin', 'linear_perp', 'inverse_perp', 'futures', 'options'])).toBe(
-			'Spot · Margin · Perps · Inverse perps · Futures · Options'
+			'Spot · Margin · Perps · COIN perps · Futures · Options'
 		)
 	})
 

@@ -59,6 +59,7 @@ function marketPair(slug: string, displayName: string, volume24h: number): Marke
 			reported: volume24h,
 			normalized: volume24h * 0.8,
 			active_liquidity: 1_000_000,
+			active_liquidity_measured: 1_000_000,
 			band: 0.05,
 			daily_vol: 0.03,
 			coverage: 0.03,

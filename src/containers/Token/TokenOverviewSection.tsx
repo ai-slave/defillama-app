@@ -68,8 +68,8 @@ const TREASURY_TOOLTIP = 'Treasury is the value of assets held by the entity iss
 
 const MARKET_CATEGORY_LABELS: Record<Segment, string> = {
 	spot: 'Spot',
-	linear_perp: 'Linear Perp',
-	inverse_perp: 'Inverse Perp'
+	linear_perp: 'USD Perp',
+	inverse_perp: 'COIN Perp'
 }
 const MARKET_CATEGORY_ORDER: Segment[] = ['spot', 'linear_perp', 'inverse_perp']
 const TOKEN_OVERVIEW_CHART_QUERY_KEY = 'chart'

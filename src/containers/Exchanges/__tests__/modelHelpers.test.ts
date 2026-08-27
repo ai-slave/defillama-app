@@ -34,6 +34,7 @@ function activity(patch: Partial<ExchangeSegmentActivity> = {}): ExchangeSegment
 		depthBidUsd: null,
 		depthAskUsd: null,
 		depthPartial: false,
+		depthLadder: null,
 		volumeUpdatedAt: VOLUME_UPDATED_AT,
 		supportsOpenInterest: false,
 		supportsDepth: false,
@@ -136,6 +137,7 @@ describe('spark and normalized-volume aggregation helpers', () => {
 				reported: 1_000,
 				normalized: 800,
 				activeLiquidity: 600,
+				activeLiquidityForCap: 600,
 				discountFraction: 0.2,
 				unverifiedFraction: 0,
 				flag: null
@@ -144,6 +146,7 @@ describe('spark and normalized-volume aggregation helpers', () => {
 				reported: 200,
 				normalized: 100,
 				activeLiquidity: 50,
+				activeLiquidityForCap: 50,
 				discountFraction: 0.5,
 				unverifiedFraction: 0.5,
 				flag: 'thin'
@@ -199,6 +202,18 @@ describe('directory discovery and canonical links', () => {
 		expect(filterDirectoryRows([trackedSpot, trackedPerp, metadataOnly], filters).map((item) => item.slug)).toEqual(
 			expected
 		)
+	})
+
+	// The merged view keeps any venue with a spot or USD perp book, and drops a
+	// COIN-perp-only venue: none of its columns would have anything to show.
+	it('the merged scope keeps spot and USD perp venues and drops COIN-perp-only ones', () => {
+		const inverseOnly = row({ slug: 'inverse', segments: { inverse_perp: activity() } })
+		expect(
+			filterDirectoryRows([trackedSpot, trackedPerp, inverseOnly, metadataOnly], {
+				kind: 'all',
+				scope: 'all'
+			}).map((item) => item.slug)
+		).toEqual(['venue', 'perp', 'catalog'])
 	})
 
 	it('preserves canonical API-authored routes for tracked and metadata-only profiles', () => {
@@ -260,6 +275,23 @@ describe('country-aware directory filtering', () => {
 			catalog
 		})
 		expect(spot.map((venue) => venue.slug)).toEqual(['available', 'restricted'])
+		// The country gate follows the scope: in the merged view availability in EITHER
+		// segment keeps the row, so a venue offering only spot in a country still shows,
+		// with empty perp cells rather than being hidden altogether.
+		const perpOnlyInCountry = row({
+			slug: 'perp-only',
+			segments: { spot: activity(), linear_perp: activity() },
+			regional: regional('available', ['linear_perp'])
+		})
+		expect(
+			filterDirectoryRows([available, perpOnlyInCountry], {
+				kind: 'all',
+				scope: 'all',
+				country: 'DE',
+				catalog
+			}).map((venue) => venue.slug)
+		).toEqual(['available', 'perp-only'])
+		expect(filterDirectoryRows([perpOnlyInCountry], { kind: 'all', scope: 'spot', country: 'DE', catalog })).toEqual([])
 		expect(required(spot[1]).selectedCountryStatus).toBe('restricted')
 		expect(
 			filterDirectoryRows([available, restricted], {
@@ -378,6 +410,7 @@ describe('parent/child directory nesting', () => {
 					reported: 1_000,
 					normalized: 800,
 					activeLiquidity: 600,
+					activeLiquidityForCap: 600,
 					discountFraction: 0.2,
 					unverifiedFraction: 0,
 					flag: null
@@ -409,6 +442,7 @@ describe('parent/child directory nesting', () => {
 					reported: 40,
 					normalized: 20,
 					activeLiquidity: 10,
+					activeLiquidityForCap: 10,
 					discountFraction: 0.5,
 					unverifiedFraction: 0.5,
 					flag: null
@@ -542,7 +576,7 @@ describe('child liquidity descriptions', () => {
 		expect(description).toContain('Spot')
 		expect(description).toContain('subset of pairs')
 		expect(description).toContain('volume also counted under OKX')
-		expect(description).toContain('Linear Perps')
+		expect(description).toContain('USD Perps')
 		expect(description).toContain('separate from OKX')
 	})
 
@@ -558,7 +592,7 @@ describe('child liquidity descriptions', () => {
 		})
 		const description = describeChildLiquidity(mirror)
 		expect(description).toContain("Spot: presents Venue's order book")
-		expect(description).toContain('Linear Perps')
+		expect(description).toContain('USD Perps')
 		expect(description).toContain('separate from Venue')
 	})
 
@@ -573,6 +607,7 @@ describe('normalized volume and depth semantics', () => {
 			reported: 100,
 			normalized: 70,
 			activeLiquidity: 40,
+			activeLiquidityForCap: 40,
 			discountFraction: 0.3,
 			unverifiedFraction: 0.1,
 			flag: null
@@ -581,6 +616,7 @@ describe('normalized volume and depth semantics', () => {
 			reported: 50,
 			normalized: 30,
 			activeLiquidity: 20,
+			activeLiquidityForCap: 20,
 			discountFraction: 0.4,
 			unverifiedFraction: 0.4,
 			flag: 'outlier'
@@ -600,6 +636,7 @@ describe('normalized volume and depth semantics', () => {
 			reported: 100,
 			normalized: 70,
 			activeLiquidity: 40,
+			activeLiquidityForCap: 40,
 			discountFraction: 0.3,
 			unverifiedFraction: 0.1,
 			flag: null

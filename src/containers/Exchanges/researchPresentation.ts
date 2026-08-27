@@ -18,9 +18,10 @@ export type ResearchPresentation = Pick<ExchangeResearchChartModel, 'title' | 'd
 const TOP_EXCHANGES =
 	'Up to eight exchanges with the largest latest observation are shown separately; remaining exchanges are grouped as Other.'
 
-const LINEAR_PERPS = 'Linear perps are perpetual contracts margined and settled in a quote asset such as USDT or USDC.'
+const LINEAR_PERPS =
+	'USD perps (also called linear perps) are margined and settled in a quote asset such as USDT or USDC.'
 const INVERSE_PERPS =
-	'Inverse perps are perpetual contracts margined and settled in the underlying coin (collateral and PnL denominated in that coin).'
+	'COIN perps (also called inverse perps) are margined and settled in the underlying coin, so collateral and PnL are denominated in that coin.'
 
 export const RESEARCH_VIEWS: Record<ExchangeResearchPart, readonly ResearchPresentation[]> = {
 	volume: [
@@ -36,22 +37,22 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, readonly ResearchPrese
 		},
 		{
 			id: 'linear-perp-exchanges',
-			label: 'Linear Perps',
+			label: 'USD Perps',
 			metric: 'volume',
 			segment: 'linear_perp',
 			grouping: 'exchange',
-			title: 'Linear perp volume · Exchanges',
-			description: `Daily linear perpetual volume by exchange. ${LINEAR_PERPS} ${TOP_EXCHANGES}`,
+			title: 'USD perp volume · Exchanges',
+			description: `Daily USD perp volume by exchange. ${LINEAR_PERPS} ${TOP_EXCHANGES}`,
 			valueSymbol: '$'
 		},
 		{
 			id: 'inverse-perp-exchanges',
-			label: 'Inverse Perps',
+			label: 'COIN Perps',
 			metric: 'volume',
 			segment: 'inverse_perp',
 			grouping: 'exchange',
-			title: 'Inverse perp volume · Exchanges',
-			description: `Daily inverse perpetual volume by exchange. ${INVERSE_PERPS} ${TOP_EXCHANGES}`,
+			title: 'COIN perp volume · Exchanges',
+			description: `Daily COIN perp volume by exchange. ${INVERSE_PERPS} ${TOP_EXCHANGES}`,
 			valueSymbol: '$'
 		},
 		{
@@ -61,30 +62,29 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, readonly ResearchPrese
 			segment: 'separate',
 			grouping: 'venue-type',
 			title: 'Volume · CEX vs DEX',
-			description:
-				'Daily volume grouped by exchange type, with spot, linear perp, and inverse perp lines kept separate.',
+			description: 'Daily volume grouped by exchange type, with spot, USD perp, and COIN perp lines kept separate.',
 			valueSymbol: '$'
 		}
 	],
 	oi: [
 		{
 			id: 'open-interest-linear-exchanges',
-			label: 'Linear Perps',
+			label: 'USD Perps',
 			metric: 'open-interest',
 			segment: 'linear_perp',
 			grouping: 'exchange',
-			title: 'Linear perp open interest · Exchanges',
-			description: `Daily linear perpetual open interest by exchange. ${LINEAR_PERPS} ${TOP_EXCHANGES}`,
+			title: 'USD perp open interest · Exchanges',
+			description: `Daily USD perp open interest by exchange. ${LINEAR_PERPS} ${TOP_EXCHANGES}`,
 			valueSymbol: '$'
 		},
 		{
 			id: 'open-interest-inverse-exchanges',
-			label: 'Inverse Perps',
+			label: 'COIN Perps',
 			metric: 'open-interest',
 			segment: 'inverse_perp',
 			grouping: 'exchange',
-			title: 'Inverse perp open interest · Exchanges',
-			description: `Daily inverse perpetual open interest by exchange. ${INVERSE_PERPS} ${TOP_EXCHANGES}`,
+			title: 'COIN perp open interest · Exchanges',
+			description: `Daily COIN perp open interest by exchange. ${INVERSE_PERPS} ${TOP_EXCHANGES}`,
 			valueSymbol: '$'
 		},
 		{
@@ -95,7 +95,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, readonly ResearchPrese
 			grouping: 'venue-type',
 			title: 'Open interest · CEX vs DEX',
 			description:
-				'Daily perpetual open interest grouped by exchange type, with linear and inverse perp lines kept separate.',
+				'Daily perpetual open interest grouped by exchange type, with USD and COIN perp lines kept separate.',
 			valueSymbol: '$'
 		}
 	],
@@ -112,22 +112,22 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, readonly ResearchPrese
 		},
 		{
 			id: 'depth-linear-exchanges',
-			label: 'Linear Perps',
+			label: 'USD Perps',
 			metric: 'depth',
 			segment: 'linear_perp',
 			grouping: 'exchange',
-			title: 'Linear perp market depth · Exchanges',
-			description: `End-of-day linear perpetual order-book depth within ±2% by exchange. ${LINEAR_PERPS} ${TOP_EXCHANGES}`,
+			title: 'USD perp market depth · Exchanges',
+			description: `End-of-day USD perp order-book depth within ±2% by exchange. ${LINEAR_PERPS} ${TOP_EXCHANGES}`,
 			valueSymbol: '$'
 		},
 		{
 			id: 'depth-inverse-exchanges',
-			label: 'Inverse Perps',
+			label: 'COIN Perps',
 			metric: 'depth',
 			segment: 'inverse_perp',
 			grouping: 'exchange',
-			title: 'Inverse perp market depth · Exchanges',
-			description: `End-of-day inverse perpetual order-book depth within ±2% by exchange. ${INVERSE_PERPS} ${TOP_EXCHANGES}`,
+			title: 'COIN perp market depth · Exchanges',
+			description: `End-of-day COIN perp order-book depth within ±2% by exchange. ${INVERSE_PERPS} ${TOP_EXCHANGES}`,
 			valueSymbol: '$'
 		},
 		{
@@ -138,7 +138,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, readonly ResearchPrese
 			grouping: 'venue-type',
 			title: 'Market depth · CEX vs DEX',
 			description:
-				'End-of-day order-book depth within ±2% grouped by exchange type, with spot, linear perp, and inverse perp lines kept separate.',
+				'End-of-day order-book depth within ±2% grouped by exchange type, with spot, USD perp, and COIN perp lines kept separate.',
 			valueSymbol: '$'
 		},
 		{
@@ -149,7 +149,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, readonly ResearchPrese
 			grouping: 'segment',
 			title: 'Market depth · BTC by segment',
 			description:
-				'Daily BTC order-book depth within ±2% across all exchanges, with spot, linear perp, and inverse perp lines kept separate.',
+				'Daily BTC order-book depth within ±2% across all exchanges, with spot, USD perp, and COIN perp lines kept separate.',
 			valueSymbol: '$'
 		}
 	],
@@ -166,22 +166,22 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, readonly ResearchPrese
 		},
 		{
 			id: 'normalized-linear-exchanges',
-			label: 'Linear Perps',
+			label: 'USD Perps',
 			metric: 'normalized-volume',
 			segment: 'linear_perp',
 			grouping: 'exchange',
-			title: 'Liquidity-normalized linear perp volume · Exchanges',
-			description: `Daily linear perpetual volume constrained by observed active liquidity, by exchange. ${LINEAR_PERPS} ${TOP_EXCHANGES}`,
+			title: 'Liquidity-normalized USD perp volume · Exchanges',
+			description: `Daily USD perp volume constrained by observed active liquidity, by exchange. ${LINEAR_PERPS} ${TOP_EXCHANGES}`,
 			valueSymbol: '$'
 		},
 		{
 			id: 'normalized-inverse-exchanges',
-			label: 'Inverse Perps',
+			label: 'COIN Perps',
 			metric: 'normalized-volume',
 			segment: 'inverse_perp',
 			grouping: 'exchange',
-			title: 'Liquidity-normalized inverse perp volume · Exchanges',
-			description: `Daily inverse perpetual volume constrained by observed active liquidity, by exchange. ${INVERSE_PERPS} ${TOP_EXCHANGES}`,
+			title: 'Liquidity-normalized COIN perp volume · Exchanges',
+			description: `Daily COIN perp volume constrained by observed active liquidity, by exchange. ${INVERSE_PERPS} ${TOP_EXCHANGES}`,
 			valueSymbol: '$'
 		},
 		{
@@ -192,7 +192,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, readonly ResearchPrese
 			grouping: 'venue-type',
 			title: 'Liquidity-normalized volume · CEX vs DEX',
 			description:
-				'Daily normalized volume grouped by exchange type, with spot, linear perp, and inverse perp lines kept separate.',
+				'Daily normalized volume grouped by exchange type, with spot, USD perp, and COIN perp lines kept separate.',
 			valueSymbol: '$'
 		},
 		{
@@ -202,7 +202,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, readonly ResearchPrese
 			segment: 'separate',
 			grouping: 'segment',
 			title: 'Liquidity-normalized volume · By segment',
-			description: 'Daily normalized volume grouped by market segment: spot, linear perps, and inverse perps.',
+			description: 'Daily normalized volume grouped by market segment: spot, USD perps, and COIN perps.',
 			valueSymbol: '$'
 		},
 		{
@@ -218,22 +218,22 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, readonly ResearchPrese
 		},
 		{
 			id: 'survival-linear-exchanges',
-			label: 'Survival · Linear Perps',
+			label: 'Survival · USD Perps',
 			metric: 'survival-ratio',
 			segment: 'linear_perp',
 			grouping: 'exchange',
-			title: 'Normalized / reported linear perp volume · Exchanges',
-			description: `Daily normalized linear perpetual volume divided by reported linear perpetual volume for each exchange. ${LINEAR_PERPS} Exchanges are ranked by latest reported volume; Other is calculated from aggregated normalized and reported volume.`,
+			title: 'Normalized / reported USD perp volume · Exchanges',
+			description: `Daily normalized USD perp volume divided by reported USD perp volume for each exchange. ${LINEAR_PERPS} Exchanges are ranked by latest reported volume; Other is calculated from aggregated normalized and reported volume.`,
 			valueSymbol: '%'
 		},
 		{
 			id: 'survival-inverse-exchanges',
-			label: 'Survival · Inverse Perps',
+			label: 'Survival · COIN Perps',
 			metric: 'survival-ratio',
 			segment: 'inverse_perp',
 			grouping: 'exchange',
-			title: 'Normalized / reported inverse perp volume · Exchanges',
-			description: `Daily normalized inverse perpetual volume divided by reported inverse perpetual volume for each exchange. ${INVERSE_PERPS} Exchanges are ranked by latest reported volume; Other is calculated from aggregated normalized and reported volume.`,
+			title: 'Normalized / reported COIN perp volume · Exchanges',
+			description: `Daily normalized COIN perp volume divided by reported COIN perp volume for each exchange. ${INVERSE_PERPS} Exchanges are ranked by latest reported volume; Other is calculated from aggregated normalized and reported volume.`,
 			valueSymbol: '%'
 		}
 	]

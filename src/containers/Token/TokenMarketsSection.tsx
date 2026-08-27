@@ -1,8 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import type { SortingState } from '@tanstack/react-table'
 import { type KeyboardEvent, Suspense, useMemo, useReducer, useRef } from 'react'
+import { ExchangeFeatureGate, useExchangeAccessState } from '~/containers/Exchanges/ExchangeAccessGate'
+import { fetchExchangeExecutionSlippage } from '~/containers/Exchanges/master.api'
 import { mapExchangePair } from '~/containers/Exchanges/master.mappers'
 import type { PairTableRow } from '~/containers/Exchanges/PairTable'
+import { TokenDepthChart, type VenueSlippage } from '~/containers/Exchanges/TokenDepthChart'
 import type {
 	MarketCategoryTotals,
 	MarketPair,
@@ -35,8 +38,8 @@ const VENUE_TABS: ReadonlyArray<{ id: VenueTabId; label: string }> = [
 
 const CATEGORY_TABS: ReadonlyArray<{ id: Segment; label: string }> = [
 	{ id: 'spot', label: 'Spot' },
-	{ id: 'linear_perp', label: 'Linear Perp' },
-	{ id: 'inverse_perp', label: 'Inverse Perp' }
+	{ id: 'linear_perp', label: 'USD Perp' },
+	{ id: 'inverse_perp', label: 'COIN Perp' }
 ]
 
 const EMPTY_TOTALS: MarketCategoryTotals = { pair_count: 0, total_volume_24h: 0, total_oi_usd: null }
@@ -280,6 +283,20 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 		enabled: Boolean(geckoId)
 	})
 
+	// Measured fills decide which venues the order-book chart may show, so a failure
+	// here means no chart rather than an unverified one. Fetched separately: it is a
+	// small shared payload and the table does not need it. Only fetched for llama
+	// users while the order-book chart itself is gated to them.
+	const exchangeAccess = useExchangeAccessState()
+	const { data: slippageFeed } = useQuery({
+		queryKey: ['exchange-execution-slippage'],
+		queryFn: fetchExchangeExecutionSlippage,
+		staleTime: 6 * 60 * 60 * 1000,
+		refetchOnWindowFocus: false,
+		retry: false,
+		enabled: exchangeAccess === 'authorized'
+	})
+
 	const availableCategoriesByVenue = useMemo(() => {
 		if (!data) {
 			return { dex: [], cex: [], all: [] } as Record<VenueTabId, Segment[]>
@@ -323,6 +340,25 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 		() => (data ? rows.map((row) => toPairTableRow(row, data.depth_bands, selectedCategoryTab)) : []),
 		[data, rows, selectedCategoryTab]
 	)
+
+	const perpDepthPairs = useMemo(() => {
+		if (!data) return []
+		const rowsForDepth = [...(data.cex.linear_perp ?? []), ...(data.dex.linear_perp ?? [])]
+		return rowsForDepth.map((row) => toPairTableRow(row, data.depth_bands, 'linear_perp'))
+	}, [data])
+
+	// This token's measured slippage, keyed by venue slug. Only the execution basket
+	// (BTC, ETH, SOL, HYPE, BNB today) has fills, so most tokens resolve to an empty
+	// map and show no order-book chart at all.
+	const tokenSlippage = useMemo<VenueSlippage>(() => {
+		const asset = tokenSymbol.toUpperCase()
+		const map: VenueSlippage = {}
+		for (const [slug, byAsset] of Object.entries(slippageFeed?.venues ?? {})) {
+			const measured = byAsset[asset]
+			if (measured) map[slug] = measured
+		}
+		return map
+	}, [slippageFeed, tokenSymbol])
 
 	const isPerpCategory = selectedCategoryTab !== 'spot'
 
@@ -374,6 +410,13 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 
 	const content = (
 		<>
+			{/* Above the tabs and independent of them: this is the venue comparison for the
+			    token, not a picture of whichever rows the table is filtered to. Gated to
+			    llama users like the exchanges pages until the orderbook data goes public. */}
+			<ExchangeFeatureGate>
+				<TokenDepthChart pairs={perpDepthPairs} slippage={tokenSlippage} symbol={tokenSymbol.toUpperCase()} />
+			</ExchangeFeatureGate>
+
 			<Tabs
 				tabs={visibleVenueTabs}
 				activeTab={selectedVenueTab}
@@ -382,7 +425,6 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 			/>
 
 			<HeaderStrip rows={rows} totals={totals} showOi={isPerpCategory} />
-
 			{/* Remount per venue/category tab so sorting and search reset, matching the prior behavior.
 			    CEX and All start with no active sort — rows already come pre-ranked (bybit's top pair
 			    first, then volume) from rankRowsBybitFirst — so no header shows a sort indicator until

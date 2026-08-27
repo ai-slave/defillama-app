@@ -15,12 +15,7 @@ import {
 	useExchangeRegionalMetadata
 } from './ExchangeRegionalInformation'
 import { hasExchangeInformation } from './MetadataGroups'
-import {
-	EXCHANGE_SEGMENTS,
-	type ExchangeOverviewChartModel,
-	type ExchangeProfileModel,
-	type ExchangeSegment
-} from './models'
+import { EXCHANGE_SEGMENTS, type ExchangeOverviewChartModel, type ExchangeProfileModel } from './models'
 import { PairTable } from './PairTable'
 import { ProfileExecution } from './ProfileExecution'
 import { ProfileHistory } from './ProfileHistory'
@@ -29,6 +24,7 @@ import { ProfileMetrics } from './ProfileMetrics'
 import { ProfileRanking } from './ProfileRanking'
 import { ProfileReserves } from './ProfileReserves'
 import { ProfileSegmentTabs } from './ProfileSegmentTabs'
+import { ProfileTokenTable } from './ProfileTokenTable'
 import {
 	DEFAULT_PROFILE_TAB,
 	EXCHANGES_QUERY_KEYS,
@@ -36,16 +32,26 @@ import {
 	getProfileTab,
 	withCountryParam,
 	type ExchangeResearchRange,
+	type ProfileSegmentSelection,
 	type ProfileTab
 } from './queryState'
 import { VenueChart } from './VenueChart'
 
+/**
+ * The markets view to show. `all` is the per-token rollup and is always available once
+ * the venue has any segment; an exact segment is honoured only if the venue trades it,
+ * so a stale ?segment= cannot land on an empty table.
+ */
 export function resolveProfileSegment(
 	profile: ExchangeProfileModel,
-	selected: ExchangeSegment | null
-): ExchangeSegment | null {
-	if (selected && profile.segments[selected]) return selected
-	return EXCHANGE_SEGMENTS.find((segment) => profile.segments[segment]) ?? null
+	selected: ProfileSegmentSelection | null
+): ProfileSegmentSelection | null {
+	const firstSegment = EXCHANGE_SEGMENTS.find((segment) => profile.segments[segment]) ?? null
+	if (!firstSegment) return null
+	if (selected && selected !== 'all' && profile.segments[selected]) return selected
+	// No selection, or one this venue cannot serve, lands on the rollup: it is the view
+	// that works for every venue whatever segments it runs.
+	return 'all'
 }
 
 export function ExchangeProfile({
@@ -131,7 +137,7 @@ function MarketsExchangeProfile({
 				? countryView.regional.segments
 				: null
 	const segment = resolveProfileSegment(profile, getProfileSegment(router.query))
-	const active = segment ? profile.segments[segment] : null
+	const active = segment && segment !== 'all' ? profile.segments[segment] : null
 	const requestedTab = getProfileTab(router.query)
 	const tab: ProfileTab =
 		(requestedTab === 'information' && hasInformation) ||
@@ -147,7 +153,7 @@ function MarketsExchangeProfile({
 		})
 	}
 
-	const setSegment = (nextSegment: ExchangeSegment) => {
+	const setSegment = (nextSegment: ProfileSegmentSelection) => {
 		void pushShallowQuery(router, {
 			[EXCHANGES_QUERY_KEYS.profileSegment]: nextSegment === defaultSegment ? undefined : nextSegment
 		})
@@ -190,6 +196,16 @@ function MarketsExchangeProfile({
 					<div className="flex flex-col gap-2">
 						<ProfileRanking profile={profile} />
 						<ExchangeRegionalInformation profile={profile} asOfDate={asOfDate} view={countryView} />
+					</div>
+				) : segment === 'all' ? (
+					<div className="flex flex-col gap-1">
+						{countryView.status !== 'global' ? (
+							<p className="px-1 body-sm text-tertiary">Markets show global data</p>
+						) : null}
+						<ProfileTokenTable
+							profile={profile}
+							leadingControls={<ProfileSegmentTabs profile={profile} value={segment} onValueChange={setSegment} />}
+						/>
 					</div>
 				) : segment && active ? (
 					<div className="flex flex-col gap-1">

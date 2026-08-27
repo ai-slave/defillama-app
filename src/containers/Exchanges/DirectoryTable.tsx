@@ -9,12 +9,13 @@ import { buildDirectoryColumns, EXECUTION_COLUMN_IDS } from './directoryColumns'
 import { ExchangeCountrySelect } from './ExchangeCountrySelect'
 import type { MasterExchangeRegionCatalogResponse } from './master.types'
 import { filterDirectoryRows, nestDirectoryRows, type DirectoryKind, type DirectoryTreeRow } from './modelHelpers'
-import type { ExchangeDirectoryRowModel, ExchangeSegment } from './models'
+import type { ExchangeDirectoryRowModel } from './models'
 import {
 	DEFAULT_DIRECTORY_QUERY_STATE,
 	EXCHANGES_QUERY_KEYS,
 	getDirectoryQueryState,
-	type DirectoryColumnGroup
+	type DirectoryColumnGroup,
+	type DirectoryScope
 } from './queryState'
 import { SegmentToggleLabel } from './segmentPresentation'
 
@@ -25,9 +26,10 @@ const KIND_OPTIONS = [
 ] as const
 
 const SCOPE_OPTIONS = [
+	{ value: 'all', label: 'All', ariaLabel: 'All segments' },
 	{ value: 'spot', label: <SegmentToggleLabel segment="spot" />, ariaLabel: 'Spot' },
-	{ value: 'linear_perp', label: <SegmentToggleLabel segment="linear_perp" />, ariaLabel: 'Linear Perps' },
-	{ value: 'inverse_perp', label: <SegmentToggleLabel segment="inverse_perp" />, ariaLabel: 'Inverse Perps' }
+	{ value: 'linear_perp', label: <SegmentToggleLabel segment="linear_perp" />, ariaLabel: 'USD Perps' },
+	{ value: 'inverse_perp', label: <SegmentToggleLabel segment="inverse_perp" />, ariaLabel: 'COIN Perps' }
 ] as const
 
 const GROUP_OPTIONS = [
@@ -40,7 +42,17 @@ const GROUP_OPTIONS = [
 
 const GROUP_COLUMN_IDS: Record<DirectoryColumnGroup, string[]> = {
 	// Render order lives in buildDirectoryColumns; this is only the visible set.
+	// Active liquidity replaces the fixed ±2% depth here — same fact, band scaled to
+	// the day's volatility. depth2Usd stays available through the column selector.
+	// The segment-qualified twins sit alongside; scope visibility picks which set
+	// applies, so no scope ever renders both.
 	activity: [
+		'spotActiveLiquidity',
+		'perpActiveLiquidity',
+		'perpOpenInterest',
+		'spotNormalizedVolume',
+		'perpNormalizedVolume',
+		'activeLiquidity',
 		'depth2Usd',
 		'volume24h',
 		'volumeChange24h',
@@ -83,26 +95,72 @@ const ALL_COLUMN_IDS = [
 	...new Set([...Object.values(GROUP_COLUMN_IDS).flat(), ...OPTIONAL_COLUMN_IDS])
 ]
 
+// Columns that only make sense in the merged `all` view: each names its own segment,
+// which would be redundant-at-best and contradictory-at-worst inside a scope that has
+// already fixed the segment.
+const MERGED_ONLY_COLUMN_IDS = [
+	'spotActiveLiquidity',
+	'perpActiveLiquidity',
+	'perpOpenInterest',
+	'spotNormalizedVolume',
+	'perpNormalizedVolume'
+]
+
 // Fee columns follow the active segment scope exactly; perp-only metrics don't apply to
 // spot. Execution columns are measured on the linear-perp basket only today, so they
-// show in that scope alone.
-const SCOPE_HIDDEN_COLUMN_IDS: Record<ExchangeSegment, string[]> = {
+// show in that scope alone. Liquidity follows the same rule: active liquidity needs a
+// normalized-volume band, which exists for spot and USD perps, so COIN perps show the
+// fixed ±2% depth instead of a column of dashes.
+const SCOPE_HIDDEN_COLUMN_IDS: Record<DirectoryScope, string[]> = {
+	// The merged view drops every scope-bound column (they have no segment to read)
+	// and every COIN-perp column: that segment is out of scope here by design.
+	all: [
+		'venueLinks',
+		'kind',
+		'spotFee',
+		'linearPerpFee',
+		'inversePerpFee',
+		'activeLiquidity',
+		'depth2Usd',
+		'volume24h',
+		'volumeChange24h',
+		'openInterestUsd',
+		'openInterestChange24h',
+		'normalizedVolume',
+		'volumeToOi',
+		'volumeToDepth',
+		'sparkline',
+		'marketCount',
+		'coinCount'
+	],
 	spot: [
 		'openInterestUsd',
 		'openInterestChange24h',
 		'volumeToOi',
 		'linearPerpFee',
 		'inversePerpFee',
+		'depth2Usd',
+		...MERGED_ONLY_COLUMN_IDS,
 		...EXECUTION_COLUMN_IDS
 	],
-	linear_perp: ['spotFee', 'inversePerpFee'],
-	inverse_perp: ['spotFee', 'linearPerpFee', ...EXECUTION_COLUMN_IDS]
+	linear_perp: ['spotFee', 'inversePerpFee', 'depth2Usd', ...MERGED_ONLY_COLUMN_IDS],
+	inverse_perp: ['spotFee', 'linearPerpFee', 'activeLiquidity', ...MERGED_ONLY_COLUMN_IDS, ...EXECUTION_COLUMN_IDS]
 }
 
-function directoryColumnVisibility(group: DirectoryColumnGroup, scope: ExchangeSegment): VisibilityState {
-	const hidden = SCOPE_HIDDEN_COLUMN_IDS[scope]
+export function directoryColumnVisibility(group: DirectoryColumnGroup, scope: DirectoryScope): VisibilityState {
+	// The merged view hides fee columns so the metric views spend their width on
+	// measurements, but the Fees view IS those columns: apply the hidden list as-is
+	// there and the view renders only Name and Fee Token. Fees are per-segment, not
+	// scope-bound (they read row.fees), so the spot and USD-perp fees can show; the
+	// COIN-perp fee stays out with the rest of that segment.
+	const hidden =
+		scope === 'all' && group === 'fees'
+			? SCOPE_HIDDEN_COLUMN_IDS.all.filter((id) => id !== 'spotFee' && id !== 'linearPerpFee')
+			: SCOPE_HIDDEN_COLUMN_IDS[scope]
 	const groupColumns = GROUP_COLUMN_IDS[group].filter((id) => !hidden.includes(id))
-	const visible = new Set(['name', 'venueLinks', 'kind', ...groupColumns])
+	// name always shows; links and type are dropped in the merged view (see its hidden
+	// list), so they are only force-added for the exact-segment tables.
+	const visible = new Set(scope === 'all' ? ['name', ...groupColumns] : ['name', 'venueLinks', 'kind', ...groupColumns])
 	return Object.fromEntries(ALL_COLUMN_IDS.map((id) => [id, visible.has(id)]))
 }
 
@@ -120,6 +178,8 @@ export function DirectoryTable({
 	catalog,
 	catalogFailed,
 	executionAvailable,
+	executionCostBasket,
+	executionFillBasket,
 	onCountryChange
 }: {
 	rows: ExchangeDirectoryRowModel[]
@@ -127,6 +187,8 @@ export function DirectoryTable({
 	catalog: MasterExchangeRegionCatalogResponse | null
 	catalogFailed: boolean
 	executionAvailable: boolean
+	executionCostBasket: string[]
+	executionFillBasket: string[]
 	onCountryChange: (country: string | null) => void
 }) {
 	const router = useRouter()
@@ -138,7 +200,14 @@ export function DirectoryTable({
 		() => nestDirectoryRows(filterDirectoryRows(rows, { kind, scope, country, catalog })),
 		[rows, kind, scope, country, catalog]
 	)
-	const columns = React.useMemo(() => buildDirectoryColumns(scope, executionAvailable), [scope, executionAvailable])
+	// Brand rows start collapsed in the merged view: it is the default landing table and
+	// every expanded parent pushes the ranked list further down. The exact-segment
+	// tables keep their expanded default.
+	const brandRowsExpanded = scope === 'all' ? undefined : true
+	const columns = React.useMemo(
+		() => buildDirectoryColumns(scope, executionAvailable, executionCostBasket, executionFillBasket),
+		[scope, executionAvailable, executionCostBasket, executionFillBasket]
+	)
 
 	return (
 		<TableWithSearch<DirectoryTreeRow>
@@ -151,7 +220,7 @@ export function DirectoryTable({
 			header={null}
 			leadingControls={
 				<div className="flex flex-wrap items-center gap-2">
-					<SegmentedControl<ExchangeSegment>
+					<SegmentedControl<DirectoryScope>
 						value={scope}
 						onValueChange={(nextScope) => {
 							void pushShallowQuery(router, {
@@ -207,7 +276,7 @@ export function DirectoryTable({
 				</div>
 			}
 			columnVisibility={directoryColumnVisibility(group, scope)}
-			initialExpanded
+			initialExpanded={brandRowsExpanded}
 			showColumnSelect
 			csvExportAllColumns
 			csvFileName="exchanges-directory"
