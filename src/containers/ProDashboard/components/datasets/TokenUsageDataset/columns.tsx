@@ -79,7 +79,8 @@ export const getColumns = (tokenSymbols: string[]): ColumnDef<ProtocolTokenUsage
 
 	baseColumns.push({
 		header: isMultiToken ? 'Total Amount' : 'Token Amount',
-		accessorKey: 'amountUsd',
+		id: 'amountUsd',
+		accessorFn: (row) => row.amountUsd ?? undefined,
 		cell: ({ row }) => {
 			const value = row.original.amountUsd
 			return (

@@ -60,7 +60,8 @@ const loanColumns: ColumnDef<LoanRow>[] = [
 	{ header: 'Pool', accessorKey: 'pool', size: 180 },
 	{
 		header: 'Principal',
-		accessorKey: 'principal',
+		id: 'principal',
+		accessorFn: (row) => row.principal ?? undefined,
 		cell: ({ getValue }) =>
 			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
@@ -68,7 +69,8 @@ const loanColumns: ColumnDef<LoanRow>[] = [
 	},
 	{
 		header: 'Rate',
-		accessorKey: 'interestRate',
+		id: 'interestRate',
+		accessorFn: (row) => row.interestRate ?? undefined,
 		cell: ({ getValue }) => formatPct(getValue<number>()),
 		meta: { align: 'end' as const },
 		size: 80
@@ -80,7 +82,8 @@ const loanColumns: ColumnDef<LoanRow>[] = [
 	},
 	{
 		header: 'Age',
-		accessorKey: 'ageDays',
+		id: 'ageDays',
+		accessorFn: (row) => row.ageDays ?? undefined,
 		cell: ({ getValue }) => {
 			const days = getValue<number>()
 			if (days <= 0) return '< 1d'
@@ -92,7 +95,8 @@ const loanColumns: ColumnDef<LoanRow>[] = [
 	},
 	{
 		header: 'Interest Paid',
-		accessorKey: 'interestPaid',
+		id: 'interestPaid',
+		accessorFn: (row) => row.interestPaid ?? undefined,
 		cell: ({ getValue }) =>
 			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
@@ -100,7 +104,8 @@ const loanColumns: ColumnDef<LoanRow>[] = [
 	},
 	{
 		header: 'Pay Interval',
-		accessorKey: 'paymentIntervalDays',
+		id: 'paymentIntervalDays',
+		accessorFn: (row) => row.paymentIntervalDays ?? undefined,
 		cell: ({ getValue }) => `${getValue<number>()}d`,
 		meta: { align: 'end' as const },
 		size: 90
@@ -121,6 +126,7 @@ function LoansTable({ data }: { data: LoanRow[] }) {
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 15 })
 
 	const instance = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: loanColumns,
 		state: { sorting, pagination },

@@ -108,7 +108,7 @@ const stablecoinsColumns = [
 			headerHelperText: 'Chains are ordered by stablecoin issuance on each chain'
 		}
 	}),
-	columnHelper.accessor((row) => (row.yieldBearing ? null : row.pegDeviation), {
+	columnHelper.accessor((row) => (row.yieldBearing ? null : row.pegDeviation) ?? undefined, {
 		id: 'pegDeviation',
 		header: '% Off Peg',
 		cell: ({ getValue, row }) => {
@@ -129,7 +129,7 @@ const stablecoinsColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor((row) => (row.yieldBearing ? null : row.pegDeviation_1m), {
+	columnHelper.accessor((row) => (row.yieldBearing ? null : row.pegDeviation_1m) ?? undefined, {
 		id: 'pegDeviation_1m',
 		header: '1m % Off Peg',
 		cell: ({ getValue, row }) => {
@@ -151,7 +151,8 @@ const stablecoinsColumns = [
 			headerHelperText: 'Shows greatest % price deviation from peg over the past month'
 		}
 	}),
-	columnHelper.accessor('price', {
+	columnHelper.accessor((row) => row.price ?? undefined, {
+		id: 'price',
 		header: 'Price',
 		cell: ({ getValue, row }) => {
 			const value = getValue()
@@ -172,7 +173,8 @@ const stablecoinsColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('change_1d', {
+	columnHelper.accessor((row) => row.change_1d ?? undefined, {
+		id: 'change_1d',
 		header: '1d Change',
 		cell: (info) =>
 			info.row.original.change_1d_nol != null ? (
@@ -192,7 +194,8 @@ const stablecoinsColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('change_7d', {
+	columnHelper.accessor((row) => row.change_7d ?? undefined, {
+		id: 'change_7d',
 		header: '7d Change',
 		cell: (info) =>
 			info.row.original.change_7d_nol != null ? (
@@ -212,7 +215,8 @@ const stablecoinsColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('change_1m', {
+	columnHelper.accessor((row) => row.change_1m ?? undefined, {
+		id: 'change_1m',
 		header: '1m Change',
 		cell: (info) =>
 			info.row.original.change_1m_nol != null ? (
@@ -232,7 +236,8 @@ const stablecoinsColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('mcap', {
+	columnHelper.accessor((row) => row.mcap ?? undefined, {
+		id: 'mcap',
 		header: 'Market Cap',
 		cell: (info) => {
 			const value = info.getValue()

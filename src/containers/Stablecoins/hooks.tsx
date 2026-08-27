@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { isChainsCategoryGroupKey, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { capitalizeFirstLetter, getPercentChange } from '~/utils'
-import { formatPercent } from '~/utils/numberFormat'
 import type { StablecoinBridges } from './types'
 
 type StablecoinCirculatingInput = {
@@ -44,17 +43,8 @@ type GroupBridgeDataInput = {
 	circulatingPrevMonth: number | null
 }
 
-type StablecoinUsageByChainBase = Omit<
-	GroupBridgeDataInput,
-	'bridgedAmount' | 'change_1d' | 'change_7d' | 'change_1m'
-> & {
-	bridgedAmount: string | number | null
-	change_1d: number | null
-	change_7d: number | null
-	change_1m: number | null
-}
-
-type StablecoinUsageByChainRow = StablecoinUsageByChainBase & {
+type StablecoinUsageByChainRow = GroupBridgeDataInput & {
+	bridgedPercent: number | null
 	bridgeInfo: StablecoinBridgeInfo
 	subRows?: StablecoinUsageByChainRow[]
 }
@@ -265,23 +255,13 @@ export const groupBridgeData = (
 		const parentBridges = parent.bridges
 		const percentBridged =
 			parent.circulating != null && parent.circulating > 0 && parent.bridgedAmount != null
-				? (parent.bridgedAmount / parent.circulating) * 100.0
-				: null
-		const percentBridgedtoDisplay =
-			percentBridged != null
-				? percentBridged < 100
-					? formatPercent(percentBridged, {
-							input: 'percent',
-							minimumFractionDigits: 2,
-							maximumFractionDigits: 2,
-							useGrouping: false
-						})
-					: '100%'
+				? Math.min(100, (parent.bridgedAmount / parent.circulating) * 100)
 				: null
 		const bridgeIds = parentBridges ? Object.keys(parentBridges) : []
 		if (!parentBridges || bridgeIds.length === 0) {
 			finalData[parent.name] = {
 				...parent,
+				bridgedPercent: percentBridged,
 				bridgeInfo: {
 					name: '-'
 				}
@@ -307,14 +287,14 @@ export const groupBridgeData = (
 					childData = {
 						...parent,
 						bridgeInfo: resolvedBridgeInfo,
-						bridgedAmount: percentBridgedtoDisplay,
+						bridgedPercent: percentBridged,
 						name: `Natively Issued`
 					}
 				} else {
 					childData = {
 						...parent,
 						bridgeInfo: resolvedBridgeInfo,
-						bridgedAmount: percentBridgedtoDisplay,
+						bridgedPercent: percentBridged,
 						name: firstBridgeAmount.sourceChain
 							? `Bridged from ${capitalizeFirstLetter(firstBridgeAmount.sourceChain)}`
 							: 'Bridged'
@@ -323,7 +303,7 @@ export const groupBridgeData = (
 				finalData[parent.name] = {
 					...parent,
 					bridgeInfo: resolvedBridgeInfo,
-					bridgedAmount: percentBridgedtoDisplay,
+					bridgedPercent: percentBridged,
 					subRows: [childData]
 				}
 			} else {
@@ -342,19 +322,8 @@ export const groupBridgeData = (
 							percentBridged == null
 								? null
 								: totalBridged > 0
-									? (parentAmountBridged / totalBridged) * (percentBridged > 100 ? 100 : percentBridged)
+									? (parentAmountBridged / totalBridged) * percentBridged
 									: 0
-						const percentBridgedBreakdownToDisplay =
-							percentBridgedBreakdown == null
-								? null
-								: percentBridgedBreakdown < 100
-									? formatPercent(percentBridgedBreakdown, {
-											input: 'percent',
-											minimumFractionDigits: 2,
-											maximumFractionDigits: 2,
-											useGrouping: false
-										})
-									: '100%'
 
 						const childData = {
 							...parent,
@@ -362,7 +331,8 @@ export const groupBridgeData = (
 								? `Bridged from ${capitalizeFirstLetter(bridgeAmount.sourceChain)}`
 								: 'Bridged',
 							bridgeInfo: bridgeInfo,
-							bridgedAmount: percentBridgedBreakdownToDisplay,
+							bridgedAmount: parentAmountBridged,
+							bridgedPercent: percentBridgedBreakdown,
 							circulating: parentAmountBridged,
 							change_1d: null,
 							change_7d: null,
@@ -370,7 +340,7 @@ export const groupBridgeData = (
 						}
 						finalData[parent.name] = {
 							...parent,
-							bridgedAmount: percentBridgedtoDisplay,
+							bridgedPercent: percentBridged,
 							bridgeInfo: {
 								name: '-'
 							},

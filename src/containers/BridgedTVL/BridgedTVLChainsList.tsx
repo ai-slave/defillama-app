@@ -80,7 +80,7 @@ const bridgedColumns = [
 			headerClassName: 'w-[min(200px,40vw)]'
 		}
 	}),
-	columnHelper.accessor((row) => row.total.total, {
+	columnHelper.accessor((row) => row.total.total ?? undefined, {
 		id: 'total',
 		header: 'Total Bridged',
 		cell: (info) =>

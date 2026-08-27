@@ -103,6 +103,25 @@ const pageMetadata = {
 	emissionsProtocolBySlug: {}
 }
 
+function market(
+	pair: string,
+	volume24h: number | null,
+	rwaPlatformSlug: string
+): IEquitiesOnchainResponse['perps'][number] {
+	return {
+		pair,
+		volume24h,
+		rwaPlatformSlug,
+		price: null,
+		openInterest: null,
+		annualizedFundingRate: null,
+		tradeUrl: 'https://example.com',
+		contractSlug: pair,
+		exchangeType: 'CEX',
+		updatedAt: '2026-08-27T00:00:00Z'
+	}
+}
+
 beforeEach(() => {
 	vi.clearAllMocks()
 	mocks.fetchEquitiesSummary.mockResolvedValue(emptySummary)
@@ -240,6 +259,61 @@ describe('getEquitiesTickerPageData', () => {
 			activeMarketcap: 0,
 			issuerRwaPlatformName: 'Ondo Finance'
 		})
+	})
+
+	it('promotes only the highest-volume Bybit pair without mutating the API response', async () => {
+		const onchain: IEquitiesOnchainResponse = {
+			perps: [
+				market('Bybit small', 10, 'bybit'),
+				market('Binance', 300, 'binance'),
+				market('Bybit large', 200, 'bybit'),
+				market('Ostium', null, 'ostium'),
+				market('Zero', 0, 'other')
+			],
+			tokens: []
+		}
+		for (const row of onchain.perps) Object.freeze(row)
+		Object.freeze(onchain.perps)
+		Object.freeze(onchain)
+		mocks.fetchEquitiesOnchain.mockResolvedValue(onchain)
+
+		const result = await getEquitiesTickerPageData('NVDA', 'US', pageMetadata)
+
+		expect(result?.onchain?.perps.map(({ pair }) => pair)).toEqual([
+			'Bybit large',
+			'Binance',
+			'Bybit small',
+			'Zero',
+			'Ostium'
+		])
+		expect(onchain.perps.map(({ pair }) => pair)).toEqual(['Bybit small', 'Binance', 'Bybit large', 'Ostium', 'Zero'])
+	})
+
+	it('orders markets by descending volume with missing values last when Bybit is absent', async () => {
+		mocks.fetchEquitiesOnchain.mockResolvedValue({
+			perps: [market('Ostium', null, 'ostium'), market('Zero', 0, 'other'), market('Binance', 300, 'binance')],
+			tokens: []
+		})
+
+		const result = await getEquitiesTickerPageData('NVDA', 'US', pageMetadata)
+
+		expect(result?.onchain?.perps.map(({ pair }) => pair)).toEqual(['Binance', 'Zero', 'Ostium'])
+	})
+
+	it.each([null, 0])('keeps Bybit first by default even when its volume is %s', async (volume) => {
+		mocks.fetchEquitiesOnchain.mockResolvedValue({
+			perps: [
+				market('Ostium', null, 'ostium'),
+				market('Binance', 300, 'binance'),
+				market('Bybit', volume, 'bybit'),
+				market('Bybit missing', null, 'bybit')
+			],
+			tokens: []
+		})
+
+		const result = await getEquitiesTickerPageData('NVDA', 'US', pageMetadata)
+
+		expect(result?.onchain?.perps.map(({ pair }) => pair)).toEqual(['Bybit', 'Binance', 'Ostium', 'Bybit missing'])
 	})
 
 	it('keeps filings and on-chain data available when price history fails', async () => {

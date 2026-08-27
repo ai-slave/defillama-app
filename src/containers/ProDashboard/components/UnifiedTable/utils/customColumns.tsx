@@ -361,7 +361,7 @@ export function createCustomColumnDef({
 	return {
 		id: definition.id,
 		header: definition.name,
-		accessorFn: (row) => row.customValues[definition.id] ?? null,
+		accessorFn: (row) => row.customValues[definition.id] ?? undefined,
 		meta: { align: 'end' as const },
 		cell: ({ row }) => renderer(row.original.customValues[definition.id] ?? null)
 	}

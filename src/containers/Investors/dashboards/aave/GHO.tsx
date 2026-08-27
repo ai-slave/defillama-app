@@ -53,7 +53,8 @@ const ghoMarketColumns: ColumnDef<GHOMarketRow>[] = [
 	{ header: 'Chain', accessorKey: 'chain', size: 120 },
 	{
 		header: 'Market Size',
-		accessorKey: 'sizeUsd',
+		id: 'sizeUsd',
+		accessorFn: (row) => row.sizeUsd ?? undefined,
 		cell: ({ getValue }) =>
 			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
@@ -61,7 +62,8 @@ const ghoMarketColumns: ColumnDef<GHOMarketRow>[] = [
 	},
 	{
 		header: 'Total Borrowed',
-		accessorKey: 'totalBorrowedUsd',
+		id: 'totalBorrowedUsd',
+		accessorFn: (row) => row.totalBorrowedUsd ?? undefined,
 		cell: ({ getValue }) =>
 			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
@@ -69,7 +71,8 @@ const ghoMarketColumns: ColumnDef<GHOMarketRow>[] = [
 	},
 	{
 		header: 'Available Liquidity',
-		accessorKey: 'availableLiquidityUsd',
+		id: 'availableLiquidityUsd',
+		accessorFn: (row) => row.availableLiquidityUsd ?? undefined,
 		cell: ({ getValue }) =>
 			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
@@ -77,14 +80,16 @@ const ghoMarketColumns: ColumnDef<GHOMarketRow>[] = [
 	},
 	{
 		header: 'Borrow APY',
-		accessorKey: 'borrowApy',
+		id: 'borrowApy',
+		accessorFn: (row) => row.borrowApy ?? undefined,
 		cell: ({ getValue }) => formatPct(getValue<number>()),
 		meta: { align: 'end' as const },
 		size: 110
 	},
 	{
 		header: 'Utilization',
-		accessorKey: 'utilization',
+		id: 'utilization',
+		accessorFn: (row) => row.utilization ?? undefined,
 		cell: ({ getValue }) => formatPct(getValue<number>()),
 		meta: { align: 'end' as const },
 		size: 110
@@ -95,6 +100,7 @@ function GHOMarketsTable({ data }: { data: GHOMarketRow[] }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'sizeUsd', desc: true }])
 
 	const instance = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: ghoMarketColumns,
 		state: { sorting },

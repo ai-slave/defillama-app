@@ -60,7 +60,7 @@ const columns = [
 			headerClassName: 'w-[min(280px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('total24h', {
+	columnHelper.accessor((row) => row.total24h ?? undefined, {
 		id: 'total24h',
 		header: 'NFT Volume 24h',
 		cell: (info) =>

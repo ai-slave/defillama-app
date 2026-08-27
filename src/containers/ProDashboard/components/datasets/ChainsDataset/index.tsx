@@ -146,7 +146,7 @@ export function ChainsDataset({
 					const value = row[metric.key]
 					const total = totals[metric.key]
 
-					return getChainMetricShare(value, total)
+					return getChainMetricShare(value, total) ?? undefined
 				},
 				cell: ({ row }) => {
 					const sourceValue = row.original[metric.key]
@@ -164,14 +164,6 @@ export function ChainsDataset({
 							})}
 						</span>
 					)
-				},
-				sortingFn: (rowA, rowB) => {
-					if (totals[metric.key] <= 0) return 0
-					const sourceA = rowA.original[metric.key]
-					const sourceB = rowB.original[metric.key]
-					if (sourceA === null) return sourceB === null ? 0 : 1
-					if (sourceB === null) return -1
-					return sourceA - sourceB
 				}
 			})
 		)
@@ -182,6 +174,7 @@ export function ChainsDataset({
 	}, [percentageShareColumns])
 
 	const instance = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data: data ?? EMPTY_DATA,
 		columns: allColumns,
 		state: {

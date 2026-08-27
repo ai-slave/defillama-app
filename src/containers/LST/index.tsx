@@ -72,7 +72,8 @@ const LST_COLUMNS = [
 			headerClassName: 'w-[min(280px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('stakedEth', {
+	columnHelper.accessor((row) => row.stakedEth ?? undefined, {
+		id: 'stakedEth',
 		header: 'Staked ETH',
 		cell: (info) =>
 			formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
@@ -81,7 +82,8 @@ const LST_COLUMNS = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('stakedEthInUsd', {
+	columnHelper.accessor((row) => row.stakedEthInUsd ?? undefined, {
+		id: 'stakedEthInUsd',
 		header: 'TVL',
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
@@ -90,7 +92,8 @@ const LST_COLUMNS = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('stakedEthPctChange7d', {
+	columnHelper.accessor((row) => row.stakedEthPctChange7d ?? undefined, {
+		id: 'stakedEthPctChange7d',
 		header: '7d Change',
 		cell: (info) => <PercentChange percent={info.getValue()} />,
 		meta: {
@@ -98,7 +101,8 @@ const LST_COLUMNS = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('stakedEthPctChange30d', {
+	columnHelper.accessor((row) => row.stakedEthPctChange30d ?? undefined, {
+		id: 'stakedEthPctChange30d',
 		header: '30d Change',
 		cell: (info) => <PercentChange percent={info.getValue()} />,
 		meta: {
@@ -106,7 +110,8 @@ const LST_COLUMNS = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('marketShare', {
+	columnHelper.accessor((row) => row.marketShare ?? undefined, {
+		id: 'marketShare',
 		header: 'Market Share',
 		cell: ({ getValue }) => {
 			const value = getValue()
@@ -145,7 +150,8 @@ const LST_COLUMNS = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('ethPeg', {
+	columnHelper.accessor((row) => row.ethPeg ?? undefined, {
+		id: 'ethPeg',
 		header: 'ETH Peg',
 		cell: ({ getValue, row }) => {
 			const value = getValue()
@@ -171,7 +177,8 @@ const LST_COLUMNS = [
 				'Market Rate (pulled from 1inch) divided by Expected Rate. Hover for Market Rate and Expected Rate Info.'
 		}
 	}),
-	columnHelper.accessor('mcapOverTvl', {
+	columnHelper.accessor((row) => row.mcapOverTvl ?? undefined, {
+		id: 'mcapOverTvl',
 		header: 'Mcap/TVL',
 		cell: ({ getValue }) => formatRatio(getValue()),
 		meta: {
@@ -180,7 +187,8 @@ const LST_COLUMNS = [
 			headerHelperText: 'Market cap / TVL ratio'
 		}
 	}),
-	columnHelper.accessor('apy', {
+	columnHelper.accessor((row) => row.apy ?? undefined, {
+		id: 'apy',
 		header: 'Supply APY',
 		cell: (info) =>
 			info.getValue() != null
@@ -192,7 +200,8 @@ const LST_COLUMNS = [
 			headerHelperText: 'Annualized staking reward rate of the LST'
 		}
 	}),
-	columnHelper.accessor('fee', {
+	columnHelper.accessor((row) => row.fee ?? undefined, {
+		id: 'fee',
 		header: 'Fee',
 		cell: (info) =>
 			info.getValue() != null

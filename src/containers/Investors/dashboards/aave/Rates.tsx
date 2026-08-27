@@ -78,7 +78,8 @@ const rateColumns: ColumnDef<RateComparisonRow>[] = [
 	{ header: 'Market', accessorKey: 'market', size: 200 },
 	{
 		header: 'Market Size',
-		accessorKey: 'sizeUsd',
+		id: 'sizeUsd',
+		accessorFn: (row) => row.sizeUsd ?? undefined,
 		cell: ({ getValue }) =>
 			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
@@ -86,21 +87,24 @@ const rateColumns: ColumnDef<RateComparisonRow>[] = [
 	},
 	{
 		header: 'Supply APY',
-		accessorKey: 'supplyApy',
+		id: 'supplyApy',
+		accessorFn: (row) => row.supplyApy ?? undefined,
 		cell: ({ getValue }) => formatPct(getValue<number>()),
 		meta: { align: 'end' as const },
 		size: 110
 	},
 	{
 		header: 'Borrow APY',
-		accessorKey: 'borrowApy',
+		id: 'borrowApy',
+		accessorFn: (row) => row.borrowApy ?? undefined,
 		cell: ({ getValue }) => formatPct(getValue<number | null>()),
 		meta: { align: 'end' as const },
 		size: 110
 	},
 	{
 		header: 'Utilization',
-		accessorKey: 'utilization',
+		id: 'utilization',
+		accessorFn: (row) => row.utilization ?? undefined,
 		cell: ({ getValue }) => formatPct(getValue<number | null>()),
 		meta: { align: 'end' as const },
 		size: 100
@@ -111,6 +115,7 @@ function RateComparisonTable({ data }: { data: RateComparisonRow[] }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'sizeUsd', desc: true }])
 
 	const instance = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: rateColumns,
 		state: { sorting },

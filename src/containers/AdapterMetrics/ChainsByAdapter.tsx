@@ -185,7 +185,7 @@ const metricColumn = (
 	size: number,
 	csvHeader?: string
 ) =>
-	columnHelper.accessor(accessor, {
+	columnHelper.accessor((row) => accessor(row) ?? undefined, {
 		id,
 		header,
 		cell: (info) =>

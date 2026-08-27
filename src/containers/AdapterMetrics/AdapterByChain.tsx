@@ -604,7 +604,7 @@ const centeredMetricColumn = (
 	size: MetricColumnSize,
 	csvHeader?: string
 ) =>
-	columnHelper.accessor(accessor, {
+	columnHelper.accessor((row) => accessor(row) ?? undefined, {
 		id,
 		header,
 		cell: (info) =>
@@ -626,7 +626,7 @@ const endMetricColumn = (
 	headerHelperText: string,
 	size: MetricColumnSize
 ) =>
-	columnHelper.accessor(accessor, {
+	columnHelper.accessor((row) => accessor(row) ?? undefined, {
 		id,
 		header,
 		cell: (info) =>
@@ -648,7 +648,7 @@ const doubleCountedMetricColumn = (
 	size: MetricColumnSize,
 	csvHeader?: string
 ) =>
-	columnHelper.accessor(accessor, {
+	columnHelper.accessor((row) => accessor(row) ?? undefined, {
 		id,
 		header,
 		cell: (info) => {
@@ -685,7 +685,7 @@ const reportedPerpVolumeColumn = (
 	headerHelperText: string,
 	size: MetricColumnSize
 ) =>
-	columnHelper.accessor(accessor, {
+	columnHelper.accessor((row) => accessor(row) ?? undefined, {
 		id,
 		header,
 		cell: (info) => {
@@ -736,7 +736,7 @@ const openInterestMetricColumn = (
 	size: MetricColumnSize,
 	align: 'center' | 'end' = 'center'
 ) =>
-	columnHelper.accessor(accessor, {
+	columnHelper.accessor((row) => accessor(row) ?? undefined, {
 		id,
 		header,
 		cell: (info) => {
@@ -766,7 +766,7 @@ const openInterestMetricColumn = (
 	})
 
 const pfOrPsColumn = (label: 'P/F' | 'P/S', headerHelperText: string) =>
-	columnHelper.accessor((protocol) => protocol.pfOrPs, {
+	columnHelper.accessor((protocol) => protocol.pfOrPs ?? undefined, {
 		id: 'pfOrPs',
 		header: label,
 		cell: (info) => formatRatio(info.getValue()),

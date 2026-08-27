@@ -16,7 +16,7 @@ export function Treasuries({ data, entity }: { data: ITreasuryRow[]; entity: boo
 		() =>
 			entity
 				? columns.filter((c) => {
-						const key = 'accessorKey' in c ? String(c.accessorKey) : ''
+						const key = c.id ?? ('accessorKey' in c ? String(c.accessorKey) : '')
 						return !['ownTokens', 'coreTvl', 'mcap'].includes(key)
 					})
 				: columns,
@@ -115,7 +115,7 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('stablecoins', {
+	columnHelper.accessor((row) => row.stablecoins ?? undefined, {
 		id: 'stablecoins',
 		header: 'Stablecoins',
 		cell: (info) =>
@@ -125,7 +125,7 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('majors', {
+	columnHelper.accessor((row) => row.majors ?? undefined, {
 		id: 'majors',
 		header: 'Majors (BTC, ETH)',
 		cell: (info) =>
@@ -135,7 +135,8 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('ownTokens', {
+	columnHelper.accessor((row) => row.ownTokens ?? undefined, {
+		id: 'ownTokens',
 		header: 'Own Tokens',
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
@@ -144,7 +145,7 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('others', {
+	columnHelper.accessor((row) => row.others ?? undefined, {
 		id: 'others',
 		header: 'Others',
 		cell: (info) =>
@@ -154,7 +155,7 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('coreTvl', {
+	columnHelper.accessor((row) => row.coreTvl ?? undefined, {
 		id: 'coreTvl',
 		header: 'Total excl. own tokens',
 		cell: (info) =>
@@ -164,7 +165,7 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('tvl', {
+	columnHelper.accessor((row) => row.tvl ?? undefined, {
 		id: 'tvl',
 		header: 'Total Treasury',
 		cell: (info) =>
@@ -174,11 +175,11 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('mcap', {
+	columnHelper.accessor((row) => row.mcap ?? undefined, {
 		id: 'mcap',
 		header: 'Mcap',
 		cell: (info) =>
-			info.getValue() === null
+			info.getValue() == null
 				? null
 				: formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: {

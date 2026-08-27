@@ -87,28 +87,32 @@ const governanceColumns = [
 			headerClassName: 'w-[min(220px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('proposalsCount', {
+	columnHelper.accessor((row) => row.proposalsCount ?? undefined, {
+		id: 'proposalsCount',
 		header: 'Proposals',
 		meta: {
 			headerClassName: 'w-[100px]',
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('successfulProposals', {
+	columnHelper.accessor((row) => row.successfulProposals ?? undefined, {
+		id: 'successfulProposals',
 		header: 'Successful Proposals',
 		meta: {
 			headerClassName: 'w-[min(180px,40vw)]',
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('proposalsInLast30Days', {
+	columnHelper.accessor((row) => row.proposalsInLast30Days ?? undefined, {
+		id: 'proposalsInLast30Days',
 		header: 'Proposals in last 30 days',
 		meta: {
 			headerClassName: 'w-[min(200px,40vw)]',
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('successfulProposalsInLast30Days', {
+	columnHelper.accessor((row) => row.successfulProposalsInLast30Days ?? undefined, {
+		id: 'successfulProposalsInLast30Days',
 		header: 'Successful Proposals in last 30 days',
 		meta: {
 			headerClassName: 'w-[min(280px,40vw)]',

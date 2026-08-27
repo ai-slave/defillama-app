@@ -125,7 +125,8 @@ const proposalsCompoundColumns = [
 			headerClassName: 'w-[min(360px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('start', {
+	columnHelper.accessor((row) => row.start ?? undefined, {
+		id: 'start',
 		header: 'Start',
 		cell: (info) => <DateCell info={info} />,
 		meta: {
@@ -133,7 +134,8 @@ const proposalsCompoundColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('end', {
+	columnHelper.accessor((row) => row.end ?? undefined, {
+		id: 'end',
 		header: 'End',
 		cell: (info) => <DateCell info={info} />,
 		meta: {
@@ -149,7 +151,8 @@ const proposalsCompoundColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('scores_total', {
+	columnHelper.accessor((row) => row.scores_total ?? undefined, {
+		id: 'scores_total',
 		header: 'Votes',
 		cell: (info) =>
 			formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
@@ -158,7 +161,8 @@ const proposalsCompoundColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('score_curve', {
+	columnHelper.accessor((row) => row.score_curve ?? undefined, {
+		id: 'score_curve',
 		header: 'Controversy',
 		cell: (info) => <ControversyCell info={info} />,
 		meta: {
@@ -178,7 +182,8 @@ const proposalsSnapshotColumns = [
 			headerClassName: 'w-[min(360px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('start', {
+	columnHelper.accessor((row) => row.start ?? undefined, {
+		id: 'start',
 		header: 'Start',
 		cell: (info) => <DateCell info={info} />,
 		meta: {
@@ -186,7 +191,8 @@ const proposalsSnapshotColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('end', {
+	columnHelper.accessor((row) => row.end ?? undefined, {
+		id: 'end',
 		header: 'End',
 		cell: (info) => <DateCell info={info} />,
 		meta: {
@@ -207,7 +213,8 @@ const proposalsSnapshotColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('scores_total', {
+	columnHelper.accessor((row) => row.scores_total ?? undefined, {
+		id: 'scores_total',
 		header: 'Votes',
 		cell: (info) =>
 			formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
@@ -230,7 +237,8 @@ const proposalsSnapshotColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('score_curve', {
+	columnHelper.accessor((row) => row.score_curve ?? undefined, {
+		id: 'score_curve',
 		header: 'Controversy',
 		cell: (info) => <ControversyCell info={info} />,
 		meta: {
@@ -264,7 +272,8 @@ const proposalsTallyColumns = [
 			headerClassName: 'w-[min(360px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('start', {
+	columnHelper.accessor((row) => row.start ?? undefined, {
+		id: 'start',
 		header: 'Start',
 		cell: (info) => <DateCell info={info} />,
 		meta: {
@@ -272,7 +281,8 @@ const proposalsTallyColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('end', {
+	columnHelper.accessor((row) => row.end ?? undefined, {
+		id: 'end',
 		header: 'End',
 		cell: (info) => <DateCell info={info} />,
 		meta: {
@@ -288,7 +298,8 @@ const proposalsTallyColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('scores_total', {
+	columnHelper.accessor((row) => row.scores_total ?? undefined, {
+		id: 'scores_total',
 		header: 'Votes',
 		cell: (info) =>
 			formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
@@ -297,7 +308,8 @@ const proposalsTallyColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('score_curve', {
+	columnHelper.accessor((row) => row.score_curve ?? undefined, {
+		id: 'score_curve',
 		header: 'Controversy',
 		cell: (info) => <ControversyCell info={info} />,
 		meta: {

@@ -231,7 +231,7 @@ function defaultColumns(type: TokenMetricType) {
 
 const mcapColumns = [
 	...defaultColumns('mcap'),
-	columnHelper.accessor('value', {
+	columnHelper.accessor((row) => row.value ?? undefined, {
 		id: 'mcap',
 		header: 'Market Cap',
 		cell: (info) =>
@@ -247,7 +247,7 @@ const mcapColumns = [
 
 const fdvColumns = [
 	...defaultColumns('fdv'),
-	columnHelper.accessor('value', {
+	columnHelper.accessor((row) => row.value ?? undefined, {
 		id: 'fdv',
 		header: 'FDV',
 		cell: (info) =>
@@ -263,7 +263,7 @@ const fdvColumns = [
 
 const priceColumns = [
 	...defaultColumns('price'),
-	columnHelper.accessor('value', {
+	columnHelper.accessor((row) => row.value ?? undefined, {
 		id: 'price',
 		header: 'Token Price',
 		cell: (info) =>
@@ -279,7 +279,7 @@ const priceColumns = [
 
 const outstandingFdvColumns = [
 	...defaultColumns('outstanding-fdv'),
-	columnHelper.accessor('value', {
+	columnHelper.accessor((row) => row.value ?? undefined, {
 		id: 'outstanding-fdv',
 		header: 'Outstanding FDV',
 		cell: (info) =>

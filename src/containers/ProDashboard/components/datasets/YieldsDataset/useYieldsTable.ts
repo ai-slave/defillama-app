@@ -197,6 +197,7 @@ export function useYieldsTable({
 	}, [data, filters])
 
 	const table = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data: filteredData.length > 0 ? filteredData : EMPTY_TABLE_DATA,
 		columns: yieldsDatasetColumns,
 		state: {

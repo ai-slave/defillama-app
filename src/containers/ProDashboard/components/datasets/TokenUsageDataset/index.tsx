@@ -158,6 +158,7 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 	const columns = useMemo(() => getColumns(tokenSymbols), [tokenSymbols])
 
 	const table = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data: filteredData,
 		columns,
 		state: {

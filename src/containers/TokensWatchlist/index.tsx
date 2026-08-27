@@ -108,6 +108,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 	const [expanded, setExpanded] = useState<ExpandedState>({})
 
 	const table = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data: rows,
 		columns,
 		state: { sorting, expanded },

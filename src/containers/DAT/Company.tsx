@@ -341,7 +341,7 @@ const columns = [
 	}),
 	columnHelper.accessor(
 		(row) => {
-			return row.type === 'sale' ? -Number(row.amount) : Number(row.amount)
+			return row.type === 'sale' ? -row.amount : row.amount
 		},
 		{
 			id: 'amount',
@@ -360,7 +360,8 @@ const columns = [
 			}
 		}
 	),
-	columnHelper.accessor('avg_price', {
+	columnHelper.accessor((row) => row.avg_price ?? undefined, {
+		id: 'avg_price',
 		header: 'Avg Purchase Price',
 		cell: (info) =>
 			info.getValue() != null
@@ -371,7 +372,8 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('usd_value', {
+	columnHelper.accessor((row) => row.usd_value ?? undefined, {
+		id: 'usd_value',
 		header: 'USD Value',
 		cell: (info) =>
 			info.getValue() != null

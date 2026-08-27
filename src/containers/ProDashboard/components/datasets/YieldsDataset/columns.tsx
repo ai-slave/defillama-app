@@ -83,25 +83,29 @@ export const yieldsDatasetColumns: TableOptions<ProYieldRow>['columns'] = [
 		size: 60,
 		meta: { align: 'end' }
 	}),
-	columnHelper.accessor('tvl', {
+	columnHelper.accessor((row) => row.tvl ?? undefined, {
+		id: 'tvl',
 		header: 'TVL',
 		cell: ({ row }) => <DollarCell value={row.original.tvl} />,
 		size: 120,
 		meta: { align: 'end' }
 	}),
-	columnHelper.accessor('apy', {
+	columnHelper.accessor((row) => row.apy ?? undefined, {
+		id: 'apy',
 		header: 'Supply APY',
 		cell: ({ row }) => <PercentCell value={row.original.apy} bold />,
 		size: 110,
 		meta: { align: 'end' }
 	}),
-	columnHelper.accessor('apyBase', {
+	columnHelper.accessor((row) => row.apyBase ?? undefined, {
+		id: 'apyBase',
 		header: 'Base APY',
 		cell: ({ row }) => <PercentCell value={row.original.apyBase} />,
 		size: 100,
 		meta: { align: 'end' }
 	}),
-	columnHelper.accessor('apyReward', {
+	columnHelper.accessor((row) => row.apyReward ?? undefined, {
+		id: 'apyReward',
 		header: 'Reward APY',
 		cell: ({ row }) => (
 			<span className="flex items-center justify-end gap-1">
@@ -114,7 +118,8 @@ export const yieldsDatasetColumns: TableOptions<ProYieldRow>['columns'] = [
 		size: 150,
 		meta: { align: 'end' }
 	}),
-	columnHelper.accessor('apyMean30d', {
+	columnHelper.accessor((row) => row.apyMean30d ?? undefined, {
+		id: 'apyMean30d',
 		header: '30d Avg APY',
 		cell: ({ row }) => <PercentCell value={row.original.apyMean30d} />,
 		size: 120,
@@ -126,7 +131,8 @@ export const yieldsDatasetColumns: TableOptions<ProYieldRow>['columns'] = [
 		size: 120,
 		meta: { align: 'end' }
 	}),
-	columnHelper.accessor('volumeUsd1d', {
+	columnHelper.accessor((row) => row.volumeUsd1d ?? undefined, {
+		id: 'volumeUsd1d',
 		header: '24h Volume',
 		cell: ({ row }) => <DollarCell value={row.original.volumeUsd1d} />,
 		size: 120,
@@ -138,31 +144,36 @@ export const yieldsDatasetColumns: TableOptions<ProYieldRow>['columns'] = [
 		size: 80,
 		meta: { align: 'end' }
 	}),
-	columnHelper.accessor('apyBorrow', {
+	columnHelper.accessor((row) => row.apyBorrow ?? undefined, {
+		id: 'apyBorrow',
 		header: 'Borrow Cost APY',
 		cell: ({ row }) => <PercentCell value={row.original.apyBorrow} />,
 		size: 130,
 		meta: { align: 'end' }
 	}),
-	columnHelper.accessor('totalSupplyUsd', {
+	columnHelper.accessor((row) => row.totalSupplyUsd ?? undefined, {
+		id: 'totalSupplyUsd',
 		header: 'Total Supplied',
 		cell: ({ row }) => <DollarCell value={row.original.totalSupplyUsd} />,
 		size: 130,
 		meta: { align: 'end' }
 	}),
-	columnHelper.accessor('totalBorrowUsd', {
+	columnHelper.accessor((row) => row.totalBorrowUsd ?? undefined, {
+		id: 'totalBorrowUsd',
 		header: 'Total Borrowed',
 		cell: ({ row }) => <DollarCell value={row.original.totalBorrowUsd} />,
 		size: 130,
 		meta: { align: 'end' }
 	}),
-	columnHelper.accessor('totalAvailableUsd', {
+	columnHelper.accessor((row) => row.totalAvailableUsd ?? undefined, {
+		id: 'totalAvailableUsd',
 		header: 'Available',
 		cell: ({ row }) => <DollarCell value={row.original.totalAvailableUsd} />,
 		size: 120,
 		meta: { align: 'end' }
 	}),
-	columnHelper.accessor('ltv', {
+	columnHelper.accessor((row) => row.ltv ?? undefined, {
+		id: 'ltv',
 		header: 'LTV',
 		cell: ({ row }) => {
 			const value = row.original.ltv

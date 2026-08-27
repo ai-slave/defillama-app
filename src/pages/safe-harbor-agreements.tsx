@@ -157,7 +157,8 @@ const columns = [
 			headerClassName: 'w-[min(280px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('tvl', {
+	columnHelper.accessor((row) => row.tvl ?? undefined, {
+		id: 'tvl',
 		header: 'TVL',
 		cell: (info) =>
 			info.getValue() != null
@@ -168,7 +169,8 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('fees', {
+	columnHelper.accessor((row) => row.fees ?? undefined, {
+		id: 'fees',
 		header: '24h Fees',
 		cell: (info) =>
 			info.getValue() != null
@@ -179,7 +181,8 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('revenue', {
+	columnHelper.accessor((row) => row.revenue ?? undefined, {
+		id: 'revenue',
 		header: '24h Revenue',
 		cell: (info) =>
 			info.getValue() != null
@@ -190,7 +193,8 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('dexVolume', {
+	columnHelper.accessor((row) => row.dexVolume ?? undefined, {
+		id: 'dexVolume',
 		header: '24h DEX Volume',
 		cell: (info) =>
 			info.getValue() != null

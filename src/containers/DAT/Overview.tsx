@@ -187,7 +187,8 @@ const overviewColumns = [
 			}
 		}
 	),
-	columnHelper.accessor('totalCost', {
+	columnHelper.accessor((row) => row.totalCost ?? undefined, {
+		id: 'totalCost',
 		header: 'Cost Basis',
 		cell: (info) =>
 			info.getValue() != null
@@ -198,7 +199,8 @@ const overviewColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('totalUsdValue', {
+	columnHelper.accessor((row) => row.totalUsdValue ?? undefined, {
+		id: 'totalUsdValue',
 		header: "Today's Holdings Value",
 		cell: (info) =>
 			info.getValue() != null
@@ -209,7 +211,8 @@ const overviewColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('price', {
+	columnHelper.accessor((row) => row.price ?? undefined, {
+		id: 'price',
 		header: 'Stock Price',
 		cell: ({ getValue, row }) => {
 			const price = getValue()
@@ -238,7 +241,8 @@ const overviewColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('realized_mNAV', {
+	columnHelper.accessor((row) => row.realized_mNAV ?? undefined, {
+		id: 'realized_mNAV',
 		header: 'Realized mNAV',
 		cell: (info) =>
 			info.getValue() != null
@@ -251,7 +255,8 @@ const overviewColumns = [
 				'Market Net Asset Value based only on the current outstanding common shares, with no dilution considered.'
 		}
 	}),
-	columnHelper.accessor('realistic_mNAV', {
+	columnHelper.accessor((row) => row.realistic_mNAV ?? undefined, {
+		id: 'realistic_mNAV',
 		header: 'Realistic mNAV',
 		cell: (info) =>
 			info.getValue() != null
@@ -264,7 +269,8 @@ const overviewColumns = [
 				'Market Net Asset Value adjusted for expected dilution from in-the-money options and convertibles that are likely to be exercised'
 		}
 	}),
-	columnHelper.accessor('max_mNAV', {
+	columnHelper.accessor((row) => row.max_mNAV ?? undefined, {
+		id: 'max_mNAV',
 		header: 'Max mNAV',
 		cell: (info) =>
 			info.getValue() != null

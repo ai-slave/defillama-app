@@ -51,7 +51,7 @@ const columns = [
 		size: 200,
 		maxSize: 200
 	}),
-	columnHelper.accessor('currentPrice', {
+	columnHelper.accessor((row) => row.currentPrice ?? undefined, {
 		id: 'currentPrice',
 		header: 'Price',
 		cell: (info) =>
@@ -59,7 +59,7 @@ const columns = [
 		meta: { align: 'end' },
 		size: 120
 	}),
-	columnHelper.accessor('marketCap', {
+	columnHelper.accessor((row) => row.marketCap ?? undefined, {
 		id: 'marketCap',
 		header: 'Market Cap',
 		cell: (info) =>
@@ -67,14 +67,14 @@ const columns = [
 		meta: { align: 'end' },
 		size: 140
 	}),
-	columnHelper.accessor('volume', {
+	columnHelper.accessor((row) => row.volume ?? undefined, {
 		id: 'volume',
 		header: 'Volume',
 		cell: (info) => formatEquitiesCompanyVolume(info.getValue()),
 		meta: { align: 'end' },
 		size: 130
 	}),
-	columnHelper.accessor('priceChangePercentage1d', {
+	columnHelper.accessor((row) => row.priceChangePercentage1d ?? undefined, {
 		id: 'priceChangePercentage1d',
 		header: '1d Change',
 		cell: (info) => {
@@ -86,7 +86,7 @@ const columns = [
 		meta: { align: 'end' },
 		size: 110
 	}),
-	columnHelper.accessor('priceChangePercentage7d', {
+	columnHelper.accessor((row) => row.priceChangePercentage7d ?? undefined, {
 		id: 'priceChangePercentage7d',
 		header: '7d Change',
 		cell: (info) => {
@@ -98,7 +98,7 @@ const columns = [
 		meta: { align: 'end' },
 		size: 110
 	}),
-	columnHelper.accessor('priceChangePercentage1m', {
+	columnHelper.accessor((row) => row.priceChangePercentage1m ?? undefined, {
 		id: 'priceChangePercentage1m',
 		header: '1m Change',
 		cell: (info) => {
@@ -110,21 +110,21 @@ const columns = [
 		meta: { align: 'end' },
 		size: 110
 	}),
-	columnHelper.accessor('trailingPE', {
+	columnHelper.accessor((row) => row.trailingPE ?? undefined, {
 		id: 'trailingPE',
 		header: 'P/E',
 		cell: (info) => formatRatio(info.getValue()) ?? '—',
 		meta: { align: 'end' },
 		size: 90
 	}),
-	columnHelper.accessor('dividendYield', {
+	columnHelper.accessor((row) => row.dividendYield ?? undefined, {
 		id: 'dividendYield',
 		header: 'Div Yield',
 		cell: (info) => formatEquitiesCompanyDividendYield(info.getValue()),
 		meta: { align: 'end' },
 		size: 100
 	}),
-	columnHelper.accessor('revenueTTM', {
+	columnHelper.accessor((row) => row.revenueTTM ?? undefined, {
 		id: 'revenueTTM',
 		header: 'Revenue TTM',
 		cell: (info) =>
@@ -132,7 +132,7 @@ const columns = [
 		meta: { align: 'end' },
 		size: 140
 	}),
-	columnHelper.accessor('earningsTTM', {
+	columnHelper.accessor((row) => row.earningsTTM ?? undefined, {
 		id: 'earningsTTM',
 		header: 'Earnings TTM',
 		cell: (info) =>
@@ -195,6 +195,7 @@ export function EquitiesCompaniesDataset() {
 
 	const { data, isLoading, error } = useEquitiesCompaniesTableData()
 	const instance = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data: data ?? EMPTY_DATA,
 		columns,
 		state: {

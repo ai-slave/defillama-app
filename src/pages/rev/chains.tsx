@@ -82,7 +82,8 @@ const columns = [
 			headerClassName: 'w-[min(280px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('total24h', {
+	columnHelper.accessor((row) => row.total24h ?? undefined, {
+		id: 'total24h',
 		header: 'REV 24h',
 		cell: (info) =>
 			info.getValue() != null
@@ -94,7 +95,8 @@ const columns = [
 			headerHelperText: definitions.rev.chain['24h']
 		}
 	}),
-	columnHelper.accessor('total30d', {
+	columnHelper.accessor((row) => row.total30d ?? undefined, {
+		id: 'total30d',
 		header: 'REV 30d',
 		cell: (info) =>
 			info.getValue() != null

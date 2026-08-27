@@ -31,7 +31,8 @@ const banksTableColumns = [
 			headerClassName: 'w-[min(220px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('date', {
+	columnHelper.accessor((row) => row.date ?? undefined, {
+		id: 'date',
 		header: 'Closing date',
 		sortingFn: sortingFns.datetime,
 		cell: (info) => (info.getValue() ? formatDate(info.getValue(), { input: 'seconds' }) : ''),

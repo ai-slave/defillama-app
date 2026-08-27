@@ -105,14 +105,16 @@ const columns = [
 			headerClassName: 'w-[min(220px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('headcount', {
+	columnHelper.accessor((row) => row.headcount ?? undefined, {
+		id: 'headcount',
 		header: 'Headcount',
 		meta: {
 			headerClassName: 'w-[110px]',
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('sumAnnualUsdExpenses', {
+	columnHelper.accessor((row) => row.sumAnnualUsdExpenses ?? undefined, {
+		id: 'sumAnnualUsdExpenses',
 		header: 'Annual Expenses',
 		cell: (info) =>
 			info.getValue() != null

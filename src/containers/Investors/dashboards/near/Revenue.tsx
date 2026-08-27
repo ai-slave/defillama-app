@@ -130,14 +130,16 @@ const walletColumns = [
 		},
 		size: 300
 	}),
-	walletColumnHelper.accessor('totalFormatted', {
+	walletColumnHelper.accessor((row) => row.total ?? undefined, {
+		id: 'totalFormatted',
 		header: 'Total NEAR',
-		cell: (info) => <span className="tabular-nums">{info.getValue()}</span>,
+		cell: ({ row }) => <span className="tabular-nums">{row.original.totalFormatted}</span>,
 		size: 150
 	}),
-	walletColumnHelper.accessor('shareFormatted', {
+	walletColumnHelper.accessor((row) => row.total ?? undefined, {
+		id: 'shareFormatted',
 		header: 'Share',
-		cell: (info) => <span className="tabular-nums">{info.getValue()}</span>,
+		cell: ({ row }) => <span className="tabular-nums">{row.original.shareFormatted}</span>,
 		size: 100
 	})
 ]
@@ -164,6 +166,7 @@ export default function Revenue() {
 	}, [data, isLoading, onContentReady])
 
 	const walletTable = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data: data?.walletBreakdown ?? [],
 		columns: walletColumns,
 		getCoreRowModel: getCoreRowModel(),

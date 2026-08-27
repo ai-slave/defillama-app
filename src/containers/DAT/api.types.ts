@@ -79,8 +79,8 @@ export interface IDATTransaction {
 	id: number
 	asset: string
 	amount: string
-	avg_price: string
-	usd_value: string
+	avg_price: string | null
+	usd_value: string | null
 	start_date: string
 	end_date: string
 	report_date: string

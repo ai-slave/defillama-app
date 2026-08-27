@@ -230,6 +230,7 @@ function EmptyState({ children }: { children: React.ReactNode }) {
 
 export function EquitiesMarketsTable({ markets, ticker }: { markets: IEquitiesOnchainMarketRow[]; ticker: string }) {
 	const table = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data: markets,
 		columns: marketsColumns,
 		initialState: {
@@ -237,7 +238,7 @@ export function EquitiesMarketsTable({ markets, ticker }: { markets: IEquitiesOn
 				pageIndex: 0,
 				pageSize: DEFAULT_TABLE_PAGE_SIZE
 			},
-			sorting: [{ id: 'volume24h', desc: true }]
+			sorting: []
 		},
 		getCoreRowModel: getCoreRowModel(),
 		getSortedRowModel: getSortedRowModel(),
@@ -261,6 +262,7 @@ export function EquitiesMarketsTable({ markets, ticker }: { markets: IEquitiesOn
 
 export function EquitiesTokensTable({ tokens, ticker }: { tokens: IEquitiesOnchainTokenRow[]; ticker: string }) {
 	const table = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data: tokens,
 		columns: tokensColumns,
 		initialState: {

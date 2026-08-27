@@ -54,22 +54,26 @@ const columns = [
 		cell: (info) => <span>{info.getValue()}</span>,
 		size: 140
 	}),
-	columnHelper.accessor('tvlUsd', {
+	columnHelper.accessor((row) => row.tvlUsd ?? undefined, {
+		id: 'tvlUsd',
 		header: 'TVL',
 		cell: (info) => <span className="tabular-nums">{info.row.original.tvlFormatted}</span>,
 		size: 120
 	}),
-	columnHelper.accessor('apy', {
+	columnHelper.accessor((row) => row.apy ?? undefined, {
+		id: 'apy',
 		header: 'APY',
 		cell: (info) => <span className="font-medium text-success tabular-nums">{info.row.original.apyFormatted}</span>,
 		size: 100
 	}),
-	columnHelper.accessor('apyBase', {
+	columnHelper.accessor((row) => row.apyBase ?? undefined, {
+		id: 'apyBase',
 		header: 'Base APY',
 		cell: (info) => <span className="tabular-nums">{formatPct(info.getValue())}</span>,
 		size: 100
 	}),
-	columnHelper.accessor('apyReward', {
+	columnHelper.accessor((row) => row.apyReward ?? undefined, {
+		id: 'apyReward',
 		header: 'Reward APY',
 		cell: (info) => <span className="tabular-nums">{formatPct(info.getValue())}</span>,
 		size: 110
@@ -87,6 +91,7 @@ export default function YieldsEmissions() {
 	}, [data, isLoading, onContentReady])
 
 	const table = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data: data?.yields.pools ?? [],
 		columns,
 		getCoreRowModel: getCoreRowModel(),

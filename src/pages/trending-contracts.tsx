@@ -183,14 +183,16 @@ const columns = (chain: string, blockExplorers: ReturnType<typeof useBlockExplor
 			headerClassName: 'w-[min(280px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('txns', {
+	columnHelper.accessor((row) => row.txns ?? undefined, {
+		id: 'txns',
 		header: 'Transactions',
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('txns_percentage_growth', {
+	columnHelper.accessor((row) => row.txns_percentage_growth ?? undefined, {
+		id: 'txns_percentage_growth',
 		header: 'Tx Growth',
 		cell: (info) => <PercentChange percent={info.getValue()} />,
 		meta: {
@@ -198,14 +200,16 @@ const columns = (chain: string, blockExplorers: ReturnType<typeof useBlockExplor
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('active_accounts', {
+	columnHelper.accessor((row) => row.active_accounts ?? undefined, {
+		id: 'active_accounts',
 		header: 'Active Accounts',
 		meta: {
 			headerClassName: 'w-[150px]',
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('accounts_percentage_growth', {
+	columnHelper.accessor((row) => row.accounts_percentage_growth ?? undefined, {
+		id: 'accounts_percentage_growth',
 		header: 'Account Growth',
 		cell: (info) => <PercentChange percent={info.getValue()} />,
 		meta: {
@@ -213,7 +217,8 @@ const columns = (chain: string, blockExplorers: ReturnType<typeof useBlockExplor
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('gas_spend', {
+	columnHelper.accessor((row) => row.gas_spend ?? undefined, {
+		id: 'gas_spend',
 		header: 'Gas Spent',
 		cell: (info) => <>{formatNumber(info.getValue())} ETH</>,
 		meta: {
@@ -221,7 +226,8 @@ const columns = (chain: string, blockExplorers: ReturnType<typeof useBlockExplor
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('gas_spend_percentage_growth', {
+	columnHelper.accessor((row) => row.gas_spend_percentage_growth ?? undefined, {
+		id: 'gas_spend_percentage_growth',
 		header: 'Gas Growth',
 		cell: (info) => <PercentChange percent={info.getValue()} />,
 		meta: {

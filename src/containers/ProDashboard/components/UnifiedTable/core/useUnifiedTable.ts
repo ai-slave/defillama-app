@@ -218,6 +218,7 @@ export function useUnifiedTable({
 	)
 
 	const table = useReactTable<ProtocolTableRow>({
+		defaultColumn: { sortUndefined: 'last' },
 		data: readModel.rows,
 		columns,
 		getRowId: getProtocolTableRowId,

@@ -306,14 +306,16 @@ const columns = [
 			headerClassName: 'w-[min(200px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('protocols', {
+	columnHelper.accessor((row) => row.protocols ?? undefined, {
+		id: 'protocols',
 		header: 'Protocols',
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('tvl', {
+	columnHelper.accessor((row) => row.tvl ?? undefined, {
+		id: 'tvl',
 		header: 'DeFi TVL',
 		cell: (info) =>
 			info.getValue() != null
@@ -325,7 +327,8 @@ const columns = [
 			headerHelperText: 'Sum of value of all coins held in smart contracts of all the protocols on the chain'
 		}
 	}),
-	columnHelper.accessor('change_1d', {
+	columnHelper.accessor((row) => row.change_1d ?? undefined, {
+		id: 'change_1d',
 		header: '1d TVL Change',
 		cell: (info) => <PercentChange percent={info.getValue()} />,
 		meta: {
@@ -334,7 +337,8 @@ const columns = [
 			headerHelperText: 'Change in TVL in the last 24 hours'
 		}
 	}),
-	columnHelper.accessor('change_7d', {
+	columnHelper.accessor((row) => row.change_7d ?? undefined, {
+		id: 'change_7d',
 		header: '7d TVL Change',
 		cell: (info) => <PercentChange percent={info.getValue()} />,
 		meta: {
@@ -343,7 +347,8 @@ const columns = [
 			headerHelperText: 'Change in TVL in the last 7 days'
 		}
 	}),
-	columnHelper.accessor('change_1m', {
+	columnHelper.accessor((row) => row.change_1m ?? undefined, {
+		id: 'change_1m',
 		header: '1m TVL Change',
 		cell: (info) => <PercentChange percent={info.getValue()} />,
 		meta: {
@@ -434,7 +439,8 @@ const columns = [
 			}
 		}
 	),
-	columnHelper.accessor('stablesMcap', {
+	columnHelper.accessor((row) => row.stablesMcap ?? undefined, {
+		id: 'stablesMcap',
 		header: 'Stables MCap',
 		cell: (info) =>
 			info.getValue() != null
@@ -446,7 +452,8 @@ const columns = [
 			headerHelperText: 'Sum of market cap of all stablecoins on the chain'
 		}
 	}),
-	columnHelper.accessor('dexVolume24h', {
+	columnHelper.accessor((row) => row.dexVolume24h ?? undefined, {
+		id: 'dexVolume24h',
 		header: '24h DEXs Volume',
 		enableSorting: true,
 		cell: (info) =>
@@ -459,7 +466,8 @@ const columns = [
 			headerHelperText: 'Sum of 24h volume on all DEXs on the chain. Updated daily at 00:00UTC'
 		}
 	}),
-	columnHelper.accessor('fees24h', {
+	columnHelper.accessor((row) => row.fees24h ?? undefined, {
+		id: 'fees24h',
 		header: `24h Chain Fees`,
 		enableSorting: true,
 		cell: (info) =>
@@ -472,7 +480,8 @@ const columns = [
 			headerHelperText: definitions.fees.chain['24h']
 		}
 	}),
-	columnHelper.accessor('appRevenue24h', {
+	columnHelper.accessor((row) => row.appRevenue24h ?? undefined, {
+		id: 'appRevenue24h',
 		header: `24h App Revenue`,
 		enableSorting: true,
 		cell: (info) =>
@@ -485,7 +494,8 @@ const columns = [
 			headerHelperText: definitions.appRevenue.chain['24h']
 		}
 	}),
-	columnHelper.accessor('activeUsers24h', {
+	columnHelper.accessor((row) => row.activeUsers24h ?? undefined, {
+		id: 'activeUsers24h',
 		header: '24h Active Addresses',
 		cell: (info) => {
 			const value = info.getValue()
@@ -499,7 +509,8 @@ const columns = [
 			headerHelperText: 'Active addresses in the last 24h'
 		}
 	}),
-	columnHelper.accessor('mcaptvl', {
+	columnHelper.accessor((row) => row.mcaptvl ?? undefined, {
+		id: 'mcaptvl',
 		header: 'Mcap / DeFi TVL',
 		cell: (info) => formatRatio(info.getValue()),
 		meta: {
@@ -508,7 +519,8 @@ const columns = [
 			headerHelperText: 'Market cap / DeFi TVL ratio'
 		}
 	}),
-	columnHelper.accessor('nftVolume24h', {
+	columnHelper.accessor((row) => row.nftVolume24h ?? undefined, {
+		id: 'nftVolume24h',
 		header: '24h NFT Volume',
 		cell: (info) =>
 			info.getValue() != null

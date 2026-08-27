@@ -39,7 +39,7 @@ const columns = [
 		cell: (info) => formatDate(info.getValue()) ?? '-',
 		size: 120
 	}),
-	columnHelper.accessor('reportDate', {
+	columnHelper.accessor((row) => row.reportDate ?? undefined, {
 		id: 'reportDate',
 		header: 'Report Date',
 		cell: (info) => formatDate(info.getValue()) ?? '-',
@@ -155,6 +155,7 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 	}, [data, selectedForm])
 
 	const instance = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data: filteredData,
 		columns,
 		state: {

@@ -184,7 +184,8 @@ function createExposureColumns(methodologies: TokenRiskResponse['exposures']['me
 				headerHelperText: methodologies.asset
 			}
 		}),
-		exposureColumnHelper.accessor('currentMaxBorrowUsd', {
+		exposureColumnHelper.accessor((row) => row.currentMaxBorrowUsd ?? undefined, {
+			id: 'currentMaxBorrowUsd',
 			header: 'Max Borrowable',
 			cell: ({ getValue }) => formatRiskUsd(getValue()),
 			meta: {
@@ -192,7 +193,7 @@ function createExposureColumns(methodologies: TokenRiskResponse['exposures']['me
 				headerHelperText: methodologies.currentMaxBorrowUsd
 			}
 		}),
-		exposureColumnHelper.accessor('minBadDebtAtPriceZeroUsd', {
+		exposureColumnHelper.accessor((row) => row.minBadDebtAtPriceZeroUsd ?? undefined, {
 			id: 'minBadDebtAtPriceZeroUsd',
 			header: 'Bad Debt at $0',
 			cell: ({ row, getValue }) => formatMinBadDebtValue(getValue(), row.original.minBadDebtAtPriceZeroCoverage),
@@ -215,6 +216,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 	const exposureColumns = useMemo(() => createExposureColumns(exposures.methodologies), [exposures.methodologies])
 
 	const exposureTable = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data: exposures.rows,
 		columns: exposureColumns,
 		state: {

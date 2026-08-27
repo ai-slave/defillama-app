@@ -174,7 +174,8 @@ const positionColumns: ColumnDef<HlpPosition>[] = [
 	},
 	{
 		header: 'Size',
-		accessorKey: 'size',
+		id: 'size',
+		accessorFn: (row) => row.size ?? undefined,
 		cell: ({ getValue }) =>
 			formatCompactNumber(getValue<number>(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
@@ -182,7 +183,8 @@ const positionColumns: ColumnDef<HlpPosition>[] = [
 	},
 	{
 		header: 'Entry',
-		accessorKey: 'entryPx',
+		id: 'entryPx',
+		accessorFn: (row) => row.entryPx ?? undefined,
 		cell: ({ getValue }) =>
 			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
@@ -190,7 +192,8 @@ const positionColumns: ColumnDef<HlpPosition>[] = [
 	},
 	{
 		header: 'Pos Value',
-		accessorKey: 'positionValue',
+		id: 'positionValue',
+		accessorFn: (row) => row.positionValue ?? undefined,
 		cell: ({ getValue }) =>
 			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
@@ -198,28 +201,32 @@ const positionColumns: ColumnDef<HlpPosition>[] = [
 	},
 	{
 		header: 'Unrealized',
-		accessorKey: 'unrealizedPnl',
+		id: 'unrealizedPnl',
+		accessorFn: (row) => row.unrealizedPnl ?? undefined,
 		cell: ({ getValue }) => <PnlCell value={getValue<number>()} />,
 		meta: { align: 'end' as const },
 		size: 120
 	},
 	{
 		header: 'ROE',
-		accessorKey: 'roe',
+		id: 'roe',
+		accessorFn: (row) => row.roe ?? undefined,
 		cell: ({ getValue }) => <PercentCell value={getValue<number>()} />,
 		meta: { align: 'end' as const },
 		size: 90
 	},
 	{
 		header: 'Leverage',
-		accessorKey: 'leverage',
+		id: 'leverage',
+		accessorFn: (row) => row.leverage ?? undefined,
 		cell: ({ getValue }) => `${getValue<number>()}x`,
 		meta: { align: 'end' as const },
 		size: 90
 	},
 	{
 		header: 'Liq Price',
-		accessorKey: 'liquidationPx',
+		id: 'liquidationPx',
+		accessorFn: (row) => row.liquidationPx ?? undefined,
 		cell: ({ getValue }) => {
 			const value = getValue<number | null>()
 			return value != null
@@ -231,7 +238,8 @@ const positionColumns: ColumnDef<HlpPosition>[] = [
 	},
 	{
 		header: 'Funding',
-		accessorKey: 'cumFundingSinceOpen',
+		id: 'cumFundingSinceOpen',
+		accessorFn: (row) => row.cumFundingSinceOpen ?? undefined,
 		cell: ({ getValue }) => <PnlCell value={getValue<number>()} />,
 		meta: { align: 'end' as const },
 		size: 110
@@ -241,7 +249,8 @@ const positionColumns: ColumnDef<HlpPosition>[] = [
 const fillColumns: ColumnDef<HlpFill>[] = [
 	{
 		header: 'Time',
-		accessorKey: 'time',
+		id: 'time',
+		accessorFn: (row) => row.time ?? undefined,
 		cell: ({ getValue }) => new Date(getValue<number>()).toLocaleString(),
 		size: 165
 	},
@@ -263,7 +272,8 @@ const fillColumns: ColumnDef<HlpFill>[] = [
 	},
 	{
 		header: 'Price',
-		accessorKey: 'px',
+		id: 'px',
+		accessorFn: (row) => row.px ?? undefined,
 		cell: ({ getValue }) =>
 			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
@@ -271,7 +281,8 @@ const fillColumns: ColumnDef<HlpFill>[] = [
 	},
 	{
 		header: 'Size',
-		accessorKey: 'sz',
+		id: 'sz',
+		accessorFn: (row) => row.sz ?? undefined,
 		cell: ({ getValue }) =>
 			formatCompactNumber(getValue<number>(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
@@ -279,14 +290,16 @@ const fillColumns: ColumnDef<HlpFill>[] = [
 	},
 	{
 		header: 'Closed PnL',
-		accessorKey: 'closedPnl',
+		id: 'closedPnl',
+		accessorFn: (row) => row.closedPnl ?? undefined,
 		cell: ({ getValue }) => <PnlCell value={getValue<number>()} />,
 		meta: { align: 'end' as const },
 		size: 120
 	},
 	{
 		header: 'Fee',
-		accessorKey: 'fee',
+		id: 'fee',
+		accessorFn: (row) => row.fee ?? undefined,
 		cell: ({ getValue }) =>
 			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
@@ -309,7 +322,8 @@ const fillColumns: ColumnDef<HlpFill>[] = [
 const openOrderColumns: ColumnDef<HlpOpenOrder>[] = [
 	{
 		header: 'Time',
-		accessorKey: 'timestamp',
+		id: 'timestamp',
+		accessorFn: (row) => row.timestamp ?? undefined,
 		cell: ({ getValue }) => new Date(getValue<number>()).toLocaleString(),
 		size: 160
 	},
@@ -331,7 +345,8 @@ const openOrderColumns: ColumnDef<HlpOpenOrder>[] = [
 	},
 	{
 		header: 'Price',
-		accessorKey: 'limitPx',
+		id: 'limitPx',
+		accessorFn: (row) => row.limitPx ?? undefined,
 		cell: ({ getValue }) =>
 			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
@@ -339,13 +354,20 @@ const openOrderColumns: ColumnDef<HlpOpenOrder>[] = [
 	},
 	{
 		header: 'Size',
-		accessorKey: 'sz',
+		id: 'sz',
+		accessorFn: (row) => row.sz ?? undefined,
 		cell: ({ getValue }) =>
 			formatCompactNumber(getValue<number>(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 100
 	},
-	{ header: 'Order ID', accessorKey: 'oid', meta: { align: 'end' as const }, size: 120 }
+	{
+		header: 'Order ID',
+		id: 'oid',
+		accessorFn: (row) => row.oid ?? undefined,
+		meta: { align: 'end' as const },
+		size: 120
+	}
 ]
 
 function DataTable<T>({
@@ -365,6 +387,7 @@ function DataTable<T>({
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize })
 
 	const instance = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns,
 		state: { sorting, pagination },
@@ -560,7 +583,8 @@ export default function Positions() {
 					columns={[
 						{
 							header: 'Time',
-							accessorKey: 'time',
+							id: 'time',
+							accessorFn: (row) => row.time ?? undefined,
 							cell: ({ getValue }) => new Date(getValue<number>()).toLocaleString(),
 							size: 160
 						},
@@ -568,7 +592,8 @@ export default function Positions() {
 						{ header: 'Coin', accessorKey: 'coin', size: 80 },
 						{
 							header: 'Rate',
-							accessorKey: 'fundingRate',
+							id: 'fundingRate',
+							accessorFn: (row) => row.fundingRate ?? undefined,
 							cell: ({ getValue }) =>
 								`${formatPercent(getValue<number>(), { input: 'fraction', minimumFractionDigits: 4, maximumFractionDigits: 4, useGrouping: false })}`,
 							meta: { align: 'end' as const },
@@ -576,7 +601,8 @@ export default function Positions() {
 						},
 						{
 							header: 'Szi',
-							accessorKey: 'szi',
+							id: 'szi',
+							accessorFn: (row) => row.szi ?? undefined,
 							cell: ({ getValue }) =>
 								formatCompactNumber(getValue<number>(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 							meta: { align: 'end' as const },
@@ -584,7 +610,8 @@ export default function Positions() {
 						},
 						{
 							header: 'USDC',
-							accessorKey: 'usdc',
+							id: 'usdc',
+							accessorFn: (row) => row.usdc ?? undefined,
 							cell: ({ getValue }) => <PnlCell value={getValue<number>()} />,
 							meta: { align: 'end' as const },
 							size: 110

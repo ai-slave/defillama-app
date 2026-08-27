@@ -387,7 +387,8 @@ const CoinPerformanceColumn = [
 			headerClassName: 'w-[min(240px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('change', {
+	columnHelper.accessor((row) => row.change ?? undefined, {
+		id: 'change',
 		header: 'Δ%',
 		cell: ({ getValue }) => <PercentChange percent={getValue()} />,
 		meta: {
@@ -396,7 +397,8 @@ const CoinPerformanceColumn = [
 			headerHelperText: `Shows how a coin has performed over your chosen time period and in your selected denomination (e.g., $, BTC).`
 		}
 	}),
-	columnHelper.accessor('mcap', {
+	columnHelper.accessor((row) => row.mcap ?? undefined, {
+		id: 'mcap',
 		header: 'Market Cap',
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
@@ -405,7 +407,8 @@ const CoinPerformanceColumn = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('volume1D', {
+	columnHelper.accessor((row) => row.volume1D ?? undefined, {
+		id: 'volume1D',
 		header: '24h Volume',
 		cell: ({ getValue }) => {
 			const value = getValue()
@@ -455,7 +458,8 @@ const CategoryPerformanceColumn = [
 			headerClassName: 'w-[min(240px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('change', {
+	columnHelper.accessor((row) => row.change ?? undefined, {
+		id: 'change',
 		header: 'Δ%',
 		cell: ({ getValue }) => <PercentChange percent={getValue()} />,
 		meta: {
@@ -464,7 +468,8 @@ const CategoryPerformanceColumn = [
 			headerHelperText: `Shows how a category of coins has performed over your chosen time period and in your selected denomination (e.g., $, BTC). Method: 1. calculating the percentage change for each individual coin in the category. 2. weighting these changes based on each coin's market capitalization. 3. averaging these weighted changes to get the overall category performance.`
 		}
 	}),
-	columnHelper.accessor('mcap', {
+	columnHelper.accessor((row) => row.mcap ?? undefined, {
+		id: 'mcap',
 		header: 'Market Cap',
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
@@ -473,7 +478,8 @@ const CategoryPerformanceColumn = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('volume1D', {
+	columnHelper.accessor((row) => row.volume1D ?? undefined, {
+		id: 'volume1D',
 		header: '24h Volume',
 		cell: (info) =>
 			info.getValue() != null
@@ -484,7 +490,8 @@ const CategoryPerformanceColumn = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('nbCoins', {
+	columnHelper.accessor((row) => row.nbCoins ?? undefined, {
+		id: 'nbCoins',
 		header: '# of Coins',
 		meta: {
 			headerClassName: 'w-[110px]',

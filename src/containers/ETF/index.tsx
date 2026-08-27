@@ -167,7 +167,8 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('flows', {
+	columnHelper.accessor((row) => row.flows ?? undefined, {
+		id: 'flows',
 		header: 'Flows',
 		cell: ({ getValue }) => {
 			const value = getValue()
@@ -189,7 +190,8 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('aum', {
+	columnHelper.accessor((row) => row.aum ?? undefined, {
+		id: 'aum',
 		header: 'AUM',
 		cell: (info) =>
 			info.getValue() != null
@@ -200,7 +202,8 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('volume', {
+	columnHelper.accessor((row) => row.volume ?? undefined, {
+		id: 'volume',
 		header: 'Volume',
 		cell: (info) =>
 			info.getValue() != null

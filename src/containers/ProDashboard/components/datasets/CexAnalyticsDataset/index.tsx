@@ -260,6 +260,7 @@ function VenueComparisonTable({ data }: { data: CexAnalyticsSnapshotResponse }) 
 	})
 
 	const instance = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data: data.rows ?? EMPTY_ROWS,
 		columns: cexAnalyticsColumns,
 		state: {

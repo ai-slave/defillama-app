@@ -115,7 +115,8 @@ const earningsColumns = [
 			headerClassName: 'w-[min(240px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('totalMintEarnings', {
+	columnHelper.accessor((row) => row.totalMintEarnings ?? undefined, {
+		id: 'totalMintEarnings',
 		header: 'Mint Earnings',
 		cell: (info) =>
 			info.getValue() != null
@@ -126,7 +127,8 @@ const earningsColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('totalRoyaltyEarnings', {
+	columnHelper.accessor((row) => row.totalRoyaltyEarnings ?? undefined, {
+		id: 'totalRoyaltyEarnings',
 		header: 'Lifetime Royalty Earnings',
 		cell: (info) =>
 			info.getValue() != null
@@ -137,7 +139,8 @@ const earningsColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('total30d', {
+	columnHelper.accessor((row) => row.total30d ?? undefined, {
+		id: 'total30d',
 		header: 'Royalties 30d',
 		cell: (info) =>
 			info.getValue() != null
@@ -148,7 +151,8 @@ const earningsColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('totalEarnings', {
+	columnHelper.accessor((row) => row.totalEarnings ?? undefined, {
+		id: 'totalEarnings',
 		header: 'Total Lifetime Earnings',
 		cell: (info) =>
 			info.getValue() != null

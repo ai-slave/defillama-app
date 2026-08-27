@@ -305,7 +305,7 @@ export const calendarColumns = [
 			headerClassName: 'w-[100px]'
 		}
 	}),
-	columnHelper.accessor('timestamp', {
+	columnHelper.accessor((row) => row.timestamp ?? undefined, {
 		id: 'timestamp',
 		header: 'Date',
 		cell: ({ getValue, row }) => {

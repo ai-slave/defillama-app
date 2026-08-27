@@ -40,63 +40,72 @@ export const cexAnalyticsColumns: ColumnDef<CexAnalyticsSnapshotRow>[] = [
 	},
 	{
 		header: 'Spot 24h',
-		accessorKey: 'spotVolume24h',
+		id: 'spotVolume24h',
+		accessorFn: (row) => row.spotVolume24h ?? undefined,
 		size: 140,
 		meta: { align: 'end' },
 		cell: ({ getValue }) => renderCurrency(getValue() as number)
 	},
 	{
 		header: 'Derivatives 24h',
-		accessorKey: 'derivativesVolume24h',
+		id: 'derivativesVolume24h',
+		accessorFn: (row) => row.derivativesVolume24h ?? undefined,
 		size: 150,
 		meta: { align: 'end' },
 		cell: ({ getValue }) => renderCurrency(getValue() as number)
 	},
 	{
 		header: 'Spot Share',
-		accessorKey: 'spotShare',
+		id: 'spotShare',
+		accessorFn: (row) => row.spotShare ?? undefined,
 		size: 110,
 		meta: { align: 'end' },
 		cell: ({ getValue }) => renderPercent(getValue() as number)
 	},
 	{
 		header: 'Derivatives Share',
-		accessorKey: 'derivativesShare',
+		id: 'derivativesShare',
+		accessorFn: (row) => row.derivativesShare ?? undefined,
 		size: 140,
 		meta: { align: 'end' },
 		cell: ({ getValue }) => renderPercent(getValue() as number)
 	},
 	{
 		header: 'Derivatives / Spot',
-		accessorKey: 'derivativesToSpotRatio',
+		id: 'derivativesToSpotRatio',
+		accessorFn: (row) => row.derivativesToSpotRatio ?? undefined,
 		size: 145,
 		meta: { align: 'end' },
 		cell: ({ getValue }) => renderRatio(getValue() as number | null)
 	},
 	{
 		header: 'Open Interest',
-		accessorKey: 'openInterest',
+		id: 'openInterest',
+		accessorFn: (row) => row.openInterest ?? undefined,
 		size: 135,
 		meta: { align: 'end' },
 		cell: ({ getValue }) => renderCurrency(getValue() as number | null)
 	},
 	{
 		header: 'Avg Leverage',
-		accessorKey: 'avgLeverage',
+		id: 'avgLeverage',
+		accessorFn: (row) => row.avgLeverage ?? undefined,
 		size: 120,
 		meta: { align: 'end' },
 		cell: ({ getValue }) => renderRatio(getValue() as number | null)
 	},
 	{
 		header: 'Clean TVL',
-		accessorKey: 'cleanTvl',
+		id: 'cleanTvl',
+		accessorFn: (row) => row.cleanTvl ?? undefined,
 		size: 120,
 		meta: { align: 'end' },
 		cell: ({ getValue }) => renderCurrency(getValue() as number | null)
 	},
 	{
 		header: 'Volume / TVL',
-		accessorKey: 'volumeToTvl',
+		id: 'volumeToTvl',
+		accessorFn: (row) => row.volumeToTvl ?? undefined,
 		size: 120,
 		meta: { align: 'end' },
 		cell: ({ getValue }) => renderRatio(getValue() as number | null)

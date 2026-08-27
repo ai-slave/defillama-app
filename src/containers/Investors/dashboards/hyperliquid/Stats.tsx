@@ -346,7 +346,8 @@ const perpColumns: ColumnDef<PerpMarket>[] = [
 	},
 	{
 		header: 'Price',
-		accessorKey: 'markPx',
+		id: 'markPx',
+		accessorFn: (row) => row.markPx ?? undefined,
 		cell: ({ getValue }) =>
 			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
@@ -354,7 +355,8 @@ const perpColumns: ColumnDef<PerpMarket>[] = [
 	},
 	{
 		header: 'Oracle',
-		accessorKey: 'oraclePx',
+		id: 'oraclePx',
+		accessorFn: (row) => row.oraclePx ?? undefined,
 		cell: ({ getValue }) => {
 			const value = getValue<number | undefined>()
 			return value
@@ -368,7 +370,7 @@ const perpColumns: ColumnDef<PerpMarket>[] = [
 		header: 'Basis',
 		id: 'basis',
 		accessorFn: (row) => {
-			if (!row.oraclePx) return null
+			if (!row.oraclePx) return undefined
 			return ((row.markPx - row.oraclePx) / row.oraclePx) * 100
 		},
 		cell: ({ getValue }) => {
@@ -382,7 +384,8 @@ const perpColumns: ColumnDef<PerpMarket>[] = [
 	},
 	{
 		header: 'Premium',
-		accessorKey: 'premium',
+		id: 'premium',
+		accessorFn: (row) => row.premium ?? undefined,
 		cell: ({ getValue }) => {
 			const v = getValue<number | null | undefined>()
 			if (v == null) return '—'
@@ -395,7 +398,8 @@ const perpColumns: ColumnDef<PerpMarket>[] = [
 	},
 	{
 		header: '24h Volume',
-		accessorKey: 'dayNtlVlm',
+		id: 'dayNtlVlm',
+		accessorFn: (row) => row.dayNtlVlm ?? undefined,
 		cell: ({ getValue }) =>
 			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
@@ -403,7 +407,8 @@ const perpColumns: ColumnDef<PerpMarket>[] = [
 	},
 	{
 		header: 'Open Interest',
-		accessorKey: 'openInterest',
+		id: 'openInterest',
+		accessorFn: (row) => row.openInterest ?? undefined,
 		cell: ({ getValue }) =>
 			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
@@ -411,7 +416,8 @@ const perpColumns: ColumnDef<PerpMarket>[] = [
 	},
 	{
 		header: 'Funding (ann.)',
-		accessorKey: 'fundingAnnualized',
+		id: 'fundingAnnualized',
+		accessorFn: (row) => row.fundingAnnualized ?? undefined,
 		cell: ({ getValue }) => {
 			const v = getValue<number>()
 			const color = v > 0 ? 'text-success' : v < 0 ? 'text-error' : ''
@@ -431,7 +437,8 @@ const spotColumns: ColumnDef<SpotMarket>[] = [
 	},
 	{
 		header: 'Price',
-		accessorKey: 'markPx',
+		id: 'markPx',
+		accessorFn: (row) => row.markPx ?? undefined,
 		cell: ({ getValue }) =>
 			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
@@ -439,7 +446,8 @@ const spotColumns: ColumnDef<SpotMarket>[] = [
 	},
 	{
 		header: '24h Volume',
-		accessorKey: 'dayNtlVlm',
+		id: 'dayNtlVlm',
+		accessorFn: (row) => row.dayNtlVlm ?? undefined,
 		cell: ({ getValue }) =>
 			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
@@ -447,7 +455,8 @@ const spotColumns: ColumnDef<SpotMarket>[] = [
 	},
 	{
 		header: '24h Change',
-		accessorKey: 'change24hPct',
+		id: 'change24hPct',
+		accessorFn: (row) => row.change24hPct ?? undefined,
 		cell: ({ getValue }) => {
 			const v = getValue<number>()
 			const color = v > 0 ? 'text-success' : v < 0 ? 'text-error' : ''
@@ -467,7 +476,8 @@ const predictedFundingColumns: ColumnDef<PredictedFunding>[] = [
 	},
 	{
 		header: 'HL Predicted',
-		accessorKey: 'hlRate',
+		id: 'hlRate',
+		accessorFn: (row) => row.hlRate ?? undefined,
 		cell: ({ getValue }) => {
 			const v = getValue<number | null>()
 			if (v == null) return '—'
@@ -479,7 +489,8 @@ const predictedFundingColumns: ColumnDef<PredictedFunding>[] = [
 	},
 	{
 		header: 'Spread (HL − Best CEX)',
-		accessorKey: 'spreadToBestCex',
+		id: 'spreadToBestCex',
+		accessorFn: (row) => row.spreadToBestCex ?? undefined,
 		cell: ({ getValue }) => {
 			const v = getValue<number | null>()
 			if (v == null) return '—'
@@ -491,7 +502,8 @@ const predictedFundingColumns: ColumnDef<PredictedFunding>[] = [
 	},
 	{
 		header: 'Binance',
-		accessorKey: 'binanceRate',
+		id: 'binanceRate',
+		accessorFn: (row) => row.binanceRate ?? undefined,
 		cell: ({ getValue }) => {
 			const v = getValue<number | null>()
 			if (v == null) return '—'
@@ -503,7 +515,8 @@ const predictedFundingColumns: ColumnDef<PredictedFunding>[] = [
 	},
 	{
 		header: 'Bybit',
-		accessorKey: 'bybitRate',
+		id: 'bybitRate',
+		accessorFn: (row) => row.bybitRate ?? undefined,
 		cell: ({ getValue }) => {
 			const v = getValue<number | null>()
 			if (v == null) return '—'
@@ -515,7 +528,8 @@ const predictedFundingColumns: ColumnDef<PredictedFunding>[] = [
 	},
 	{
 		header: 'Next Funding',
-		accessorKey: 'nextFundingTime',
+		id: 'nextFundingTime',
+		accessorFn: (row) => row.nextFundingTime ?? undefined,
 		cell: ({ getValue }) => formatTimestamp(getValue<number | null>()),
 		size: 180
 	}
@@ -660,6 +674,7 @@ function PredictedFundingTable({ data }: { data: PredictedFunding[] }) {
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: PAGE_SIZE })
 
 	const instance = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: predictedFundingColumns,
 		state: { sorting, pagination },
@@ -688,6 +703,7 @@ function PerpsTable({ data }: { data: PerpMarket[] }) {
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: PAGE_SIZE })
 
 	const instance = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: perpColumns,
 		state: { sorting, pagination },
@@ -712,6 +728,7 @@ function SpotTable({ data }: { data: SpotMarket[] }) {
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: PAGE_SIZE })
 
 	const instance = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: spotColumns,
 		state: { sorting, pagination },

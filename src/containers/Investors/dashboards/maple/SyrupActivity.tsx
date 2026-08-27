@@ -66,7 +66,8 @@ const DRIP_CLAIMS_CHART: IMultiSeriesChartProps['charts'] = [
 const txColumns: ColumnDef<TxRow>[] = [
 	{
 		header: 'Date',
-		accessorKey: 'timestamp',
+		id: 'timestamp',
+		accessorFn: (row) => row.timestamp ?? undefined,
 		cell: ({ getValue }) => {
 			const timestamp = getValue<number>()
 			return (
@@ -92,7 +93,8 @@ const txColumns: ColumnDef<TxRow>[] = [
 	},
 	{
 		header: 'Amount',
-		accessorKey: 'assetsAmount',
+		id: 'assetsAmount',
+		accessorFn: (row) => row.assetsAmount ?? undefined,
 		cell: ({ getValue }) =>
 			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
@@ -112,7 +114,8 @@ const txColumns: ColumnDef<TxRow>[] = [
 const dripColumns: ColumnDef<DripRow>[] = [
 	{
 		header: 'Date',
-		accessorKey: 'timestamp',
+		id: 'timestamp',
+		accessorFn: (row) => row.timestamp ?? undefined,
 		cell: ({ getValue }) => {
 			const timestamp = getValue<number>()
 			return (
@@ -131,7 +134,8 @@ const dripColumns: ColumnDef<DripRow>[] = [
 	},
 	{
 		header: 'Amount',
-		accessorKey: 'amount',
+		id: 'amount',
+		accessorFn: (row) => row.amount ?? undefined,
 		cell: ({ getValue }) =>
 			formatCompactNumber(getValue<number>(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
@@ -153,6 +157,7 @@ function TxTable({ data }: { data: TxRow[] }) {
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 15 })
 
 	const instance = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: txColumns,
 		state: { sorting, pagination },
@@ -179,6 +184,7 @@ function DripTable({ data }: { data: DripRow[] }) {
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 15 })
 
 	const instance = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: dripColumns,
 		state: { sorting, pagination },

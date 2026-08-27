@@ -1,5 +1,5 @@
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
-import type { IDATInstitutionHolding, IDATInstitutionMetadata } from './api.types'
+import type { IDATInstitutionHolding, IDATInstitutionMetadata, IDATTransaction } from './api.types'
 
 // ── Overview page (digital-asset-treasuries/index) ──────────────────────
 
@@ -86,29 +86,16 @@ export interface IDATCompanyChartByAsset {
 	holdingsChart: IDATChartPayload
 }
 
+export interface IDATTransactionRow extends Omit<IDATTransaction, 'amount' | 'avg_price' | 'usd_value'> {
+	amount: number
+	avg_price: number | null
+	usd_value: number | null
+}
+
 export interface IDATCompanyPageProps {
 	name: string
 	ticker: string
-	transactions: Array<{
-		id: number
-		asset: string
-		amount: string
-		avg_price: string
-		usd_value: string
-		start_date: string
-		end_date: string
-		report_date: string
-		type: string
-		source_type: string
-		source_url: string
-		source_note: string
-		is_approved: boolean
-		reject_reason: string | null
-		last_updated: string
-		ticker: string
-		assetName: string
-		assetTicker: string
-	}>
+	transactions: IDATTransactionRow[]
 	price: number
 	priceChange24h: number | null
 	totalCost: number

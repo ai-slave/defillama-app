@@ -10,7 +10,7 @@ import {
 	type SortingState,
 	useReactTable
 } from '@tanstack/react-table'
-import { act, useState } from 'react'
+import { act, useMemo, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { StreamDoneContext } from '../../../queries'
@@ -20,6 +20,7 @@ import { TablePagination } from '../../Table/TablePagination'
 import UnifiedTable from '../index'
 import type { ProtocolTableLeafRow, ProtocolTableRow } from '../types'
 import { UnifiedVirtualTable } from './UnifiedVirtualTable'
+import { useUnifiedTable } from './useUnifiedTable'
 
 vi.mock('../../../ProDashboardAPIContext', () => ({
 	useProDashboardCatalog: () => ({ getProtocolInfo: () => null }),
@@ -140,6 +141,34 @@ async function waitForContent(container: HTMLElement, content: string) {
 	throw new Error(`Expected rendered content: ${content}`)
 }
 
+function SortingHarness({ columnId }: { columnId: string }) {
+	const [sorting, setSorting] = useState<SortingState>([{ id: columnId, desc: true }])
+	const columnOrder = useMemo(() => ['name', columnId], [columnId])
+	const columnVisibility = useMemo(() => ({ name: true, [columnId]: true }), [columnId])
+	const { table } = useUnifiedTable({
+		config: unifiedTableConfig,
+		rowHeaders: unifiedTableConfig.rowHeaders,
+		searchTerm: '',
+		columnOrder,
+		columnVisibility,
+		sorting,
+		onSortingChange: setSorting
+	})
+	return (
+		<>
+			<button type="button" onClick={() => setSorting([{ id: columnId, desc: false }])}>
+				Ascending
+			</button>
+			<output data-testid="sorted-rows">
+				{table
+					.getSortedRowModel()
+					.rows.map((row) => `${row.original.displayName}:${row.getValue(columnId) ?? 'missing'}`)
+					.join(',')}
+			</output>
+		</>
+	)
+}
+
 function TableHarness() {
 	const [data, setData] = useState(() => Array.from({ length: 21 }, (_, index) => createRow(index + 1)))
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
@@ -209,6 +238,41 @@ describe('UnifiedTable rendering', () => {
 		container.remove()
 		vi.unstubAllGlobals()
 	})
+
+	it.each(['tvl', 'fees24h'])(
+		'sorts missing %s last without losing measured zero or negative values',
+		async (columnId) => {
+			const data: ProtocolsUnifiedTableResponse = {
+				...unifiedTableResponse,
+				rows: [100, null, 0, -20].map((value, index) => ({ ...createRow(index), metrics: { [columnId]: value } }))
+			}
+			vi.stubGlobal(
+				'fetch',
+				vi.fn(
+					async () =>
+						new Response(JSON.stringify(data), {
+							status: 200,
+							headers: { 'content-type': 'application/json' }
+						})
+				)
+			)
+			await act(async () =>
+				root.render(
+					<QueryClientProvider client={createQueryClient()}>
+						<StreamDoneContext.Provider value={true}>
+							<SortingHarness columnId={columnId} />
+						</StreamDoneContext.Provider>
+					</QueryClientProvider>
+				)
+			)
+			await waitForContent(container, 'Row 0:100')
+			const order = () => container.querySelector('[data-testid="sorted-rows"]')!.textContent
+			expect(order()).toBe('Row 0:100,Row 2:0,Row 3:-20,Row 1:missing')
+
+			await act(async () => button('Ascending').click())
+			expect(order()).toBe('Row 3:-20,Row 2:0,Row 0:100,Row 1:missing')
+		}
+	)
 
 	it('renders equal-sized page changes and resets the virtual scroll window', async () => {
 		await act(async () => root.render(<TableHarness />))

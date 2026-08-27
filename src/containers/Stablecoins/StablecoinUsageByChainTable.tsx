@@ -22,7 +22,7 @@ import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInput
 import { Panel } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
 import { TableToolbar } from '~/ui/Toolbar'
-import { formatCompactNumber } from '~/utils/numberFormat'
+import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 
 type StablecoinByChainRow = ReturnType<typeof useGroupBridgeData>[number]
 const columnHelper = createColumnHelper<StablecoinByChainRow>()
@@ -105,14 +105,25 @@ const stablecoinsByChainColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('bridgedAmount', {
-		header: 'Bridged Amount',
+	columnHelper.accessor((row) => row.bridgedPercent ?? undefined, {
+		id: 'bridgedAmount',
+		header: 'Bridged %',
+		cell: ({ getValue }) => {
+			const value = getValue()
+			return formatPercent(value, {
+				input: 'percent',
+				minimumFractionDigits: value === 100 ? 0 : 2,
+				maximumFractionDigits: 2,
+				useGrouping: false
+			})
+		},
 		meta: {
 			headerClassName: 'w-[145px]',
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('change_1d', {
+	columnHelper.accessor((row) => row.change_1d ?? undefined, {
+		id: 'change_1d',
 		header: '1d Change',
 		cell: (info) => <PercentChange percent={info.getValue()} />,
 		meta: {
@@ -120,7 +131,8 @@ const stablecoinsByChainColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('change_7d', {
+	columnHelper.accessor((row) => row.change_7d ?? undefined, {
+		id: 'change_7d',
 		header: '7d Change',
 		cell: (info) => <PercentChange percent={info.getValue()} />,
 		meta: {
@@ -128,7 +140,8 @@ const stablecoinsByChainColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('change_1m', {
+	columnHelper.accessor((row) => row.change_1m ?? undefined, {
+		id: 'change_1m',
 		header: '1m Change',
 		cell: (info) => <PercentChange percent={info.getValue()} />,
 		meta: {
@@ -136,7 +149,8 @@ const stablecoinsByChainColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('circulating', {
+	columnHelper.accessor((row) => row.circulating ?? undefined, {
+		id: 'circulating',
 		header: 'Total Circulating',
 		cell: (info) =>
 			formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),

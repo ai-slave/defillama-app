@@ -3,7 +3,7 @@ import { CHART_COLORS } from '~/constants/colors'
 import { oldBlue } from '~/constants/colors'
 import { getDominancePercent, getNDistinctColors } from '~/utils'
 import { fetchDATInstitutions, fetchDATInstitutionDetail, toUnixMsTimestamp } from './api'
-import type { IDATInstitutionsResponse, IDATTransaction } from './api.types'
+import type { IDATInstitutionsResponse } from './api.types'
 import type {
 	IDATOverviewPageProps,
 	IDATInstitutionOverview,
@@ -12,7 +12,8 @@ import type {
 	IDATInstitutionOverviewByAsset,
 	IDATCompanyPageProps,
 	IDATCompanyAssetBreakdown,
-	IDATCompanyChartByAsset
+	IDATCompanyChartByAsset,
+	IDATTransactionRow
 } from './types'
 
 function breakdownColor(type: string): string | null {
@@ -284,9 +285,9 @@ export async function getDATOverviewDataByAsset(asset: string): Promise<IDATOver
 // ── Company detail page query ───────────────────────────────────────────
 
 export function buildDATTransactionRowsByAsset(
-	transactions: IDATTransaction[]
-): Map<string, Array<[number, number, number, number]>> {
-	const transactionsByAsset = new Map<string, Array<[number, number, number, number]>>()
+	transactions: IDATTransactionRow[]
+): Map<string, Array<[number, number, number | null, number | null]>> {
+	const transactionsByAsset = new Map<string, Array<[number, number, number | null, number | null]>>()
 	const assetsToSort = new Set<string>()
 	for (let i = transactions.length - 1; i >= 0; i--) {
 		const item = transactions[i]
@@ -297,12 +298,7 @@ export function buildDATTransactionRowsByAsset(
 		}
 		const timestamp = Math.floor(Date.parse(item.end_date ?? item.start_date) / 1000)
 		if (rows.length > 0 && timestamp < rows[rows.length - 1][0]) assetsToSort.add(item.asset)
-		rows.push([
-			timestamp,
-			item.type === 'sale' ? -Number(item.amount) : Number(item.amount),
-			Number(item.avg_price),
-			Number(item.usd_value)
-		])
+		rows.push([timestamp, item.type === 'sale' ? -item.amount : item.amount, item.avg_price, item.usd_value])
 	}
 	for (const asset of assetsToSort) transactionsByAsset.get(asset)?.sort((a, b) => a[0] - b[0])
 	return transactionsByAsset
@@ -312,9 +308,16 @@ export async function getDATCompanyData(company: string): Promise<IDATCompanyPag
 	const data = await fetchDATInstitutionDetail(company)
 	if (!data) return null
 
+	const transactions: IDATTransactionRow[] = data.transactions.map((transaction) => ({
+		...transaction,
+		amount: Number(transaction.amount),
+		avg_price: transaction.avg_price == null ? null : Number(transaction.avg_price),
+		usd_value: transaction.usd_value == null ? null : Number(transaction.usd_value)
+	}))
+
 	// The endpoint is normally newest-first. The builder walks it backwards and only sorts an asset
 	// when a local ordering anomaly is detected in the live response.
-	const transactionsByAsset = buildDATTransactionRowsByAsset(data.transactions)
+	const transactionsByAsset = buildDATTransactionRowsByAsset(transactions)
 
 	const chartByAsset: IDATCompanyChartByAsset[] = []
 	for (const assetKey in data.assets) {
@@ -475,7 +478,7 @@ export async function getDATCompanyData(company: string): Promise<IDATCompanyPag
 	let firstAnnouncementTimestamp = Number.POSITIVE_INFINITY
 	let lastAnnouncementTimestamp = Number.NEGATIVE_INFINITY
 
-	for (const transaction of data.transactions) {
+	for (const transaction of transactions) {
 		const reportDate = transaction.report_date
 		const reportTimestamp = new Date(reportDate).getTime()
 		if (!Number.isFinite(reportTimestamp)) continue
@@ -493,7 +496,7 @@ export async function getDATCompanyData(company: string): Promise<IDATCompanyPag
 	return {
 		name: data.name,
 		ticker: data.ticker,
-		transactions: data.transactions,
+		transactions,
 		price: data.price,
 		priceChange24h: data.priceChange24h,
 		totalCost: data.totalCost,

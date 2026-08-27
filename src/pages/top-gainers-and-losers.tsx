@@ -87,7 +87,8 @@ const topGainersAndLosersColumns = [
 			headerHelperText: "Chains are ordered by protocol's highest TVL on each chain"
 		}
 	}),
-	columnHelper.accessor('tvl', {
+	columnHelper.accessor((row) => row.tvl ?? undefined, {
+		id: 'tvl',
 		header: 'TVL',
 		cell: (info) =>
 			info.getValue() != null
@@ -98,7 +99,8 @@ const topGainersAndLosersColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('change_1d', {
+	columnHelper.accessor((row) => row.change_1d ?? undefined, {
+		id: 'change_1d',
 		header: '1d TVL Change',
 		cell: ({ getValue }) => <PercentChange percent={getValue()} />,
 		meta: {
@@ -107,7 +109,8 @@ const topGainersAndLosersColumns = [
 			headerHelperText: 'Change in TVL in the last 24 hours'
 		}
 	}),
-	columnHelper.accessor('mcaptvl', {
+	columnHelper.accessor((row) => row.mcaptvl ?? undefined, {
+		id: 'mcaptvl',
 		header: 'Mcap/TVL',
 		cell: (info) => formatRatio(info.getValue()),
 		meta: {

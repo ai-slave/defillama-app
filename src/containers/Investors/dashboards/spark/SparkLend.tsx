@@ -111,7 +111,8 @@ const poolColumns: ColumnDef<PoolRow>[] = [
 	{ header: 'Chain', accessorKey: 'chain', size: 120 },
 	{
 		header: 'TVL',
-		accessorKey: 'tvlUsd',
+		id: 'tvlUsd',
+		accessorFn: (row) => row.tvlUsd ?? undefined,
 		cell: ({ getValue }) =>
 			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
@@ -119,21 +120,24 @@ const poolColumns: ColumnDef<PoolRow>[] = [
 	},
 	{
 		header: 'Supply APY',
-		accessorKey: 'apy',
+		id: 'apy',
+		accessorFn: (row) => row.apy ?? undefined,
 		cell: ({ getValue }) => formatPct(getValue<number | null>()),
 		meta: { align: 'end' as const },
 		size: 100
 	},
 	{
 		header: 'Base APY',
-		accessorKey: 'apyBase',
+		id: 'apyBase',
+		accessorFn: (row) => row.apyBase ?? undefined,
 		cell: ({ getValue }) => formatPct(getValue<number | null>()),
 		meta: { align: 'end' as const },
 		size: 110
 	},
 	{
 		header: 'Reward APY',
-		accessorKey: 'apyReward',
+		id: 'apyReward',
+		accessorFn: (row) => row.apyReward ?? undefined,
 		cell: ({ getValue }) => formatPct(getValue<number | null>()),
 		meta: { align: 'end' as const },
 		size: 120
@@ -145,6 +149,7 @@ function YieldPoolsTable({ data }: { data: PoolRow[] }) {
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 15 })
 
 	const instance = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: poolColumns,
 		state: { sorting, pagination },

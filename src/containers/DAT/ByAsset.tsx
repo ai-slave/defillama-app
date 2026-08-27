@@ -152,7 +152,7 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 				align: 'start'
 			}
 		}),
-		columnHelper.accessor((row) => row.holdings.amount, {
+		columnHelper.accessor((row) => row.holdings.amount ?? undefined, {
 			id: 'totalAssetAmount',
 			header: 'Holdings',
 			cell: ({ getValue }) => {
@@ -167,7 +167,7 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 				align: 'end'
 			}
 		}),
-		columnHelper.accessor((row) => row.holdings.usdValue, {
+		columnHelper.accessor((row) => row.holdings.usdValue ?? undefined, {
 			id: 'totalUsdValue',
 			header: "Today's Holdings Value",
 			cell: ({ getValue }) => {
@@ -180,7 +180,8 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 				align: 'end'
 			}
 		}),
-		columnHelper.accessor('price', {
+		columnHelper.accessor((row) => row.price ?? undefined, {
+			id: 'price',
 			header: 'Stock Price',
 			cell: ({ getValue, row }) => {
 				const price = getValue()
@@ -209,7 +210,7 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 				align: 'end'
 			}
 		}),
-		columnHelper.accessor((row) => row.holdings.supplyPercentage, {
+		columnHelper.accessor((row) => row.holdings.supplyPercentage ?? undefined, {
 			id: 'supplyPercentage',
 			header: `% of ${symbol} Circulating Supply`,
 			cell: ({ getValue }) => {
@@ -231,7 +232,8 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 				align: 'end'
 			}
 		}),
-		columnHelper.accessor('realized_mNAV', {
+		columnHelper.accessor((row) => row.realized_mNAV ?? undefined, {
+			id: 'realized_mNAV',
 			header: 'Realized mNAV',
 			cell: ({ getValue }) => {
 				const realized_mNAV = getValue()
@@ -245,7 +247,8 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 					'Market Net Asset Value based only on the current outstanding common shares, with no dilution considered.'
 			}
 		}),
-		columnHelper.accessor('realistic_mNAV', {
+		columnHelper.accessor((row) => row.realistic_mNAV ?? undefined, {
+			id: 'realistic_mNAV',
 			header: 'Realistic mNAV',
 			cell: ({ getValue }) => {
 				const realistic_mNAV = getValue()
@@ -261,7 +264,8 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 					'Market Net Asset Value adjusted for expected dilution from in-the-money options and convertibles that are likely to be exercised'
 			}
 		}),
-		columnHelper.accessor('max_mNAV', {
+		columnHelper.accessor((row) => row.max_mNAV ?? undefined, {
+			id: 'max_mNAV',
 			header: 'Max mNAV',
 			cell: ({ getValue }) => {
 				const max_mNAV = getValue()
@@ -275,7 +279,7 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 					'Market Net Asset Value under the fully diluted scenario, assuming every warrant, option, and convertible is exercised (the most conservative/worst-case view)'
 			}
 		}),
-		columnHelper.accessor((row) => row.holdings.avgPrice, {
+		columnHelper.accessor((row) => row.holdings.avgPrice ?? undefined, {
 			id: 'avgPrice',
 			header: 'Avg Purchase Price',
 			cell: ({ getValue }) => {

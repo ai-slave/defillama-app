@@ -34,13 +34,15 @@ export const chainsDatasetColumns: ColumnDef<ChainsDatasetRow>[] = [
 	},
 	{
 		header: 'Protocols',
-		accessorKey: 'protocols',
+		id: 'protocols',
+		accessorFn: (row) => row.protocols ?? undefined,
 		size: 100,
 		cell: ({ row }) => <span className="text-pro-text-primary">{row.original.protocols}</span>
 	},
 	{
 		header: 'Active Addresses',
-		accessorKey: 'users',
+		id: 'users',
+		accessorFn: (row) => row.users ?? undefined,
 		size: 130,
 		cell: ({ row }) => (
 			<span className="text-pro-text-primary">
@@ -55,67 +57,78 @@ export const chainsDatasetColumns: ColumnDef<ChainsDatasetRow>[] = [
 	},
 	{
 		header: '1d Change',
-		accessorKey: 'change_1d',
+		id: 'change_1d',
+		accessorFn: (row) => row.change_1d ?? undefined,
 		size: 90,
 		cell: ({ row }) => renderChange(row.original.change_1d)
 	},
 	{
 		header: '7d Change',
-		accessorKey: 'change_7d',
+		id: 'change_7d',
+		accessorFn: (row) => row.change_7d ?? undefined,
 		size: 90,
 		cell: ({ row }) => renderChange(row.original.change_7d)
 	},
 	{
 		header: '1m Change',
-		accessorKey: 'change_1m',
+		id: 'change_1m',
+		accessorFn: (row) => row.change_1m ?? undefined,
 		size: 90,
 		cell: ({ row }) => renderChange(row.original.change_1m)
 	},
 	{
 		header: 'DeFi TVL',
-		accessorKey: 'tvl',
+		id: 'tvl',
+		accessorFn: (row) => row.tvl ?? undefined,
 		size: 140,
 		cell: ({ row }) => <span className="text-pro-text-primary">{formatNullableUsd(row.original.tvl)}</span>
 	},
 	{
 		header: 'Bridged TVL',
-		accessorKey: 'bridgedTvl',
+		id: 'bridgedTvl',
+		accessorFn: (row) => row.bridgedTvl ?? undefined,
 		size: 120,
 		cell: ({ row }) => <span className="text-pro-text-secondary">{formatNullableUsd(row.original.bridgedTvl)}</span>
 	},
 	{
 		header: 'Stables',
-		accessorKey: 'stablesMcap',
+		id: 'stablesMcap',
+		accessorFn: (row) => row.stablesMcap ?? undefined,
 		size: 120,
 		cell: ({ row }) => <span className="text-pro-text-secondary">{formatNullableUsd(row.original.stablesMcap)}</span>
 	},
 	{
 		header: '24h DEXs Volume',
-		accessorKey: 'totalVolume24h',
+		id: 'totalVolume24h',
+		accessorFn: (row) => row.totalVolume24h ?? undefined,
 		size: 150,
 		cell: ({ row }) => <span className="text-pro-text-secondary">{formatNullableUsd(row.original.totalVolume24h)}</span>
 	},
 	{
 		header: '30d DEXs Volume',
-		accessorKey: 'totalVolume30d',
+		id: 'totalVolume30d',
+		accessorFn: (row) => row.totalVolume30d ?? undefined,
 		size: 150,
 		cell: ({ row }) => <span className="text-pro-text-secondary">{formatNullableUsd(row.original.totalVolume30d)}</span>
 	},
 	{
 		header: '24h Chain Fees',
-		accessorKey: 'totalFees24h',
+		id: 'totalFees24h',
+		accessorFn: (row) => row.totalFees24h ?? undefined,
 		size: 130,
 		cell: ({ row }) => <span className="text-pro-text-secondary">{formatNullableUsd(row.original.totalFees24h)}</span>
 	},
 	{
 		header: '30d Chain Fees',
-		accessorKey: 'totalFees30d',
+		id: 'totalFees30d',
+		accessorFn: (row) => row.totalFees30d ?? undefined,
 		size: 130,
 		cell: ({ row }) => <span className="text-pro-text-secondary">{formatNullableUsd(row.original.totalFees30d)}</span>
 	},
 	{
 		header: '24h App Revenue',
-		accessorKey: 'totalAppRevenue24h',
+		id: 'totalAppRevenue24h',
+		accessorFn: (row) => row.totalAppRevenue24h ?? undefined,
 		size: 120,
 		cell: ({ row }) => (
 			<span className="text-pro-text-secondary">{formatNullableUsd(row.original.totalAppRevenue24h)}</span>
@@ -123,7 +136,8 @@ export const chainsDatasetColumns: ColumnDef<ChainsDatasetRow>[] = [
 	},
 	{
 		header: '30d App Revenue',
-		accessorKey: 'totalAppRevenue30d',
+		id: 'totalAppRevenue30d',
+		accessorFn: (row) => row.totalAppRevenue30d ?? undefined,
 		size: 140,
 		cell: ({ row }) => (
 			<span className="text-pro-text-secondary">{formatNullableUsd(row.original.totalAppRevenue30d)}</span>
@@ -131,7 +145,8 @@ export const chainsDatasetColumns: ColumnDef<ChainsDatasetRow>[] = [
 	},
 	{
 		header: '30d Chain Revenue',
-		accessorKey: 'totalRevenue30d',
+		id: 'totalRevenue30d',
+		accessorFn: (row) => row.totalRevenue30d ?? undefined,
 		size: 140,
 		cell: ({ row }) => (
 			<span className="text-pro-text-secondary">{formatNullableUsd(row.original.totalRevenue30d)}</span>
@@ -139,7 +154,8 @@ export const chainsDatasetColumns: ColumnDef<ChainsDatasetRow>[] = [
 	},
 	{
 		header: 'Mcap / DeFi TVL',
-		accessorKey: 'mcaptvl',
+		id: 'mcaptvl',
+		accessorFn: (row) => row.mcaptvl ?? undefined,
 		size: 120,
 		cell: ({ row }) => (
 			<span className="text-pro-text-secondary">
@@ -149,13 +165,15 @@ export const chainsDatasetColumns: ColumnDef<ChainsDatasetRow>[] = [
 	},
 	{
 		header: 'Market Cap',
-		accessorKey: 'mcap',
+		id: 'mcap',
+		accessorFn: (row) => row.mcap ?? undefined,
 		size: 140,
 		cell: ({ row }) => <span className="text-pro-text-secondary">{formatNullableUsd(row.original.mcap)}</span>
 	},
 	{
 		header: 'NFT Volume',
-		accessorKey: 'nftVolume',
+		id: 'nftVolume',
+		accessorFn: (row) => row.nftVolume ?? undefined,
 		size: 120,
 		cell: ({ row }) => <span className="text-pro-text-secondary">{formatNullableUsd(row.original.nftVolume)}</span>
 	}

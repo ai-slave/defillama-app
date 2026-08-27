@@ -100,25 +100,29 @@ const getColumns = (blockExplorersData: BlockExplorersResponse, tokenChain: stri
 			meta: { headerClassName: 'w-[200px] min-w-[200px]' }
 		}
 	),
-	columnHelper.accessor('received', {
+	columnHelper.accessor((row) => row.received ?? undefined, {
+		id: 'received',
 		header: 'Received',
 		cell: ({ getValue }) =>
 			formatCompactNumber(getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { headerClassName: 'w-[140px] min-w-[140px]', align: 'end' }
 	}),
-	columnHelper.accessor('balance', {
+	columnHelper.accessor((row) => row.balance ?? undefined, {
+		id: 'balance',
 		header: 'Balance',
 		cell: ({ getValue }) =>
 			formatCompactNumber(getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { headerClassName: 'w-[140px] min-w-[140px]', align: 'end' }
 	}),
-	columnHelper.accessor('staked', {
+	columnHelper.accessor((row) => row.staked ?? undefined, {
+		id: 'staked',
 		header: 'Staked',
 		cell: ({ getValue }) =>
 			formatCompactNumber(getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { headerClassName: 'w-[140px] min-w-[140px]', align: 'end' }
 	}),
-	columnHelper.accessor('transferredOut', {
+	columnHelper.accessor((row) => row.transferredOut ?? undefined, {
+		id: 'transferredOut',
 		header: 'Transferred Out',
 		cell: ({ getValue }) =>
 			formatCompactNumber(getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
@@ -148,6 +152,7 @@ export const InsidersTable = ({
 	}, [blockExplorersData, tokenChain, insiders])
 
 	const instance = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data: insiders,
 		columns,
 		state: { sorting },

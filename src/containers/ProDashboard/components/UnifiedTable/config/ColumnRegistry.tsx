@@ -69,8 +69,8 @@ const renderMetricCell = (
 
 const metricAccessor =
 	(key: MetricKey) =>
-	(row: ProtocolTableRow): number | null =>
-		row.metrics[key] ?? null
+	(row: ProtocolTableRow): number | undefined =>
+		row.metrics[key] ?? undefined
 
 const buildUsdMetricColumn = (key: MetricKey, header: string): ColumnDef<ProtocolTableRow> => ({
 	id: key,
@@ -445,7 +445,7 @@ export const getUnifiedTableColumns = ({
 		return {
 			id,
 			header: COLUMN_DICTIONARY_BY_ID.get(id)?.header ?? id,
-			accessorFn: (row) => row.filteredShares[metric] ?? null,
+			accessorFn: (row) => row.filteredShares[metric] ?? undefined,
 			meta: { align: 'end' },
 			cell: ({ row }) => renderPercent(row.original.filteredShares[metric])
 		}

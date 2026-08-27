@@ -60,13 +60,13 @@ const columns = [
 			headerHelperText: d.assetGroup.description
 		}
 	}),
-	columnHelper.accessor('markets', {
+	columnHelper.accessor((row) => row.markets ?? undefined, {
 		id: 'markets',
 		header: d.markets.label,
 		cell: (info) => formatCompactNumber(info.getValue()),
 		meta: { headerClassName: 'w-[112px]', align: 'end', headerHelperText: d.markets.description }
 	}),
-	columnHelper.accessor('venues', {
+	columnHelper.accessor((row) => row.venues ?? undefined, {
 		id: 'venues',
 		header: 'Venues',
 		cell: (info) => (
@@ -83,21 +83,21 @@ const columns = [
 			headerHelperText: 'Number of distinct venues listing this asset.'
 		}
 	}),
-	columnHelper.accessor('openInterest', {
+	columnHelper.accessor((row) => row.openInterest ?? undefined, {
 		id: 'openInterest',
 		header: d.openInterest.label,
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { headerClassName: 'w-[152px]', align: 'end', headerHelperText: d.openInterest.description }
 	}),
-	columnHelper.accessor('volume24h', {
+	columnHelper.accessor((row) => row.volume24h ?? undefined, {
 		id: 'volume24h',
 		header: d.volume24h.label,
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { headerClassName: 'w-[152px]', align: 'end', headerHelperText: d.volume24h.description }
 	}),
-	columnHelper.accessor('fundingRateMin', {
+	columnHelper.accessor((row) => row.fundingRateMin ?? undefined, {
 		id: 'fundingRateMin',
 		header: 'Funding Range',
 		cell: (info) => (

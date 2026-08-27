@@ -71,7 +71,8 @@ const columns = [
 			headerClassName: 'w-[min(280px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('netTreasury', {
+	columnHelper.accessor((row) => row.netTreasury ?? undefined, {
+		id: 'netTreasury',
 		header: 'Net Treasury',
 		cell: (info) =>
 			info.getValue() != null

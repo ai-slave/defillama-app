@@ -1,7 +1,26 @@
-import { describe, expect, it } from 'vitest'
-import { toUnixMsTimestamp } from './api'
-import type { IDATTransaction } from './api.types'
-import { buildDATTransactionRowsByAsset } from './queries'
+import type { Table } from '@tanstack/react-table'
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { describe, expect, it, vi } from 'vitest'
+import { fetchDATInstitutionDetail, toUnixMsTimestamp } from './api'
+import type { IDATInstitutionDetailResponse, IDATTransaction } from './api.types'
+import { DATCompany } from './Company'
+import { buildDATTransactionRowsByAsset, getDATCompanyData } from './queries'
+import type { IDATTransactionRow } from './types'
+
+const captured = vi.hoisted(() => ({ table: null as Table<IDATTransactionRow> | null }))
+vi.mock('~/components/Table/Table', () => ({
+	VirtualTable: ({ instance }: { instance: Table<IDATTransactionRow> }) => {
+		captured.table = instance
+		return null
+	}
+}))
+vi.mock('~/components/CsvDownloadButton', () => ({ CSVDownloadButton: () => null }))
+vi.mock('~/components/ChartExport/ChartExportButtons', () => ({ ChartExportButtons: () => null }))
+vi.mock('./api', async (importOriginal) => ({
+	...(await importOriginal<typeof import('./api')>()),
+	fetchDATInstitutionDetail: vi.fn()
+}))
 
 describe('toUnixMsTimestamp', () => {
 	it('normalizes documented numeric second timestamps without changing millisecond timestamps', () => {
@@ -10,13 +29,13 @@ describe('toUnixMsTimestamp', () => {
 	})
 })
 
-function transaction(overrides: Partial<IDATTransaction>): IDATTransaction {
+function transaction(overrides: Partial<IDATTransactionRow>): IDATTransactionRow {
 	return {
 		id: 1,
 		asset: 'bitcoin',
-		amount: '1',
-		avg_price: '100',
-		usd_value: '100',
+		amount: 1,
+		avg_price: 100,
+		usd_value: 100,
 		start_date: '2026-01-01',
 		end_date: '2026-01-01',
 		report_date: '2026-01-02',
@@ -37,9 +56,9 @@ function transaction(overrides: Partial<IDATTransaction>): IDATTransaction {
 describe('buildDATTransactionRowsByAsset', () => {
 	it('reverse-iterates the newest-first API response and groups assets in one pass', () => {
 		const result = buildDATTransactionRowsByAsset([
-			transaction({ id: 3, end_date: '2026-01-03', amount: '3', avg_price: '300', usd_value: '900' }),
-			transaction({ id: 2, asset: 'ethereum', end_date: '2026-01-02', amount: '2' }),
-			transaction({ id: 1, end_date: '2026-01-01', amount: '1' })
+			transaction({ id: 3, end_date: '2026-01-03', amount: 3, avg_price: 300, usd_value: 900 }),
+			transaction({ id: 2, asset: 'ethereum', end_date: '2026-01-02', amount: 2 }),
+			transaction({ id: 1, end_date: '2026-01-01', amount: 1 })
 		])
 
 		expect(result.get('bitcoin')).toEqual([
@@ -49,9 +68,9 @@ describe('buildDATTransactionRowsByAsset', () => {
 		expect(result.get('ethereum')).toEqual([[Date.parse('2026-01-02') / 1000, 2, 100, 100]])
 	})
 
-	it('keeps sales negative while converting the documented string numerics once', () => {
+	it('keeps sales negative and preserves decimal prices and values', () => {
 		const result = buildDATTransactionRowsByAsset([
-			transaction({ type: 'sale', amount: '2.5', avg_price: '12.25', usd_value: '30.625' })
+			transaction({ type: 'sale', amount: 2.5, avg_price: 12.25, usd_value: 30.625 })
 		])
 
 		expect(result.get('bitcoin')?.[0].slice(1)).toEqual([-2.5, 12.25, 30.625])
@@ -59,10 +78,10 @@ describe('buildDATTransactionRowsByAsset', () => {
 
 	it('sorts only an asset whose mostly newest-first response contains a local inversion', () => {
 		const result = buildDATTransactionRowsByAsset([
-			transaction({ id: 4, end_date: '2026-01-04', amount: '4' }),
-			transaction({ id: 2, end_date: '2026-01-02', amount: '2' }),
-			transaction({ id: 3, end_date: '2026-01-03', amount: '3' }),
-			transaction({ id: 1, end_date: '2026-01-01', amount: '1' })
+			transaction({ id: 4, end_date: '2026-01-04', amount: 4 }),
+			transaction({ id: 2, end_date: '2026-01-02', amount: 2 }),
+			transaction({ id: 3, end_date: '2026-01-03', amount: 3 }),
+			transaction({ id: 1, end_date: '2026-01-01', amount: 1 })
 		])
 
 		expect(result.get('bitcoin')?.map((item) => item[0])).toEqual([
@@ -72,4 +91,71 @@ describe('buildDATTransactionRowsByAsset', () => {
 			Date.parse('2026-01-04') / 1000
 		])
 	})
+})
+
+describe('getDATCompanyData transaction rows', () => {
+	const transactions: IDATTransaction[] = [
+		{ ...transaction({ id: 1 }), amount: '2.5', avg_price: '9.50', usd_value: '80800000.00' },
+		{ ...transaction({ id: 2 }), amount: '3', avg_price: '100.00', usd_value: '2010000000.00' },
+		{ ...transaction({ id: 3 }), amount: '0', avg_price: '0', usd_value: '0' },
+		{ ...transaction({ id: 4 }), amount: '1', avg_price: null, usd_value: null },
+		{ ...transaction({ id: 5, type: 'sale' }), amount: '1.25', avg_price: '9.12', usd_value: '2500000.00' }
+	]
+	const response: IDATInstitutionDetailResponse = {
+		institutionId: 1,
+		ticker: 'MSTR',
+		name: 'Strategy',
+		type: 'company',
+		rank: 1,
+		price: 100,
+		priceChange24h: null,
+		volume24h: 0,
+		totalCost: 100,
+		totalUsdValue: 100,
+		assets: { bitcoin: { amount: 1, avgPrice: 100, usdValue: 100, cost: 100 } },
+		assetsMeta: { bitcoin: { name: 'Bitcoin', ticker: 'BTC' } },
+		ohlcv: [],
+		assetValue: [],
+		stats: [],
+		transactions,
+		lastUpdated: '2026-01-02'
+	}
+
+	it('converts API strings once for table and chart data without turning null into zero', async () => {
+		vi.mocked(fetchDATInstitutionDetail).mockResolvedValueOnce(response)
+		const result = (await getDATCompanyData('mstr'))!
+
+		expect(result.transactions.map(({ amount, avg_price, usd_value }) => [amount, avg_price, usd_value])).toEqual([
+			[2.5, 9.5, 80_800_000],
+			[3, 100, 2_010_000_000],
+			[0, 0, 0],
+			[1, null, null],
+			[1.25, 9.12, 2_500_000]
+		])
+		expect(result.chartByAsset[0].holdingsChart.dataset.source).toEqual([
+			[Date.parse('2026-01-01'), -1.25, -1.25, 9.12, 2_500_000],
+			[Date.parse('2026-01-01'), -0.25, 1, null, null],
+			[Date.parse('2026-01-01'), -0.25, 0, 0, 0],
+			[Date.parse('2026-01-01'), 2.75, 3, 100, 2_010_000_000],
+			[Date.parse('2026-01-01'), 5.25, 2.5, 9.5, 80_800_000]
+		])
+		expect(response.transactions[0].avg_price).toBe('9.50')
+	})
+
+	it.each(['avg_price', 'usd_value'])(
+		'sorts %s numerically in both directions with missing values last',
+		async (id) => {
+			vi.mocked(fetchDATInstitutionDetail).mockResolvedValueOnce(response)
+			const props = (await getDATCompanyData('mstr'))!
+			renderToStaticMarkup(createElement(DATCompany, { ...props, chartByAsset: [] }))
+			const table = captured.table!
+
+			for (const desc of [false, true]) {
+				table.setOptions((options) => ({ ...options, state: { ...options.state, sorting: [{ id, desc }] } }))
+				const rows = table.getSortedRowModel().rows
+				expect(rows.map((row) => row.original.id)).toEqual(desc ? [2, 1, 5, 3, 4] : [3, 5, 1, 2, 4])
+				expect(rows.at(-1)?.getValue(id)).toBeUndefined()
+			}
+		}
+	)
 })

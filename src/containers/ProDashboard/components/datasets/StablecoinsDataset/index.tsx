@@ -61,6 +61,7 @@ export function StablecoinsDataset({ chain }: StablecoinsDatasetProps) {
 
 	const { data, isLoading, error } = useStablecoinsData(chain)
 	const instance = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data: data ?? EMPTY_DATA,
 		columns: stablecoinsDatasetColumns,
 		state: {

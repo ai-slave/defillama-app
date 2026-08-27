@@ -287,7 +287,8 @@ const protocolsColumns = [
 			headerClassName: 'w-[140px]'
 		}
 	}),
-	columnHelper.accessor('tvl', {
+	columnHelper.accessor((row) => row.tvl ?? undefined, {
+		id: 'tvl',
 		header: 'TVL',
 		cell: ({ getValue, row }) => <ProtocolTvlCell value={getValue()} rowValues={row.original} />,
 		meta: {
@@ -296,7 +297,8 @@ const protocolsColumns = [
 			headerHelperText: 'Sum of value of all coins held in smart contracts of the protocol'
 		}
 	}),
-	columnHelper.accessor('change_1d', {
+	columnHelper.accessor((row) => row.change_1d ?? undefined, {
+		id: 'change_1d',
 		header: '1d TVL Change',
 		cell: ({ getValue }) => <PercentChange percent={getValue()} />,
 		meta: {
@@ -305,7 +307,8 @@ const protocolsColumns = [
 			headerHelperText: 'Change in TVL in the last 24 hours'
 		}
 	}),
-	columnHelper.accessor('change_7d', {
+	columnHelper.accessor((row) => row.change_7d ?? undefined, {
+		id: 'change_7d',
 		header: '7d TVL Change',
 		cell: ({ getValue }) => <PercentChange percent={getValue()} />,
 		meta: {
@@ -314,7 +317,8 @@ const protocolsColumns = [
 			headerHelperText: 'Change in TVL in the last 7 days'
 		}
 	}),
-	columnHelper.accessor('change_1m', {
+	columnHelper.accessor((row) => row.change_1m ?? undefined, {
+		id: 'change_1m',
 		header: '1m TVL Change',
 		cell: ({ getValue }) => <PercentChange percent={getValue()} />,
 		meta: {
@@ -323,7 +327,8 @@ const protocolsColumns = [
 			headerHelperText: 'Change in TVL in the last 30 days'
 		}
 	}),
-	columnHelper.accessor('mcaptvl', {
+	columnHelper.accessor((row) => row.mcaptvl ?? undefined, {
+		id: 'mcaptvl',
 		header: 'Mcap/TVL',
 		cell: (info) => <>{formatRatio(info.getValue())}</>,
 		meta: {
@@ -392,7 +397,8 @@ function ProtocolTvlCell({ value, rowValues }: { value: unknown; rowValues: Prot
 	)
 }
 
-const listedAtColumn = columnHelper.accessor('listedAt', {
+const listedAtColumn = columnHelper.accessor((row) => row.listedAt ?? undefined, {
+	id: 'listedAt',
 	header: 'Listed At',
 	cell: ({ getValue }) => {
 		const listedAt = getValue()

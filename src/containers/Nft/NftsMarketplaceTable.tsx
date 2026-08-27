@@ -75,7 +75,8 @@ const columns = [
 			headerClassName: 'w-[min(280px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('weeklyChange', {
+	columnHelper.accessor((row) => row.weeklyChange ?? undefined, {
+		id: 'weeklyChange',
 		header: 'Volume change',
 		cell: (info) => (info.getValue() != null ? <PercentChange percent={info.getValue()} /> : null),
 		meta: {
@@ -84,7 +85,8 @@ const columns = [
 			headerHelperText: 'Change of last 7d volume over the previous 7d volume'
 		}
 	}),
-	columnHelper.accessor('1DayVolume', {
+	columnHelper.accessor((row) => row['1DayVolume'] ?? undefined, {
+		id: '1DayVolume',
 		header: 'Volume 1d',
 		cell: (info) => <EthVolumeCell value={info.getValue()} />,
 		meta: {
@@ -93,7 +95,8 @@ const columns = [
 			headerHelperText: '24h rolling volume'
 		}
 	}),
-	columnHelper.accessor('7DayVolume', {
+	columnHelper.accessor((row) => row['7DayVolume'] ?? undefined, {
+		id: '7DayVolume',
 		header: 'Volume 7d',
 		cell: (info) => <EthVolumeCell value={info.getValue()} />,
 		meta: {
@@ -102,7 +105,8 @@ const columns = [
 			headerHelperText: '7day rolling volume'
 		}
 	}),
-	columnHelper.accessor('pctOfTotal', {
+	columnHelper.accessor((row) => row.pctOfTotal ?? undefined, {
+		id: 'pctOfTotal',
 		header: 'Market Share',
 		cell: (info) =>
 			Number.isFinite(Number(info.getValue()))
@@ -114,7 +118,8 @@ const columns = [
 			headerHelperText: 'based on Volume 1d'
 		}
 	}),
-	columnHelper.accessor('1DayNbTrades', {
+	columnHelper.accessor((row) => row['1DayNbTrades'] ?? undefined, {
+		id: '1DayNbTrades',
 		header: 'Trades 1d',
 		meta: {
 			headerClassName: 'w-[130px]',
@@ -122,7 +127,8 @@ const columns = [
 			headerHelperText: '24h rolling trades'
 		}
 	}),
-	columnHelper.accessor('7DayNbTrades', {
+	columnHelper.accessor((row) => row['7DayNbTrades'] ?? undefined, {
+		id: '7DayNbTrades',
 		header: 'Trades 7d',
 		meta: {
 			headerClassName: 'w-[130px]',

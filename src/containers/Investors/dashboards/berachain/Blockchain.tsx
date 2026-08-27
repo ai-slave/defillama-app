@@ -106,12 +106,14 @@ const tokenColumns = [
 		cell: (info) => <span className="font-medium">{info.getValue()}</span>,
 		size: 120
 	}),
-	tokenColumnHelper.accessor('volumeFormatted', {
+	tokenColumnHelper.accessor((row) => row.volumeUsd ?? undefined, {
+		id: 'volumeFormatted',
 		header: '30d Volume (USD)',
-		cell: (info) => <span className="tabular-nums">{info.getValue()}</span>,
+		cell: ({ row }) => <span className="tabular-nums">{row.original.volumeFormatted}</span>,
 		size: 150
 	}),
-	tokenColumnHelper.accessor('transferCount', {
+	tokenColumnHelper.accessor((row) => row.transferCount ?? undefined, {
+		id: 'transferCount',
 		header: 'Transfers',
 		cell: (info) => (
 			<span className="tabular-nums">
@@ -120,7 +122,8 @@ const tokenColumns = [
 		),
 		size: 120
 	}),
-	tokenColumnHelper.accessor('uniqueSenders', {
+	tokenColumnHelper.accessor((row) => row.uniqueSenders ?? undefined, {
+		id: 'uniqueSenders',
 		header: 'Unique Senders',
 		cell: (info) => (
 			<span className="tabular-nums">
@@ -140,6 +143,7 @@ export default function Blockchain() {
 	}, [data, isLoading, onContentReady])
 
 	const tokenTable = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data: data?.topTokens ?? [],
 		columns: tokenColumns,
 		getCoreRowModel: getCoreRowModel(),

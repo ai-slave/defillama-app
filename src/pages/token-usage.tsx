@@ -323,7 +323,8 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('amountUsd', {
+	columnHelper.accessor((row) => row.amountUsd ?? undefined, {
+		id: 'amountUsd',
 		header: 'Amount',
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),

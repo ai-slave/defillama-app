@@ -96,22 +96,26 @@ function makeProtocolColumns(valueLabel: string) {
 			cell: (info) => <span className="text-pro-text-label">{info.getValue() ?? '—'}</span>,
 			size: 120
 		}),
-		protocolColumnHelper.accessor('total24h', {
+		protocolColumnHelper.accessor((row) => row.total24h ?? undefined, {
+			id: 'total24h',
 			header: `24h ${valueLabel}`,
 			cell: (info) => <span className="tabular-nums">{info.row.original.total24hFormatted}</span>,
 			size: 120
 		}),
-		protocolColumnHelper.accessor('total7d', {
+		protocolColumnHelper.accessor((row) => row.total7d ?? undefined, {
+			id: 'total7d',
 			header: `7d ${valueLabel}`,
 			cell: (info) => <span className="tabular-nums">{formatSonicUsd(info.getValue())}</span>,
 			size: 120
 		}),
-		protocolColumnHelper.accessor('total30d', {
+		protocolColumnHelper.accessor((row) => row.total30d ?? undefined, {
+			id: 'total30d',
 			header: `30d ${valueLabel}`,
 			cell: (info) => <span className="tabular-nums">{formatSonicUsd(info.getValue())}</span>,
 			size: 120
 		}),
-		protocolColumnHelper.accessor('totalAllTime', {
+		protocolColumnHelper.accessor((row) => row.totalAllTime ?? undefined, {
+			id: 'totalAllTime',
 			header: `All-Time ${valueLabel}`,
 			cell: (info) => <span className="tabular-nums">{formatSonicUsd(info.getValue())}</span>,
 			size: 130
@@ -123,6 +127,7 @@ function ProtocolTable({ data, valueLabel }: { data: TopProtocolEntry[]; valueLa
 	const columns = useMemo(() => makeProtocolColumns(valueLabel), [valueLabel])
 
 	const table = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns,
 		getCoreRowModel: getCoreRowModel(),

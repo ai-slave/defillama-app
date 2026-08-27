@@ -222,27 +222,32 @@ const columns = [
 		},
 		size: 200
 	}),
-	columnHelper.accessor('contractsCount', {
+	columnHelper.accessor((row) => row.contractsCount ?? undefined, {
+		id: 'contractsCount',
 		header: 'Contracts',
 		cell: (info) => <span className="tabular-nums">{formatSonicCount(info.getValue())}</span>,
 		size: 100
 	}),
-	columnHelper.accessor('transactionsCount', {
+	columnHelper.accessor((row) => row.transactionsCount ?? undefined, {
+		id: 'transactionsCount',
 		header: 'Transactions',
 		cell: (info) => <span className="tabular-nums">{info.row.original.transactionsFormatted}</span>,
 		size: 120
 	}),
-	columnHelper.accessor('collectedRewards', {
+	columnHelper.accessor((row) => row.collectedRewards ?? undefined, {
+		id: 'collectedRewards',
 		header: 'Collected Rewards',
 		cell: (info) => <span className="tabular-nums">{info.row.original.collectedRewardsFormatted}</span>,
 		size: 140
 	}),
-	columnHelper.accessor('claimedRewards', {
+	columnHelper.accessor((row) => row.claimedRewards ?? undefined, {
+		id: 'claimedRewards',
 		header: 'Claimed',
 		cell: (info) => <span className="tabular-nums">{formatSonicCount(info.getValue())} S</span>,
 		size: 120
 	}),
-	columnHelper.accessor('rewardsToClaim', {
+	columnHelper.accessor((row) => row.rewardsToClaim ?? undefined, {
+		id: 'rewardsToClaim',
 		header: 'Unclaimed',
 		cell: (info) => <span className="tabular-nums">{formatSonicCount(info.getValue())} S</span>,
 		size: 120
@@ -260,6 +265,7 @@ export default function FeeM() {
 	}, [data, isLoading, onContentReady])
 
 	const table = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data: data?.leaderboard ?? [],
 		columns,
 		getCoreRowModel: getCoreRowModel(),

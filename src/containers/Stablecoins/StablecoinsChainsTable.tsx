@@ -92,7 +92,8 @@ const stablecoinsByChainColumns = [
 			headerClassName: 'w-[min(200px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('change_7d', {
+	columnHelper.accessor((row) => row.change_7d ?? undefined, {
+		id: 'change_7d',
 		header: '7d Change',
 		cell: (info) => <PercentChange percent={info.getValue()} />,
 		meta: {
@@ -100,7 +101,8 @@ const stablecoinsByChainColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('mcap', {
+	columnHelper.accessor((row) => row.mcap ?? undefined, {
+		id: 'mcap',
 		header: 'Stables Mcap',
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
@@ -141,7 +143,8 @@ const stablecoinsByChainColumns = [
 			}
 		}
 	),
-	columnHelper.accessor('minted', {
+	columnHelper.accessor((row) => row.minted ?? undefined, {
+		id: 'minted',
 		header: 'Total Mcap Issued On',
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
@@ -150,7 +153,8 @@ const stablecoinsByChainColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('bridgedTo', {
+	columnHelper.accessor((row) => row.bridgedTo ?? undefined, {
+		id: 'bridgedTo',
 		header: 'Total Mcap Bridged To',
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),

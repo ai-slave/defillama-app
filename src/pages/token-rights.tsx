@@ -671,7 +671,8 @@ const columns = [
 		cell: ({ getValue }) => <TokenPills tokens={getValue()} />,
 		meta: { headerClassName: 'w-[280px]' }
 	}),
-	columnHelper.accessor('holdersRevenue24h', {
+	columnHelper.accessor((row) => row.holdersRevenue24h ?? undefined, {
+		id: 'holdersRevenue24h',
 		header: 'Holders Rev 24h',
 		enableSorting: true,
 		cell: ({ getValue }) => {

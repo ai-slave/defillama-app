@@ -1,6 +1,22 @@
-import { describe, expect, it } from 'vitest'
+import type { Table } from '@tanstack/react-table'
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { describe, expect, it, vi } from 'vitest'
 import type { ChainsDatasetRow } from '~/containers/ChainsByCategory/types'
 import { buildChainShareTotals, getChainMetricShare } from './chainShares'
+import { ChainsDataset } from './index'
+
+const mocks = vi.hoisted(() => ({ data: [] as ChainsDatasetRow[], table: null as Table<ChainsDatasetRow> | null }))
+vi.mock('./useChainsData', () => ({ useChainsData: () => ({ data: mocks.data, isLoading: false, error: null }) }))
+vi.mock('./ChainsTableHeader', () => ({ ChainsTableHeader: () => null }))
+vi.mock('./ColumnManagementPanel', () => ({ ColumnManagementPanel: () => null }))
+vi.mock('../../Table/TablePagination', () => ({ TablePagination: () => null }))
+vi.mock('../../Table/TableBody', () => ({
+	TableBody: ({ table }: { table: Table<ChainsDatasetRow> }) => {
+		mocks.table = table
+		return null
+	}
+}))
 
 function chain(name: string, totalFees24h: number | null): ChainsDatasetRow {
 	return {
@@ -36,6 +52,50 @@ function chain(name: string, totalFees24h: number | null): ChainsDatasetRow {
 }
 
 describe('chain metric shares', () => {
+	it.each([true, false])('sorts signed shares with missing values last when descending=%s', (desc) => {
+		mocks.data = [chain('Positive', 100), chain('Unknown', null), chain('Zero', 0), chain('Adjustment', -20)]
+		renderToStaticMarkup(createElement(ChainsDataset))
+		const table = mocks.table!
+		table.setOptions((options) => ({
+			...options,
+			state: { ...options.state, sorting: [{ id: 'totalFees24h_share', desc }] }
+		}))
+
+		expect(
+			table.getSortedRowModel().rows.map((row) => [row.original.name, row.getValue('totalFees24h_share')])
+		).toEqual(
+			desc
+				? [
+						['Positive', 125],
+						['Zero', 0],
+						['Adjustment', -25],
+						['Unknown', undefined]
+					]
+				: [
+						['Adjustment', -25],
+						['Zero', 0],
+						['Positive', 125],
+						['Unknown', undefined]
+					]
+		)
+	})
+
+	it.each([0, -10])('keeps shares unavailable when the total is %s', (total) => {
+		mocks.data = [chain('First', total), chain('Zero', 0), chain('Unknown', null)]
+		renderToStaticMarkup(createElement(ChainsDataset))
+		const table = mocks.table!
+		table.setOptions((options) => ({
+			...options,
+			state: { ...options.state, sorting: [{ id: 'totalFees24h_share', desc: true }] }
+		}))
+
+		expect(table.getSortedRowModel().rows.map((row) => row.getValue('totalFees24h_share'))).toEqual([
+			undefined,
+			undefined,
+			undefined
+		])
+	})
+
 	it('uses the algebraic canonical total so signed contributions sum to 100%', () => {
 		const totals = buildChainShareTotals([chain('Positive', 100), chain('Adjustment', -20), chain('Unknown', null)])
 

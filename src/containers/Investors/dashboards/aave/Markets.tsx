@@ -44,7 +44,8 @@ const reserveColumns: ColumnDef<FlatReserve>[] = [
 	{ header: 'Chain', accessorKey: 'chain', size: 100 },
 	{
 		header: 'Market Size',
-		accessorKey: 'sizeUsd',
+		id: 'sizeUsd',
+		accessorFn: (row) => row.sizeUsd ?? undefined,
 		cell: ({ getValue }) =>
 			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
@@ -52,7 +53,8 @@ const reserveColumns: ColumnDef<FlatReserve>[] = [
 	},
 	{
 		header: 'Oracle Price',
-		accessorKey: 'oraclePrice',
+		id: 'oraclePrice',
+		accessorFn: (row) => row.oraclePrice ?? undefined,
 		cell: ({ getValue }) => {
 			const v = getValue<number | null>()
 			if (v == null) return '—'
@@ -67,7 +69,8 @@ const reserveColumns: ColumnDef<FlatReserve>[] = [
 	},
 	{
 		header: 'Supply APY',
-		accessorKey: 'supplyApy',
+		id: 'supplyApy',
+		accessorFn: (row) => row.supplyApy ?? undefined,
 		cell: ({ getValue, row }) => {
 			const apy = formatPct(getValue<number>())
 			const reward = row.original.rewardSupplyApr
@@ -85,7 +88,8 @@ const reserveColumns: ColumnDef<FlatReserve>[] = [
 	},
 	{
 		header: 'Borrow APY',
-		accessorKey: 'borrowApy',
+		id: 'borrowApy',
+		accessorFn: (row) => row.borrowApy ?? undefined,
 		cell: ({ getValue, row }) => {
 			const apy = formatPct(getValue<number | null>())
 			const discount = row.original.rewardBorrowDiscount
@@ -103,21 +107,24 @@ const reserveColumns: ColumnDef<FlatReserve>[] = [
 	},
 	{
 		header: 'Utilization',
-		accessorKey: 'utilization',
+		id: 'utilization',
+		accessorFn: (row) => row.utilization ?? undefined,
 		cell: ({ getValue }) => formatPct(getValue<number | null>()),
 		meta: { align: 'end' as const },
 		size: 90
 	},
 	{
 		header: 'LTV',
-		accessorKey: 'maxLTV',
+		id: 'maxLTV',
+		accessorFn: (row) => row.maxLTV ?? undefined,
 		cell: ({ getValue }) => formatPct(getValue<number>()),
 		meta: { align: 'end' as const },
 		size: 70
 	},
 	{
 		header: 'Liq. Threshold',
-		accessorKey: 'liquidationThreshold',
+		id: 'liquidationThreshold',
+		accessorFn: (row) => row.liquidationThreshold ?? undefined,
 		cell: ({ getValue }) => formatPct(getValue<number>()),
 		meta: { align: 'end' as const },
 		size: 110
@@ -141,6 +148,7 @@ function ReservesTable({ data }: { data: FlatReserve[] }) {
 	const [page, setPage] = useState(0)
 
 	const instance = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: reserveColumns,
 		state: { sorting },

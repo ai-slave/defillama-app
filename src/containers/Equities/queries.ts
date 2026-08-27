@@ -42,7 +42,7 @@ function buildRwaPlatformNameLookup(platforms: string[]): Map<string, string> {
 	return lookup
 }
 
-function addEquitiesOnchainDisplayNames({
+function buildEquitiesOnchainPageData({
 	onchain,
 	protocolDisplayNames,
 	rwaPlatforms
@@ -63,6 +63,18 @@ function addEquitiesOnchainDisplayNames({
 				: null,
 			platformName: row.rwaPlatformSlug ? (rwaPlatformNames.get(row.rwaPlatformSlug) ?? row.rwaPlatformSlug) : null
 		})
+	}
+
+	perps.sort((a, b) => {
+		if (a.volume24h == null) return b.volume24h == null ? 0 : 1
+		if (b.volume24h == null) return -1
+		return b.volume24h - a.volume24h
+	})
+	// Match token markets: promote only Bybit's top-volume pair until the user chooses a column sort.
+	const bybitIndex = perps.findIndex((row) => row.rwaPlatformSlug === 'bybit')
+	if (bybitIndex > 0) {
+		const [bybit] = perps.splice(bybitIndex, 1)
+		perps.unshift(bybit)
 	}
 
 	for (const row of onchain.tokens) {
@@ -122,7 +134,7 @@ export async function getEquitiesTickerPageData(
 		filings,
 		filingForms: Array.from(filingForms).sort((a, b) => a.localeCompare(b)),
 		onchain: rawOnchain
-			? addEquitiesOnchainDisplayNames({
+			? buildEquitiesOnchainPageData({
 					onchain: rawOnchain,
 					protocolDisplayNames: pageMetadata.protocolDisplayNames,
 					rwaPlatforms: pageMetadata.rwaPlatforms

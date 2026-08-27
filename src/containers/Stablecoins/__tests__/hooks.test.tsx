@@ -1,5 +1,17 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { flexRender, type Table } from '@tanstack/react-table'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { calcCirculating, groupBridgeData, groupChainsPegged } from '../hooks'
+import { StablecoinByChainUsageTable } from '../StablecoinUsageByChainTable'
+
+type BridgeRow = ReturnType<typeof groupBridgeData>[number]
+const captured = vi.hoisted(() => ({ table: null as Table<BridgeRow> | null }))
+vi.mock('~/components/Table/Table', () => ({
+	VirtualTable: ({ instance }: { instance: Table<BridgeRow> }) => {
+		captured.table = instance
+		return null
+	}
+}))
 
 let chainGroupSettings: Record<string, boolean> = {}
 
@@ -178,18 +190,19 @@ describe('useGroupChainsPegged', () => {
 })
 
 describe('useGroupBridgeData', () => {
+	const baseChain = {
+		symbol: 'USD',
+		circulating: 100,
+		unreleased: 0,
+		change_1d: null,
+		change_7d: null,
+		change_1m: null,
+		circulatingPrevDay: null,
+		circulatingPrevWeek: null,
+		circulatingPrevMonth: null
+	}
+
 	it('keeps an unavailable bridged percentage distinct from an explicit zero', () => {
-		const baseChain = {
-			symbol: 'USD',
-			circulating: 100,
-			unreleased: 0,
-			change_1d: null,
-			change_7d: null,
-			change_1m: null,
-			circulatingPrevDay: null,
-			circulatingPrevWeek: null,
-			circulatingPrevMonth: null
-		}
 		const result = groupBridgeData(
 			[
 				{
@@ -210,10 +223,10 @@ describe('useGroupBridgeData', () => {
 
 		const unknown = result.find((row) => row.name === 'Unknown')
 		const zero = result.find((row) => row.name === 'Zero')
-		expect(unknown?.bridgedAmount).toBeNull()
-		expect(unknown?.subRows?.[0]?.bridgedAmount).toBeNull()
-		expect(zero?.bridgedAmount).toBe('0.00%')
-		expect(zero?.subRows?.[0]?.bridgedAmount).toBe('0.00%')
+		expect(unknown?.bridgedPercent).toBeNull()
+		expect(unknown?.subRows?.[0]?.bridgedPercent).toBeNull()
+		expect(zero?.bridgedPercent).toBe(0)
+		expect(zero?.subRows?.[0]?.bridgedPercent).toBe(0)
 	})
 
 	it('does not infer a full-supply bridge when both measurements are unavailable', () => {
@@ -242,7 +255,101 @@ describe('useGroupBridgeData', () => {
 		expect(result?.subRows?.[0]).toMatchObject({
 			name: 'Bridged from Ethereum',
 			circulating: 40,
-			bridgedAmount: null
+			bridgedAmount: 40,
+			bridgedPercent: null
 		})
+	})
+
+	it('uses percentages for chains without breakdowns while keeping raw amounts and full precision', () => {
+		const result = groupBridgeData(
+			[10.1234, 0, null].map((bridgedAmount, index) => ({
+				...baseChain,
+				name: `chain-${index}`,
+				circulating: 200,
+				bridgedAmount,
+				bridges: {}
+			})),
+			{}
+		)
+		expect(result.map(({ bridgedAmount }) => bridgedAmount)).toEqual([10.1234, 0, null])
+		expect(result[0].bridgedPercent).toBeCloseTo(5.0617)
+		expect(result[1].bridgedPercent).toBe(0)
+		expect(result[2].bridgedPercent).toBeNull()
+	})
+
+	it.each([0, null])('does not divide by an unavailable or zero circulating supply (%s)', (circulating) => {
+		const [row] = groupBridgeData([{ ...baseChain, name: 'Empty', circulating, bridgedAmount: 0, bridges: {} }], {})
+		expect(row.bridgedPercent).toBeNull()
+	})
+
+	it.each([80, 120])('preserves bridge shares and the 100 percent cap for a bridged amount of %s', (bridgedAmount) => {
+		const [row] = groupBridgeData(
+			[
+				{
+					...baseChain,
+					name: 'Chain',
+					bridgedAmount,
+					bridges: {
+						first: [{ amount: bridgedAmount * 0.75, sourceChain: 'ethereum' }],
+						second: [{ amount: bridgedAmount * 0.25, sourceChain: 'arbitrum' }]
+					}
+				}
+			],
+			{ first: { name: 'First' }, second: { name: 'Second' } }
+		)
+		const percent = Math.min(100, bridgedAmount)
+		expect(row.bridgedAmount).toBe(bridgedAmount)
+		expect(row.bridgedPercent).toBe(percent)
+		expect(row.subRows?.map(({ bridgedPercent }) => bridgedPercent)).toEqual([percent * 0.75, percent * 0.25])
+		expect(row.subRows?.map((child) => child.bridgedAmount)).toEqual([bridgedAmount * 0.75, bridgedAmount * 0.25])
+	})
+
+	it.each(['Natively Issued', 'Bridge'])('preserves the full-supply %s breakdown', (name) => {
+		const [row] = groupBridgeData(
+			[
+				{
+					...baseChain,
+					name: 'Chain',
+					bridgedAmount: 100,
+					bridges: { bridge: [{ amount: 100, sourceChain: 'ethereum' }] }
+				}
+			],
+			{ bridge: { name } }
+		)
+		expect(row.bridgedPercent).toBe(100)
+		expect(row.subRows?.[0]).toMatchObject({
+			name: name === 'Natively Issued' ? name : 'Bridged from Ethereum',
+			bridgedAmount: 100,
+			bridgedPercent: 100,
+			bridgeInfo: { name: name === 'Natively Issued' ? '-' : name }
+		})
+	})
+
+	it('sorts actual table percentages in both directions and formats only the cell', () => {
+		const data = groupBridgeData(
+			[100, null, 9.1234, 0, 50].map((bridgedAmount, index) => ({
+				...baseChain,
+				name: `chain-${index}`,
+				bridgedAmount,
+				bridges: index === 0 ? { bridge: [{ amount: 100, sourceChain: 'ethereum' }] } : {}
+			})),
+			{ bridge: { name: 'Bridge' } }
+		)
+		renderToStaticMarkup(<StablecoinByChainUsageTable data={data} />)
+		const table = captured.table!
+		for (const desc of [false, true]) {
+			table.setOptions((options) => ({
+				...options,
+				state: { ...options.state, sorting: [{ id: 'bridgedAmount', desc }] }
+			}))
+			expect(table.getSortedRowModel().rows.map((row) => row.getValue('bridgedAmount'))).toEqual(
+				desc ? [100, 50, 9.1234, 0, undefined] : [0, 9.1234, 50, 100, undefined]
+			)
+		}
+		const rendered = table.getSortedRowModel().rows.map((row) => {
+			const cell = row.getAllCells().find((cell) => cell.column.id === 'bridgedAmount')!
+			return renderToStaticMarkup(<>{flexRender(cell.column.columnDef.cell, cell.getContext())}</>)
+		})
+		expect(rendered).toEqual(['100%', '50.00%', '9.12%', '0.00%', ''])
 	})
 })

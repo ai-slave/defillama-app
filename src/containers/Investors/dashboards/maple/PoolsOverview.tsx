@@ -53,7 +53,8 @@ const poolColumns: ColumnDef<PoolRow>[] = [
 	{ header: 'Asset', accessorKey: 'asset', size: 80 },
 	{
 		header: 'TVL',
-		accessorKey: 'tvlUsd',
+		id: 'tvlUsd',
+		accessorFn: (row) => row.tvlUsd ?? undefined,
 		cell: ({ getValue }) =>
 			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
@@ -61,30 +62,40 @@ const poolColumns: ColumnDef<PoolRow>[] = [
 	},
 	{
 		header: 'Spot APY',
-		accessorKey: 'spotApy',
+		id: 'spotApy',
+		accessorFn: (row) => row.spotApy ?? undefined,
 		cell: ({ getValue }) => formatPct(getValue<number>()),
 		meta: { align: 'end' as const },
 		size: 100
 	},
 	{
 		header: 'Utilization',
-		accessorKey: 'utilization',
+		id: 'utilization',
+		accessorFn: (row) => row.utilization ?? undefined,
 		cell: ({ getValue }) => formatPct(getValue<number>()),
 		meta: { align: 'end' as const },
 		size: 100
 	},
 	{
 		header: 'Depositors',
-		accessorKey: 'numPositions',
+		id: 'numPositions',
+		accessorFn: (row) => row.numPositions ?? undefined,
 		cell: ({ getValue }) =>
 			formatCompactNumber(getValue<number>(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' as const },
 		size: 100
 	},
-	{ header: 'Open Loans', accessorKey: 'numOpenTermLoans', meta: { align: 'end' as const }, size: 100 },
+	{
+		header: 'Open Loans',
+		id: 'numOpenTermLoans',
+		accessorFn: (row) => row.numOpenTermLoans ?? undefined,
+		meta: { align: 'end' as const },
+		size: 100
+	},
 	{
 		header: 'Fees',
-		accessorKey: 'feeRate',
+		id: 'feeRate',
+		accessorFn: (row) => row.feeRate ?? undefined,
 		cell: ({ getValue }) => formatPct(getValue<number>()),
 		meta: { align: 'end' as const },
 		size: 80
@@ -102,6 +113,7 @@ function PoolsTable({ data }: { data: PoolRow[] }) {
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 15 })
 
 	const instance = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: poolColumns,
 		state: { sorting, pagination },

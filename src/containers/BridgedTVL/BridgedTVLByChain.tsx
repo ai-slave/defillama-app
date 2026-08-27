@@ -61,7 +61,7 @@ const bridgedChainColumns = [
 			headerClassName: 'w-[min(220px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('value', {
+	columnHelper.accessor((row) => row.value ?? undefined, {
 		id: 'value',
 		header: 'Total Bridged',
 		cell: (info) =>

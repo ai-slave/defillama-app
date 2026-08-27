@@ -468,7 +468,7 @@ const emissionsColumns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor((row) => row.mcap, {
+	columnHelper.accessor((row) => row.mcap ?? undefined, {
 		id: 'mcap',
 		header: 'MCap',
 		cell: ({ row }) => {

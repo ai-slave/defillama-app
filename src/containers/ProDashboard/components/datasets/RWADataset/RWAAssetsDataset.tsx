@@ -56,21 +56,21 @@ const columns = [
 		cell: (info) => info.getValue() || '—',
 		size: 140
 	}),
-	columnHelper.accessor('activeMcap', {
+	columnHelper.accessor((row) => row.activeMcap ?? undefined, {
 		id: 'activeMcap',
 		header: 'Active Mcap',
 		cell: (info) => formatNullableUsd(info.getValue()),
 		meta: { align: 'end' },
 		size: 150
 	}),
-	columnHelper.accessor('onChainMcap', {
+	columnHelper.accessor((row) => row.onChainMcap ?? undefined, {
 		id: 'onChainMcap',
 		header: 'Onchain Mcap',
 		cell: (info) => formatNullableUsd(info.getValue()),
 		meta: { align: 'end' },
 		size: 150
 	}),
-	columnHelper.accessor('defiActiveTvl', {
+	columnHelper.accessor((row) => row.defiActiveTvl ?? undefined, {
 		id: 'defiActiveTvl',
 		header: 'DeFi Active TVL',
 		cell: (info) =>
@@ -147,6 +147,7 @@ function RWAAssetsTable({ chain }: { chain?: string }) {
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
 	const { data, isLoading, error } = useRWAAssetsTableData(chain)
 	const instance = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data: data ?? EMPTY_DATA,
 		columns,
 		state: { sorting, columnOrder, columnSizing, columnFilters, pagination },

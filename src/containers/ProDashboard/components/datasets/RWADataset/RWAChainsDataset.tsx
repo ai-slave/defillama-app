@@ -47,7 +47,7 @@ const columns = [
 		size: 200,
 		maxSize: 200
 	}),
-	columnHelper.accessor('totalAssetIssuers', {
+	columnHelper.accessor((row) => row.totalAssetIssuers ?? undefined, {
 		id: 'totalAssetIssuers',
 		header: 'Asset Issuers',
 		cell: (info) =>
@@ -55,7 +55,7 @@ const columns = [
 		meta: { align: 'end' },
 		size: 140
 	}),
-	columnHelper.accessor('totalAssetCount', {
+	columnHelper.accessor((row) => row.totalAssetCount ?? undefined, {
 		id: 'totalAssetCount',
 		header: 'Asset Count',
 		cell: (info) =>
@@ -63,7 +63,7 @@ const columns = [
 		meta: { align: 'end' },
 		size: 140
 	}),
-	columnHelper.accessor('totalActiveMcap', {
+	columnHelper.accessor((row) => row.totalActiveMcap ?? undefined, {
 		id: 'totalActiveMcap',
 		header: 'Active Mcap',
 		cell: (info) =>
@@ -71,7 +71,7 @@ const columns = [
 		meta: { align: 'end' },
 		size: 160
 	}),
-	columnHelper.accessor('totalOnChainMcap', {
+	columnHelper.accessor((row) => row.totalOnChainMcap ?? undefined, {
 		id: 'totalOnChainMcap',
 		header: 'Onchain Mcap',
 		cell: (info) =>
@@ -79,7 +79,7 @@ const columns = [
 		meta: { align: 'end' },
 		size: 160
 	}),
-	columnHelper.accessor('totalDefiActiveTvl', {
+	columnHelper.accessor((row) => row.totalDefiActiveTvl ?? undefined, {
 		id: 'totalDefiActiveTvl',
 		header: 'DeFi Active TVL',
 		cell: (info) =>
@@ -165,6 +165,7 @@ export function RWAChainsDataset() {
 
 	const { data, isLoading, error } = useRWAChainsTableData()
 	const instance = useReactTable({
+		defaultColumn: { sortUndefined: 'last' },
 		data: data ?? EMPTY_DATA,
 		columns,
 		state: {

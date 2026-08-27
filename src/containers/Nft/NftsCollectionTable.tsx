@@ -72,7 +72,8 @@ const columns = [
 			headerClassName: 'w-[min(200px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('floorPrice', {
+	columnHelper.accessor((row) => row.floorPrice ?? undefined, {
+		id: 'floorPrice',
 		header: 'Floor Price',
 		cell: (info) => <EthValueCell value={info.getValue()} />,
 		meta: {
@@ -80,7 +81,8 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('floorPricePctChange1Day', {
+	columnHelper.accessor((row) => row.floorPricePctChange1Day ?? undefined, {
+		id: 'floorPricePctChange1Day',
 		header: '1d Change',
 		cell: (info) => <PercentChange percent={info.getValue()} />,
 		meta: {
@@ -88,7 +90,8 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('floorPricePctChange7Day', {
+	columnHelper.accessor((row) => row.floorPricePctChange7Day ?? undefined, {
+		id: 'floorPricePctChange7Day',
 		header: '7d Change',
 		cell: (info) => <PercentChange percent={info.getValue()} />,
 		meta: {
@@ -96,7 +99,8 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('volume1d', {
+	columnHelper.accessor((row) => row.volume1d ?? undefined, {
+		id: 'volume1d',
 		header: 'Volume 1d',
 		cell: (info) => <EthValueCell value={info.getValue()} />,
 		meta: {
@@ -104,7 +108,8 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('volume7d', {
+	columnHelper.accessor((row) => row.volume7d ?? undefined, {
+		id: 'volume7d',
 		header: 'Volume 7d',
 		cell: (info) => <EthValueCell value={info.getValue()} />,
 		meta: {
@@ -112,7 +117,8 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('sales1d', {
+	columnHelper.accessor((row) => row.sales1d ?? undefined, {
+		id: 'sales1d',
 		header: 'Sales 1d',
 		cell: (info) => (info.getValue() != null ? info.getValue() : null),
 		meta: {
@@ -120,14 +126,16 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('totalSupply', {
+	columnHelper.accessor((row) => row.totalSupply ?? undefined, {
+		id: 'totalSupply',
 		header: 'Total Supply',
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor('onSaleCount', {
+	columnHelper.accessor((row) => row.onSaleCount ?? undefined, {
+		id: 'onSaleCount',
 		header: 'On Sale',
 		meta: {
 			headerClassName: 'w-[120px]',

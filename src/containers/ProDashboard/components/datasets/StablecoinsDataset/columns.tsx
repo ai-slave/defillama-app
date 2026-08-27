@@ -32,7 +32,8 @@ export const stablecoinsDatasetColumns: ColumnDef<StablecoinsTableRow>[] = [
 	},
 	{
 		header: 'Price',
-		accessorKey: 'price',
+		id: 'price',
+		accessorFn: (row) => row.price ?? undefined,
 		cell: ({ row }) => {
 			const value = row.original.price
 			const pegDeviation = row.original.pegDeviation
@@ -64,7 +65,8 @@ export const stablecoinsDatasetColumns: ColumnDef<StablecoinsTableRow>[] = [
 	},
 	{
 		header: 'Market Cap',
-		accessorKey: 'mcap',
+		id: 'mcap',
+		accessorFn: (row) => row.mcap ?? undefined,
 		cell: ({ row }) => {
 			const value = row.original.mcap
 			return (
@@ -91,7 +93,8 @@ export const stablecoinsDatasetColumns: ColumnDef<StablecoinsTableRow>[] = [
 	},
 	{
 		header: '1d Change',
-		accessorKey: 'change_1d',
+		id: 'change_1d',
+		accessorFn: (row) => row.change_1d ?? undefined,
 		cell: ({ row }) => {
 			const value = row.original.change_1d
 			return (
@@ -107,7 +110,8 @@ export const stablecoinsDatasetColumns: ColumnDef<StablecoinsTableRow>[] = [
 	},
 	{
 		header: '7d Change',
-		accessorKey: 'change_7d',
+		id: 'change_7d',
+		accessorFn: (row) => row.change_7d ?? undefined,
 		cell: ({ row }) => {
 			const value = row.original.change_7d
 			return (
@@ -123,7 +127,8 @@ export const stablecoinsDatasetColumns: ColumnDef<StablecoinsTableRow>[] = [
 	},
 	{
 		header: '1m Change',
-		accessorKey: 'change_1m',
+		id: 'change_1m',
+		accessorFn: (row) => row.change_1m ?? undefined,
 		cell: ({ row }) => {
 			const value = row.original.change_1m
 			return (

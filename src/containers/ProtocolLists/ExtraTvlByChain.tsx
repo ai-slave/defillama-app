@@ -187,7 +187,7 @@ function buildColumns(metric: ExtraTvlMetric) {
 				headerClassName: 'w-[128px]'
 			}
 		}),
-		columnHelper.accessor('value', {
+		columnHelper.accessor((row) => row.value ?? undefined, {
 			id: 'value',
 			header: metricInfo.header,
 			cell: (info) =>
@@ -200,7 +200,8 @@ function buildColumns(metric: ExtraTvlMetric) {
 				headerHelperText: metricInfo.headerHelperText
 			}
 		}),
-		columnHelper.accessor('change_1m', {
+		columnHelper.accessor((row) => row.change_1m ?? undefined, {
+			id: 'change_1m',
 			header: 'Change 30d',
 			cell: (info) => <PercentChange percent={info.getValue()} />,
 			meta: {
