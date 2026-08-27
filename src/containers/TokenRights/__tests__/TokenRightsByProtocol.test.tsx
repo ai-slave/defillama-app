@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
+import type { Raise } from '~/containers/Raises/model'
 import type { IRawTokenRightsEntry } from '../api.types'
 import { TokenRightsByProtocol } from '../TokenRightsByProtocol'
 import { parseTokenRightsEntry } from '../utils'
@@ -47,6 +48,64 @@ const baseTokenRightsEntry: IRawTokenRightsEntry = {
 const baseTokenRightsData = parseTokenRightsEntry(baseTokenRightsEntry)
 
 describe('TokenRightsByProtocol', () => {
+	it.each([
+		{ amounts: [2_500_000, null, 14_000_000], total: '$16.5m' },
+		{ amounts: [null, null], total: 'Undisclosed' }
+	])('shows funding coverage for $amounts', ({ amounts, total }) => {
+		const raises: Raise[] = amounts.map((amountUsd) => ({
+			date: 1_737_331_200,
+			name: 'Test Protocol',
+			round: 'Seed',
+			amountUsd,
+			valuationUsd: null,
+			chains: [],
+			sector: null,
+			category: null,
+			categoryGroup: null,
+			leadInvestors: [],
+			otherInvestors: [],
+			source: ''
+		}))
+		const html = renderToStaticMarkup(
+			<TokenRightsByProtocol
+				name="Test Protocol"
+				symbol="TEST"
+				initialView="details"
+				tokenRightsData={baseTokenRightsData}
+				raises={raises}
+			/>
+		)
+		expect(html.replace(/<[^>]*>/g, '')).toContain(`${total} total`)
+	})
+	it('shows measured zero separately from an undisclosed funding round', () => {
+		const round: Raise = {
+			date: 1_737_331_200,
+			name: 'Test Protocol',
+			round: 'Seed',
+			amountUsd: 0,
+			valuationUsd: null,
+			chains: [],
+			sector: null,
+			category: null,
+			categoryGroup: null,
+			leadInvestors: [],
+			otherInvestors: [],
+			source: ''
+		}
+		const html = renderToStaticMarkup(
+			<TokenRightsByProtocol
+				name="Test Protocol"
+				symbol="TEST"
+				initialView="details"
+				tokenRightsData={baseTokenRightsData}
+				raises={[round, { ...round, amountUsd: null, round: 'Series A' }]}
+			/>
+		)
+		const rows = html.match(/<tr\b[\s\S]*?<\/tr>/g) ?? []
+		expect(rows.find((row) => row.includes('Seed'))).toContain('$0')
+		expect(rows.find((row) => row.includes('Series A'))).toContain('—')
+	})
+
 	it('renders the overview view by default with a details toggle', () => {
 		const html = renderToStaticMarkup(
 			<TokenRightsByProtocol name="Test Protocol" symbol="TEST" raises={null} tokenRightsData={baseTokenRightsData} />
@@ -95,15 +154,15 @@ describe('TokenRightsByProtocol', () => {
 	})
 
 	it('hides the primary value accrual card when primary value and details are absent', () => {
+		const { 'Value Accrual Details': _details, ...entry } = baseTokenRightsEntry
 		const html = renderToStaticMarkup(
 			<TokenRightsByProtocol
 				name="Test Protocol"
 				symbol="TEST"
 				raises={null}
 				tokenRightsData={parseTokenRightsEntry({
-					...baseTokenRightsEntry,
-					'Value Accrual': 'N/A',
-					'Value Accrual Details': undefined
+					...entry,
+					'Value Accrual': 'N/A'
 				})}
 			/>
 		)
@@ -112,16 +171,14 @@ describe('TokenRightsByProtocol', () => {
 	})
 
 	it('still shows the primary value accrual card when details exist and the primary value is null', () => {
+		const { 'Value Accrual': _valueAccrual, ...entry } = baseTokenRightsEntry
 		const html = renderToStaticMarkup(
 			<TokenRightsByProtocol
 				name="Test Protocol"
 				symbol="TEST"
 				raises={null}
 				initialView="details"
-				tokenRightsData={parseTokenRightsEntry({
-					...baseTokenRightsEntry,
-					'Value Accrual': undefined
-				})}
+				tokenRightsData={parseTokenRightsEntry(entry)}
 			/>
 		)
 

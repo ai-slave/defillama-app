@@ -13,7 +13,7 @@ import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { VirtualTable } from '~/components/Table/Table'
-import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
+import { useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { RaisesFilters } from '~/containers/Raises/Filters'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
@@ -24,7 +24,7 @@ import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { useRaisesData } from './hooks'
 import type { Raise } from './model'
-import { raisesColumnOrders, raisesColumns } from './Table'
+import { prepareRaisesCsv, raisesColumnOrders, raisesColumns } from './Table'
 
 const MultiSeriesChart = React.lazy(
 	() => import('~/components/ECharts/MultiSeriesChart')
@@ -73,7 +73,7 @@ function RaisesByInvestorTable({ raises }: { raises: Raise[] }) {
 						className={searchFieldInputStyles}
 					/>
 				</label>
-				<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: 'raises' })} smol size="md" />
+				<CSVDownloadButton prepareCsv={() => prepareRaisesCsv(instance)} smol size="md" />
 			</TableToolbar>
 			<VirtualTable instance={instance} />
 		</Panel>

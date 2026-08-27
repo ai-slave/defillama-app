@@ -23,6 +23,7 @@ import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { removedCategoriesFromChainTvlSet } from '~/containers/ProtocolRankings/constants'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
+import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
 import { Icon } from '~/ui/Icon'
 import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
@@ -409,24 +410,22 @@ const recentlyListedProtocolsColumns = [
 	...protocolsColumns.slice(3, -1)
 ]
 
-const airdropsColumns = [
+export const airdropsColumns = [
 	...protocolsColumns.slice(0, 3),
-	columnHelper.accessor('totalRaised', {
+	columnHelper.accessor((row) => row.raiseSummary?.totalUsd ?? undefined, {
+		id: 'totalRaised',
 		header: 'Total Money Raised',
-		cell: ({ getValue }) => {
-			const totalRaised = getValue()
-			return (
-				<>
-					{totalRaised != null
-						? formatUsd(totalRaised, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-						: ''}
-				</>
-			)
-		},
+		cell: ({ row }) => (row.original.raiseSummary ? <RaisesTotal {...row.original.raiseSummary} /> : null),
 		meta: {
+			csvHeader: 'Disclosed Money Raised',
 			headerClassName: 'w-[168px]',
 			align: 'end'
 		}
+	}),
+	columnHelper.accessor((row) => row.raiseSummary?.undisclosedCount ?? undefined, {
+		id: 'undisclosedRounds',
+		header: 'Undisclosed Funding Rounds',
+		meta: { hidden: true, csvOnly: true }
 	}),
 	listedAtColumn,
 	...protocolsColumns.slice(3, -1)

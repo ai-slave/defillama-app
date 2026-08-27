@@ -12,8 +12,8 @@ export interface RaisesResponse {
 	raises: Raise[]
 }
 
-function millionsToUsd(value: number | string | null): number | null {
-	if (value == null || (typeof value === 'string' && value.trim() === '')) return null
+function valuationToUsd(value: string | null): number | null {
+	if (value === null || value.trim() === '') return null
 	const millions = Number(value)
 	return Number.isFinite(millions) ? millions * USD_PER_MILLION : null
 }
@@ -23,8 +23,8 @@ export function normalizeRaisesApiItem(raise: RaisesApiItem): Raise {
 	const { amount, valuation, ...record } = raise
 	return {
 		...record,
-		amountUsd: millionsToUsd(amount),
-		valuationUsd: millionsToUsd(valuation)
+		amountUsd: amount === null ? null : amount * USD_PER_MILLION,
+		valuationUsd: valuationToUsd(valuation)
 	}
 }
 

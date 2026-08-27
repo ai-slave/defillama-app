@@ -23,7 +23,7 @@ export interface IInvestorTimespan {
 	deals: number
 	projects: string
 	chains: string[]
-	medianAmountUsd: number
+	medianAmountUsd: number | null
 }
 
 export interface IInvestor {

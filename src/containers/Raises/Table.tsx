@@ -36,14 +36,15 @@ export const raisesColumns = [
 			headerClassName: 'w-[min(180px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('date', {
+	columnHelper.accessor((row) => row.date ?? undefined, {
+		id: 'date',
 		meta: {
 			headerClassName: 'w-[120px]'
 		},
 		header: 'Date',
 		cell: (info) => formatDate(info.getValue(), { input: 'seconds' })
 	}),
-	columnHelper.accessor('amountUsd', {
+	columnHelper.accessor((row) => row.amountUsd ?? undefined, {
 		id: 'amount',
 		header: 'Amount Raised',
 		cell: (info) =>
@@ -85,7 +86,7 @@ export const raisesColumns = [
 		enableSorting: false,
 		cell: (info) => <Tooltip content={info.getValue().join(', ')}>{info.getValue().join(', ')}</Tooltip>
 	}),
-	columnHelper.accessor('valuationUsd', {
+	columnHelper.accessor((row) => row.valuationUsd ?? undefined, {
 		id: 'valuation',
 		header: 'Valuation',
 		cell: (info) =>
@@ -141,11 +142,10 @@ export const raisesColumnOrders: ColumnOrdersByBreakpoint = {
 	]
 }
 
-const prepareRaisesCsv = (instance: Table<Raise>) => {
+export const prepareRaisesCsv = (instance: Table<Raise>) => {
 	const csv = prepareTableCsv({ instance, filename: 'raises' })
-	if (csv.rows.length === 0) return csv
-
-	const headers = csv.rows[0] as string[]
+	const headers = csv.rows[0]
+	if (!headers) return csv
 	const dateIdx = headers.indexOf('Date')
 	const newHeaders = [...headers]
 
@@ -159,8 +159,8 @@ const prepareRaisesCsv = (instance: Table<Raise>) => {
 			newHeaders,
 			...csv.rows.slice(1).map((row) => {
 				const newRow = [...row]
-				if (dateIdx !== -1 && typeof newRow[dateIdx] === 'number') {
-					const ts = newRow[dateIdx] as number
+				const ts = newRow[dateIdx]
+				if (dateIdx !== -1 && typeof ts === 'number') {
 					newRow.splice(dateIdx, 1, ts, formatIsoDate(ts, { input: 'seconds' }) ?? '')
 				}
 				return newRow

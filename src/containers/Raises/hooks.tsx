@@ -1,10 +1,11 @@
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
-import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type { MultiSeriesChartSeriesConfig, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_COLORS } from '~/constants/colors'
 import { formatIsoDate } from '~/utils/dateFormat'
 import { parseExcludeParam } from '~/utils/routerQuery'
 import type { Raise } from './model'
+import type { RaisesSummary } from './summary'
 
 interface UseRaisesDataParams {
 	raises: Raise[]
@@ -101,12 +102,16 @@ export function useRaisesData({ raises, investors, rounds, sectors, chains }: Us
 		const investmentByRounds: { [round: string]: number } = {}
 
 		const minimumAmountRaised =
-			typeof minRaised === 'string' && !Number.isNaN(Number(minRaised)) ? Number(minRaised) : 0
+			typeof minRaised === 'string' && minRaised.trim() !== '' && Number.isFinite(Number(minRaised))
+				? Number(minRaised)
+				: null
 
 		const maximumAmountRaised =
-			typeof maxRaised === 'string' && !Number.isNaN(Number(maxRaised)) ? Number(maxRaised) : 0
+			typeof maxRaised === 'string' && maxRaised.trim() !== '' && Number.isFinite(Number(maxRaised))
+				? Number(maxRaised)
+				: null
 
-		const isValidTvlRange = !!minimumAmountRaised || !!maximumAmountRaised
+		const isAmountRangeActive = minimumAmountRaised !== null || maximumAmountRaised !== null
 
 		const isInvestorFilterActive = selectedInvestors.length !== investors.length
 		const isChainsFilterActive = selectedChains.length !== chains.length
@@ -118,16 +123,18 @@ export function useRaisesData({ raises, investors, rounds, sectors, chains }: Us
 		const selectedRoundsSet = isRoundsFilterActive ? new Set(selectedRounds) : null
 		const selectedSectorsSet = isSectorsFilterActive ? new Set(selectedSectors) : null
 
-		const filteredRaisesList = raises.filter((raise) => {
-			if (isInvestorFilterActive) {
+		const filteredRaisesList: Raise[] = []
+		let undisclosedCount = 0
+		for (const raise of raises) {
+			if (selectedInvestorsSet) {
 				if (raise.leadInvestors.length === 0 && raise.otherInvestors.length === 0) {
-					return false
+					continue
 				}
 
 				let isAnInvestor = false
 
 				for (const lead of raise.leadInvestors) {
-					if (selectedInvestorsSet!.has(lead)) {
+					if (selectedInvestorsSet.has(lead)) {
 						isAnInvestor = true
 						break
 					}
@@ -135,7 +142,7 @@ export function useRaisesData({ raises, investors, rounds, sectors, chains }: Us
 
 				if (!isAnInvestor) {
 					for (const otherInv of raise.otherInvestors) {
-						if (selectedInvestorsSet!.has(otherInv)) {
+						if (selectedInvestorsSet.has(otherInv)) {
 							isAnInvestor = true
 							break
 						}
@@ -143,122 +150,99 @@ export function useRaisesData({ raises, investors, rounds, sectors, chains }: Us
 				}
 
 				if (!isAnInvestor) {
-					return false
+					continue
 				}
 			}
 
-			if (isChainsFilterActive) {
+			if (selectedChainsSet) {
 				if (raise.chains.length === 0) {
-					return false
+					continue
 				}
 
 				let raiseIncludesChain = false
 
 				for (const raiseChain of raise.chains) {
-					if (selectedChainsSet!.has(raiseChain)) {
+					if (selectedChainsSet.has(raiseChain)) {
 						raiseIncludesChain = true
 						break
 					}
 				}
 
 				if (!raiseIncludesChain) {
-					return false
+					continue
 				}
 			}
 
-			// selectedRoundsSet already has excludes filtered out
-			if (isRoundsFilterActive) {
-				if (!raise.round || raise.round === '') {
-					return false
-				} else {
-					if (!selectedRoundsSet!.has(raise.round)) {
-						return false
-					}
-				}
-			}
+			if (selectedRoundsSet && (!raise.round || !selectedRoundsSet.has(raise.round))) continue
+			if (selectedSectorsSet && (!raise.category || !selectedSectorsSet.has(raise.category))) continue
 
-			// selectedSectorsSet already has excludes filtered out
-			if (isSectorsFilterActive) {
-				if (!raise.category || raise.category === '') {
-					return false
-				} else {
-					if (!selectedSectorsSet!.has(raise.category)) {
-						return false
-					}
-				}
-			}
-
-			const raisedAmount = raise.amountUsd ?? 0
-
-			const isInRange =
-				(minimumAmountRaised ? raisedAmount >= minimumAmountRaised : true) &&
-				(maximumAmountRaised ? raisedAmount <= maximumAmountRaised : true)
-
-			if (isValidTvlRange && !isInRange) {
-				return false
+			if (isAmountRangeActive) {
+				if (raise.amountUsd === null) continue
+				if (minimumAmountRaised !== null && raise.amountUsd < minimumAmountRaised) continue
+				if (maximumAmountRaised !== null && raise.amountUsd > maximumAmountRaised) continue
 			}
 
 			if (raise.category) {
 				raisesByCategory[raise.category] = (raisesByCategory[raise.category] ?? 0) + 1
 			}
 
-			return true
-		})
-
-		for (const r of filteredRaisesList) {
+			filteredRaisesList.push(raise)
+			if (raise.amountUsd === null) undisclosedCount++
 			// split EOS raised amount between 13 months
-			if (r.name === 'EOS') {
+			if (raise.name === 'EOS') {
 				for (let month = 0; month < 13; month++) {
-					const date = formatIsoDate(r.date - month * 2_529_746, { input: 'seconds' })?.slice(0, 7)
+					const date = formatIsoDate(raise.date - month * 2_529_746, { input: 'seconds' })?.slice(0, 7)
 					if (!date) continue
-					monthlyInvestment[date] = (monthlyInvestment[date] ?? 0) + (r.amountUsd ?? 0) / 13
+					monthlyInvestment[date] = (monthlyInvestment[date] ?? 0) + (raise.amountUsd ?? 0) / 13
 					fundingRoundsByMonth[date] = (fundingRoundsByMonth[date] ?? 0) + 1
 				}
 			} else {
-				const monthlyDate = formatIsoDate(r.date, { input: 'seconds' })?.slice(0, 7)
+				const monthlyDate = formatIsoDate(raise.date, { input: 'seconds' })?.slice(0, 7)
 				if (!monthlyDate) continue
 
-				monthlyInvestment[monthlyDate] = (monthlyInvestment[monthlyDate] ?? 0) + (r.amountUsd ?? 0)
+				monthlyInvestment[monthlyDate] = (monthlyInvestment[monthlyDate] ?? 0) + (raise.amountUsd ?? 0)
 				fundingRoundsByMonth[monthlyDate] = (fundingRoundsByMonth[monthlyDate] ?? 0) + 1
 			}
 
-			if (r.round) {
-				investmentByRounds[r.round] = (investmentByRounds[r.round] ?? 0) + 1
+			if (raise.round) {
+				investmentByRounds[raise.round] = (investmentByRounds[raise.round] ?? 0) + 1
 			}
 		}
 
-		const finalMonthlyInvestment = []
+		const finalMonthlyInvestment: [number, number][] = []
 		const finalRaisesByCategory = []
 		const finalInvestmentByRounds = []
-		const finalFundingRoundsByMonth = []
+		const finalFundingRoundsByMonth: [number, number][] = []
 		let totalAmountRaised = 0
 
+		// These loops enumerate only buckets initialized in the row pass above.
 		for (const date in monthlyInvestment) {
-			finalMonthlyInvestment.push([new Date(date).getTime(), monthlyInvestment[date]])
-			totalAmountRaised += monthlyInvestment[date]
+			const amount = monthlyInvestment[date]!
+			finalMonthlyInvestment.push([new Date(date).getTime(), amount])
+			totalAmountRaised += amount
 		}
 		// ECharts `dataZoom` (slider shadow) is sensitive to source order.
 		// We build these series from object keys, which are not guaranteed to be chronological.
 		finalMonthlyInvestment.sort((a, b) => a[0] - b[0])
 		for (const category in raisesByCategory) {
-			finalRaisesByCategory.push({ name: category, value: raisesByCategory[category] })
+			finalRaisesByCategory.push({ name: category, value: raisesByCategory[category]! })
 		}
 		for (const roundLabel in investmentByRounds) {
-			finalInvestmentByRounds.push({ name: roundLabel, value: investmentByRounds[roundLabel] })
+			finalInvestmentByRounds.push({ name: roundLabel, value: investmentByRounds[roundLabel]! })
 		}
 		for (const date in fundingRoundsByMonth) {
-			finalFundingRoundsByMonth.push([new Date(date).getTime(), fundingRoundsByMonth[date]])
+			finalFundingRoundsByMonth.push([new Date(date).getTime(), fundingRoundsByMonth[date]!])
 		}
 		finalFundingRoundsByMonth.sort((a, b) => a[0] - b[0])
 
-		const monthlyInvestmentChart: { dataset: MultiSeriesChartDataset; charts: IMultiSeriesChartProps['charts'] } = {
+		const monthlyInvestmentChart: { dataset: MultiSeriesChartDataset; charts: MultiSeriesChartSeriesConfig[] } = {
 			dataset: {
 				source: finalMonthlyInvestment,
 				dimensions: ['timestamp', 'Funding Amount']
 			},
 			charts: [
 				{
-					type: 'bar' as const,
+					type: 'bar',
 					name: 'Funding Amount',
 					encode: { x: 0, y: 1 },
 					color: CHART_COLORS[0],
@@ -267,14 +251,14 @@ export function useRaisesData({ raises, investors, rounds, sectors, chains }: Us
 			]
 		}
 
-		const fundingRoundsByMonthChart: { dataset: MultiSeriesChartDataset; charts: IMultiSeriesChartProps['charts'] } = {
+		const fundingRoundsByMonthChart: { dataset: MultiSeriesChartDataset; charts: MultiSeriesChartSeriesConfig[] } = {
 			dataset: {
 				source: finalFundingRoundsByMonth,
 				dimensions: ['timestamp', 'Funding Rounds']
 			},
 			charts: [
 				{
-					type: 'bar' as const,
+					type: 'bar',
 					name: 'Funding Rounds',
 					encode: { x: 0, y: 1 },
 					color: CHART_COLORS[0],
@@ -283,6 +267,11 @@ export function useRaisesData({ raises, investors, rounds, sectors, chains }: Us
 			]
 		}
 
+		const fundingSummary: RaisesSummary = {
+			totalUsd:
+				filteredRaisesList.length > 0 && undisclosedCount === filteredRaisesList.length ? null : totalAmountRaised,
+			undisclosedCount
+		}
 		return {
 			selectedInvestors,
 			selectedChains,
@@ -293,7 +282,8 @@ export function useRaisesData({ raises, investors, rounds, sectors, chains }: Us
 			investmentByRounds: finalInvestmentByRounds.sort((a, b) => b.value - a.value),
 			monthlyInvestmentChart,
 			fundingRoundsByMonthChart,
-			totalAmountRaised
+			totalAmountRaised,
+			fundingSummary
 		}
 	}, [
 		investor,

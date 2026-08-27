@@ -109,30 +109,33 @@ describe('ProtocolLists queries', () => {
 		await expect(getAirdropsProtocols()).rejects.toThrow('unavailable')
 	})
 
-	it('keeps incomplete raise totals unavailable without changing no-raise zero', async () => {
+	it.each([false, true])('sums disclosed rounds regardless of order (reversed: %s)', async (reversed) => {
 		mocks.fetchProtocols.mockResolvedValue(
 			response({
 				protocols: [
 					{ ...liteProtocol({ defillamaId: 'partial', name: 'Partial', mcap: null, borrowed: null }), symbol: '-' },
 					{ ...liteProtocol({ defillamaId: 'unknown', name: 'Unknown', mcap: null, borrowed: null }), symbol: '-' },
+					{ ...liteProtocol({ defillamaId: 'zero', name: 'Zero', mcap: null, borrowed: null }), symbol: '-' },
 					{ ...liteProtocol({ defillamaId: 'none', name: 'None', mcap: null, borrowed: null }), symbol: '-' }
 				],
 				parentProtocols: []
 			})
 		)
-		mocks.fetchRaises.mockResolvedValue({
-			raises: [
-				{ defillamaId: 'partial', amountUsd: 10 },
-				{ defillamaId: 'partial', amountUsd: null },
-				{ defillamaId: 'unknown', amountUsd: null }
-			]
-		})
+		const raises = [
+			{ defillamaId: 'partial', amountUsd: 10 },
+			{ defillamaId: 'partial', amountUsd: null },
+			{ defillamaId: 'zero', amountUsd: 0 },
+			{ defillamaId: 'zero', amountUsd: null },
+			{ defillamaId: 'unknown', amountUsd: null }
+		]
+		mocks.fetchRaises.mockResolvedValue({ raises: reversed ? raises.toReversed() : raises })
 
 		const result = await getAirdropsProtocols()
-		expect(result.protocols.map(({ name, totalRaised }) => [name, totalRaised])).toEqual([
-			['Partial', null],
-			['Unknown', null],
-			['None', 0]
+		expect(result.protocols.map(({ name, raiseSummary }) => [name, raiseSummary])).toEqual([
+			['Partial', { totalUsd: 10, undisclosedCount: 1 }],
+			['Unknown', { totalUsd: null, undisclosedCount: 1 }],
+			['Zero', { totalUsd: 0, undisclosedCount: 1 }],
+			['None', { totalUsd: 0, undisclosedCount: 0 }]
 		])
 	})
 

@@ -15,6 +15,8 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { CreateAlertModal } from '~/containers/LlamaAI/components/CreateAlertModal'
 import type { MarketTotalsBySegment, TokenMarketsResponse } from '~/containers/Markets/api.types'
 import type { Segment } from '~/containers/Markets/segments'
+import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
+import { summarizeRaises } from '~/containers/Raises/summary'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useIsClient } from '~/hooks/useIsClient'
@@ -93,21 +95,6 @@ function formatSupply(value: number | null | undefined, symbol: string) {
 function formatTokenPercentChange(value: number | null | undefined) {
 	if (value == null) return null
 	return `${value > 0 ? '+' : ''}${formatPercent(value, { input: 'percent', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
-}
-
-function getTotalRaisedAmount(raises: TokenOverviewData['raises']): number | null {
-	if (!raises?.length) return null
-
-	let totalRaised = 0
-	let hasDisclosedRaise = false
-
-	for (const raise of raises) {
-		if (raise.amountUsd == null) continue
-		totalRaised += raise.amountUsd
-		hasDisclosedRaise = true
-	}
-
-	return hasDisclosedRaise ? totalRaised : null
 }
 
 function formatDateLabel(value: string | number | null | undefined) {
@@ -393,7 +380,6 @@ function MarketsMetricSection({
 }
 
 function TokenMetrics({ overview, geckoId }: { overview: TokenOverviewData; geckoId: string | null }) {
-	const totalRaised = getTotalRaisedAmount(overview.raises)
 	const { data: markets } = useQuery({
 		queryKey: ['token-markets', geckoId],
 		queryFn: geckoId ? () => fetchTokenMarkets(geckoId) : skipToken,
@@ -515,18 +501,7 @@ function TokenMetrics({ overview, geckoId }: { overview: TokenOverviewData; geck
 					</MetricSection>
 				) : null}
 				{overview.raises?.length ? (
-					<MetricSection
-						label="Total Raised"
-						value={
-							totalRaised == null
-								? 'Undisclosed'
-								: formatUsd(totalRaised, {
-										compact: true,
-										minimumCompactValue: 1_000_000,
-										compactSuffix: 'lowercase'
-									})
-						}
-					>
+					<MetricSection label="Total Raised" value={<RaisesTotal {...summarizeRaises(overview.raises)} />}>
 						{overview.raises.map((raise) => (
 							<SubMetricRow
 								key={`${raise.date}-${raise.round ?? 'raise'}`}

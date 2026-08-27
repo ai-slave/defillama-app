@@ -4,6 +4,7 @@ import { fetchCoinPrices } from '~/api/pricing'
 import { CHART_COLORS } from '~/constants/colors'
 import { fetchChainChart, fetchChainsByCategoryAll } from '~/containers/Chains/api'
 import { fetchRaises } from '~/containers/Raises/api'
+import type { RaisesSummary } from '~/containers/Raises/summary'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
 import { getPercentChange, slug } from '~/utils'
 import type { IProtocolMetadata } from '~/utils/metadata/types'
@@ -134,19 +135,16 @@ export async function getAirdropsProtocols(): Promise<IRecentProtocolsPageData> 
 		}
 	}
 
-	const raisesById = new Map<string, number | null>()
+	const raisesById = new Map<string, RaisesSummary>()
 	for (const r of raises) {
 		if (r.defillamaId) {
-			const key = r.defillamaId.toString()
-			const currentTotal = raisesById.get(key)
-			raisesById.set(
-				key,
-				currentTotal === undefined
-					? r.amountUsd
-					: currentTotal === null || r.amountUsd === null
-						? null
-						: currentTotal + r.amountUsd
-			)
+			let summary = raisesById.get(r.defillamaId)
+			if (!summary) {
+				summary = { totalUsd: null, undisclosedCount: 0 }
+				raisesById.set(r.defillamaId, summary)
+			}
+			if (r.amountUsd === null) summary.undisclosedCount++
+			else summary.totalUsd = (summary.totalUsd ?? 0) + r.amountUsd
 		}
 	}
 
@@ -167,7 +165,7 @@ export async function getAirdropsProtocols(): Promise<IRecentProtocolsPageData> 
 		if (protocol.category) {
 			categoryTvlMap.set(protocol.category, (categoryTvlMap.get(protocol.category) ?? 0) + (protocol.tvl ?? 0))
 		}
-		const totalRaised = raisesById.get(protocol.defillamaId)
+		const raiseSummary = raisesById.get(protocol.defillamaId) ?? { totalUsd: 0, undisclosedCount: 0 }
 
 		airdropsProtocols.push({
 			name: protocol.name,
@@ -187,7 +185,7 @@ export async function getAirdropsProtocols(): Promise<IRecentProtocolsPageData> 
 			...(protocol.deprecated !== undefined ? { deprecated: protocol.deprecated } : {}),
 			...(isForkedProtocol ? { forkedFrom: protocol.forkedFrom } : {}),
 			extraTvl: extractExtraTvl(protocol),
-			totalRaised: totalRaised === undefined ? 0 : totalRaised
+			raiseSummary
 		})
 	}
 

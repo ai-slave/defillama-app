@@ -8,10 +8,10 @@ interface ITooltip extends Ariakit.TooltipOptions {
 	shallow?: boolean
 	onClick?: (e: React.MouseEvent) => void
 	children: React.ReactNode
-	render?: Ariakit.TooltipOptions['render']
 	color?: string
 	fontSize?: string
 	className?: string
+	tabIndex?: number
 	placement?:
 		| 'top'
 		| 'top-start'

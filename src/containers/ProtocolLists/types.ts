@@ -1,4 +1,5 @@
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import type { RaisesSummary } from '~/containers/Raises/summary'
 import type { ProtocolListAdditiveTvlKey } from './api.types'
 
 // ---------------------------------------------------------------------------
@@ -86,7 +87,7 @@ export interface IRecentProtocol {
 	/** Finite protocol-list TVL sections extracted from chainTvls. */
 	extraTvl: Partial<Record<ProtocolListAdditiveTvlKey, TvlEntry>>
 	/** Only present on airdrops page. */
-	totalRaised?: number | null
+	raiseSummary?: RaisesSummary
 }
 
 export interface IRecentProtocolsPageData {

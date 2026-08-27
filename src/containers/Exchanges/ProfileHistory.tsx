@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
+import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
+import { summarizeRaises } from '~/containers/Raises/summary'
 import { Card } from '~/ui/Card'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { formatDate } from '~/utils/dateFormat'
@@ -65,9 +67,7 @@ function HistoryRecord({ details, amount }: { details: ReactNode; amount: ReactN
 
 export function ProfileHistory({ profile }: { profile: ExchangeProfileModel }) {
 	const totalHacked = profile.hacks.reduce((sum, hack) => sum + (hack.amountUsd ?? 0), 0)
-	const totalRaised = profile.raises.reduce((sum, raise) => sum + (raise.amountUsd ?? 0), 0)
 	const hasKnownHackTotal = profile.hacks.some((hack) => hack.amountUsd != null)
-	const hasKnownRaiseTotal = profile.raises.some((raise) => raise.amountUsd != null)
 	const hackedTotalLabel =
 		profile.hacks.length === 0 ? 'No recorded hacks' : hasKnownHackTotal ? money(totalHacked) : 'Amount unknown'
 	return (
@@ -84,7 +84,7 @@ export function ProfileHistory({ profile }: { profile: ExchangeProfileModel }) {
 					<div className="border-t border-subtle p-3 sm:border-t-0 sm:border-l">
 						<p className="label-sm text-tertiary">Total disclosed raises</p>
 						<p className="mt-1 font-jetbrains text-xl font-semibold">
-							{money(hasKnownRaiseTotal ? totalRaised : null)}
+							{profile.raises.length > 0 ? <RaisesTotal {...summarizeRaises(profile.raises)} /> : money(null)}
 						</p>
 					</div>
 				</div>

@@ -16,6 +16,7 @@ function raise(over: Partial<Raise>): Raise {
 		leadInvestors: [],
 		otherInvestors: [],
 		valuationUsd: null,
+		source: '',
 		...over
 	}
 }

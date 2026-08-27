@@ -98,7 +98,8 @@ describe('ProtocolOverview API chart fetchers', () => {
 					categoryGroup: 'DeFi',
 					leadInvestors: [],
 					otherInvestors: [],
-					valuation: '300'
+					valuation: '300',
+					source: ''
 				}
 			],
 			hacks: [

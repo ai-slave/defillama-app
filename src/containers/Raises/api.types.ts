@@ -10,9 +10,9 @@ export interface RaisesApiItem {
 	categoryGroup: string | null
 	leadInvestors: string[]
 	otherInvestors: string[]
-	/** USD millions. Normalize before using in app code. */
-	valuation: number | string | null
-	source?: string
+	/** Freeform Airtable text in USD millions; nonnumeric text remains undisclosed. */
+	valuation: string | null
+	source: string
 	defillamaId?: string
 }
 

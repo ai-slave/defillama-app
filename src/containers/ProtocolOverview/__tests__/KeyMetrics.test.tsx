@@ -223,7 +223,7 @@ describe('KeyMetrics', () => {
 		expect(positiveMarkup).toContain('10% of total')
 	})
 
-	it('keeps Total Raised unavailable for an undisclosed round and renders an explicit-zero round', async () => {
+	it('shows the disclosed subtotal with mixed funding amounts and preserves the explicit-zero round', async () => {
 		const raise = (date: number, amountUsd: number | null) => ({
 			date,
 			name: 'Gauntlet',
@@ -235,7 +235,8 @@ describe('KeyMetrics', () => {
 			category: null,
 			categoryGroup: null,
 			leadInvestors: [],
-			otherInvestors: []
+			otherInvestors: [],
+			source: ''
 		})
 		const markup = await renderKeyMetrics({
 			...baseProps,
@@ -243,7 +244,7 @@ describe('KeyMetrics', () => {
 		})
 
 		expect(markup).toContain('Total Raised')
-		expect(markup.match(/\$10m/g)).toHaveLength(1)
+		expect(markup.match(/\$10m/g)).toHaveLength(2)
 		expect(markup).toContain('$0')
 	})
 

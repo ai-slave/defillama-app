@@ -340,6 +340,7 @@ beforeEach(() => {
 					leadInvestors: ['Investor B'],
 					otherInvestors: [],
 					valuationUsd: null,
+					source: '',
 					defillamaId: 'parent#test-protocol'
 				}
 			].filter((raise) => raise.defillamaId === defillamaId) satisfies Raise[]
@@ -991,6 +992,21 @@ describe('TokenPageHero component', () => {
 })
 
 describe('TokenOverviewSection component', () => {
+	it('keeps the known subtotal visible when another round is undisclosed', () => {
+		const html = renderTokenOverviewSection({
+			geckoId: 'bitcoin',
+			overview: {
+				...overviewFixture,
+				raises: [
+					{ date: 1, round: 'Seed', amountUsd: 2_500_000, investors: [] },
+					{ date: 2, round: 'Private', amountUsd: null, investors: [] },
+					{ date: 3, round: 'Series A', amountUsd: 14_000_000, investors: [] }
+				]
+			}
+		})
+		expect(html).toContain('$16.5m')
+		expect(html).toContain('Undisclosed')
+	})
 	it('renders the overview chart shell and key metrics without duplicating the page hero', () => {
 		const html = renderTokenOverviewSection({
 			overview: overviewFixture,

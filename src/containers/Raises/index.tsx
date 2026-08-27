@@ -5,9 +5,9 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import { RaisesFilters } from '~/containers/Raises/Filters'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
-import { formatUsd } from '~/utils/numberFormat'
 import { useRaisesData } from './hooks'
 import type { Raise } from './model'
+import { RaisesTotal } from './RaisesTotal'
 import { RaisesTable } from './Table'
 
 const MultiSeriesChart = React.lazy(
@@ -32,7 +32,7 @@ const RaisesContainer = ({ raises, investors, rounds, sectors, chains, investorN
 		selectedRounds,
 		selectedChains,
 		selectedSectors,
-		totalAmountRaised,
+		fundingSummary,
 		monthlyInvestmentChart
 	} = useRaisesData({
 		raises,
@@ -81,14 +81,7 @@ const RaisesContainer = ({ raises, investors, rounds, sectors, chains, investorN
 			<SummaryCardGrid>
 				<SummaryStatsCard padding="sm">
 					<StatItem label="Total Funding Rounds" value={filteredRaisesList.length} />
-					<StatItem
-						label="Total Funding Amount"
-						value={formatUsd(totalAmountRaised, {
-							compact: true,
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})}
-					/>
+					<StatItem label="Total Funding Amount" value={<RaisesTotal {...fundingSummary} />} />
 				</SummaryStatsCard>
 
 				<ChartPanel className="col-span-2">

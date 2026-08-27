@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import type { Raise } from '~/containers/Raises/model'
+import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
+import { summarizeRaises } from '~/containers/Raises/summary'
 import { Card } from '~/ui/Card'
 import { CopyHelper } from '~/ui/Copy'
 import { Icon } from '~/ui/Icon'
@@ -734,8 +736,6 @@ function RightsRow({
 }
 
 function RaiseHistorySection({ tooltip, raises }: { tooltip?: string; raises: Raise[] }) {
-	const totalAmountUsd = raises.reduce((sum, raise) => sum + (raise.amountUsd ?? 0), 0)
-
 	return (
 		<div className="flex flex-col gap-2">
 			<div className="flex items-center justify-between">
@@ -747,13 +747,7 @@ function RaiseHistorySection({ tooltip, raises }: { tooltip?: string; raises: Ra
 					<h3 className="label-md">Raise History</h3>
 				)}
 				<span className="label-sm text-secondary">
-					{raises.length} round{raises.length !== 1 ? 's' : ''} ·{' '}
-					{formatUsd(totalAmountUsd, {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					})}{' '}
-					total
+					{raises.length} round{raises.length !== 1 ? 's' : ''} · <RaisesTotal {...summarizeRaises(raises)} /> total
 				</span>
 			</div>
 			<div className="overflow-x-auto">
@@ -775,7 +769,7 @@ function RaiseHistorySection({ tooltip, raises }: { tooltip?: string; raises: Ra
 										{r.date ? (formatDate(r.date, { input: 'seconds' }) ?? '—') : '—'}
 									</td>
 									<td className="py-2.5 pr-4 text-right whitespace-nowrap">
-										{r.amountUsd
+										{r.amountUsd !== null
 											? formatUsd(r.amountUsd, {
 													compact: true,
 													minimumCompactValue: 1_000_000,

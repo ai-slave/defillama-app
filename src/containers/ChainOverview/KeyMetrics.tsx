@@ -1,5 +1,7 @@
 import { Fragment, memo, useRef } from 'react'
 import { BasicLink } from '~/components/Link'
+import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
+import { summarizeRaises } from '~/containers/Raises/summary'
 import { definitions as rwaDefinitions } from '~/containers/RWA/definitions'
 import { definitions } from '~/public/definitions'
 import {
@@ -422,16 +424,11 @@ function TreasurySection({ treasury }: { treasury: IChainOverviewData['treasury'
 function RaisesSection({ chainRaises }: { chainRaises: IChainOverviewData['chainRaises'] }) {
 	if (!chainRaises || chainRaises.length === 0) return null
 	const sortedRaises = chainRaises.toSorted((a, b) => a.date - b.date)
-	const totalRaisedUsd = chainRaises.reduce((sum, raise) => sum + (raise.amountUsd ?? 0), 0)
 	return (
 		<ChainMetricSection
 			label="Total Raised"
 			tooltip="Sum of all money raised by the chain, including VC funding rounds, public sales and ICOs."
-			value={formatUsd(totalRaisedUsd, {
-				compact: true,
-				minimumCompactValue: 1_000_000,
-				compactSuffix: 'lowercase'
-			})}
+			value={<RaisesTotal {...summarizeRaises(chainRaises)} />}
 		>
 			{sortedRaises.map((raise) => (
 				<p

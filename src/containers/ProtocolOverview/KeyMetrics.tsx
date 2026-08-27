@@ -1,6 +1,8 @@
 import { useMemo, useRef, useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { ReportIncorrectData } from '~/components/ReportIncorrectData'
+import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
+import { summarizeRaises } from '~/containers/Raises/summary'
 import { definitions } from '~/public/definitions'
 import { Icon } from '~/ui/Icon'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
@@ -1027,23 +1029,8 @@ const TokenCGData = (props: IKeyMetricsProps) => {
 
 const Raises = (props: IKeyMetricsProps) => {
 	if (!props.raises || props.raises.length === 0) return null
-	let totalRaised: number | null = 0
-	for (const raise of props.raises) {
-		if (raise.amountUsd === null) {
-			totalRaised = null
-			break
-		}
-		totalRaised += raise.amountUsd
-	}
 	return (
-		<MetricSection
-			label="Total Raised"
-			value={formatUsd(totalRaised, {
-				compact: true,
-				minimumCompactValue: 1_000_000,
-				compactSuffix: 'lowercase'
-			})}
-		>
+		<MetricSection label="Total Raised" value={<RaisesTotal {...summarizeRaises(props.raises)} />}>
 			{props.raises.map((raise) => (
 				<p
 					className="flex flex-col gap-1 border-b border-dashed border-subtle py-1 group-last:border-none"

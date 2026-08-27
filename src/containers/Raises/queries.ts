@@ -33,13 +33,15 @@ const LAST_30_DAYS_IN_MS = 30 * DAY_IN_MS
 const LAST_180_DAYS_IN_MS = 180 * DAY_IN_MS
 const LAST_1Y_IN_MS = 365 * DAY_IN_MS
 
-function calculateMedian(amounts: number[]) {
-	if (amounts.length === 0) return 0
+function calculateMedian(amounts: number[]): number | null {
+	if (amounts.length === 0) return null
 
-	const sorted = amounts.toSorted((a, b) => a - b)
+	// The accumulator owns this array and is finished when the median is calculated.
+	const sorted = amounts.sort((a, b) => a - b)
 	const middle = Math.floor(sorted.length / 2)
 
-	return sorted.length % 2 === 0 ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[middle]
+	// A nonempty sorted array contains middle; an even nonempty array also contains middle - 1.
+	return sorted.length % 2 === 0 ? (sorted[middle - 1]! + sorted[middle]!) / 2 : sorted[middle]!
 }
 
 function createEmptyTimespan(): InvestorDealsAccumulatorTimespan {
@@ -67,7 +69,7 @@ function createInvestorDealsAccumulator(name: string): InvestorDealsAccumulator 
 function updateTimespan(timespan: InvestorDealsAccumulatorTimespan, raise: Raise) {
 	timespan.deals += 1
 	timespan.projects.add(raise.name)
-	for (const chain of raise.chains ?? []) {
+	for (const chain of raise.chains) {
 		timespan.chains.add(chain)
 	}
 
@@ -75,8 +77,8 @@ function updateTimespan(timespan: InvestorDealsAccumulatorTimespan, raise: Raise
 		timespan.amounts.push(raise.amountUsd)
 		// "Top" fields track the single largest deal amount in the timespan.
 		if (raise.amountUsd > timespan.topAmount) {
-			timespan.topCategory = raise.category ?? null
-			timespan.topRound = raise.round ?? null
+			timespan.topCategory = raise.category
+			timespan.topRound = raise.round
 			timespan.topAmount = raise.amountUsd
 		}
 	}
@@ -115,14 +117,14 @@ export async function getInvestorRaisesPageData(
 	for (const raise of data.raises) {
 		let isInvestor = false
 
-		for (const leadInvestor of raise.leadInvestors ?? []) {
+		for (const leadInvestor of raise.leadInvestors) {
 			if (slug(leadInvestor.toLowerCase()) === investorSlug) {
 				investorName = leadInvestor
 				isInvestor = true
 			}
 		}
 
-		for (const otherInvestor of raise.otherInvestors ?? []) {
+		for (const otherInvestor of raise.otherInvestors) {
 			if (slug(otherInvestor.toLowerCase()) === investorSlug) {
 				investorName = otherInvestor
 				isInvestor = true
@@ -134,7 +136,7 @@ export async function getInvestorRaisesPageData(
 		}
 	}
 
-	if (raises.length === 0) {
+	if (investorName === null) {
 		return {
 			notFound: true
 		}
@@ -145,8 +147,7 @@ export async function getInvestorRaisesPageData(
 	return {
 		raises,
 		...filters,
-		// `raises` is non-empty only when a matching investor was found in the loop above.
-		investorName: investorName!
+		investorName
 	}
 }
 
@@ -155,10 +156,11 @@ export async function getInvestorsPageData(): Promise<IInvestorsPageData> {
 	const dealsByInvestor: Record<string, InvestorDealsAccumulator> = {}
 	const now = Date.now()
 
-	for (const raise of data.raises ?? []) {
+	for (const raise of data.raises) {
 		const raiseDateMs = raise.date * 1000
 
-		const investors = new Set([...(raise.leadInvestors ?? []), ...(raise.otherInvestors ?? [])])
+		const investors = new Set(raise.leadInvestors)
+		for (const investor of raise.otherInvestors) investors.add(investor)
 
 		for (const investorName of investors) {
 			dealsByInvestor[investorName] = dealsByInvestor[investorName] ?? createInvestorDealsAccumulator(investorName)
@@ -177,13 +179,18 @@ export async function getInvestorsPageData(): Promise<IInvestorsPageData> {
 		}
 	}
 
-	const investors: IInvestor[] = Object.values(dealsByInvestor).map((investor) => ({
-		name: investor.name,
-		last30d: normalizeTimespan(investor.last30d),
-		last180d: normalizeTimespan(investor.last180d),
-		last1y: normalizeTimespan(investor.last1y),
-		allTime: normalizeTimespan(investor.allTime)
-	}))
+	const investors: IInvestor[] = []
+	for (const name in dealsByInvestor) {
+		// Every enumerated entry is initialized in the accumulation pass above.
+		const investor = dealsByInvestor[name]!
+		investors.push({
+			name: investor.name,
+			last30d: normalizeTimespan(investor.last30d),
+			last180d: normalizeTimespan(investor.last180d),
+			last1y: normalizeTimespan(investor.last1y),
+			allTime: normalizeTimespan(investor.allTime)
+		})
+	}
 
 	return { investors }
 }

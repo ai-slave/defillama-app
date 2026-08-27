@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchRaises } from './api'
+import type { RaisesApiResponse } from './api.types'
 
 const fetchJsonMock = vi.hoisted(() => vi.fn())
 
@@ -24,10 +25,11 @@ describe('Raises API', () => {
 					categoryGroup: 'CeFi',
 					leadInvestors: [],
 					otherInvestors: [],
-					valuation: '300'
+					valuation: '300',
+					source: ''
 				}
 			]
-		})
+		} satisfies RaisesApiResponse)
 
 		const result = await fetchRaises()
 
@@ -36,34 +38,69 @@ describe('Raises API', () => {
 		expect(result.raises[0]).not.toHaveProperty('valuation')
 	})
 
-	it('treats blank and non-numeric transport values as undisclosed', async () => {
+	it.each([null, '', ' ', 'not disclosed', '3,000', '<7000', '9.8 millions'])(
+		'keeps freeform valuation %s unavailable',
+		async (valuation) => {
+			fetchJsonMock.mockResolvedValue({
+				raises: [
+					{
+						date: 1,
+						name: 'Undisclosed',
+						round: null,
+						amount: null,
+						chains: [],
+						sector: null,
+						category: null,
+						categoryGroup: null,
+						leadInvestors: [],
+						otherInvestors: [],
+						valuation,
+						source: ''
+					}
+				]
+			} satisfies RaisesApiResponse)
+
+			const result = await fetchRaises()
+
+			expect(result.raises[0]).toMatchObject({
+				round: null,
+				sector: null,
+				category: null,
+				categoryGroup: null,
+				amountUsd: null,
+				valuationUsd: null
+			})
+		}
+	)
+
+	it('preserves measured zero, required empty source, exact labels and optional identity', async () => {
 		fetchJsonMock.mockResolvedValue({
 			raises: [
 				{
 					date: 1,
-					name: 'Undisclosed',
+					name: 'wstETH',
 					round: null,
-					amount: null,
+					amount: 0,
 					chains: [],
 					sector: null,
 					category: null,
 					categoryGroup: null,
-					leadInvestors: [],
+					leadInvestors: ['Fund', 'fund'],
 					otherInvestors: [],
-					valuation: ' '
+					valuation: '0',
+					source: '',
+					defillamaId: 'parent#1'
 				}
 			]
-		})
-
-		const result = await fetchRaises()
-
-		expect(result.raises[0]).toMatchObject({
-			round: null,
-			sector: null,
-			category: null,
-			categoryGroup: null,
-			amountUsd: null,
-			valuationUsd: null
+		} satisfies RaisesApiResponse)
+		expect((await fetchRaises()).raises[0]).toMatchObject({
+			date: 1,
+			name: 'wstETH',
+			amountUsd: 0,
+			valuationUsd: 0,
+			source: '',
+			defillamaId: 'parent#1',
+			leadInvestors: ['Fund', 'fund']
 		})
 	})
 })

@@ -15,15 +15,14 @@ interface IDropdownMenusProps {
 	header: string
 	headingAs?: 'h1' | 'h2'
 	pathname?: string
-	investors?: Array<string>
-	selectedInvestors?: Array<string>
-	chains?: Array<string>
-	selectedChains?: Array<string>
-	sectors?: Array<string>
-	selectedSectors?: Array<string>
-	rounds?: Array<string>
-	selectedRounds?: Array<string>
-	nestedMenu?: boolean
+	investors: string[]
+	selectedInvestors: string[]
+	chains: string[]
+	selectedChains: string[]
+	sectors: string[]
+	selectedSectors: string[]
+	rounds: string[]
+	selectedRounds: string[]
 }
 
 export function RaisesFilters(props: IDropdownMenusProps) {
@@ -37,11 +36,6 @@ export function RaisesFilters(props: IDropdownMenusProps) {
 	)
 }
 
-const EMPTY_INVESTORS: string[] = []
-const EMPTY_CHAINS: string[] = []
-const EMPTY_SECTORS: string[] = []
-const EMPTY_ROUNDS: string[] = []
-
 function Filters({
 	investors,
 	selectedInvestors,
@@ -53,7 +47,7 @@ function Filters({
 	selectedRounds,
 	pathname,
 	nestedMenu
-}: IDropdownMenusProps) {
+}: IDropdownMenusProps & { nestedMenu: boolean }) {
 	const router = useRouter()
 
 	// Check if any filters are active based on URL query params.
@@ -89,11 +83,11 @@ function Filters({
 
 	return (
 		<>
-			{investors != null && investors.length > 0 ? (
+			{investors.length > 0 ? (
 				<SelectWithCombobox
 					label="Investors"
 					allValues={investors}
-					selectedValues={selectedInvestors ?? EMPTY_INVESTORS}
+					selectedValues={selectedInvestors}
 					nestedMenu={nestedMenu}
 					labelType="smol"
 					variant="filter-responsive"
@@ -103,11 +97,11 @@ function Filters({
 				/>
 			) : null}
 
-			{chains != null && chains.length > 0 ? (
+			{chains.length > 0 ? (
 				<SelectWithCombobox
 					label="Chains"
 					allValues={chains}
-					selectedValues={selectedChains ?? EMPTY_CHAINS}
+					selectedValues={selectedChains}
 					nestedMenu={nestedMenu}
 					labelType="smol"
 					variant="filter-responsive"
@@ -117,11 +111,11 @@ function Filters({
 				/>
 			) : null}
 
-			{sectors != null && sectors.length > 0 ? (
+			{sectors.length > 0 ? (
 				<SelectWithCombobox
 					label="Sectors"
 					allValues={sectors}
-					selectedValues={selectedSectors ?? EMPTY_SECTORS}
+					selectedValues={selectedSectors}
 					nestedMenu={nestedMenu}
 					labelType="smol"
 					variant="filter-responsive"
@@ -131,11 +125,11 @@ function Filters({
 				/>
 			) : null}
 
-			{rounds != null && rounds.length > 0 ? (
+			{rounds.length > 0 ? (
 				<SelectWithCombobox
 					label="Rounds"
 					allValues={rounds}
-					selectedValues={selectedRounds ?? EMPTY_ROUNDS}
+					selectedValues={selectedRounds}
 					nestedMenu={nestedMenu}
 					labelType="smol"
 					variant="filter-responsive"
@@ -164,7 +158,7 @@ function RaisedRange({
 	nestedMenu,
 	placement
 }: {
-	nestedMenu?: boolean
+	nestedMenu: boolean
 	placement?: Ariakit.PopoverStoreProps['placement']
 }) {
 	const { min, max, handleSubmit, handleClear } = useRangeFilter('minRaised', 'maxRaised')
@@ -173,7 +167,7 @@ function RaisedRange({
 		<FilterBetweenRange
 			trigger={
 				<>
-					{min || max ? (
+					{min !== null || max !== null ? (
 						<>
 							<span>Amount Raised: </span>
 							<span className="text-link">{`${formatNumber(min) ?? 'min'} - ${formatNumber(max) ?? 'max'}`}</span>

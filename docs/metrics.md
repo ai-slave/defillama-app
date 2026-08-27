@@ -410,14 +410,33 @@ The Downloads hacks dataset exposes the same normalized USD fields.
 
 Raise amounts and valuations use USD millions in both API payloads:
 
-- `/raises` returns `amount` as a nullable number and `valuation` as a nullable number or numeric string, both in USD millions.
+- `/raises` returns `amount` as a nullable number and `valuation` as nullable freeform Airtable text in USD millions.
 - `/v2/metrics/tvl/protocol/:protocol` embeds the same fields and units.
 
 Normalize both API shapes at their fetch boundaries with `normalizeRaisesApiItem`. App consumers, snapshot reads, tables, charts,
 filters, and CSV exports should only use `amountUsd` and `valuationUsd`. Raw snapshot publication remains transport-shaped
 so existing artifacts can be read and normalized consistently. The Downloads Raises dataset also exposes normalized USD
-fields. Any exact per-protocol total is unavailable when one matched round has an undisclosed amount; known rounds must not
-be displayed as a complete subtotal. Explicit zero remains a measured round value.
+fields. Funding summaries show the sum of disclosed amounts. When some rounds have undisclosed amounts, keep the dollar
+subtotal visible with a dotted underline and a tooltip stating how many rounds are excluded. A nonempty population with
+no disclosed amount shows `Undisclosed`, not `$0`; a measured zero remains `$0`, including alongside undisclosed rounds.
+Successful empty aggregate populations remain zero, and pages that omit empty funding sections keep doing so. Whole-source
+failure retains its existing unavailable/hidden behavior; it is not an undisclosed round.
+
+This presentation applies to Raises, protocol, token, Token Rights, chain and exchange funding summaries and the
+Potential Airdrops funding column. It replaces the earlier sticky-null display rule for mixed protocol funding totals.
+Potential Airdrops sorts and exports the same disclosed subtotal, with an explicitly labeled disclosed-money CSV column
+and an export-only count of undisclosed rounds. Individual round values and their CSV exports remain unchanged.
+
+Blank or nonnumeric valuation text stays unavailable; do not invent a parser for freeform entries such as `3,000` or
+`<7000`. Numeric amount data needs no runtime validation. The producer trims surrounding whitespace before publishing
+labels and preserves casing. Investor directory rows retain exact producer labels; route slugs keep their existing
+case-insensitive behavior. Required `source` may be an empty string.
+
+Broad Raises overview and monthly funding totals sum disclosed amounts; undisclosed rounds still count as rounds.
+Numeric amount filters exclude undisclosed amounts only while a bound is active. A measured zero remains eligible,
+including for a maximum of zero. Investor median uses measured amounts only: no measurements means null, not zero.
+Both Raises tables export raw whole-USD money, Unix-second `Timestamp`, and ISO `Date` through the same CSV preparation.
+Preserve the existing EOS 13-month funding split and ascending chart order.
 
 The warehouse has a different contract: `fact.raise_event.amount` and `fact.hack_event.amount` are already whole USD.
 Do not pass warehouse rows through the Raises API normalizer or silently combine warehouse and API records; the sources

@@ -63,14 +63,15 @@ const columns = [
 			headerClassName: 'w-[min(200px,40vw)]'
 		}
 	}),
-	columnHelper.accessor('deals', {
+	columnHelper.accessor((row) => row.deals ?? undefined, {
+		id: 'deals',
 		header: 'Deals',
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor((row) => row.medianAmountUsd || null, {
+	columnHelper.accessor((row) => row.medianAmountUsd ?? undefined, {
 		id: 'medianAmount',
 		header: 'Median Amount',
 		cell: (info) =>
@@ -133,7 +134,7 @@ const validPeriods = new Set(allPeriods.map((p) => p.value))
 const ActiveInvestors = ({ investors }: IInvestorsPageData) => {
 	const router = useRouter()
 	const { period } = router.query
-	const selectedPeriod = typeof period === 'string' && validPeriods.has(period) ? period : allPeriods[0].value
+	const selectedPeriod = typeof period === 'string' && validPeriods.has(period) ? period : 'allTime'
 
 	const [sorting, setSorting] = React.useState<SortingState>([{ desc: true, id: 'deals' }])
 
