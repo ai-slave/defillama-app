@@ -108,6 +108,42 @@ const outlineBtnCls =
 const filledBtnCls =
 	'h-14 w-full rounded-xl bg-sub-brand-primary text-base leading-5 font-medium text-on-brand sm:h-10 sm:rounded-lg sm:text-sm'
 
+// Where a non-Stripe plan is actually managed; Stripe checkout/portal actions
+// don't apply to these providers.
+function ProviderManageNotice({ provider }: { provider: string | null }) {
+	if (provider === 'llamapay' || provider === 'legacy') {
+		return (
+			<p className="text-center text-[13px] leading-5 text-sub-text-cool-muted dark:text-sub-text-muted">
+				Your plan is billed through{' '}
+				<a
+					href="https://subscriptions.llamapay.io/"
+					target="_blank"
+					rel="noopener noreferrer"
+					className="underline hover:text-sub-brand-primary"
+				>
+					LlamaPay
+				</a>
+				. Manage or change it there.
+			</p>
+		)
+	}
+	if (provider === 'apple') {
+		return (
+			<p className="text-center text-[13px] leading-5 text-sub-text-cool-muted dark:text-sub-text-muted">
+				Your plan is billed through the App Store. Manage it in your Apple subscription settings.
+			</p>
+		)
+	}
+	if (provider === 'google_play') {
+		return (
+			<p className="text-center text-[13px] leading-5 text-sub-text-cool-muted dark:text-sub-text-muted">
+				Your plan is billed through Google Play. Manage it in your Google Play subscription settings.
+			</p>
+		)
+	}
+	return null
+}
+
 function PricingCardCta({
 	card,
 	isCurrentPlan,
@@ -118,6 +154,8 @@ function PricingCardCta({
 	isUpgradeTier,
 	isLowerTier,
 	isManualSubscription,
+	currentProvider,
+	isTeamProvided,
 	isPageStateLoading,
 	onPrimaryCtaClick,
 	onSecondaryCtaClick,
@@ -138,13 +176,23 @@ function PricingCardCta({
 	isUpgradeTier: boolean
 	isLowerTier: boolean | '' | null | 0
 	isManualSubscription?: boolean
+	currentProvider?: string | null
+	isTeamProvided?: boolean
 	billingCycle: BillingCycle
 	isPageStateLoading?: boolean
 } & PricingCardCallbacks) {
 	/* ── Still loading auth/subscription data: hide CTAs ── */
 	if (isPageStateLoading) return null
 
-	if (isManualSubscription) {
+	/* ── Team-granted and team-seat plans aren't self-serve; Contact Us stays valid ── */
+	if (isManualSubscription || isTeamProvided) {
+		if (card.key === 'enterprise') {
+			return (
+				<a href="mailto:sales@defillama.com" className={`${filledBtnCls} flex items-center justify-center`}>
+					{card.primaryCta}
+				</a>
+			)
+		}
 		if (!isCurrentPlan) return null
 		return (
 			<>
@@ -152,7 +200,9 @@ function PricingCardCta({
 					Current Plan
 				</p>
 				<p className="text-center text-[13px] leading-5 text-sub-text-cool-muted dark:text-sub-text-muted">
-					Your {card.title} plan was provided by the DefiLlama team. To make any changes, please contact the team.
+					{isTeamProvided
+						? `Your ${card.title} plan is provided through your team. Ask your team admin about plan changes.`
+						: `Your ${card.title} plan was provided by the DefiLlama team. To make any changes, please contact the team.`}
 				</p>
 			</>
 		)
@@ -160,6 +210,8 @@ function PricingCardCta({
 
 	/* ── Lower tier than current subscription: no CTA ── */
 	if (isLowerTier) return null
+
+	const isSelfServeStripe = currentProvider === 'stripe'
 
 	/* ── Current plan: show label + optional yearly upgrade ── */
 	if (isCurrentPlan) {
@@ -174,15 +226,19 @@ function PricingCardCta({
 						<p className="text-center text-xs leading-4 text-sub-text-muted">
 							Your plan stays active until the end of the billing period.
 						</p>
-						<button
-							type="button"
-							className="mt-1 text-[13px] leading-5 font-medium text-sub-brand-primary underline hover:text-sub-brand-secondary"
-							onClick={onRevertCancellation}
-						>
-							Revert Cancellation
-						</button>
+						{/* Reverting opens the Stripe billing portal, so it only applies to Stripe plans */}
+						{isSelfServeStripe ? (
+							<button
+								type="button"
+								className="mt-1 text-[13px] leading-5 font-medium text-sub-brand-primary underline hover:text-sub-brand-secondary"
+								onClick={onRevertCancellation}
+							>
+								Revert Cancellation
+							</button>
+						) : null}
 					</div>
 				) : null}
+				{!isSelfServeStripe && !isTrial ? <ProviderManageNotice provider={currentProvider ?? null} /> : null}
 				{isTrial ? (
 					<button type="button" className={filledBtnCls} onClick={onEndTrial}>
 						Upgrade to Full Access
@@ -210,6 +266,11 @@ function PricingCardCta({
 					{card.primaryCta}
 				</a>
 			)
+		}
+		// The upgrade flow charges through Stripe; a plan billed elsewhere must be
+		// changed with its own provider first or the user gets billed twice.
+		if (!isSelfServeStripe) {
+			return <ProviderManageNotice provider={currentProvider ?? null} />
 		}
 		return (
 			<button
@@ -389,6 +450,8 @@ export function PricingCard({
 	billingCycle = 'monthly',
 	userBillingCycle = null,
 	isManualSubscription = false,
+	currentProvider = null,
+	isTeamProvided = false,
 	isPageStateLoading = false,
 	onPrimaryCtaClick,
 	onSecondaryCtaClick,
@@ -409,9 +472,13 @@ export function PricingCard({
 	billingCycle?: BillingCycle
 	userBillingCycle?: BillingCycle | null
 	isManualSubscription?: boolean
+	currentProvider?: string | null
+	isTeamProvided?: boolean
 	isPageStateLoading?: boolean
 } & PricingCardCallbacks) {
-	const canUpgradeCycle = isCurrentPlan && userBillingCycle === 'monthly'
+	// The yearly upgrade runs through Stripe checkout, so it's only offered for
+	// Stripe-billed personal plans.
+	const canUpgradeCycle = isCurrentPlan && userBillingCycle === 'monthly' && currentProvider === 'stripe'
 	const isUpgradeTier =
 		isAuthenticated &&
 		currentPlan &&
@@ -452,6 +519,8 @@ export function PricingCard({
 							isUpgradeTier={isUpgradeTier}
 							isLowerTier={isLowerTier}
 							isManualSubscription={isManualSubscription}
+							currentProvider={currentProvider}
+							isTeamProvided={isTeamProvided}
 							billingCycle={billingCycle}
 							isPageStateLoading={isPageStateLoading}
 							onPrimaryCtaClick={onPrimaryCtaClick}

@@ -104,15 +104,19 @@ export function TeamMemberView() {
 
 			<ConfirmActionModal
 				isOpen={showLeaveConfirm}
-				onClose={() => setShowLeaveConfirm(false)}
+				onClose={() => {
+					leaveTeamMutation.reset()
+					setShowLeaveConfirm(false)
+				}}
 				onConfirm={() => {
-					void leaveTeamMutation.mutateAsync().then(() => setShowLeaveConfirm(false))
+					leaveTeamMutation.mutate(undefined, { onSuccess: () => setShowLeaveConfirm(false) })
 				}}
 				isLoading={leaveTeamMutation.isPending}
 				title="Leave Team"
 				description="Are you sure you want to leave this team? Your team subscription will be revoked and you will lose access to any team-managed features."
 				confirmLabel="Leave Team"
 				confirmVariant="danger"
+				error={leaveTeamMutation.isError ? leaveTeamMutation.error.message : null}
 			/>
 		</div>
 	)

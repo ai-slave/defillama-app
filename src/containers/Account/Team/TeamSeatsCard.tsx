@@ -3,7 +3,6 @@ import { useSubscribe } from '~/auth/useSubscribe'
 import { Icon } from '~/ui/Icon'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
-import { computeNextBillingDate } from './billingDate'
 import { ConfirmActionModal } from './ConfirmActionModal'
 import type { TeamSubscription } from './types'
 import { useTeam } from './useTeam'
@@ -79,21 +78,15 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 	const active = isActiveSub(subscription)
 	const isCanceling = isCancelingSub(subscription)
 	const cancelAtDate = getCancelAtDate(subscription)
-	const nextDate =
-		active && !isCanceling && subscription.createdAt
-			? computeNextBillingDate(subscription.createdAt, subscription.billingInterval)
-			: null
 
 	const isMonthly = subscription.billingInterval === 'month'
 	const upgradePending = upgradeSeatsMutation.isPending
 
-	const handleConfirmUpgrade = async () => {
-		try {
-			await upgradeSeatsMutation.mutateAsync({ subscriptionType: subscription.type })
-			setShowUpgradeConfirm(false)
-		} catch {
-			// error toast is handled inside upgradeSeatsMutation.onError
-		}
+	const handleConfirmUpgrade = () => {
+		upgradeSeatsMutation.mutate(
+			{ subscriptionType: subscription.type },
+			{ onSuccess: () => setShowUpgradeConfirm(false) }
+		)
 	}
 
 	return (
@@ -141,8 +134,10 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 				/>
 				{isCanceling && cancelAtDate ? (
 					<InfoRow label="Cancels on" value={formatDate(cancelAtDate) ?? '-'} valueClassName="text-error" />
-				) : nextDate ? (
-					<InfoRow label="Next billing" value={formatDate(nextDate) ?? '-'} />
+				) : active ? (
+					// The team response has no billing-period end, and deriving one from the row's
+					// creation date goes wrong once an annual upgrade moves Stripe's billing anchor.
+					<InfoRow label="Next billing" value="See the Stripe portal" valueClassName="text-sub-text-muted" />
 				) : subscription.status ? (
 					<InfoRow label="Status" value={subscription.status} valueClassName="capitalize text-sub-text-muted" />
 				) : null}
@@ -160,9 +155,14 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 
 			<ConfirmActionModal
 				isOpen={showUpgradeConfirm}
-				onClose={() => !upgradePending && setShowUpgradeConfirm(false)}
-				onConfirm={() => void handleConfirmUpgrade()}
+				onClose={() => {
+					if (upgradePending) return
+					upgradeSeatsMutation.reset()
+					setShowUpgradeConfirm(false)
+				}}
+				onConfirm={handleConfirmUpgrade}
 				isLoading={upgradePending}
+				error={upgradeSeatsMutation.isError ? upgradeSeatsMutation.error.message : null}
 				title={`Upgrade ${label} to Yearly`}
 				description={`Upgrade your ${label} subscription (${subscription.seats.seatCount} seat${subscription.seats.seatCount === 1 ? '' : 's'}) to yearly billing? Stripe will immediately charge your saved card the prorated yearly amount.`}
 				confirmLabel="Upgrade to Yearly"
@@ -221,7 +221,7 @@ function YearlyTip({ subscriptions }: { subscriptions: TeamSubscription[] }) {
 
 export function TeamSeatsCard() {
 	const { teamSubscriptions, upgradeSeatsMutation } = useTeam()
-	const { createPortalSession, isPortalSessionLoading } = useSubscribe()
+	const { createPortalSession, createPortalSessionMutation } = useSubscribe()
 	const [showPurchaseModal, setShowPurchaseModal] = useState(false)
 
 	const hasStripe = teamSubscriptions.some((sub) => sub.provider === undefined || sub.provider === 'stripe')
@@ -238,11 +238,11 @@ export function TeamSeatsCard() {
 					{teamSubscriptions.length > 0 && hasStripe && (
 						<button
 							onClick={() => void createPortalSession()}
-							disabled={isPortalSessionLoading}
+							disabled={createPortalSessionMutation.isPending}
 							className="flex h-8 items-center gap-1.5 rounded-lg border border-sub-border-slate-100 px-3 text-xs font-medium text-sub-text-primary hover:bg-sub-brand-primary/5 disabled:opacity-50 dark:border-sub-border-strong"
 						>
 							<Icon name="external-link" height={12} width={12} />
-							{isPortalSessionLoading ? 'Opening...' : 'Manage in Stripe'}
+							{createPortalSessionMutation.isPending ? 'Opening...' : 'Manage in Stripe'}
 						</button>
 					)}
 					<button

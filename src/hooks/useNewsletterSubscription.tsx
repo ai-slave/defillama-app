@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
+import { refreshSession } from '~/auth/authStore'
 import { errorToast, successToast } from '~/components/Toast/notifications'
 import { AUTH_SERVER } from '~/constants'
 import { handleSimpleFetchResponse } from '~/utils/async'
@@ -74,9 +75,7 @@ export function useNewsletterSubscription({
 		},
 		onSuccess: (data, { newsletters }) => {
 			if (pb.authStore.isValid) {
-				pb.collection('users')
-					.authRefresh()
-					.catch(() => {})
+				refreshSession().catch(() => {})
 			}
 			const failed = newsletters.filter((key) => data.result?.[key] !== 'ok')
 			if (failed.length === 0) {

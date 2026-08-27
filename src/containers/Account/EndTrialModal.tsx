@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useCallback, useState } from 'react'
+import { useCallback } from 'react'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { Icon } from '~/ui/Icon'
 
@@ -20,9 +20,6 @@ interface EndTrialModalProps {
 	confirmLabel?: string
 	secondaryHref?: string
 	secondaryLabel?: string
-	/** When provided, the parent owns the upgrade action + loading state. When omitted, the modal self-calls endTrialSubscription() and shows its own success state. */
-	onConfirm?: () => void
-	isLoading?: boolean
 }
 
 export function EndTrialModal({
@@ -34,33 +31,23 @@ export function EndTrialModal({
 	benefits = DEFAULT_BENEFITS,
 	confirmLabel = 'Confirm & Upgrade Now',
 	secondaryHref,
-	secondaryLabel,
-	onConfirm,
-	isLoading: externalLoading
+	secondaryLabel
 }: EndTrialModalProps) {
-	const selfHandled = !onConfirm
-	const { endTrialSubscription, isEndTrialLoading } = useSubscribe()
-	const [upgraded, setUpgraded] = useState(false)
+	// The modal owns the upgrade: the mutation is the single source of the
+	// pending/success/error state, and all feedback renders inside the dialog.
+	const { endTrialMutation } = useSubscribe()
+	const upgraded = endTrialMutation.isSuccess
+	const error = endTrialMutation.isError ? endTrialMutation.error.message : null
+	const isLoading = endTrialMutation.isPending
 
-	const isLoading = selfHandled ? isEndTrialLoading : !!externalLoading
-
-	const handleConfirm = useCallback(async () => {
-		if (onConfirm) {
-			onConfirm()
-			return
-		}
-		try {
-			await endTrialSubscription()
-			setUpgraded(true)
-		} catch (error) {
-			console.error('Failed to upgrade:', error)
-		}
-	}, [onConfirm, endTrialSubscription])
+	const handleConfirm = useCallback(() => {
+		endTrialMutation.mutate()
+	}, [endTrialMutation])
 
 	const handleClose = useCallback(() => {
-		setUpgraded(false)
+		endTrialMutation.reset()
 		onClose()
-	}, [onClose])
+	}, [endTrialMutation, onClose])
 
 	return (
 		<Ariakit.Dialog
@@ -76,7 +63,8 @@ export function EndTrialModal({
 				<h3 className="text-xl font-bold">{upgraded ? 'Upgrade Successful' : title}</h3>
 				<button
 					onClick={handleClose}
-					className="rounded-full p-1.5 text-tertiary transition-colors hover:bg-gray-100 hover:text-secondary dark:text-sub-text-muted dark:hover:bg-sub-line dark:hover:text-sub-text-primary"
+					disabled={isLoading}
+					className="rounded-full p-1.5 text-tertiary transition-colors hover:bg-gray-100 hover:text-secondary disabled:cursor-not-allowed disabled:opacity-50 dark:text-sub-text-muted dark:hover:bg-sub-line dark:hover:text-sub-text-primary"
 				>
 					<Icon name="x" height={18} width={18} />
 				</button>
@@ -127,6 +115,15 @@ export function EndTrialModal({
 							</p>
 						</div>
 					</div>
+
+					{error ? (
+						<div className="rounded-lg border border-error/30 bg-error/10 p-3">
+							<div className="flex items-center gap-2 text-error">
+								<Icon name="alert-warning" height={16} width={16} className="shrink-0" />
+								<p className="text-sm">{error}</p>
+							</div>
+						</div>
+					) : null}
 
 					{/* Actions */}
 					<div className="mt-2 flex flex-col gap-3">

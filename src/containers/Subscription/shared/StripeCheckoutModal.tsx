@@ -11,6 +11,7 @@ import { loadStripe } from '@stripe/stripe-js'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { useAuthContext } from '~/auth'
+import { getReferrer } from '~/auth/referrer'
 import { AUTH_SERVER, STRIPE_PUBLISHABLE_KEY } from '~/constants'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Icon } from '~/ui/Icon'
@@ -102,7 +103,8 @@ export function StripeCheckoutModal({
 						provider: paymentMethod,
 						subscriptionType: type,
 						billingInterval,
-						isTrial
+						isTrial,
+						referralCode: getReferrer()
 					})
 				},
 				true

@@ -56,6 +56,7 @@ function ComparisonPlanHead({
 	isSelected,
 	isCurrentPlan,
 	isLowerTier,
+	hideAction,
 	onAction
 }: {
 	plan: PlanKey
@@ -65,6 +66,7 @@ function ComparisonPlanHead({
 	isSelected: boolean
 	isCurrentPlan: boolean
 	isLowerTier: boolean
+	hideAction?: boolean
 	onAction?: (plan: PlanKey) => void
 }) {
 	const meta = PLAN_META_BY_CYCLE[billingCycle][plan]
@@ -105,7 +107,7 @@ function ComparisonPlanHead({
 					<p className="text-center text-[10px] leading-7 font-medium text-sub-brand-primary md:text-xs dark:text-sub-brand-secondary">
 						{isCurrentPlan ? 'Current Plan' : 'Unlocked'}
 					</p>
-				) : (
+				) : hideAction ? null : (
 					<button
 						type="button"
 						className={`h-7 rounded-[6px] border px-2 text-[10px] leading-3 md:h-8 md:rounded-lg md:text-xs ${btnStyle}`}
@@ -146,6 +148,7 @@ export function SubscriptionComparisonSection({
 	billingCycle,
 	selectedPlan,
 	currentPlan = null,
+	hidePlanActions = false,
 	onPlanAction
 }: {
 	planOrder: PlanKey[]
@@ -153,6 +156,8 @@ export function SubscriptionComparisonSection({
 	billingCycle: BillingCycle
 	selectedPlan: PlanKey
 	currentPlan?: PlanKey | null
+	// Withhold plan-change buttons while the current plan is unknown
+	hidePlanActions?: boolean
 	onPlanAction?: (plan: PlanKey) => void
 }) {
 	const bodyScrollRef = useRef<HTMLDivElement>(null)
@@ -226,6 +231,7 @@ export function SubscriptionComparisonSection({
 											isLowerTier={
 												currentPlan != null && currentPlan !== 'free' && PLAN_TIER[plan] < PLAN_TIER[currentPlan]
 											}
+											hideAction={hidePlanActions && plan !== 'enterprise'}
 											onAction={onPlanAction}
 										/>
 									))}

@@ -7,10 +7,12 @@ import {
 	useContext,
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 	useSyncExternalStore
 } from 'react'
 import toast from 'react-hot-toast'
+import { getAuthStoreSnapshot, getServerSnapshot, refreshSession, subscribeToAuthStore } from '~/auth/authStore'
 import { OAuthWelcomeDialog } from '~/auth/OAuthWelcomeDialog'
 import { getReferrer } from '~/auth/referrer'
 import { isGoogleLinkChallenge, type GoogleLinkChallenge } from '~/auth/signInFlowStore'
@@ -73,64 +75,6 @@ export function readGoogleAuthResult(value: unknown): GoogleAuthResult {
 	}
 }
 
-function syncAuthTokenToCookie(token: string | null) {
-	if (typeof document === 'undefined') return
-	if (token) {
-		document.cookie = `pb_auth_token=${token}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax; Secure`
-	} else {
-		document.cookie = `pb_auth_token=; path=/; max-age=0; path=/; Secure`
-	}
-}
-
-// Custom event name for auth store changes
-const AUTH_STORE_CHANGE_EVENT = 'pb-auth-store-change'
-
-// Store for tracking auth state changes
-let authStoreSnapshot = {
-	token: pb.authStore.token,
-	record: pb.authStore.record ? { ...pb.authStore.record } : null,
-	isValid: pb.authStore.isValid
-}
-
-// Subscribe to PocketBase authStore changes and dispatch window events
-const subscribeToAuthStore = (callback: () => void) => {
-	const unsubscribe = pb.authStore.onChange((token, record) => {
-		const hasTokenChanged = authStoreSnapshot.token !== token
-		const hasRecordChanged = JSON.stringify(authStoreSnapshot.record) !== JSON.stringify(record)
-		const hasValidChanged = authStoreSnapshot.isValid !== pb.authStore.isValid
-
-		if (hasTokenChanged || hasRecordChanged || hasValidChanged) {
-			authStoreSnapshot = {
-				token,
-				record: record ? { ...record } : null,
-				isValid: pb.authStore.isValid
-			}
-			syncAuthTokenToCookie(pb.authStore.isValid ? token : null)
-			callback()
-		}
-	})
-
-	// Also listen to the custom event for external triggers
-	const handleAuthStoreChange = () => callback()
-	window.addEventListener(AUTH_STORE_CHANGE_EVENT, handleAuthStoreChange)
-
-	return () => {
-		unsubscribe()
-		window.removeEventListener(AUTH_STORE_CHANGE_EVENT, handleAuthStoreChange)
-	}
-}
-
-const getAuthStoreSnapshot = () => authStoreSnapshot
-
-// Cache the server snapshot to avoid infinite loop in useSyncExternalStore
-const serverSnapshot = {
-	token: '',
-	record: null,
-	isValid: false
-}
-
-const getServerSnapshot = () => serverSnapshot
-
 interface FetchOptions extends RequestInit {
 	skipAuth?: boolean
 }
@@ -156,7 +100,6 @@ const loadCreateSiweMessage = async (): Promise<CreateSiweMessage> => {
 
 const clearUserSession = () => {
 	pb.authStore.clear()
-	syncAuthTokenToCookie(null)
 	localStorage.removeItem('userHash')
 	localStorage.removeItem('lite-dashboards')
 	if (typeof window !== 'undefined') {
@@ -265,6 +208,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 	const [verifyEmailPrompt, setVerifyEmailPrompt] = useState<{ isOpen: boolean; email?: string }>({ isOpen: false })
 	const [verifyEmailConfirm, setVerifyEmailConfirm] = useState<{ isOpen: boolean; email?: string }>({ isOpen: false })
 	const [oauthWelcomeOpen, setOauthWelcomeOpen] = useState(false)
+	// The undismissable welcome dialog must not outlive the session it was opened
+	// for (cross-tab logout or account switch), or its consent choices would write
+	// into whichever account is current when Continue is clicked.
+	const oauthWelcomeUserRef = useRef<string | null>(null)
+	const openOauthWelcome = useCallback(() => {
+		oauthWelcomeUserRef.current = pb.authStore.record?.id ?? null
+		setOauthWelcomeOpen(true)
+	}, [])
 
 	const promptVerifyEmail = useCallback((email?: string) => {
 		setVerifyEmailConfirm({ isOpen: true, email })
@@ -276,31 +227,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 	const queryClient = useQueryClient()
 
 	useEffect(() => {
-		syncAuthTokenToCookie(isAuthenticated ? authStoreState.token : null)
-	}, [authStoreState.token, isAuthenticated])
+		if (oauthWelcomeOpen && (authStoreState.record?.id ?? null) !== oauthWelcomeUserRef.current) {
+			setOauthWelcomeOpen(false)
+		}
+	}, [oauthWelcomeOpen, authStoreState.record?.id])
 
 	const { isLoading: userQueryIsLoading } = useQuery({
 		queryKey: ['auth', 'status', authStoreState?.record?.id ?? null],
 		queryFn: async () => {
-			if (!authStoreState.token) {
-				clearUserSession()
+			const sessionToken = authStoreState.token
+			if (!sessionToken) {
 				return null
 			}
+			// Responses for a session the user already left must not touch the
+			// store: a slow refresh must not resurrect it, and a stale 401 must
+			// not clear the newer session that replaced it.
 			try {
-				const refreshResult = await pb.collection('users').authRefresh()
-				return refreshResult.record
+				return await refreshSession(sessionToken)
 			} catch (error: any) {
 				if (error?.isAbort || error?.message?.includes('autocancelled')) {
-					if (authStoreState.isValid && authStoreState.record) {
-						return authStoreState.record
-					}
-					clearUserSession()
-					return null
+					return pb.authStore.token === sessionToken ? (pb.authStore.record ?? null) : null
 				}
 
 				console.log('Error refreshing auth:', error)
 
-				if (error?.status === 401 || error?.code === 401) {
+				if ((error?.status === 401 || error?.code === 401) && pb.authStore.token === sessionToken) {
 					clearUserSession()
 				}
 
@@ -324,9 +275,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 				console.log('Login error:', error)
 				throw new Error('Invalid credentials')
 			}
-		},
-		onSuccess: () => {
-			toast.success('Successfully signed in', { duration: 3000 })
 		},
 		onError: () => {
 			toast.error('Invalid email or password')
@@ -387,7 +335,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 			const { token } = await response.json()
 			pb.authStore.save(token)
 			try {
-				await pb.collection('users').authRefresh()
+				await refreshSession()
 			} catch (error) {
 				console.log('Error refreshing auth after signup:', error)
 			}
@@ -395,7 +343,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 		onSuccess: (_data, variables) => {
 			clearSignupSource()
 			sessionStorage.setItem('just_signed_up', 'true')
-			toast.success('Account created!', { duration: 3000 })
 			if (!variables.suppressVerifyEmailPrompt) {
 				setVerifyEmailPrompt({ isOpen: true, email: variables.email })
 			}
@@ -535,7 +482,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 			}
 
 			clearSignupSource()
-			toast.success('Successfully signed in with Web3 wallet')
 
 			return { address }
 		}
@@ -549,7 +495,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 			})
 
 			if (authData.meta?.isNew) {
-				setOauthWelcomeOpen(true)
+				openOauthWelcome()
 				try {
 					await fetch(`${AUTH_SERVER}/user/attribution`, {
 						method: 'POST',
@@ -580,11 +526,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 	const saveGoogleSession = async (session: GoogleAuthSession) => {
 		pb.authStore.save(session.token)
 		try {
-			await pb.collection('users').authRefresh()
+			await refreshSession()
 		} catch (error) {
 			console.log('Error refreshing auth after Google sign-in:', error)
 		}
-		toast.success('Successfully signed in with Google')
 	}
 
 	const signInWithGoogleMutation = useMutation({
@@ -607,7 +552,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 			if (result.kind === 'link_verification_required') return result
 			await saveGoogleSession(result)
 			if (result.isNew) {
-				setOauthWelcomeOpen(true)
+				openOauthWelcome()
 				try {
 					await fetch(`${AUTH_SERVER}/user/attribution`, {
 						method: 'POST',
@@ -704,7 +649,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 		},
 		onSuccess: async () => {
 			try {
-				await pb.collection('users').authRefresh()
+				await refreshSession()
 			} catch {
 				/* ignore refresh error */
 			}
@@ -793,7 +738,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 		},
 		onSuccess: async () => {
 			try {
-				await pb.collection('users').authRefresh()
+				await refreshSession()
 			} catch (error) {
 				console.log('Error refreshing auth after OTP verification:', error)
 			}
@@ -851,16 +796,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 				}
 			})
 			try {
-				await pb.collection('users').authRefresh()
+				await refreshSession()
 			} catch (error) {
 				console.log('Error refreshing auth after promotional emails update:', error)
 			}
-			toast.success('Email preferences updated successfully')
 		},
 		onError: (error: any) => {
-			toast.error(getUserFacingErrorMessage(error, 'Failed to update email preferences'))
+			console.log('Failed to update promotional emails preference:', error)
 		}
 	})
+
+	// Settings gets toasts (no dialog is open there); the onboarding dialog
+	// renders the same outcomes inline instead.
+	const setPromotionalEmailsFromSettings = useCallback(
+		(value: string) => {
+			setPromotionalEmails.mutate(value, {
+				onSuccess: () => toast.success('Email preferences updated successfully'),
+				onError: (error) => toast.error(getUserFacingErrorMessage(error, 'Failed to update email preferences'))
+			})
+		},
+		[setPromotionalEmails]
+	)
 
 	const userData = useMemo(() => {
 		if (!authStoreState?.record) return null
@@ -905,7 +861,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 		sendOtp: sendOtpMutation.mutateAsync,
 		verifyOtp: verifyOtpMutation.mutateAsync,
 		addEmail: addEmail.mutateAsync,
-		setPromotionalEmails: setPromotionalEmails.mutate,
+		setPromotionalEmails: setPromotionalEmailsFromSettings,
 		promptVerifyEmail,
 		isAuthenticated,
 		authToken: isAuthenticated ? authStoreState.token : null,
@@ -945,13 +901,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 				loaders={contextValue.loaders}
 				onClose={() => setVerifyEmailPrompt({ isOpen: false })}
 			/>
-			<OAuthWelcomeDialog
-				isOpen={oauthWelcomeOpen}
-				onContinue={(value) => {
-					setPromotionalEmails.mutate(value)
-					setOauthWelcomeOpen(false)
-				}}
-			/>
+			{/* Mount per onboarding instance so a later account can't inherit this one's
+			    consent choices. Close only after the preference write succeeds; on error
+			    the mutation toasts and the dialog stays open for a retry. */}
+			{oauthWelcomeOpen ? (
+				<OAuthWelcomeDialog
+					isOpen
+					isSaving={setPromotionalEmails.isPending}
+					error={
+						setPromotionalEmails.isError
+							? getUserFacingErrorMessage(
+									setPromotionalEmails.error,
+									'Failed to save your preference. Please try again.'
+								)
+							: null
+					}
+					onContinue={(value) => {
+						setPromotionalEmails.mutate(value, { onSuccess: () => setOauthWelcomeOpen(false) })
+					}}
+				/>
+			) : null}
 		</AuthContext.Provider>
 	)
 }

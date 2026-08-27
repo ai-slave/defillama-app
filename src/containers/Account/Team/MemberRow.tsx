@@ -86,28 +86,36 @@ export function MemberRow({ member }: { member: TeamMember }) {
 
 			<ConfirmActionModal
 				isOpen={showUnassignConfirm}
-				onClose={() => setShowUnassignConfirm(false)}
+				onClose={() => {
+					unassignMemberMutation.reset()
+					setShowUnassignConfirm(false)
+				}}
 				onConfirm={() => {
-					void unassignMemberMutation.mutateAsync({ userId: member.userId }).then(() => setShowUnassignConfirm(false))
+					unassignMemberMutation.mutate({ userId: member.userId }, { onSuccess: () => setShowUnassignConfirm(false) })
 				}}
 				isLoading={unassignMemberMutation.isPending}
 				title="Unassign Subscription"
 				description={`This will remove the ${getSubscriptionLabel(member.subscriptionType)} subscription from ${member.email}. Their access and credits will be revoked.`}
 				confirmLabel="Unassign"
 				confirmVariant="danger"
+				error={unassignMemberMutation.isError ? unassignMemberMutation.error.message : null}
 			/>
 
 			<ConfirmActionModal
 				isOpen={showRemoveConfirm}
-				onClose={() => setShowRemoveConfirm(false)}
+				onClose={() => {
+					removeMemberMutation.reset()
+					setShowRemoveConfirm(false)
+				}}
 				onConfirm={() => {
-					void removeMemberMutation.mutateAsync({ userId: member.userId }).then(() => setShowRemoveConfirm(false))
+					removeMemberMutation.mutate({ userId: member.userId }, { onSuccess: () => setShowRemoveConfirm(false) })
 				}}
 				isLoading={removeMemberMutation.isPending}
 				title="Remove Member"
 				description={`Are you sure you want to remove ${member.email} from the team? Their subscription will be revoked.`}
 				confirmLabel="Remove"
 				confirmVariant="danger"
+				error={removeMemberMutation.isError ? removeMemberMutation.error.message : null}
 			/>
 		</>
 	)

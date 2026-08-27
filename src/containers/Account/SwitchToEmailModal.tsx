@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
+import { refreshSession } from '~/auth/authStore'
 import { AUTH_SERVER } from '~/constants'
 import { Icon } from '~/ui/Icon'
 import pb from '~/utils/pocketbase'
@@ -24,12 +25,12 @@ interface SwitchToEmailResponse {
 	token?: string
 }
 
-async function requestSwitchToEmailOtp(email: string) {
+async function requestSwitchToEmailOtp({ email, sessionToken }: { email: string; sessionToken: string }) {
 	const response = await fetch(`${AUTH_SERVER}/switch-to-email/request`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
-			Authorization: `Bearer ${pb.authStore.token}`
+			Authorization: `Bearer ${sessionToken}`
 		},
 		body: JSON.stringify({ email })
 	})
@@ -40,7 +41,11 @@ async function requestSwitchToEmailOtp(email: string) {
 	}
 }
 
-async function confirmSwitchToEmail(payload: {
+async function confirmSwitchToEmail({
+	sessionToken,
+	...payload
+}: {
+	sessionToken: string
 	email: string
 	otp: string
 	password: string
@@ -50,7 +55,7 @@ async function confirmSwitchToEmail(payload: {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
-			Authorization: `Bearer ${pb.authStore.token}`
+			Authorization: `Bearer ${sessionToken}`
 		},
 		body: JSON.stringify(payload)
 	})
@@ -73,11 +78,16 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 	const [showPassword, setShowPassword] = useState(false)
 	const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
 	const resendRef = useRef<ResendCooldownHandle>(null)
+	// The whole flow is pinned to the session it started in: every request uses the
+	// token captured at the first OTP send, and a session change in the meantime
+	// discards the result instead of writing into the newer account.
+	const sessionTokenRef = useRef('')
 	const requestOtpMutation = useMutation({ mutationFn: requestSwitchToEmailOtp })
 	const confirmMutation = useMutation({ mutationFn: confirmSwitchToEmail })
 	const isLoading = requestOtpMutation.isPending || confirmMutation.isPending
 
 	const resetState = () => {
+		sessionTokenRef.current = ''
 		setStep('email')
 		setEmail(defaultEmail ?? '')
 		setOtp('')
@@ -100,9 +110,10 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 		if (!email || isLoading) return
 
 		setError('')
+		sessionTokenRef.current = pb.authStore.token
 
 		try {
-			await requestOtpMutation.mutateAsync(email)
+			await requestOtpMutation.mutateAsync({ email, sessionToken: sessionTokenRef.current })
 			resendRef.current?.start()
 			setStep('confirm')
 		} catch (err: any) {
@@ -126,8 +137,18 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 
 		setError('')
 
+		const sessionToken = sessionTokenRef.current
+
 		try {
-			const data = await confirmMutation.mutateAsync({ email, otp, password, passwordConfirm })
+			const data = await confirmMutation.mutateAsync({ sessionToken, email, otp, password, passwordConfirm })
+
+			// The session changed while the confirmation was pending: the switch went
+			// through server-side, but this dialog belongs to a session that no longer
+			// exists — close quietly instead of overwriting or announcing success.
+			if (pb.authStore.token !== sessionToken) {
+				handleClose()
+				return
+			}
 
 			if (data.token) {
 				pb.authStore.save(data.token)
@@ -145,7 +166,7 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 		setError('')
 
 		try {
-			await requestOtpMutation.mutateAsync(email)
+			await requestOtpMutation.mutateAsync({ email, sessionToken: sessionTokenRef.current })
 			resendRef.current?.start()
 			toast.success('Verification code resent!')
 		} catch (err: any) {
@@ -156,9 +177,7 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 	const handleSuccessDone = () => {
 		handleClose()
 		// Refresh auth to pick up the new user state
-		pb.collection('users')
-			.authRefresh()
-			.catch(() => {})
+		refreshSession().catch(() => {})
 	}
 
 	return (

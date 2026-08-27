@@ -5,7 +5,6 @@ interface TrialSubscriptionCardProps {
 	trialEndDate: string | null
 	isCancelPending: boolean
 	onCancel: () => void
-	isCancelLoading: boolean
 }
 
 function InfoRow({ label, value, valueClassName }: { label: string; value: string; valueClassName?: string }) {
@@ -25,12 +24,7 @@ function getRemainingDays(iso: string): number {
 	return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
 }
 
-export function TrialSubscriptionCard({
-	trialEndDate,
-	isCancelPending,
-	onCancel,
-	isCancelLoading
-}: TrialSubscriptionCardProps) {
+export function TrialSubscriptionCard({ trialEndDate, isCancelPending, onCancel }: TrialSubscriptionCardProps) {
 	const remainingDays = trialEndDate ? getRemainingDays(trialEndDate) : null
 	const formattedDate = trialEndDate ? (formatDate(trialEndDate) ?? 'Unknown') : 'Unknown'
 
@@ -68,10 +62,9 @@ export function TrialSubscriptionCard({
 					<div className="flex gap-2">
 						<button
 							onClick={onCancel}
-							disabled={isCancelLoading}
-							className="flex h-8 items-center rounded-lg border border-sub-border-muted px-3 text-xs font-medium whitespace-nowrap text-sub-text-primary disabled:opacity-50 dark:border-sub-border-strong"
+							className="flex h-8 items-center rounded-lg border border-sub-border-muted px-3 text-xs font-medium whitespace-nowrap text-sub-text-primary dark:border-sub-border-strong"
 						>
-							{isCancelLoading ? 'Cancelling...' : 'Cancel Free Trial'}
+							Cancel Free Trial
 						</button>
 					</div>
 				</>

@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useState } from 'react'
+import { refreshSession } from '~/auth/authStore'
 import { Icon } from '~/ui/Icon'
 import pb from '~/utils/pocketbase'
 
@@ -31,7 +32,7 @@ export function EmailChangeModal({ isOpen, onClose }: EmailChangeModalProps) {
 			await pb.collection('users').requestEmailChange(email)
 			// Refresh auth to update user state (verified will become false for new email)
 			try {
-				await pb.collection('users').authRefresh()
+				await refreshSession()
 			} catch {}
 			setIsSuccess(true)
 		} catch {

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { getReferrer } from '~/auth/referrer'
@@ -36,6 +36,8 @@ export interface Subscription {
 	provider: string
 	billing_interval?: 'year' | 'month'
 	overage?: boolean
+	// Set on seat-derived records billed through a team, not the user's own provider account
+	team_id?: string
 	metadata?: {
 		isTrial?: boolean
 		trial_started_at?: string
@@ -102,33 +104,33 @@ const parseGeneratedApiKey = (payload: unknown): string | null => {
 	return typeof value === 'string' && value.length > 0 ? value : null
 }
 
+// A 404 is the only response that proves "no active subscription"; any other
+// failure is unknown and must surface as an error, never render as Free.
 async function fetchSubscription({ isAuthenticated }: { isAuthenticated: boolean }): Promise<Subscription> {
 	if (!isAuthenticated) {
 		return defaultInactiveSubscription
 	}
 
-	try {
-		const response = await fetch(`${AUTH_SERVER}/subscription/status`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${pb.authStore.token}`
-			}
-		})
-
-		if (!response.ok) {
-			return defaultInactiveSubscription
+	const response = await fetch(`${AUTH_SERVER}/subscription/status`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			Authorization: `Bearer ${pb.authStore.token}`
 		}
+	})
 
-		const data: SubscriptionResponse = await response.json()
-
-		return data?.subscription
-	} catch (error) {
-		console.log('Error fetching subscription:', error)
+	if (response.status === 404) {
 		return defaultInactiveSubscription
 	}
+
+	const normalized = await handleSimpleFetchResponse(response).catch((error) => {
+		throw new Error(getErrorMessage(error, 'Failed to load subscription'))
+	})
+	const data: SubscriptionResponse = await normalized.json()
+	return data.subscription
 }
 
+// Same contract: 404 means "no past-due subscription", anything else is unknown.
 async function fetchPastDueSubscription({
 	isAuthenticated
 }: {
@@ -136,31 +138,27 @@ async function fetchPastDueSubscription({
 }): Promise<Subscription | null> {
 	if (!isAuthenticated) return null
 
-	try {
-		const response = await fetch(`${AUTH_SERVER}/subscription/past-due`, {
-			method: 'GET',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${pb.authStore.token}`
-			}
-		})
+	const response = await fetch(`${AUTH_SERVER}/subscription/past-due`, {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json',
+			Authorization: `Bearer ${pb.authStore.token}`
+		}
+	})
 
-		if (!response.ok) return null
+	if (response.status === 404) return null
 
-		const data: SubscriptionResponse = await response.json()
-		return data?.subscription ?? null
-	} catch (error) {
-		console.log('Error fetching past-due subscription:', error)
-		return null
-	}
+	const normalized = await handleSimpleFetchResponse(response).catch((error) => {
+		throw new Error(getErrorMessage(error, 'Failed to check payment status'))
+	})
+	const data: SubscriptionResponse = await normalized.json()
+	return data.subscription ?? null
 }
 
 export const useSubscribe = () => {
 	const router = useRouter()
 	const { user, isAuthenticated, authorizedFetch } = useAuthContext()!
 	const queryClient = useQueryClient()
-	const [isPayingWithStripe, setIsPayingWithStripe] = useState(false)
-	const [isPayingWithLlamapay, setIsPayingWithLlamapay] = useState(false)
 
 	const createSubscription = useMutation<SubscriptionCreateResponse, Error, SubscriptionRequest>({
 		mutationFn: async (subscriptionData) => {
@@ -207,12 +205,6 @@ export const useSubscribe = () => {
 			}
 
 			const subscriptionType = type || 'api'
-			const userId = user?.id
-			if (paymentMethod === 'stripe') {
-				setIsPayingWithStripe(true)
-			} else {
-				setIsPayingWithLlamapay(true)
-			}
 
 			const subscriptionData: SubscriptionRequest = {
 				redirectUrl: `${window.location.origin}/welcome`,
@@ -224,19 +216,10 @@ export const useSubscribe = () => {
 				referralCode: getReferrer()
 			}
 
-			queryClient.setQueryData(['subscription', userId], defaultInactiveSubscription)
-			void queryClient.invalidateQueries({ queryKey: ['auth', 'status'] })
-
-			const result = await createSubscription
-				.mutateAsync(subscriptionData)
-				.catch((error) => {
-					console.log('Subscription error:', error)
-					throw error
-				})
-				.finally(() => {
-					setIsPayingWithStripe(false)
-					setIsPayingWithLlamapay(false)
-				})
+			const result = await createSubscription.mutateAsync(subscriptionData).catch((error) => {
+				console.log('Subscription error:', error)
+				throw error
+			})
 
 			// For embedded mode, return the result instead of redirecting
 			if (useEmbedded) {
@@ -251,17 +234,14 @@ export const useSubscribe = () => {
 				window.location.href = result.checkoutUrl
 			}
 		},
-		[isAuthenticated, queryClient, user?.id, createSubscription]
+		[isAuthenticated, createSubscription]
 	)
 
-	const handleLlamapayTopup = useCallback(
-		async (type: 'api' | 'llamafeed', billingInterval: 'year' | 'month' = 'month') => {
+	const topupMutation = useMutation<void, Error, { type: 'api' | 'llamafeed'; billingInterval?: 'year' | 'month' }>({
+		mutationFn: async ({ type, billingInterval = 'month' }) => {
 			if (!isAuthenticated) {
-				toast.error('Please sign in to top up')
-				return
+				throw new Error('Please sign in to top up')
 			}
-
-			setIsPayingWithLlamapay(true)
 
 			const topupData: SubscriptionRequest = {
 				redirectUrl: `${window.location.origin}/account`,
@@ -271,41 +251,37 @@ export const useSubscribe = () => {
 				billingInterval
 			}
 
-			try {
-				const response = await authorizedFetch(
-					`${AUTH_SERVER}/subscription/topup`,
-					{
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json'
-						},
-						body: JSON.stringify(topupData)
+			const response = await authorizedFetch(
+				`${AUTH_SERVER}/subscription/topup`,
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
 					},
-					true
-				)
+					body: JSON.stringify(topupData)
+				},
+				true
+			)
 
-				if (!response) {
-					throw new Error('Not authenticated')
-				}
+			if (!response) {
+				throw new Error('Not authenticated')
+			}
 
-				const result: SubscriptionCreateResponse = await handleSimpleFetchResponse(response)
-					.then((res) => res.json())
-					.catch((error) => {
-						throw new Error(getErrorMessage(error, 'Failed to create top-up link'))
-					})
+			const result: SubscriptionCreateResponse = await handleSimpleFetchResponse(response)
+				.then((res) => res.json())
+				.catch((error) => {
+					throw new Error(getErrorMessage(error, 'Failed to create top-up link'))
+				})
 
-				if (result?.checkoutUrl) {
-					window.open(result.checkoutUrl, '_blank', 'noopener,noreferrer')
-				}
-			} catch (error) {
-				console.log('Top-up error:', error)
-				toast.error(getErrorMessage(error, 'Failed to create top-up link'))
-			} finally {
-				setIsPayingWithLlamapay(false)
+			if (result?.checkoutUrl) {
+				window.open(result.checkoutUrl, '_blank', 'noopener,noreferrer')
 			}
 		},
-		[isAuthenticated, authorizedFetch]
-	)
+		onError: (error) => {
+			console.log('Top-up error:', error)
+			toast.error(getErrorMessage(error, 'Failed to create top-up link'))
+		}
+	})
 
 	const subscriptionQuery = useQuery({
 		queryKey: ['subscription', user?.id],
@@ -318,24 +294,20 @@ export const useSubscribe = () => {
 
 	const subscriptionData = subscriptionQuery?.data ?? null
 
+	// A subscription can keep access (status active) while its latest payment failed
+	// (metadata.isPastDue), so payment health is queried independently of access.
 	const pastDueSubscriptionQuery = useQuery({
 		queryKey: ['subscription', 'past-due', user?.id],
 		queryFn: () => fetchPastDueSubscription({ isAuthenticated }),
 		retry: false,
 		refetchOnWindowFocus: false,
-		enabled:
-			isAuthenticated &&
-			router.pathname === '/account' &&
-			!subscriptionQuery.isLoading &&
-			subscriptionData?.status !== 'active',
+		enabled: isAuthenticated && router.pathname === '/account',
 		staleTime: 1000 * 60 * 15
 	})
 
 	const apiSubscription = subscriptionData?.type === 'api' ? subscriptionData : defaultInactiveSubscription
 
 	const llamafeedSubscription = subscriptionData?.type === 'llamafeed' ? subscriptionData : defaultInactiveSubscription
-
-	const legacySubscription = subscriptionData?.provider === 'legacy' ? subscriptionData : defaultInactiveSubscription
 
 	useEffect(() => {
 		if (subscriptionData?.status === 'active' && !user?.has_active_subscription) {
@@ -348,12 +320,14 @@ export const useSubscribe = () => {
 
 	const trialAvailabilityQuery = useQuery({
 		queryKey: ['subscription', 'trial-available', user?.id],
-		queryFn: async () => {
+		queryFn: async (): Promise<{ trialAvailable: boolean }> => {
+			// A failed read is unknown, not "no trial": throw so the query retries
+			// and recovers instead of caching trialAvailable=false for 15 minutes.
 			const response = await authorizedFetch(`${AUTH_SERVER}/subscription/trial-available`)
-
-			if (!response.ok) {
-				return { trialAvailable: false }
-			}
+				.then(handleSimpleFetchResponse)
+				.catch((error) => {
+					throw new Error(getErrorMessage(error, 'Failed to check trial availability'))
+				})
 			return response.json()
 		},
 		enabled: isAuthenticated,
@@ -361,7 +335,9 @@ export const useSubscribe = () => {
 		refetchOnWindowFocus: false
 	})
 
-	const apiKeyQuery = useQuery({
+	// Runs for the side effect: fetches the key and mirrors it into local storage,
+	// which `apiKey` below subscribes to.
+	useQuery({
 		queryKey: ['subscription', 'api-key', user?.id],
 		queryFn: async () => {
 			const newApiKey = await authorizedFetch(`${AUTH_SERVER}/auth/get-api-key`)
@@ -399,11 +375,7 @@ export const useSubscribe = () => {
 
 	const apiKey = useStorageItem(API_KEY_LOCAL_STORAGE_KEY, null)
 
-	const {
-		data: credits,
-		isLoading: isCreditsLoading,
-		refetch: refetchCredits
-	} = useQuery<Credits>({
+	const { data: credits } = useQuery<Credits>({
 		queryKey: ['subscription', 'credits', user?.id, apiKey],
 		queryFn: async () => {
 			const data = await authorizedFetch(`${AUTH_SERVER}/user/credits`, {
@@ -441,7 +413,7 @@ export const useSubscribe = () => {
 		retry: false
 	})
 
-	const { mutateAsync: createPortalSessionAsync, isPending: isPortalSessionLoading } = useMutation({
+	const createPortalSessionMutation = useMutation({
 		mutationFn: async () => {
 			if (!isAuthenticated) {
 				throw new Error('Not authenticated')
@@ -463,25 +435,29 @@ export const useSubscribe = () => {
 				.then(handleSimpleFetchResponse)
 				.then((res) => res.json())
 				.catch((error) => {
-					console.log('Failed to create portal session:', error)
-					return null
+					throw new Error(getErrorMessage(error, 'Failed to open the billing portal'))
 				})
 
-			return data?.url
+			if (!data?.url) {
+				throw new Error('Failed to open the billing portal')
+			}
+			return data.url as string
 		},
 		onError: (error) => {
 			console.log('Failed to create portal session:', error)
+			toast.error(getErrorMessage(error, 'Failed to open the billing portal. Please try again.'))
 		}
 	})
 
+	// Navigation helper on top of the mutation: opening the portal always redirects.
+	const createPortalSessionAsync = createPortalSessionMutation.mutateAsync
 	const createPortalSession = useCallback(async () => {
 		try {
 			const url = await createPortalSessionAsync()
-			if (url) {
-				window.location.href = url
-			}
+			window.location.href = url
 			return url
 		} catch {
+			// The mutation's onError already surfaced the failure.
 			return null
 		}
 	}, [createPortalSessionAsync])
@@ -507,7 +483,7 @@ export const useSubscribe = () => {
 			return normalizedResponse.json()
 		},
 		onSuccess: async () => {
-			toast.success('Trial upgrade successful')
+			// The modal that runs this mutation shows the success state itself.
 			await queryClient.invalidateQueries({ queryKey: ['auth', 'status'] })
 			await queryClient.invalidateQueries({ queryKey: ['subscription'] })
 		},
@@ -542,12 +518,11 @@ export const useSubscribe = () => {
 			return data
 		},
 		onSuccess: () => {
-			toast.success('Overage has been enabled successfully')
+			// The toggle reflects the new state after the refetch; errors render inline next to it.
 			void queryClient.invalidateQueries({ queryKey: ['subscription', user?.id] })
 		},
 		onError: (error) => {
 			console.log('Failed to enable overage:', error)
-			toast.error(error.message || 'Failed to enable overage. Please try again.')
 		}
 	})
 
@@ -577,16 +552,18 @@ export const useSubscribe = () => {
 			return data
 		},
 		onSuccess: () => {
-			toast.success('Overage has been disabled successfully')
 			void queryClient.invalidateQueries({ queryKey: ['subscription', user?.id] })
 		},
 		onError: (error) => {
 			console.log('Failed to disable overage:', error)
-			toast.error(error.message || 'Failed to disable overage. Please try again.')
 		}
 	})
 
-	const cancelSubscriptionMutation = useMutation({
+	const cancelSubscriptionMutation = useMutation<
+		{ message?: string; cancelled_immediately?: boolean; cancel_at_period_end?: boolean },
+		Error,
+		string | undefined
+	>({
 		mutationFn: async (message?: string) => {
 			if (!isAuthenticated) {
 				throw new Error('Not authenticated')
@@ -614,88 +591,53 @@ export const useSubscribe = () => {
 
 			return normalizedResponse.json()
 		},
-		onSuccess: () => {
-			toast.success('Subscription scheduled for cancellation')
+		onSuccess: (data) => {
+			// The modal that runs this mutation shows the scheduled/immediate result itself.
+			if (data?.cancelled_immediately) {
+				void queryClient.invalidateQueries({ queryKey: ['auth', 'status'] })
+			}
 			void queryClient.invalidateQueries({ queryKey: ['subscription', user?.id] })
+			void queryClient.invalidateQueries({ queryKey: ['subscription', 'past-due', user?.id] })
 		},
 		onError: (error) => {
 			console.log('Cancel subscription error:', error)
-			toast.error('Failed to cancel subscription. Please try again or contact support.')
 		}
 	})
 
-	const enableOverage = useCallback(async () => {
-		if (!isAuthenticated) {
-			toast.error('Please sign in to enable overage')
-			return
-		}
-
-		if (apiSubscription.status !== 'active') {
-			toast.error('No active API subscription found')
-			return
-		}
-
-		try {
-			await enableOverageMutation.mutateAsync()
-		} catch (error) {
-			console.log('Enable overage error:', error)
-		}
-	}, [isAuthenticated, apiSubscription.status, enableOverageMutation])
-
-	const disableOverage = useCallback(async () => {
-		if (!isAuthenticated) {
-			toast.error('Please sign in to disable overage')
-			return
-		}
-
-		if (apiSubscription.status !== 'active') {
-			toast.error('No active API subscription found')
-			return
-		}
-
-		try {
-			await disableOverageMutation.mutateAsync()
-		} catch (error) {
-			console.log('Disable overage error:', error)
-		}
-	}, [isAuthenticated, apiSubscription.status, disableOverageMutation])
-
 	return {
 		handleSubscribe,
-		handleLlamapayTopup,
-		isLoading: createSubscription.isPending,
-		error: createSubscription.error,
+		topupMutation,
 		subscription: subscriptionData ?? defaultInactiveSubscription,
 		hasActiveSubscription: subscriptionData?.status === 'active',
-		loading: isPayingWithStripe ? 'stripe' : isPayingWithLlamapay ? 'llamapay' : null,
+		// Which checkout button is in flight, derived from the mutations themselves
+		loading: createSubscription.isPending
+			? createSubscription.variables?.provider === 'llamapay'
+				? ('llamapay' as const)
+				: ('stripe' as const)
+			: topupMutation.isPending
+				? ('llamapay' as const)
+				: null,
 		isSubscriptionLoading,
 		isSubscriptionError,
+		isSubscriptionRetrying: subscriptionQuery.isFetching,
+		refetchSubscription: subscriptionQuery.refetch,
+		isPastDueError: pastDueSubscriptionQuery.isError && pastDueSubscriptionQuery.data == null,
+		refetchPastDueSubscription: pastDueSubscriptionQuery.refetch,
 		apiKey,
-		isApiKeyLoading: apiKey === null && apiKeyQuery.isLoading,
 		generateNewKeyMutation,
 		credits: credits?.credits,
-		isCreditsLoading,
-		refetchCredits,
-		getPortalSessionUrl: createPortalSessionAsync,
 		createPortalSession,
-		endTrialSubscription: endTrialMutation.mutateAsync,
-		isEndTrialLoading: endTrialMutation.isPending,
-		isPortalSessionLoading,
-		enableOverage,
-		isEnableOverageLoading: enableOverageMutation.isPending,
-		disableOverage,
-		isDisableOverageLoading: disableOverageMutation.isPending,
+		createPortalSessionMutation,
+		endTrialMutation,
+		enableOverageMutation,
+		disableOverageMutation,
+		cancelSubscriptionMutation,
 		apiSubscription: apiSubscription,
 		llamafeedSubscription: llamafeedSubscription,
-		legacySubscription: legacySubscription,
 		isTrialAvailable: isAuthenticated ? (trialAvailabilityQuery.data?.trialAvailable ?? false) : true,
-		isTrialStatusLoading: isAuthenticated && trialAvailabilityQuery.isLoading,
 		usageStats: usageStatsQuery.data ?? null,
 		isUsageStatsLoading: usageStatsQuery.isLoading,
 		isUsageStatsError: usageStatsQuery.isError,
-		cancelSubscription: cancelSubscriptionMutation.mutateAsync,
-		isCancelSubscriptionLoading: cancelSubscriptionMutation.isPending,
-		pastDueSubscription: pastDueSubscriptionQuery.data ?? null,
-		isPastDueSubscriptionLoading: pastDueSubscriptionQuery.isLoading
+		pastDueSubscription: pastDueSubscriptionQuery.data ?? null
 	}
 }

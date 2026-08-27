@@ -1,4 +1,5 @@
 import * as Ariakit from '@ariakit/react'
+import { useEffect, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { EndTrialModal } from '~/containers/Account/EndTrialModal'
@@ -43,10 +44,21 @@ export function ResearchLimitModal({
 	const { isTrial } = useAuthContext()
 	const open = dialogStore.useState('open')
 
+	// Freeze the dialog choice while open: a successful upgrade flips isTrial, and
+	// swapping in the paid-plan dialog would replace the success pane mid-view.
+	const [trialFlow, setTrialFlow] = useState<boolean | null>(null)
+	useEffect(() => {
+		if (open) {
+			setTrialFlow((current) => current ?? isTrial)
+		} else {
+			setTrialFlow(null)
+		}
+	}, [open, isTrial])
+
 	const limitBody = isLifetime ? COPY[feature].bodyLifetime(limit) : COPY[feature].bodyDaily(limit)
 
 	// Trial users converting to a paid plan get the shared, instant-charge modal.
-	if (isTrial) {
+	if (trialFlow ?? isTrial) {
 		return (
 			<EndTrialModal
 				isOpen={open}

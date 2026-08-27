@@ -6,6 +6,7 @@ import { useEffect } from 'react'
 import { AuthProvider, useAuthContext } from '~/auth'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { Toast } from '~/components/Toast'
+import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { WalletProvider } from '~/layout/WalletProvider'
 import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -30,10 +31,12 @@ function AuthContent() {
 	const { isAuthenticated, logout, user } = useAuthContext()
 	const redirectUrl = router.query.redirect_uri
 
-	const { subscription, isSubscriptionLoading } = useSubscribe()
+	const { subscription, isSubscriptionLoading, isSubscriptionError, isSubscriptionRetrying, refetchSubscription } =
+		useSubscribe()
 
 	useEffect(() => {
-		if (isAuthenticated && !isSubscriptionLoading) {
+		// A failed read must not be forwarded as an inactive subscription.
+		if (isAuthenticated && !isSubscriptionLoading && !isSubscriptionError) {
 			trackUmamiEvent('sheets-auth-sign-in', { user_id: user?.id })
 			// google sheets auth, requiring redirect url
 			if (redirectUrl) {
@@ -62,7 +65,16 @@ function AuthContent() {
 				window.close()
 			}
 		}
-	}, [isAuthenticated, redirectUrl, router, router.query, user, isSubscriptionLoading, subscription])
+	}, [
+		isAuthenticated,
+		redirectUrl,
+		router,
+		router.query,
+		user,
+		isSubscriptionLoading,
+		isSubscriptionError,
+		subscription
+	])
 
 	const dialogStore = Ariakit.useDialogStore({ defaultOpen: true })
 
@@ -82,9 +94,18 @@ function AuthContent() {
 							</div>
 							<h2 className="mb-2 text-2xl font-bold text-on-brand">Successfully logged in.</h2>
 							{user?.email ? <p className="text-sm text-sub-text-muted">Signed in as {user.email}</p> : null}
-							<p className="mt-2 text-sm text-sub-text-muted">
-								You should be automatically redirected to finish the authentication process.
-							</p>
+							{isSubscriptionError ? (
+								<div className="mt-2 text-left">
+									<SubscriptionLoadError
+										isRetrying={isSubscriptionRetrying}
+										onRetry={() => void refetchSubscription()}
+									/>
+								</div>
+							) : (
+								<p className="mt-2 text-sm text-sub-text-muted">
+									You should be automatically redirected to finish the authentication process.
+								</p>
+							)}
 						</div>
 
 						<div className="space-y-3">

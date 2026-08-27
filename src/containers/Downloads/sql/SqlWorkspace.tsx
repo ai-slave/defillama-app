@@ -2,6 +2,7 @@ import { useRouter } from 'next/router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { useSubscribe } from '~/auth/useSubscribe'
+import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { getStorageJSON, setStorageJSON } from '~/contexts/localStorageStore'
 import { Icon } from '~/ui/Icon'
@@ -53,7 +54,8 @@ interface SqlWorkspaceProps {
 
 export function SqlWorkspace({ chartOptionsMap }: SqlWorkspaceProps) {
 	const { isAuthenticated, isTrial, loaders, authorizedFetch, user } = useAuthContext()
-	const { subscription, isSubscriptionLoading } = useSubscribe()
+	const { subscription, isSubscriptionLoading, isSubscriptionError, isSubscriptionRetrying, refetchSubscription } =
+		useSubscribe()
 	const isApiPlan = subscription?.type === 'api' && subscription?.status === 'active'
 	const isLlama = !!user?.flags?.is_llama
 	const allowed = isAuthenticated && (isApiPlan || isLlama)
@@ -62,6 +64,15 @@ export function SqlWorkspace({ chartOptionsMap }: SqlWorkspaceProps) {
 		return (
 			<div className="flex min-h-[60vh] items-center justify-center">
 				<LocalLoader />
+			</div>
+		)
+	}
+
+	// A failed read is unknown: show a retry state, not an upsell.
+	if (isAuthenticated && isSubscriptionError && !isLlama) {
+		return (
+			<div className="mx-auto w-full max-w-xl py-16">
+				<SubscriptionLoadError isRetrying={isSubscriptionRetrying} onRetry={() => void refetchSubscription()} />
 			</div>
 		)
 	}

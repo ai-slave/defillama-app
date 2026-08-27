@@ -5,13 +5,12 @@ interface SubscriptionCardProps {
 	renewalDate: string
 	subscriptionType: string
 	subscriptionPayment: string
-	provider: 'stripe' | 'llamapay' | 'legacy' | 'manual'
+	provider: string
 	isCancelPending: boolean
 	onManage: () => void
 	onCancel: () => void
 	onTopup?: () => void
 	isManageLoading?: boolean
-	isCancelLoading?: boolean
 	isTopupLoading?: boolean
 }
 
@@ -36,7 +35,6 @@ export function SubscriptionCard({
 	onCancel,
 	onTopup,
 	isManageLoading,
-	isCancelLoading,
 	isTopupLoading
 }: SubscriptionCardProps) {
 	const isManageable = provider === 'stripe' || provider === 'llamapay'
@@ -90,6 +88,11 @@ export function SubscriptionCard({
 
 			{isCancelPending ? (
 				<p className="text-xs font-medium text-sub-warning-text-dark">Cancellation scheduled</p>
+			) : provider === 'apple' || provider === 'google_play' ? (
+				<p className="text-xs leading-4 text-sub-text-muted">
+					This plan is billed through {provider === 'apple' ? 'the App Store' : 'Google Play'}. Manage or cancel it in
+					your {provider === 'apple' ? 'Apple' : 'Google Play'} subscription settings.
+				</p>
 			) : isManageable ? (
 				<div className="flex gap-2">
 					{onTopup && (
@@ -112,10 +115,9 @@ export function SubscriptionCard({
 					</button>
 					<button
 						onClick={onCancel}
-						disabled={isCancelLoading}
-						className="flex h-8 items-center rounded-lg border border-sub-border-muted px-3 text-xs font-medium whitespace-nowrap text-sub-text-primary disabled:opacity-50 dark:border-sub-border-strong"
+						className="flex h-8 items-center rounded-lg border border-sub-border-muted px-3 text-xs font-medium whitespace-nowrap text-sub-text-primary dark:border-sub-border-strong"
 					>
-						{isCancelLoading ? 'Cancelling...' : 'Cancel Subscription'}
+						Cancel Subscription
 					</button>
 				</div>
 			) : null}

@@ -12,15 +12,26 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 	const { inviteMemberMutation } = useTeam()
 	const [email, setEmail] = useState('')
 
-	const handleInvite = async () => {
-		if (!email.trim()) return
-		await inviteMemberMutation.mutateAsync({ email: email.trim() })
-		setEmail('')
+	const handleClose = () => {
+		inviteMemberMutation.reset()
 		onClose()
 	}
 
+	const handleInvite = () => {
+		if (!email.trim() || inviteMemberMutation.isPending) return
+		inviteMemberMutation.mutate(
+			{ email: email.trim() },
+			{
+				onSuccess: () => {
+					setEmail('')
+					onClose()
+				}
+			}
+		)
+	}
+
 	return (
-		<Ariakit.DialogProvider open={isOpen} setOpen={(open) => !open && onClose()}>
+		<Ariakit.DialogProvider open={isOpen} setOpen={(open) => !open && handleClose()}>
 			<Ariakit.Dialog
 				backdrop={<div className="bg-black/80" />}
 				className="dialog max-h-[90vh] min-h-0 gap-0 overflow-y-auto rounded-2xl border-0 p-0 md:max-w-[380px]"
@@ -53,22 +64,28 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 								value={email}
 								onChange={(e) => setEmail(e.target.value)}
 								onKeyDown={(e) => {
-									if (e.key === 'Enter') void handleInvite()
+									if (e.key === 'Enter') handleInvite()
 								}}
 								className="w-full rounded-lg border border-sub-border-slate-100 bg-white py-2 pr-3 pl-9 text-sm text-sub-text-primary placeholder:text-sub-text-muted focus:border-sub-brand-primary focus:ring-1 focus:ring-sub-brand-primary focus:outline-hidden dark:border-sub-border-strong dark:bg-sub-surface-dark"
 								autoFocus
 							/>
 						</div>
 					</div>
+					{inviteMemberMutation.isError ? (
+						<div className="flex items-center gap-2 rounded-lg border border-error/30 bg-error/10 p-3 text-error">
+							<Icon name="alert-warning" height={16} width={16} className="shrink-0" />
+							<p className="text-sm">{inviteMemberMutation.error.message}</p>
+						</div>
+					) : null}
 					<div className="flex gap-3">
 						<button
-							onClick={onClose}
+							onClick={handleClose}
 							className="flex h-9 flex-1 items-center justify-center rounded-lg border border-sub-border-muted text-sm font-medium text-sub-text-primary dark:border-sub-border-strong"
 						>
 							Cancel
 						</button>
 						<button
-							onClick={() => void handleInvite()}
+							onClick={handleInvite}
 							disabled={!email.trim() || inviteMemberMutation.isPending}
 							className="flex h-9 flex-1 items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand disabled:opacity-50"
 						>

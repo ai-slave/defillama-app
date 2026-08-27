@@ -61,32 +61,26 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 	const decrementDisabled = seatCount <= minSeats
 	const isPending = setSeatsMutation.isPending
 
-	const handleSubmit = async () => {
-		try {
-			await setSeatsMutation.mutateAsync({
-				subscriptionType: subscription.type,
-				seatCount
-			})
-			onClose()
-		} catch {
-			// error toast is handled inside setSeatsMutation.onError
-		}
+	const seatsError = setSeatsMutation.isError ? setSeatsMutation.error.message : null
+
+	const handleSubmit = () => {
+		setSeatsMutation.mutate({ subscriptionType: subscription.type, seatCount }, { onSuccess: onClose })
 	}
 
-	const handleConfirmCancel = async () => {
-		try {
-			await setSeatsMutation.mutateAsync({
-				subscriptionType: subscription.type,
-				seatCount: 0
-			})
-			setShowCancelConfirm(false)
-			onClose()
-		} catch {
-			// error toast is handled inside setSeatsMutation.onError
-		}
+	const handleConfirmCancel = () => {
+		setSeatsMutation.mutate(
+			{ subscriptionType: subscription.type, seatCount: 0 },
+			{
+				onSuccess: () => {
+					setShowCancelConfirm(false)
+					onClose()
+				}
+			}
+		)
 	}
 
 	const handleClose = () => {
+		setSeatsMutation.reset()
 		setSeatCount(subscription.seats.seatCount)
 		onClose()
 	}
@@ -204,8 +198,15 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 						</div>
 					)}
 
+					{seatsError && !showCancelConfirm ? (
+						<div className="flex items-center gap-2 rounded-lg border border-error/30 bg-error/10 p-3 text-error">
+							<Icon name="alert-warning" height={16} width={16} className="shrink-0" />
+							<p className="text-sm">{seatsError}</p>
+						</div>
+					) : null}
+
 					<button
-						onClick={() => void handleSubmit()}
+						onClick={handleSubmit}
 						disabled={isPending || !hasChange}
 						className="flex h-10 w-full items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand disabled:opacity-50"
 					>
@@ -214,7 +215,10 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 
 					{!isCanceling && subscription.seats.seatCount > 0 ? (
 						<button
-							onClick={() => setShowCancelConfirm(true)}
+							onClick={() => {
+								setSeatsMutation.reset()
+								setShowCancelConfirm(true)
+							}}
 							disabled={isPending}
 							className="flex h-10 w-full items-center justify-center rounded-lg border border-error/40 text-sm font-medium text-error hover:bg-error/5 disabled:opacity-50"
 						>
@@ -226,9 +230,14 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 
 			<ConfirmActionModal
 				isOpen={showCancelConfirm}
-				onClose={() => !isPending && setShowCancelConfirm(false)}
-				onConfirm={() => void handleConfirmCancel()}
+				onClose={() => {
+					if (isPending) return
+					setSeatsMutation.reset()
+					setShowCancelConfirm(false)
+				}}
+				onConfirm={handleConfirmCancel}
 				isLoading={isPending}
+				error={showCancelConfirm ? seatsError : null}
 				title={`Cancel ${label} Subscription`}
 				description={
 					subscription.seats.occupiedSeats > 0

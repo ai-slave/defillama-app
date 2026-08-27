@@ -78,16 +78,25 @@ export function WelcomeOnboarding() {
 	const [slackAcquisition, setSlackAcquisition] = useState<SlackAcquisition | null>(null)
 	const slackAcquisitionHandledRef = useRef(false)
 
-	// Invalidate subscription cache once on mount when arriving from Stripe redirect.
-	// StripeCheckoutModal redirects directly to /welcome, bypassing /account?success=true
-	// where the cache invalidation previously happened.
-	const hasInvalidatedRef = useRef(false)
+	// Stripe redirects here before the webhook grants the entitlement. The page reads
+	// has_active_subscription from the auth record, so the auth-status query must be
+	// re-read too — and a bounded number of times, since one read can race the webhook.
+	// The Refresh button below stays as the manual recovery path.
+	const CONFIRMATION_READS = 6
+	const [confirmationReads, setConfirmationReads] = useState(0)
 	useEffect(() => {
-		if (isAuthenticated && !hasActiveSubscription && !loaders.userLoading && !hasInvalidatedRef.current) {
-			hasInvalidatedRef.current = true
-			void queryClient.invalidateQueries({ queryKey: ['subscription'] })
-		}
-	}, [isAuthenticated, hasActiveSubscription, loaders.userLoading, queryClient])
+		if (!isAuthenticated || hasActiveSubscription || loaders.userLoading) return
+		if (confirmationReads >= CONFIRMATION_READS) return
+		const id = window.setTimeout(
+			() => {
+				void queryClient.invalidateQueries({ queryKey: ['auth', 'status'] })
+				void queryClient.invalidateQueries({ queryKey: ['subscription'] })
+				setConfirmationReads((reads) => reads + 1)
+			},
+			confirmationReads === 0 ? 0 : 4000
+		)
+		return () => window.clearTimeout(id)
+	}, [confirmationReads, isAuthenticated, hasActiveSubscription, loaders.userLoading, queryClient])
 
 	const trialActivationFiredRef = useRef(false)
 	useEffect(() => {
@@ -213,7 +222,8 @@ export function WelcomeOnboarding() {
 					</div>
 					<h2 className="text-xl font-bold text-on-brand">Processing your payment...</h2>
 					<p className="max-w-sm text-sub-text-muted">
-						This usually takes a few seconds. If it doesn&apos;t update, try refreshing.
+						This usually takes a few seconds — we&apos;ll keep checking automatically. If it doesn&apos;t update, try
+						refreshing.
 					</p>
 					<button
 						onClick={() => window.location.reload()}

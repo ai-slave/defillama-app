@@ -2,7 +2,6 @@ import { Icon } from '~/ui/Icon'
 
 interface TrialUpgradeBannerProps {
 	onUpgrade: () => void
-	isLoading: boolean
 }
 
 const BENEFITS = [
@@ -12,7 +11,7 @@ const BENEFITS = [
 	'All Pro features without limitations'
 ]
 
-export function TrialUpgradeBanner({ onUpgrade, isLoading }: TrialUpgradeBannerProps) {
+export function TrialUpgradeBanner({ onUpgrade }: TrialUpgradeBannerProps) {
 	return (
 		<div className="flex items-center rounded-2xl border border-sub-brand-primary bg-sub-brand-primary/20 p-4">
 			<div className="flex w-full flex-col gap-4 sm:w-[200px]">
@@ -31,10 +30,9 @@ export function TrialUpgradeBanner({ onUpgrade, isLoading }: TrialUpgradeBannerP
 				</div>
 				<button
 					onClick={onUpgrade}
-					disabled={isLoading}
-					className="flex h-8 w-full items-center justify-center rounded-lg bg-sub-brand-primary px-3 text-xs font-medium text-on-brand disabled:opacity-50"
+					className="flex h-8 w-full items-center justify-center rounded-lg bg-sub-brand-primary px-3 text-xs font-medium text-on-brand"
 				>
-					{isLoading ? 'Processing...' : 'Upgrade to Pro'}
+					Upgrade to Pro
 				</button>
 			</div>
 		</div>

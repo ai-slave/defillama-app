@@ -111,7 +111,9 @@ describe('api route catalog', () => {
 
 	it('keeps production relative API paths on canonical grouped URLs', () => {
 		const legacyApiPaths: string[] = []
-		const legacyRelativeApiPathPattern = /['"`](\/api\/(?!public\/|private\/|dynamic\/)[^'"`\s)]*)/g
+		// /api/collections/ is PocketBase's namespace: those paths are sent through the
+		// PocketBase client against POCKETBASE_URL, not this app's API routes.
+		const legacyRelativeApiPathPattern = /['"`](\/api\/(?!public\/|private\/|dynamic\/|collections\/)[^'"`\s)]*)/g
 
 		for (const filePath of walkFiles(srcDir, ['.ts', '.tsx']).filter(isProductionSourceFile)) {
 			const relativePath = relative(process.cwd(), filePath)

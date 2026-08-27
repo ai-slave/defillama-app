@@ -1,9 +1,9 @@
-import { lazy, Suspense, useState } from 'react'
-import toast from 'react-hot-toast'
+import { lazy, type ReactNode, Suspense, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { useSubscribe } from '~/auth/useSubscribe'
 import type { Subscription } from '~/auth/useSubscribe'
 import { BasicLink } from '~/components/Link'
+import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { useAiBalance } from '~/containers/Subscription/useTopup'
 import { Icon } from '~/ui/Icon'
 import { formatDate } from '~/utils/dateFormat'
@@ -48,6 +48,10 @@ function getPaymentLabel(provider: string): string {
 	return provider
 }
 
+function getOverageErrorText(error: Error, action: 'enable' | 'disable'): string {
+	return error.message || `Failed to ${action} overage. Please try again.`
+}
+
 function getPlanName(type: string): string {
 	if (type === 'api') return 'API'
 	if (type === 'llamafeed') return 'Pro'
@@ -60,7 +64,6 @@ function SubscriptionCardWithProps({
 	onCancel,
 	onTopup,
 	isManageLoading,
-	isCancelLoading,
 	isTopupLoading
 }: {
 	subscription: Subscription
@@ -68,7 +71,6 @@ function SubscriptionCardWithProps({
 	onCancel: () => void
 	onTopup?: () => void
 	isManageLoading: boolean
-	isCancelLoading: boolean
 	isTopupLoading?: boolean
 }) {
 	const isCancelPending = subscription.metadata?.isCanceled === 'true'
@@ -79,13 +81,12 @@ function SubscriptionCardWithProps({
 			renewalDate={expiryDate ? (formatDate(expiryDate) ?? 'Unknown') : 'Unknown'}
 			subscriptionType={getSubscriptionTypeLabel(subscription)}
 			subscriptionPayment={getPaymentLabel(subscription.provider)}
-			provider={subscription.provider as 'stripe' | 'llamapay' | 'legacy' | 'manual'}
+			provider={subscription.provider}
 			isCancelPending={isCancelPending}
 			onManage={onManage}
 			onCancel={onCancel}
 			onTopup={onTopup}
 			isManageLoading={isManageLoading}
-			isCancelLoading={isCancelLoading}
 			isTopupLoading={isTopupLoading}
 		/>
 	)
@@ -166,14 +167,14 @@ function PastDueSubscriptionCard({
 	subscription,
 	onUpdatePayment,
 	onCancel,
-	isUpdateLoading,
-	isCancelLoading
+	isUpdateLoading
 }: {
 	subscription: Subscription
 	onUpdatePayment: () => void
-	onCancel: () => void
+	// The cancel endpoint targets the user's active subscription first, so the
+	// cancel action is only offered when the overdue record is that subscription.
+	onCancel: (() => void) | null
 	isUpdateLoading: boolean
-	isCancelLoading: boolean
 }) {
 	const planName = getPlanName(subscription.type)
 	const canUpdatePayment = subscription.provider === 'stripe'
@@ -192,7 +193,7 @@ function PastDueSubscriptionCard({
 					</h3>
 					<p className="text-sm text-sub-warning-text-light dark:text-sub-warning-text-dark">
 						Your most recent payment failed. To keep your subscription active, update your payment method on Stripe.
-						Otherwise, you can cancel the overdue subscription below.
+						{onCancel ? ' Otherwise, you can cancel the overdue subscription below.' : ''}
 					</p>
 				</div>
 			</div>
@@ -207,13 +208,14 @@ function PastDueSubscriptionCard({
 						{!isUpdateLoading && <Icon name="circle-external-link" height={16} width={16} className="shrink-0" />}
 					</button>
 				)}
-				<button
-					onClick={onCancel}
-					disabled={isCancelLoading}
-					className="flex h-9 items-center rounded-lg border border-sub-border-muted px-3 text-sm font-medium whitespace-nowrap text-sub-text-primary disabled:opacity-50 dark:border-sub-border-strong"
-				>
-					{isCancelLoading ? 'Cancelling...' : 'Cancel Subscription'}
-				</button>
+				{onCancel && (
+					<button
+						onClick={onCancel}
+						className="flex h-9 items-center rounded-lg border border-sub-border-muted px-3 text-sm font-medium whitespace-nowrap text-sub-text-primary dark:border-sub-border-strong"
+					>
+						Cancel Subscription
+					</button>
+				)}
 			</div>
 		</div>
 	)
@@ -272,47 +274,60 @@ function TeamSubscriptionBanner({ teamName, subscriptionType }: { teamName: stri
 
 export function SubscriptionSection() {
 	const { isTrial: isTrialFromAuth, hasActiveSubscription } = useAuthContext()
-	const { team } = useTeam()
+	const { team, isTeamError, isTeamRetrying, refetchTeam } = useTeam()
 
 	const { balance, isLoading: isAiBalanceLoading } = useAiBalance()
 	const [isTopupModalOpen, setIsTopupModalOpen] = useState(false)
 	const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false)
 	const [isCancelSubscriptionModalOpen, setIsCancelSubscriptionModalOpen] = useState(false)
 	const [isCancelSubModalOpen, setIsCancelSubModalOpen] = useState(false)
+	const [isCancelPastDueModalOpen, setIsCancelPastDueModalOpen] = useState(false)
 	const [isYearlyUpgradeModalOpen, setIsYearlyUpgradeModalOpen] = useState(false)
 	const [yearlyUpgradeType, setYearlyUpgradeType] = useState<'api' | 'llamafeed' | null>(null)
 	const {
 		apiSubscription,
 		llamafeedSubscription,
 		pastDueSubscription,
+		isSubscriptionError,
+		isSubscriptionRetrying,
+		refetchSubscription,
+		isPastDueError,
+		refetchPastDueSubscription,
 		credits,
 		usageStats,
 		isUsageStatsLoading,
 		isUsageStatsError,
 		createPortalSession,
-		cancelSubscription,
+		createPortalSessionMutation,
 		generateNewKeyMutation,
 		apiKey,
-		isPortalSessionLoading,
-		isCancelSubscriptionLoading,
-		endTrialSubscription,
-		isEndTrialLoading,
 		isSubscriptionLoading,
-		handleLlamapayTopup,
-		loading,
+		topupMutation,
 		subscription,
-		enableOverage,
-		disableOverage,
-		isEnableOverageLoading,
-		isDisableOverageLoading
+		enableOverageMutation,
+		disableOverageMutation
 	} = useSubscribe()
+
+	// Unknown team means unknown billing ownership: don't render personal billing
+	// controls that may belong to a team seat.
+	if (isTeamError) {
+		return (
+			<SubscriptionLoadError
+				isRetrying={isTeamRetrying}
+				onRetry={() => void refetchTeam()}
+				message="Couldn't load your team. Please try again."
+			/>
+		)
+	}
 
 	const isTeamMember = Boolean(team && !team.isAdmin)
 	const teamAssignedType = isTeamMember ? (team?.subscriptionType ?? null) : null
 
-	// Team member guard: hide personal billing controls. Still render the feature cards
-	// (API access, usage, external-data balance) that the assigned subscription unlocks.
-	if (isTeamMember && team) {
+	// Members with an assigned seat are billed through the team: hide personal billing
+	// controls and render only the feature cards the assigned subscription unlocks.
+	// Members WITHOUT a seat fall through — membership alone doesn't cancel a personal
+	// subscription, so any still-billed personal plan must stay visible.
+	if (isTeamMember && team && teamAssignedType) {
 		const teamBanner = <TeamSubscriptionBanner teamName={team.name} subscriptionType={teamAssignedType} />
 
 		if (teamAssignedType === 'api') {
@@ -361,10 +376,42 @@ export function SubscriptionSection() {
 		return teamBanner
 	}
 
+	// Unassigned team members still see their own billing below the membership notice.
+	const teamBanner =
+		isTeamMember && team ? <TeamSubscriptionBanner teamName={team.name} subscriptionType={null} /> : null
+
+	// A failed read is unknown, not Free: show a retry state instead of an upsell
+	// banner or a misleading payment warning.
+	if (isSubscriptionError) {
+		return (
+			<>
+				{teamBanner}
+				<SubscriptionLoadError isRetrying={isSubscriptionRetrying} onRetry={() => void refetchSubscription()} />
+			</>
+		)
+	}
+
+	// The overdue check failing silently would read as "no payment problems".
+	const pastDueCheckFailedNotice = isPastDueError ? (
+		<p className="text-xs leading-4 text-sub-text-muted">
+			Couldn't check payment status.{' '}
+			<button
+				type="button"
+				onClick={() => void refetchPastDueSubscription()}
+				className="underline hover:text-sub-brand-primary"
+			>
+				Retry
+			</button>
+		</p>
+	) : null
+
 	const hasProSubscription = llamafeedSubscription?.status === 'active'
 	const hasApiSubscription = apiSubscription?.status === 'active'
 	const activeSubscription = hasApiSubscription ? apiSubscription : hasProSubscription ? llamafeedSubscription : null
 	const isPastDue = Boolean(pastDueSubscription?.id) && !hasApiSubscription && !hasProSubscription
+	// Payment health is separate from access: a subscription can keep access while
+	// its latest payment failed. Surface the overdue warning alongside the plan cards.
+	const activePastDueSubscription = activeSubscription && pastDueSubscription?.id ? pastDueSubscription : null
 	const isProMonthly = hasProSubscription && llamafeedSubscription?.billing_interval === 'month'
 	const isApiMonthly = hasApiSubscription && apiSubscription?.billing_interval === 'month'
 	const isTrial = hasProSubscription && (isTrialFromAuth || String(llamafeedSubscription?.metadata?.isTrial) === 'true')
@@ -395,97 +442,47 @@ export function SubscriptionSection() {
 
 	const handleTopup = () => {
 		if (!activeSubscription) return
-		void handleLlamapayTopup(activeSubscription.type === 'api' ? 'api' : 'llamafeed', 'month')
+		topupMutation.mutate({ type: activeSubscription.type === 'api' ? 'api' : 'llamafeed' })
 	}
 
 	const isMonthlyLlamapay = subscription?.provider === 'llamapay' && subscription?.billing_interval === 'month'
 
 	const isOverageEnabled = Boolean(apiSubscription?.overage)
-	const canManageOverage = hasApiSubscription && apiSubscription?.provider === 'manual'
-	const isOverageToggleLoading = isEnableOverageLoading || isDisableOverageLoading
+	// The overage endpoints only operate on the user's own Stripe API subscription;
+	// seat-derived team records look like Stripe but have no Stripe subscription behind them.
+	const canManageOverage = hasApiSubscription && apiSubscription?.provider === 'stripe' && !apiSubscription?.team_id
+	const isOverageToggleLoading = enableOverageMutation.isPending || disableOverageMutation.isPending
+	const overageError = enableOverageMutation.isError
+		? getOverageErrorText(enableOverageMutation.error, 'enable')
+		: disableOverageMutation.isError
+			? getOverageErrorText(disableOverageMutation.error, 'disable')
+			: null
 
 	const handleToggleOverage = () => {
 		if (isOverageToggleLoading) return
 		if (isOverageEnabled) {
-			void disableOverage()
+			disableOverageMutation.mutate()
 		} else {
-			void enableOverage()
+			enableOverageMutation.mutate()
 		}
 	}
 
-	if (isPastDue && pastDueSubscription) {
-		const handlePastDuePayment = async () => {
-			if (pastDueSubscription.provider === 'stripe') {
-				await createPortalSession()
+	// The cancel endpoint targets the active subscription first, so cancelling from
+	// the overdue warning is only offered when the overdue record IS that subscription.
+	const pastDueBanner = activePastDueSubscription ? (
+		<PastDueSubscriptionCard
+			subscription={activePastDueSubscription}
+			onUpdatePayment={async () => {
+				if (activePastDueSubscription.provider === 'stripe') {
+					await createPortalSession()
+				}
+			}}
+			onCancel={
+				activePastDueSubscription.id === activeSubscription?.id ? () => setIsCancelPastDueModalOpen(true) : null
 			}
-		}
-		return (
-			<>
-				<PastDueSubscriptionCard
-					subscription={pastDueSubscription}
-					onUpdatePayment={handlePastDuePayment}
-					onCancel={() => setIsCancelSubModalOpen(true)}
-					isUpdateLoading={isPortalSessionLoading}
-					isCancelLoading={isCancelSubscriptionLoading}
-				/>
-				{isCancelSubModalOpen ? (
-					<CancelSubscriptionModal
-						isOpen={isCancelSubModalOpen}
-						onClose={() => setIsCancelSubModalOpen(false)}
-						onConfirm={async (message) => {
-							await cancelSubscription(message)
-							setIsCancelSubModalOpen(false)
-						}}
-						isLoading={isCancelSubscriptionLoading}
-						variant="subscription"
-					/>
-				) : null}
-			</>
-		)
-	}
-
-	if (isTrial && llamafeedSubscription) {
-		const trialEndDate = parseExpiryDate(llamafeedSubscription.expires_at)
-		return (
-			<>
-				<div className="flex flex-col items-stretch gap-3 sm:flex-row">
-					<TrialSubscriptionCard
-						trialEndDate={trialEndDate}
-						isCancelPending={llamafeedSubscription.metadata?.isCanceled === 'true'}
-						onCancel={() => setIsCancelSubscriptionModalOpen(true)}
-						isCancelLoading={isCancelSubscriptionLoading}
-					/>
-					<TrialUpgradeBanner onUpgrade={() => setIsUpgradeModalOpen(true)} isLoading={false} />
-				</div>
-				<CancelSubscriptionModal
-					isOpen={isCancelSubscriptionModalOpen}
-					onClose={() => setIsCancelSubscriptionModalOpen(false)}
-					onConfirm={async (message) => {
-						await cancelSubscription(message)
-						setIsCancelSubscriptionModalOpen(false)
-					}}
-					isLoading={isCancelSubscriptionLoading}
-				/>
-				<EndTrialModal
-					isOpen={isUpgradeModalOpen}
-					onClose={() => setIsUpgradeModalOpen(false)}
-					onConfirm={() => {
-						endTrialSubscription()
-							.then(() => setIsUpgradeModalOpen(false))
-							.catch(() => toast.error('Failed to end trial. Please try again.'))
-					}}
-					isLoading={isEndTrialLoading}
-				/>
-			</>
-		)
-	}
-
-	if (!activeSubscription) {
-		if (isSubscriptionLoading || hasActiveSubscription) {
-			return null
-		}
-		return <FreeUpgradeBanner />
-	}
+			isUpdateLoading={createPortalSessionMutation.isPending}
+		/>
+	) : null
 
 	const balanceCard =
 		(hasProSubscription || hasApiSubscription) && balance ? (
@@ -508,46 +505,100 @@ export function SubscriptionSection() {
 			/>
 		) : null
 
-	const topupModal = isTopupModalOpen ? (
-		<Suspense fallback={null}>
-			<TopupModal isOpen={isTopupModalOpen} onClose={() => setIsTopupModalOpen(false)} />
-		</Suspense>
-	) : null
+	// Dialogs mount once, outside the entitlement branches: their success actions
+	// invalidate the very queries that select a branch, and an exclusive mount
+	// would unmount the success pane as soon as the refetch lands.
+	const dialogs = (
+		<>
+			<CancelSubscriptionModal
+				isOpen={isCancelSubscriptionModalOpen}
+				onClose={() => setIsCancelSubscriptionModalOpen(false)}
+			/>
+			<CancelSubscriptionModal
+				isOpen={isCancelSubModalOpen}
+				onClose={() => setIsCancelSubModalOpen(false)}
+				variant={isPastDue ? 'pastDue' : 'subscription'}
+			/>
+			<CancelSubscriptionModal
+				isOpen={isCancelPastDueModalOpen}
+				onClose={() => setIsCancelPastDueModalOpen(false)}
+				variant="pastDue"
+			/>
+			<EndTrialModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} />
+			{isTopupModalOpen ? (
+				<Suspense fallback={null}>
+					<TopupModal isOpen={isTopupModalOpen} onClose={() => setIsTopupModalOpen(false)} />
+				</Suspense>
+			) : null}
+			{isYearlyUpgradeModalOpen && yearlyUpgradeType ? (
+				<Suspense fallback={null}>
+					<StripeCheckoutModal
+						isOpen={isYearlyUpgradeModalOpen}
+						onClose={() => {
+							setIsYearlyUpgradeModalOpen(false)
+							setYearlyUpgradeType(null)
+						}}
+						paymentMethod="stripe"
+						type={yearlyUpgradeType}
+						billingInterval="year"
+						isUpgradeFlow
+						upgradeReturnPath="/account?success=true"
+					/>
+				</Suspense>
+			) : null}
+		</>
+	)
 
-	const cancelSubModal = isCancelSubModalOpen ? (
-		<CancelSubscriptionModal
-			isOpen={isCancelSubModalOpen}
-			onClose={() => setIsCancelSubModalOpen(false)}
-			onConfirm={async (message) => {
-				await cancelSubscription(message)
-				setIsCancelSubModalOpen(false)
-			}}
-			isLoading={isCancelSubscriptionLoading}
-			variant="subscription"
-		/>
-	) : null
-
-	const yearlyUpgradeModal =
-		isYearlyUpgradeModalOpen && yearlyUpgradeType ? (
-			<Suspense fallback={null}>
-				<StripeCheckoutModal
-					isOpen={isYearlyUpgradeModalOpen}
-					onClose={() => {
-						setIsYearlyUpgradeModalOpen(false)
-						setYearlyUpgradeType(null)
-					}}
-					paymentMethod="stripe"
-					type={yearlyUpgradeType}
-					billingInterval="year"
-					isUpgradeFlow
-					upgradeReturnPath="/account?success=true"
-				/>
-			</Suspense>
-		) : null
-
-	if (hasApiSubscription) {
-		return (
+	let body: ReactNode = null
+	if (isPastDue && pastDueSubscription) {
+		body = (
 			<>
+				{teamBanner}
+				<PastDueSubscriptionCard
+					subscription={pastDueSubscription}
+					onUpdatePayment={async () => {
+						if (pastDueSubscription.provider === 'stripe') {
+							await createPortalSession()
+						}
+					}}
+					onCancel={() => setIsCancelSubModalOpen(true)}
+					isUpdateLoading={createPortalSessionMutation.isPending}
+				/>
+			</>
+		)
+	} else if (isTrial && llamafeedSubscription) {
+		body = (
+			<>
+				{teamBanner}
+				{pastDueBanner}
+				{pastDueCheckFailedNotice}
+				<div className="flex flex-col items-stretch gap-3 sm:flex-row">
+					<TrialSubscriptionCard
+						trialEndDate={parseExpiryDate(llamafeedSubscription.expires_at)}
+						isCancelPending={llamafeedSubscription.metadata?.isCanceled === 'true'}
+						onCancel={() => setIsCancelSubscriptionModalOpen(true)}
+					/>
+					<TrialUpgradeBanner onUpgrade={() => setIsUpgradeModalOpen(true)} />
+				</div>
+			</>
+		)
+	} else if (!activeSubscription) {
+		body =
+			isSubscriptionLoading || hasActiveSubscription ? (
+				teamBanner
+			) : (
+				<>
+					{teamBanner}
+					{pastDueCheckFailedNotice}
+					<FreeUpgradeBanner />
+				</>
+			)
+	} else if (hasApiSubscription) {
+		body = (
+			<>
+				{teamBanner}
+				{pastDueBanner}
+				{pastDueCheckFailedNotice}
 				{isLegacy && <LegacyWarning />}
 				<div className="flex flex-col items-stretch gap-3 sm:flex-row">
 					<SubscriptionCardWithProps
@@ -555,11 +606,10 @@ export function SubscriptionSection() {
 						onManage={handleManageSubscription}
 						onCancel={handleCancelSubscription}
 						onTopup={isMonthlyLlamapay ? handleTopup : undefined}
-						isManageLoading={isPortalSessionLoading}
-						isCancelLoading={isCancelSubscriptionLoading}
-						isTopupLoading={loading === 'llamapay'}
+						isManageLoading={createPortalSessionMutation.isPending}
+						isTopupLoading={topupMutation.isPending}
 					/>
-					{isApiMonthly && !isCancelPending && apiSubscription?.provider === 'stripe' && (
+					{isApiMonthly && !isCancelPending && apiSubscription?.provider === 'stripe' && !apiSubscription?.team_id && (
 						<YearlyUpgradeBanner onUpgrade={() => handleUpgradeToYearly('api')} planType="api" />
 					)}
 				</div>
@@ -575,35 +625,42 @@ export function SubscriptionSection() {
 					isOverageEnabled={isOverageEnabled}
 					onToggleOverage={handleToggleOverage}
 					isOverageToggleLoading={isOverageToggleLoading}
+					overageError={overageError}
 				/>
 				{balanceCard}
-				{topupModal}
-				{cancelSubModal}
-				{yearlyUpgradeModal}
+			</>
+		)
+	} else {
+		body = (
+			<>
+				{teamBanner}
+				{pastDueBanner}
+				{pastDueCheckFailedNotice}
+				<div className="flex flex-col items-stretch gap-3 sm:flex-row">
+					<SubscriptionCardWithProps
+						subscription={activeSubscription}
+						onManage={handleManageSubscription}
+						onCancel={handleCancelSubscription}
+						onTopup={isMonthlyLlamapay ? handleTopup : undefined}
+						isManageLoading={createPortalSessionMutation.isPending}
+						isTopupLoading={topupMutation.isPending}
+					/>
+					{isProMonthly &&
+						!isCancelPending &&
+						llamafeedSubscription?.provider === 'stripe' &&
+						!llamafeedSubscription?.team_id && (
+							<YearlyUpgradeBanner onUpgrade={() => handleUpgradeToYearly('llamafeed')} planType="pro" />
+						)}
+				</div>
+				{balanceCard}
 			</>
 		)
 	}
 
 	return (
 		<>
-			<div className="flex flex-col items-stretch gap-3 sm:flex-row">
-				<SubscriptionCardWithProps
-					subscription={activeSubscription}
-					onManage={handleManageSubscription}
-					onCancel={handleCancelSubscription}
-					onTopup={isMonthlyLlamapay ? handleTopup : undefined}
-					isManageLoading={isPortalSessionLoading}
-					isCancelLoading={isCancelSubscriptionLoading}
-					isTopupLoading={loading === 'llamapay'}
-				/>
-				{isProMonthly && !isCancelPending && llamafeedSubscription?.provider === 'stripe' && (
-					<YearlyUpgradeBanner onUpgrade={() => handleUpgradeToYearly('llamafeed')} planType="pro" />
-				)}
-			</div>
-			{balanceCard}
-			{topupModal}
-			{cancelSubModal}
-			{yearlyUpgradeModal}
+			{body}
+			{dialogs}
 		</>
 	)
 }

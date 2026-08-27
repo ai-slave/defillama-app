@@ -24,6 +24,7 @@ import {
 	SubscriptionPricingSection,
 	SubscriptionTrustedBlock
 } from '~/containers/Subscription/sections'
+import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import type { BillingCycle, PlanKey } from '~/containers/Subscription/types'
 import { useSubscriptionPageState } from '~/containers/Subscription/usePageState'
@@ -46,6 +47,9 @@ function SubscriptionContent() {
 		isTrial,
 		userBillingCycle,
 		isManualSubscription,
+		currentProvider,
+		isTeamProvided,
+		isSubscriptionError,
 		isLoading: isPageStateLoading
 	} = useSubscriptionPageState()
 	const { user, loaders, promptVerifyEmail } = useAuthContext()
@@ -53,10 +57,10 @@ function SubscriptionContent() {
 		handleSubscribe,
 		loading,
 		isTrialAvailable: isTrialAvailableFromApi,
-		endTrialSubscription,
-		isEndTrialLoading,
 		subscription,
-		getPortalSessionUrl
+		createPortalSession,
+		isSubscriptionRetrying,
+		refetchSubscription
 	} = useSubscribe()
 
 	const isTrialAvailable = isAuthenticated ? isTrialAvailableFromApi : true
@@ -75,15 +79,6 @@ function SubscriptionContent() {
 
 	/* ── End trial modal ──────────────────────────────────────────────── */
 	const [showEndTrialModal, setShowEndTrialModal] = useState(false)
-
-	const handleEndTrial = async () => {
-		try {
-			await endTrialSubscription()
-			setShowEndTrialModal(false)
-		} catch (error) {
-			console.error('Failed to end trial:', error)
-		}
-	}
 
 	/* ── Slack acquisition source capture ─────────────────────────────── */
 	useEffect(() => {
@@ -122,16 +117,8 @@ function SubscriptionContent() {
 	}, [isAuthenticated, returnUrl, loaders.userLoading, user?.created])
 
 	/* ── Helpers ───────────────────────────────────────────────────────── */
-	const handleRevertCancellation = async () => {
-		try {
-			const portalUrl = await getPortalSessionUrl()
-			if (portalUrl) {
-				window.location.href = portalUrl
-			}
-		} catch {
-			toast.error('Failed to open billing portal. Please try again.')
-		}
-	}
+	// Reverting a scheduled cancellation happens in the Stripe billing portal.
+	const handleRevertCancellation = () => createPortalSession()
 
 	const billingInterval = billingCycle === 'yearly' ? 'year' : 'month'
 
@@ -201,12 +188,43 @@ function SubscriptionContent() {
 
 	const PLAN_TIER: Record<PlanKey, number> = { free: 0, pro: 1, api: 2, enterprise: 3 }
 
-	const handleComparisonPlanAction = (plan: PlanKey) => {
-		// Team-provided (manual) subscriptions can't be changed via self-serve checkout.
-		if (isManualSubscription) return
+	// Self-serve plan changes only apply to Stripe-billed personal plans. Everyone
+	// else (manual, team seat, LlamaPay, app store) keeps the comparison buttons
+	// hidden, matching the pricing cards; the click guards below stay as backstop.
+	const canSelfServePlanChange =
+		!isAuthenticated || !currentPlan || currentPlan === 'free'
+			? true
+			: currentProvider === 'stripe' && !isTeamProvided && !isManualSubscription
 
+	const handleComparisonPlanAction = (plan: PlanKey) => {
+		// Contact Us stays valid regardless of how the current plan is billed.
 		if (plan === 'enterprise') {
 			window.location.href = 'mailto:sales@defillama.com'
+			return
+		}
+
+		// With the current plan unknown, checkout could double-subscribe.
+		if (isSubscriptionError) {
+			toast.error("Couldn't load your subscription. Retry loading it before changing plans.")
+			return
+		}
+
+		// Plans not billed through the user's own Stripe account can't be changed
+		// via self-serve checkout; say so instead of silently doing nothing.
+		if (isManualSubscription || isTeamProvided) {
+			toast.error(
+				isTeamProvided
+					? 'Your plan is provided through your team. Ask your team admin about plan changes.'
+					: 'Your plan was provided by the DefiLlama team. Please contact the team to make changes.'
+			)
+			return
+		}
+		if (isAuthenticated && currentPlan && currentPlan !== 'free' && currentProvider !== 'stripe') {
+			toast.error(
+				currentProvider === 'llamapay' || currentProvider === 'legacy'
+					? 'Your plan is billed through LlamaPay. Manage it at subscriptions.llamapay.io first.'
+					: 'Your plan is billed through the app store. Manage it there first.'
+			)
 			return
 		}
 
@@ -233,6 +251,11 @@ function SubscriptionContent() {
 			<SubscriptionHeader />
 
 			<main className="relative z-10">
+				{isSubscriptionError ? (
+					<div className="mx-auto max-w-[600px] px-4 pt-10">
+						<SubscriptionLoadError isRetrying={isSubscriptionRetrying} onRetry={() => void refetchSubscription()} />
+					</div>
+				) : null}
 				<SubscriptionPricingSection
 					pricingCards={PRICING_CARDS_BY_CYCLE[billingCycle]}
 					billingCycle={billingCycle}
@@ -243,6 +266,9 @@ function SubscriptionContent() {
 					isCancelPending={isCancelPending}
 					userBillingCycle={userBillingCycle}
 					isManualSubscription={isManualSubscription}
+					currentProvider={currentProvider}
+					isTeamProvided={isTeamProvided}
+					isPageStateLoading={isPageStateLoading || isSubscriptionError}
 					onPrimaryCtaClick={handlePrimaryCtaClick}
 					onSecondaryCtaClick={handleSecondaryCtaClick}
 					onUpgradeToYearly={handleUpgradeToYearly}
@@ -251,8 +277,7 @@ function SubscriptionContent() {
 					onEndTrial={() => setShowEndTrialModal(true)}
 					onRevertCancellation={() => void handleRevertCancellation()}
 					isTrialAvailable={isTrialAvailable}
-					loading={loading as 'stripe' | 'llamapay' | null}
-					isPageStateLoading={isPageStateLoading}
+					loading={loading}
 				/>
 				<SubscriptionComparisonSection
 					planOrder={PLAN_ORDER}
@@ -260,6 +285,7 @@ function SubscriptionContent() {
 					billingCycle={billingCycle}
 					selectedPlan="api"
 					currentPlan={currentPlan}
+					hidePlanActions={isSubscriptionError || !canSelfServePlanChange}
 					onPlanAction={handleComparisonPlanAction}
 				/>
 
@@ -290,12 +316,7 @@ function SubscriptionContent() {
 			) : null}
 
 			{/* End trial confirmation modal */}
-			<EndTrialModal
-				isOpen={showEndTrialModal}
-				onClose={() => setShowEndTrialModal(false)}
-				onConfirm={() => void handleEndTrial()}
-				isLoading={isEndTrialLoading}
-			/>
+			<EndTrialModal isOpen={showEndTrialModal} onClose={() => setShowEndTrialModal(false)} />
 
 			{/* Return modal (post sign-in redirect) */}
 			{returnUrl ? (

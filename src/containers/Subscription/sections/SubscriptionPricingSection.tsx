@@ -11,6 +11,8 @@ export function SubscriptionPricingSection({
 	isCancelPending = false,
 	userBillingCycle = null,
 	isManualSubscription = false,
+	currentProvider = null,
+	isTeamProvided = false,
 	isPageStateLoading = false,
 	...callbacks
 }: {
@@ -23,6 +25,8 @@ export function SubscriptionPricingSection({
 	isCancelPending?: boolean
 	userBillingCycle?: BillingCycle | null
 	isManualSubscription?: boolean
+	currentProvider?: string | null
+	isTeamProvided?: boolean
 	isPageStateLoading?: boolean
 } & PricingCardCallbacks) {
 	const isMonthly = billingCycle === 'monthly'
@@ -103,6 +107,8 @@ export function SubscriptionPricingSection({
 						billingCycle={billingCycle}
 						userBillingCycle={userBillingCycle}
 						isManualSubscription={isManualSubscription}
+						currentProvider={currentProvider}
+						isTeamProvided={isTeamProvided}
 						isPageStateLoading={isPageStateLoading}
 						{...callbacks}
 					/>

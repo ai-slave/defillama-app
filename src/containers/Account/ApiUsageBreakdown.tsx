@@ -86,12 +86,14 @@ function useChartSource(usageStats: ApiUsageStats | null | undefined) {
 
 	const totalRequests = useMemo(() => sortedStats.reduce((sum, day) => sum + day.totalRequests, 0), [sortedStats])
 
-	const averageRequests = useMemo(() => {
-		if (!sortedStats.length) return 0
-		return Math.round(totalRequests / sortedStats.length)
-	}, [sortedStats.length, totalRequests])
-
 	const windowDays = usageStats?.windowDays ?? DEFAULT_WINDOW_DAYS
+
+	// The stats are sparse (days without requests are omitted) while the chart and the
+	// "Last N days" label cover the full window, so the average uses the window too.
+	const averageRequests = useMemo(() => {
+		if (!sortedStats.length || windowDays <= 0) return 0
+		return Math.round(totalRequests / windowDays)
+	}, [sortedStats.length, totalRequests, windowDays])
 	const routeSeries = useMemo(() => {
 		const totals = new Map<string, number>()
 		for (const day of sortedStats) {

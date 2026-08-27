@@ -41,23 +41,28 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 	}, [lockedInterval, billingInterval])
 
 	const handlePurchase = async () => {
-		const result: PurchaseSeatsResponse = await purchaseSeatsMutation.mutateAsync({
-			subscriptionType,
-			seatCount,
-			billingInterval,
-			redirectUrl: `${window.location.origin}/account?tab=team&team-checkout=success`,
-			cancelUrl: `${window.location.origin}/account?tab=team`
-		})
+		try {
+			const result: PurchaseSeatsResponse = await purchaseSeatsMutation.mutateAsync({
+				subscriptionType,
+				seatCount,
+				billingInterval,
+				redirectUrl: `${window.location.origin}/account?tab=team&team-checkout=success`,
+				cancelUrl: `${window.location.origin}/account?tab=team`
+			})
 
-		if (result.action === 'checkout_created') {
-			setCheckoutClientSecret(result.clientSecret)
-		} else {
-			// seats_added — success toast handled by mutation onSuccess
-			onClose()
+			if (result.action === 'checkout_created') {
+				setCheckoutClientSecret(result.clientSecret)
+			} else {
+				// seats_added — success toast handled by mutation onSuccess
+				onClose()
+			}
+		} catch {
+			// The purchase error renders inline below the actions.
 		}
 	}
 
 	const handleClose = () => {
+		purchaseSeatsMutation.reset()
 		setCheckoutClientSecret(null)
 		onClose()
 	}
@@ -235,6 +240,13 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 									</p>
 								</div>
 							)}
+
+							{purchaseSeatsMutation.isError ? (
+								<div className="flex items-center gap-2 rounded-lg border border-error/30 bg-error/10 p-3 text-error">
+									<Icon name="alert-warning" height={16} width={16} className="shrink-0" />
+									<p className="text-sm">{purchaseSeatsMutation.error.message}</p>
+								</div>
+							) : null}
 
 							<button
 								onClick={() => void handlePurchase()}

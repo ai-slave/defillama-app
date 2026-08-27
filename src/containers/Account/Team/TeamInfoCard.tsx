@@ -9,13 +9,13 @@ export function TeamInfoCard() {
 
 	if (!team) return null
 
-	const handleSave = async () => {
-		if (!editName.trim()) return
-		await updateTeamMutation.mutateAsync({ name: editName.trim() })
-		setIsEditing(false)
+	const handleSave = () => {
+		if (!editName.trim() || updateTeamMutation.isPending) return
+		updateTeamMutation.mutate({ name: editName.trim() }, { onSuccess: () => setIsEditing(false) })
 	}
 
 	const startEditing = () => {
+		updateTeamMutation.reset()
 		setEditName(team.name)
 		setIsEditing(true)
 	}
@@ -38,14 +38,14 @@ export function TeamInfoCard() {
 								value={editName}
 								onChange={(e) => setEditName(e.target.value)}
 								onKeyDown={(e) => {
-									if (e.key === 'Enter') void handleSave()
+									if (e.key === 'Enter') handleSave()
 									if (e.key === 'Escape') setIsEditing(false)
 								}}
 								className="w-40 rounded-sm border border-sub-border-slate-100 bg-white px-2 py-1 text-xs text-sub-text-primary focus:border-sub-brand-primary focus:outline-hidden dark:border-sub-border-strong dark:bg-sub-surface-dark"
 								autoFocus
 							/>
 							<button
-								onClick={() => void handleSave()}
+								onClick={handleSave}
 								disabled={!editName.trim() || updateTeamMutation.isPending}
 								className="text-xs font-medium text-sub-brand-primary disabled:opacity-50"
 							>
@@ -75,6 +75,9 @@ export function TeamInfoCard() {
 					<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border" />
 					<span className="shrink-0 text-xs leading-4 text-sub-text-primary">{team.isAdmin ? 'Admin' : 'Member'}</span>
 				</div>
+				{isEditing && updateTeamMutation.isError ? (
+					<p className="text-xs text-error">{updateTeamMutation.error.message}</p>
+				) : null}
 			</div>
 		</div>
 	)

@@ -94,7 +94,9 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 
 	const team = teamQuery.data ?? null
 	const isTeamLoading = teamQuery.isLoading
-	const isTeamError = teamQuery.isError
+	// A refetch failure keeps showing the cached team; error means nothing is known.
+	const isTeamError = teamQuery.isError && teamQuery.data == null
+	const isTeamRetrying = teamQuery.isFetching
 	const isAdmin = team?.isAdmin === true
 	const members = team?.members ?? []
 	const pendingInvites = team?.pendingInvites ?? []
@@ -120,7 +122,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 			void queryClient.invalidateQueries({ queryKey: ['auth', 'status'] })
 		},
 		onError: (error) => {
-			toast.error(getErrorMessage(error, 'Failed to create team'))
+			console.log('Failed to create team:', error)
 		}
 	})
 
@@ -144,7 +146,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		},
 		onError: (error, _vars, context) => {
 			rollback(error, _vars, context)
-			toast.error(getErrorMessage(error, 'Failed to update team'))
+			console.log('Failed to update team:', error)
 		},
 		onSettled: () => refetch()
 	})
@@ -176,7 +178,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 			}
 		},
 		onError: (error) => {
-			toast.error(getErrorMessage(error, 'Failed to purchase seats'))
+			console.log('Failed to purchase seats:', error)
 		}
 	})
 
@@ -201,7 +203,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 			void queryClient.invalidateQueries({ queryKey: ['subscription'] })
 		},
 		onError: (error) => {
-			toast.error(getErrorMessage(error, 'Failed to upgrade subscription'))
+			console.log('Failed to upgrade subscription:', error)
 		}
 	})
 
@@ -242,7 +244,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		},
 		onError: (error, _vars, context) => {
 			rollback(error, _vars, context)
-			toast.error(getErrorMessage(error, 'Failed to update seats'))
+			console.log('Failed to update seats:', error)
 		},
 		onSuccess: (_data, { seatCount }) => {
 			if (seatCount === 0) toast.success('Subscription will cancel at the end of the current period')
@@ -285,7 +287,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		},
 		onError: (error, _vars, context) => {
 			rollback(error, _vars, context)
-			toast.error(getErrorMessage(error, 'Failed to assign member'))
+			console.log('Failed to assign member:', error)
 		},
 		onSuccess: () => {
 			toast.success('Subscription assigned successfully!')
@@ -336,7 +338,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		},
 		onError: (error, _vars, context) => {
 			rollback(error, _vars, context)
-			toast.error(getErrorMessage(error, 'Failed to unassign member'))
+			console.log('Failed to unassign member:', error)
 		},
 		onSuccess: () => {
 			toast.success('Subscription removed from member')
@@ -378,7 +380,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		},
 		onError: (error, _vars, context) => {
 			rollback(error, _vars, context)
-			toast.error(getErrorMessage(error, 'Failed to send invite'))
+			console.log('Failed to send invite:', error)
 		},
 		onSuccess: () => {
 			toast.success('Invite sent successfully!')
@@ -401,11 +403,11 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 			return normalized.json()
 		},
 		onSuccess: () => {
-			toast.success('Invite resent')
+			// The row's Resend button flips into its cooldown label, which is the feedback.
 			refetch()
 		},
 		onError: (error) => {
-			toast.error(getErrorMessage(error, 'Failed to resend invite'))
+			console.log('Failed to resend invite:', error)
 		}
 	})
 
@@ -432,7 +434,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		},
 		onError: (error, _vars, context) => {
 			rollback(error, _vars, context)
-			toast.error(getErrorMessage(error, 'Failed to revoke invite'))
+			console.log('Failed to revoke invite:', error)
 		},
 		onSuccess: () => {
 			toast.success('Invite revoked')
@@ -482,7 +484,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		},
 		onError: (error, _vars, context) => {
 			rollback(error, _vars, context)
-			toast.error(getErrorMessage(error, 'Failed to remove member'))
+			console.log('Failed to remove member:', error)
 		},
 		onSuccess: () => {
 			toast.success('Member removed from team')
@@ -510,7 +512,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		},
 		onError: (error, _vars, context) => {
 			rollback(error, _vars, context)
-			toast.error(getErrorMessage(error, 'Failed to leave team'))
+			console.log('Failed to leave team:', error)
 		},
 		onSuccess: () => {
 			toast.success('You have left the team')
@@ -525,6 +527,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		team,
 		isTeamLoading,
 		isTeamError,
+		isTeamRetrying,
 		isAdmin,
 		members,
 		pendingInvites,

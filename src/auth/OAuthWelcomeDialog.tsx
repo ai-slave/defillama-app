@@ -5,9 +5,13 @@ import { Icon } from '~/ui/Icon'
 
 export function OAuthWelcomeDialog({
 	isOpen,
+	isSaving = false,
+	error = null,
 	onContinue
 }: {
 	isOpen: boolean
+	isSaving?: boolean
+	error?: string | null
 	onContinue: (promotionalEmails: 'on' | 'off') => void
 }) {
 	const [acceptedTerms, setAcceptedTerms] = useState(false)
@@ -65,12 +69,13 @@ export function OAuthWelcomeDialog({
 
 					<button
 						type="button"
-						disabled={!acceptedTerms}
+						disabled={!acceptedTerms || isSaving}
 						className="h-10 w-full rounded-lg bg-brand text-sm font-medium text-on-brand disabled:bg-signin-btn-disabled-bg disabled:text-signin-btn-disabled-text"
 						onClick={() => onContinue(promotionalEmails ? 'on' : 'off')}
 					>
-						Continue
+						{isSaving ? 'Saving...' : 'Continue'}
 					</button>
+					{error ? <p className="text-xs leading-4 text-error">{error}</p> : null}
 				</div>
 			</Ariakit.Dialog>
 		</Ariakit.DialogProvider>

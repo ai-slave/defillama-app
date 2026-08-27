@@ -19,6 +19,7 @@ interface ApiAccessCardProps {
 	isOverageEnabled?: boolean
 	onToggleOverage?: () => void
 	isOverageToggleLoading?: boolean
+	overageError?: string | null
 }
 
 export function ApiAccessCard({
@@ -32,7 +33,8 @@ export function ApiAccessCard({
 	canManageOverage,
 	isOverageEnabled,
 	onToggleOverage,
-	isOverageToggleLoading
+	isOverageToggleLoading,
+	overageError
 }: ApiAccessCardProps) {
 	const [copied, setCopied] = useState(false)
 	const [showKey, setShowKey] = useState(false)
@@ -174,6 +176,7 @@ export function ApiAccessCard({
 						<br />
 						We will notify you via email if you approach your plan limits.
 					</p>
+					{overageError ? <p className="text-xs leading-4 text-error">{overageError}</p> : null}
 				</div>
 			)}
 

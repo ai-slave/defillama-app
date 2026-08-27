@@ -32,9 +32,10 @@ function InviteRow({ invite }: { invite: TeamInvite }) {
 
 	const handleResend = () => {
 		if (onCooldown || isResending) return
-		void resendInviteMutation.mutateAsync({ inviteId: invite.id }).then(() => {
-			setCooldownUntil(Date.now() + RESEND_COOLDOWN_MS)
-		})
+		resendInviteMutation.mutate(
+			{ inviteId: invite.id },
+			{ onSuccess: () => setCooldownUntil(Date.now() + RESEND_COOLDOWN_MS) }
+		)
 	}
 
 	const expiresAt = parseDateTimestamp(invite.expiresAt)
@@ -51,19 +52,25 @@ function InviteRow({ invite }: { invite: TeamInvite }) {
 							className={`text-xs ${isExpired ? 'text-error' : 'text-sub-text-muted'}`}
 							title={formatDateTime(invite.expiresAt, { timeZone: 'UTC' }) ?? undefined}
 						>
-							{isExpired ? 'Expired' : `Expires ${expiresLabel ?? 'Unknown'}`}
+							{/* An expired token can't be resent; the supported flow is revoke, then invite again. */}
+							{isExpired ? 'Expired — revoke this invite and send a new one' : `Expires ${expiresLabel ?? 'Unknown'}`}
 						</span>
 					</div>
+					{resendInviteMutation.isError ? (
+						<p className="mt-1 text-xs text-error">{resendInviteMutation.error.message}</p>
+					) : null}
 				</div>
-				<button
-					onClick={handleResend}
-					disabled={onCooldown || isResending}
-					className="flex h-7 shrink-0 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-xs font-medium text-sub-text-muted transition-colors hover:border-sub-brand-primary hover:text-sub-brand-primary disabled:cursor-not-allowed disabled:opacity-50 dark:border-sub-border-strong"
-					title={onCooldown ? `Wait ${remainingSeconds}s to resend again` : 'Resend invite'}
-				>
-					<Icon name="mail" height={12} width={12} />
-					{isResending ? 'Sending...' : onCooldown ? `Resend in ${remainingSeconds}s` : 'Resend'}
-				</button>
+				{!isExpired && (
+					<button
+						onClick={handleResend}
+						disabled={onCooldown || isResending}
+						className="flex h-7 shrink-0 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-xs font-medium text-sub-text-muted transition-colors hover:border-sub-brand-primary hover:text-sub-brand-primary disabled:cursor-not-allowed disabled:opacity-50 dark:border-sub-border-strong"
+						title={onCooldown ? `Wait ${remainingSeconds}s to resend again` : 'Resend invite'}
+					>
+						<Icon name="mail" height={12} width={12} />
+						{isResending ? 'Sending...' : onCooldown ? `Resend in ${remainingSeconds}s` : 'Resend'}
+					</button>
+				)}
 				<button
 					onClick={() => setShowRevokeConfirm(true)}
 					className="flex h-7 shrink-0 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-xs font-medium text-sub-text-muted transition-colors hover:border-error hover:text-error dark:border-sub-border-strong"
@@ -76,15 +83,19 @@ function InviteRow({ invite }: { invite: TeamInvite }) {
 
 			<ConfirmActionModal
 				isOpen={showRevokeConfirm}
-				onClose={() => setShowRevokeConfirm(false)}
+				onClose={() => {
+					revokeInviteMutation.reset()
+					setShowRevokeConfirm(false)
+				}}
 				onConfirm={() => {
-					void revokeInviteMutation.mutateAsync({ inviteId: invite.id }).then(() => setShowRevokeConfirm(false))
+					revokeInviteMutation.mutate({ inviteId: invite.id }, { onSuccess: () => setShowRevokeConfirm(false) })
 				}}
 				isLoading={revokeInviteMutation.isPending}
 				title="Revoke Invite"
 				description={`Are you sure you want to revoke the invite for ${invite.email}?`}
 				confirmLabel="Revoke"
 				confirmVariant="danger"
+				error={revokeInviteMutation.isError ? revokeInviteMutation.error.message : null}
 			/>
 		</>
 	)

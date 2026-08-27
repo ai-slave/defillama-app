@@ -7,11 +7,17 @@ export function CreateTeamCard() {
 	const [isCreating, setIsCreating] = useState(false)
 	const [teamName, setTeamName] = useState('')
 
-	const handleCreate = async () => {
-		if (!teamName.trim()) return
-		await createTeamMutation.mutateAsync({ name: teamName.trim() })
-		setTeamName('')
-		setIsCreating(false)
+	const handleCreate = () => {
+		if (!teamName.trim() || createTeamMutation.isPending) return
+		createTeamMutation.mutate(
+			{ name: teamName.trim() },
+			{
+				onSuccess: () => {
+					setTeamName('')
+					setIsCreating(false)
+				}
+			}
+		)
 	}
 
 	return (
@@ -34,14 +40,15 @@ export function CreateTeamCard() {
 						value={teamName}
 						onChange={(e) => setTeamName(e.target.value)}
 						onKeyDown={(e) => {
-							if (e.key === 'Enter') void handleCreate()
+							if (e.key === 'Enter') handleCreate()
 						}}
 						className="w-full rounded-lg border border-sub-border-slate-100 bg-white px-3 py-2 text-sm text-sub-text-primary placeholder:text-sub-text-muted focus:border-sub-brand-primary focus:ring-1 focus:ring-sub-brand-primary focus:outline-hidden dark:border-sub-border-strong dark:bg-sub-surface-dark"
 						autoFocus
 					/>
+					{createTeamMutation.isError ? <p className="text-xs text-error">{createTeamMutation.error.message}</p> : null}
 					<div className="flex gap-2">
 						<button
-							onClick={() => void handleCreate()}
+							onClick={handleCreate}
 							disabled={!teamName.trim() || createTeamMutation.isPending}
 							className="flex h-9 flex-1 items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand disabled:opacity-50"
 						>
@@ -49,6 +56,7 @@ export function CreateTeamCard() {
 						</button>
 						<button
 							onClick={() => {
+								createTeamMutation.reset()
 								setIsCreating(false)
 								setTeamName('')
 							}}

@@ -1,4 +1,6 @@
 import * as Ariakit from '@ariakit/react'
+import { useEffect } from 'react'
+import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { useIsSqlAllowed } from '../../hooks/useIsSqlAllowed'
 import type { VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
 import { SqlChartUpsell } from '../SqlChart/SqlChartUpsell'
@@ -23,7 +25,7 @@ export function AddChartModal({
 	onOpenSqlModal
 }: AddChartModalProps) {
 	const { state, actions, computed } = useModalActions(editItem, onClose)
-	const { isAllowed: isSqlAllowed } = useIsSqlAllowed()
+	const { isAllowed: isSqlAllowed, isUnknown: isSqlAccessUnknown, isRetrying, retry } = useIsSqlAllowed()
 	const handleTabChange: typeof actions.handleMainTabChange = (tab) => {
 		if (tab === 'sql' && isSqlAllowed && onOpenSqlModal) {
 			onOpenSqlModal()
@@ -31,6 +33,15 @@ export function AddChartModal({
 		}
 		actions.handleMainTabChange(tab)
 	}
+
+	// The SQL tab is only reachable when access was denied or unknown at click
+	// time, so a later flip to allowed (a retry resolving) hands off to the SQL
+	// editor the same way the click would have.
+	useEffect(() => {
+		if (state.selectedMainTab === 'sql' && isSqlAllowed && onOpenSqlModal) {
+			onOpenSqlModal()
+		}
+	}, [state.selectedMainTab, isSqlAllowed, onOpenSqlModal])
 
 	const composerItemsWithData = useComposerItemsData(state.composerItems, computed.timePeriod)
 
@@ -280,7 +291,15 @@ export function AddChartModal({
 						<LlamaAITab selectedChart={state.selectedLlamaAIChart} onChartSelect={actions.setSelectedLlamaAIChart} />
 					) : null}
 
-					{state.selectedMainTab === 'sql' ? <SqlChartUpsell /> : null}
+					{state.selectedMainTab === 'sql' ? (
+						isSqlAccessUnknown ? (
+							<div className="mx-auto w-full max-w-md py-8">
+								<SubscriptionLoadError isRetrying={isRetrying} onRetry={retry} />
+							</div>
+						) : (
+							<SqlChartUpsell />
+						)
+					) : null}
 				</div>
 
 				{(state.selectedMainTab !== 'table' || state.selectedTableType !== 'protocols') &&

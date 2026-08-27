@@ -22,15 +22,26 @@ export function AssignSubscriptionModal({ isOpen, onClose, member }: AssignSubsc
 
 	const availableSubscriptions = teamSubscriptions.filter((sub: TeamSubscription) => sub.seats.availableSeats > 0)
 
-	const handleAssign = async () => {
-		if (!selectedType) return
-		await assignMemberMutation.mutateAsync({ userId: member.userId, subscriptionType: selectedType })
-		setSelectedType('')
+	const handleClose = () => {
+		assignMemberMutation.reset()
 		onClose()
 	}
 
+	const handleAssign = () => {
+		if (!selectedType || assignMemberMutation.isPending) return
+		assignMemberMutation.mutate(
+			{ userId: member.userId, subscriptionType: selectedType },
+			{
+				onSuccess: () => {
+					setSelectedType('')
+					onClose()
+				}
+			}
+		)
+	}
+
 	return (
-		<Ariakit.DialogProvider open={isOpen} setOpen={(open) => !open && onClose()}>
+		<Ariakit.DialogProvider open={isOpen} setOpen={(open) => !open && handleClose()}>
 			<Ariakit.Dialog
 				backdrop={<div className="bg-black/80" />}
 				className="dialog max-h-[90vh] min-h-0 gap-0 overflow-y-auto rounded-2xl border-0 p-0 md:max-w-[380px]"
@@ -81,15 +92,21 @@ export function AssignSubscriptionModal({ isOpen, onClose, member }: AssignSubsc
 						</div>
 					)}
 
+					{assignMemberMutation.isError ? (
+						<div className="flex items-center gap-2 rounded-lg border border-error/30 bg-error/10 p-3 text-error">
+							<Icon name="alert-warning" height={16} width={16} className="shrink-0" />
+							<p className="text-sm">{assignMemberMutation.error.message}</p>
+						</div>
+					) : null}
 					<div className="flex gap-3">
 						<button
-							onClick={onClose}
+							onClick={handleClose}
 							className="flex h-9 flex-1 items-center justify-center rounded-lg border border-sub-border-muted text-sm font-medium text-sub-text-primary dark:border-sub-border-strong"
 						>
 							Cancel
 						</button>
 						<button
-							onClick={() => void handleAssign()}
+							onClick={handleAssign}
 							disabled={!selectedType || assignMemberMutation.isPending}
 							className="flex h-9 flex-1 items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand disabled:opacity-50"
 						>

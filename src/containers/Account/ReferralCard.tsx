@@ -17,7 +17,12 @@ export function ReferralCard() {
 
 	const referralCode = user?.referral_code
 
-	const { data: stats, isLoading: isStatsLoading } = useQuery<ReferralStats>({
+	const {
+		data: stats,
+		isLoading: isStatsLoading,
+		isError: isStatsError,
+		refetch: refetchStats
+	} = useQuery<ReferralStats>({
 		queryKey: ['referral-stats', user?.id],
 		queryFn: async () => {
 			const data = await authorizedFetch(`${FEATURES_SERVER}/user/referral-stats`, {
@@ -85,22 +90,37 @@ export function ReferralCard() {
 			</div>
 
 			<div className="flex flex-col gap-3 rounded-lg bg-sub-surface-panel p-3 dark:bg-sub-dark-page">
-				<div className="flex items-center justify-between">
-					<span className="text-xs text-sub-text-primary">Sign-ups</span>
-					{isStatsLoading ? (
-						<div className="h-4 w-8 animate-pulse rounded-sm bg-sub-border-light dark:bg-sub-border-strong" />
-					) : (
-						<span className="text-xs font-medium text-sub-text-primary">{stats?.referralsCount ?? 0}</span>
-					)}
-				</div>
-				<div className="flex items-center justify-between">
-					<span className="text-xs text-sub-text-primary">Paid Subscriptions</span>
-					{isStatsLoading ? (
-						<div className="h-4 w-8 animate-pulse rounded-sm bg-sub-border-light dark:bg-sub-border-strong" />
-					) : (
-						<span className="text-xs font-medium text-sub-text-primary">{stats?.paidReferralsCount ?? 0}</span>
-					)}
-				</div>
+				{/* A failed lookup must not read as zero referrals; keep previously loaded stats visible. */}
+				{isStatsError && stats == null ? (
+					<div className="flex items-center justify-between">
+						<span className="text-xs text-sub-text-primary">Couldn't load referral stats.</span>
+						<button
+							onClick={() => refetchStats()}
+							className="text-xs font-medium text-sub-text-primary underline decoration-dotted underline-offset-2 hover:text-sub-brand-primary"
+						>
+							Retry
+						</button>
+					</div>
+				) : (
+					<>
+						<div className="flex items-center justify-between">
+							<span className="text-xs text-sub-text-primary">Sign-ups</span>
+							{isStatsLoading ? (
+								<div className="h-4 w-8 animate-pulse rounded-sm bg-sub-border-light dark:bg-sub-border-strong" />
+							) : (
+								<span className="text-xs font-medium text-sub-text-primary">{stats?.referralsCount ?? 0}</span>
+							)}
+						</div>
+						<div className="flex items-center justify-between">
+							<span className="text-xs text-sub-text-primary">Paid Subscriptions</span>
+							{isStatsLoading ? (
+								<div className="h-4 w-8 animate-pulse rounded-sm bg-sub-border-light dark:bg-sub-border-strong" />
+							) : (
+								<span className="text-xs font-medium text-sub-text-primary">{stats?.paidReferralsCount ?? 0}</span>
+							)}
+						</div>
+					</>
+				)}
 			</div>
 		</div>
 	)
