@@ -75,6 +75,7 @@ function createMetadataPayload(overrides: Partial<CoreMetadataPayload> = {}): Co
 			contracts: [],
 			venues: [],
 			categories: [],
+			assets: [],
 			assetGroups: [],
 			total: 0
 		},

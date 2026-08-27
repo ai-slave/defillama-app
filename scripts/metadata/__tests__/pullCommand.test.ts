@@ -35,7 +35,7 @@ function createPayload(): CoreMetadataPayload {
 		cexs: [],
 		rwaList: { canonicalMarketIds: [], platforms: [], chains: [], categories: [], assetGroups: [], idMap: {} },
 		rwaPlatformsIndex: { generatedAt: 0, byPid: {}, platforms: {} },
-		rwaPerpsList: { contracts: [], venues: [], categories: [], assetGroups: [], total: 0 },
+		rwaPerpsList: { contracts: [], venues: [], categories: [], assets: [], assetGroups: [], total: 0 },
 		tokenlist: { aave: tokenEntry },
 		tokenDirectory: {},
 		protocolDisplayNames: { aave: 'Aave' },

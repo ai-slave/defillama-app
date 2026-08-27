@@ -50,6 +50,7 @@ const metadataCache = vi.hoisted(
 			contracts: ['xyz:sp500'],
 			venues: ['CME'],
 			categories: ['RWA Perps'],
+			assets: ['S&P 500 Index'],
 			assetGroups: [],
 			total: 2
 		},
@@ -193,7 +194,12 @@ describe('cache-backed sitemap sections', () => {
 			expect.arrayContaining(['pre-ipo/anthropic', 'pre-ipo/commonwealth-fusion'])
 		)
 		expect(entriesBySection.get('rwa')).toEqual(
-			expect.arrayContaining(['rwa/asset/ondo%2Fusdy', 'rwa/perps/contract/xyz%3Asp500', 'rwa/perps/forex'])
+			expect.arrayContaining([
+				'rwa/asset/ondo%2Fusdy',
+				'rwa/perps/asset/s-p-500-index',
+				'rwa/perps/contract/xyz%3Asp500',
+				'rwa/perps/forex'
+			])
 		)
 		expect(entriesBySection.get('rwa')).not.toContain('rwa/perps/category/rwa-perps')
 		expect(entriesBySection.get('liquidations')).toEqual(

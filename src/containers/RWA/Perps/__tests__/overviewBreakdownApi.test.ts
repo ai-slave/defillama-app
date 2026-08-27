@@ -122,6 +122,16 @@ describe('parseOverviewBreakdownRequest', () => {
 		expect(
 			parseOverviewBreakdownRequest({
 				query: {
+					baseAsset: 'SK Hynix',
+					breakdown: 'venue',
+					key: 'openInterest'
+				}
+			})
+		).toBeNull()
+
+		expect(
+			parseOverviewBreakdownRequest({
+				query: {
 					breakdown: 'contract',
 					key: 'markets'
 				}

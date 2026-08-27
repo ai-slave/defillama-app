@@ -45,6 +45,7 @@ describe('parseRWAPerpsChartState', () => {
 		const overviewState = parseRWAPerpsChartState({}, 'overview')
 		const venueState = parseRWAPerpsChartState({}, 'venue')
 		const assetGroupState = parseRWAPerpsChartState({}, 'assetGroup')
+		const assetState = parseRWAPerpsChartState({}, 'asset')
 
 		expect(overviewState).toMatchObject({
 			view: 'timeSeries',
@@ -61,6 +62,12 @@ describe('parseRWAPerpsChartState', () => {
 		expect(assetGroupState).toMatchObject({
 			view: 'timeSeries',
 			breakdown: 'baseAsset',
+			timeSeriesMode: 'breakdown',
+			treemapNestedBy: 'contract'
+		})
+		expect(assetState).toMatchObject({
+			view: 'timeSeries',
+			breakdown: 'venue',
 			timeSeriesMode: 'breakdown',
 			treemapNestedBy: 'contract'
 		})
@@ -153,11 +160,13 @@ describe('perps chartState options', () => {
 		expect(getDefaultRWAPerpsChartView('overview')).toBe('timeSeries')
 		expect(getDefaultRWAPerpsChartView('venue')).toBe('timeSeries')
 		expect(getDefaultRWAPerpsChartView('assetGroup')).toBe('timeSeries')
+		expect(getDefaultRWAPerpsChartView('asset')).toBe('timeSeries')
 		expect(getRWAPerpsChartViewQueryValueForMode('overview', getDefaultRWAPerpsChartView('overview'))).toBe(undefined)
 		expect(getRWAPerpsChartViewQueryValueForMode('venue', getDefaultRWAPerpsChartView('venue'))).toBe(undefined)
 		expect(getRWAPerpsChartViewQueryValueForMode('assetGroup', getDefaultRWAPerpsChartView('assetGroup'))).toBe(
 			undefined
 		)
+		expect(getRWAPerpsChartViewQueryValueForMode('asset', getDefaultRWAPerpsChartView('asset'))).toBe(undefined)
 	})
 
 	it('uses the expected defaults for each page/view', () => {
@@ -173,6 +182,9 @@ describe('perps chartState options', () => {
 		expect(getDefaultRWAPerpsChartBreakdown('assetGroup', 'timeSeries')).toBe('baseAsset')
 		expect(getDefaultRWAPerpsChartBreakdown('assetGroup', 'pie')).toBe('baseAsset')
 		expect(getDefaultRWAPerpsChartBreakdown('assetGroup', 'treemap')).toBe('baseAsset')
+		expect(getDefaultRWAPerpsChartBreakdown('asset', 'timeSeries')).toBe('venue')
+		expect(getDefaultRWAPerpsChartBreakdown('asset', 'pie')).toBe('venue')
+		expect(getDefaultRWAPerpsChartBreakdown('asset', 'treemap')).toBe('venue')
 	})
 
 	it('exposes chart metric options with key/name pairs', () => {
@@ -271,6 +283,18 @@ describe('perps chartState options', () => {
 				labels: chartLabels
 			}).map(({ key }) => key)
 		).toEqual(['baseAsset', 'venue', 'assetClass', 'contract'])
+	})
+
+	it('limits asset pages to venue and contract comparisons', () => {
+		for (const view of ['timeSeries', 'pie', 'treemap'] as const) {
+			expect(
+				getRWAPerpsChartBreakdownOptions({ mode: 'asset', view, labels: chartLabels }).map(({ key }) => key)
+			).toEqual(['venue', 'contract'])
+		}
+		expect(getRWAPerpsTreemapNestedByOptions('asset', 'venue', chartLabels).map(({ key }) => key)).toEqual([
+			'none',
+			'contract'
+		])
 	})
 
 	it('returns nested-group options keyed by treemap parent group', () => {

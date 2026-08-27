@@ -15,7 +15,7 @@ import type {
 	IRWAPerpsContractBreakdownRequest,
 	IRWAPerpsMarketBreakdownRequest,
 	IRWAPerpsOverviewBreakdownRequest,
-	RWAPerpsChartTarget
+	RWAPerpsMarketBreakdownTarget
 } from './types'
 
 function encodeRWAPerpsPathSegment(value: string): string {
@@ -24,7 +24,7 @@ function encodeRWAPerpsPathSegment(value: string): string {
 
 export function setRWAPerpsChartScope(
 	searchParams: URLSearchParams,
-	scope: { target: RWAPerpsChartTarget; includeCex: boolean }
+	scope: { target: RWAPerpsMarketBreakdownTarget; includeCex: boolean }
 ): void {
 	if (scope.includeCex) searchParams.set('includeCex', 'true')
 	const target = scope.target
@@ -42,6 +42,9 @@ export function setRWAPerpsChartScope(
 			return
 		case 'excludeAssetClass':
 			searchParams.set('excludeAssetClass', target.slug)
+			return
+		case 'baseAsset':
+			searchParams.set('baseAsset', target.slug)
 			return
 	}
 }
@@ -122,6 +125,14 @@ export async function fetchRWAPerpsMarketsByAssetGroup(
 ): Promise<IRWAPerpsMarket[]> {
 	const encodedAssetGroup = encodeRWAPerpsPathSegment(assetGroup)
 	return fetchJson<IRWAPerpsMarket[]>(createRWAPerpsScopedUrl(`assetGroup/${encodedAssetGroup}`, includeCex))
+}
+
+/**
+ * Fetch all markets mapped to one canonical reference asset.
+ */
+export async function fetchRWAPerpsMarketsByAsset(asset: string, includeCex: boolean): Promise<IRWAPerpsMarket[]> {
+	const encodedAsset = encodeRWAPerpsPathSegment(asset)
+	return fetchJson<IRWAPerpsMarket[]>(createRWAPerpsScopedUrl(`asset/${encodedAsset}`, includeCex))
 }
 
 /**

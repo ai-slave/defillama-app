@@ -40,7 +40,7 @@ function createCoreMetadataSources(overrides: Record<string, unknown> = {}) {
 		cexsResponse: { cexs: [], cg_volume_cexs: ['binance'] },
 		rwaList: { canonicalMarketIds: [], platforms: [], chains: [], categories: [], assetGroups: [], idMap: {} },
 		rwaPlatformsIndex: { generatedAt: 0, byPid: {}, platforms: {} },
-		rwaPerpsList: { contracts: [], venues: [], categories: [], assetGroups: [], total: 0 },
+		rwaPerpsList: { contracts: [], venues: [], categories: [], assets: [], assetGroups: [], total: 0 },
 		tokenlistArray: [
 			{
 				id: 'aave',

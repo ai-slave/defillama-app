@@ -79,6 +79,7 @@ export interface IRWAPerpsListResponse {
 	contracts: string[]
 	venues: string[]
 	categories: string[]
+	assets: string[]
 	assetGroups: string[]
 	total: number
 }

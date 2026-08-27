@@ -32,6 +32,9 @@ export function getRWARoutesFromMetadata(metadataCache: MetadataCache): string[]
 	for (const assetGroup of rwaPerpsList.assetGroups) {
 		routes.push(`rwa/perps/asset-group/${rwaSlug(assetGroup)}`)
 	}
+	for (const asset of rwaPerpsList.assets) {
+		routes.push(`rwa/perps/asset/${rwaSlug(asset)}`)
+	}
 
 	return routes
 }

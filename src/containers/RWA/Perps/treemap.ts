@@ -3,6 +3,7 @@ import { roundNumber } from '~/utils/numberFormat'
 import type { IRWAPerpsMarket } from './api.types'
 import { getRWAPerpsSharedBreakdownLabel } from './breakdownLabels'
 import type {
+	RWAPerpsAssetTreemapBreakdown,
 	RWAPerpsChartMetricKey,
 	RWAPerpsOverviewTreemapBreakdown,
 	RWAPerpsTreemapNestedBy,
@@ -17,10 +18,10 @@ export type RWAPerpsTreemapNode = {
 	children?: RWAPerpsTreemapNode[]
 }
 
-type ParentGrouping = RWAPerpsOverviewTreemapBreakdown | RWAPerpsVenueTreemapBreakdown
+type ParentGrouping = RWAPerpsOverviewTreemapBreakdown | RWAPerpsVenueTreemapBreakdown | RWAPerpsAssetTreemapBreakdown
 type ChildGrouping = Exclude<RWAPerpsTreemapNestedBy, 'none'>
 
-type TreemapScope = { mode: 'overview' } | { mode: 'venue' | 'assetGroup'; scopeLabel: string }
+type TreemapScope = { mode: 'overview' } | { mode: 'venue' | 'assetGroup' | 'asset'; scopeLabel: string }
 
 function getGroupLabel(market: IRWAPerpsMarket, grouping: ParentGrouping | ChildGrouping): string {
 	return getRWAPerpsSharedBreakdownLabel(market, grouping)

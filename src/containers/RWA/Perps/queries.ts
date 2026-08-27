@@ -7,6 +7,8 @@ import {
 	fetchRWAPerpsFundingHistory,
 	fetchRWAPerpsList,
 	fetchRWAPerpsMarketChart,
+	fetchRWAPerpsMarketBreakdownChartData,
+	fetchRWAPerpsMarketsByAsset,
 	fetchRWAPerpsMarketsByAssetGroup,
 	fetchRWAPerpsMarketsByContract,
 	fetchRWAPerpsMarketsByVenue,
@@ -32,19 +34,25 @@ import type {
 	IRWAPerpsAssetGroupPageData,
 	IRWAPerpsAssetGroupsOverview,
 	IRWAPerpsAssetGroupsOverviewRow,
+	IRWAPerpsAssetPageData,
+	IRWAPerpsAssetsOverview,
+	IRWAPerpsAssetsOverviewRow,
 	IRWAPerpsContractData,
 	IRWAPerpsContractBreakdownRequest,
 	IRWAPerpsContractFundingHistoryPoint,
 	IRWAPerpsContractMarketChartPoint,
+	IRWAPerpsNavLink,
 	IRWAPerpsOverviewPageData,
 	IRWAPerpsOverviewBreakdownRequest,
 	IRWAPerpsVenuePageData,
 	IRWAPerpsVenuesOverview,
 	IRWAPerpsVenuesOverviewRow,
 	RWAPerpsAssetGroupSnapshotBreakdown,
+	RWAPerpsAssetSnapshotBreakdown,
 	RWAPerpsChartMetricKey,
 	RWAPerpsAllChartTarget,
 	RWAPerpsAssetClassChartTarget,
+	RWAPerpsBaseAssetChartTarget,
 	RWAPerpsExcludeAssetClassChartTarget,
 	RWAPerpsChartTarget,
 	RWAPerpsChartView,
@@ -57,6 +65,7 @@ type SnapshotBreakdown =
 	| RWAPerpsOverviewSnapshotBreakdown
 	| RWAPerpsVenueSnapshotBreakdown
 	| RWAPerpsAssetGroupSnapshotBreakdown
+	| RWAPerpsAssetSnapshotBreakdown
 
 type BreakdownLabelResolver<TRow, TBreakdown extends string> = (row: TRow, breakdown: TBreakdown) => string
 
@@ -346,6 +355,23 @@ export function buildRWAPerpsAssetGroupSnapshotBreakdownTotals({
 	})
 }
 
+export function buildRWAPerpsAssetSnapshotBreakdownTotals({
+	rows,
+	breakdown,
+	key
+}: {
+	rows: IRWAPerpsMarket[]
+	breakdown: RWAPerpsAssetSnapshotBreakdown
+	key: RWAPerpsChartMetricKey
+}) {
+	return buildSnapshotBreakdownTotals({
+		rows,
+		breakdown,
+		key,
+		getBreakdownLabel: getRWAPerpsOverviewSnapshotBreakdownLabel
+	})
+}
+
 function toAssetGroupDetailLink(assetGroup: string) {
 	return `/rwa/perps/asset-group/${rwaSlug(assetGroup)}`
 }
@@ -380,30 +406,50 @@ export async function getRWAPerpsContractBreakdownChartDataset(
 	return toRWAPerpsBreakdownChartDataset(rows)
 }
 
-async function getInitialTimeSeriesDataset({
-	mode,
-	target,
-	defaultTimeSeriesBreakdown
-}: {
-	mode: 'overview' | 'venue' | 'assetGroup'
-	target: RWAPerpsChartTarget
-	defaultTimeSeriesBreakdown?: RWAPerpsTimeSeriesBreakdown
-}): Promise<RWAChartDataset> {
-	const chartDefaults = defaultTimeSeriesBreakdown ? { timeSeriesBreakdown: defaultTimeSeriesBreakdown } : undefined
-	const defaultBreakdown = getDefaultRWAPerpsChartBreakdown(mode, 'timeSeries', chartDefaults)
+export async function getRWAPerpsMarketBreakdownChartDataset(
+	request: Parameters<typeof fetchRWAPerpsMarketBreakdownChartData>[0]
+): Promise<RWAChartDataset> {
+	const rows = await fetchRWAPerpsMarketBreakdownChartData(request)
+	if (!rows) throw new Error('Failed to get RWA perps market breakdown chart data')
+	return toRWAPerpsBreakdownChartDataset(rows)
+}
+
+type InitialTimeSeriesDatasetRequest =
+	| {
+			mode: 'asset'
+			target: RWAPerpsBaseAssetChartTarget
+			includeCex?: boolean
+	  }
+	| {
+			mode: 'overview' | 'venue' | 'assetGroup'
+			target: RWAPerpsChartTarget
+			defaultTimeSeriesBreakdown?: RWAPerpsTimeSeriesBreakdown
+			includeCex?: boolean
+	  }
+
+async function getInitialTimeSeriesDataset(request: InitialTimeSeriesDatasetRequest): Promise<RWAChartDataset> {
+	const includeCex = request.includeCex ?? false
+	if (request.mode === 'asset') {
+		return getRWAPerpsMarketBreakdownChartDataset({ key: 'openInterest', target: request.target, includeCex })
+	}
+
+	const chartDefaults = request.defaultTimeSeriesBreakdown
+		? { timeSeriesBreakdown: request.defaultTimeSeriesBreakdown }
+		: undefined
+	const defaultBreakdown = getDefaultRWAPerpsChartBreakdown(request.mode, 'timeSeries', chartDefaults)
 	if (defaultBreakdown === 'contract') {
 		return getRWAPerpsContractBreakdownChartDataset({
 			key: 'openInterest',
-			target,
-			includeCex: false
+			target: request.target,
+			includeCex
 		})
 	}
 
 	return getRWAPerpsBreakdownChartDataset({
 		breakdown: defaultBreakdown,
 		key: 'openInterest',
-		target,
-		includeCex: false
+		target: request.target,
+		includeCex
 	})
 }
 
@@ -642,4 +688,117 @@ export function buildRWAPerpsAssetGroupsOverviewRows(markets: IRWAPerpsMarket[])
 	}
 
 	return rows.sort((a, b) => b.openInterest - a.openInterest)
+}
+
+type RWAPerpsAssetOverviewBucket = {
+	assetGroups: Set<string>
+	openInterest: number
+	volume24h: number
+	markets: number
+	venues: Set<string>
+	dexVenues: Set<string>
+	cexVenues: Set<string>
+	fundingRateMin: number
+	fundingRateMax: number
+}
+
+export function buildRWAPerpsAssetsOverviewRows(markets: IRWAPerpsMarket[]): IRWAPerpsAssetsOverviewRow[] {
+	const totalsByAsset = new Map<string, RWAPerpsAssetOverviewBucket>()
+
+	for (const market of getRWAPerpsIncludedRows(markets, 'asset')) {
+		if (!market.referenceAsset) continue
+
+		const bucket = totalsByAsset.get(market.referenceAsset)
+		if (bucket) {
+			bucket.assetGroups.add(getRWAPerpsAssetGroupBreakdownLabel(market))
+			bucket.openInterest += market.openInterest
+			bucket.volume24h += market.volume24h
+			bucket.markets++
+			bucket.venues.add(market.venue)
+			bucket[market.venueType === 'CEX' ? 'cexVenues' : 'dexVenues'].add(market.venue)
+			bucket.fundingRateMin = Math.min(bucket.fundingRateMin, market.fundingRate)
+			bucket.fundingRateMax = Math.max(bucket.fundingRateMax, market.fundingRate)
+			continue
+		}
+
+		const venueTypeSet = new Set([market.venue])
+		totalsByAsset.set(market.referenceAsset, {
+			assetGroups: new Set([getRWAPerpsAssetGroupBreakdownLabel(market)]),
+			openInterest: market.openInterest,
+			volume24h: market.volume24h,
+			markets: 1,
+			venues: new Set([market.venue]),
+			dexVenues: market.venueType === 'DEX' ? venueTypeSet : new Set(),
+			cexVenues: market.venueType === 'CEX' ? venueTypeSet : new Set(),
+			fundingRateMin: market.fundingRate,
+			fundingRateMax: market.fundingRate
+		})
+	}
+
+	const rows: IRWAPerpsAssetsOverviewRow[] = []
+	for (const [asset, bucket] of totalsByAsset) {
+		rows.push({
+			asset,
+			assetGroups: [...bucket.assetGroups].sort((a, b) => a.localeCompare(b)),
+			openInterest: bucket.openInterest,
+			volume24h: bucket.volume24h,
+			markets: bucket.markets,
+			venues: bucket.venues.size,
+			dexVenues: bucket.dexVenues.size,
+			cexVenues: bucket.cexVenues.size,
+			fundingRateMin: bucket.fundingRateMin,
+			fundingRateMax: bucket.fundingRateMax
+		})
+	}
+
+	return rows.sort((a, b) => b.openInterest - a.openInterest || a.asset.localeCompare(b.asset))
+}
+
+export async function getRWAPerpsAssetsOverview(): Promise<IRWAPerpsAssetsOverview> {
+	const markets = await fetchRWAPerpsCurrent(true)
+	const dexMarkets = markets.filter((market) => market.venueType !== 'CEX')
+
+	return {
+		rows: buildRWAPerpsAssetsOverviewRows(markets),
+		dexRows: buildRWAPerpsAssetsOverviewRows(dexMarkets),
+		initialChartDataset: null
+	}
+}
+
+export async function getRWAPerpsAssetPage({
+	asset,
+	assetLinks,
+	activeView = getDefaultRWAPerpsChartView('asset')
+}: {
+	asset: string
+	assetLinks: IRWAPerpsNavLink[]
+	activeView?: RWAPerpsChartView
+}): Promise<IRWAPerpsAssetPageData> {
+	const markets = await fetchRWAPerpsMarketsByAsset(asset, true)
+
+	const includeCexByDefault = markets.every((market) => market.venueType === 'CEX')
+	const initialChartDataset = shouldPreloadInitialChartDataset(activeView)
+		? await getInitialTimeSeriesDataset({
+				mode: 'asset',
+				target: { kind: 'baseAsset', slug: asset },
+				includeCex: includeCexByDefault
+			})
+		: EMPTY_CHART_DATASET
+	const totalOpenInterest = sumMarketMetric(markets, 'openInterest')
+	const totalVolume24h = sumMarketMetric(markets, 'volume24h')
+
+	return {
+		asset,
+		markets: sortMarketsByOpenInterest(markets),
+		initialChartDataset,
+		assetLinks,
+		totals: {
+			openInterest: totalOpenInterest,
+			openInterestChange24h: getAggregateOpenInterestChange24h(markets),
+			volume24h: totalVolume24h,
+			volume24hChange24h: getAggregateVolume24hChange24h(markets),
+			markets: markets.length,
+			protocolFees24h: sumProtocolFees24h(markets)
+		}
+	}
 }

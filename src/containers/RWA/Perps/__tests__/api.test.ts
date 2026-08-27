@@ -38,6 +38,7 @@ describe('rwa perps api urls', () => {
 		await api.fetchRWAPerpsMarketsByContract('xyz:META/2026')
 		await api.fetchRWAPerpsMarketsByVenue('my venue')
 		await api.fetchRWAPerpsMarketsByAssetGroup('US Equities', true)
+		await api.fetchRWAPerpsMarketsByAsset('SK Hynix', true)
 		await api.fetchRWAPerpsVenueChart('venue/one')
 		await api.fetchRWAPerpsOverviewBreakdownChartData({
 			breakdown: 'assetGroup',
@@ -52,7 +53,7 @@ describe('rwa perps api urls', () => {
 		})
 		await api.fetchRWAPerpsMarketBreakdownChartData({
 			key: 'openInterest',
-			target: { kind: 'excludeAssetClass', slug: 'Forex Perps' },
+			target: { kind: 'baseAsset', slug: 'SK Hynix' },
 			includeCex: false
 		})
 
@@ -64,10 +65,11 @@ describe('rwa perps api urls', () => {
 			['https://example.com/rwa-perps/contract/xyz%3AMETA%2F2026'],
 			['https://example.com/rwa-perps/venue/my%20venue'],
 			['https://example.com/rwa-perps/assetGroup/US%20Equities?includeCex=true'],
+			['https://example.com/rwa-perps/asset/SK%20Hynix?includeCex=true'],
 			['https://example.com/rwa-perps/chart/venue/venue%2Fone'],
 			['https://example.com/rwa-perps/chart/overview-breakdown?breakdown=assetGroup&key=openInterest&venue=xyz'],
 			['https://example.com/rwa-perps/chart/contract-breakdown?key=markets&includeCex=true&assetGroup=US+Equities'],
-			['https://example.com/rwa-perps/chart/market-breakdown?key=openInterest&excludeAssetClass=Forex+Perps']
+			['https://example.com/rwa-perps/chart/market-breakdown?key=openInterest&baseAsset=SK+Hynix']
 		])
 	})
 

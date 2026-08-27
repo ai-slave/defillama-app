@@ -72,7 +72,7 @@ function metadataFixture(): MetadataCache {
 		},
 		rwaList: { canonicalMarketIds: [], platforms: [], chains: [], categories: [], assetGroups: [], idMap: {} },
 		rwaPlatformsIndex: { generatedAt: 0, byPid: {}, platforms: {} },
-		rwaPerpsList: { contracts: [], venues: [], categories: [], assetGroups: [], total: 0 },
+		rwaPerpsList: { contracts: [], venues: [], categories: [], assets: [], assetGroups: [], total: 0 },
 		tokenlist: {},
 		tokenDirectory: {},
 		tokenDirectoryRecordByRouteSegment: {},

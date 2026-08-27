@@ -585,6 +585,17 @@
       ]
     },
     {
+      "name": "RWA Perps by Asset",
+      "route": "/rwa/perps/assets",
+      "category": "RWA",
+      "description": "Compare RWA perpetual markets grouped by their underlying reference asset",
+      "searchKeywords": [
+        "rwa perp assets",
+        "rwa perps by asset",
+        "real world asset perpetual markets"
+      ]
+    },
+    {
       "name": "RWA by Asset Group",
       "route": "/rwa/asset-groups",
       "category": "RWA",

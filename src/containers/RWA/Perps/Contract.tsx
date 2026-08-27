@@ -218,6 +218,10 @@ function RWAPerpsContractInfoCard({ contract }: { contract: IRWAPerpsContractDat
 			<BasicLink href={`/rwa/perps/venue/${rwaSlug(row.value)}`} className="text-link hover:underline">
 				{row.value}
 			</BasicLink>
+		) : row.label === d.baseAsset.label ? (
+			<BasicLink href={`/rwa/perps/asset/${rwaSlug(row.value)}`} className="text-link hover:underline">
+				{row.value}
+			</BasicLink>
 		) : row.label === 'Website' ? (
 			<a
 				href={row.value}

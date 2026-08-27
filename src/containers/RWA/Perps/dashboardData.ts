@@ -4,6 +4,7 @@ import type { RWAChartDataset, RWAChartRow } from '~/containers/RWA/chartDataset
 import type { IRWAPerpsMarket } from './api.types'
 import { getRWAPerpsSharedBreakdownLabel } from './breakdownLabels'
 import type {
+	RWAPerpsAssetTimeSeriesBreakdown,
 	RWAPerpsAssetGroupBreakdown,
 	RWAPerpsChartMode,
 	RWAPerpsOverviewBreakdown,
@@ -16,6 +17,7 @@ type RWAPerpsTimeSeriesBreakdownForMode =
 	| RWAPerpsOverviewBreakdown
 	| RWAPerpsVenueBreakdown
 	| RWAPerpsAssetGroupBreakdown
+	| RWAPerpsAssetTimeSeriesBreakdown
 
 function getRWAPerpsTimeSeriesDatasetDimensions(source: RWAChartDataset['source']) {
 	const latestValueBySeries = new Map<string, number>()

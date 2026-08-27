@@ -87,6 +87,7 @@ import {
 import { perpsDefinitions as d } from './definitions'
 import {
 	buildRWAPerpsAssetGroupSnapshotBreakdownTotals,
+	buildRWAPerpsAssetSnapshotBreakdownTotals,
 	buildRWAPerpsOverviewSnapshotBreakdownTotals,
 	buildRWAPerpsVenueSnapshotBreakdownTotals,
 	appendRWAPerpsTimeSeriesDatasetTotal,
@@ -100,12 +101,14 @@ import {
 import { buildRWAPerpsTreemapTreeData } from './treemap'
 import type {
 	IRWAPerpsAssetGroupPageData,
+	IRWAPerpsAssetPageData,
 	IRWAPerpsContractBreakdownRequest,
 	IRWAPerpsMarketBreakdownRequest,
 	IRWAPerpsOverviewBreakdownRequest,
 	IRWAPerpsOverviewPageData,
 	IRWAPerpsVenuePageData,
 	RWAPerpsAssetGroupTimeSeriesBreakdown,
+	RWAPerpsAssetTimeSeriesBreakdown,
 	RWAPerpsMarketBreakdownTarget,
 	RWAPerpsOverviewTimeSeriesBreakdown,
 	RWAPerpsVenueTimeSeriesBreakdown
@@ -257,6 +260,11 @@ type RWAPerpsDashboardProps = (
 			data: IRWAPerpsAssetGroupPageData
 			defaultTimeSeriesBreakdown?: RWAPerpsAssetGroupTimeSeriesBreakdown
 	  }
+	| {
+			mode: 'asset'
+			data: IRWAPerpsAssetPageData
+			defaultTimeSeriesBreakdown?: RWAPerpsAssetTimeSeriesBreakdown
+	  }
 ) & {
 	/** When set, restricts rendered markets/totals to the matching `assetClass[0]`. Used by the dedicated Forex page. */
 	assetClassFilter?: string
@@ -336,6 +344,17 @@ const overviewColumns = [
 		id: 'baseAsset',
 		header: d.baseAsset.label,
 		enableSorting: false,
+		cell: (info) =>
+			info.getValue() ? (
+				<BasicLink
+					href={`/rwa/perps/asset/${rwaSlug(info.getValue())}`}
+					className="truncate label-md text-link hover:underline"
+				>
+					{info.getValue()}
+				</BasicLink>
+			) : (
+				''
+			),
 		meta: {
 			headerClassName: 'w-[180px] min-w-[180px]',
 			headerHelperText: d.baseAsset.description
@@ -748,6 +767,17 @@ const venueColumns = [
 		id: 'baseAsset',
 		header: d.baseAsset.label,
 		enableSorting: false,
+		cell: (info) =>
+			info.getValue() ? (
+				<BasicLink
+					href={`/rwa/perps/asset/${rwaSlug(info.getValue())}`}
+					className="truncate label-md text-link hover:underline"
+				>
+					{info.getValue()}
+				</BasicLink>
+			) : (
+				''
+			),
 		meta: {
 			headerClassName: 'w-[180px] min-w-[180px]',
 			headerHelperText: d.baseAsset.description
@@ -1018,6 +1048,19 @@ const assetGroupColumns = [
 	)
 ]
 
+const assetPriorityColumns = ['contract', 'venue'] as const
+
+const assetColumns = [
+	...assetPriorityColumns.flatMap((columnId) => overviewColumns.filter((column) => column.id === columnId)),
+	...overviewColumns.filter(
+		(column) =>
+			column.id !== 'baseAsset' &&
+			column.id !== 'baseAssetGroup' &&
+			column.id !== 'assetClass' &&
+			!assetPriorityColumns.includes(column.id as (typeof assetPriorityColumns)[number])
+	)
+]
+
 const overviewColumnVisibility: VisibilityState = {
 	category: false,
 	parentPlatform: false,
@@ -1051,6 +1094,12 @@ const venueColumnVisibility: VisibilityState = {
 
 const assetGroupColumnVisibility: VisibilityState = {
 	...overviewColumnVisibility,
+	baseAssetGroup: false
+}
+
+const assetColumnVisibility: VisibilityState = {
+	...overviewColumnVisibility,
+	baseAsset: false,
 	baseAssetGroup: false
 }
 
@@ -1710,10 +1759,13 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	const isOverviewMode = props.mode === 'overview'
 	const isVenueMode = props.mode === 'venue'
 	const isAssetGroupMode = props.mode === 'assetGroup'
+	const isAssetMode = props.mode === 'asset'
 	const assetClassFilter = props.assetClassFilter
 	const showForexToggle = isOverviewMode && assetClassFilter == null
 	const includeForex = showForexToggle ? isTrueQueryParam(router.query.includeForex) : true
-	const includeCexByDefault = props.mode === 'venue' && props.data.markets.every((market) => market.venueType === 'CEX')
+	const includeCexByDefault =
+		(props.mode === 'venue' || props.mode === 'asset') &&
+		props.data.markets.every((market) => market.venueType === 'CEX')
 	const includeCex = router.query.includeCex == null ? includeCexByDefault : isTrueQueryParam(router.query.includeCex)
 	const rowsBeforeUserFilters = useMemo(() => {
 		const markets = includeCex ? props.data.markets : props.data.markets.filter((market) => market.venueType !== 'CEX')
@@ -1841,11 +1893,13 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	const initialChartDataset = props.data.initialChartDataset
 	const venueLabel = props.mode === 'venue' ? props.data.venue : null
 	const assetGroupLabel = props.mode === 'assetGroup' ? props.data.assetGroup : null
+	const assetLabel = props.mode === 'asset' ? props.data.asset : null
 	const treemapScope = useMemo(() => {
 		if (venueLabel !== null) return { mode: 'venue', scopeLabel: venueLabel } as const
 		if (assetGroupLabel !== null) return { mode: 'assetGroup', scopeLabel: assetGroupLabel } as const
+		if (assetLabel !== null) return { mode: 'asset', scopeLabel: assetLabel } as const
 		return { mode: 'overview' } as const
-	}, [assetGroupLabel, venueLabel])
+	}, [assetGroupLabel, assetLabel, venueLabel])
 	const timeSeriesClassTarget: RWAPerpsMarketBreakdownTarget | null = assetClassFilter
 		? { kind: 'assetClass', slug: assetClassFilter }
 		: showForexToggle && !includeForex
@@ -1855,15 +1909,22 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 		? { kind: 'venue', slug: props.data.venue }
 		: isAssetGroupMode
 			? { kind: 'assetGroup', slug: props.data.assetGroup }
-			: { kind: 'all' }
+			: isAssetMode
+				? { kind: 'baseAsset', slug: props.data.asset }
+				: { kind: 'all' }
+	const aggregatePageTarget = isVenueMode
+		? ({ kind: 'venue', slug: props.data.venue } as const)
+		: isAssetGroupMode
+			? ({ kind: 'assetGroup', slug: props.data.assetGroup } as const)
+			: ({ kind: 'all' } as const)
 	const shouldProjectMarketBreakdown = hasActiveMarketFilters
 	const timeSeriesRequest: RWAPerpsTimeSeriesRequest = (() => {
-		if (shouldProjectMarketBreakdown) {
+		if (isAssetMode || shouldProjectMarketBreakdown) {
 			const target = timeSeriesClassTarget ?? pageTarget
 			return { source: 'market-breakdown', key: chartState.metric, target, includeCex }
 		}
 
-		const target = timeSeriesClassTarget ?? pageTarget
+		const target = timeSeriesClassTarget ?? aggregatePageTarget
 		return chartState.breakdown === 'contract'
 			? { source: 'contract-breakdown', key: chartState.metric, target, includeCex }
 			: { source: 'overview-breakdown', key: chartState.metric, breakdown: chartState.breakdown, target, includeCex }
@@ -1876,7 +1937,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 		initialChartDataset.source.length > 0 ||
 		initialChartDataset.dimensions.some((dimension) => dimension !== 'timestamp')
 	const canUseInitialTimeSeriesDataset =
-		timeSeriesRequest.source !== 'market-breakdown' &&
+		(timeSeriesRequest.source !== 'market-breakdown' || isAssetMode) &&
 		(!showForexToggle || !includeForex) &&
 		includeCex === includeCexByDefault
 	const shouldUseInitialTimeSeriesDataset =
@@ -1988,6 +2049,12 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 					breakdown: chartState.breakdown,
 					key: chartState.metric
 				})
+			case 'asset':
+				return buildRWAPerpsAssetSnapshotBreakdownTotals({
+					rows: includedRows,
+					breakdown: chartState.breakdown,
+					key: chartState.metric
+				})
 		}
 	}, [includedRows, chartState])
 
@@ -2046,12 +2113,16 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 		? 'RWA Perps'
 		: isVenueMode
 			? `${props.data.venue} RWA Perps`
-			: `${props.data.assetGroup} RWA Perps`
+			: isAssetGroupMode
+				? `${props.data.assetGroup} RWA Perps`
+				: `${props.data.asset} RWA Perps`
 	const filenameBase = isOverviewMode
 		? 'rwa-perps-overview'
 		: isVenueMode
 			? `rwa-perps-venue-${props.data.venue}`
-			: `rwa-perps-asset-group-${props.data.assetGroup}`
+			: isAssetGroupMode
+				? `rwa-perps-asset-group-${props.data.assetGroup}`
+				: `rwa-perps-asset-${props.data.asset}`
 	const timeSeriesFilename = `${filenameBase}-time-series-${chartState.metric}-${chartState.breakdown}-${chartState.timeSeriesMode}`
 	const nonTimeSeriesFilename = `${filenameBase}-${chartState.view}-${chartState.metric}-${chartState.breakdown}`
 
@@ -2216,6 +2287,8 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 				<RowLinksWithDropdown links={props.data.venueLinks} activeLink={props.data.venue} />
 			) : isAssetGroupMode ? (
 				<RowLinksWithDropdown links={props.data.assetGroupLinks} activeLink={props.data.assetGroup} />
+			) : isAssetMode ? (
+				<RowLinksWithDropdown links={props.data.assetLinks} activeLink={props.data.asset} />
 			) : null}
 			{showForexToggle ? (
 				<>
@@ -2407,22 +2480,40 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 			)}
 			<TableWithSearch
 				data={currentRows}
-				columns={isOverviewMode ? overviewColumns : isVenueMode ? venueColumns : assetGroupColumns}
+				columns={
+					isOverviewMode
+						? overviewColumns
+						: isVenueMode
+							? venueColumns
+							: isAssetGroupMode
+								? assetGroupColumns
+								: assetColumns
+				}
 				placeholder={
 					isOverviewMode
 						? 'Search markets or assets...'
 						: isVenueMode
 							? 'Search venue markets...'
-							: 'Search asset-group markets...'
+							: isAssetGroupMode
+								? 'Search asset-group markets...'
+								: 'Search asset markets...'
 				}
 				columnToSearch="contract"
 				header={
-					isOverviewMode ? 'Markets Rankings' : `${isVenueMode ? props.data.venue : props.data.assetGroup} Markets`
+					isOverviewMode
+						? 'Markets Rankings'
+						: `${isVenueMode ? props.data.venue : isAssetGroupMode ? props.data.assetGroup : props.data.asset} Markets`
 				}
 				headingAs="h1"
 				sortingState={[{ id: 'openInterest', desc: true }]}
 				columnVisibility={
-					isOverviewMode ? overviewColumnVisibility : isVenueMode ? venueColumnVisibility : assetGroupColumnVisibility
+					isOverviewMode
+						? overviewColumnVisibility
+						: isVenueMode
+							? venueColumnVisibility
+							: isAssetGroupMode
+								? assetGroupColumnVisibility
+								: assetColumnVisibility
 				}
 				rowSize={56}
 				compact
@@ -2432,7 +2523,9 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 						? 'rwa-perps-overview-markets'
 						: isVenueMode
 							? `rwa-perps-${props.data.venue}-markets`
-							: `rwa-perps-${props.data.assetGroup}-markets`
+							: isAssetGroupMode
+								? `rwa-perps-${props.data.assetGroup}-markets`
+								: `rwa-perps-${props.data.asset}-markets`
 				}
 			/>
 		</div>

@@ -94,6 +94,15 @@ describe('parseContractBreakdownRequest', () => {
 		expect(
 			parseContractBreakdownRequest({
 				query: {
+					baseAsset: 'SK Hynix',
+					key: 'openInterest'
+				}
+			})
+		).toBeNull()
+
+		expect(
+			parseContractBreakdownRequest({
+				query: {
 					venue: ['xyz'],
 					key: 'openInterest'
 				}

@@ -134,6 +134,7 @@ export interface IRWAPerpsList {
 	contracts: Array<string>
 	venues: Array<string>
 	categories: Array<string>
+	assets: Array<string>
 	assetGroups: Array<string>
 	total: number
 }

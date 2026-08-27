@@ -240,7 +240,7 @@
 	},
 	"markets": {
 		"label": "Markets",
-		"description": "Number of perpetual contract markets listed on this venue."
+		"description": "Number of tracked perpetual contract markets in the current scope."
 	},
 	"openInterestShare": {
 		"label": "% of Total OI",

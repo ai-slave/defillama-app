@@ -1,0 +1,155 @@
+import { createColumnHelper } from '@tanstack/react-table'
+import { useRouter } from 'next/router'
+import { BasicLink } from '~/components/Link'
+import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import type {} from '~/components/Table/utils'
+import type { RWAChartDataset } from '~/containers/RWA/chartDataset'
+import { rwaSlug } from '~/containers/RWA/rwaSlug'
+import { Card } from '~/ui/Card'
+import { Checkbox } from '~/ui/Checkbox'
+import { Tooltip } from '~/ui/Tooltip'
+import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
+import { isTrueQueryParam, pushShallowQuery } from '~/utils/routerQuery'
+import { perpsDefinitions as d } from './definitions'
+import { RWAPerpsOverviewChart } from './OverviewChart'
+import type { IRWAPerpsAssetsOverviewRow } from './types'
+
+const columnHelper = createColumnHelper<IRWAPerpsAssetsOverviewRow>()
+
+function formatFundingRate(value: number) {
+	return formatPercent(value * 100, {
+		input: 'percent',
+		compact: true,
+		minimumCompactValue: 1_000_000,
+		compactSuffix: 'lowercase'
+	})
+}
+
+const columns = [
+	columnHelper.accessor('asset', {
+		id: 'asset',
+		header: d.baseAsset.label,
+		enableSorting: false,
+		cell: (info) => (
+			<span className="flex items-center gap-2">
+				<span className="vf-row-index shrink-0" aria-hidden="true" />
+				<BasicLink
+					href={`/rwa/perps/asset/${rwaSlug(info.getValue())}`}
+					className="truncate label-md text-link hover:underline"
+				>
+					{info.getValue()}
+				</BasicLink>
+			</span>
+		),
+		meta: {
+			headerClassName: 'w-[220px]',
+			headerHelperText: d.baseAsset.description
+		}
+	}),
+	columnHelper.accessor((row) => row.assetGroups.join(', '), {
+		id: 'assetGroups',
+		header: d.assetGroup.label,
+		cell: (info) => (
+			<Tooltip content={info.getValue()} className="inline-block max-w-full truncate">
+				{info.getValue()}
+			</Tooltip>
+		),
+		enableSorting: false,
+		meta: {
+			headerClassName: 'w-[200px]',
+			headerHelperText: d.assetGroup.description
+		}
+	}),
+	columnHelper.accessor('markets', {
+		id: 'markets',
+		header: d.markets.label,
+		cell: (info) => formatCompactNumber(info.getValue()),
+		meta: { headerClassName: 'w-[112px]', align: 'end', headerHelperText: d.markets.description }
+	}),
+	columnHelper.accessor('venues', {
+		id: 'venues',
+		header: 'Venues',
+		cell: (info) => (
+			<span className="flex flex-col items-end">
+				<span>{formatCompactNumber(info.getValue())}</span>
+				<span className="text-xs text-tertiary">
+					{info.row.original.dexVenues} DEX · {info.row.original.cexVenues} CEX
+				</span>
+			</span>
+		),
+		meta: {
+			headerClassName: 'w-[128px]',
+			align: 'end',
+			headerHelperText: 'Number of distinct venues listing this asset.'
+		}
+	}),
+	columnHelper.accessor('openInterest', {
+		id: 'openInterest',
+		header: d.openInterest.label,
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+		meta: { headerClassName: 'w-[152px]', align: 'end', headerHelperText: d.openInterest.description }
+	}),
+	columnHelper.accessor('volume24h', {
+		id: 'volume24h',
+		header: d.volume24h.label,
+		cell: (info) =>
+			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+		meta: { headerClassName: 'w-[152px]', align: 'end', headerHelperText: d.volume24h.description }
+	}),
+	columnHelper.accessor('fundingRateMin', {
+		id: 'fundingRateMin',
+		header: 'Funding Range',
+		cell: (info) => (
+			<span className="whitespace-nowrap">
+				{formatFundingRate(info.getValue())} – {formatFundingRate(info.row.original.fundingRateMax)}
+			</span>
+		),
+		meta: { headerClassName: 'w-[200px]', align: 'end', headerHelperText: d.fundingRate.description }
+	})
+]
+
+export function RWAPerpsAssetsOverview({
+	assets,
+	dexAssets,
+	initialChartDataset
+}: {
+	assets: IRWAPerpsAssetsOverviewRow[]
+	dexAssets: IRWAPerpsAssetsOverviewRow[]
+	initialChartDataset: RWAChartDataset | null
+}) {
+	const router = useRouter()
+	const includeCex = isTrueQueryParam(router.query.includeCex)
+	const rows = includeCex ? assets : dexAssets
+
+	return (
+		<div className="flex flex-col gap-2">
+			<Card padding="sm" className="flex flex-wrap items-center gap-2">
+				<Checkbox
+					variant="filter"
+					value="includeCex"
+					checked={includeCex}
+					onChange={() => void pushShallowQuery(router, { includeCex: includeCex ? undefined : 'true' })}
+				>
+					<span className="whitespace-nowrap">CEX Venues</span>
+				</Checkbox>
+			</Card>
+			<RWAPerpsOverviewChart
+				breakdown="baseAsset"
+				initialChartDataset={initialChartDataset}
+				includeCex={includeCex}
+				stackLabel={d.baseAsset.label}
+			/>
+			<TableWithSearch
+				data={rows}
+				columns={columns}
+				placeholder="Search assets..."
+				columnToSearch="asset"
+				header="Asset Rankings"
+				headingAs="h1"
+				csvFileName="rwa-perps-assets.csv"
+				sortingState={[{ id: 'openInterest', desc: true }]}
+			/>
+		</div>
+	)
+}

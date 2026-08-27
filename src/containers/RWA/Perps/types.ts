@@ -58,16 +58,21 @@ export type RWAPerpsAssetGroupBreakdown = 'venue' | 'baseAsset' | 'contract' | '
 export type RWAPerpsAssetGroupTimeSeriesBreakdown = 'venue' | 'baseAsset' | 'contract' | 'assetClass'
 export type RWAPerpsAssetGroupNonTimeSeriesBreakdown = 'venue' | 'baseAsset' | 'contract' | 'assetClass'
 export type RWAPerpsAssetGroupTreemapBreakdown = 'venue' | 'baseAsset' | 'assetClass' | 'contract'
+export type RWAPerpsAssetTimeSeriesBreakdown = 'venue' | 'contract'
+export type RWAPerpsAssetNonTimeSeriesBreakdown = 'venue' | 'contract'
+export type RWAPerpsAssetTreemapBreakdown = 'venue' | 'contract'
 export type RWAPerpsOverviewSnapshotBreakdown = RWAPerpsOverviewNonTimeSeriesBreakdown
 export type RWAPerpsVenueSnapshotBreakdown = RWAPerpsVenueNonTimeSeriesBreakdown
 export type RWAPerpsAssetGroupSnapshotBreakdown = RWAPerpsAssetGroupNonTimeSeriesBreakdown
-export type RWAPerpsChartMode = 'overview' | 'venue' | 'assetGroup'
+export type RWAPerpsAssetSnapshotBreakdown = RWAPerpsAssetNonTimeSeriesBreakdown
+export type RWAPerpsChartMode = 'overview' | 'venue' | 'assetGroup' | 'asset'
 
 export type RWAPerpsAllChartTarget = { kind: 'all' }
 export type RWAPerpsVenueChartTarget = { kind: 'venue'; slug: string }
 export type RWAPerpsAssetGroupChartTarget = { kind: 'assetGroup'; slug: string }
 export type RWAPerpsAssetClassChartTarget = { kind: 'assetClass'; slug: string }
 export type RWAPerpsExcludeAssetClassChartTarget = { kind: 'excludeAssetClass'; slug: string }
+export type RWAPerpsBaseAssetChartTarget = { kind: 'baseAsset'; slug: string }
 
 export type RWAPerpsChartTarget =
 	| RWAPerpsAllChartTarget
@@ -76,23 +81,23 @@ export type RWAPerpsChartTarget =
 	| RWAPerpsAssetClassChartTarget
 	| RWAPerpsExcludeAssetClassChartTarget
 
-export type RWAPerpsMarketBreakdownTarget = RWAPerpsChartTarget
+export type RWAPerpsMarketBreakdownTarget = RWAPerpsChartTarget | RWAPerpsBaseAssetChartTarget
 
-interface IRWAPerpsChartScope {
-	target: RWAPerpsChartTarget
+interface IRWAPerpsChartScope<TTarget extends RWAPerpsMarketBreakdownTarget> {
+	target: TTarget
 	includeCex: boolean
 }
 
-export interface IRWAPerpsOverviewBreakdownRequest extends IRWAPerpsChartScope {
+export interface IRWAPerpsOverviewBreakdownRequest extends IRWAPerpsChartScope<RWAPerpsChartTarget> {
 	key: RWAPerpsChartMetricKey
 	breakdown: Exclude<RWAPerpsOverviewBreakdown, 'contract'>
 }
 
-export interface IRWAPerpsContractBreakdownRequest extends IRWAPerpsChartScope {
+export interface IRWAPerpsContractBreakdownRequest extends IRWAPerpsChartScope<RWAPerpsChartTarget> {
 	key: RWAPerpsChartMetricKey
 }
 
-export interface IRWAPerpsMarketBreakdownRequest extends IRWAPerpsChartScope {
+export interface IRWAPerpsMarketBreakdownRequest extends IRWAPerpsChartScope<RWAPerpsMarketBreakdownTarget> {
 	key: RWAPerpsChartMetricKey
 }
 
@@ -140,6 +145,21 @@ export interface IRWAPerpsAssetGroupPageData {
 	}
 }
 
+export interface IRWAPerpsAssetPageData {
+	asset: string
+	markets: IRWAPerpsMarket[]
+	initialChartDataset: RWAChartDataset
+	assetLinks: IRWAPerpsNavLink[]
+	totals: {
+		openInterest: number
+		openInterestChange24h: number | null
+		volume24h: number
+		volume24hChange24h: number | null
+		markets: number
+		protocolFees24h: number
+	}
+}
+
 export interface IRWAPerpsVenuesOverviewRow {
 	venue: string
 	openInterest: number
@@ -168,4 +188,23 @@ export interface IRWAPerpsAssetGroupsOverview {
 	rows: IRWAPerpsAssetGroupsOverviewRow[]
 	dexRows: IRWAPerpsAssetGroupsOverviewRow[]
 	initialChartDataset: RWAChartDataset
+}
+
+export interface IRWAPerpsAssetsOverviewRow {
+	asset: string
+	assetGroups: string[]
+	openInterest: number
+	volume24h: number
+	markets: number
+	venues: number
+	dexVenues: number
+	cexVenues: number
+	fundingRateMin: number
+	fundingRateMax: number
+}
+
+export interface IRWAPerpsAssetsOverview {
+	rows: IRWAPerpsAssetsOverviewRow[]
+	dexRows: IRWAPerpsAssetsOverviewRow[]
+	initialChartDataset: RWAChartDataset | null
 }

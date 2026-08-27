@@ -40,7 +40,7 @@ const {
 			idMap: {}
 		},
 		rwaPlatformsIndex: { generatedAt: 0, byPid: {}, platforms: {} },
-		rwaPerpsList: { contracts: [], venues: [], categories: [], assetGroups: [], total: 0 },
+		rwaPerpsList: { contracts: [], venues: [], categories: [], assets: [], assetGroups: [], total: 0 },
 		tokenlist: {},
 		tokenDirectory: {},
 		tokenDirectoryRecordByRouteSegment: {},

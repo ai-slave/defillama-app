@@ -30,7 +30,8 @@ import type {
 	IRWAPerpsContractBreakdownRequest,
 	IRWAPerpsMarketBreakdownRequest,
 	IRWAPerpsOverviewBreakdownRequest,
-	RWAPerpsChartTarget
+	RWAPerpsChartTarget,
+	RWAPerpsMarketBreakdownTarget
 } from '~/containers/RWA/Perps/types'
 import {
 	hasExactlyOneTarget,
@@ -286,14 +287,21 @@ export const rwaOverviewBreakdown = defineApiRoute({
 	}
 })
 
-async function hasKnownPerpsTarget(target: RWAPerpsChartTarget): Promise<boolean> {
-	if (target.kind !== 'venue' && target.kind !== 'assetGroup') return true
+async function hasKnownPerpsTarget(target: RWAPerpsMarketBreakdownTarget): Promise<boolean> {
+	if (target.kind !== 'venue' && target.kind !== 'assetGroup' && target.kind !== 'baseAsset') return true
 
 	const metadataCache = await import('~/utils/metadata').then((m) => m.default)
 	if (target.kind === 'venue') {
 		const requestSlug = rwaSlug(target.slug)
 		for (const venue of metadataCache.rwaPerpsList.venues) {
 			if (rwaSlug(venue) === requestSlug) return true
+		}
+		return false
+	}
+	if (target.kind === 'baseAsset') {
+		const requestSlug = rwaSlug(target.slug)
+		for (const asset of metadataCache.rwaPerpsList.assets) {
+			if (rwaSlug(asset) === requestSlug) return true
 		}
 		return false
 	}
@@ -310,7 +318,7 @@ const RWA_PERPS_OVERVIEW_BREAKDOWNS = ['venue', 'assetClass', 'assetGroup', 'bas
 function parsePerpsChartTarget(query: ApiQuery): RWAPerpsChartTarget | null {
 	// venueType belonged to the pre-rollout API. Reject it so callers cannot
 	// silently get the DEX default when they intended a different scope.
-	if (query.venueType !== undefined) return null
+	if (query.venueType !== undefined || query.baseAsset !== undefined) return null
 
 	const venue = parseOptionalTarget(query.venue)
 	const assetGroup = parseOptionalTarget(query.assetGroup)
@@ -327,6 +335,22 @@ function parsePerpsChartTarget(query: ApiQuery): RWAPerpsChartTarget | null {
 	if (assetClass) return { kind: 'assetClass', slug: assetClass }
 	if (!excludeAssetClass) return null
 	return { kind: 'excludeAssetClass', slug: excludeAssetClass }
+}
+
+function parsePerpsMarketChartTarget(query: ApiQuery): RWAPerpsMarketBreakdownTarget | null {
+	const baseAsset = parseOptionalTarget(query.baseAsset)
+	if (baseAsset === null) return null
+	if (baseAsset === undefined) return parsePerpsChartTarget(query)
+	if (
+		query.venue !== undefined ||
+		query.assetGroup !== undefined ||
+		query.assetClass !== undefined ||
+		query.excludeAssetClass !== undefined ||
+		query.venueType !== undefined
+	) {
+		return null
+	}
+	return { kind: 'baseAsset', slug: baseAsset }
 }
 
 export function parsePerpsOverviewBreakdownRequest(req: { query: ApiQuery }): IRWAPerpsOverviewBreakdownRequest | null {
@@ -441,7 +465,7 @@ export function parsePerpsMarketBreakdownRequest(req: { query: ApiQuery }): IRWA
 	const key = parsePerpsChartMetricKey(req.query.key)
 	if (key == null) return null
 
-	const target = parsePerpsChartTarget(req.query)
+	const target = parsePerpsMarketChartTarget(req.query)
 	const includeCex = parseBooleanQueryFlag(req.query.includeCex, false)
 	return target == null || includeCex == null ? null : { key, target, includeCex }
 }

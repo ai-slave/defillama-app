@@ -172,6 +172,7 @@ Common usage examples:
 - [RWA by Platform](https://defillama.com/rwa/platforms): Overview of all Real World Assets (RWAs) by platform Category: RWA.
 - [RWA by Category](https://defillama.com/rwa/categories): Overview of all Real World Assets (RWAs) by category Category: RWA.
 - [RWA: Perps](https://defillama.com/rwa/perps): Overview of all Real World Assets (RWAs) perps Category: RWA.
+- [RWA Perps by Asset](https://defillama.com/rwa/perps/assets): Compare RWA perpetual markets grouped by their underlying reference asset Category: RWA.
 - [RWA by Asset Group](https://defillama.com/rwa/asset-groups): Overview of all Real World Assets (RWAs) by asset group Category: RWA.
 - [RWA Perps by Venue](https://defillama.com/rwa/perps/venues): Overview of all Real World Assets (RWAs) perps by venue Category: RWA.
 - [RWA Perps by Asset Group](https://defillama.com/rwa/perps/asset-groups): Overview of all Real World Assets (RWAs) perps by asset group Category: RWA.

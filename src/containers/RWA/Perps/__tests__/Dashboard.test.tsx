@@ -10,7 +10,12 @@ import {
 	buildRWAPerpsTimeSeriesDatasetForRows,
 	getRWAPerpsIncludedRows
 } from '../dashboardData'
-import type { IRWAPerpsAssetGroupPageData, IRWAPerpsOverviewPageData, IRWAPerpsVenuePageData } from '../types'
+import type {
+	IRWAPerpsAssetGroupPageData,
+	IRWAPerpsAssetPageData,
+	IRWAPerpsOverviewPageData,
+	IRWAPerpsVenuePageData
+} from '../types'
 
 let routerQuery: Record<string, string | string[]> = {}
 type CapturedQueryOptions = {
@@ -273,6 +278,21 @@ const assetGroupData = {
 		protocolFees24h: 1
 	}
 } satisfies IRWAPerpsAssetGroupPageData
+
+const assetData = {
+	asset: 'Meta',
+	markets: overviewData.markets,
+	initialChartDataset: overviewData.initialChartDataset,
+	assetLinks: [{ label: 'All', to: '/rwa/perps/assets' }],
+	totals: {
+		openInterest: 100,
+		openInterestChange24h: 25,
+		volume24h: 50,
+		volume24hChange24h: -10,
+		markets: 1,
+		protocolFees24h: 1
+	}
+} satisfies IRWAPerpsAssetPageData
 
 describe('getRWAPerpsIncludedRows', () => {
 	const suspiciousMarket: IRWAPerpsMarket = {
@@ -1065,7 +1085,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 		expect(html).toContain('-10.00%')
 	})
 
-	it('defaults direct CEX venues on while asset groups remain off', () => {
+	it('defaults direct CEX venues and assets on while asset groups remain off', () => {
 		const cexVenueData = {
 			...venueData,
 			venue: 'binance',
@@ -1075,6 +1095,24 @@ describe('RWAPerpsDashboard treemap controls', () => {
 
 		expect(venueHtml).toContain('CEX Venues')
 		expect(getLastTableWithSearchProps().data).toEqual([cexMarket])
+
+		const cexAssetData = {
+			...assetData,
+			markets: [cexMarket]
+		} satisfies IRWAPerpsAssetPageData
+		const assetHtml = renderToStaticMarkup(<RWAPerpsDashboard mode="asset" data={cexAssetData} />)
+
+		expect(assetHtml).toContain('CEX Venues')
+		expect(getLastTableWithSearchProps().data).toEqual([cexMarket])
+		expect(getLastUseQueryOptions().queryKey).toEqual([
+			'rwa-perps-chart',
+			{
+				source: 'market-breakdown',
+				key: 'openInterest',
+				target: { kind: 'baseAsset', slug: 'Meta' },
+				includeCex: true
+			}
+		])
 
 		const cexAssetGroupData = {
 			...assetGroupData,

@@ -85,6 +85,20 @@ describe('parseMarketBreakdownRequest', () => {
 			target: { kind: 'excludeAssetClass', slug: 'Forex Perps' },
 			includeCex: false
 		})
+
+		expect(
+			parseMarketBreakdownRequest({
+				query: {
+					baseAsset: 'SK Hynix',
+					includeCex: 'true',
+					key: 'openInterest'
+				}
+			})
+		).toEqual({
+			key: 'openInterest',
+			target: { kind: 'baseAsset', slug: 'SK Hynix' },
+			includeCex: true
+		})
 	})
 
 	it('rejects invalid metrics and conflicting targets', () => {
@@ -92,6 +106,16 @@ describe('parseMarketBreakdownRequest', () => {
 			parseMarketBreakdownRequest({
 				query: {
 					key: 'activeMcap'
+				}
+			})
+		).toBeNull()
+
+		expect(
+			parseMarketBreakdownRequest({
+				query: {
+					baseAsset: 'SK Hynix',
+					venue: 'Binance',
+					key: 'openInterest'
 				}
 			})
 		).toBeNull()

@@ -3,12 +3,15 @@ import { toRWAPerpsBreakdownChartDataset } from '../breakdownDataset'
 import {
 	appendRWAPerpsTimeSeriesDatasetTotal,
 	buildRWAPerpsAssetGroupSnapshotBreakdownTotals,
+	buildRWAPerpsAssetsOverviewRows,
 	buildRWAPerpsOverviewSnapshotBreakdownTotals,
 	buildRWAPerpsVenueSnapshotBreakdownTotals,
 	groupRWAPerpsTimeSeriesDataset,
 	hasEnoughTimeSeriesHistory,
 	getRWAPerpsAssetGroupPage,
 	getRWAPerpsAssetGroupsOverview,
+	getRWAPerpsAssetPage,
+	getRWAPerpsAssetsOverview,
 	getRWAPerpsBreakdownChartDataset,
 	getRWAPerpsContractBreakdownChartDataset,
 	getRWAPerpsContractData,
@@ -23,22 +26,26 @@ const {
 	fetchRWAPerpsMarketsByContract,
 	fetchRWAPerpsMarketChart,
 	fetchRWAPerpsFundingHistory,
+	fetchRWAPerpsMarketBreakdownChartData,
 	fetchRWAPerpsOverviewBreakdownChartData,
 	fetchRWAPerpsStats,
 	fetchRWAPerpsCurrent,
 	fetchRWAPerpsList,
 	fetchRWAPerpsMarketsByAssetGroup,
+	fetchRWAPerpsMarketsByAsset,
 	fetchRWAPerpsMarketsByVenue
 } = vi.hoisted(() => ({
 	fetchRWAPerpsContractBreakdownChartData: vi.fn(),
 	fetchRWAPerpsMarketsByContract: vi.fn(),
 	fetchRWAPerpsMarketChart: vi.fn(),
 	fetchRWAPerpsFundingHistory: vi.fn(),
+	fetchRWAPerpsMarketBreakdownChartData: vi.fn(),
 	fetchRWAPerpsOverviewBreakdownChartData: vi.fn(),
 	fetchRWAPerpsStats: vi.fn(),
 	fetchRWAPerpsCurrent: vi.fn(),
 	fetchRWAPerpsList: vi.fn(),
 	fetchRWAPerpsMarketsByAssetGroup: vi.fn(),
+	fetchRWAPerpsMarketsByAsset: vi.fn(),
 	fetchRWAPerpsMarketsByVenue: vi.fn()
 }))
 
@@ -47,11 +54,13 @@ vi.mock('../api', () => ({
 	fetchRWAPerpsMarketsByContract,
 	fetchRWAPerpsMarketChart,
 	fetchRWAPerpsFundingHistory,
+	fetchRWAPerpsMarketBreakdownChartData,
 	fetchRWAPerpsOverviewBreakdownChartData,
 	fetchRWAPerpsStats,
 	fetchRWAPerpsCurrent,
 	fetchRWAPerpsList,
 	fetchRWAPerpsMarketsByAssetGroup,
+	fetchRWAPerpsMarketsByAsset,
 	fetchRWAPerpsMarketsByVenue
 }))
 
@@ -115,6 +124,7 @@ beforeEach(() => {
 		contracts: ['xyz:META', 'flx:GOLD'],
 		venues: ['xyz', 'flx'],
 		categories: ['RWA Perps', 'Gold & Commodities'],
+		assets: ['Meta', 'NVIDIA', 'Gold'],
 		assetGroups: ['Commodities', 'Equities'],
 		total: 2
 	})
@@ -200,6 +210,22 @@ beforeEach(() => {
 			}
 		]
 	})
+	fetchRWAPerpsMarketsByAsset.mockImplementation(async (asset: string) => [
+		{ ...baseMarket, id: 'xyz:meta', referenceAsset: asset },
+		{
+			...baseMarket,
+			id: 'binance:meta',
+			contract: 'binance:METAUSDT',
+			venue: 'Binance',
+			venueType: 'CEX',
+			referenceAsset: asset,
+			openInterest: 300
+		}
+	])
+	fetchRWAPerpsMarketBreakdownChartData.mockResolvedValue([
+		{ timestamp: 1774483200, 'xyz:meta': 100 },
+		{ timestamp: 1774569600, 'xyz:meta': 120 }
+	])
 	fetchRWAPerpsOverviewBreakdownChartData.mockImplementation(async (request: any) => {
 		const target =
 			request.target.kind === 'all'
@@ -831,6 +857,91 @@ describe('perps overview helpers', () => {
 		const assetGroups = await getRWAPerpsAssetGroupsOverview()
 		expect(assetGroups.rows[0]?.openInterest).toBe(500)
 		expect(assetGroups.dexRows[0]?.openInterest).toBe(100)
+
+		fetchRWAPerpsCurrent.mockResolvedValueOnce([dexMarket, cexMarket])
+		const assets = await getRWAPerpsAssetsOverview()
+		expect(assets.rows[0]).toMatchObject({
+			asset: 'Meta',
+			assetGroups: ['Equities'],
+			openInterest: 500,
+			markets: 2,
+			venues: 2,
+			dexVenues: 1,
+			cexVenues: 1
+		})
+		expect(assets.dexRows[0]).toMatchObject({ openInterest: 100, markets: 1, venues: 1 })
+	})
+
+	it('aggregates funding ranges and skips markets without a canonical asset', () => {
+		const rows = buildRWAPerpsAssetsOverviewRows([
+			{ ...baseMarket, id: 'xyz:meta', fundingRate: 0.00001 },
+			{
+				...baseMarket,
+				id: 'binance:meta',
+				contract: 'binance:METAUSDT',
+				venue: 'Binance',
+				venueType: 'CEX',
+				referenceAssetGroup: 'Public Equities',
+				openInterest: 300,
+				fundingRate: 0.00004
+			},
+			{ ...baseMarket, id: 'xyz:unknown', referenceAsset: null }
+		])
+
+		expect(rows).toEqual([
+			{
+				asset: 'Meta',
+				assetGroups: ['Equities', 'Public Equities'],
+				openInterest: 400,
+				volume24h: 100,
+				markets: 2,
+				venues: 2,
+				dexVenues: 1,
+				cexVenues: 1,
+				fundingRateMin: 0.00001,
+				fundingRateMax: 0.00004
+			}
+		])
+	})
+
+	it('loads an asset page with all markets and preloads its DEX history', async () => {
+		const assetLinks = [{ label: 'Meta', to: '/rwa/perps/asset/meta' }]
+		await expect(getRWAPerpsAssetPage({ asset: 'Meta', assetLinks })).resolves.toMatchObject({
+			asset: 'Meta',
+			assetLinks,
+			markets: [{ id: 'binance:meta' }, { id: 'xyz:meta' }],
+			initialChartDataset: {
+				dimensions: ['timestamp', 'xyz:meta']
+			},
+			totals: { openInterest: 400, markets: 2 }
+		})
+
+		expect(fetchRWAPerpsMarketsByAsset).toHaveBeenCalledWith('Meta', true)
+		expect(fetchRWAPerpsList).not.toHaveBeenCalled()
+		expect(fetchRWAPerpsMarketBreakdownChartData).toHaveBeenCalledWith({
+			key: 'openInterest',
+			target: { kind: 'baseAsset', slug: 'Meta' },
+			includeCex: false
+		})
+	})
+
+	it('preloads all-venue history for a directly opened CEX-only asset', async () => {
+		fetchRWAPerpsMarketsByAsset.mockResolvedValueOnce([
+			{
+				...baseMarket,
+				id: 'binance:meta',
+				contract: 'binance:METAUSDT',
+				venue: 'Binance',
+				venueType: 'CEX'
+			}
+		])
+
+		await expect(getRWAPerpsAssetPage({ asset: 'Meta', assetLinks: [] })).resolves.toMatchObject({ asset: 'Meta' })
+		expect(fetchRWAPerpsMarketBreakdownChartData).toHaveBeenCalledWith({
+			key: 'openInterest',
+			target: { kind: 'baseAsset', slug: 'Meta' },
+			includeCex: true
+		})
 	})
 
 	it('aggregates overview chart rows by timestamp into a multi-series dataset', () => {

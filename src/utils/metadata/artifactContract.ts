@@ -165,7 +165,7 @@ export const METADATA_ARTIFACT_REGISTRY = defineMetadataArtifactRegistry({
 	},
 	rwaPerpsList: {
 		file: 'rwaPerps.json',
-		stub: { contracts: [], venues: [], categories: [], assetGroups: [], total: 0 },
+		stub: { contracts: [], venues: [], categories: [], assets: [], assetGroups: [], total: 0 },
 		parse: parseArtifact<IRWAPerpsList>
 	},
 	tokenlist: {
