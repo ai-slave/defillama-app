@@ -239,6 +239,12 @@ export const stablecoinPegTypeOptions: StablecoinFilterOption[] = [
 		key: 'PEGGEDKRW',
 		filterFn: (item) => item.pegType === 'peggedKRW',
 		help: 'Show stablecoins pegged to Korean Won'
+	},
+	{
+		name: 'HKD',
+		key: 'PEGGEDHKD',
+		filterFn: (item) => item.pegType === 'peggedHKD',
+		help: 'Show stablecoins pegged to Hong Kong Dollar'
 	}
 ]
 

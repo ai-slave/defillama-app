@@ -26,6 +26,7 @@ export type StablecoinPegType =
 	| 'peggedPEN'
 	| 'peggedPHP'
 	| 'peggedKRW'
+	| 'peggedHKD'
 
 export type StablecoinPegMechanism = 'algorithmic' | 'fiat-backed' | 'crypto-backed'
 export type RawStablecoinPegMechanism = StablecoinPegMechanism | 'crytpo-backed'
