@@ -54,7 +54,6 @@ import {
 	type ExchangeSegment,
 	type MicaVenueModel
 } from './models'
-import { clipSeriesValues, clipToNativeHistory } from './nativeHistory'
 import { getResearchPresentation } from './researchPresentation'
 
 /** Index a columnar `{ days, key, series }` payload into a `key -> values` map aligned to `days`.
@@ -948,13 +947,10 @@ export function mapMasterProfile(
 }
 
 export function mapMasterDirectoryOverview(response: MasterColumnarSeriesResponse): ExchangeOverviewChartModel {
-	// Clipped at the mapper so every consumer of this model — listing overview and
-	// venue history alike — shows the same era. See nativeHistory.ts for why.
-	const clipped = clipToNativeHistory(response.days, parseColumnarSeries(response))
 	return {
-		days: clipped.days,
+		days: response.days,
 		lastUpdated: response.last_updated,
-		series: clipped.series
+		series: parseColumnarSeries(response)
 	}
 }
 
@@ -999,17 +995,14 @@ function researchChart(
 	lines: ExchangeResearchChartModel['lines']
 ): ExchangeResearchChartModel {
 	const presentation = getResearchPresentation(part, view)
-	// Same cutoff as every other chart: before it, coverage was third-party backfill
-	// and the step up to our own collection reads as a jump in activity.
-	const clippedLines = clipSeriesValues(response.days, lines)
 	return {
 		metric: presentation.metric,
 		segment: presentation.segment,
 		grouping: presentation.grouping,
 		title: presentation.title,
 		description: presentation.description,
-		days: clippedLines.days,
-		lines: clippedLines.series,
+		days: response.days,
+		lines,
 		valueSymbol: presentation.valueSymbol,
 		builtAt: response.built_at ?? response.last_updated ?? null
 	}
