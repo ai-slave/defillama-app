@@ -876,6 +876,13 @@
       "totalTrackedKey": "safeHarbor.protocols"
     },
     {
+      "name": "Rewards",
+      "route": "/rewards",
+      "category": "Others",
+      "description": "Explore protocol rewards, points, referral programs, and trading contests",
+      "tab": "Protocols"
+    },
+    {
       "name": "Token Rights",
       "route": "/token-rights",
       "category": "Others",

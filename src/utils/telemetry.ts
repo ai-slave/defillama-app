@@ -100,7 +100,7 @@ type DomainEvent = {
 	span_id?: string
 	parent_span_id?: string
 	route?: string
-	event_name: 'token_rights.alert' | 'build.complete' | 'metadata.refresh'
+	event_name: 'token_rights.alert' | 'rewards.missing_metadata' | 'build.complete' | 'metadata.refresh'
 	level: 'info' | 'warn' | 'error'
 	occurred_at: string
 	subject?: string

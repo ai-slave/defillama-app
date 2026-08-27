@@ -1,0 +1,178 @@
+import { createColumnHelper, type Row } from '@tanstack/react-table'
+import Link from 'next/link'
+import { ExternalLinkButton } from '~/components/ExternalLinkButton'
+import { TokenLogo } from '~/components/TokenLogo'
+import { Button } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
+import { Tag } from '~/ui/Tag'
+import type { RewardLifecycle, RewardProgram } from './types'
+
+const lifecycleStyles: Record<RewardLifecycle, string> = {
+	Live: 'text-data-up',
+	Upcoming: 'text-link',
+	'Season Gap': 'text-warning',
+	Ended: 'text-secondary',
+	Unknown: 'text-tertiary'
+}
+const helper = createColumnHelper<RewardProgram>()
+
+// Widths follow COLUMN_WIDTHS.md: 24px padding + max(header + 14px sort, widest
+// realistic body), measured against public/fonts/inter.woff2.
+export const columns = [
+	helper.accessor('protocol', {
+		header: 'Protocol / Program',
+		meta: { headerClassName: 'w-[300px] min-w-[300px]' },
+		cell: ({ row }) => (
+			<div className="flex items-center gap-2">
+				<Button
+					size="md"
+					variant="ghost"
+					square
+					type="button"
+					aria-label={`Details for ${row.original.protocol}${row.original.programName ? ` — ${row.original.programName}` : ''}`}
+					aria-expanded={row.getIsExpanded()}
+					aria-controls={row.getIsExpanded() ? `reward-details-${row.id}` : undefined}
+					onClick={row.getToggleExpandedHandler()}
+				>
+					<Icon
+						name={row.getIsExpanded() ? 'chevron-down' : 'chevron-right'}
+						height={16}
+						width={16}
+						aria-hidden="true"
+					/>
+				</Button>
+				<TokenLogo src={row.original.logo} size={28} />
+				<div className="flex min-w-0 flex-col gap-0.5">
+					{row.original.protocolHref ? (
+						<Link href={row.original.protocolHref} className="label-md text-link">
+							{row.original.protocol}
+						</Link>
+					) : (
+						<span className="label-md text-primary">{row.original.protocol}</span>
+					)}
+					{row.original.programName ? (
+						<span className="truncate body-sm text-secondary">{row.original.programName}</span>
+					) : null}
+					{row.original.category ? <span className="body-xs text-tertiary">{row.original.category}</span> : null}
+				</div>
+			</div>
+		)
+	}),
+	helper.accessor((row) => row.fees30d ?? undefined, {
+		id: 'fees30d',
+		sortUndefined: 'last',
+		sortDescFirst: true,
+		sortingFn: 'basic'
+	}),
+	helper.accessor((row) => row.tvl ?? undefined, {
+		id: 'tvl',
+		sortUndefined: 'last',
+		sortDescFirst: true,
+		sortingFn: 'basic'
+	}),
+	helper.accessor('visitorBenefit', {
+		header: 'What you get',
+		enableSorting: false,
+		// The page's primary content, so it takes the width the viewport can spare.
+		// Two clamped lines rather than one truncated one: at 520px that shows the
+		// whole benefit for nearly every program while still bounding row height.
+		// The expanded row always carries the full copy (COLUMN_WIDTHS.md —
+		// clipped cells reveal nothing on hover).
+		meta: {
+			headerClassName: 'w-[320px] min-w-[320px] xl:w-[420px] xl:min-w-[420px] 2xl:w-[520px] 2xl:min-w-[520px]'
+		},
+		cell: ({ getValue }) => <span className="line-clamp-2 text-secondary">{getValue()}</span>
+	}),
+	helper.accessor('rewardTypes', {
+		header: 'Reward Type',
+		enableSorting: false,
+		meta: { headerClassName: 'w-[240px] min-w-[240px]' },
+		cell: ({ getValue }) =>
+			getValue().length ? (
+				<div className="flex flex-wrap gap-1">
+					{getValue().map((type) => (
+						<Tag key={type}>{type}</Tag>
+					))}
+				</div>
+			) : (
+				<span className="text-tertiary" title="Reward type not specified">
+					—
+				</span>
+			)
+	}),
+	helper.accessor('lifecycle', {
+		header: 'Status',
+		meta: { headerClassName: 'w-[116px] min-w-[116px]' },
+		cell: ({ row, getValue }) => (
+			<div className="flex flex-col items-start gap-1">
+				<span className={`inline-flex items-center gap-1.5 label-sm ${lifecycleStyles[getValue()]}`}>
+					<span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
+					{getValue()}
+				</span>
+				{/* Verified is the norm; only the exception carries information per row. */}
+				{row.original.verification === 'Unverified' ? <span className="body-xs text-tertiary">Unverified</span> : null}
+			</div>
+		)
+	}),
+	helper.accessor((row) => row.sortDate ?? undefined, {
+		id: 'dates',
+		header: 'Dates',
+		sortUndefined: 'last',
+		sortingFn: 'text',
+		meta: { headerClassName: 'w-[173px] min-w-[173px]' },
+		cell: ({ row }) =>
+			row.original.dateRangeLabel ? <span className="text-secondary">{row.original.dateRangeLabel}</span> : null
+	}),
+	helper.display({
+		id: 'link',
+		header: 'Link',
+		meta: { headerClassName: 'w-[100px] min-w-[100px]' },
+		cell: ({ row }) =>
+			row.original.referralUrl ? (
+				<ExternalLinkButton
+					href={row.original.referralUrl}
+					rel="noopener noreferrer sponsored"
+					aria-label={`Open ${row.original.protocol}${row.original.programName ? ` ${row.original.programName}` : ''} program`}
+				>
+					Open
+				</ExternalLinkButton>
+			) : (
+				<span className="text-tertiary">—</span>
+			)
+	})
+]
+
+export function renderProgramDetails(row: Row<RewardProgram>) {
+	const program = row.original
+	return (
+		<div id={`reward-details-${row.id}`} className="flex flex-col gap-4 bg-surface-elevated-1 p-4">
+			{/* Bounded by the content measure, not the panel: the panel is as wide as the
+			    table, so anything pushed to its right edge sits outside the scroller. */}
+			<div className="flex max-w-[72ch] items-start gap-4">
+				<p className="body-sm text-tertiary">{program.summary}</p>
+				{program.lastVerified ? (
+					<span className="ml-auto shrink-0 body-xs text-tertiary">Verified {program.lastVerified}</span>
+				) : null}
+			</div>
+			<dl className="flex max-w-[72ch] flex-col gap-3">
+				<div>
+					<dt className="label-sm text-secondary">For invited users</dt>
+					<dd className="mt-1 body-md text-primary">{program.visitorBenefit}</dd>
+				</div>
+				<div>
+					<dt className="label-sm text-secondary">For users who invite others</dt>
+					<dd className="mt-1 body-md text-primary">{program.referrerBenefit}</dd>
+				</div>
+			</dl>
+			{program.sources.length ? (
+				<div className="flex flex-wrap items-center gap-2">
+					{program.sources.map((source) => (
+						<ExternalLinkButton key={source.url} href={source.url}>
+							{source.label}
+						</ExternalLinkButton>
+					))}
+				</div>
+			) : null}
+		</div>
+	)
+}
