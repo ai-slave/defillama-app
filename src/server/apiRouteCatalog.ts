@@ -32,7 +32,8 @@ export const privateApiRoutePaths = [
 	'revalidate-instances',
 	'token-liquidations/[symbol]',
 	'token-unlocks/[protocol]',
-	'token-usage/[symbol]'
+	'token-usage/[symbol]',
+	'utr/leaderboard'
 ] as const
 
 export const dynamicApiRoutePaths = [
@@ -207,6 +208,7 @@ export const allApiRoutePaths = [
 	'token-unlocks/[protocol]',
 	'token-usage/[symbol]',
 	'uniswap/[tab]',
+	'utr/leaderboard',
 	'visitor-region',
 	'yields/borrow-markets',
 	'yields/borrow-routes',
@@ -232,7 +234,8 @@ const routeMethodOverrides: Partial<Record<ApiRoutePath, readonly ApiRouteMethod
 	'protocol-rankings/export': ['POST'],
 	'protocol-rankings/rows': ['POST'],
 	'chains-by-category/rows': ['POST'],
-	'revalidate-instances': ['POST']
+	'revalidate-instances': ['POST'],
+	'utr/leaderboard': ['GET']
 }
 
 const cachePolicyByKind = {

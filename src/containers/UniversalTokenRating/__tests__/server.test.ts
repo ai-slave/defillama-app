@@ -6,6 +6,7 @@ vi.mock('~/utils/async', () => ({ fetchJson: (...args: unknown[]) => fetchJson(.
 import {
 	exchangeOptionsFromScoringConfig,
 	fetchUtrDisclosureScoreSummaries,
+	fetchUtrLeaderboardStrict,
 	fetchUtrProjects,
 	fetchUtrScoringConfig,
 	fetchUtrUniverseWithLive
@@ -119,5 +120,27 @@ describe('UTR project API', () => {
 		await expect(fetchUtrScoringConfig()).resolves.toBeNull()
 		expect(exchangeOptionsFromScoringConfig(null)).toEqual([])
 		await expect(fetchUtrUniverseWithLive()).resolves.toEqual({ rows: [], scoredCount: 0, totalCount: 0 })
+	})
+
+	it('loads the leaderboard with the Forgd bearer key and preserves upstream failures', async () => {
+		vi.stubEnv('API_KEY_FORGD', 'qk_test_123')
+		const payload = {
+			configVersion: 18,
+			generatedAt: '2026-08-27T00:00:00.000Z',
+			scoredCount: 0,
+			totalCount: 0,
+			postTge: { rows: [] },
+			preTge: { rows: [] }
+		}
+		fetchJson.mockResolvedValueOnce(payload)
+
+		await expect(fetchUtrLeaderboardStrict()).resolves.toEqual(payload)
+		expect(fetchJson).toHaveBeenCalledWith(
+			'https://quant.forgd.com/api/utr/leaderboard',
+			expect.objectContaining({ headers: { Authorization: 'Bearer qk_test_123' } })
+		)
+
+		fetchJson.mockRejectedValueOnce(new Error('upstream failed'))
+		await expect(fetchUtrLeaderboardStrict()).rejects.toThrow('upstream failed')
 	})
 })

@@ -374,6 +374,30 @@ export type UtrLeaderboardResponse = {
 	preTge: { rows: UtrLeaderboardApiRow[] }
 }
 
+export type UtrLeaderboardTableApiRow = {
+	rank: number | null
+	asset: string
+	coingeckoId: string | null
+	projectName: string
+	symbol: string
+	sector: string | null
+	listingStatus: UtrListingStatus
+	grade: string | null
+	overallScore: number | null
+	overallMomChangePct: number | null
+	disclosureScore: number | null
+	performanceScore: number | null
+	fdvUsd: number | null
+}
+
+export type UtrLeaderboardTableApiResponse = {
+	configVersion: number
+	generatedAt: string
+	scoredCount: number
+	totalCount: number
+	rows: UtrLeaderboardTableApiRow[]
+}
+
 export type UtrCriterionDoc = {
 	key: string
 	label: string

@@ -219,13 +219,17 @@ export async function fetchUtrLeaderboardMom(): Promise<UtrMomResponse | null> {
 
 export async function fetchUtrLeaderboard(): Promise<UtrLeaderboardResponse | null> {
 	try {
-		return await fetchJson<UtrLeaderboardResponse>(`${FORGD_HOST}/api/utr/leaderboard`, {
-			timeout: 30_000,
-			headers: forgdUtrHeaders()
-		})
+		return await fetchUtrLeaderboardStrict()
 	} catch {
 		return null
 	}
+}
+
+export function fetchUtrLeaderboardStrict(): Promise<UtrLeaderboardResponse> {
+	return fetchJson<UtrLeaderboardResponse>(`${FORGD_HOST}/api/utr/leaderboard`, {
+		timeout: 30_000,
+		headers: forgdUtrHeaders()
+	})
 }
 
 function withEmptyCriteria(categories: UtrCategoryBreakdown[]): UtrCategoryBreakdown[] {
@@ -281,17 +285,20 @@ async function withIconDataUrls(rows: UtrLeaderboardRow[]): Promise<UtrLeaderboa
 	)
 }
 
-export async function fetchUtrUniverseWithLive(): Promise<UtrUniverse> {
-	const leaderboard = await fetchUtrLeaderboard()
-	const postRows = (leaderboard?.postTge.rows ?? []).map(rowFromLeaderboardApiRow)
-	const preRows = (leaderboard?.preTge.rows ?? []).map(rowFromLeaderboardApiRow).map((row) => ({
+export function leaderboardRowsFromResponse(leaderboard: UtrLeaderboardResponse): UtrLeaderboardRow[] {
+	const postRows = leaderboard.postTge.rows.map(rowFromLeaderboardApiRow)
+	const preRows = leaderboard.preTge.rows.map(rowFromLeaderboardApiRow).map((row) => ({
 		...row,
 		scores: { ...row.scores, rank: row.scores.rank == null ? null : row.scores.rank + postRows.length }
 	}))
-	if (leaderboard && (postRows.length || preRows.length)) {
-		const rows = await withIconDataUrls(
-			[...postRows, ...preRows].sort((a, b) => (a.scores.rank ?? Infinity) - (b.scores.rank ?? Infinity))
-		)
+	return [...postRows, ...preRows].sort((a, b) => (a.scores.rank ?? Infinity) - (b.scores.rank ?? Infinity))
+}
+
+export async function fetchUtrUniverseWithLive(): Promise<UtrUniverse> {
+	const leaderboard = await fetchUtrLeaderboard()
+	const leaderboardRows = leaderboard ? leaderboardRowsFromResponse(leaderboard) : []
+	if (leaderboard && leaderboardRows.length) {
+		const rows = await withIconDataUrls(leaderboardRows)
 		return { rows, scoredCount: leaderboard.scoredCount, totalCount: leaderboard.totalCount }
 	}
 	return { rows: [], scoredCount: leaderboard?.scoredCount ?? 0, totalCount: leaderboard?.totalCount ?? 0 }

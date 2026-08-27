@@ -74,6 +74,12 @@ describe('api route catalog', () => {
 		).toEqual(['POST'])
 	})
 
+	it('marks the authenticated UTR leaderboard route as GET-only', () => {
+		expect(apiRouteCatalog.find((entry) => entry.canonicalPath === '/api/private/utr/leaderboard')?.methods).toEqual([
+			'GET'
+		])
+	})
+
 	it('keeps auth-sensitive reads out of public routes', () => {
 		const forbiddenPatterns = [
 			/validateSubscription/,
