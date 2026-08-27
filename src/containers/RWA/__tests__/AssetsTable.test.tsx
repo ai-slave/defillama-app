@@ -1,7 +1,11 @@
+import { createTable, flexRender, getCoreRowModel } from '@tanstack/react-table'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
+import { prepareTableCsv } from '~/components/Table/utils'
 import type { IRWAAssetsOverview, IRWAFlowSummaryResponse } from '../api.types'
 import {
 	createAssetTableRows,
+	createRWAAssetColumns,
 	getActiveMetricValue,
 	getDefiMetricValue,
 	getDefiUtilization,
@@ -59,6 +63,7 @@ function createPerpsAsset(
 	return {
 		id: 'perps-1',
 		kind: 'perps',
+		venueType: 'DEX',
 		detailHref: '/rwa/perps/contract/xyz%3Ausdy',
 		contract: 'xyz:USDY',
 		ticker: 'xyz:USDY',
@@ -131,6 +136,29 @@ function createFlowSummary(): IRWAFlowSummaryResponse {
 }
 
 describe('RWAAssetsTable', () => {
+	it.each(['DEX', 'CEX'] as const)(
+		'shows and exports N/A for %s perp attestations regardless of the stored flag',
+		(venueType) => {
+			for (const attestations of [true, false, null]) {
+				const asset = createPerpsAsset({ venueType, attestations })
+				const result = renderAttestations(asset)
+				expect(result.markup).toBe('<span class="text-tertiary">N/A</span>')
+				expect(result.csv).toBe('N/A')
+				expect(result.value).toBeUndefined()
+			}
+		}
+	)
+
+	it.each([
+		[true, 'Yes', true],
+		[false, 'No', false],
+		[null, '', '']
+	] as const)('preserves spot attestations for %s', (attestations, label, csv) => {
+		const result = renderAttestations(createSpotAsset({ attestations }))
+		expect(result.markup).toContain(`>${label}</span>`)
+		expect(result.csv).toBe(csv)
+	})
+
 	it('keeps the original metric headers when the perps toggle is off', () => {
 		expect(getMetricColumnHeaders(false)).toEqual({
 			active: 'Active Marketcap',
@@ -178,3 +206,24 @@ describe('RWAAssetsTable', () => {
 		expect(getDefiUtilization(createSpotAsset({ activeMcap: { total: -100, breakdown: [] } }))).toBe(-25)
 	})
 })
+
+function renderAttestations(asset: IRWAAssetsOverview['assets'][number]) {
+	const table = createTable({
+		data: createAssetTableRows([asset], undefined),
+		columns: createRWAAssetColumns(true, false, false),
+		getCoreRowModel: getCoreRowModel(),
+		state: {},
+		onStateChange: () => {},
+		renderFallbackValue: null
+	})
+	const cell = table
+		.getRowModel()
+		.rows[0].getAllCells()
+		.find((cell) => cell.column.id === 'attestations')!
+	const csv = prepareTableCsv({ instance: table, filename: 'rwa-assets' }).rows
+	return {
+		markup: renderToStaticMarkup(flexRender(cell.column.columnDef.cell, cell.getContext())),
+		value: cell.getValue(),
+		csv: csv[1][csv[0].indexOf('Attestations')]
+	}
+}

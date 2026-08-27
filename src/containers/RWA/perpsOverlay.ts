@@ -15,6 +15,7 @@ export function toRWAPerpsContractOverlayRow(market: IRWAPerpsMarket): RWAPerpsC
 		kind: 'perps',
 		detailHref: `/rwa/perps/contract/${encodeURIComponent(market.contract)}`,
 		contract: market.contract,
+		venueType: market.venueType,
 		assetName: market.referenceAsset ?? market.contract,
 		ticker: market.contract,
 		primaryChain: null,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { RWAAssetOverviewRow } from '../api.types'
+import type { RWAAssetOverviewRow, RWAPerpsContractOverlayRow } from '../api.types'
 import {
 	filterRwaAssetOverviewRows,
 	filterRwaOverviewDisplayRows,
@@ -10,19 +10,6 @@ import {
 	getRwaDisplayedDefiActiveTvlByProtocol,
 	type RWAFilterState
 } from '../filterState'
-
-const DEFAULT_INCLUSION = {
-	includeStablecoins: false,
-	includeGovernance: false,
-	includeRwaPerps: false,
-	includeBridgeTvl: true
-}
-const DEFAULT_ALL_INCLUSION = {
-	includeStablecoins: true,
-	includeGovernance: true,
-	includeRwaPerps: false,
-	includeBridgeTvl: true
-}
 
 const baseAsset: RWAAssetOverviewRow = {
 	id: 'asset-1',
@@ -85,6 +72,7 @@ const baseFilterState: RWAFilterState = {
 	includeStablecoins: true,
 	includeGovernance: true,
 	includeRwaPerps: true,
+	includeCex: false,
 	includeBridgeTvl: true,
 	hasPerpsOverlayBlockingFilters: false,
 	minDefiActiveTvlToOnChainMcapPct: null,
@@ -95,7 +83,89 @@ const baseFilterState: RWAFilterState = {
 	maxDefiActiveTvlToActiveMcapPct: null
 }
 
+const dexPerp: RWAPerpsContractOverlayRow = {
+	...baseAsset,
+	id: 'xyz:usdy',
+	kind: 'perps',
+	contract: 'xyz:USDY',
+	venueType: 'DEX',
+	type: 'Perp',
+	openInterest: 100,
+	onChainMcap: null,
+	activeMcap: null,
+	defiActiveTvl: null,
+	defiActiveTvlByChain: null
+}
+const cexPerp: RWAPerpsContractOverlayRow = {
+	...dexPerp,
+	id: 'binance:usdy',
+	contract: 'binance:USDY',
+	venueType: 'CEX',
+	openInterest: 200
+}
+
 describe('RWA filter state', () => {
+	it('includes CEX perps only when both inclusion flags are enabled without changing spot totals', () => {
+		const rows = [baseAsset, dexPerp, cexPerp]
+		for (const [includeRwaPerps, includeCex, expectedIds, expectedOi] of [
+			[false, false, ['asset-1'], 0],
+			[true, false, ['asset-1', 'xyz:usdy'], 100],
+			[true, true, ['asset-1', 'xyz:usdy', 'binance:usdy'], 300],
+			[false, true, ['asset-1'], 0],
+			[true, false, ['asset-1', 'xyz:usdy'], 100]
+		] as const) {
+			const result = filterRwaOverviewDisplayRows(rows, { ...baseFilterState, includeRwaPerps, includeCex })
+			expect(result.filteredAssets.map((asset) => asset.id)).toEqual(expectedIds)
+			expect(result.totalOpenInterest).toBe(expectedOi)
+			expect(result.totalOnChainMcap).toBe(100)
+			expect(result.totalActiveMcap).toBe(50)
+			expect(result.totalOnChainDeFiActiveTvl).toBe(25)
+		}
+	})
+
+	it('adds stablecoins and governance tokens without removing selected perps', () => {
+		const rows = [
+			baseAsset,
+			{ ...baseAsset, id: 'stablecoin', stablecoin: true },
+			{ ...baseAsset, id: 'governance', governance: true },
+			dexPerp,
+			cexPerp
+		]
+		for (const includeStablecoins of [false, true]) {
+			for (const includeGovernance of [false, true]) {
+				const result = filterRwaOverviewDisplayRows(rows, {
+					...baseFilterState,
+					includeStablecoins,
+					includeGovernance,
+					includeCex: true,
+					hasPerpsOverlayBlockingFilters: hasPerpsOverlayBlockingFiltersFromQuery({
+						includeStablecoins: String(includeStablecoins),
+						includeGovernance: String(includeGovernance)
+					})
+				})
+				expect(result.totalOpenInterest).toBe(300)
+				expect(result.filteredAssets.map((asset) => asset.id)).toEqual([
+					'asset-1',
+					...(includeStablecoins ? ['stablecoin'] : []),
+					...(includeGovernance ? ['governance'] : []),
+					'xyz:usdy',
+					'binance:usdy'
+				])
+			}
+		}
+	})
+
+	it('excludes both kinds of perps when filtering for attested assets', () => {
+		const result = filterRwaOverviewDisplayRows([{ ...baseAsset, attestations: true }, dexPerp, cexPerp], {
+			...baseFilterState,
+			includeCex: true,
+			selectedAttestationsStates: ['yes'],
+			hasPerpsOverlayBlockingFilters: hasPerpsOverlayBlockingFiltersFromQuery({ attestationsStates: 'yes' })
+		})
+		expect(result.filteredAssets.map((asset) => asset.id)).toEqual(['asset-1'])
+		expect(result.totalOpenInterest).toBe(0)
+	})
+
 	it('parses attribute filter state params', () => {
 		expect(parseAttributeFilterStatesParam(undefined)).toEqual(['yes', 'no', 'unknown'])
 		expect(parseAttributeFilterStatesParam('yes')).toEqual(['yes'])
@@ -105,23 +175,21 @@ describe('RWA filter state', () => {
 	})
 
 	it('treats asset-only query filters as perps overlay blockers', () => {
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ types: 'Asset' }, DEFAULT_INCLUSION)).toBe(true)
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ minActiveMcapToOnChainMcapPct: '10' }, DEFAULT_INCLUSION)).toBe(
-			true
-		)
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ kycForMintRedeemStates: 'yes' }, DEFAULT_INCLUSION)).toBe(true)
+		expect(hasPerpsOverlayBlockingFiltersFromQuery({ types: 'Asset' })).toBe(true)
+		expect(hasPerpsOverlayBlockingFiltersFromQuery({ minActiveMcapToOnChainMcapPct: '10' })).toBe(true)
+		expect(hasPerpsOverlayBlockingFiltersFromQuery({ kycForMintRedeemStates: 'yes' })).toBe(true)
 	})
 
 	it('does not treat shared filters or includeRwaPerps as perps overlay blockers', () => {
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ categories: 'Treasuries' }, DEFAULT_INCLUSION)).toBe(false)
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ platforms: 'Ondo' }, DEFAULT_INCLUSION)).toBe(false)
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeRwaPerps: 'false' }, DEFAULT_INCLUSION)).toBe(false)
+		expect(hasPerpsOverlayBlockingFiltersFromQuery({ categories: 'Treasuries' })).toBe(false)
+		expect(hasPerpsOverlayBlockingFiltersFromQuery({ platforms: 'Ondo' })).toBe(false)
+		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeRwaPerps: 'false' })).toBe(false)
 	})
 
-	it('treats stablecoin and governance inclusion overrides as perps overlay blockers', () => {
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeStablecoins: 'false' }, DEFAULT_INCLUSION)).toBe(false)
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeStablecoins: 'true' }, DEFAULT_INCLUSION)).toBe(true)
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeGovernance: 'false' }, DEFAULT_ALL_INCLUSION)).toBe(true)
+	it('allows stablecoins and governance tokens alongside perps', () => {
+		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeStablecoins: 'false' })).toBe(false)
+		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeStablecoins: 'true' })).toBe(false)
+		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeGovernance: 'false' })).toBe(false)
 	})
 
 	it('does not include ratio-filtered rows with a zero denominator', () => {

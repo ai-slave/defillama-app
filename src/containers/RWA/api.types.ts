@@ -1,6 +1,7 @@
 import type { EarnPageRow } from '~/containers/Yields/data/types'
 import type { RWAChartDataset, RWAPositionalChartDataset } from './chartDataset'
 import type { RWAOverviewInclusionDefaults } from './constants'
+import type { RWAPerpsVenueType } from './Perps/api.types'
 import type { RWAPlatformAssetSummary, RWAPlatformPageData } from './PlatformPage/types'
 
 type RWANumberMap = Record<string, number>
@@ -184,6 +185,7 @@ export type RWAAssetOverviewRow = RWAOverviewDisplayRowBase & {
 export type RWAPerpsContractOverlayRow = RWAOverviewDisplayRowBase & {
 	kind: 'perps'
 	contract: string
+	venueType: RWAPerpsVenueType
 }
 
 export type RWAOverviewDisplayRow = RWAAssetOverviewRow | RWAPerpsContractOverlayRow

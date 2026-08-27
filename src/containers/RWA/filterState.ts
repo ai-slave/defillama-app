@@ -2,7 +2,6 @@ import type { NextRouter } from 'next/router'
 import { isTrueQueryParam, toNonEmptyArrayParam } from '~/utils/routerQuery'
 import type { RWAAssetOverviewRow, RWAOverviewDisplayRow, RWAPerpsContractOverlayRow } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
-import type { RWAOverviewInclusionDefaults } from './constants'
 import { rwaSlug } from './rwaSlug'
 
 export const RWA_ATTRIBUTE_FILTER_STATES = ['yes', 'no', 'unknown'] as const
@@ -51,6 +50,7 @@ export type RWAFilterState = {
 	includeStablecoins: boolean
 	includeGovernance: boolean
 	includeRwaPerps: boolean
+	includeCex: boolean
 	includeBridgeTvl: boolean
 	hasPerpsOverlayBlockingFilters: boolean
 	minDefiActiveTvlToOnChainMcapPct: number | null
@@ -145,13 +145,7 @@ export function hasActiveInclusionOverride(queryValue: string | string[] | undef
 	return resolveRWAOverviewInclusionFlag(queryValue, defaultValue) !== defaultValue
 }
 
-export function hasPerpsOverlayBlockingFiltersFromQuery(
-	query: NextRouter['query'],
-	defaultInclusion: RWAOverviewInclusionDefaults
-): boolean {
-	if (hasActiveInclusionOverride(query.includeStablecoins, defaultInclusion.includeStablecoins)) return true
-	if (hasActiveInclusionOverride(query.includeGovernance, defaultInclusion.includeGovernance)) return true
-
+export function hasPerpsOverlayBlockingFiltersFromQuery(query: NextRouter['query']): boolean {
 	for (const key of RWA_PERPS_OVERLAY_BLOCKING_FILTER_KEYS) {
 		if (key in query) return true
 	}
@@ -194,7 +188,9 @@ export function filterRwaPerpsContractOverlayRows(
 ): RWAPerpsContractOverlayRow[] {
 	if (!filterState.includeRwaPerps || filterState.hasPerpsOverlayBlockingFilters) return []
 	const preparedFilters = prepareRwaFilters(filterState)
-	return rows.filter((row) => matchesSharedRwaFilters(row, preparedFilters))
+	return rows.filter(
+		(row) => (filterState.includeCex || row.venueType !== 'CEX') && matchesSharedRwaFilters(row, preparedFilters)
+	)
 }
 
 export function filterRwaOverviewDisplayRows(
@@ -208,7 +204,11 @@ export function filterRwaOverviewDisplayRows(
 	for (const asset of assets) {
 		if (asset.kind === 'spot') {
 			if (matchesRwaAssetFilters(asset, filterState, preparedFilters)) filteredSpotRows.push(asset)
-		} else if (includePerps && matchesSharedRwaFilters(asset, preparedFilters)) {
+		} else if (
+			includePerps &&
+			(filterState.includeCex || asset.venueType !== 'CEX') &&
+			matchesSharedRwaFilters(asset, preparedFilters)
+		) {
 			filteredPerpsRows.push(asset)
 		}
 	}

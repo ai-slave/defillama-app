@@ -6,6 +6,7 @@ import { CHART_COLORS } from '~/constants/colors'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
 import {
+	isTrueQueryParam,
 	toNonEmptyArrayParam,
 	parseExcludeParam,
 	parseNumberInput,
@@ -147,6 +148,7 @@ export const useRWATableQueryParams = ({
 		includeStablecoins: stablecoinsQ,
 		includeGovernance: governanceQ,
 		includeRwaPerps: rwaPerpsQ,
+		includeCex: cexQ,
 		includeBridgeTvl: bridgeTvlQ,
 		redeemableStates: redeemableStatesQ,
 		attestationsStates: attestationsStatesQ,
@@ -182,6 +184,7 @@ export const useRWATableQueryParams = ({
 		includeStablecoins,
 		includeGovernance,
 		includeRwaPerps,
+		includeCex,
 		includeBridgeTvl
 	} = useMemo(() => {
 		// If query param is 'None', return empty array. If no param, return all (default). Otherwise parse the array.
@@ -220,6 +223,7 @@ export const useRWATableQueryParams = ({
 		const includeStablecoins = resolveRWAOverviewInclusionFlag(stablecoinsQ, defaultInclusion.includeStablecoins)
 		const includeGovernance = resolveRWAOverviewInclusionFlag(governanceQ, defaultInclusion.includeGovernance)
 		const includeRwaPerps = resolveRWAOverviewInclusionFlag(rwaPerpsQ, defaultInclusion.includeRwaPerps)
+		const includeCex = includeRwaPerps && isTrueQueryParam(cexQ)
 		const includeBridgeTvl = resolveRWAOverviewInclusionFlag(bridgeTvlQ, defaultInclusion.includeBridgeTvl ?? true)
 
 		// Build selected arrays with correct "exclude" semantics:
@@ -345,6 +349,7 @@ export const useRWATableQueryParams = ({
 			includeStablecoins,
 			includeGovernance,
 			includeRwaPerps,
+			includeCex,
 			includeBridgeTvl
 		}
 	}, [
@@ -382,6 +387,7 @@ export const useRWATableQueryParams = ({
 		stablecoinsQ,
 		governanceQ,
 		rwaPerpsQ,
+		cexQ,
 		bridgeTvlQ,
 		defaultInclusion.includeStablecoins,
 		defaultInclusion.includeGovernance,
@@ -401,8 +407,8 @@ export const useRWATableQueryParams = ({
 	])
 
 	const hasPerpsOverlayBlockingFilters = useMemo(
-		() => hasPerpsOverlayBlockingFiltersFromQuery(router.query, defaultInclusion),
-		[router.query, defaultInclusion]
+		() => hasPerpsOverlayBlockingFiltersFromQuery(router.query),
+		[router.query]
 	)
 
 	const setDefiActiveTvlToOnChainMcapPctRange = (minValue: string | number | null, maxValue: string | number | null) =>
@@ -438,8 +444,13 @@ export const useRWATableQueryParams = ({
 
 	const setIncludeRwaPerps = (value: boolean) => {
 		void pushShallowQuery(router, {
-			includeRwaPerps: value === defaultInclusion.includeRwaPerps ? undefined : value ? 'true' : 'false'
+			includeRwaPerps: value === defaultInclusion.includeRwaPerps ? undefined : value ? 'true' : 'false',
+			includeCex: undefined
 		})
+	}
+
+	const setIncludeCex = (value: boolean) => {
+		void pushShallowQuery(router, { includeCex: includeRwaPerps && value ? 'true' : undefined })
 	}
 
 	const setIncludeBridgeTvl = (value: boolean) => {
@@ -489,6 +500,7 @@ export const useRWATableQueryParams = ({
 		includeStablecoins,
 		includeGovernance,
 		includeRwaPerps,
+		includeCex,
 		includeBridgeTvl,
 		hasPerpsOverlayBlockingFilters,
 		setRedeemableStates,
@@ -504,6 +516,7 @@ export const useRWATableQueryParams = ({
 		setIncludeStablecoins,
 		setIncludeGovernance,
 		setIncludeRwaPerps,
+		setIncludeCex,
 		setIncludeBridgeTvl
 	}
 }
@@ -532,6 +545,7 @@ export const useFilteredRwaAssets = ({
 	includeStablecoins,
 	includeGovernance,
 	includeRwaPerps,
+	includeCex,
 	includeBridgeTvl = true,
 	hasPerpsOverlayBlockingFilters,
 	minDefiActiveTvlToOnChainMcapPct,
@@ -562,6 +576,7 @@ export const useFilteredRwaAssets = ({
 	includeStablecoins: boolean
 	includeGovernance: boolean
 	includeRwaPerps: boolean
+	includeCex: boolean
 	includeBridgeTvl?: boolean
 	hasPerpsOverlayBlockingFilters: boolean
 	minDefiActiveTvlToOnChainMcapPct: number | null
@@ -598,6 +613,7 @@ export const useFilteredRwaAssets = ({
 			includeStablecoins,
 			includeGovernance,
 			includeRwaPerps,
+			includeCex,
 			includeBridgeTvl,
 			hasPerpsOverlayBlockingFilters,
 			minDefiActiveTvlToOnChainMcapPct,
@@ -629,6 +645,7 @@ export const useFilteredRwaAssets = ({
 		includeStablecoins,
 		includeGovernance,
 		includeRwaPerps,
+		includeCex,
 		includeBridgeTvl,
 		hasPerpsOverlayBlockingFilters,
 		minDefiActiveTvlToOnChainMcapPct,
@@ -994,6 +1011,7 @@ const CHART_FILTER_QUERY_KEYS = new Set([
 	'includeStablecoins',
 	'includeGovernance',
 	'includeRwaPerps',
+	'includeCex',
 	'includeBridgeTvl'
 ])
 
@@ -1025,7 +1043,7 @@ function hasActiveRwaFilters(
 			if (hasActiveInclusionOverride(query.includeGovernance, defaultInclusion.includeGovernance)) return true
 			continue
 		}
-		if (key === 'includeRwaPerps') {
+		if (key === 'includeRwaPerps' || key === 'includeCex') {
 			continue
 		}
 		if (key === 'includeBridgeTvl') {
@@ -1059,8 +1077,8 @@ export function getRwaAssetChartQueryKey(
 	] as const
 }
 
-export function getRwaOpenInterestChartQueryKey() {
-	return ['rwa-perps-open-interest-chart'] as const
+export function getRwaOpenInterestChartQueryKey(includeCex: boolean) {
+	return ['rwa-perps-open-interest-chart', includeCex] as const
 }
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -1107,8 +1125,10 @@ async function fetchRwaAssetChartData(params: {
 	return fetchJson<IRWAChartMetricRows>(`/api/public/rwa/asset-breakdown?${searchParams.toString()}`)
 }
 
-async function fetchRwaOpenInterestChartData(): Promise<RWAChartDataset> {
-	return fetchJson<RWAChartDataset>('/api/public/rwa/perps/contract-breakdown?key=openInterest')
+async function fetchRwaOpenInterestChartData(includeCex: boolean): Promise<RWAChartDataset> {
+	const searchParams = new URLSearchParams({ key: 'openInterest' })
+	if (includeCex) searchParams.set('includeCex', 'true')
+	return fetchJson<RWAChartDataset>(`/api/public/rwa/perps/contract-breakdown?${searchParams.toString()}`)
 }
 
 export function useRwaChartDataset({
@@ -1121,6 +1141,7 @@ export function useRwaChartDataset({
 	includeStablecoins,
 	includeGovernance,
 	includeRwaPerps,
+	includeCex,
 	includeBridgeTvl = true,
 	useInitialDataset,
 	enabled = true
@@ -1134,6 +1155,7 @@ export function useRwaChartDataset({
 	includeStablecoins: boolean
 	includeGovernance: boolean
 	includeRwaPerps: boolean
+	includeCex: boolean
 	includeBridgeTvl?: boolean
 	useInitialDataset: boolean
 	enabled?: boolean
@@ -1146,8 +1168,13 @@ export function useRwaChartDataset({
 	const hasSpotAssets = filteredAssets.some((asset) => asset.kind === 'spot')
 	const hasPerpsAssets = filteredAssets.some((asset) => asset.kind === 'perps')
 	const shouldFetchAssetRows = enabled && !useInitialDataset && hasSpotAssets
+	// The preloaded OI line only covers DEX markets; spot history is unaffected by CEX inclusion.
+	const useInitialOpenInterestDataset = useInitialDataset && !includeCex
 	const shouldFetchOpenInterest =
-		enabled && includeRwaPerps && hasPerpsAssets && (!useInitialDataset || initialOpenInterestDataset == null)
+		enabled &&
+		includeRwaPerps &&
+		hasPerpsAssets &&
+		(!useInitialOpenInterestDataset || initialOpenInterestDataset == null)
 	const {
 		data: assetRows,
 		isLoading,
@@ -1172,8 +1199,8 @@ export function useRwaChartDataset({
 		isLoading: isOpenInterestLoading,
 		error: openInterestError
 	} = useQuery({
-		queryKey: getRwaOpenInterestChartQueryKey(),
-		queryFn: () => fetchRwaOpenInterestChartData(),
+		queryKey: getRwaOpenInterestChartQueryKey(includeCex),
+		queryFn: () => fetchRwaOpenInterestChartData(includeCex),
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: 1,
@@ -1202,10 +1229,10 @@ export function useRwaChartDataset({
 			return buildRwaCanonicalMetricDataset(dataset, selectedMetric, mode === 'total')
 		})()
 
-		if (!includeRwaPerps) return spotDataset
+		if (!includeRwaPerps || !hasPerpsAssets) return spotDataset
 
 		const openInterestDataset: RWAPositionalChartDataset =
-			useInitialDataset && initialOpenInterestDataset
+			useInitialOpenInterestDataset && initialOpenInterestDataset
 				? toRwaMultiSeriesChartDataset(initialOpenInterestDataset)
 				: openInterestRows
 					? toRwaMultiSeriesChartDataset(buildRwaOpenInterestDataset(filteredAssets, openInterestRows))
@@ -1216,6 +1243,8 @@ export function useRwaChartDataset({
 		useInitialDataset,
 		initialDataset,
 		initialOpenInterestDataset,
+		useInitialOpenInterestDataset,
+		hasPerpsAssets,
 		assetRows,
 		openInterestRows,
 		filteredAssets,

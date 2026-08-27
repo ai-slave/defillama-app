@@ -244,6 +244,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		includeStablecoins,
 		includeGovernance,
 		includeRwaPerps,
+		includeCex,
 		includeBridgeTvl,
 		hasPerpsOverlayBlockingFilters,
 		setDefiActiveTvlToOnChainMcapPctRange,
@@ -252,6 +253,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		setIncludeStablecoins,
 		setIncludeGovernance,
 		setIncludeRwaPerps,
+		setIncludeCex,
 		setIncludeBridgeTvl,
 		setRedeemableStates,
 		setAttestationsStates,
@@ -306,6 +308,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		includeStablecoins,
 		includeGovernance,
 		includeRwaPerps,
+		includeCex,
 		includeBridgeTvl,
 		hasPerpsOverlayBlockingFilters,
 		minDefiActiveTvlToOnChainMcapPct,
@@ -402,6 +405,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		includeStablecoins,
 		includeGovernance,
 		includeRwaPerps,
+		includeCex,
 		includeBridgeTvl,
 		enabled: !isFlowMetric && chartView === 'timeSeries',
 		useInitialDataset:
@@ -424,6 +428,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		includeStablecoins,
 		includeGovernance,
 		includeRwaPerps: false,
+		includeCex: false,
 		enabled: isFlowMetric && (selectedFlowOverlayMetrics.includes('onChainMcap') || isFlowVsPrice),
 		useInitialDataset: initialChartDataset?.metric === 'onChainMcap' && !activeFilters && !isFlowVsPrice
 	})
@@ -437,6 +442,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		includeStablecoins,
 		includeGovernance,
 		includeRwaPerps: false,
+		includeCex: false,
 		enabled: isFlowMetric && !isFlowVsPrice && selectedFlowOverlayMetrics.includes('activeMcap'),
 		useInitialDataset: initialChartDataset?.metric === 'activeMcap' && !activeFilters
 	})
@@ -450,6 +456,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		includeStablecoins,
 		includeGovernance,
 		includeRwaPerps: false,
+		includeCex: false,
 		includeBridgeTvl,
 		enabled: isFlowMetric && !isFlowVsPrice && selectedFlowOverlayMetrics.includes('defiActiveTvl'),
 		useInitialDataset: initialChartDataset?.metric === 'defiActiveTvl' && !activeFilters
@@ -1267,6 +1274,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 					includeStablecoins,
 					includeGovernance,
 					includeRwaPerps,
+					includeCex,
 					includeBridgeTvl
 				}}
 				actions={{
@@ -1276,6 +1284,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 					setIncludeStablecoins,
 					setIncludeGovernance,
 					setIncludeRwaPerps,
+					setIncludeCex,
 					setIncludeBridgeTvl,
 					setRedeemableStates,
 					setAttestationsStates,

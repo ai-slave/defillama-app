@@ -70,6 +70,7 @@ const FILTER_QUERY_KEYS = [
 	'includeStablecoins',
 	'includeGovernance',
 	'includeRwaPerps',
+	'includeCex',
 	'includeBridgeTvl'
 ] as const
 
@@ -155,6 +156,7 @@ type RWAFilterSelections = {
 	includeStablecoins: boolean
 	includeGovernance: boolean
 	includeRwaPerps: boolean
+	includeCex: boolean
 	includeBridgeTvl: boolean
 }
 
@@ -165,6 +167,7 @@ type RWAFilterActions = {
 	setIncludeStablecoins: (value: boolean) => void
 	setIncludeGovernance: (value: boolean) => void
 	setIncludeRwaPerps: (value: boolean) => void
+	setIncludeCex: (value: boolean) => void
 	setIncludeBridgeTvl: (value: boolean) => void
 	setRedeemableStates: (values: RWAAttributeFilterState[]) => void
 	setAttestationsStates: (values: RWAAttributeFilterState[]) => void
@@ -217,7 +220,7 @@ type RWAActiveFilterPill = {
 }
 
 type RWAInclusionFilterConfig = {
-	id: 'includeStablecoins' | 'includeGovernance' | 'includeRwaPerps' | 'includeBridgeTvl'
+	id: 'includeStablecoins' | 'includeGovernance' | 'includeRwaPerps' | 'includeCex' | 'includeBridgeTvl'
 	label: string
 	value: boolean
 	defaultValue: boolean
@@ -483,6 +486,12 @@ function getRwaInclusionFilters(props: RWAOverviewFiltersProps): RWAInclusionFil
 			defaultValue: defaultInclusion.includeRwaPerps
 		},
 		{
+			id: 'includeCex',
+			label: 'Include CEX Perps',
+			value: props.selections.includeCex,
+			defaultValue: false
+		},
+		{
 			id: 'includeBridgeTvl',
 			label: 'Bridge/Interop TVL',
 			value: props.selections.includeBridgeTvl,
@@ -726,6 +735,16 @@ function RWAInclusionToggles({ selections, actions }: Pick<RWAOverviewFiltersPro
 			>
 				<span className="whitespace-nowrap">RWA Perps</span>
 			</Checkbox>
+			{selections.includeRwaPerps ? (
+				<Checkbox
+					variant="filter"
+					value="includeCex"
+					checked={selections.includeCex}
+					onChange={() => actions.setIncludeCex(!selections.includeCex)}
+				>
+					<span className="whitespace-nowrap">Include CEX Perps</span>
+				</Checkbox>
+			) : null}
 			<Checkbox
 				variant="filter"
 				value="includeBridgeTvl"

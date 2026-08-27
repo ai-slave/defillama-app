@@ -283,6 +283,7 @@ describe('rwa queries', () => {
 			{
 				id: 'treasury-1',
 				canonicalMarketId: 'ondo/usdy',
+				chain: ['Ethereum'],
 				ticker: 'USDY',
 				assetName: 'Ondo USDY',
 				category: ['Treasuries'],
@@ -293,56 +294,70 @@ describe('rwa queries', () => {
 				defiActiveTvl: { Ethereum: { Aave: 20 } }
 			}
 		])
+		const dexMarket = {
+			id: 'perps-1',
+			timestamp: 1,
+			contract: 'xyz:usdy',
+			venue: 'xyz',
+			venueType: 'DEX',
+			openInterest: 10,
+			openInterestChange24h: null,
+			volume24h: 20,
+			volume24hChange24h: null,
+			price: 1.01,
+			priceChange24h: 0,
+			fundingRate: 0,
+			premium: 0,
+			cumulativeFunding: 0,
+			referenceAsset: 'Ondo USDY',
+			referenceAssetGroup: 'Treasuries',
+			assetClass: ['Bonds'],
+			parentPlatform: 'Ondo',
+			pair: null,
+			marginAsset: null,
+			settlementAsset: null,
+			category: ['RWA Perps', 'Treasuries'],
+			issuer: 'Ondo',
+			website: null,
+			link: null,
+			oracleProvider: null,
+			description: null,
+			accessModel: 'Permissioned',
+			rwaClassification: 'RWA',
+			makerFeeRate: 0,
+			takerFeeRate: 0,
+			deployerFeeShare: 0,
+			oraclePx: 0,
+			midPx: 0,
+			prevDayPx: 0,
+			maxLeverage: 0,
+			szDecimals: 0,
+			fundingIntervalHours: 1,
+			volume7d: 0,
+			volume30d: 0,
+			volumeAllTime: 0,
+			estimatedProtocolFees24h: 0,
+			estimatedProtocolFees7d: 0,
+			estimatedProtocolFees30d: 0,
+			estimatedProtocolFeesAllTime: 0,
+			suspicious: false
+		}
 		fetchRWAPerpsCurrentMock.mockResolvedValue([
+			dexMarket,
 			{
-				id: 'perps-1',
-				timestamp: 1,
-				contract: 'xyz:usdy',
-				venue: 'xyz',
-				openInterest: 10,
-				openInterestChange24h: null,
-				volume24h: 20,
-				volume24hChange24h: null,
-				price: 1.01,
-				priceChange24h: 0,
-				fundingRate: 0,
-				premium: 0,
-				cumulativeFunding: 0,
-				referenceAsset: 'Ondo USDY',
-				referenceAssetGroup: 'Treasuries',
-				assetClass: ['Bonds'],
-				parentPlatform: 'Ondo',
-				pair: null,
-				marginAsset: null,
-				settlementAsset: null,
-				category: ['RWA Perps', 'Treasuries'],
-				issuer: 'Ondo',
-				website: null,
-				link: null,
-				oracleProvider: null,
-				description: null,
-				accessModel: 'Permissioned',
-				rwaClassification: 'RWA',
-				makerFeeRate: 0,
-				takerFeeRate: 0,
-				deployerFeeShare: 0,
-				oraclePx: 0,
-				midPx: 0,
-				prevDayPx: 0,
-				maxLeverage: 0,
-				szDecimals: 0,
-				fundingIntervalHours: 1,
-				volume7d: 0,
-				volume30d: 0,
-				volumeAllTime: 0,
-				estimatedProtocolFees24h: 0,
-				estimatedProtocolFees7d: 0,
-				estimatedProtocolFees30d: 0,
-				estimatedProtocolFeesAllTime: 0,
-				suspicious: false
+				...dexMarket,
+				id: 'binance:usdy',
+				contract: 'binance:USDY',
+				venue: 'Binance',
+				venueType: 'CEX',
+				parentPlatform: 'Binance',
+				issuer: null,
+				openInterest: 200
 			}
 		])
-		fetchRWAPerpsContractBreakdownChartDataMock.mockResolvedValue([{ timestamp: 1_000, 'xyz:usdy': 10 }])
+		fetchRWAPerpsContractBreakdownChartDataMock.mockResolvedValue([
+			{ timestamp: 1_000, 'xyz:usdy': 10, 'binance:USDY': 200 }
+		])
 
 		const result = await getRWAAssetsOverview({
 			rwaList: {
@@ -353,7 +368,7 @@ describe('rwa queries', () => {
 			} as never
 		})
 
-		expect(result?.assets.map((asset) => asset.kind)).toEqual(['spot', 'perps'])
+		expect(result?.assets.map((asset) => asset.kind)).toEqual(['spot', 'perps', 'perps'])
 		expect(result?.assets[0]).toMatchObject({
 			kind: 'spot',
 			detailHref: '/rwa/asset/ondo%2Fusdy'
@@ -380,6 +395,28 @@ describe('rwa queries', () => {
 		expect(result?.typeOptions.map((option) => option.key)).toContain('Perp')
 		expect(result?.platforms).toContain('Ondo')
 		expect(result?.assetGroups).toContain('Treasuries')
+		expect(fetchRWAPerpsCurrentMock).toHaveBeenLastCalledWith(true)
+		expect(fetchRWAPerpsContractBreakdownChartDataMock).toHaveBeenLastCalledWith({
+			key: 'openInterest',
+			target: { kind: 'all' },
+			includeCex: false
+		})
+		expect(result?.assets[1]).toMatchObject({ venueType: 'DEX', attestations: null })
+		expect(result?.assets[2]).toMatchObject({ venueType: 'CEX', attestations: null })
+		expect(result?.platforms).toContain('Binance')
+		expect(result?.issuers).toContain('Unknown')
+
+		const chainResult = await getRWAAssetsOverview({
+			chain: 'ethereum',
+			rwaList: {
+				chains: ['Ethereum'],
+				categories: ['Treasuries'],
+				platforms: ['Ondo'],
+				assetGroups: ['Treasuries']
+			} as never
+		})
+		expect(chainResult?.assets.map((asset) => asset.kind)).toEqual(['spot'])
+		expect(chainResult?.initialOpenInterestChartDataset).toBeNull()
 	})
 
 	it('falls back to the spot overview when the perps markets request fails', async () => {
@@ -593,6 +630,7 @@ describe('rwa queries', () => {
 				timestamp: 1,
 				contract: 'xyz:gold',
 				venue: 'xyz',
+				venueType: 'DEX',
 				openInterest: 10,
 				openInterestChange24h: null,
 				volume24h: 20,

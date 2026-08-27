@@ -27,6 +27,7 @@ import type {
 	IRWAAssetGroupsOverview,
 	IRWAAssetGroupsOverviewRow,
 	RWASpotOverviewAsset,
+	RWAPerpsContractOverlayRow,
 	RWAAssetChartTarget,
 	RWADefiTvlProtocolBreakdown
 } from './api.types'
@@ -145,7 +146,7 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 			IRWAPerpsBreakdownChartResponse | null
 		] = await Promise.all([
 			fetchRWAActiveTVLs(),
-			fetchRWAPerpsCurrent(false).catch(() => []),
+			fetchRWAPerpsCurrent(true).catch(() => []),
 			selectedPlatform
 				? Promise.resolve(undefined)
 				: fetchRWAChartMetricDataByAsset({
@@ -541,9 +542,8 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 			if (asset.accessModel) {
 				accessModels.set(asset.accessModel, accessModels.get(asset.accessModel) ?? 0)
 			}
-			if (asset.issuer) {
-				issuers.set(asset.issuer, issuers.get(asset.issuer) ?? 0)
-			}
+			const issuer = asset.issuer || 'Unknown'
+			issuers.set(issuer, issuers.get(issuer) ?? 0)
 		}
 
 		const formattedRwaClassifications = Array.from(rwaClassifications.entries())
@@ -613,7 +613,10 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 		})
 		const defaultAggregateAssets =
 			mode === 'platform' ? defaultFilteredAssets : defaultFilteredAssets.filter((asset) => asset.suspicious !== true)
-		const defaultFilteredPerpsRows = defaultAggregateAssets.filter((asset) => asset.kind === 'perps')
+		const defaultFilteredPerpsRows: RWAPerpsContractOverlayRow[] = []
+		for (const asset of defaultAggregateAssets) {
+			if (asset.kind === 'perps' && asset.venueType !== 'CEX') defaultFilteredPerpsRows.push(asset)
+		}
 		const initialChartDataset = chartRows
 			? {
 					metric: 'activeMcap' as const,

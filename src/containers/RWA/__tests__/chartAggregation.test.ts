@@ -99,6 +99,7 @@ function createPerpsAsset(
 	return {
 		id: 'perps-1',
 		kind: 'perps',
+		venueType: 'DEX',
 		detailHref: '/rwa/perps/contract/xyz%3Aalpha',
 		contract: 'xyz:alpha',
 		ticker: 'xyz:alpha',

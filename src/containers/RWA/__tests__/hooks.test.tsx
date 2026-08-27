@@ -87,6 +87,7 @@ function createPerpsAsset(
 	return {
 		id: 'perps-1',
 		kind: 'perps',
+		venueType: 'DEX',
 		detailHref: '/rwa/perps/contract/xyz%3Aalpha',
 		contract: 'xyz:alpha',
 		ticker: 'xyz:alpha',
@@ -146,6 +147,7 @@ function DatasetProbe({
 	includeStablecoins = false,
 	includeGovernance = false,
 	includeRwaPerps = false,
+	includeCex = false,
 	useInitialDataset = false
 }: {
 	mode: RWAChartAggregationMode
@@ -156,6 +158,7 @@ function DatasetProbe({
 	includeStablecoins?: boolean
 	includeGovernance?: boolean
 	includeRwaPerps?: boolean
+	includeCex?: boolean
 	useInitialDataset?: boolean
 }) {
 	const { chartDataset, chartError } = useRwaChartDataset({
@@ -168,10 +171,15 @@ function DatasetProbe({
 		includeStablecoins,
 		includeGovernance,
 		includeRwaPerps,
+		includeCex,
 		useInitialDataset
 	})
 
-	return React.createElement('pre', null, `${chartDataset.dimensions.join('|')};${chartError ?? ''}`)
+	return React.createElement(
+		'pre',
+		null,
+		`${chartDataset.dimensions.join('|')};${chartError ?? ''};${JSON.stringify(chartDataset)}`
+	)
 }
 
 function AssetGroupProbe({
@@ -219,11 +227,13 @@ function CategoryProbe({
 function FilteredAssetsProbe({
 	chartAssets,
 	includeRwaPerps,
+	includeCex = false,
 	hasPerpsOverlayBlockingFilters = false,
 	selectedCategoryOverride
 }: {
 	chartAssets: IRWAAssetsOverview['assets']
 	includeRwaPerps: boolean
+	includeCex?: boolean
 	hasPerpsOverlayBlockingFilters?: boolean
 	selectedCategoryOverride?: string[]
 }) {
@@ -259,6 +269,7 @@ function FilteredAssetsProbe({
 		includeStablecoins: true,
 		includeGovernance: true,
 		includeRwaPerps,
+		includeCex,
 		hasPerpsOverlayBlockingFilters,
 		minDefiActiveTvlToOnChainMcapPct: null,
 		maxDefiActiveTvlToOnChainMcapPct: null,
@@ -324,7 +335,7 @@ describe('useRwaChartDataset', () => {
 			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'onChainMcap', false, false, true)
 		})
 		expect(getUseQueryOptions(1)).toMatchObject({
-			queryKey: getRwaOpenInterestChartQueryKey(),
+			queryKey: getRwaOpenInterestChartQueryKey(false),
 			enabled: false
 		})
 		expect(getUseQueryOptions(2)).toMatchObject({
@@ -340,7 +351,7 @@ describe('useRwaChartDataset', () => {
 			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'onChainMcap', false, false, true)
 		})
 		expect(getUseQueryOptions(1)).toMatchObject({
-			queryKey: getRwaOpenInterestChartQueryKey(),
+			queryKey: getRwaOpenInterestChartQueryKey(false),
 			enabled: false
 		})
 		expect(getUseQueryOptions(2)).toMatchObject({
@@ -424,7 +435,7 @@ describe('useRwaChartDataset', () => {
 			enabled: false
 		})
 		expect(getUseQueryOptions(1)).toMatchObject({
-			queryKey: getRwaOpenInterestChartQueryKey(),
+			queryKey: getRwaOpenInterestChartQueryKey(false),
 			enabled: false
 		})
 	})
@@ -462,7 +473,7 @@ describe('useRwaChartDataset', () => {
 			enabled: false
 		})
 		expect(getUseQueryOptions(1)).toMatchObject({
-			queryKey: getRwaOpenInterestChartQueryKey(),
+			queryKey: getRwaOpenInterestChartQueryKey(false),
 			enabled: false
 		})
 	})
@@ -499,7 +510,7 @@ describe('useRwaChartDataset', () => {
 	it('retries a missing prerendered RWA Perps OI dataset without refetching the spot dataset', () => {
 		useQueryMock.mockImplementation((options: { queryKey: unknown[] }) => ({
 			data:
-				options.queryKey[0] === getRwaOpenInterestChartQueryKey()[0]
+				options.queryKey[0] === getRwaOpenInterestChartQueryKey(false)[0]
 					? {
 							source: [{ timestamp: 1, 'xyz:alpha': 25 }],
 							dimensions: ['timestamp', 'xyz:alpha']
@@ -527,9 +538,91 @@ describe('useRwaChartDataset', () => {
 		expect(markup).toContain('timestamp|Total Active Mcap|Treasuries|RWA Perps OI')
 		expect(getUseQueryOptions(0)).toMatchObject({ enabled: false })
 		expect(getUseQueryOptions(1)).toMatchObject({
-			queryKey: getRwaOpenInterestChartQueryKey(),
+			queryKey: getRwaOpenInterestChartQueryKey(false),
 			enabled: true
 		})
+	})
+
+	it('switches OI venue scope without refetching spot history or reusing the wrong preloaded line', async () => {
+		useQueryMock.mockImplementation((options: { queryKey: unknown[] }) => ({
+			data:
+				options.queryKey[0] === 'rwa-perps-open-interest-chart'
+					? {
+							source: [{ timestamp: 1, 'xyz:alpha': 100, 'binance:ALPHA': 200 }],
+							dimensions: ['timestamp', 'xyz:alpha', 'binance:ALPHA']
+						}
+					: undefined,
+			isLoading: false,
+			error: null
+		}))
+		const dex = createPerpsAsset()
+		const cex = createPerpsAsset({ id: 'binance:alpha', contract: 'binance:ALPHA', venueType: 'CEX' })
+		for (const includeCex of [false, true, false]) {
+			useQueryMock.mockClear()
+			const markup = renderToStaticMarkup(
+				<DatasetProbe
+					mode="category"
+					chartAssets={[createSpotAsset(), dex, ...(includeCex ? [cex] : [])]}
+					initialDataset={{ source: [[1, 50, 50]], dimensions: ['timestamp', 'Total Active Mcap', 'Treasuries'] }}
+					initialOpenInterestDataset={{
+						source: [{ timestamp: 1, 'RWA Perps OI': 100 }],
+						dimensions: ['timestamp', 'RWA Perps OI']
+					}}
+					selectedMetric="activeMcap"
+					includeRwaPerps
+					includeCex={includeCex}
+					useInitialDataset
+				/>
+			)
+			expect(markup).toContain('[1,50,50]')
+			expect(markup).toContain(`[1,${includeCex ? 300 : 100}]`)
+			expect(getUseQueryOptions(0)).toMatchObject({ enabled: false })
+			expect(getUseQueryOptions(1)).toMatchObject({
+				queryKey: getRwaOpenInterestChartQueryKey(includeCex),
+				enabled: includeCex
+			})
+			await useQueryMock.mock.calls[1][0].queryFn()
+			expect(fetchJsonMock).toHaveBeenLastCalledWith(
+				`/api/public/rwa/perps/contract-breakdown?key=openInterest${includeCex ? '&includeCex=true' : ''}`
+			)
+		}
+	})
+
+	it('reports a failed CEX history request instead of showing the preloaded DEX total', () => {
+		useQueryMock.mockReturnValue({ data: undefined, isLoading: false, error: new Error('CEX history unavailable') })
+		const markup = renderToStaticMarkup(
+			<DatasetProbe
+				mode="category"
+				chartAssets={[createSpotAsset(), createPerpsAsset()]}
+				initialDataset={{ source: [[1, 50, 50]], dimensions: ['timestamp', 'Total Active Mcap', 'Treasuries'] }}
+				initialOpenInterestDataset={{
+					source: [{ timestamp: 1, 'RWA Perps OI': 100 }],
+					dimensions: ['timestamp', 'RWA Perps OI']
+				}}
+				includeRwaPerps
+				includeCex
+				useInitialDataset
+			/>
+		)
+		expect(markup).toContain('CEX history unavailable')
+		expect(markup).not.toContain('RWA Perps OI')
+	})
+
+	it('does not display a preloaded OI line when filters exclude all perps', () => {
+		const markup = renderToStaticMarkup(
+			<DatasetProbe
+				mode="category"
+				chartAssets={[createSpotAsset()]}
+				initialOpenInterestDataset={{
+					source: [{ timestamp: 1, 'RWA Perps OI': 100 }],
+					dimensions: ['timestamp', 'RWA Perps OI']
+				}}
+				includeRwaPerps
+				useInitialDataset
+			/>
+		)
+		expect(markup).not.toContain('RWA Perps OI')
+		expect(getUseQueryOptions(1)).toMatchObject({ enabled: false })
 	})
 
 	it('reuses the prerendered dataset for Total by projecting the hidden Total column', () => {
@@ -557,7 +650,7 @@ describe('useRwaChartDataset', () => {
 			enabled: false
 		})
 		expect(getUseQueryOptions(1)).toMatchObject({
-			queryKey: getRwaOpenInterestChartQueryKey(),
+			queryKey: getRwaOpenInterestChartQueryKey(false),
 			enabled: false
 		})
 	})
@@ -585,7 +678,7 @@ describe('useRwaChartDataset', () => {
 			enabled: true
 		})
 		expect(getUseQueryOptions(1)).toMatchObject({
-			queryKey: getRwaOpenInterestChartQueryKey(),
+			queryKey: getRwaOpenInterestChartQueryKey(false),
 			enabled: true
 		})
 	})
@@ -610,6 +703,7 @@ describe('hasActiveChartFilters', () => {
 		expect(hasActiveChartFilters({ includeStablecoins: 'true' }, DEFAULT_STABLECOIN_INCLUSION)).toBe(false)
 		expect(hasActiveChartFilters({ includeStablecoins: 'false' }, DEFAULT_INCLUSION)).toBe(false)
 		expect(hasActiveChartFilters({ includeRwaPerps: 'false' }, DEFAULT_INCLUSION)).toBe(false)
+		expect(hasActiveChartFilters({ includeCex: 'true' }, DEFAULT_INCLUSION)).toBe(false)
 	})
 
 	it('treats inclusion params as active when they override the current defaults', () => {

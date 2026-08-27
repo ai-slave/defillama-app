@@ -1,5 +1,19 @@
-import { describe, expect, it } from 'vitest'
-import { RWA_FILTERS_TEST_UTILS } from '../Filters'
+// @vitest-environment happy-dom
+
+import { act, createElement, type ComponentProps } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { RWA_FILTERS_TEST_UTILS, RWAOverviewFilters } from '../Filters'
+import { useRWATableQueryParams } from '../hooks'
+
+const routerMock = vi.hoisted(() => ({
+	query: {} as Record<string, string | string[] | undefined>,
+	push: vi.fn()
+}))
+
+vi.mock('next/router', () => ({
+	useRouter: () => ({ query: routerMock.query, pathname: '/rwa', asPath: '/rwa', push: routerMock.push })
+}))
 
 const actions = {
 	setDefiActiveTvlToOnChainMcapPctRange: () => {},
@@ -8,6 +22,8 @@ const actions = {
 	setIncludeStablecoins: () => {},
 	setIncludeGovernance: () => {},
 	setIncludeRwaPerps: () => {},
+	setIncludeCex: () => {},
+	setIncludeBridgeTvl: () => {},
 	setRedeemableStates: () => {},
 	setAttestationsStates: () => {},
 	setCexListedStates: () => {},
@@ -17,7 +33,7 @@ const actions = {
 	setSelfCustodyStates: () => {}
 }
 
-const baseProps = {
+const baseProps: ComponentProps<typeof RWAOverviewFilters> = {
 	enabled: true,
 	defaultInclusion: { includeStablecoins: false, includeGovernance: false, includeRwaPerps: false },
 	modes: {
@@ -83,10 +99,12 @@ const baseProps = {
 		maxDefiActiveTvlToActiveMcapPct: null,
 		includeStablecoins: false,
 		includeGovernance: false,
-		includeRwaPerps: false
+		includeRwaPerps: false,
+		includeCex: false,
+		includeBridgeTvl: true
 	},
 	actions
-} as const
+}
 
 function makeProps(overrides: Record<string, unknown> = {}) {
 	return {
@@ -205,5 +223,102 @@ describe('RWA overview filter dialog helpers', () => {
 		const pills = RWA_FILTERS_TEST_UTILS.getRwaActiveFilterPills(props as any, router as any)
 
 		expect(pills).toEqual([])
+	})
+})
+
+function FiltersProbe() {
+	const { options } = baseProps
+	const state = useRWATableQueryParams({
+		assetNames: options.assetNames,
+		types: options.typeOptions.map((option) => option.key),
+		categories: options.categoriesOptions.map((option) => option.key),
+		platforms: options.platforms,
+		assetGroups: options.assetGroups,
+		assetClasses: options.assetClassOptions.map((option) => option.key),
+		rwaClassifications: options.rwaClassificationOptions.map((option) => option.key),
+		accessModels: options.accessModelOptions.map((option) => option.key),
+		issuers: options.issuers,
+		defaultInclusion: baseProps.defaultInclusion,
+		mode: 'chain'
+	})
+	return createElement(RWAOverviewFilters, { ...baseProps, selections: state, actions: state })
+}
+
+describe('RWA overview inclusion controls', () => {
+	let container: HTMLDivElement
+	let root: Root
+	const render = () =>
+		act(async () => {
+			root.render(createElement(FiltersProbe))
+		})
+	const checkbox = (value: string) => container.querySelector<HTMLInputElement>(`input[value="${value}"]`)
+	const click = async (value: string) => {
+		await act(async () => {
+			checkbox(value)!.click()
+		})
+		await render()
+	}
+
+	beforeEach(() => {
+		routerMock.query = {}
+		routerMock.push.mockReset()
+		routerMock.push.mockImplementation(async ({ query }: { query: typeof routerMock.query }) => {
+			routerMock.query = query
+			return true
+		})
+		container = document.createElement('div')
+		document.body.appendChild(container)
+		root = createRoot(container)
+	})
+
+	afterEach(async () => {
+		await act(async () => root.unmount())
+		container.remove()
+	})
+
+	it('reveals CEX only with perps and clears its selection when perps are switched off', async () => {
+		await render()
+		expect(checkbox('includeCex')).toBeNull()
+		await click('includeRwaPerps')
+		expect(checkbox('includeCex')!.checked).toBe(false)
+		await click('includeCex')
+		expect(checkbox('includeCex')!.checked).toBe(true)
+		expect(routerMock.query).toMatchObject({ includeRwaPerps: 'true', includeCex: 'true' })
+		await click('includeRwaPerps')
+		expect(checkbox('includeCex')).toBeNull()
+		expect(routerMock.query.includeCex).toBeUndefined()
+		await click('includeRwaPerps')
+		expect(checkbox('includeCex')!.checked).toBe(false)
+	})
+
+	it('restores inclusion from the URL and lets Reset filters clear both boxes', async () => {
+		routerMock.query = { includeRwaPerps: 'true', includeCex: 'true' }
+		await render()
+		expect(checkbox('includeRwaPerps')!.checked).toBe(true)
+		expect(checkbox('includeCex')!.checked).toBe(true)
+		await act(async () => {
+			const reset = [...container.querySelectorAll('button')].find((button) => button.textContent === 'Reset filters')!
+			reset.click()
+		})
+		await render()
+		expect(routerMock.query).toEqual({})
+		expect(checkbox('includeRwaPerps')!.checked).toBe(false)
+		expect(checkbox('includeCex')).toBeNull()
+	})
+
+	it('follows back/forward query changes without retaining a stale CEX selection', async () => {
+		await render()
+		routerMock.query = { includeRwaPerps: 'true', includeCex: 'true' }
+		await render()
+		expect(checkbox('includeCex')!.checked).toBe(true)
+		routerMock.query = { includeRwaPerps: 'true' }
+		await render()
+		expect(checkbox('includeCex')!.checked).toBe(false)
+		routerMock.query = { includeCex: 'true' }
+		await render()
+		expect(checkbox('includeRwaPerps')!.checked).toBe(false)
+		expect(checkbox('includeCex')).toBeNull()
+		await click('includeRwaPerps')
+		expect(checkbox('includeCex')!.checked).toBe(false)
 	})
 })

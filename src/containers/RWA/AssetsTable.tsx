@@ -323,7 +323,7 @@ function MixedMetricCell({
 	) : null
 }
 
-function createRWAAssetColumns(
+export function createRWAAssetColumns(
 	includeRwaPerps: boolean,
 	isLoadingFlowSummary: boolean,
 	isFlowSummaryUnavailable: boolean,
@@ -745,18 +745,22 @@ function createRWAAssetColumns(
 				headerHelperText: definitions.redeemable.description
 			}
 		}),
-		columnHelper.accessor((asset) => asset.attestations ?? undefined, {
+		columnHelper.accessor((asset) => (asset.kind === 'perps' ? undefined : (asset.attestations ?? undefined)), {
 			id: 'attestations',
 			header: definitions.attestations.label,
-			cell: (info) => (
-				<span className={info.getValue() ? 'text-data-up' : 'text-data-down'}>
-					{info.getValue() != null ? (info.getValue() ? 'Yes' : 'No') : null}
-				</span>
-			),
+			cell: (info) =>
+				info.row.original.kind === 'perps' ? (
+					<span className="text-tertiary">N/A</span>
+				) : (
+					<span className={info.getValue() ? 'text-data-up' : 'text-data-down'}>
+						{info.getValue() != null ? (info.getValue() ? 'Yes' : 'No') : null}
+					</span>
+				),
 			meta: {
 				headerClassName: 'w-[120px]',
 				align: 'end',
-				headerHelperText: definitions.attestations.description
+				headerHelperText: definitions.attestations.description,
+				csvValue: (asset) => (asset.kind === 'perps' ? 'N/A' : (asset.attestations ?? ''))
 			}
 		}),
 		columnHelper.accessor((asset) => asset.cexListed ?? undefined, {
