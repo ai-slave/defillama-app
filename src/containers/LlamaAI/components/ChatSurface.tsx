@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useRef, type ReactNode } from 'react'
 import { ChatLanding, type ChatLandingProps } from '~/containers/LlamaAI/components/ChatLanding'
 import { ConversationView, type ConversationViewModel } from '~/containers/LlamaAI/components/ConversationView'
 
@@ -34,6 +34,11 @@ export function ChatSurface({
 	conversationViewModel,
 	conversationKey
 }: ChatSurfaceProps) {
+	// The exit copy must not bind the live composer ref: React nulls a shared ref when the
+	// exit layer unmounts, detaching the still-mounted conversation composer (auto-grow,
+	// focus, and combobox anchoring all silently break).
+	const exitLandingPromptInputRef = useRef<HTMLTextAreaElement | null>(null)
+
 	if (showLanding && !animateLandingTransition) {
 		return renderLanding(landingOverride, landingProps)
 	}
@@ -47,7 +52,7 @@ export function ChatSurface({
 					aria-hidden="true"
 					className="pointer-events-none absolute inset-0 motion-safe:animate-ai-landing-exit motion-reduce:opacity-0"
 				>
-					{renderLanding(landingOverride, landingProps)}
+					{renderLanding(landingOverride, { ...landingProps, promptInputRef: exitLandingPromptInputRef })}
 				</div>
 			) : null}
 			<div

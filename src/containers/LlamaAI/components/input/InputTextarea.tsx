@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
-import type { RefObject } from 'react'
+import { useMemo, type RefObject } from 'react'
+import { createOwnedRef } from '~/containers/LlamaAI/utils/ownedRef'
 
 interface InputTextareaProps {
 	combobox: Ariakit.ComboboxStore
@@ -34,6 +35,7 @@ export function InputTextarea({
 	onCompositionStart,
 	onCompositionEnd
 }: InputTextareaProps) {
+	const bindPromptInput = useMemo(() => createOwnedRef(promptInputRef), [promptInputRef])
 	return (
 		<div className="relative w-full">
 			<Ariakit.Combobox
@@ -46,7 +48,7 @@ export function InputTextarea({
 				setValueOnChange={false}
 				render={
 					<textarea
-						ref={promptInputRef}
+						ref={bindPromptInput}
 						value={value}
 						rows={1}
 						maxLength={200_000}
