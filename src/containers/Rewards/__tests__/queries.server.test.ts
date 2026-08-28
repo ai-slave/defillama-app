@@ -60,6 +60,19 @@ describe('rewards public page boundary', () => {
 		})
 	})
 
+	it.each(['Live', 'Ended'] as const)('retains %s programs when the API omits the source URL', (lifecycle) => {
+		const entry = apiRecord({ lifecycle })
+		delete entry.source_url
+		const { programs } = buildRewardsPageData([entry], {}, rankings)
+		expect(programs).toHaveLength(1)
+		expect(programs[0]).toMatchObject({
+			programId: entry.program_id,
+			lifecycle,
+			referralUrl: entry.referral_url,
+			sources: []
+		})
+	})
+
 	it('labels dates at the month granularity editors record, and sorts by the earliest known date', () => {
 		const [both, startOnly, endOnly, neither] = buildRewardsPageData(
 			[

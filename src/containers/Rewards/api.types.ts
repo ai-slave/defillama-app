@@ -18,5 +18,5 @@ export interface RewardsApiRecord {
 	visitor_benefit: string
 	referrer_benefit: string
 	referral_url: string
-	source_url: string
+	source_url?: string
 }

@@ -48,7 +48,7 @@ export function buildRewardsPageData(
 		const name = protocol?.displayName ?? protocol?.name ?? entry.protocol
 		const rankingId = rankings.parentById.get(entry.defillama_id) ?? entry.defillama_id
 		const sources: RewardSource[] = []
-		for (const value of entry.source_url.split('|')) {
+		for (const value of entry.source_url?.split('|') ?? []) {
 			const source = publicHttpUrl(value)
 			if (source && !sources.some((existing) => existing.url === source.url)) sources.push(source)
 		}
