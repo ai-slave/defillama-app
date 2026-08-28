@@ -1,15 +1,25 @@
 import type {
 	EquitiesDimensionMetric,
 	EquitiesDimensionPeriod,
+	EquitiesIntradayTimeframe,
 	EquitiesPriceHistory,
 	IEquitiesDimensionsResponse
 } from './api.types'
-import type { IEquitiesPriceHistoryChart } from './types'
+import type { IEquitiesIntradayPriceHistoryChart, IEquitiesPriceHistoryChart } from './types'
 
 const FUNDAMENTAL_CHART_LABELS: Record<EquitiesDimensionMetric, string> = {
 	revenue: 'Revenue',
 	holdersRevenue: 'Holders Revenue',
-	earnings: 'Earnings'
+	earnings: 'Earnings',
+	basicSharesOutstanding: 'Shares Outstanding'
+}
+
+// Shares outstanding is a share count, so it must not render with the USD symbol the other metrics use.
+export const FUNDAMENTAL_CHART_VALUE_SYMBOLS: Record<EquitiesDimensionMetric, string> = {
+	revenue: '$',
+	holdersRevenue: '$',
+	earnings: '$',
+	basicSharesOutstanding: ''
 }
 
 export function buildPriceHistoryChart(priceHistory: EquitiesPriceHistory): IEquitiesPriceHistoryChart {
@@ -36,13 +46,55 @@ export function buildPriceHistoryChart(priceHistory: EquitiesPriceHistory): IEqu
 	}
 }
 
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+function formatIntradaySessionLabel(timestampMs: number): string {
+	const date = new Date(timestampMs)
+	const hours = date.getUTCHours().toString().padStart(2, '0')
+	const minutes = date.getUTCMinutes().toString().padStart(2, '0')
+	return `${date.getUTCDate()} ${MONTH_LABELS[date.getUTCMonth()]} ${hours}:${minutes}`
+}
+
+export function formatIntradayAxisTimeOnly(label: string): string {
+	return label.slice(label.lastIndexOf(' ') + 1)
+}
+
+export function buildIntradayPriceHistoryChart(
+	priceHistory: EquitiesPriceHistory,
+	timeframe: EquitiesIntradayTimeframe
+): IEquitiesIntradayPriceHistoryChart {
+	const timeSeries = buildPriceHistoryChart(priceHistory)
+	const source: Array<Array<string | number | null>> = new Array(timeSeries.dataset.source.length)
+	for (let index = 0; index < timeSeries.dataset.source.length; index++) {
+		const row = timeSeries.dataset.source[index]!
+		source[index] = [formatIntradaySessionLabel(row[0] as number), row[1] ?? null]
+	}
+
+	return {
+		dataset: {
+			source,
+			dimensions: ['session', 'Close']
+		},
+		charts: [
+			{
+				type: 'line',
+				name: 'Close',
+				encode: { x: 'session', y: 'Close' }
+			}
+		],
+		csvDataset: timeSeries.dataset,
+		timeOnlyAxisLabels: timeframe === '1D'
+	}
+}
+
 export function buildEquitiesDimensionsChart(
 	dimensions: IEquitiesDimensionsResponse,
 	metric: EquitiesDimensionMetric,
 	period: EquitiesDimensionPeriod
 ): IEquitiesPriceHistoryChart {
 	const label = FUNDAMENTAL_CHART_LABELS[metric]
-	const points = dimensions[metric][period]
+	const valueSymbol = FUNDAMENTAL_CHART_VALUE_SYMBOLS[metric]
+	const points = dimensions[metric]?.[period] ?? []
 	const source: Array<Array<number | null>> = new Array(points.length)
 	let targetIndex = points.length - 1
 	for (const [date, value] of points) {
@@ -59,7 +111,8 @@ export function buildEquitiesDimensionsChart(
 			{
 				type: 'bar',
 				name: label,
-				encode: { x: 'timestamp', y: label }
+				encode: { x: 'timestamp', y: label },
+				valueSymbol
 			}
 		]
 	}

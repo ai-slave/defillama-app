@@ -5,19 +5,37 @@ import {
 	getSortedRowModel,
 	useReactTable
 } from '@tanstack/react-table'
+import { useRouter } from 'next/router'
+import { useMemo } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { BasicLink } from '~/components/Link'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
+import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Tag } from '~/ui/Tag'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formatDateTime } from '~/utils/dateFormat'
+import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import { formatEquitiesCompactValue } from './financialsFormatting'
 import type { IEquitiesOnchainMarketRow, IEquitiesOnchainTokenRow } from './types'
 
 const TABLE_PAGE_SIZE_OPTIONS = [10, 25, 50] as const
 const DEFAULT_TABLE_PAGE_SIZE = 10
+
+const MARKET_VENUE_FILTERS = ['all', 'CEX', 'DEX'] as const
+type MarketVenueFilter = (typeof MARKET_VENUE_FILTERS)[number]
+const MARKET_VENUE_QUERY_VALUES: Record<MarketVenueFilter, string | undefined> = {
+	all: undefined,
+	CEX: 'cex',
+	DEX: 'dex'
+}
+
+function getMarketVenueFromQuery(value?: string): MarketVenueFilter {
+	const match = MARKET_VENUE_FILTERS.find((filter) => MARKET_VENUE_QUERY_VALUES[filter] === value)
+	return match ?? 'all'
+}
 
 const marketsColumnHelper = createColumnHelper<IEquitiesOnchainMarketRow>()
 const tokensColumnHelper = createColumnHelper<IEquitiesOnchainTokenRow>()
@@ -113,6 +131,15 @@ const marketsColumns = [
 			),
 		meta: {
 			headerClassName: 'w-[180px]',
+			align: 'start'
+		}
+	}),
+	marketsColumnHelper.accessor('exchangeType', {
+		header: 'Type',
+		enableSorting: false,
+		cell: ({ getValue }) => <Tag>{getValue()}</Tag>,
+		meta: {
+			headerClassName: 'w-[84px]',
 			align: 'start'
 		}
 	}),
@@ -229,9 +256,29 @@ function EmptyState({ children }: { children: React.ReactNode }) {
 }
 
 export function EquitiesMarketsTable({ markets, ticker }: { markets: IEquitiesOnchainMarketRow[]; ticker: string }) {
+	const router = useRouter()
+	const activeVenue = getMarketVenueFromQuery(readSingleQueryValue(router.query.marketVenue))
+
+	const { rows, counts } = useMemo(() => {
+		let cexCount = 0
+		for (const market of markets) {
+			if (market.exchangeType === 'CEX') cexCount += 1
+		}
+		return {
+			counts: { all: markets.length, CEX: cexCount, DEX: markets.length - cexCount },
+			rows: activeVenue === 'all' ? markets : markets.filter((market) => market.exchangeType === activeVenue)
+		}
+	}, [activeVenue, markets])
+
+	const columnVisibility = useMemo(
+		() => ({ exchangeType: activeVenue === 'all', exchangeName: activeVenue === 'DEX' }),
+		[activeVenue]
+	)
+
 	const table = useReactTable({
 		defaultColumn: { sortUndefined: 'last' },
-		data: markets,
+		data: rows,
+		state: { columnVisibility },
 		columns: marketsColumns,
 		initialState: {
 			pagination: {
@@ -245,16 +292,45 @@ export function EquitiesMarketsTable({ markets, ticker }: { markets: IEquitiesOn
 		getPaginationRowModel: getPaginationRowModel()
 	})
 
+	const setActiveVenue = (venue: MarketVenueFilter) => {
+		table.resetPageIndex()
+		void pushShallowQuery(router, { marketVenue: MARKET_VENUE_QUERY_VALUES[venue] })
+	}
+
+	const csvFilename =
+		activeVenue === 'all'
+			? `equities-${ticker.toLowerCase()}-markets`
+			: `equities-${ticker.toLowerCase()}-markets-${activeVenue.toLowerCase()}`
+
 	return (
 		<Panel padding="none" className="col-span-full">
-			<TableToolbar className="justify-end">
+			<TableToolbar>
+				<SegmentedControl
+					value={activeVenue}
+					onValueChange={setActiveVenue}
+					options={MARKET_VENUE_FILTERS.map((filter) => ({
+						value: filter,
+						label: `${filter === 'all' ? 'All' : filter} (${counts[filter]})`,
+						disabled: counts[filter] === 0
+					}))}
+					label="Venue type"
+					variant="default"
+					size="md"
+					className="mr-auto"
+				/>
 				<CSVDownloadButton
-					prepareCsv={() => prepareTableCsv({ instance: table, filename: `equities-${ticker.toLowerCase()}-markets` })}
+					prepareCsv={() => prepareTableCsv({ instance: table, filename: csvFilename })}
 					smol
 					size="md"
 				/>
 			</TableToolbar>
-			{markets.length === 0 ? <EmptyState>No on-chain markets found for {ticker}.</EmptyState> : null}
+			{rows.length === 0 ? (
+				<EmptyState>
+					{activeVenue === 'all'
+						? `No on-chain markets found for ${ticker}.`
+						: `No ${activeVenue} markets found for ${ticker}.`}
+				</EmptyState>
+			) : null}
 			<PaginatedTable table={table} pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS} shell="none" />
 		</Panel>
 	)

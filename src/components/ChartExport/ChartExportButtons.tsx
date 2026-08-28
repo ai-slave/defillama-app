@@ -10,6 +10,7 @@ interface ChartExportButtonsProps {
 	expandLegend?: boolean | undefined
 	className?: string | undefined
 	smol?: boolean | undefined
+	disabled?: boolean | undefined
 	showCsv?: boolean | undefined
 	showPng?: boolean | undefined
 	/** Explicitly declares whether CSV reads the rendered chart, a lazy dataset, or specialized rows. */
@@ -27,6 +28,7 @@ export function ChartExportButtons({
 	expandLegend,
 	className,
 	smol,
+	disabled,
 	showCsv = true,
 	showPng = true,
 	csvSource,
@@ -42,6 +44,7 @@ export function ChartExportButtons({
 					filename={filename}
 					className={className}
 					smol={smol}
+					disabled={disabled}
 					source={csvSource}
 					onExport={onCsvExport}
 				/>
@@ -55,6 +58,7 @@ export function ChartExportButtons({
 					expandLegend={expandLegend}
 					className={className}
 					smol={smol}
+					disabled={disabled}
 					pngProfile={pngProfile}
 					onExport={onPngExport}
 				/>

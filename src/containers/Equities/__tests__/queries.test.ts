@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type {
 	EquitiesPriceHistory,
+	EquitiesPriceHistoryTimeframe,
 	IEquitiesCompanyApiItem,
 	IEquitiesDimensionsResponse,
 	IEquitiesFilingApiItem,
@@ -18,7 +19,10 @@ const mocks = vi.hoisted(() => ({
 	fetchEquitiesFilings: vi.fn<(ticker: string, country: string) => Promise<IEquitiesFilingApiItem[]>>(),
 	fetchEquitiesMetadata: vi.fn<(ticker: string, country: string) => Promise<IEquitiesMetadataResponse>>(),
 	fetchEquitiesOnchain: vi.fn<(ticker: string, country: string) => Promise<IEquitiesOnchainResponse>>(),
-	fetchEquitiesPriceHistory: vi.fn<(ticker: string, country: string) => Promise<EquitiesPriceHistory>>(),
+	fetchEquitiesPriceHistory:
+		vi.fn<
+			(ticker: string, country: string, timeframe: EquitiesPriceHistoryTimeframe) => Promise<EquitiesPriceHistory>
+		>(),
 	fetchEquitiesStatements: vi.fn<(ticker: string, country: string) => Promise<IEquitiesStatementsResponse>>(),
 	fetchEquitiesSummary: vi.fn<(ticker: string, country: string) => Promise<IEquitiesSummaryResponse>>()
 }))
@@ -28,7 +32,8 @@ vi.mock('../api', () => mocks)
 const emptyDimensions: IEquitiesDimensionsResponse = {
 	revenue: { annual: [], quarterly: [] },
 	holdersRevenue: { annual: [], quarterly: [] },
-	earnings: { annual: [], quarterly: [] }
+	earnings: { annual: [], quarterly: [] },
+	basicSharesOutstanding: { annual: [], quarterly: [] }
 }
 
 const emptyStatementSection = {
@@ -154,6 +159,19 @@ describe('getEquitiesListPageData', () => {
 })
 
 describe('getEquitiesTickerPageData', () => {
+	it('fetches only the default 1D price history for page generation', async () => {
+		const priceHistory: EquitiesPriceHistory = [
+			['2026-08-27T13:35:00Z', 223],
+			['2026-08-27T13:30:00Z', 222]
+		]
+		mocks.fetchEquitiesPriceHistory.mockResolvedValue(priceHistory)
+
+		const result = await getEquitiesTickerPageData('NVDA', 'US', pageMetadata)
+
+		expect(mocks.fetchEquitiesPriceHistory).toHaveBeenCalledExactlyOnceWith('NVDA', 'US', '1D')
+		expect(result?.priceHistory).toEqual(priceHistory)
+	})
+
 	it('derives an unlocks slug from a lowercased ticker present in emissions metadata', async () => {
 		const result = await getEquitiesTickerPageData('NVDA', 'US', {
 			protocolDisplayNames: new Map(),
@@ -181,7 +199,7 @@ describe('getEquitiesTickerPageData', () => {
 			emissionsProtocolBySlug: {}
 		})
 
-		expect(result?.priceHistoryChart?.dataset.source).toEqual([])
+		expect(result?.priceHistory).toEqual([])
 		expect(result?.filings).toEqual([])
 		expect(result?.onchain).toEqual({ perps: [], tokens: [] })
 		expect(mocks.fetchEquitiesOnchain).toHaveBeenCalledWith('NVDA', 'US')
@@ -322,7 +340,7 @@ describe('getEquitiesTickerPageData', () => {
 		const result = await getEquitiesTickerPageData('NVDA', 'US', pageMetadata)
 
 		expect(result).not.toBeNull()
-		expect(result?.priceHistoryChart).toBeNull()
+		expect(result?.priceHistory).toBeNull()
 		expect(result?.filings).toEqual([])
 		expect(result?.filingForms).toEqual([])
 		expect(result?.onchain).toEqual({ perps: [], tokens: [] })
@@ -334,7 +352,7 @@ describe('getEquitiesTickerPageData', () => {
 		const result = await getEquitiesTickerPageData('NVDA', 'US', pageMetadata)
 
 		expect(result).not.toBeNull()
-		expect(result?.priceHistoryChart?.dataset.source).toEqual([])
+		expect(result?.priceHistory).toEqual([])
 		expect(result?.filings).toBeNull()
 		expect(result?.filingForms).toEqual([])
 		expect(result?.onchain).toEqual({ perps: [], tokens: [] })
@@ -346,7 +364,7 @@ describe('getEquitiesTickerPageData', () => {
 		const result = await getEquitiesTickerPageData('NVDA', 'US', pageMetadata)
 
 		expect(result).not.toBeNull()
-		expect(result?.priceHistoryChart?.dataset.source).toEqual([])
+		expect(result?.priceHistory).toEqual([])
 		expect(result?.filings).toEqual([])
 		expect(result?.onchain).toBeNull()
 	})

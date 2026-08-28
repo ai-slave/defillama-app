@@ -1,5 +1,6 @@
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import type {
+	EquitiesPriceHistory,
 	IEquitiesCompanyApiItem,
 	IEquitiesDimensionsResponse,
 	IEquitiesFilingApiItem,
@@ -13,6 +14,11 @@ import type {
 export interface IEquitiesPriceHistoryChart {
 	dataset: MultiSeriesChartDataset
 	charts: MultiSeriesChartSeriesConfig[]
+}
+
+export interface IEquitiesIntradayPriceHistoryChart extends IEquitiesPriceHistoryChart {
+	csvDataset: MultiSeriesChartDataset
+	timeOnlyAxisLabels: boolean
 }
 
 export interface IEquitiesListCompanyRow extends IEquitiesCompanyApiItem {
@@ -53,7 +59,7 @@ export interface IEquityTickerPageProps {
 	name: string
 	metadata: IEquitiesMetadataResponse
 	summary: IEquitiesSummaryResponse
-	priceHistoryChart: IEquitiesPriceHistoryChart | null
+	priceHistory: EquitiesPriceHistory | null
 	statements: IEquitiesStatementsResponse
 	dimensions: IEquitiesDimensionsResponse
 	filings: IEquitiesFilingApiItem[] | null

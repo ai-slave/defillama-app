@@ -71,12 +71,12 @@ export async function fetchEquitiesStatements(ticker: string, country: string): 
 }
 
 /**
- * Fetch historical daily close prices for a company ticker.
+ * Fetch close prices for a company ticker at the requested timeframe's resolution.
  */
 export async function fetchEquitiesPriceHistory(
 	ticker: string,
 	country: string,
-	timeframe: EquitiesPriceHistoryTimeframe = 'MAX'
+	timeframe: EquitiesPriceHistoryTimeframe
 ): Promise<EquitiesPriceHistory> {
 	return fetchJson<EquitiesPriceHistory>(createEquitiesUrl(EQUITIES_PRICE_HISTORY_API, { ticker, country, timeframe }))
 }

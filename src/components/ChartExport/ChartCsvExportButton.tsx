@@ -308,6 +308,7 @@ interface ChartCsvExportButtonProps {
 	chartInstance: () => echarts.ECharts | null
 	className?: string | undefined
 	smol?: boolean | undefined
+	disabled?: boolean | undefined
 	filename?: string | undefined
 	source: ChartCsvSource
 	onExport?: ((info: { filename: string }) => void) | undefined
@@ -319,6 +320,7 @@ export function ChartCsvExportButton({
 	chartInstance,
 	className = DEFAULT_CLASSNAME,
 	smol = true,
+	disabled,
 	filename,
 	source,
 	onExport
@@ -344,7 +346,7 @@ export function ChartCsvExportButton({
 	}, [chartInstance, filename, source, onExport])
 
 	return (
-		<CSVDownloadButton prepareCsv={prepareCsv} replaceClassName className={className} smol={smol}>
+		<CSVDownloadButton prepareCsv={prepareCsv} replaceClassName className={className} smol={smol} disabled={disabled}>
 			<span>{smol ? '.csv' : 'CSV'}</span>
 		</CSVDownloadButton>
 	)

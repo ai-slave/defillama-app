@@ -1,7 +1,9 @@
+import { useQuery } from '@tanstack/react-query'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import { TokenLogo } from '~/components/TokenLogo'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
@@ -9,23 +11,32 @@ import defs from '~/public/equities-definitions.json'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { MetricRow } from '~/ui/MetricPrimitives'
-import { Panel } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { equityCountryFlagUrl } from '~/utils/icons'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
-import type {
-	EquitiesDimensionMetric,
-	EquitiesDimensionPeriod,
-	EquitiesPriceHistoryTimeframe,
-	IEquitiesSummaryResponse
+import {
+	DEFAULT_PRICE_HISTORY_TIMEFRAME,
+	EQUITIES_PRICE_HISTORY_TIMEFRAMES,
+	isEquitiesIntradayTimeframe,
+	type EquitiesDimensionMetric,
+	type EquitiesDimensionPeriod,
+	type EquitiesPriceHistoryTimeframe,
+	type IEquitiesSummaryResponse
 } from './api.types'
-import { buildEquitiesDimensionsChart } from './chartData'
+import {
+	buildEquitiesDimensionsChart,
+	buildIntradayPriceHistoryChart,
+	buildPriceHistoryChart,
+	formatIntradayAxisTimeOnly,
+	FUNDAMENTAL_CHART_VALUE_SYMBOLS
+} from './chartData'
 import { EquitiesFilingsTable } from './FilingsTable'
 import { formatEquitiesCompactValue } from './financialsFormatting'
 import { EquitiesFinancialsTable } from './FinancialsTable'
 import { EquitiesMarketsTable, EquitiesTokensTable } from './OnchainTables'
+import { fetchEquitiesPriceHistoryFromProxy } from './priceHistoryClient'
 import { getAvailableEquityTabs, type EquityTab } from './tickerPageState'
 import type { IEquityTickerPageProps } from './types'
 
@@ -35,29 +46,34 @@ const TokenUnlocksSection = dynamic(
 	{ loading: () => <div className="min-h-[572px]" /> }
 )
 
-const EQUITIES_PRICE_HISTORY_TIMEFRAMES: readonly EquitiesPriceHistoryTimeframe[] = [
-	'1W',
-	'1M',
-	'6M',
-	'1Y',
-	'5Y',
-	'MAX'
-]
-const DEFAULT_PRICE_HISTORY_TIMEFRAME: EquitiesPriceHistoryTimeframe = 'MAX'
 const SCALED_Y_AXIS_CHART_OPTIONS = { yAxis: { scale: true } }
 
-const EQUITY_FUNDAMENTAL_CHART_OPTIONS = ['Revenue', 'Holders Revenue', 'Earnings'] as const
+// Category axis so closed-market hours are compressed out instead of drawn as a
+// diagonal between sessions. boundaryGap:false keeps the line flush with the edges.
+const INTRADAY_CHART_OPTIONS = {
+	...createCategoryChartOptions('$'),
+	xAxis: { type: 'category' as const, boundaryGap: false },
+	yAxis: { scale: true }
+}
+const INTRADAY_SINGLE_SESSION_CHART_OPTIONS = {
+	...INTRADAY_CHART_OPTIONS,
+	xAxis: { ...INTRADAY_CHART_OPTIONS.xAxis, axisLabel: { formatter: formatIntradayAxisTimeOnly } }
+}
+
+const EQUITY_FUNDAMENTAL_CHART_OPTIONS = ['Revenue', 'Holders Revenue', 'Earnings', 'Shares Outstanding'] as const
 type EquityFundamentalChartOption = (typeof EQUITY_FUNDAMENTAL_CHART_OPTIONS)[number]
 const DEFAULT_EQUITY_FUNDAMENTAL_CHART: EquityFundamentalChartOption = 'Revenue'
 const EQUITY_FUNDAMENTAL_CHART_QUERY_VALUES: Record<EquityFundamentalChartOption, string | undefined> = {
 	Revenue: undefined,
 	'Holders Revenue': 'holders-revenue',
-	Earnings: 'earnings'
+	Earnings: 'earnings',
+	'Shares Outstanding': 'shares-outstanding'
 }
 const EQUITY_FUNDAMENTAL_CHART_API_KEYS: Record<EquityFundamentalChartOption, EquitiesDimensionMetric> = {
 	Revenue: 'revenue',
 	'Holders Revenue': 'holdersRevenue',
-	Earnings: 'earnings'
+	Earnings: 'earnings',
+	'Shares Outstanding': 'basicSharesOutstanding'
 }
 
 const EQUITY_DIMENSION_PERIOD_OPTIONS = ['Quarterly', 'Annual'] as const
@@ -70,15 +86,6 @@ const EQUITY_DIMENSION_PERIOD_QUERY_VALUES: Record<EquityDimensionPeriodOption, 
 const EQUITY_DIMENSION_PERIOD_API_KEYS: Record<EquityDimensionPeriodOption, EquitiesDimensionPeriod> = {
 	Quarterly: 'quarterly',
 	Annual: 'annual'
-}
-
-const TIMEFRAME_MS: Record<EquitiesPriceHistoryTimeframe, number | null> = {
-	'1W': 7 * 86_400_000,
-	'1M': 30 * 86_400_000,
-	'6M': 180 * 86_400_000,
-	'1Y': 365 * 86_400_000,
-	'5Y': 5 * 365 * 86_400_000,
-	MAX: null
 }
 
 const TAB_LABELS: Record<EquityTab, string> = {
@@ -235,27 +242,46 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 		readSingleQueryValue(router.query.fundamentalsPeriod)
 	)
 
-	const activePriceHistoryChart = useMemo(() => {
-		if (!props.priceHistoryChart) return null
-		const duration = TIMEFRAME_MS[activeTimeframe]
-		if (!duration) return props.priceHistoryChart
-		const latestPoint = props.priceHistoryChart.dataset.source.at(-1)
-		if (!latestPoint) return props.priceHistoryChart
-		const cutoff = (latestPoint[0] as number) - duration
-		const source: typeof props.priceHistoryChart.dataset.source = []
-		for (const point of props.priceHistoryChart.dataset.source) {
-			if ((point[0] as number) >= cutoff) source.push(point)
-		}
-		return { ...props.priceHistoryChart, dataset: { ...props.priceHistoryChart.dataset, source } }
-	}, [activeTimeframe, props.priceHistoryChart])
+	const isIntradayTimeframe = isEquitiesIntradayTimeframe(activeTimeframe)
+
+	const priceHistory = useQuery({
+		queryKey: ['equities-price-history', props.ticker, props.country, activeTimeframe],
+		queryFn: () => fetchEquitiesPriceHistoryFromProxy(props.ticker, props.country, activeTimeframe),
+		// Only seed the default timeframe; every other range comes from its own proxy request.
+		initialData: activeTimeframe === DEFAULT_PRICE_HISTORY_TIMEFRAME ? (props.priceHistory ?? undefined) : undefined,
+		staleTime: 30 * 60 * 1000,
+		refetchOnWindowFocus: false
+	})
+
+	const dailyPriceHistoryChart = useMemo(() => {
+		if (isIntradayTimeframe || !priceHistory.data?.length) return null
+		return buildPriceHistoryChart(priceHistory.data)
+	}, [isIntradayTimeframe, priceHistory.data])
+
+	const intradayPriceHistoryChart = useMemo(
+		() =>
+			isIntradayTimeframe && priceHistory.data?.length
+				? buildIntradayPriceHistoryChart(priceHistory.data, activeTimeframe)
+				: null,
+		[activeTimeframe, priceHistory.data, isIntradayTimeframe]
+	)
+
+	const activePriceHistoryChart = intradayPriceHistoryChart ?? dailyPriceHistoryChart
+	const priceHistoryChartOptions = intradayPriceHistoryChart
+		? intradayPriceHistoryChart.timeOnlyAxisLabels
+			? INTRADAY_SINGLE_SESSION_CHART_OPTIONS
+			: INTRADAY_CHART_OPTIONS
+		: SCALED_Y_AXIS_CHART_OPTIONS
+
+	const activeFundamentalMetric = EQUITY_FUNDAMENTAL_CHART_API_KEYS[activeFundamentalChart]
 
 	const activeFundamentalsChart = useMemo(() => {
 		return buildEquitiesDimensionsChart(
 			props.dimensions,
-			EQUITY_FUNDAMENTAL_CHART_API_KEYS[activeFundamentalChart],
+			activeFundamentalMetric,
 			EQUITY_DIMENSION_PERIOD_API_KEYS[activeDimensionPeriod]
 		)
-	}, [activeDimensionPeriod, activeFundamentalChart, props.dimensions])
+	}, [activeDimensionPeriod, activeFundamentalMetric, props.dimensions])
 
 	const setActiveTab = (tab: EquityTab) => {
 		void pushShallowQuery(router, { tab: tab === 'financials' ? undefined : tab })
@@ -287,10 +313,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 		<article className="flex flex-col gap-2">
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
 				{/* Desktop: left stats panel */}
-				<Card
-					padding="sm"
-					className={`col-span-1 hidden flex-col gap-6 xl:flex ${activePriceHistoryChart ? 'xl:min-h-[360px]' : 'xl:col-span-full'}`}
-				>
+				<Card padding="sm" className="col-span-1 hidden flex-col gap-6 xl:flex xl:min-h-[360px]">
 					<EquityTitle
 						ticker={props.ticker}
 						country={props.country}
@@ -306,71 +329,66 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 					<EquityKeyMetrics summary={props.summary} />
 				</Card>
 
-				<div className={`col-span-1 grid grid-cols-2 gap-2 ${activePriceHistoryChart ? 'xl:col-[2/-1]' : 'xl:hidden'}`}>
-					{activePriceHistoryChart ? (
-						<Panel padding="none" className="col-span-full">
-							{/* Mobile: name + market cap */}
-							<div className="flex flex-col gap-6 p-2 pb-0 xl:hidden">
-								<EquityTitle
-									ticker={props.ticker}
-									country={props.country}
-									name={props.name}
-									website={props.metadata.website}
-								/>
-								<p className="flex flex-col">
-									<span className="text-secondary">{defs.marketCap.label}</span>
-									<span className="min-h-8 font-jetbrains text-2xl font-semibold">
-										{formatEquitiesCompactValue(props.summary.marketCap, '$') ?? '-'}
-									</span>
-								</p>
-							</div>
+				<div className="col-span-1 grid grid-cols-2 gap-2 xl:col-[2/-1]">
+					<ChartPanel className="col-span-full">
+						{/* Mobile: name + market cap */}
+						<div className="flex flex-col gap-6 p-2 pb-0 xl:hidden">
+							<EquityTitle
+								ticker={props.ticker}
+								country={props.country}
+								name={props.name}
+								website={props.metadata.website}
+							/>
+							<p className="flex flex-col">
+								<span className="text-secondary">{defs.marketCap.label}</span>
+								<span className="min-h-8 font-jetbrains text-2xl font-semibold">
+									{formatEquitiesCompactValue(props.summary.marketCap, '$') ?? '-'}
+								</span>
+							</p>
+						</div>
 
-							<ChartPanelToolbar className="justify-end">
-								<h2 className="mr-auto heading-xs">Price History</h2>
-								<TagGroup
-									variant="default"
-									size="md"
-									selectedValue={activeTimeframe}
-									setValue={setActiveTimeframe}
-									values={EQUITIES_PRICE_HISTORY_TIMEFRAMES}
-								/>
-								<ChartExportButtons
-									chartInstance={priceChartInstance}
-									filename={exportFilename}
-									title={exportTitle}
-									csvSource={{ type: 'dataset', prepare: () => activePriceHistoryChart.dataset }}
-								/>
-							</ChartPanelToolbar>
-							<Suspense fallback={<ChartPanelBodyFallback />}>
+						<ChartPanelToolbar className="justify-end">
+							<h2 className="mr-auto heading-xs">Price History</h2>
+							<TagGroup
+								variant="default"
+								size="md"
+								selectedValue={activeTimeframe}
+								setValue={setActiveTimeframe}
+								values={EQUITIES_PRICE_HISTORY_TIMEFRAMES}
+							/>
+							<ChartExportButtons
+								chartInstance={priceChartInstance}
+								filename={exportFilename}
+								title={exportTitle}
+								disabled={!activePriceHistoryChart}
+								csvSource={{
+									type: 'dataset',
+									prepare: () => intradayPriceHistoryChart?.csvDataset ?? activePriceHistoryChart!.dataset
+								}}
+							/>
+						</ChartPanelToolbar>
+						<Suspense fallback={<ChartPanelBodyFallback />}>
+							{priceHistory.isPending ? (
+								<ChartPanelBodyFallback role="status" aria-label="Loading price history" />
+							) : activePriceHistoryChart ? (
 								<MultiSeriesChart
 									dataset={activePriceHistoryChart.dataset}
 									charts={activePriceHistoryChart.charts}
-									chartOptions={SCALED_Y_AXIS_CHART_OPTIONS}
+									chartOptions={priceHistoryChartOptions}
 									valueSymbol="$"
 									title=""
-									hideDataZoom={activePriceHistoryChart.dataset.source.length < 2}
+									hideDataZoom={intradayPriceHistoryChart !== null || activePriceHistoryChart.dataset.source.length < 2}
 									onReady={handlePriceChartReady}
 								/>
-							</Suspense>
-						</Panel>
-					) : (
-						<Panel padding="none" className="col-span-full xl:hidden">
-							<div className="flex flex-col gap-6 p-2">
-								<EquityTitle
-									ticker={props.ticker}
-									country={props.country}
-									name={props.name}
-									website={props.metadata.website}
-								/>
-								<p className="flex flex-col">
-									<span className="text-secondary">{defs.marketCap.label}</span>
-									<span className="min-h-8 font-jetbrains text-2xl font-semibold">
-										{formatEquitiesCompactValue(props.summary.marketCap, '$') ?? '-'}
-									</span>
-								</p>
-							</div>
-						</Panel>
-					)}
+							) : (
+								<ChartPanelBodyFallback className="text-secondary" role="status">
+									{priceHistory.isError
+										? 'Failed to load price history.'
+										: 'No price history available for this timeframe.'}
+								</ChartPanelBodyFallback>
+							)}
+						</Suspense>
+					</ChartPanel>
 
 					{/* Mobile: key metrics below chart */}
 					<Card padding="sm" className="col-span-full flex flex-col gap-6 xl:hidden">
@@ -403,12 +421,12 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							/>
 						</div>
 					</ChartPanelToolbar>
-					<Suspense fallback={<div className="min-h-[320px]" />}>
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
 							dataset={activeFundamentalsChart.dataset}
 							charts={activeFundamentalsChart.charts}
 							chartOptions={SCALED_Y_AXIS_CHART_OPTIONS}
-							valueSymbol="$"
+							valueSymbol={FUNDAMENTAL_CHART_VALUE_SYMBOLS[activeFundamentalMetric]}
 							title=""
 							hideDataZoom={activeFundamentalsChart.dataset.source.length < 2}
 							onReady={handleFundamentalsChartReady}

@@ -1520,6 +1520,7 @@ interface ChartPngExportButtonProps {
 	chartInstance: () => echarts.ECharts | null
 	className?: string | undefined
 	smol?: boolean | undefined
+	disabled?: boolean | undefined
 	title?: string | undefined
 	filename?: string | undefined
 	iconUrl?: string | undefined
@@ -1537,6 +1538,7 @@ export function ChartPngExportButton({
 	chartInstance,
 	className = DEFAULT_CLASSNAME,
 	smol = true,
+	disabled = false,
 	title,
 	filename,
 	iconUrl,
@@ -1586,7 +1588,7 @@ export function ChartPngExportButton({
 	}
 
 	const handleDownload = () => {
-		if (isLoading) return
+		if (disabled || isLoading) return
 		popover.hide()
 		generateDataURL()
 			.then((dataURL) => {
@@ -1607,7 +1609,7 @@ export function ChartPngExportButton({
 	}
 
 	const handleCopyToClipboard = () => {
-		if (isLoading) return
+		if (disabled || isLoading) return
 		popover.hide()
 		// Safari requires clipboard.write() to be called synchronously within
 		// the user gesture. Passing a Promise<Blob> to ClipboardItem defers the
@@ -1637,7 +1639,7 @@ export function ChartPngExportButton({
 			<Ariakit.PopoverDisclosure
 				className={className}
 				data-loading={isLoading}
-				disabled={isLoading}
+				disabled={disabled || isLoading}
 				title={csvMenuItem ? 'Export chart' : 'Export chart as image'}
 			>
 				{isLoading ? <LoadingSpinner size={14} /> : <Icon name="download-paper" height={14} width={14} />}
@@ -1657,6 +1659,7 @@ export function ChartPngExportButton({
 				{csvMenuItem ? (
 					<button
 						data-umami-event="export-csv"
+						disabled={disabled || isLoading}
 						data-umami-event-page={router.pathname}
 						type="button"
 						className={popoverMenuItemStyles}
@@ -1678,6 +1681,7 @@ export function ChartPngExportButton({
 				) : null}
 				<button
 					data-umami-event="export-image"
+					disabled={disabled || isLoading}
 					data-umami-event-page={router.pathname}
 					type="button"
 					className={popoverMenuItemStyles}
@@ -1688,6 +1692,7 @@ export function ChartPngExportButton({
 				</button>
 				<button
 					data-umami-event="copy-image"
+					disabled={disabled || isLoading}
 					data-umami-event-page={router.pathname}
 					type="button"
 					className={popoverMenuItemStyles}

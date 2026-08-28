@@ -6,6 +6,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { EquitiesMarketsTable, EquitiesTokensTable } from '../OnchainTables'
 import type { IEquitiesOnchainMarketRow, IEquitiesOnchainTokenRow } from '../types'
 
+const routerMock = {
+	query: {} as Record<string, string>,
+	pathname: '/equities/[ticker]',
+	asPath: '/equities/NVDA:US',
+	push: vi.fn()
+}
+vi.mock('next/router', () => ({ useRouter: () => routerMock }))
+
 vi.mock('~/components/CsvDownloadButton', () => ({ CSVDownloadButton: () => null }))
 vi.mock('~/components/Link', () => ({
 	BasicLink: ({ children }: { children: React.ReactNode }) => <span>{children}</span>
@@ -32,6 +40,12 @@ const tokens: IEquitiesOnchainTokenRow[] = [100, null, 0, 10].map((value, index)
 	issuerRwaPlatformName: 'Issuer',
 	price: value,
 	activeMarketcap: value
+}))
+
+const mixedVenueMarkets: IEquitiesOnchainMarketRow[] = ['CEX', 'DEX', 'CEX'].map((exchangeType, index) => ({
+	...markets[0]!,
+	pair: `${exchangeType}-${index}`,
+	exchangeType: exchangeType as IEquitiesOnchainMarketRow['exchangeType']
 }))
 
 describe('equities onchain table sorting', () => {
@@ -129,5 +143,57 @@ describe('equities onchain table sorting', () => {
 
 		await clickHeader(header)
 		expect(rowNames()).toEqual(['token-2', 'token-3', 'token-0', 'token-1'])
+	})
+})
+
+describe('equities markets venue filter', () => {
+	let container: HTMLDivElement
+	let root: Root
+
+	beforeEach(() => {
+		routerMock.query = {}
+		routerMock.push.mockReset()
+		container = document.createElement('div')
+		document.body.appendChild(container)
+		root = createRoot(container)
+	})
+
+	afterEach(async () => {
+		await act(async () => root.unmount())
+		container.remove()
+	})
+
+	const render = async () => {
+		await act(async () => root.render(<EquitiesMarketsTable markets={mixedVenueMarkets} ticker="NVDA" />))
+	}
+	const rowPairs = () => [...container.querySelectorAll('tbody tr')].map((row) => row.children[0].textContent)
+	const venueButton = (label: string) =>
+		[...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === label)
+
+	it('shows every market with per-venue counts by default', async () => {
+		await render()
+		expect(rowPairs()).toHaveLength(3)
+		expect(venueButton('All (3)')).toBeTruthy()
+		expect(venueButton('CEX (2)')).toBeTruthy()
+		expect(venueButton('DEX (1)')).toBeTruthy()
+	})
+
+	it('filters to the venue named by the query param', async () => {
+		routerMock.query = { marketVenue: 'dex' }
+		await render()
+		expect(rowPairs()).toEqual(['DEX-1'])
+	})
+
+	it('pushes the venue into the URL so a filtered view is shareable', async () => {
+		await render()
+		await act(async () => venueButton('CEX (2)')!.click())
+		expect(routerMock.push.mock.calls[0][0].query.marketVenue).toBe('cex')
+	})
+
+	it('disables a venue with no markets instead of offering an empty table', async () => {
+		await act(async () =>
+			root.render(<EquitiesMarketsTable markets={[{ ...markets[0]!, exchangeType: 'CEX' }]} ticker="NVDA" />)
+		)
+		expect(venueButton('DEX (0)')?.disabled).toBe(true)
 	})
 })

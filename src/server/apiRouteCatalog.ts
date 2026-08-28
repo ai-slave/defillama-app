@@ -95,6 +95,7 @@ export const allApiRoutePaths = [
 	'downloads/chart-breakdown/[slug]',
 	'dune/query/[queryId]',
 	'emission/[protocol]',
+	'equities/price-history',
 	'exchanges/[exchange]/history',
 	'exchanges/[exchange]/metadata',
 	'exchanges/charts/[part]',

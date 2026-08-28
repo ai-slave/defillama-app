@@ -26,6 +26,7 @@ interface CSVDownloadButtonProps {
 	smol?: boolean
 	children?: ReactNode
 	free?: boolean
+	disabled?: boolean
 }
 
 export type CsvPayload = { filename: string; rows: Array<Array<string | number | boolean | null | undefined>> }
@@ -95,7 +96,7 @@ function csvDownloadButtonReducer(
 
 // use children to pass in the text
 export function CSVDownloadButton(props: CSVDownloadButtonPropsUnion) {
-	const { className, replaceClassName, smol, children, free, size = 'sm' } = props
+	const { className, replaceClassName, smol, children, free, disabled = false, size = 'sm' } = props
 	const [state, dispatch] = useReducer(csvDownloadButtonReducer, initialCSVDownloadButtonState)
 	const { staticLoading, shouldRenderModal, trialCsvLimitOpen } = state
 	const { isAuthenticated, loaders, hasActiveSubscription, isTrial } = useAuthContext()
@@ -160,7 +161,7 @@ export function CSVDownloadButton(props: CSVDownloadButtonPropsUnion) {
 	)
 
 	const handleButtonClick = useCallback(async () => {
-		if (isLoading) return
+		if (disabled || isLoading) return
 
 		if (free) {
 			await runDownload()
@@ -179,7 +180,17 @@ export function CSVDownloadButton(props: CSVDownloadButtonPropsUnion) {
 
 		setSignupSource('csv')
 		subscribeModalStore.show()
-	}, [free, hasActiveSubscription, isAuthenticated, isLoading, isTrial, runDownload, subscribeModalStore, userLoading])
+	}, [
+		disabled,
+		free,
+		hasActiveSubscription,
+		isAuthenticated,
+		isLoading,
+		isTrial,
+		runDownload,
+		subscribeModalStore,
+		userLoading
+	])
 
 	return (
 		<>
@@ -191,7 +202,7 @@ export function CSVDownloadButton(props: CSVDownloadButtonPropsUnion) {
 					onClick={() => {
 						void handleButtonClick()
 					}}
-					disabled={isClient ? isLoading : true}
+					disabled={disabled || !isClient || isLoading}
 				>
 					{buttonContent}
 				</button>
@@ -204,7 +215,7 @@ export function CSVDownloadButton(props: CSVDownloadButtonPropsUnion) {
 					onClick={() => {
 						void handleButtonClick()
 					}}
-					disabled={isClient ? isLoading : true}
+					disabled={disabled || !isClient || isLoading}
 				>
 					{buttonContent}
 				</Button>
