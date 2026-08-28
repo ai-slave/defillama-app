@@ -92,7 +92,7 @@ function SourceMiniCard({ reference }: { reference: UnifiedCitationReference }) 
 				<span className="shrink-0 text-[10px] font-medium tracking-wide text-ai-accent-blue uppercase">
 					{badgeFor(reference.sourceType)}
 				</span>
-				{domain ? <span className="truncate text-[10px] text-ai-muted">{domain}</span> : null}
+				{domain ? <span className="truncate body-xs text-ai-muted">{domain}</span> : null}
 				{reference.value ? (
 					<span className="ml-auto shrink-0 text-[11px] font-medium text-ai-primary">{reference.value}</span>
 				) : null}

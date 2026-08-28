@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ApiRequest } from '~/server/api/types'
 import { createUtrLeaderboardApi } from '../api'
@@ -90,6 +91,7 @@ describe('UTR leaderboard API', () => {
 
 		expect(result.status).toBe(200)
 		expect(result.headers?.['Cache-Control']).toBe('private, no-store, max-age=0')
+		assert('body' in result, 'Expected a JSON body')
 		expect(result.body).toMatchObject({
 			configVersion: 18,
 			generatedAt: '2026-08-27T00:00:00.000Z',
