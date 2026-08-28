@@ -17,6 +17,7 @@ export interface ChartCapabilities {
 	allowPercentage: boolean
 	allowCumulative: boolean
 	allowGrouping: boolean
+	groupingLocked: boolean
 	allowHallmarks: boolean
 	allowLabels: boolean
 	allowLogScale: boolean
@@ -29,6 +30,7 @@ export interface ChartControlsModel {
 	title?: string
 	state: ChartViewState
 	showGrouping: boolean
+	groupingLocked: boolean
 	showStack: boolean
 	showPercentage: boolean
 	showCumulative: boolean
@@ -91,6 +93,7 @@ export function deriveCapabilities(config: ChartConfiguration, adaptedChart: Ada
 			)
 
 			const allowGrouping = !!config.displayOptions?.supportsGrouping && adaptedChart.groupingPolicy === 'always'
+			const groupingLocked = allowGrouping && adaptedChart.seriesMeta.some((series) => series.metricClass === 'unknown')
 			const hasCategoryLogos = !!(
 				adaptedChart.props &&
 				'categoryLogos' in adaptedChart.props &&
@@ -103,6 +106,7 @@ export function deriveCapabilities(config: ChartConfiguration, adaptedChart: Ada
 				allowPercentage: !!config.displayOptions?.canShowPercentage && percentageEligibleSeries.length > 1,
 				allowCumulative: !!config.displayOptions?.canShowCumulative && adaptedChart.isTimeChart && hasCumulativeSeries,
 				allowGrouping,
+				groupingLocked,
 				allowHallmarks: adaptedChart.hasHallmarks,
 				allowLabels: hasCategoryLogos,
 				allowLogScale: logEligibleYAxes.length > 0,
@@ -116,6 +120,7 @@ export function deriveCapabilities(config: ChartConfiguration, adaptedChart: Ada
 				allowPercentage: false,
 				allowCumulative: false,
 				allowGrouping: false,
+				groupingLocked: false,
 				allowHallmarks: false,
 				allowLabels: false,
 				allowLogScale: false,
@@ -128,6 +133,7 @@ export function deriveCapabilities(config: ChartConfiguration, adaptedChart: Ada
 				allowPercentage: false,
 				allowCumulative: false,
 				allowGrouping: false,
+				groupingLocked: false,
 				allowHallmarks: false,
 				allowLabels: true,
 				allowLogScale: isScatterLogEligible(adaptedChart),
@@ -145,6 +151,7 @@ export function deriveCapabilities(config: ChartConfiguration, adaptedChart: Ada
 				allowPercentage: false,
 				allowCumulative: false,
 				allowGrouping: false,
+				groupingLocked: false,
 				allowHallmarks: false,
 				allowLabels: hbarHasLogos,
 				allowLogScale: false,
@@ -163,7 +170,9 @@ export function normalizeViewState(chartState: ChartViewState, capabilities: Cha
 		percentage: capabilities.allowPercentage ? chartState.percentage : false,
 		cumulative: capabilities.allowCumulative ? chartState.cumulative : false,
 		grouping:
-			capabilities.allowGrouping && capabilities.groupingOptions.includes(chartState.grouping)
+			capabilities.allowGrouping &&
+			!capabilities.groupingLocked &&
+			capabilities.groupingOptions.includes(chartState.grouping)
 				? chartState.grouping
 				: 'day',
 		showHallmarks: capabilities.allowHallmarks ? chartState.showHallmarks : false,
@@ -193,6 +202,7 @@ export function buildControlsModel(
 	const controls: ChartControlsModel = {
 		state,
 		showGrouping: capabilities.allowGrouping,
+		groupingLocked: capabilities.groupingLocked,
 		showStack: capabilities.allowStack && !state.cumulative,
 		showPercentage: capabilities.allowPercentage && !state.cumulative,
 		showCumulative: capabilities.allowCumulative,

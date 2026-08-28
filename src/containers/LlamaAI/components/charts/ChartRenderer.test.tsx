@@ -357,6 +357,41 @@ describe('ChartRenderer', () => {
 		consoleErrorSpy.mockRestore()
 	})
 
+	it('lets promoted date categories resolve aggregation and retain it after save and reset', async () => {
+		const config = makeCartesianChart()
+		config.axes.x.type = 'category'
+		config.series[0].metricClass = 'unknown'
+		const rows = chartData.map((row) => ({ ...row, timestamp: new Date(row.timestamp * 1000).toISOString() }))
+		await act(async () =>
+			root.render(<ChartRenderer charts={[config]} chartData={rows} onLocalStyleSave={() => undefined} />)
+		)
+		await click(container, '[title="Edit chart style"]')
+		const select = document.querySelector<HTMLSelectElement>('[aria-label="Series 1 aggregation"]')
+		if (!select) throw new Error('Expected aggregation select for promoted dates')
+		expect(select.value).toBe('unknown')
+		await setSelectValue(select, 'flow')
+		expect(document.querySelector<HTMLSelectElement>('[aria-label="Series 1 aggregation"]')?.value).toBe('flow')
+		await clickButton(document, 'Save')
+
+		await click(container, '[title="Edit chart style"]')
+		await clickButton(document, 'Reset')
+		expect(document.querySelector<HTMLSelectElement>('[aria-label="Series 1 aggregation"]')?.value).toBe('flow')
+		await clickButton(document, 'Save')
+		await click(container, '[data-action="grouping"]')
+		expect(container.querySelector('[data-testid="chart-controls"]')?.getAttribute('data-grouping')).toBe('month')
+	})
+
+	it.each(['category', 'time'] as const)('hides aggregation for a non-groupable %s chart', async (axisType) => {
+		const config = axisType === 'category' ? makeCategoryChart() : makeCartesianChart()
+		if (axisType === 'time') config.displayOptions.supportsGrouping = false
+		config.series[0].metricClass = 'unknown'
+		await act(async () =>
+			root.render(<ChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={() => undefined} />)
+		)
+		await click(container, '[title="Edit chart style"]')
+		expect(document.querySelector('[aria-label$="aggregation"]')).toBeNull()
+	})
+
 	it('previews a discrete series option without changing the applied chart', async () => {
 		const config = makeCartesianChart()
 		await act(async () =>

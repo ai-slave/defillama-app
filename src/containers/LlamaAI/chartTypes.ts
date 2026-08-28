@@ -34,7 +34,7 @@ export interface ChartConfiguration {
 		name: string
 		type: 'line' | 'area' | 'bar' | 'hbar' | 'scatter' | 'candlestick'
 		yAxisId: string
-		metricClass: 'flow' | 'stock'
+		metricClass: 'flow' | 'stock' | 'unknown'
 		dataMapping: {
 			xField: string
 			yField: string
@@ -90,7 +90,13 @@ export interface ChartStylePatch {
 		max?: number | 'dataMax'
 		interval?: number
 	}>
-	series?: Array<{ name?: string; color?: string; opacity?: number; type?: 'line' | 'bar' | 'area' }>
+	series?: Array<{
+		name?: string
+		color?: string
+		opacity?: number
+		type?: 'line' | 'bar' | 'area'
+		metricClass?: 'flow' | 'stock'
+	}>
 	order?: number[]
 }
 
@@ -155,7 +161,11 @@ function isYAxis(value: unknown): boolean {
 function isChartSeries(value: unknown): boolean {
 	if (!isChartDataRow(value)) return false
 	if (typeof value.name !== 'string' || typeof value.type !== 'string' || !SERIES_TYPES.has(value.type)) return false
-	if (typeof value.yAxisId !== 'string' || (value.metricClass !== 'flow' && value.metricClass !== 'stock')) return false
+	if (
+		typeof value.yAxisId !== 'string' ||
+		(value.metricClass !== 'flow' && value.metricClass !== 'stock' && value.metricClass !== 'unknown')
+	)
+		return false
 	if (!isChartDataRow(value.dataMapping)) return false
 	if (typeof value.dataMapping.xField !== 'string' || typeof value.dataMapping.yField !== 'string') return false
 	const entityFilter = value.dataMapping.entityFilter

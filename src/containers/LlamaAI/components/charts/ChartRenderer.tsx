@@ -720,6 +720,7 @@ function ActiveSingleChart({
 				onHallmarksChange={handleHallmarksChange}
 				onLabelsChange={handleLabelsChange}
 				onLogScaleChange={handleLogScaleChange}
+				onOpenStyleEditor={canEdit ? handleOpenStyleEditor : undefined}
 			>
 				<ChartExportButtonsSlot
 					chartInstance={chartInstance}

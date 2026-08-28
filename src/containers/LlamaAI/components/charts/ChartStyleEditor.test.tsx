@@ -30,6 +30,7 @@ const config = {
 } satisfies ChartConfiguration
 
 const caps = {
+	showGrouping: true,
 	showStack: false,
 	showPercentage: false,
 	showLogScale: false,
@@ -183,6 +184,50 @@ describe('ChartStyleEditor', () => {
 		expect(onPreview).toHaveBeenCalledTimes(2)
 	})
 
+	// The backend ships metricClass 'unknown' when the model did not declare how a series aggregates.
+	// The owner resolves it here, once per y-field, and the choice is what update-chart-style persists.
+	it('lets the owner set the aggregation of unknown series, per y-field, and saves it', async () => {
+		const unknown = (name: string, value: string): ChartConfiguration['series'][number] => ({
+			...revenueSeries,
+			name,
+			type: 'bar',
+			metricClass: 'unknown',
+			dataMapping: { xField: 'timestamp', yField: 'value', entityFilter: { field: 'protocol', value } }
+		})
+		const editorConfig = {
+			...config,
+			type: 'bar',
+			series: [
+				unknown('Aave', 'aave'),
+				unknown('Lido', 'lido'),
+				{ ...revenueSeries, name: 'TVL', metricClass: 'stock', dataMapping: { xField: 'timestamp', yField: 'tvl' } }
+			]
+		} satisfies ChartConfiguration
+		const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
+		await act(async () => root.render(<EditorHarness editorConfig={editorConfig} onSave={onSave} />))
+
+		const selects = container.querySelectorAll<HTMLSelectElement>('[aria-label$="aggregation"]')
+		expect([...selects].map((select) => select.value)).toEqual(['unknown', 'unknown', 'stock'])
+
+		await act(async () => {
+			selects[0].value = 'flow'
+			selects[0].dispatchEvent(new Event('change', { bubbles: true }))
+		})
+		const after = container.querySelectorAll<HTMLSelectElement>('[aria-label$="aggregation"]')
+		expect([...after].map((select) => select.value)).toEqual(['flow', 'flow', 'stock'])
+
+		const saveButton = [...container.querySelectorAll<HTMLButtonElement>('button')].find(
+			(button) => button.textContent === 'Save'
+		)
+		if (!saveButton) throw new Error('Expected save button')
+		await act(async () => saveButton.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+
+		expect(onSave).toHaveBeenCalledOnce()
+		const [savedConfig, patch] = onSave.mock.calls[0]
+		expect(savedConfig.series.map((series) => series.metricClass)).toEqual(['flow', 'flow', 'stock'])
+		expect(patch.series?.map((series) => series.metricClass)).toEqual(['flow', 'flow', 'stock'])
+	})
+
 	it('keeps the last valid preview and disables save while series names are duplicated', async () => {
 		vi.useFakeTimers()
 		const editorConfig = {
@@ -263,6 +308,33 @@ describe('ChartStyleEditor', () => {
 
 	const previewNames = () => container.querySelector('[data-testid="preview-series-names"]')?.textContent
 
+	it.each(['unknown', 'stock'] as const)(
+		'discards unsaved aggregation changes on reset from %s',
+		async (metricClass) => {
+			const editorConfig = { ...config, series: [{ ...revenueSeries, metricClass }] }
+			const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
+			const onPreview = vi.fn((_config: ChartConfiguration) => undefined)
+			await act(async () =>
+				root.render(<EditorHarness editorConfig={editorConfig} onSave={onSave} onPreview={onPreview} />)
+			)
+			const select = container.querySelector<HTMLSelectElement>('[aria-label="Series 1 aggregation"]')
+			if (!select) throw new Error('Expected aggregation select')
+			await act(async () => {
+				select.value = 'flow'
+				select.dispatchEvent(new Event('change', { bubbles: true }))
+			})
+			expect(onPreview.mock.lastCall?.[0].series[0].metricClass).toBe('flow')
+
+			await clickButton('Reset')
+			expect(select.value).toBe(metricClass)
+			expect(onPreview.mock.lastCall?.[0].series[0].metricClass).toBe(metricClass)
+			await clickButton('Save')
+			const [savedConfig, patch] = onSave.mock.calls[0]
+			expect(savedConfig.series[0].metricClass).toBe(metricClass)
+			expect(patch.series?.[0].metricClass).toBe(metricClass === 'unknown' ? undefined : metricClass)
+		}
+	)
+
 	it('moves a series up and saves the permutation in the patch', async () => {
 		const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
 		await act(async () => root.render(<EditorHarness editorConfig={bucketConfig} onSave={onSave} />))
@@ -307,24 +379,36 @@ describe('ChartStyleEditor', () => {
 		expect(patch.order).toBeUndefined()
 	})
 
-	it('maps reset back to the original series order relative to the saved config', async () => {
+	it('resets series names and order while preserving saved aggregation by data binding', async () => {
 		const editorConfig = {
 			...config,
 			type: 'bar',
-			series: [bucketSeries('1 day', 'd1'), bucketSeries('2 days', 'd2')]
+			series: [bucketSeries('Saved day 1', 'd1'), { ...bucketSeries('Saved day 2', 'd2'), metricClass: 'stock' }]
 		} satisfies ChartConfiguration
 		const originalConfig = {
 			...config,
 			type: 'bar',
-			series: [bucketSeries('2 days', 'd2'), bucketSeries('1 day', 'd1')]
+			series: [
+				{ ...bucketSeries('2 days', 'd2'), metricClass: 'unknown' },
+				{ ...bucketSeries('1 day', 'd1'), metricClass: 'unknown' }
+			]
 		} satisfies ChartConfiguration
 		const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
+		const onPreview = vi.fn((_config: ChartConfiguration) => undefined)
 		await act(async () =>
-			root.render(<EditorHarness editorConfig={editorConfig} originalConfig={originalConfig} onSave={onSave} />)
+			root.render(
+				<EditorHarness
+					editorConfig={editorConfig}
+					originalConfig={originalConfig}
+					onSave={onSave}
+					onPreview={onPreview}
+				/>
+			)
 		)
 
 		await clickButton('Reset')
 		expect(previewNames()).toBe('2 days|1 day')
+		expect(onPreview.mock.lastCall?.[0].series.map((series) => series.metricClass)).toEqual(['stock', 'flow'])
 
 		await clickButton('Save')
 		const call = onSave.mock.calls[0]
@@ -332,5 +416,6 @@ describe('ChartStyleEditor', () => {
 		if (!call) throw new Error('Missing save call')
 		const patch = call[1]
 		expect(patch.order).toEqual([1, 0])
+		expect(patch.series?.map((series) => series.metricClass)).toEqual(['stock', 'flow'])
 	})
 })

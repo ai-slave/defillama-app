@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
+import { isChartConfiguration, type ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { adaptCartesianChartData } from '~/containers/LlamaAI/utils/chartAdapters/cartesian'
 import type { ChartCapabilities, ChartViewState } from '../chartCapabilities'
 import { buildControlsModel, deriveCapabilities, normalizeViewState } from '../chartCapabilities'
@@ -9,6 +9,7 @@ const capabilities: ChartCapabilities = {
 	allowPercentage: true,
 	allowCumulative: false,
 	allowGrouping: false,
+	groupingLocked: false,
 	allowHallmarks: false,
 	allowLabels: false,
 	allowLogScale: true,
@@ -133,5 +134,57 @@ describe('chartCapabilities', () => {
 
 		expect(state.logScale).toBe(false)
 		expect(controls.showLogScale).toBe(false)
+	})
+})
+
+// A series the backend could not classify must never be grouped on a guess: week/month stay
+// locked until the owner sets the aggregation in the chart style editor.
+describe('unknown metricClass gating', () => {
+	function unknownSeriesConfig(): ChartConfiguration {
+		return {
+			id: 'unknown-bar',
+			type: 'bar',
+			title: 'Metric',
+			description: '',
+			axes: {
+				x: { field: 'date', label: 'Date', type: 'time' },
+				yAxes: [{ id: 'value', fields: ['value'], label: 'Value', position: 'left' }]
+			},
+			series: [
+				{
+					name: 'Metric',
+					type: 'bar',
+					yAxisId: 'value',
+					metricClass: 'unknown',
+					dataMapping: { xField: 'date', yField: 'value' },
+					styling: {}
+				}
+			],
+			dataTransformation: { timeField: 'date', metrics: ['value'] },
+			displayOptions: { canStack: false, canShowPercentage: false, canShowCumulative: false, supportsGrouping: true }
+		}
+	}
+	const rows = Array.from({ length: 20 }, (_, i) => ({ date: Date.UTC(2026, 0, i + 1), value: 10 }))
+
+	it('accepts unknown in the chart contract', () => {
+		expect(isChartConfiguration(unknownSeriesConfig())).toBe(true)
+	})
+
+	it('keeps the grouping control visible but locked on day', () => {
+		const config = unknownSeriesConfig()
+		const caps = deriveCapabilities(config, adaptCartesianChartData(config, rows))
+		expect(caps).toMatchObject({ allowGrouping: true, groupingLocked: true })
+
+		const state = normalizeViewState({ ...baseState, grouping: 'month' }, caps)
+		expect(state.grouping).toBe('day')
+		expect(buildControlsModel(undefined, state, caps)).toMatchObject({ showGrouping: true, groupingLocked: true })
+	})
+
+	it('unlocks once the series class is saved', () => {
+		const config = unknownSeriesConfig()
+		config.series[0].metricClass = 'flow'
+		const caps = deriveCapabilities(config, adaptCartesianChartData(config, rows))
+		expect(caps.groupingLocked).toBe(false)
+		expect(normalizeViewState({ ...baseState, grouping: 'month' }, caps).grouping).toBe('month')
 	})
 })

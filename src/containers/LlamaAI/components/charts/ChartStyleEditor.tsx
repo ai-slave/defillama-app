@@ -9,6 +9,10 @@ import { getNDistinctColors } from '~/utils'
 
 const ALL_TYPES: ChartConfiguration['type'][] = ['line', 'area', 'bar', 'hbar', 'combo', 'pie', 'scatter']
 const SERIES_TYPES = ['line', 'bar', 'area'] as const
+const METRIC_CLASS_OPTIONS = [
+	{ value: 'flow', label: 'Sum per period' },
+	{ value: 'stock', label: 'End-of-period value' }
+] as const
 
 // Only offer type swaps the current data shape can actually render — otherwise the chart says
 // "no data available" (e.g. scatter needs a numeric x; pie/hbar need categories).
@@ -26,7 +30,7 @@ type PreviewMode = 'immediate' | 'debounced'
 
 type EditorCaps = Pick<
 	ChartControlsModel,
-	'showStack' | 'showPercentage' | 'showLogScale' | 'showLabels' | 'showHallmarks'
+	'showStack' | 'showPercentage' | 'showLogScale' | 'showLabels' | 'showHallmarks' | 'showGrouping'
 >
 
 interface ChartStyleEditorProps {
@@ -105,6 +109,7 @@ function toPatch(c: ChartConfiguration, view: ChartStyleEditorView, order?: numb
 		const patchSeries: NonNullable<ChartStylePatch['series']>[number] = { name: item.name }
 		if (item.styling.color !== undefined) patchSeries.color = item.styling.color
 		if (isSeriesType(item.type)) patchSeries.type = item.type
+		if (item.metricClass === 'flow' || item.metricClass === 'stock') patchSeries.metricClass = item.metricClass
 		series.push(patchSeries)
 	}
 
@@ -311,9 +316,14 @@ export function ChartStyleEditor({
 
 	const reset = () => {
 		const resetDraft = clone(original)
+		const resetOrder = orderRelativeTo(original, config)
+		// Aggregation describes the data, so preserve saved choices by binding when resetting presentation.
+		for (const [index, series] of resetDraft.series.entries()) {
+			series.metricClass = config.series[resetOrder[index]].metricClass
+		}
 		const nextView = { ...resetView }
 		setDraft(resetDraft)
-		setSeriesOrder(orderRelativeTo(original, config))
+		setSeriesOrder(resetOrder)
 		setDraftView(nextView)
 		setError(null)
 		publishPreview(resetDraft, nextView, 'immediate')
@@ -412,6 +422,35 @@ export function ChartStyleEditor({
 									value={s.name}
 									onChange={(e) => update((d) => updateItemAt(d.series, i, (item) => (item.name = e.target.value)))}
 								/>
+								{caps.showGrouping ? (
+									<select
+										className={`${inputStyles} w-40`}
+										aria-label={`Series ${i + 1} aggregation`}
+										title="How this series combines into week/month buckets"
+										value={s.metricClass}
+										onChange={(e) => {
+											const metricClass = e.target.value
+											if (metricClass !== 'flow' && metricClass !== 'stock') return
+											const yField = s.dataMapping.yField
+											update((d) => {
+												for (const item of d.series) {
+													if (item.dataMapping.yField === yField) item.metricClass = metricClass
+												}
+											}, 'immediate')
+										}}
+									>
+										{s.metricClass === 'unknown' ? (
+											<option value="unknown" disabled>
+												Aggregation: choose
+											</option>
+										) : null}
+										{METRIC_CLASS_OPTIONS.map((option) => (
+											<option key={option.value} value={option.value}>
+												{option.label}
+											</option>
+										))}
+									</select>
+								) : null}
 								{isCombo ? (
 									<select
 										className={`${inputStyles} w-24`}

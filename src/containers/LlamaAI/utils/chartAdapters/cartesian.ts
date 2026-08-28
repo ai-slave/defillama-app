@@ -40,7 +40,7 @@ export type LlamaAICartesianSeriesConfig = NonNullable<LlamaAICartesianChartProp
 export interface LlamaAICartesianSeriesMeta {
 	name: string
 	seriesIndex: number
-	metricClass: 'flow' | 'stock'
+	metricClass: 'flow' | 'stock' | 'unknown'
 	baseType: 'line' | 'area' | 'bar'
 	apiColor?: string
 	resolvedColor: string

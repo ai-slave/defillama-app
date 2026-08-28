@@ -1,5 +1,6 @@
 import { Select } from '~/components/Select/Select'
 import type { ChartControlsModel } from '~/containers/LlamaAI/utils/chartCapabilities'
+import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { capitalizeFirstLetter } from '~/utils'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -43,6 +44,7 @@ interface ChartControlsProps {
 	onHallmarksChange: (showHallmarks: boolean) => void
 	onLabelsChange: (showLabels: boolean) => void
 	onLogScaleChange: (logScale: boolean) => void
+	onOpenStyleEditor?: () => void
 	children?: React.ReactNode
 }
 
@@ -55,6 +57,7 @@ export function ChartControls({
 	onHallmarksChange,
 	onLabelsChange,
 	onLogScaleChange,
+	onOpenStyleEditor,
 	children
 }: ChartControlsProps) {
 	const hasControls =
@@ -81,8 +84,9 @@ export function ChartControls({
 						<Tooltip
 							content={capitalizeFirstLetter(interval)}
 							render={<button />}
-							className="inline-flex min-w-8 items-center justify-center px-3 py-1.5 text-xs whitespace-nowrap hover:not-disabled:pro-btn-primary focus-visible:not-disabled:pro-btn-primary data-[active=true]:bg-brand data-[active=true]:font-medium data-[active=true]:text-ai-white"
+							className="inline-flex min-w-8 items-center justify-center px-3 py-1.5 text-xs whitespace-nowrap hover:not-disabled:pro-btn-primary focus-visible:not-disabled:pro-btn-primary disabled:opacity-50 data-[active=true]:bg-brand data-[active=true]:font-medium data-[active=true]:text-ai-white"
 							data-active={controls.state.grouping === interval}
+							disabled={controls.groupingLocked && interval !== 'day'}
 							onClick={() => {
 								trackUmamiEvent('llamaai-chart-control', { control: 'grouping', selection: interval })
 								onGroupingChange(interval)
@@ -93,6 +97,23 @@ export function ChartControls({
 						</Tooltip>
 					))}
 				</div>
+			) : null}
+
+			{controls.groupingLocked ? (
+				onOpenStyleEditor ? (
+					<button
+						type="button"
+						className="inline-flex min-h-8 items-center gap-1 rounded-lg border border-medium px-2 text-xs whitespace-nowrap text-secondary hover:pro-btn-primary"
+						onClick={onOpenStyleEditor}
+					>
+						<Icon name="settings" height={12} width={12} />
+						Set series aggregation to enable W/M/Q/Y
+					</button>
+				) : (
+					<span className="text-xs whitespace-nowrap text-ai-muted">
+						W/M/Q/Y unavailable: series aggregation not set
+					</span>
+				)
 			) : null}
 
 			{controls.showCumulative ? (

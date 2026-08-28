@@ -8,6 +8,7 @@ const capabilities: ChartCapabilities = {
 	allowPercentage: true,
 	allowCumulative: false,
 	allowGrouping: false,
+	groupingLocked: false,
 	allowHallmarks: false,
 	allowLabels: false,
 	allowLogScale: false,
