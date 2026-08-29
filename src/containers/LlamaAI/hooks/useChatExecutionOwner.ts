@@ -34,6 +34,15 @@ export type ResumeExecutionOutcome =
 	| 'aborted'
 	| 'superseded'
 
+type AttachExecutionInput = {
+	targetSessionId: string
+	buffer?: StreamBuffer
+	resetStream?: boolean
+	onTemporaryDisconnect?: (error: Error, streamBuffer: StreamBuffer) => void
+	executionHint?: AgenticExecutionSnapshot | null
+	operation?: ExecutionOperation
+}
+
 type CreateChatStreamCallbacks = (args: {
 	buffer: StreamBuffer
 	isCurrent: () => boolean
@@ -74,22 +83,16 @@ export function useChatExecutionOwner({
 	setPaginationError,
 	setViewError
 }: ChatExecutionOwnerOptions) {
-	const resumeRunningExecution = useStableCallback(
+	const attachExecution = useStableCallback(
 		async ({
 			targetSessionId,
 			buffer = createStreamBuffer(),
 			resetStream = true,
+			replayCompleted,
 			onTemporaryDisconnect,
 			executionHint = null,
 			operation: existingOperation
-		}: {
-			targetSessionId: string
-			buffer?: StreamBuffer
-			resetStream?: boolean
-			onTemporaryDisconnect?: (error: Error, streamBuffer: StreamBuffer) => void
-			executionHint?: AgenticExecutionSnapshot | null
-			operation?: ExecutionOperation
-		}): Promise<ResumeExecutionOutcome> => {
+		}: AttachExecutionInput & { replayCompleted: boolean }): Promise<ResumeExecutionOutcome> => {
 			let nextExecutionHint = executionHint
 			const execute = async (operation: ExecutionOperation, replacementCount = 0): Promise<ResumeExecutionOutcome> => {
 				let activeMessageId: string | undefined
@@ -131,7 +134,7 @@ export function useChatExecutionOwner({
 
 					if (!activeResponse.active) {
 						const hasNewEvents = buffer.receivedEventCount < cursor
-						if (status !== 'completed' || !hasResult || !hasNewEvents) return 'inactive'
+						if (!replayCompleted || status !== 'completed' || !hasResult || !hasNewEvents) return 'inactive'
 
 						setViewError(null)
 						dispatch({ type: 'SET_ERROR', value: null })
@@ -398,5 +401,13 @@ export function useChatExecutionOwner({
 			})
 	})
 
-	return { ensureQueueAttached, resumeRunningExecution }
+	const resumeIfRunning = useStableCallback((input: AttachExecutionInput) =>
+		attachExecution({ ...input, replayCompleted: false })
+	)
+
+	const recoverExecution = useStableCallback((input: AttachExecutionInput) =>
+		attachExecution({ ...input, replayCompleted: true })
+	)
+
+	return { ensureQueueAttached, resumeIfRunning, recoverExecution }
 }

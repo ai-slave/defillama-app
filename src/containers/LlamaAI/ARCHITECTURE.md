@@ -42,8 +42,9 @@ Key boundaries:
 All agentic prompt, edit, resume, and replay flows go through
 `runAgenticRequest`. `ExecutionCoordinator` serializes execution intents for a
 session and invalidates stale callbacks before aborting their requests.
-`useChatExecutionOwner` owns discovery, resume, replay, and queue reattachment
-policy. Ancillary latest-wins requests such as restore and pagination use
+`useChatExecutionOwner` is the only attach point. Session open and tab-return
+call `resumeIfRunning`. Dropped streams call `recoverExecution`. Do not add a
+third path. Ancillary latest-wins requests such as restore and pagination use
 separate `AbortScope` instances, so they cannot take stream ownership.
 
 Direct prompt and edit mutations carry a stable `clientMutationId`. Reusing the
@@ -99,47 +100,6 @@ events. Stale request protection belongs there.
 `DeepLinkPromptModal` and only submit the prompt after user confirmation. The
 unauthenticated `/ai/chat` page uses the same modal so shared prompt URLs never
 auto-run work on page load.
-
-## Recovery And Replay
-
-Temporary connectivity failures preserve partial output and use backend active
-execution state to decide whether to resume or replay.
-
-```mermaid
-flowchart TD
-  Failure["Stream closes without done or heartbeat fails"] --> Classify["runAgenticRequest classifies temporary connectivity"]
-  Classify --> Recovery["AgenticChat starts recovery cycle"]
-  Recovery --> Probe["checkActiveExecution(sessionId)"]
-  Probe -->|active true| Resume["resumeAgenticStream(sessionId, from=eventCount)"]
-  Probe -->|active false with result| Replay["Skip replay if client already has all events"]
-  Probe -->|active false without result| Exhaust["Show retry or recovery failure"]
-  Resume --> Parser["parseSSEStream"]
-  Parser --> Commit["done commits assistant message"]
-  Parser -->|missing done| Recovery
-```
-
-Important invariants:
-
-- `receivedEventCount` is the backend event-buffer cursor. Preamble and queue
-  control events do not advance it.
-- Streams advertise `cursor=v2` in their content type when cursors come from
-  the server. The transport alone contains the temporary legacy counter
-  fallback used during rolling deployment.
-- Replay pins the stream request to the execution `messageId`. An execution
-  mismatch commits any buffered output, then returns to discovery with a fresh
-  accumulator. This prevents output from two executions sharing one message.
-- Missing `done` is a recovery signal unless the request was aborted.
-- Abort is not shown as a user-facing failure.
-- Restore, queue attachment, visibility recovery, and manual reconnect signal
-  one session-keyed coordinator instead of opening competing streams.
-- A clean queue long-poll timeout preserves both the observed execution id and
-  cursor before rearming the stream.
-- Resume and replay should share the same callback and lifecycle path as prompt
-  and edit flows.
-
-The canonical execution API shape is `{ execution: snapshot | null }`.
-`executionProtocol.ts` owns the temporary decoder for legacy flat `/active`
-responses. Domain code only consumes the canonical snapshot.
 
 ## Message And Artifact Model
 

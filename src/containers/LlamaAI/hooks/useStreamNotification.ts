@@ -1,17 +1,20 @@
 import { useCallback, useEffect, useRef } from 'react'
+import { isChatSurfaceAttended, type ChatAttention } from '~/containers/LlamaAI/chatAttention'
 
 interface UseStreamNotificationOptions {
 	soundEnabled: boolean
+	attention: ChatAttention
 }
 
-export function useStreamNotification({ soundEnabled }: UseStreamNotificationOptions) {
-	const isHiddenRef = useRef(false)
+export function useStreamNotification({ soundEnabled, attention }: UseStreamNotificationOptions) {
 	const originalTitleRef = useRef('')
 	const originalFaviconRef = useRef('')
 	const hasBadgeRef = useRef(false)
 	const audioRef = useRef<HTMLAudioElement | null>(null)
 	const soundEnabledRef = useRef(soundEnabled)
 	soundEnabledRef.current = soundEnabled
+	const attentionRef = useRef(attention)
+	attentionRef.current = attention
 
 	// Preload the notification sound once so later completion notifications can play immediately.
 	useEffect(() => {
@@ -26,7 +29,7 @@ export function useStreamNotification({ soundEnabled }: UseStreamNotificationOpt
 		}
 	}, [])
 
-	// Restore the original tab title/favicon after the user returns to the tab.
+	// Restore the original tab title/favicon after the user returns to the chat.
 	const clearBadge = useCallback(() => {
 		if (!hasBadgeRef.current) return
 		hasBadgeRef.current = false
@@ -35,7 +38,7 @@ export function useStreamNotification({ soundEnabled }: UseStreamNotificationOpt
 		if (link && originalFaviconRef.current) link.href = originalFaviconRef.current
 	}, [])
 
-	// Mark the tab as unread while a completed response is waiting in a background tab.
+	// Mark the tab as unread while a completed response is waiting out of view.
 	const setBadge = useCallback(() => {
 		if (hasBadgeRef.current) return
 		hasBadgeRef.current = true
@@ -46,20 +49,25 @@ export function useStreamNotification({ soundEnabled }: UseStreamNotificationOpt
 		if (link) link.href = '/favicon-badge.png'
 	}, [])
 
-	// Track whether the page is hidden so notifications only fire when the user is away.
+	const clearBadgeIfAttending = useCallback(() => {
+		if (isChatSurfaceAttended(attentionRef.current)) clearBadge()
+	}, [clearBadge])
+
 	useEffect(() => {
-		const handler = () => {
-			isHiddenRef.current = document.hidden
-			if (!document.hidden) clearBadge()
-		}
-		isHiddenRef.current = document.hidden
-		if (!document.hidden) clearBadge()
-		document.addEventListener('visibilitychange', handler)
 		return () => {
-			document.removeEventListener('visibilitychange', handler)
 			if (hasBadgeRef.current) clearBadge()
 		}
 	}, [clearBadge])
+
+	useEffect(() => {
+		clearBadgeIfAttending()
+		document.addEventListener('visibilitychange', clearBadgeIfAttending)
+		window.addEventListener('focus', clearBadgeIfAttending)
+		return () => {
+			document.removeEventListener('visibilitychange', clearBadgeIfAttending)
+			window.removeEventListener('focus', clearBadgeIfAttending)
+		}
+	}, [attention.uncovered, clearBadgeIfAttending])
 
 	// Reset and replay the short audio cue when a background response completes.
 	const playSound = useCallback(() => {
@@ -88,11 +96,11 @@ export function useStreamNotification({ soundEnabled }: UseStreamNotificationOpt
 		void notification
 	}, [])
 
-	// Notify only when the page is hidden; foreground completions do not need browser-level alerts.
+	// Notify only when the user is not attending the chat; foreground completions do not need browser-level alerts.
 	// Permission prompting is handled by NotificationPermissionBanner, not here — if the user hasn't
 	// granted permission we silently skip the OS notification and rely on badge+sound.
 	const notify = useCallback(() => {
-		if (!isHiddenRef.current) return
+		if (isChatSurfaceAttended(attentionRef.current)) return
 
 		setBadge()
 		playSound()

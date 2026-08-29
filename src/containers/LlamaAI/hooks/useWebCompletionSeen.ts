@@ -2,15 +2,10 @@ import { useCallback, useEffect, useEffectEvent, useRef } from 'react'
 import { useAuthContext } from '~/auth'
 import { COMPLETION_SEEN_REQUEST_TIMEOUT_MS, markWebCompletionSeen } from '~/containers/LlamaAI/api/mobilePush'
 import { LlamaAITransportError } from '~/containers/LlamaAI/api/transport'
+import { isChatSurfaceAttended, type ChatAttention } from '~/containers/LlamaAI/chatAttention'
 import { isWebMobilePushEnabled, type WebMobilePreference } from '~/containers/LlamaAI/hooks/useWebMobilePushPreference'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { getErrorMessage } from '~/utils/error'
-
-export interface ChatAttention {
-	uncovered: boolean
-	sessionId: string | null
-	visibleMessageIds: ReadonlySet<string>
-}
 
 export interface PendingSeen {
 	sessionId: string
@@ -26,10 +21,6 @@ interface UseWebCompletionSeenOptions {
 
 const SEEN_RETRY_DELAYS_MS = [750, 2_000] as const
 export const PENDING_SEEN_TTL_MS = 10_000
-
-export function hasWebChatAttention() {
-	return typeof document !== 'undefined' && document.visibilityState === 'visible' && document.hasFocus()
-}
 
 function canFlushPreference(preference: WebMobilePreference): boolean {
 	return isWebMobilePushEnabled(preference)
@@ -54,7 +45,7 @@ function shouldClearPending(preference: WebMobilePreference): boolean {
 export function canMarkSeen(pending: PendingSeen, attention: ChatAttention, preference: WebMobilePreference): boolean {
 	if (!canFlushPreference(preference)) return false
 	if (pending.expiresAt <= Date.now()) return false
-	if (!hasWebChatAttention() || !attention.uncovered) return false
+	if (!isChatSurfaceAttended(attention)) return false
 	if (attention.sessionId !== pending.sessionId) return false
 	return attention.visibleMessageIds.has(pending.messageId)
 }

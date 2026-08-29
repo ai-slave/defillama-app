@@ -61,6 +61,7 @@ import { fetchAgenticResponse, stopAgenticExecution } from '~/containers/LlamaAI
 import { useChatExecutionOwner } from '~/containers/LlamaAI/hooks/useChatExecutionOwner'
 import { useChatQueueController, type QueueSurface } from '~/containers/LlamaAI/hooks/useChatQueueController'
 import { useChatScroll } from '~/containers/LlamaAI/hooks/useChatScroll'
+import { useClearUnseenCompletion } from '~/containers/LlamaAI/hooks/useClearUnseenCompletion'
 import { useLlamaAISetting, useLlamaAISettings } from '~/containers/LlamaAI/hooks/useLlamaAISettings'
 import { movePromptDraft } from '~/containers/LlamaAI/hooks/usePromptDraft'
 import { useSessionList } from '~/containers/LlamaAI/hooks/useSessionList'
@@ -83,6 +84,7 @@ import {
 	type SharedSession
 } from '~/containers/LlamaAI/messageMappers'
 import { AgenticMutationReconcileError, createAgenticMutationEnvelope } from '~/containers/LlamaAI/mutationProtocol'
+import { useProjectSessions } from '~/containers/LlamaAI/projects/hooks'
 import { ProjectLanding } from '~/containers/LlamaAI/projects/ProjectLanding'
 import { ProjectsGrid } from '~/containers/LlamaAI/projects/ProjectsGrid'
 import { getProjectTier } from '~/containers/LlamaAI/projects/tier'
@@ -337,7 +339,6 @@ export function AgenticChat({
 	} = useSessionMutations()
 	const { sidebarVisible, toggleSidebar, hideSidebar, isFullscreen, toggleFullscreen } = useSidebarVisibility()
 	const enableSoundNotifications = useLlamaAISetting('enableSoundNotifications')
-	const { notify, primeAudio } = useStreamNotification({ soundEnabled: enableSoundNotifications })
 	const alertsModalStore = Ariakit.useDialogStore()
 	const settingsModalStore = Ariakit.useDialogStore()
 	const [shouldRenderSubscribeModal, setShouldRenderSubscribeModal] = useState(false)
@@ -563,6 +564,11 @@ export function AgenticChat({
 	const effectiveSessionProjectId = isRouteSessionPending
 		? (sessionListEntry?.projectId ?? null)
 		: (currentSessionProjectId ?? sessionListEntry?.projectId ?? null)
+	const projectSessions = useProjectSessions(effectiveSessionProjectId)
+	const projectSessionEntry =
+		lookupSessionId && projectSessions.data
+			? (projectSessions.data.find((session) => session.sessionId === lookupSessionId) ?? null)
+			: null
 	const visibleIsStreaming = !isRouteSessionPending && isStreaming
 	const hasMessages = effectiveMessages.length > 0 || visibleIsStreaming
 	const visibleError = isRouteSessionPending
@@ -853,14 +859,27 @@ export function AgenticChat({
 		!showTokenLimitModal &&
 		!showShareModal &&
 		!deepLinkConfirmationPrompt
-	const attention = {
-		uncovered: isChatPresent,
-		sessionId: readOnly ? null : sessionId,
-		visibleMessageIds
-	}
+	const attention = useMemo(
+		() => ({
+			uncovered: isChatPresent,
+			sessionId: readOnly || isRouteSessionPending ? null : sessionId,
+			visibleMessageIds
+		}),
+		[isChatPresent, isRouteSessionPending, readOnly, sessionId, visibleMessageIds]
+	)
+	const { notify, primeAudio } = useStreamNotification({
+		soundEnabled: enableSoundNotifications,
+		attention
+	})
 	const { markCompletionSeen: markWebCompletionSeen } = useWebCompletionSeen({
 		attention,
 		preference: webMobilePreference
+	})
+	useClearUnseenCompletion({
+		attention,
+		projectId: effectiveSessionProjectId,
+		hasUnseenCompletion:
+			sessionListEntry?.hasUnseenCompletion === true || projectSessionEntry?.hasUnseenCompletion === true
 	})
 
 	const openSettings = useCallback(() => {
@@ -1026,7 +1045,7 @@ export function AgenticChat({
 		}
 	}, [])
 
-	const { ensureQueueAttached, resumeRunningExecution } = useChatExecutionOwner({
+	const { ensureQueueAttached, resumeIfRunning, recoverExecution } = useChatExecutionOwner({
 		appendMessage,
 		authorizedFetch: authorizedFetchCompat,
 		clearRecovery: clearRecoveryController,
@@ -1105,11 +1124,11 @@ export function AgenticChat({
 			if (!options?.around) {
 				attach()
 			}
-			if (
+			const restoredCompletedResult =
 				result.execution?.status === 'completed' &&
-				result.execution.hasResult &&
+				!!result.execution.hasResult &&
 				projected.some((message) => message.id === result.execution?.messageId)
-			) {
+			if (restoredCompletedResult && result.execution) {
 				markWebCompletionSeen(targetSessionId, result.execution.messageId)
 			}
 			setPaginationState({
@@ -1123,7 +1142,10 @@ export function AgenticChat({
 			dispatchStream({ type: 'SET_ERROR', value: null })
 			dispatchStream({ type: 'RESET_RECOVERY' })
 
-			return { status: 'restored', execution: result.execution ?? null }
+			return {
+				status: 'restored',
+				execution: result.execution ?? null
+			}
 		},
 		[attach, markWebCompletionSeen, restoreQueueSnapshot, restoreSession, sessions]
 	)
@@ -1161,7 +1183,7 @@ export function AgenticChat({
 			lastErrorMessage: controller.lastErrorMessage
 		})
 
-		const resumeOutcome = await resumeRunningExecution({
+		const resumeOutcome = await recoverExecution({
 			targetSessionId: controller.sessionId,
 			buffer: controller.buffer,
 			resetStream: false,
@@ -1428,7 +1450,7 @@ export function AgenticChat({
 			setRestoreFailure(null)
 			setRestoringSessionId(null)
 
-			await resumeRunningExecution({
+			await resumeIfRunning({
 				targetSessionId: selectedSessionId,
 				executionHint: restoreResult.execution,
 				onTemporaryDisconnect: (disconnectError, buffer) => {
@@ -1449,7 +1471,7 @@ export function AgenticChat({
 			paginationCoordinator,
 			restoreCoordinator,
 			restoreSessionSnapshot,
-			resumeRunningExecution,
+			resumeIfRunning,
 			startRecoveryCycle
 		]
 	)
@@ -1767,7 +1789,7 @@ export function AgenticChat({
 								// persisted server-side first; attach to that execution before clearing UI.
 								buffer.receivedEventCount = eventCounter.count
 								const resumeSessionId = currentSessionId
-								const resumeOutcome = await resumeRunningExecution({
+								const resumeOutcome = await recoverExecution({
 									targetSessionId: resumeSessionId,
 									buffer,
 									resetStream: false,
@@ -1833,7 +1855,7 @@ export function AgenticChat({
 			executionCoordinator,
 			adoptQueueSession,
 			restoreCoordinator,
-			resumeRunningExecution,
+			recoverExecution,
 			startRecoveryCycle,
 			sessionTitle,
 			sessions,
@@ -2125,7 +2147,7 @@ export function AgenticChat({
 						if (isCurrent() && !buffer.error && !hasStreamBufferContent(buffer)) {
 							buffer.receivedEventCount = eventCounter.count
 							let recoveryStarted = false
-							const resumeOutcome = await resumeRunningExecution({
+							const resumeOutcome = await recoverExecution({
 								targetSessionId: sessionId,
 								buffer,
 								resetStream: false,
@@ -2246,7 +2268,7 @@ export function AgenticChat({
 			mode,
 			messages,
 			researchModalStore,
-			resumeRunningExecution,
+			recoverExecution,
 			sessionId,
 			currentSessionProjectId,
 			settings.customInstructions,
@@ -2380,7 +2402,7 @@ export function AgenticChat({
 	const reconcileSessionExecution = useStableCallback(async (targetSessionId: string) => {
 		const ownsTarget = () => (routeSessionIdRef.current ?? currentSessionIdRef.current) === targetSessionId
 		if (!ownsTarget()) return
-		const resumeOutcome = await resumeRunningExecution({ targetSessionId })
+		const resumeOutcome = await resumeIfRunning({ targetSessionId })
 		if (resumeOutcome === 'settled' || resumeOutcome === 'aborted') return
 		if (!ownsTarget()) return
 
@@ -2388,8 +2410,8 @@ export function AgenticChat({
 			restoreSessionSnapshot(targetSessionId, operation)
 		)
 		if (!ownsTarget() || restoreResult.status !== 'restored') return
-		if (restoreResult.execution) {
-			await resumeRunningExecution({ targetSessionId, executionHint: restoreResult.execution })
+		if (restoreResult.execution?.status === 'running') {
+			await resumeIfRunning({ targetSessionId, executionHint: restoreResult.execution })
 		}
 	})
 

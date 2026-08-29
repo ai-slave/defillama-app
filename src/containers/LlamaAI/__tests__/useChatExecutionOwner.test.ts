@@ -99,7 +99,7 @@ describe('useChatExecutionOwner', () => {
 		transport.checkActive.mockResolvedValue({ active: false, execution: null })
 		const owner = useTestExecutionOwner({ coordinator })
 
-		const resume = owner.resumeRunningExecution({ targetSessionId: 'session-a' })
+		const resume = owner.resumeIfRunning({ targetSessionId: 'session-a' })
 		expect(transport.checkActive).not.toHaveBeenCalled()
 		promptDone.resolve()
 		await prompt
@@ -113,7 +113,7 @@ describe('useChatExecutionOwner', () => {
 		const onTemporaryDisconnect = vi.fn()
 		const owner = useTestExecutionOwner()
 
-		await expect(owner.resumeRunningExecution({ targetSessionId: 'session-a', onTemporaryDisconnect })).resolves.toBe(
+		await expect(owner.resumeIfRunning({ targetSessionId: 'session-a', onTemporaryDisconnect })).resolves.toBe(
 			'temporary-disconnect'
 		)
 		expect(onTemporaryDisconnect).toHaveBeenCalledOnce()
@@ -164,7 +164,7 @@ describe('useChatExecutionOwner', () => {
 			})
 		const owner = useTestExecutionOwner()
 
-		await expect(owner.resumeRunningExecution({ targetSessionId: 'session-a' })).resolves.toBe('settled')
+		await expect(owner.resumeIfRunning({ targetSessionId: 'session-a' })).resolves.toBe('settled')
 
 		expect(owner.appendMessage).toHaveBeenCalledWith(expect.objectContaining({ content: 'first answer' }))
 		const secondResume = transport.resume.mock.calls[1]
@@ -174,6 +174,20 @@ describe('useChatExecutionOwner', () => {
 			expectedMessageId: 'execution-2',
 			from: 0
 		})
+	})
+
+	it('skips completed replay when opening a session that already has the answer', async () => {
+		transport.checkActive.mockResolvedValue({
+			active: false,
+			execution: { ...execution('execution-1'), cursor: 4, hasResult: true, status: 'completed' }
+		})
+		const owner = useTestExecutionOwner()
+
+		await expect(owner.resumeIfRunning({ targetSessionId: 'session-a' })).resolves.toBe('inactive')
+
+		expect(transport.resume).not.toHaveBeenCalled()
+		expect(owner.dispatch).not.toHaveBeenCalledWith({ type: 'START_STREAM' })
+		expect(owner.onSettled).not.toHaveBeenCalled()
 	})
 
 	it('reports an invalidated replay as aborted instead of settled', async () => {
@@ -190,7 +204,7 @@ describe('useChatExecutionOwner', () => {
 		)
 		const owner = useTestExecutionOwner({ coordinator })
 
-		const replay = owner.resumeRunningExecution({ targetSessionId: 'session-a' })
+		const replay = owner.recoverExecution({ targetSessionId: 'session-a' })
 		await vi.waitFor(() => expect(transport.resume).toHaveBeenCalledOnce())
 		coordinator.invalidate()
 
