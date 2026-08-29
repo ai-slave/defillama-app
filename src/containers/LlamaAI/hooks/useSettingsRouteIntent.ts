@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { consumeSlackLogin } from '~/containers/LlamaAI/api/slack'
 import { LLAMA_AI_SLACK_STATUS_QUERY_KEY } from '~/containers/LlamaAI/hooks/useSlackIntegrationLink'
+import { WEB_MOBILE_PUSH_QUERY_KEY } from '~/containers/LlamaAI/hooks/useWebMobilePushPreference'
 import {
 	getSettingsIntentFromQuery,
 	readPendingSettingsIntent,
@@ -89,6 +90,7 @@ export function useSettingsRouteIntent({
 			}
 			if (initialState.tab || initialState.tgloginToken || initialState.slackloginToken || initialState.slackResult)
 				setInitialIntegrationsState(initialState)
+			void queryClient.invalidateQueries({ queryKey: WEB_MOBILE_PUSH_QUERY_KEY })
 			settingsModalStore.show()
 		},
 		[authorizedFetch, queryClient, setInitialIntegrationsState, settingsModalStore]

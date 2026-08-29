@@ -7,6 +7,7 @@ function setupCallbacks(isCurrent = true, deferEmptyDone = false) {
 	const dispatch = vi.fn() as unknown as StreamDispatch
 	const appendMessage = vi.fn()
 	const notify = vi.fn()
+	const onCompletion = vi.fn()
 	const currentMessageIdRef = { current: 'assistant-1' }
 
 	const callbacks = createAgenticCallbacks({
@@ -17,10 +18,11 @@ function setupCallbacks(isCurrent = true, deferEmptyDone = false) {
 		toolCallIdRef: { current: 0 },
 		appendMessage,
 		deferEmptyDone,
+		onCompletion,
 		notify
 	})
 
-	return { appendMessage, buffer, callbacks, currentMessageIdRef, dispatch, notify }
+	return { appendMessage, buffer, callbacks, currentMessageIdRef, dispatch, notify, onCompletion }
 }
 
 describe('createAgenticCallbacks', () => {
@@ -37,7 +39,7 @@ describe('createAgenticCallbacks', () => {
 	})
 
 	it('updates buffer and dispatches live stream actions', () => {
-		const { appendMessage, buffer, callbacks, currentMessageIdRef, dispatch, notify } = setupCallbacks()
+		const { appendMessage, buffer, callbacks, currentMessageIdRef, dispatch, notify, onCompletion } = setupCallbacks()
 
 		callbacks.onToken('[REPORT_START]hello')
 		callbacks.onCitations(['https://example.com', 'https://example.com'])
@@ -58,10 +60,11 @@ describe('createAgenticCallbacks', () => {
 		)
 		expect(currentMessageIdRef.current).toBeNull()
 		expect(notify).toHaveBeenCalledOnce()
+		expect(onCompletion).toHaveBeenCalledWith('assistant-1')
 	})
 
 	it('commits the assistant message only once when done fires twice', () => {
-		const { appendMessage, callbacks, notify } = setupCallbacks()
+		const { appendMessage, callbacks, notify, onCompletion } = setupCallbacks()
 
 		callbacks.onToken('hello')
 		callbacks.onDone()
@@ -69,6 +72,7 @@ describe('createAgenticCallbacks', () => {
 
 		expect(appendMessage).toHaveBeenCalledOnce()
 		expect(notify).toHaveBeenCalledOnce()
+		expect(onCompletion).toHaveBeenCalledOnce()
 	})
 
 	it('writes unified fact-check refs into buffer.citations without altering text', () => {
@@ -105,13 +109,15 @@ describe('createAgenticCallbacks', () => {
 	})
 
 	it('defers empty done events when requested', () => {
-		const { appendMessage, callbacks, dispatch, notify } = setupCallbacks(true, true)
+		const { appendMessage, callbacks, dispatch, notify, onCompletion } = setupCallbacks(true, true)
 
+		callbacks.onDone()
 		callbacks.onDone()
 
 		expect(appendMessage).not.toHaveBeenCalled()
 		expect(dispatch).not.toHaveBeenCalledWith({ type: 'COMMIT_STREAM' })
 		expect(notify).not.toHaveBeenCalled()
+		expect(onCompletion).not.toHaveBeenCalled()
 	})
 
 	it('reports the canonical user message id after materializing it', () => {

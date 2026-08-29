@@ -6,6 +6,10 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SettingsModal } from '~/containers/LlamaAI/components/SettingsModal'
 import type { LlamaAISettings, LlamaAISettingsActions } from '~/containers/LlamaAI/hooks/useLlamaAISettings'
+import type {
+	WebMobilePreference,
+	WebMobilePushEnabledMutation
+} from '~/containers/LlamaAI/hooks/useWebMobilePushPreference'
 
 vi.mock('~/containers/LlamaAI/hooks/useAgentHomeData', () => ({
 	useAgentHomeData: () => ({})
@@ -40,17 +44,41 @@ describe('SettingsModal instructions', () => {
 	let root: Root
 	let dialogStore: Ariakit.DialogStore
 	let setCustomInstructions: ReturnType<typeof vi.fn<(value: string) => Promise<boolean>>>
+	let mutateMobileNotifications: ReturnType<
+		typeof vi.fn<(enabled: boolean) => Promise<{ available: boolean; enabled: boolean }>>
+	>
+	let setMobileNotifications: WebMobilePushEnabledMutation
 	let actions: LlamaAISettingsActions
 
-	function Harness({ currentSettings = settings }: { currentSettings?: LlamaAISettings }) {
+	function Harness({
+		currentSettings = settings,
+		mobileNotificationPreference
+	}: {
+		currentSettings?: LlamaAISettings
+		mobileNotificationPreference?: WebMobilePreference
+	}) {
 		dialogStore = Ariakit.useDialogStore({ defaultOpen: true })
-		return <SettingsModal dialogStore={dialogStore} settings={currentSettings} actions={actions} />
+		return (
+			<SettingsModal
+				dialogStore={dialogStore}
+				settings={currentSettings}
+				actions={actions}
+				mobileNotificationPreference={mobileNotificationPreference}
+				setMobileNotificationEnabled={setMobileNotifications}
+			/>
+		)
 	}
 
 	beforeEach(async () => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
 		vi.clearAllMocks()
 		setCustomInstructions = vi.fn(async () => true)
+		mutateMobileNotifications = vi.fn(async (enabled: boolean) => ({ available: true, enabled }))
+		setMobileNotifications = {
+			mutateAsync: mutateMobileNotifications,
+			isPending: false,
+			error: null
+		} as WebMobilePushEnabledMutation
 		actions = {
 			setCustomInstructions,
 			setEnableMemory: vi.fn(async () => true),
@@ -182,6 +210,59 @@ describe('SettingsModal instructions', () => {
 
 		expect(textarea().value).toBe('Locally submitted')
 		await act(async () => resolveSave?.(true))
+	})
+
+	it('shows the mobile notification toggle only for a ready preference', async () => {
+		await act(async () =>
+			root.render(<Harness mobileNotificationPreference={{ kind: 'known', available: true, enabled: false }} />)
+		)
+		const appTab = Array.from(document.querySelectorAll('button')).find(
+			(button) => button.textContent?.trim() === 'App'
+		)
+		await act(async () => appTab?.click())
+
+		const mobileToggle = document.querySelector('button[aria-label="Mobile notifications"]') as HTMLButtonElement | null
+		expect(mobileToggle).not.toBeNull()
+		await act(async () => mobileToggle?.click())
+		expect(mutateMobileNotifications).toHaveBeenCalledWith(true)
+
+		await act(async () =>
+			root.render(<Harness mobileNotificationPreference={{ kind: 'known', available: false, enabled: true }} />)
+		)
+		expect(document.querySelector('button[aria-label="Mobile notifications"]')).toBeNull()
+	})
+
+	it('shows a disabled loading row while the preference query is pending', async () => {
+		await act(async () => root.render(<Harness mobileNotificationPreference={{ kind: 'loading' }} />))
+		const appTab = Array.from(document.querySelectorAll('button')).find(
+			(button) => button.textContent?.trim() === 'App'
+		)
+		await act(async () => appTab?.click())
+
+		expect(document.querySelector('[role="status"]')?.textContent).toContain(
+			'Loading your mobile notification preference'
+		)
+		expect(document.querySelector('button[aria-label="Mobile notifications"]')).toBeNull()
+	})
+
+	it('shows an inline retry when the preference query fails', async () => {
+		const retry = vi.fn()
+		await act(async () =>
+			root.render(<Harness mobileNotificationPreference={{ kind: 'error', message: 'Network unavailable', retry }} />)
+		)
+		const appTab = Array.from(document.querySelectorAll('button')).find(
+			(button) => button.textContent?.trim() === 'App'
+		)
+		await act(async () => appTab?.click())
+
+		const alert = document.querySelector('[role="alert"]')
+		expect(alert?.textContent).toContain("Couldn't load mobile notifications")
+		expect(document.querySelector('button[aria-label="Mobile notifications"]')).toBeNull()
+		const retryButton = Array.from(alert?.querySelectorAll('button') ?? []).find(
+			(button) => button.textContent === 'Try again'
+		)
+		await act(async () => retryButton?.click())
+		expect(retry).toHaveBeenCalledOnce()
 	})
 
 	it('restores the spend cap after a failed save', async () => {

@@ -69,6 +69,11 @@ import { useSettingsRouteIntent } from '~/containers/LlamaAI/hooks/useSettingsRo
 import { useSidebarVisibility } from '~/containers/LlamaAI/hooks/useSidebarVisibility'
 import { useStreamNotification } from '~/containers/LlamaAI/hooks/useStreamNotification'
 import { useVisualViewport } from '~/containers/LlamaAI/hooks/useVisualViewport'
+import { useWebCompletionSeen } from '~/containers/LlamaAI/hooks/useWebCompletionSeen'
+import {
+	useWebMobilePushPreference,
+	WEB_MOBILE_PUSH_QUERY_KEY
+} from '~/containers/LlamaAI/hooks/useWebMobilePushPreference'
 import {
 	mapPersistedMessage,
 	mapPersistedMessages,
@@ -390,6 +395,10 @@ export function AgenticChat({
 	const [viewError, setViewError] = useState<string | null>(null)
 	const [paginationError, setPaginationError] = useState<string | null>(null)
 	const researchModalStore = Ariakit.useDialogStore()
+	const isAlertsModalOpen = Ariakit.useStoreState(alertsModalStore, 'open')
+	const isResearchModalOpen = Ariakit.useStoreState(researchModalStore, 'open')
+	const isSettingsModalOpen = Ariakit.useStoreState(settingsModalStore, 'open')
+	const isSubscribeModalOpen = Ariakit.useStoreState(subscribeModalStore, 'open')
 	const [limitModalFeature, setLimitModalFeature] = useState<'research' | 'fact_checked'>('research')
 	const currentMessageIdRef = useRef<string | null>(null)
 	const executionCoordinatorRef = useRef<ExecutionCoordinator | null>(null)
@@ -540,10 +549,11 @@ export function AgenticChat({
 	const visibleDashboardConfig = isRouteSessionPending ? null : dashboardPanelMountedConfig
 	const sessionPromptFailure = !isSharedView && sessionId ? (promptFailures.get(sessionId) ?? null) : null
 	const promptFailurePolicy = sessionPromptFailure ? getPromptFailurePolicy(sessionPromptFailure) : null
-	const baseEffectiveMessages = (forkedFromShared ? null : sharedMessages) ?? messages
-	const effectiveMessages = isRouteSessionPending
-		? []
-		: projectPromptFailure(baseEffectiveMessages, sessionPromptFailure)
+	const effectiveMessages = useMemo(() => {
+		if (isRouteSessionPending) return []
+		const baseMessages = (forkedFromShared ? null : sharedMessages) ?? messages
+		return projectPromptFailure(baseMessages, sessionPromptFailure)
+	}, [forkedFromShared, isRouteSessionPending, messages, sessionPromptFailure, sharedMessages])
 	const effectiveSessionId = (forkedFromShared ? sessionId : sharedSession?.session.sessionId) ?? sessionId
 	const lookupSessionId = routeSessionId ?? sessionId ?? null
 	const sessionListEntry = lookupSessionId ? (sessions.find((s) => s.sessionId === lookupSessionId) ?? null) : null
@@ -827,6 +837,50 @@ export function AgenticChat({
 		keyboardOpen,
 		startDetached: shouldStartDetachedForAnchor
 	})
+	const { preference: webMobilePreference, setEnabled: setWebMobilePushEnabled } = useWebMobilePushPreference()
+	const visibleMessageIds = useMemo(() => {
+		const ids = new Set(effectiveMessages.map((message) => message.id).filter((id): id is string => !!id))
+		if (streamingDraft?.id) ids.add(streamingDraft.id)
+		return ids
+	}, [effectiveMessages, streamingDraft?.id])
+	const isChatPresent =
+		!readOnly &&
+		!(isMobileChatView && (sidebarVisible || citationSheet.isOpen)) &&
+		!isAlertsModalOpen &&
+		!isResearchModalOpen &&
+		!isSettingsModalOpen &&
+		!isSubscribeModalOpen &&
+		!showTokenLimitModal &&
+		!showShareModal &&
+		!deepLinkConfirmationPrompt
+	const attention = {
+		uncovered: isChatPresent,
+		sessionId: readOnly ? null : sessionId,
+		visibleMessageIds
+	}
+	const { markCompletionSeen: markWebCompletionSeen } = useWebCompletionSeen({
+		attention,
+		preference: webMobilePreference
+	})
+
+	const openSettings = useCallback(() => {
+		void queryClient.invalidateQueries({ queryKey: WEB_MOBILE_PUSH_QUERY_KEY })
+		settingsModalStore.show()
+	}, [queryClient, settingsModalStore])
+	const openSettingsAtTab = useCallback(
+		(tab: SettingsTabId) => {
+			setInitialIntegrationsState({ tab, tgloginToken: null })
+			openSettings()
+		},
+		[openSettings]
+	)
+	const openSettingsModal = useCallback(
+		(tab?: SettingsTabId) => {
+			if (tab === undefined) openSettings()
+			else openSettingsAtTab(tab)
+		},
+		[openSettings, openSettingsAtTab]
+	)
 
 	// Trigger the sidebar open/close animation before toggling visibility.
 	const handleSidebarToggle = useCallback(() => {
@@ -925,8 +979,9 @@ export function AgenticChat({
 			onDuelStart?: (pairId: string) => void
 			replaceUserMessageId?: (messageId: string, queueItemId?: string) => void
 			onUserMessageId?: (messageId: string) => void
-		}) =>
-			createAgenticCallbacks({
+		}) => {
+			let completionSessionId = targetSessionId
+			return createAgenticCallbacks({
 				isCurrent,
 				buffer,
 				dispatch: dispatchStream,
@@ -944,7 +999,13 @@ export function AgenticChat({
 				onTokenLimit: () => setShowTokenLimitModal(true),
 				onQueueUpdated: handleQueueUpdated,
 				onUserMessageIdObserved: onUserMessageId,
-				onSessionId,
+				onSessionId: (observedSessionId) => {
+					completionSessionId = observedSessionId
+					onSessionId?.(observedSessionId)
+				},
+				onCompletion: (messageId) => {
+					markWebCompletionSeen(completionSessionId, messageId)
+				},
 				onTitle:
 					onTitle ??
 					((title) => {
@@ -953,6 +1014,7 @@ export function AgenticChat({
 						moveSessionToTop(targetSessionId, currentSessionProjectIdRef.current)
 					})
 			})
+		}
 	)
 
 	const clearRecoveryController = useCallback((resetState: boolean = true) => {
@@ -1043,6 +1105,13 @@ export function AgenticChat({
 			if (!options?.around) {
 				attach()
 			}
+			if (
+				result.execution?.status === 'completed' &&
+				result.execution.hasResult &&
+				projected.some((message) => message.id === result.execution?.messageId)
+			) {
+				markWebCompletionSeen(targetSessionId, result.execution.messageId)
+			}
 			setPaginationState({
 				hasMore: result.pagination?.hasMore ?? false,
 				cursor: result.pagination?.cursor ?? null,
@@ -1056,7 +1125,7 @@ export function AgenticChat({
 
 			return { status: 'restored', execution: result.execution ?? null }
 		},
-		[attach, restoreQueueSnapshot, restoreSession, sessions]
+		[attach, markWebCompletionSeen, restoreQueueSnapshot, restoreSession, sessions]
 	)
 
 	const exhaustRecovery = useCallback(
@@ -2577,17 +2646,14 @@ export function AgenticChat({
 
 	const tipActionHandlers = useMemo(
 		() => ({
-			openSettingsModal: (tab?: SettingsTabId) => {
-				if (tab) setInitialIntegrationsState({ tab, tgloginToken: null })
-				settingsModalStore.show()
-			},
+			openSettingsModal,
 			openAlertsModal: () => {
 				alertsModalStore.show()
 			},
 			toggleResearchMode: () => setMode((current) => (current === 'research' ? 'quick' : 'research')),
 			submitPrompt: (prompt: string) => handleSubmit(prompt)
 		}),
-		[settingsModalStore, alertsModalStore, setMode, handleSubmit]
+		[openSettingsModal, alertsModalStore, setMode, handleSubmit]
 	)
 
 	const promptDraftScope = getPromptDraftScope(effectiveSessionId, routeProjectId)
@@ -2815,7 +2881,7 @@ export function AgenticChat({
 										isDeletingSession={isDeletingSession}
 										isUpdatingTitle={isUpdatingTitle}
 										shouldAnimate={shouldAnimateSidebar}
-										onOpenSettings={settingsModalStore.show}
+										onOpenSettings={openSettings}
 										hasCustomInstructions={settings.customInstructions.trim().length > 0}
 										onBulkDelete={handleBulkDeleteSessions}
 										onPinSession={pinSession}
@@ -2839,7 +2905,7 @@ export function AgenticChat({
 								{!readOnly && !sidebarVisible ? (
 									<ChatControls
 										handleNewChat={handleNewChat}
-										onOpenSettings={settingsModalStore.show}
+										onOpenSettings={openSettings}
 										hasCustomInstructions={settings.customInstructions.trim().length > 0}
 										sessionTitle={effectiveSessionTitle}
 										canShare={!isSharedView && effectiveMessages.length > 0}
@@ -2968,6 +3034,8 @@ export function AgenticChat({
 									}
 									initialState={initialIntegrationsState}
 									onInitialStateConsumed={() => setInitialIntegrationsState(null)}
+									mobileNotificationPreference={webMobilePreference}
+									setMobileNotificationEnabled={setWebMobilePushEnabled}
 								/>
 							) : null}
 						</div>

@@ -53,6 +53,7 @@ export function createAgenticCallbacks({
 	onQueueUpdated,
 	onMessageIdObserved,
 	onUserMessageIdObserved,
+	onCompletion,
 	notify
 }: {
 	isCurrent: () => boolean
@@ -76,6 +77,7 @@ export function createAgenticCallbacks({
 	onQueueUpdated?: (snapshot: QueueSnapshot) => void
 	onMessageIdObserved?: (messageId: string) => void
 	onUserMessageIdObserved?: (messageId: string) => void
+	onCompletion?: (messageId: string) => void
 	notify: () => void
 }): AgenticSSECallbacks {
 	// One guard wraps every callback so late chunks from an aborted or superseded
@@ -239,12 +241,17 @@ export function createAgenticCallbacks({
 		onDone: guard(() => {
 			// Resume probes can legitimately end with only a `done` event after the
 			// backend has already persisted the result; avoid committing an empty message.
-			if (deferEmptyDone && !buffer.error && !hasStreamBufferContent(buffer)) return
 			if (committed) return
+			const completedMessageId = currentMessageIdRef.current
+			if (deferEmptyDone && !buffer.error && !hasStreamBufferContent(buffer)) {
+				committed = true
+				return
+			}
 			committed = true
 			appendBufferedAssistantMessage(buffer, currentMessageIdRef, appendMessage)
 			dispatch({ type: 'COMMIT_STREAM' })
 			notify()
+			if (completedMessageId) onCompletion?.(completedMessageId)
 		})
 	}
 }

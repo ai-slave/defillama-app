@@ -13,12 +13,18 @@ import {
 	type ModelOption
 } from '~/containers/LlamaAI/hooks/useLlamaAISettings'
 import {
+	isWebMobileToggleVisible,
+	type WebMobilePreference,
+	type WebMobilePushEnabledMutation
+} from '~/containers/LlamaAI/hooks/useWebMobilePushPreference'
+import {
 	isSettingsTabId,
 	type SettingsInitialState,
 	type SettingsTabId
 } from '~/containers/LlamaAI/utils/settingsIntent'
 import { useDarkModeManager, useLlamaAINotifyBannerDismissed } from '~/contexts/LocalStorage'
 import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatFixedNumber } from '~/utils/numberFormat'
 
@@ -43,6 +49,8 @@ interface SettingsModalProps {
 	isSettingsLoading?: boolean
 	initialState?: SettingsInitialState | null
 	onInitialStateConsumed?: () => void
+	mobileNotificationPreference?: WebMobilePreference
+	setMobileNotificationEnabled?: WebMobilePushEnabledMutation
 }
 
 export const SettingsModal = memo(function SettingsModal({
@@ -54,7 +62,9 @@ export const SettingsModal = memo(function SettingsModal({
 	telegramStatus,
 	isSettingsLoading,
 	initialState,
-	onInitialStateConsumed
+	onInitialStateConsumed,
+	mobileNotificationPreference,
+	setMobileNotificationEnabled
 }: SettingsModalProps) {
 	const isOpen = Ariakit.useStoreState(dialogStore, 'open')
 	const [isDark] = useDarkModeManager()
@@ -146,6 +156,18 @@ export const SettingsModal = memo(function SettingsModal({
 		trackUmamiEvent('llamaai-sound-notifications-toggle')
 		void actions.setEnableSoundNotifications(!settings.enableSoundNotifications)
 	}, [actions, settings.enableSoundNotifications])
+
+	const handleMobileNotificationToggle = useCallback(() => {
+		if (
+			!mobileNotificationPreference ||
+			!isWebMobileToggleVisible(mobileNotificationPreference) ||
+			!setMobileNotificationEnabled ||
+			setMobileNotificationEnabled.isPending
+		)
+			return
+		trackUmamiEvent('llamaai-mobile-notifications-toggle')
+		void setMobileNotificationEnabled.mutateAsync(!mobileNotificationPreference.enabled).catch(() => undefined)
+	}, [mobileNotificationPreference, setMobileNotificationEnabled])
 
 	const handleEnterToSendToggle = useCallback(() => {
 		trackUmamiEvent('llamaai-enter-to-send-toggle')
@@ -271,6 +293,79 @@ export const SettingsModal = memo(function SettingsModal({
 		{ id: 'memory', label: 'Memory', icon: 'sparkles' }
 	]
 	if (isDark) tabs.push({ id: 'lab', label: 'Lab', icon: 'flame' })
+
+	let mobileNotificationRow: React.ReactNode = null
+	if (mobileNotificationPreference) {
+		switch (mobileNotificationPreference.kind) {
+			case 'signed-out':
+				break
+			case 'loading':
+				mobileNotificationRow = (
+					<>
+						<RowDivider />
+						<div role="status" className="flex w-full items-start justify-between gap-4 px-4 py-3.5 text-left">
+							<div className="flex min-w-0 flex-1 flex-col gap-0.5">
+								<p className="m-0 label-md text-ai-primary">Mobile notifications</p>
+								<p className="m-0 text-xs leading-relaxed text-ai-tertiary">
+									Loading your mobile notification preference…
+								</p>
+							</div>
+							<LoadingSpinner size={16} />
+						</div>
+					</>
+				)
+				break
+			case 'error':
+				mobileNotificationRow = (
+					<>
+						<RowDivider />
+						<div role="alert" className="flex w-full items-start justify-between gap-4 px-4 py-3.5 text-left">
+							<div className="flex min-w-0 flex-1 flex-col gap-0.5">
+								<p className="m-0 label-md text-ai-primary">Mobile notifications</p>
+								<p className="m-0 text-xs leading-relaxed text-ai-tertiary">
+									Couldn't load mobile notifications. {mobileNotificationPreference.message}
+								</p>
+							</div>
+							<button
+								type="button"
+								onClick={mobileNotificationPreference.retry}
+								className="shrink-0 text-xs font-medium text-ai-accent-blue-deep underline"
+							>
+								Try again
+							</button>
+						</div>
+					</>
+				)
+				break
+			case 'known':
+				if (!mobileNotificationPreference.available) break
+				mobileNotificationRow = (
+					<>
+						<RowDivider />
+						<ToggleRow
+							label="Mobile notifications"
+							description={
+								setMobileNotificationEnabled?.error
+									? "Couldn't update mobile notifications. Try again."
+									: setMobileNotificationEnabled?.isPending
+										? 'Updating your mobile notification preference…'
+										: mobileNotificationPreference.enabled
+											? 'Notify your phone when you leave a web chat before LlamaAI finishes.'
+											: 'Get notified on your phone when a web response finishes after you leave.'
+							}
+							checked={mobileNotificationPreference.enabled}
+							onClick={handleMobileNotificationToggle}
+							interactive={!!setMobileNotificationEnabled && !setMobileNotificationEnabled.isPending}
+						/>
+					</>
+				)
+				break
+			default: {
+				const _exhaustive: never = mobileNotificationPreference
+				void _exhaustive
+			}
+		}
+	}
 
 	return (
 		<Ariakit.DialogProvider store={dialogStore}>
@@ -439,6 +534,7 @@ export const SettingsModal = memo(function SettingsModal({
 												/>
 											</>
 										) : null}
+										{mobileNotificationRow}
 									</SettingsCard>
 								</div>
 							)}
@@ -652,7 +748,7 @@ export const SettingsModal = memo(function SettingsModal({
 																{i > 0 ? <RowDivider /> : null}
 																<div className="flex items-start justify-between gap-4 px-4 py-3.5">
 																	<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-																		<p className="m-0 flex items-center gap-2 text-[13.5px] font-medium text-ai-primary">
+																		<p className="m-0 flex items-center gap-2 label-md text-ai-primary">
 																			{skill.name}
 																			<span className="rounded-sm bg-ai-hover px-1.5 py-0.5 text-[10px] font-normal text-ai-tertiary">
 																				{skill.createdBy === 'agent' ? 'learned by assistant' : 'added by you'}
@@ -844,7 +940,7 @@ function ToggleRow({
 			className="group flex w-full items-start justify-between gap-4 px-4 py-3.5 text-left transition-colors hover:bg-ai-hover-faint disabled:cursor-default disabled:hover:bg-transparent"
 		>
 			<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-				<p className="m-0 text-[13.5px] font-medium text-ai-primary">{label}</p>
+				<p className="m-0 label-md text-ai-primary">{label}</p>
 				<p className="m-0 text-xs leading-relaxed text-ai-tertiary">{description}</p>
 			</div>
 			<div
