@@ -71,19 +71,6 @@ export interface IEquitiesMetadataResponse {
 	startDate: string
 }
 
-export const EQUITIES_PRICE_HISTORY_TIMEFRAMES = ['1D', '1W', '1M', '3M', 'YTD', '1Y', '5Y', 'MAX'] as const
-export type EquitiesPriceHistoryTimeframe = (typeof EQUITIES_PRICE_HISTORY_TIMEFRAMES)[number]
-export const DEFAULT_PRICE_HISTORY_TIMEFRAME: EquitiesPriceHistoryTimeframe = '1D'
-
-export const EQUITIES_INTRADAY_TIMEFRAMES = ['1D', '1W'] as const
-export type EquitiesIntradayTimeframe = (typeof EQUITIES_INTRADAY_TIMEFRAMES)[number]
-
-export function isEquitiesIntradayTimeframe(
-	timeframe: EquitiesPriceHistoryTimeframe
-): timeframe is EquitiesIntradayTimeframe {
-	return (EQUITIES_INTRADAY_TIMEFRAMES as readonly string[]).includes(timeframe)
-}
-
 export type EquitiesPriceHistory = Array<[string, number]>
 
 export type EquitiesDimensionMetric = 'revenue' | 'holdersRevenue' | 'earnings' | 'basicSharesOutstanding'

@@ -12,11 +12,17 @@ type TestChartSeries = {
 	encode?: { y: number | string }
 	markArea?: { data: Array<Array<{ name?: string; xAxis: number }>> }
 	connectNulls?: boolean
+	yAxisIndex?: number
 }
 type TestChartOption = {
 	series: TestChartSeries[]
 	dataset: { dimensions: string[]; source: TestChartRow[] }
-	yAxis: Array<{ alignTicks?: boolean; axisLabel?: { formatter?: (value: number) => string } }>
+	yAxis: Array<{
+		alignTicks?: boolean
+		axisLabel?: { formatter?: (value: number) => string }
+		min?: unknown
+		scale?: boolean
+	}>
 	dataZoom?: object
 }
 
@@ -215,6 +221,54 @@ describe('ProtocolOverview chart renderer contract', () => {
 			)
 		)
 		expect(getLastOption()).not.toHaveProperty('dataZoom')
+	})
+
+	it('scales price and valuation axes while keeping volume and TVL zero-based', async () => {
+		await act(async () =>
+			root.render(
+				<ProtocolChart
+					chartData={{
+						'Token Price': [
+							[1_000, 77_000],
+							[2_000, 78_000]
+						],
+						'Token Volume': [
+							[1_000, 2_000],
+							[2_000, 3_000]
+						],
+						Mcap: [
+							[1_000, 1_500_000],
+							[2_000, 1_600_000]
+						],
+						FDV: [
+							[1_000, 1_800_000],
+							[2_000, 1_900_000]
+						],
+						TVL: [
+							[1_000, 500_000],
+							[2_000, 600_000]
+						]
+					}}
+					chartColors={{ 'Token Price': '#111', 'Token Volume': '#222', Mcap: '#333', FDV: '#444' }}
+					hallmarks={null}
+					rangeHallmarks={null}
+					isThemeDark={false}
+				/>
+			)
+		)
+
+		const option = getLastOption()
+		const [priceAxis, volumeAxis, valuationAxis, tvlAxis] = option.yAxis
+		expect(priceAxis).toMatchObject({ scale: true })
+		expect(priceAxis).not.toHaveProperty('min')
+		expect(volumeAxis?.scale).toBeUndefined()
+		expect(volumeAxis?.min).toEqual(expect.any(Function))
+		expect(valuationAxis).toMatchObject({ scale: true })
+		expect(valuationAxis).not.toHaveProperty('min')
+		expect(tvlAxis?.scale).toBeUndefined()
+		expect(tvlAxis?.min).toEqual(expect.any(Function))
+		expect(getSeries(option, 'Mcap').yAxisIndex).toBe(getSeries(option, 'FDV').yAxisIndex)
+		expect(getSeries(option, 'Mcap').yAxisIndex).not.toBe(getSeries(option, 'TVL').yAxisIndex)
 	})
 
 	it('omits data zoom when every series has only one independently timed point', async () => {

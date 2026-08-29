@@ -1,4 +1,5 @@
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
+import { DEFAULT_PRICE_CHART_TIMEFRAME } from '~/utils/priceChartTimeframes'
 import {
 	fetchEquitiesCompanies,
 	fetchEquitiesCompaniesList,
@@ -10,7 +11,7 @@ import {
 	fetchEquitiesStatements,
 	fetchEquitiesSummary
 } from './api'
-import { DEFAULT_PRICE_HISTORY_TIMEFRAME, type IEquitiesCompanyRoute, type IEquitiesOnchainResponse } from './api.types'
+import type { IEquitiesCompanyRoute, IEquitiesOnchainResponse } from './api.types'
 import { buildEquityTickerCountrySlug } from './tickerCountry'
 import type { IEquitiesListPageProps, IEquitiesOnchainPageData, IEquityTickerPageProps } from './types'
 
@@ -72,8 +73,7 @@ function buildEquitiesOnchainPageData({
 	// Match token markets: promote only Bybit's top-volume pair until the user chooses a column sort.
 	const bybitIndex = perps.findIndex((row) => row.rwaPlatformSlug === 'bybit')
 	if (bybitIndex > 0) {
-		const [bybit] = perps.splice(bybitIndex, 1)
-		perps.unshift(bybit)
+		perps.unshift(...perps.splice(bybitIndex, 1))
 	}
 
 	for (const row of onchain.tokens) {
@@ -100,7 +100,7 @@ export async function getEquitiesTickerPageData(
 	const [summary, metadata, priceHistory, statements, filings, dimensions, rawOnchain] = await Promise.all([
 		fetchEquitiesSummary(ticker, country),
 		fetchEquitiesMetadata(ticker, country),
-		fetchEquitiesPriceHistory(ticker, country, DEFAULT_PRICE_HISTORY_TIMEFRAME).catch(() => null),
+		fetchEquitiesPriceHistory(ticker, country, DEFAULT_PRICE_CHART_TIMEFRAME).catch(() => null),
 		fetchEquitiesStatements(ticker, country).catch(() => null),
 		fetchEquitiesFilings(ticker, country).catch(() => null),
 		fetchEquitiesDimensions(ticker, country).catch(() => null),

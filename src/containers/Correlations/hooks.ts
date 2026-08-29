@@ -11,8 +11,7 @@ export const usePriceCharts = (geckoIds: string[]) => {
 	const data = useQueries({
 		queries: geckoIds.map((id) => ({
 			queryKey: ['price_chart', id],
-			queryFn: (): Promise<CgChartResponse | null> =>
-				fetchCoinGeckoChartByIdWithCacheFallback(id, { fullChart: false }),
+			queryFn: (): Promise<CgChartResponse | null> => fetchCoinGeckoChartByIdWithCacheFallback(id, { timeframe: '1Y' }),
 			staleTime: 10 * 60 * 1000,
 			refetchOnWindowFocus: false,
 			retry: 0

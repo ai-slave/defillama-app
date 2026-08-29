@@ -1,7 +1,7 @@
+import type { PriceChartIntradayTimeframe } from '~/utils/priceChartTimeframes'
 import type {
 	EquitiesDimensionMetric,
 	EquitiesDimensionPeriod,
-	EquitiesIntradayTimeframe,
 	EquitiesPriceHistory,
 	IEquitiesDimensionsResponse
 } from './api.types'
@@ -61,7 +61,7 @@ export function formatIntradayAxisTimeOnly(label: string): string {
 
 export function buildIntradayPriceHistoryChart(
 	priceHistory: EquitiesPriceHistory,
-	timeframe: EquitiesIntradayTimeframe
+	timeframe: PriceChartIntradayTimeframe
 ): IEquitiesIntradayPriceHistoryChart {
 	const timeSeries = buildPriceHistoryChart(priceHistory)
 	const source: Array<Array<string | number | null>> = new Array(timeSeries.dataset.source.length)
@@ -83,7 +83,7 @@ export function buildIntradayPriceHistoryChart(
 			}
 		],
 		csvDataset: timeSeries.dataset,
-		timeOnlyAxisLabels: timeframe === '1D'
+		timeOnlyAxisLabels: timeframe === '24H'
 	}
 }
 

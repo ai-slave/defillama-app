@@ -6,7 +6,6 @@ import type { RawTreasuriesResponse } from '~/containers/Treasuries/api.types'
 import type { IProtocolMetadata, ITokenListEntry } from '~/utils/metadata/types'
 import type { TokenDirectoryRecord } from '~/utils/tokenDirectory'
 import {
-	buildDisplayedTokenChartData,
 	buildTokenOverviewRawChartData,
 	resolveCirculatingSupply,
 	type TokenOverviewData,
@@ -687,6 +686,10 @@ describe('tokenOverview helpers', () => {
 				[1712016000000, 110]
 			]
 		})
+		expect(mocks.fetchCoinGeckoChartByIdWithCacheFallback).toHaveBeenCalledWith('bitcoin', {
+			timeframe: '24H',
+			includeCoinData: true
+		})
 	})
 
 	it('keeps liquidity rows when yields metadata is missing a protocol display name', async () => {
@@ -921,60 +924,6 @@ describe('tokenOverview helpers', () => {
 			[1712016000000, 500]
 		])
 	})
-
-	it('shows only the default price chart when optional charts are not enabled', () => {
-		const displayed = buildDisplayedTokenChartData({
-			rawChartData: {
-				'Token Price': [
-					[1711929600000, 100],
-					[1712016000000, 110]
-				],
-				'Token Volume': [
-					[1711929600000, 450],
-					[1712016000000, 500]
-				],
-				Mcap: [
-					[1711929600000, 1000],
-					[1712016000000, 1100]
-				],
-				FDV: [
-					[1711929600000, 1500],
-					[1712016000000, 1600]
-				]
-			},
-			activeCharts: ['Token Price'],
-			groupBy: 'daily'
-		})
-
-		expect(getRecordKeys(displayed)).toEqual(['Token Price'])
-	})
-
-	it('supports non-price chart combinations when toggled on', () => {
-		const displayed = buildDisplayedTokenChartData({
-			rawChartData: {
-				'Token Price': [
-					[1711929600000, 100],
-					[1712016000000, 110]
-				],
-				'Token Volume': [
-					[1711929600000, 450],
-					[1712016000000, 500]
-				],
-				Mcap: [
-					[1711929600000, 1000],
-					[1712016000000, 1100]
-				],
-				FDV: [
-					[1711929600000, 1500],
-					[1712016000000, 1600]
-				]
-			},
-			activeCharts: ['Token Volume', 'Mcap', 'FDV'],
-			groupBy: 'daily'
-		})
-
-		expect(getRecordKeys(displayed)).toEqual(['Token Volume', 'Mcap', 'FDV'])
-	})
 })
 
 describe('TokenPageHero component', () => {
@@ -1021,6 +970,8 @@ describe('TokenOverviewSection component', () => {
 		expect(html).toContain('Key Metrics')
 		expect(html).toContain('Add Metrics')
 		expect(html).toContain('$BTC Price')
+		expect(html).toContain('24H')
+		expect(html).toContain('7D')
 		expect(html).toContain('CEX Volume')
 		expect(html).toContain('DEX Volume')
 		expect(html).toContain('Total Raised')
@@ -1053,7 +1004,7 @@ describe('TokenOverviewSection component', () => {
 
 	it('waits for the client before rendering bookmarked non-prefetched charts', () => {
 		routerState.query = {
-			chartGroup: 'weekly',
+			timeframe: '7D',
 			chart: 'Token Volume'
 		}
 
@@ -1069,7 +1020,7 @@ describe('TokenOverviewSection component', () => {
 
 	it('renders client-fetched non-price chart combinations when the chart hook returns them', () => {
 		routerState.query = {
-			chartGroup: 'weekly',
+			timeframe: '7D',
 			chart: 'Token Volume'
 		}
 		mocks.useFetchTokenOverviewChartData.mockReturnValue({
@@ -1089,8 +1040,9 @@ describe('TokenOverviewSection component', () => {
 			logo: 'https://metadata.example.com/btc.png'
 		})
 
-		expect(lastProtocolChartProps.groupBy).toBe('weekly')
+		expect(lastProtocolChartProps.groupBy).toBe('daily')
 		expect(getRecordKeys(lastProtocolChartProps.chartData)).toEqual(['Token Volume'])
+		expect(mocks.useFetchTokenOverviewChartData).toHaveBeenLastCalledWith(expect.objectContaining({ timeframe: '7D' }))
 	})
 
 	it('shows a graceful fallback when market chart data is unavailable', () => {

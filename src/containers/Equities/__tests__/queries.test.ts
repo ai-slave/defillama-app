@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { PriceChartTimeframe } from '~/utils/priceChartTimeframes'
 import type {
 	EquitiesPriceHistory,
-	EquitiesPriceHistoryTimeframe,
 	IEquitiesCompanyApiItem,
 	IEquitiesDimensionsResponse,
 	IEquitiesFilingApiItem,
@@ -20,9 +20,7 @@ const mocks = vi.hoisted(() => ({
 	fetchEquitiesMetadata: vi.fn<(ticker: string, country: string) => Promise<IEquitiesMetadataResponse>>(),
 	fetchEquitiesOnchain: vi.fn<(ticker: string, country: string) => Promise<IEquitiesOnchainResponse>>(),
 	fetchEquitiesPriceHistory:
-		vi.fn<
-			(ticker: string, country: string, timeframe: EquitiesPriceHistoryTimeframe) => Promise<EquitiesPriceHistory>
-		>(),
+		vi.fn<(ticker: string, country: string, timeframe: PriceChartTimeframe) => Promise<EquitiesPriceHistory>>(),
 	fetchEquitiesStatements: vi.fn<(ticker: string, country: string) => Promise<IEquitiesStatementsResponse>>(),
 	fetchEquitiesSummary: vi.fn<(ticker: string, country: string) => Promise<IEquitiesSummaryResponse>>()
 }))
@@ -159,7 +157,7 @@ describe('getEquitiesListPageData', () => {
 })
 
 describe('getEquitiesTickerPageData', () => {
-	it('fetches only the default 1D price history for page generation', async () => {
+	it('fetches only the default 24H price history for page generation', async () => {
 		const priceHistory: EquitiesPriceHistory = [
 			['2026-08-27T13:35:00Z', 223],
 			['2026-08-27T13:30:00Z', 222]
@@ -168,7 +166,7 @@ describe('getEquitiesTickerPageData', () => {
 
 		const result = await getEquitiesTickerPageData('NVDA', 'US', pageMetadata)
 
-		expect(mocks.fetchEquitiesPriceHistory).toHaveBeenCalledExactlyOnceWith('NVDA', 'US', '1D')
+		expect(mocks.fetchEquitiesPriceHistory).toHaveBeenCalledExactlyOnceWith('NVDA', 'US', '24H')
 		expect(result?.priceHistory).toEqual(priceHistory)
 	})
 

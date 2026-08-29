@@ -5,11 +5,6 @@ import dynamic from 'next/dynamic'
 import { useRouter } from 'next/router'
 import { useDeferredValue, useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
-import {
-	ChartGroupingSelector,
-	DWMC_GROUPING_OPTIONS_LOWERCASE,
-	type LowercaseDwmcGrouping
-} from '~/components/ECharts/shared/ChartGroupingSelector'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { CreateAlertModal } from '~/containers/LlamaAI/components/CreateAlertModal'
@@ -29,18 +24,25 @@ import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~
 import { LoadingDots } from '~/ui/Loaders'
 import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
+import { TagGroup } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatDate } from '~/utils/dateFormat'
 import { tokenIconUrl } from '~/utils/icons'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
+import {
+	DEFAULT_PRICE_CHART_TIMEFRAME,
+	getPriceChartTimeframe,
+	PRICE_CHART_TIMEFRAMES,
+	type PriceChartTimeframe
+} from '~/utils/priceChartTimeframes'
 import { pushShallowQuery, readSingleQueryValue, toNonEmptyArrayParam } from '~/utils/routerQuery'
 import { fetchTokenMarkets } from './api'
 import {
-	buildDisplayedTokenChartData,
 	TOKEN_OVERVIEW_DEFAULT_CHARTS,
 	type TokenOverviewChartLabel,
-	type TokenOverviewData
+	type TokenOverviewData,
+	type TokenOverviewRawChartData
 } from './tokenOverview'
 import { roundToSignificantFigures } from './TokenOverviewSection.utils'
 import { useFetchTokenOverviewChartData } from './useFetchTokenOverviewChartData'
@@ -52,7 +54,13 @@ const TOKEN_OVERVIEW_CHART_COLORS: Record<TokenOverviewChartLabel, string> = {
 	FDV: '#0f766e'
 }
 
-const TOKEN_OVERVIEW_CHART_ORDER: TokenOverviewChartLabel[] = ['Token Price', 'Token Volume', 'Mcap', 'FDV']
+const TOKEN_OVERVIEW_CHART_ORDER = [
+	'Token Price',
+	'Token Volume',
+	'Mcap',
+	'FDV'
+] as const satisfies readonly TokenOverviewChartLabel[]
+const TOKEN_OVERVIEW_CHART_LABELS: ReadonlySet<string> = new Set(TOKEN_OVERVIEW_CHART_ORDER)
 const FDV_TOOLTIP =
 	"Fully Diluted Valuation, this is calculated by taking the expected maximum supply of the token and multiplying it by the price. It's mainly used to calculate the hypothetical marketcap of the token if all the tokens were unlocked and circulating."
 const OUTSTANDING_FDV_TOOLTIP =
@@ -75,7 +83,7 @@ const MARKET_CATEGORY_LABELS: Record<Segment, string> = {
 }
 const MARKET_CATEGORY_ORDER: Segment[] = ['spot', 'linear_perp', 'inverse_perp']
 const TOKEN_OVERVIEW_CHART_QUERY_KEY = 'chart'
-const TOKEN_OVERVIEW_CHART_GROUP_QUERY_KEY = 'chartGroup'
+const TOKEN_OVERVIEW_TIMEFRAME_QUERY_KEY = 'timeframe'
 
 const DeferredProtocolChart = dynamic(() => import('~/containers/ProtocolOverview/Chart'), {
 	loading: () => <div className="min-h-[360px]" />
@@ -111,16 +119,7 @@ function getChartLabel(label: TokenOverviewChartLabel, symbol: string) {
 }
 
 function isTokenOverviewChartLabel(value: string): value is TokenOverviewChartLabel {
-	return TOKEN_OVERVIEW_CHART_ORDER.includes(value as TokenOverviewChartLabel)
-}
-
-function normalizeTokenOverviewChartGrouping(value: string | undefined): LowercaseDwmcGrouping {
-	const normalizedValue = value?.toLowerCase()
-	if (DWMC_GROUPING_OPTIONS_LOWERCASE.some((option) => option.value === normalizedValue)) {
-		return normalizedValue as LowercaseDwmcGrouping
-	}
-
-	return 'daily'
+	return TOKEN_OVERVIEW_CHART_LABELS.has(value)
 }
 
 function areTokenOverviewChartsEqual(a: TokenOverviewChartLabel[], b: TokenOverviewChartLabel[]) {
@@ -138,8 +137,8 @@ function TokenPriceAlertButton({
 	currentPrice
 }: {
 	overview: TokenOverviewData
-	geckoId?: string | null
-	currentPrice?: number | null
+	geckoId: string | null | undefined
+	currentPrice: number | null
 }) {
 	const dialogStore = Ariakit.useDialogStore()
 	const signInDialogStore = Ariakit.useDialogStore()
@@ -206,9 +205,9 @@ export function TokenPageHero({
 	headingAs: Heading = 'h1'
 }: {
 	overview: TokenOverviewData
-	logo?: string | null
-	issuer?: TokenIssuer | null
-	geckoId?: string | null
+	logo?: string | null | undefined
+	issuer?: TokenIssuer | null | undefined
+	geckoId?: string | null | undefined
 	headingAs?: 'h1' | 'div'
 }) {
 	const percentChange = formatTokenPercentChange(overview.marketData.percentChange24h)
@@ -547,10 +546,8 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 		)
 		return defaultCharts.length > 0 ? defaultCharts : availableCharts.slice(0, 1)
 	}, [availableCharts, overview.rawChartData])
-	const groupBy = normalizeTokenOverviewChartGrouping(
-		readSingleQueryValue(router.query[TOKEN_OVERVIEW_CHART_GROUP_QUERY_KEY])
-	)
-	const selectedChartsQuery = router.query[TOKEN_OVERVIEW_CHART_QUERY_KEY] as string | string[] | undefined
+	const activeTimeframe = getPriceChartTimeframe(readSingleQueryValue(router.query[TOKEN_OVERVIEW_TIMEFRAME_QUERY_KEY]))
+	const selectedChartsQuery = router.query[TOKEN_OVERVIEW_CHART_QUERY_KEY]
 	const activeCharts = useMemo(() => {
 		if (selectedChartsQuery === 'None') {
 			return []
@@ -574,17 +571,17 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 		geckoId,
 		overview,
 		activeCharts,
+		timeframe: activeTimeframe,
 		enabled: isClient
 	})
-	const displayedChartData = useMemo(
-		() =>
-			buildDisplayedTokenChartData({
-				rawChartData,
-				activeCharts,
-				groupBy
-			}),
-		[rawChartData, activeCharts, groupBy]
-	)
+	const displayedChartData = useMemo(() => {
+		const charts: TokenOverviewRawChartData = {}
+		for (const chartLabel of activeCharts) {
+			const chartData = rawChartData[chartLabel]
+			if (chartData?.length) charts[chartLabel] = chartData
+		}
+		return charts
+	}, [rawChartData, activeCharts])
 	const pendingCharts = useMemo(
 		() => activeCharts.filter((chart) => !displayedChartData[chart]?.length),
 		[activeCharts, displayedChartData]
@@ -596,8 +593,8 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 	}
 	const shouldWaitForClient = !isClient && geckoId != null && pendingCharts.length > 0
 	const showLoadingState = isClient && geckoId != null && pendingCharts.length > 0 && isLoading
-	const loadingLabel =
-		pendingCharts.length === 1 ? getChartLabel(pendingCharts[0], overview.symbol) : `${pendingCharts.length} metrics`
+	const [pendingChart] = pendingCharts
+	const loadingLabel = pendingChart ? getChartLabel(pendingChart, overview.symbol) : `${pendingCharts.length} metrics`
 	const filteredMetricOptions = useMemo(() => {
 		const options = availableCharts.map((chart) => ({
 			id: chart,
@@ -613,9 +610,9 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 		})
 	}, [activeCharts, availableCharts, deferredMetricsSearchValue, overview.symbol])
 
-	const setGroupBy = (nextGroupBy: LowercaseDwmcGrouping) => {
+	const setActiveTimeframe = (timeframe: PriceChartTimeframe) => {
 		void pushShallowQuery(router, {
-			[TOKEN_OVERVIEW_CHART_GROUP_QUERY_KEY]: nextGroupBy === 'daily' ? undefined : nextGroupBy
+			[TOKEN_OVERVIEW_TIMEFRAME_QUERY_KEY]: timeframe === DEFAULT_PRICE_CHART_TIMEFRAME ? undefined : timeframe
 		})
 	}
 
@@ -712,7 +709,14 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 					</button>
 				))}
 				<div className="ml-auto">
-					<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWMC_GROUPING_OPTIONS_LOWERCASE} />
+					<TagGroup
+						variant="default"
+						size="md"
+						selectedValue={activeTimeframe}
+						setValue={setActiveTimeframe}
+						values={PRICE_CHART_TIMEFRAMES}
+						ariaLabel="Price history timeframe"
+					/>
 				</div>
 			</ChartPanelToolbar>
 			<ChartPanelBody>
@@ -723,12 +727,12 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 					</ChartPanelBodyFallback>
 				) : hasChartData ? (
 					<DeferredProtocolChart
-						key={`${groupBy}:${activeCharts.join('|')}`}
+						key={`${activeTimeframe}:${activeCharts.join('|')}`}
 						chartData={displayedChartData}
 						chartColors={TOKEN_OVERVIEW_CHART_COLORS}
 						isThemeDark={isThemeDark}
 						valueSymbol="$"
-						groupBy={groupBy}
+						groupBy="daily"
 						hallmarks={null}
 						rangeHallmarks={null}
 					/>

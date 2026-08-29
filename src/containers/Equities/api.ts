@@ -1,17 +1,18 @@
 import { EQUITIES_SERVER_URL } from '~/constants'
 import { fetchJson } from '~/utils/async'
+import type { PriceChartTimeframe } from '~/utils/priceChartTimeframes'
 import type {
+	EquitiesPriceHistory,
 	IEquitiesCompanyApiItem,
 	IEquitiesCompanyListApiItem,
 	IEquitiesDimensionsResponse,
 	IEquitiesFilingApiItem,
 	IEquitiesMetadataResponse,
 	IEquitiesOnchainResponse,
-	EquitiesPriceHistory,
-	EquitiesPriceHistoryTimeframe,
 	IEquitiesStatementsResponse,
 	IEquitiesSummaryResponse
 } from './api.types'
+import { toEquitiesPriceHistoryApiTimeframe, type EquitiesPriceHistoryApiTimeframe } from './priceHistoryTimeframes'
 
 const EQUITIES_COMPANIES_API = `${EQUITIES_SERVER_URL}/companies`
 const EQUITIES_COMPANIES_LIST_API = `${EQUITIES_SERVER_URL}/companies-list`
@@ -25,7 +26,7 @@ const EQUITIES_ONCHAIN_API = `${EQUITIES_SERVER_URL}/onchain`
 
 function createEquitiesUrl(
 	baseUrl: string,
-	params?: { ticker?: string; country?: string; countries?: 'US'; timeframe?: EquitiesPriceHistoryTimeframe }
+	params?: { ticker?: string; country?: string; countries?: 'US'; timeframe?: EquitiesPriceHistoryApiTimeframe }
 ): string {
 	const url = new URL(baseUrl)
 
@@ -76,9 +77,15 @@ export async function fetchEquitiesStatements(ticker: string, country: string): 
 export async function fetchEquitiesPriceHistory(
 	ticker: string,
 	country: string,
-	timeframe: EquitiesPriceHistoryTimeframe
+	timeframe: PriceChartTimeframe
 ): Promise<EquitiesPriceHistory> {
-	return fetchJson<EquitiesPriceHistory>(createEquitiesUrl(EQUITIES_PRICE_HISTORY_API, { ticker, country, timeframe }))
+	return fetchJson<EquitiesPriceHistory>(
+		createEquitiesUrl(EQUITIES_PRICE_HISTORY_API, {
+			ticker,
+			country,
+			timeframe: toEquitiesPriceHistoryApiTimeframe(timeframe)
+		})
+	)
 }
 
 /**

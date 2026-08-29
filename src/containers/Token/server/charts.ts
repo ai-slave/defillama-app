@@ -3,6 +3,7 @@ import { isHttpNotFoundMessage } from '~/server/api/common'
 import { queryString } from '~/server/api/params'
 import { badRequest, ok } from '~/server/api/respond'
 import { defineApiRoute } from '~/server/api/types'
+import { parsePriceChartTimeframe } from '~/utils/priceChartTimeframes'
 import { recordRouteRuntimeError } from '~/utils/telemetry'
 
 const CHART_CACHE_CONTROL = 'public, s-maxage=3600, stale-while-revalidate=600'
@@ -57,8 +58,20 @@ export const coingeckoChart = defineApiRoute({
 				return ok({ totalSupply })
 			}
 
-			const fullChart = queryString(req.query, 'fullChart') !== 'false'
-			const chart = await fetchCoinGeckoChartByIdWithCacheFallback(geckoId, { fullChart })
+			const timeframeQuery = queryString(req.query, 'timeframe')
+			const timeframe = parsePriceChartTimeframe(timeframeQuery)
+			if (!timeframe) {
+				return badRequest('Invalid timeframe parameter')
+			}
+			const includeCoinDataQuery = queryString(req.query, 'includeCoinData')
+			if (includeCoinDataQuery !== undefined && includeCoinDataQuery !== 'true') {
+				return badRequest('Invalid includeCoinData parameter')
+			}
+
+			const chart = await fetchCoinGeckoChartByIdWithCacheFallback(geckoId, {
+				timeframe,
+				includeCoinData: includeCoinDataQuery === 'true'
+			})
 			if (!chart) {
 				return ok(null, NO_STORE_HEADERS)
 			}

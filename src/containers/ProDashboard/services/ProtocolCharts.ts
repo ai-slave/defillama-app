@@ -125,7 +125,7 @@ async function fetchProtocolUnlocksData(
 }
 
 async function fetchProtocolTokenData(geckoId: string) {
-	const result = await fetchCoinGeckoChartByIdWithCacheFallback(geckoId, { fullChart: true })
+	const result = await fetchCoinGeckoChartByIdWithCacheFallback(geckoId, { timeframe: 'MAX' })
 	return result?.data ?? { mcaps: [], prices: [], volumes: [] }
 }
 

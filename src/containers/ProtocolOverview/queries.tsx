@@ -176,7 +176,10 @@ export const getProtocolOverviewPageData = async ({
 				const tokenEntry = geckoId ? (tokenlist[geckoId] ?? null) : null
 				const tickers =
 					tokenEntry && geckoId
-						? await fetchCoinGeckoChartByIdWithCacheFallback(geckoId)
+						? await fetchCoinGeckoChartByIdWithCacheFallback(geckoId, {
+								timeframe: 'MAX',
+								includeCoinData: true
+							})
 								.then((res) => res?.data?.coinData?.tickers)
 								.catch(() => undefined)
 						: undefined

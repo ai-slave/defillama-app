@@ -151,7 +151,7 @@ export const useFetchProtocolChartData = ({
 		queryFn: denominationGeckoId
 			? () =>
 					fetchJson<CgChartResponse | null>(
-						`/api/public/tokens/charts/coingecko/${encodeURIComponent(denominationGeckoId)}?fullChart=true`
+						`/api/public/tokens/charts/coingecko/${encodeURIComponent(denominationGeckoId)}?timeframe=MAX`
 					).then((res) => {
 						if (!res?.data?.prices?.length) return null
 						const store: Record<string, number> = {}
@@ -175,7 +175,7 @@ export const useFetchProtocolChartData = ({
 		queryFn: geckoId
 			? () =>
 					fetchJson<CgChartResponse | null>(
-						`/api/public/tokens/charts/coingecko/${encodeURIComponent(geckoId)}?fullChart=true`
+						`/api/public/tokens/charts/coingecko/${encodeURIComponent(geckoId)}?timeframe=MAX`
 					).then((res) => {
 						const data = res?.data
 						const prices = data?.prices

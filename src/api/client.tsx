@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { skipToken, useQuery } from '@tanstack/react-query'
 import { fetchBlockExplorers } from '~/api'
 import { fetchCoinGeckoChartByIdWithCacheFallback, fetchCoinGeckoIdByAddress } from '~/api/coingecko'
 import { fetchCoinPriceByCoinGeckoIdViaLlamaPrices } from '~/api/pricing'
@@ -22,7 +22,9 @@ export const usePriceChart = (geckoId?: string) => {
 	const isEnabled = Boolean(geckoId)
 	return useQuery<CgChartResponse | null, Error>({
 		queryKey: ['coingecko', 'price-chart', geckoId ?? null],
-		queryFn: () => fetchCoinGeckoChartByIdWithCacheFallback(geckoId!),
+		queryFn: geckoId
+			? () => fetchCoinGeckoChartByIdWithCacheFallback(geckoId, { timeframe: 'MAX', includeCoinData: true })
+			: skipToken,
 		staleTime: 60 * 60 * 1000,
 		retry: 0,
 		enabled: isEnabled

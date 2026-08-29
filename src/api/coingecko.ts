@@ -1,7 +1,7 @@
-import dayjs from 'dayjs'
 import { COINGECKO_KEY, COINS_CHART_API, DATASETS_SERVER_URL } from '~/constants'
 import { fetchJson } from '~/utils/async'
 import { getObjectCache, setObjectCache } from '~/utils/cache-client'
+import type { PriceChartTimeframe } from '~/utils/priceChartTimeframes'
 import type {
 	CgChartResponse,
 	CgMarketChartResponse,
@@ -246,77 +246,199 @@ async function fetchCoinGeckoCoinMarketChartById(
 	return fetchCoinGeckoJson<CgMarketChartResponse>(url.pathname, url).catch(() => null)
 }
 
+async function fetchCoinGeckoCoinMarketChartByIdForRange({
+	geckoId,
+	vsCurrency = 'usd',
+	from,
+	to
+}: {
+	geckoId: string
+	vsCurrency?: string
+	from: number
+	to: number
+}): Promise<CgMarketChartResponse | null> {
+	const url = createCoinGeckoUrl(`/coins/${encodeURIComponent(geckoId)}/market_chart/range`)
+	setQueryParam(url, 'vs_currency', vsCurrency)
+	setQueryParam(url, 'from', from)
+	setQueryParam(url, 'to', to)
+
+	return fetchCoinGeckoJson<CgMarketChartResponse>(url.pathname, url).catch(() => null)
+}
+
 interface LlamaCoinsChartResponse {
 	coins?: Record<string, { prices?: Array<{ timestamp: number; price: number }> }>
 }
 
-async function fetchLlamaPricesFallback(geckoId: string, fullChart: boolean): Promise<Array<[number, number]> | null> {
-	const startUnix = dayjs().subtract(1, 'year').startOf('day').unix()
-	const url = `${COINS_CHART_API}/coingecko:${encodeURIComponent(geckoId)}?start=${startUnix}&span=${
-		fullChart ? '1000' : '365'
-	}`
+type LlamaChartPeriod = '5m' | '1h' | '6h' | '12h' | '1d' | '1w' | '2w'
+
+interface LlamaChartRequest {
+	period: LlamaChartPeriod
+	span: number
+}
+
+type CoinGeckoChartRange =
+	| {
+			request: { kind: 'days'; days: number | 'max' }
+			llama: LlamaChartRequest & { fromTimestampMs?: never }
+	  }
+	| {
+			request: { kind: 'range'; fromTimestamp: number; toTimestamp: number }
+			llama: LlamaChartRequest & { fromTimestampMs: number }
+	  }
+
+const COINGECKO_CHART_RANGES = {
+	'24H': { request: { kind: 'days', days: 1 }, llama: { period: '5m', span: 288 } },
+	'7D': { request: { kind: 'days', days: 7 }, llama: { period: '1h', span: 168 } },
+	'1M': { request: { kind: 'days', days: 30 }, llama: { period: '6h', span: 120 } },
+	'3M': { request: { kind: 'days', days: 90 }, llama: { period: '12h', span: 180 } },
+	'1Y': { request: { kind: 'days', days: 365 }, llama: { period: '1d', span: 365 } },
+	'5Y': { request: { kind: 'days', days: 1825 }, llama: { period: '1w', span: 261 } },
+	MAX: { request: { kind: 'days', days: 'max' }, llama: { period: '2w', span: 500 } }
+} satisfies Record<Exclude<PriceChartTimeframe, 'YTD'>, CoinGeckoChartRange>
+
+const DAY_IN_MS = 24 * 60 * 60 * 1000
+
+function getCoinGeckoChartRange(timeframe: PriceChartTimeframe, now: number): CoinGeckoChartRange {
+	if (timeframe !== 'YTD') return COINGECKO_CHART_RANGES[timeframe]
+
+	const date = new Date(now)
+	const fromTimestampMs = Date.UTC(date.getUTCFullYear(), 0, 1)
+	return {
+		request: {
+			kind: 'range',
+			fromTimestamp: fromTimestampMs / 1e3,
+			toTimestamp: Math.floor(now / 1e3)
+		},
+		llama: {
+			period: '1d',
+			span: Math.ceil((now - fromTimestampMs) / DAY_IN_MS) + 1,
+			fromTimestampMs
+		}
+	}
+}
+
+async function fetchLlamaPricesFallback({
+	geckoId,
+	range
+}: {
+	geckoId: string
+	range: CoinGeckoChartRange['llama']
+}): Promise<Array<[number, number]> | null> {
+	const url = `${COINS_CHART_API}/coingecko:${encodeURIComponent(geckoId)}?period=${range.period}&span=${range.span}`
 	const response = await fetchJson<LlamaCoinsChartResponse>(url).catch(() => null)
 	const series = response?.coins?.[`coingecko:${geckoId}`]?.prices
 	if (!series?.length) return null
-	return series.map((point) => [point.timestamp * 1000, point.price] as [number, number])
+
+	const prices: Array<[number, number]> = []
+	for (const point of series) {
+		const timestampMs = point.timestamp * 1000
+		if (range.fromTimestampMs !== undefined && timestampMs < range.fromTimestampMs) continue
+		prices.push([timestampMs, point.price])
+	}
+	return prices.length > 0 ? prices : null
 }
 
-async function fetchCgChartFresh(geckoId: string, fullChart: boolean): Promise<CgChartResponse['data'] | null> {
-	const [marketChart, coinData] = await Promise.all([
-		fetchCoinGeckoCoinMarketChartById(geckoId, {
-			vsCurrency: 'usd',
-			days: fullChart ? 'max' : 365
-		}),
-		fetchCoinGeckoCoinById(geckoId)
-	])
+async function fetchCgChartFresh({
+	geckoId,
+	range
+}: {
+	geckoId: string
+	range: CoinGeckoChartRange
+}): Promise<CgChartResponse['data'] | null> {
+	const marketChart =
+		range.request.kind === 'days'
+			? await fetchCoinGeckoCoinMarketChartById(geckoId, {
+					vsCurrency: 'usd',
+					days: range.request.days
+				})
+			: await fetchCoinGeckoCoinMarketChartByIdForRange({
+					geckoId,
+					from: range.request.fromTimestamp,
+					to: range.request.toTimestamp
+				})
 
 	let prices: Array<[number, number]> | undefined = marketChart?.prices
-	if (!prices) {
-		const llamaPrices = await fetchLlamaPricesFallback(geckoId, fullChart)
+	if (!prices?.length) {
+		const llamaPrices = await fetchLlamaPricesFallback({ geckoId, range: range.llama })
 		if (llamaPrices) prices = llamaPrices
 	}
 
-	if (!prices) return null
+	if (!prices?.length) return null
 
 	return {
 		prices,
 		...(marketChart?.market_caps !== undefined ? { mcaps: marketChart.market_caps } : {}),
-		...(marketChart?.total_volumes !== undefined ? { volumes: marketChart.total_volumes } : {}),
-		...(coinData !== null ? { coinData } : {})
+		...(marketChart?.total_volumes !== undefined ? { volumes: marketChart.total_volumes } : {})
 	}
 }
 
-export async function getCachedCgChartData(
+async function getCachedCgChartData(
 	geckoId: string,
-	fullChart: boolean
+	timeframe: PriceChartTimeframe
 ): Promise<CgChartResponse['data'] | null> {
 	if (!geckoId) return null
-	const cacheKey = `cgchart_${geckoId}${fullChart ? '_full' : ''}`
+	const now = Date.now()
+	const cacheTimeframe = timeframe === 'YTD' ? `${timeframe}_${new Date(now).getUTCFullYear()}` : timeframe
+	const cacheKey = `cgchart_${geckoId}_timeframe_${cacheTimeframe}`
 	const cached = await getObjectCache<CgChartResponse['data']>(cacheKey)
-	if (cached?.prices) return cached
+	if (cached?.prices?.length) return cached
 
-	const fresh = await fetchCgChartFresh(geckoId, fullChart)
-	if (fresh?.prices) {
+	const fresh = await fetchCgChartFresh({
+		geckoId,
+		range: getCoinGeckoChartRange(timeframe, now)
+	})
+	if (fresh?.prices?.length) {
 		await setObjectCache(cacheKey, fresh, CG_CHART_CACHE_TTL_SECONDS)
 	}
 	return fresh
 }
 
+type CgCoinData = NonNullable<NonNullable<CgChartResponse['data']>['coinData']>
+const CG_CHART_COIN_DATA_OPTIONS = {
+	localization: false,
+	tickers: true,
+	marketData: true,
+	communityData: false,
+	developerData: false,
+	sparkline: false,
+	includeCategoriesDetails: false
+} as const
+
+async function getCachedCgCoinData(geckoId: string): Promise<CgCoinData | null> {
+	const cacheKey = `cgchart_${geckoId}_coin_data`
+	const cached = await getObjectCache<CgCoinData>(cacheKey)
+	if (cached) return cached
+
+	const fresh = await fetchCoinGeckoCoinById(geckoId, CG_CHART_COIN_DATA_OPTIONS)
+	if (fresh) await setObjectCache(cacheKey, fresh, CG_CHART_CACHE_TTL_SECONDS)
+	return fresh
+}
+
 export async function fetchCoinGeckoChartByIdWithCacheFallback(
 	geckoId: string,
-	{ fullChart = true }: { fullChart?: boolean } = {}
+	{
+		timeframe,
+		includeCoinData = false
+	}: {
+		timeframe: PriceChartTimeframe
+		includeCoinData?: boolean
+	}
 ): Promise<CgChartResponse | null> {
 	if (!geckoId) return null
 
 	if (typeof window === 'undefined') {
-		const data = await getCachedCgChartData(geckoId, fullChart)
-		return data ? { data } : null
+		const [data, coinData] = await Promise.all([
+			getCachedCgChartData(geckoId, timeframe),
+			includeCoinData ? getCachedCgCoinData(geckoId) : Promise.resolve(null)
+		])
+		return data ? { data: coinData ? { ...data, coinData } : data } : null
 	}
 
 	const url = new URL(`${CG_CHART_LOCAL_API_PATH}/${encodeURIComponent(geckoId)}`, window.location.origin)
-	url.searchParams.set('fullChart', String(fullChart))
+	url.searchParams.set('timeframe', timeframe)
+	if (includeCoinData) url.searchParams.set('includeCoinData', 'true')
 	const chart = await fetchJson<CgChartResponse | null>(url.toString()).catch(() => null)
-	return chart?.data?.prices ? chart : null
+	return chart?.data?.prices?.length ? chart : null
 }
 
 /**
@@ -324,7 +446,7 @@ export async function fetchCoinGeckoChartByIdWithCacheFallback(
  * This uses the same cache-first chart path as `fetchCoinGeckoChartByIdWithCacheFallback`.
  */
 export async function fetchDenominationPriceHistoryByCoinGeckoId(geckoId: string): Promise<DenominationPriceHistory> {
-	const chart = await fetchCoinGeckoChartByIdWithCacheFallback(geckoId)
+	const chart = await fetchCoinGeckoChartByIdWithCacheFallback(geckoId, { timeframe: 'MAX' })
 	const data = chart?.data
 
 	const prices = Array.isArray(data?.prices) ? data.prices : []

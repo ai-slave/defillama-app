@@ -197,7 +197,7 @@ async function fetchChainAssetsData(chain: string, chainAssetId?: string): Promi
 }
 
 async function fetchChainTokenData(geckoId: string) {
-	const result = await fetchCoinGeckoChartByIdWithCacheFallback(geckoId, { fullChart: true })
+	const result = await fetchCoinGeckoChartByIdWithCacheFallback(geckoId, { timeframe: 'MAX' })
 	return result?.data ?? null
 }
 

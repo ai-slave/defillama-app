@@ -62,7 +62,7 @@ const pageProps: IEquityTickerPageProps = {
 		sector: 'Technology',
 		industry: 'Semiconductors',
 		employeeCount: null,
-		website: null,
+		website: '',
 		description: '',
 		startDate: ''
 	},
@@ -189,7 +189,7 @@ describe('EquityTickerPage price history', () => {
 		})
 	}
 
-	it.each(['1W', 'MAX'])('fetches a bookmarked %s timeframe through the proxy', async (timeframe) => {
+	it.each(['7D', 'MAX'])('fetches a bookmarked %s timeframe through the proxy', async (timeframe) => {
 		router.query = { timeframe }
 		await render()
 		await waitForPrices([220, 225])
@@ -207,7 +207,7 @@ describe('EquityTickerPage price history', () => {
 		const pngButton = button('.png')
 		await act(async () => csvButton.click())
 		expect(downloadCSV).toHaveBeenLastCalledWith(
-			expect.stringContaining('nvda-price-history-1d'),
+			expect.stringContaining('nvda-price-history-24h'),
 			[
 				['Timestamp', 'Date', 'Close'],
 				[Date.parse('2026-08-27T13:30:00Z'), '2026-08-27', 222],
@@ -222,7 +222,9 @@ describe('EquityTickerPage price history', () => {
 		})
 
 		await act(async () => button('1M').click())
-		expect(router.push.mock.calls[0][0].query.timeframe).toBe('1M')
+		expect(router.push).toHaveBeenCalledWith({ pathname: '/equities/NVDA:US', query: { timeframe: '1M' } }, undefined, {
+			shallow: true
+		})
 		router.query = { timeframe: '1M' }
 		await render()
 		expect(container.querySelector('[aria-label="Loading price history"]')).not.toBeNull()
@@ -274,7 +276,7 @@ describe('EquityTickerPage price history', () => {
 			})
 			expect(chart()).toBeNull()
 			expect(container.querySelector('[aria-label="Loading price history"]')).toBeNull()
-			expect(container.textContent).toContain('1D')
+			expect(container.textContent).toContain('24H')
 			expect(button('.csv').disabled).toBe(true)
 			expect(button('.png').disabled).toBe(true)
 			router.query = {}
@@ -289,7 +291,7 @@ describe('EquityTickerPage price history', () => {
 		fetchHistory.mockResolvedValue(defaultHistory)
 		await render({ ...pageProps, priceHistory: null })
 		await waitForPrices([222, 223])
-		expect(fetchHistory).toHaveBeenCalledExactlyOnceWith('NVDA', 'US', '1D')
+		expect(fetchHistory).toHaveBeenCalledExactlyOnceWith('NVDA', 'US', '24H')
 	})
 
 	it('keeps a successful empty default response without refetching and allows another timeframe', async () => {

@@ -3,8 +3,6 @@ import { fetchCoinGeckoChartByIdWithCacheFallback, fetchCoinGeckoCoinById } from
 import type { CgChartResponse, CoinGeckoCoinDetailResultForOptions } from '~/api/coingecko.types'
 import { fetchCoinPriceByCoinGeckoIdViaLlamaPrices } from '~/api/pricing'
 import type { ProtocolLiquidityTokensResponse } from '~/api/types'
-import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
-import { formatLineChart } from '~/components/ECharts/shared/timeSeries'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import { normalizeChartPointsToMs } from '~/containers/ProtocolOverview/chartSeries.utils'
 import { fetchRaisesByDefillamaId } from '~/containers/Raises/api'
@@ -15,6 +13,7 @@ import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.
 import type { YieldsMeta } from '~/containers/Yields/data/types'
 import { slug } from '~/utils'
 import type { IProtocolLlamaswapChain, IProtocolMetadata, ITokenListEntry } from '~/utils/metadata/types'
+import { DEFAULT_PRICE_CHART_TIMEFRAME } from '~/utils/priceChartTimeframes'
 import type { TokenDirectoryRecord } from '~/utils/tokenDirectory'
 
 export type TokenOverviewChartLabel = 'Token Price' | 'Token Volume' | 'Mcap' | 'FDV'
@@ -72,6 +71,7 @@ export interface TokenOverviewCurrentMetrics {
 }
 
 export type TokenOverviewRawChartData = Partial<Record<TokenOverviewChartLabel, Array<[number, number]>>>
+type CgChartTickers = NonNullable<NonNullable<CgChartResponse['data']>['coinData']>['tickers']
 
 export interface TokenOverviewData {
 	name: string
@@ -303,7 +303,7 @@ function calculateMarketValue(price: number | null, supply: number | null): numb
 
 function buildTokenMarketData(
 	tokenEntry: ITokenListEntry | null,
-	tickers: CgChartResponse['data']['coinData']['tickers'] | undefined,
+	tickers: CgChartTickers,
 	cgExchangeIdentifiers: string[],
 	currentMetrics: TokenOverviewCurrentMetrics | null,
 	marketDataFallback: TokenOverviewMarketData = emptyMarketData,
@@ -442,12 +442,9 @@ function buildTokenLiquiditySummary({
 
 	const liquidityAggregated: Record<string, Record<string, number>> = {}
 	for (const pool of tokenPools) {
-		if (!liquidityAggregated[pool.project]) {
-			liquidityAggregated[pool.project] = {}
-		}
-
-		const currentValue = liquidityAggregated[pool.project][pool.chain] ?? 0
-		liquidityAggregated[pool.project][pool.chain] = currentValue + pool.tvlUsd
+		const projectLiquidity = liquidityAggregated[pool.project] ?? {}
+		projectLiquidity[pool.chain] = (projectLiquidity[pool.chain] ?? 0) + pool.tvlUsd
+		liquidityAggregated[pool.project] = projectLiquidity
 	}
 
 	const rows: Array<[string, string, number]> = []
@@ -495,32 +492,6 @@ export function buildTokenOverviewRawChartData({
 	}
 }
 
-export function buildDisplayedTokenChartData({
-	rawChartData,
-	activeCharts,
-	groupBy
-}: {
-	rawChartData: TokenOverviewRawChartData
-	activeCharts: TokenOverviewChartLabel[]
-	groupBy: ChartTimeGroupingWithCumulative
-}): Record<TokenOverviewChartLabel, Array<[number, number | null]>> {
-	const charts = {} as Record<TokenOverviewChartLabel, Array<[number, number | null]>>
-
-	for (const chartLabel of activeCharts) {
-		const chartData = rawChartData[chartLabel]
-		if (!chartData?.length) continue
-
-		charts[chartLabel] = formatLineChart({
-			data: chartData,
-			groupBy,
-			dateInMs: true,
-			denominationPriceHistory: null
-		})
-	}
-
-	return charts
-}
-
 export async function getTokenOverviewData({
 	record,
 	displayName,
@@ -559,26 +530,31 @@ export async function getTokenOverviewData({
 		? (emissionsSupplyMetrics[emissionsProtocolSlug]?.supplyMetrics?.adjustedSupply ?? null)
 		: null
 
-	const shouldFetchProtocolData = Boolean(protocolSlug)
 	const shouldFetchTreasury = Boolean(!record.chainId && protocolDefiLlamaId)
-	const shouldFetchRaises = Boolean(chainDefiLlamaId || protocolDefiLlamaId)
-	const shouldFetchLiquidity = Boolean(shouldFetchProtocolData && protocolMetadata?.liquidity)
-	const shouldFetchCoinDetail = Boolean(geckoId && currentMetrics == null && needsCoinDetailFallback(tokenEntry))
+	const raisesDefiLlamaId = chainDefiLlamaId ?? protocolDefiLlamaId
+	const shouldFetchLiquidity = Boolean(protocolSlug && protocolMetadata?.liquidity)
 	const totalSupply = currentMetrics
 		? (currentMetrics.maxSupply ?? currentMetrics.totalSupply)
 		: (tokenEntry?.max_supply ?? tokenEntry?.total_supply ?? null)
 
 	const [cgChart, coinDetail, currentPriceViaLlama, protocolData, raisesData, treasuries] = await Promise.all([
-		geckoId ? fetchCoinGeckoChartByIdWithCacheFallback(geckoId).catch(() => null) : Promise.resolve(null),
-		shouldFetchCoinDetail ? fetchTokenOverviewCoinDetail(geckoId) : Promise.resolve(null),
+		geckoId
+			? fetchCoinGeckoChartByIdWithCacheFallback(geckoId, {
+					timeframe: DEFAULT_PRICE_CHART_TIMEFRAME,
+					includeCoinData: true
+				}).catch(() => null)
+			: Promise.resolve(null),
+		geckoId && currentMetrics == null && needsCoinDetailFallback(tokenEntry)
+			? fetchTokenOverviewCoinDetail(geckoId)
+			: Promise.resolve(null),
 		geckoId && currentMetrics == null
 			? fetchCoinPriceByCoinGeckoIdViaLlamaPrices(geckoId).catch(() => null)
 			: Promise.resolve(null),
-		shouldFetchProtocolData ? fetchProtocolOverviewMetrics(protocolSlug!).catch(() => null) : Promise.resolve(null),
+		protocolSlug ? fetchProtocolOverviewMetrics(protocolSlug).catch(() => null) : Promise.resolve(null),
 		source.kind === 'prefetched'
 			? Promise.resolve(source.raises)
-			: shouldFetchRaises
-				? fetchRaisesByDefillamaId(chainDefiLlamaId ?? protocolDefiLlamaId!).catch(() => [] as Raise[])
+			: raisesDefiLlamaId
+				? fetchRaisesByDefillamaId(raisesDefiLlamaId).catch((): Raise[] => [])
 				: Promise.resolve(null),
 		source.kind === 'prefetched'
 			? Promise.resolve(source.treasury)

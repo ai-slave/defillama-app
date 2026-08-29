@@ -1,11 +1,15 @@
-import { useQuery } from '@tanstack/react-query'
+import { skipToken, useQuery } from '@tanstack/react-query'
 import type { CgChartResponse } from '~/api/coingecko.types'
 import { fetchJson } from '~/utils/async'
+import { DEFAULT_PRICE_CHART_TIMEFRAME, type PriceChartTimeframe } from '~/utils/priceChartTimeframes'
 import { buildTokenOverviewRawChartData, type TokenOverviewChartLabel, type TokenOverviewData } from './tokenOverview'
 
-async function fetchTokenOverviewChart(geckoId: string): Promise<CgChartResponse | null> {
+async function fetchTokenOverviewChart(
+	geckoId: string,
+	timeframe: PriceChartTimeframe
+): Promise<CgChartResponse | null> {
 	return fetchJson<CgChartResponse | null>(
-		`/api/public/tokens/charts/coingecko/${encodeURIComponent(geckoId)}?fullChart=true`
+		`/api/public/tokens/charts/coingecko/${encodeURIComponent(geckoId)}?timeframe=${timeframe}`
 	)
 }
 
@@ -19,14 +23,17 @@ export function useFetchTokenOverviewChartData({
 	geckoId,
 	overview,
 	activeCharts,
+	timeframe,
 	enabled
 }: {
 	geckoId: string | null
 	overview: TokenOverviewData
 	activeCharts: TokenOverviewChartLabel[]
+	timeframe: PriceChartTimeframe
 	enabled: boolean
 }) {
-	const missingCharts = activeCharts.filter((chart) => !overview.rawChartData[chart]?.length)
+	const prefetchedChartData = timeframe === DEFAULT_PRICE_CHART_TIMEFRAME ? overview.rawChartData : {}
+	const missingCharts = activeCharts.filter((chart) => !prefetchedChartData[chart]?.length)
 	const shouldFetchChart = Boolean(geckoId) && enabled && missingCharts.length > 0
 	const shouldFetchTotalSupply =
 		Boolean(geckoId) &&
@@ -41,9 +48,8 @@ export function useFetchTokenOverviewChartData({
 		isError: isChartError,
 		isFetching: isFetchingChartData
 	} = useQuery({
-		// Keep all token overview full-chart responses under one key per Gecko id.
-		queryKey: ['token-overview', 'chart', geckoId],
-		queryFn: () => fetchTokenOverviewChart(geckoId!),
+		queryKey: ['token-overview', 'chart', geckoId, timeframe],
+		queryFn: geckoId ? () => fetchTokenOverviewChart(geckoId, timeframe) : skipToken,
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: false,
@@ -57,7 +63,7 @@ export function useFetchTokenOverviewChartData({
 		isFetching: isFetchingTotalSupply
 	} = useQuery({
 		queryKey: ['token-overview', 'total-supply', geckoId],
-		queryFn: () => fetchTokenOverviewTotalSupply(geckoId!),
+		queryFn: geckoId ? () => fetchTokenOverviewTotalSupply(geckoId) : skipToken,
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: false,
@@ -67,14 +73,14 @@ export function useFetchTokenOverviewChartData({
 	return {
 		rawChartData: chartData
 			? {
-					...overview.rawChartData,
+					...prefetchedChartData,
 					...buildTokenOverviewRawChartData({
 						chart: chartData,
 						totalSupply: overview.marketData.maxSupply ?? overview.marketData.totalSupply ?? totalSupply,
 						includeCharts: missingCharts
 					})
 				}
-			: overview.rawChartData,
+			: prefetchedChartData,
 		isLoading: loadingChartData || loadingTotalSupply,
 		isFetching: isFetchingChartData || isFetchingTotalSupply,
 		isError: isChartError || isTotalSupplyError

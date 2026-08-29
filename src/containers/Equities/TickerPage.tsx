@@ -15,16 +15,15 @@ import { TagGroup } from '~/ui/SegmentedControl'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { equityCountryFlagUrl } from '~/utils/icons'
-import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import {
-	DEFAULT_PRICE_HISTORY_TIMEFRAME,
-	EQUITIES_PRICE_HISTORY_TIMEFRAMES,
-	isEquitiesIntradayTimeframe,
-	type EquitiesDimensionMetric,
-	type EquitiesDimensionPeriod,
-	type EquitiesPriceHistoryTimeframe,
-	type IEquitiesSummaryResponse
-} from './api.types'
+	DEFAULT_PRICE_CHART_TIMEFRAME,
+	getPriceChartTimeframe,
+	isPriceChartIntradayTimeframe,
+	PRICE_CHART_TIMEFRAMES,
+	type PriceChartTimeframe
+} from '~/utils/priceChartTimeframes'
+import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
+import { type EquitiesDimensionMetric, type EquitiesDimensionPeriod, type IEquitiesSummaryResponse } from './api.types'
 import {
 	buildEquitiesDimensionsChart,
 	buildIntradayPriceHistoryChart,
@@ -230,9 +229,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 	const activeTab: EquityTab =
 		tabQueryValue && availableTabs.includes(tabQueryValue as EquityTab) ? (tabQueryValue as EquityTab) : 'financials'
 
-	const activeTimeframe: EquitiesPriceHistoryTimeframe =
-		EQUITIES_PRICE_HISTORY_TIMEFRAMES.find((t) => t === readSingleQueryValue(router.query.timeframe)) ??
-		DEFAULT_PRICE_HISTORY_TIMEFRAME
+	const activeTimeframe = getPriceChartTimeframe(readSingleQueryValue(router.query.timeframe))
 
 	const activeFundamentalChart: EquityFundamentalChartOption = getFundamentalChartFromQuery(
 		readSingleQueryValue(router.query.fundamentals)
@@ -242,13 +239,13 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 		readSingleQueryValue(router.query.fundamentalsPeriod)
 	)
 
-	const isIntradayTimeframe = isEquitiesIntradayTimeframe(activeTimeframe)
+	const isIntradayTimeframe = isPriceChartIntradayTimeframe(activeTimeframe)
 
 	const priceHistory = useQuery({
 		queryKey: ['equities-price-history', props.ticker, props.country, activeTimeframe],
 		queryFn: () => fetchEquitiesPriceHistoryFromProxy(props.ticker, props.country, activeTimeframe),
 		// Only seed the default timeframe; every other range comes from its own proxy request.
-		initialData: activeTimeframe === DEFAULT_PRICE_HISTORY_TIMEFRAME ? (props.priceHistory ?? undefined) : undefined,
+		initialData: activeTimeframe === DEFAULT_PRICE_CHART_TIMEFRAME ? (props.priceHistory ?? undefined) : undefined,
 		staleTime: 30 * 60 * 1000,
 		refetchOnWindowFocus: false
 	})
@@ -287,9 +284,9 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 		void pushShallowQuery(router, { tab: tab === 'financials' ? undefined : tab })
 	}
 
-	const setActiveTimeframe = (timeframe: EquitiesPriceHistoryTimeframe) => {
+	const setActiveTimeframe = (timeframe: PriceChartTimeframe) => {
 		void pushShallowQuery(router, {
-			timeframe: timeframe === DEFAULT_PRICE_HISTORY_TIMEFRAME ? undefined : timeframe
+			timeframe: timeframe === DEFAULT_PRICE_CHART_TIMEFRAME ? undefined : timeframe
 		})
 	}
 
@@ -354,7 +351,8 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 								size="md"
 								selectedValue={activeTimeframe}
 								setValue={setActiveTimeframe}
-								values={EQUITIES_PRICE_HISTORY_TIMEFRAMES}
+								values={PRICE_CHART_TIMEFRAMES}
+								ariaLabel="Price history timeframe"
 							/>
 							<ChartExportButtons
 								chartInstance={priceChartInstance}
@@ -363,7 +361,11 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 								disabled={!activePriceHistoryChart}
 								csvSource={{
 									type: 'dataset',
-									prepare: () => intradayPriceHistoryChart?.csvDataset ?? activePriceHistoryChart!.dataset
+									prepare: () => {
+										if (intradayPriceHistoryChart) return intradayPriceHistoryChart.csvDataset
+										if (activePriceHistoryChart) return activePriceHistoryChart.dataset
+										throw new Error('Price history export requires chart data')
+									}
 								}}
 							/>
 						</ChartPanelToolbar>

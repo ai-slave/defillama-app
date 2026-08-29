@@ -76,7 +76,7 @@ export function buildDenominationPriceHistory(data: CoingeckoChartData): Denomin
 
 async function fetchDenominationPriceHistory(geckoId: string): Promise<DenominationPriceHistory | null> {
 	const response = await fetchJson<CgChartResponse>(
-		`/api/public/tokens/charts/coingecko/${encodeURIComponent(geckoId)}?fullChart=true`
+		`/api/public/tokens/charts/coingecko/${encodeURIComponent(geckoId)}?timeframe=MAX`
 	)
 	const prices = response.data?.prices
 	if (!prices?.length) return null

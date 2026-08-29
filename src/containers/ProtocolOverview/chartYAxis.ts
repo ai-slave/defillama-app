@@ -10,7 +10,7 @@ type AxisExtent = {
 
 type AxisBuilderContext = {
 	chartColors: Record<string, string>
-	chartsInSeries: Set<string>
+	chartsInSeries: Set<ProtocolChartsLabels>
 	unlockTokenSymbol: string
 	gasUsedValueSymbol: string
 }
@@ -18,6 +18,7 @@ type AxisBuilderContext = {
 type AxisConfig = {
 	formatter?: (value: number, context: AxisBuilderContext) => string
 	resolveColor?: (context: AxisBuilderContext) => string | undefined
+	scale?: true
 }
 
 const CUSTOM_OFFSETS: Record<string, number> = {
@@ -37,8 +38,14 @@ function getZeroBaselineYAxisMin(extent: AxisExtent) {
 }
 
 const AXIS_CONFIG_BY_TYPE: Partial<Record<ProtocolChartsLabels, AxisConfig>> = {
+	Mcap: {
+		resolveColor: ({ chartColors, chartsInSeries }) =>
+			chartsInSeries.has('Mcap') ? chartColors.Mcap : chartColors.FDV,
+		scale: true
+	},
 	'Token Price': {
-		resolveColor: ({ chartColors }) => chartColors['Token Price']
+		resolveColor: ({ chartColors }) => chartColors['Token Price'],
+		scale: true
 	},
 	'Token Volume': {
 		resolveColor: ({ chartColors }) => chartColors['Token Volume']
@@ -138,7 +145,7 @@ export function buildProtocolYAxis({
 	allYAxis: Array<[ProtocolChartsLabels, number | undefined]>
 	baseYAxis: MultiSeriesYAxisOption
 	chartColors: Record<string, string>
-	chartsInSeries: Set<string>
+	chartsInSeries: Set<ProtocolChartsLabels>
 	unlockTokenSymbol: string
 	gasUsedValueSymbol: string
 }) {
@@ -156,13 +163,13 @@ export function buildProtocolYAxis({
 		}
 
 		const prevOffset = finalYAxis[finalYAxis.length - 1]?.offset ?? 0
+		const axisConfig = AXIS_CONFIG_BY_TYPE[type]
 		const axisOptions = mergeDeep(baseYAxis, {
 			name: '',
 			type: 'value',
-			min: getZeroBaselineYAxisMin,
+			...(axisConfig?.scale ? { scale: true } : { min: getZeroBaselineYAxisMin }),
 			offset: noOffset || index == null || index < 2 ? 0 : prevOffset + (CUSTOM_OFFSETS[type] ?? 40)
 		})
-		const axisConfig = AXIS_CONFIG_BY_TYPE[type]
 
 		const formatter = axisConfig?.formatter
 		if (formatter) {

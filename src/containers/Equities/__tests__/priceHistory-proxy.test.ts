@@ -2,10 +2,16 @@ import { describe, expect, it, vi } from 'vitest'
 import { fetchEquitiesPriceHistoryFromProxy } from '../priceHistoryClient'
 import { buildEquitiesPriceHistoryUpstreamUrl } from '../server/priceHistory.api'
 
-const fetchJsonMock = vi.fn()
+const fetchJsonMock = vi.hoisted(() => vi.fn())
 vi.mock('~/utils/async', () => ({
-	fetchJson: (...args: unknown[]) => fetchJsonMock(...args)
+	fetchJson: fetchJsonMock
 }))
+
+function upstreamUrl(query: Parameters<typeof buildEquitiesPriceHistoryUpstreamUrl>[0]): URL {
+	const url = buildEquitiesPriceHistoryUpstreamUrl(query)
+	if (!url) throw new Error('Expected a valid equities price history request')
+	return new URL(url)
+}
 
 describe('equities price history proxy mapping', () => {
 	it('preserves the requested identity and timeframe through both proxy URL builders', async () => {
@@ -13,23 +19,36 @@ describe('equities price history proxy mapping', () => {
 		fetchJsonMock.mockResolvedValue([])
 		await fetchEquitiesPriceHistoryFromProxy(query.ticker, query.country, query.timeframe)
 
-		const proxy = new URL(fetchJsonMock.mock.calls[0][0], 'https://defillama.com')
+		const proxyUrl = fetchJsonMock.mock.lastCall?.[0]
+		if (typeof proxyUrl !== 'string') throw new Error('Missing equities price history proxy request')
+		const proxy = new URL(proxyUrl, 'https://defillama.com')
 		expect(proxy.pathname).toBe('/api/public/equities/price-history')
 		const forwarded = Object.fromEntries(proxy.searchParams)
 		expect(forwarded).toEqual(query)
 
-		const upstream = new URL(buildEquitiesPriceHistoryUpstreamUrl(forwarded)!)
+		const upstream = upstreamUrl(forwarded)
 		expect(upstream.pathname).toMatch(/\/price-history$/)
 		expect(Object.fromEntries(upstream.searchParams)).toMatchObject(query)
 	})
 
+	it.each([
+		['24H', '1D'],
+		['7D', '1W']
+	])('maps the public %s timeframe to the equities backend %s timeframe', (timeframe, upstreamTimeframe) => {
+		const upstream = upstreamUrl({ ticker: 'NVDA', country: 'US', timeframe })
+
+		expect(upstream.searchParams.get('timeframe')).toBe(upstreamTimeframe)
+	})
+
 	it('rejects requests missing a ticker or country', () => {
-		expect(buildEquitiesPriceHistoryUpstreamUrl({ country: 'US', timeframe: '1D' })).toBeNull()
-		expect(buildEquitiesPriceHistoryUpstreamUrl({ ticker: 'NVDA', timeframe: '1D' })).toBeNull()
+		expect(buildEquitiesPriceHistoryUpstreamUrl({ country: 'US', timeframe: '24H' })).toBeNull()
+		expect(buildEquitiesPriceHistoryUpstreamUrl({ ticker: 'NVDA', timeframe: '24H' })).toBeNull()
 	})
 
 	it('rejects unsupported or missing timeframes', () => {
 		expect(buildEquitiesPriceHistoryUpstreamUrl({ ticker: 'NVDA', country: 'US', timeframe: '10Y' })).toBeNull()
+		expect(buildEquitiesPriceHistoryUpstreamUrl({ ticker: 'NVDA', country: 'US', timeframe: '1D' })).toBeNull()
+		expect(buildEquitiesPriceHistoryUpstreamUrl({ ticker: 'NVDA', country: 'US', timeframe: '1W' })).toBeNull()
 		expect(buildEquitiesPriceHistoryUpstreamUrl({ ticker: 'NVDA', country: 'US' })).toBeNull()
 	})
 })

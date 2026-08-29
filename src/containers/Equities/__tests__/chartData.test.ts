@@ -65,8 +65,8 @@ describe('equities chart data', () => {
 			],
 			dimensions: ['timestamp', 'Shares Outstanding']
 		})
-		expect(chart.charts[0].valueSymbol).toBe('')
-		expect(buildEquitiesDimensionsChart(dimensions, 'revenue', 'annual').charts[0].valueSymbol).toBe('$')
+		expect(chart.charts.at(0)?.valueSymbol).toBe('')
+		expect(buildEquitiesDimensionsChart(dimensions, 'revenue', 'annual').charts.at(0)?.valueSymbol).toBe('$')
 	})
 
 	it('preserves measured zero in price and dimension charts', () => {
@@ -95,7 +95,7 @@ describe('intraday price history', () => {
 	]
 
 	it('plots sessions as adjacent categories so closed hours are compressed out', () => {
-		const chart = buildIntradayPriceHistoryChart(intraday, '1W')
+		const chart = buildIntradayPriceHistoryChart(intraday, '7D')
 		expect(chart.dataset.dimensions).toEqual(['session', 'Close'])
 		expect(chart.dataset.source).toEqual([
 			['26 Aug 19:50', 209],
@@ -106,7 +106,7 @@ describe('intraday price history', () => {
 	})
 
 	it('keeps machine timestamps for CSV export while the axis shows labels', () => {
-		const chart = buildIntradayPriceHistoryChart(intraday, '1W')
+		const chart = buildIntradayPriceHistoryChart(intraday, '7D')
 		expect(chart.csvDataset.dimensions).toEqual(['timestamp', 'Close'])
 		expect(chart.csvDataset.source).toEqual([
 			[Date.parse('2026-08-26T19:50:00Z'), 209],

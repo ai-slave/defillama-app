@@ -83,7 +83,8 @@ export async function getProtocolUnlocksStaticPropsData(
 	const tokenEntry = geckoId ? (tokenlist[geckoId] ?? null) : null
 	const cgChart = geckoId
 		? await fetchCoinGeckoChartByIdWithCacheFallback(geckoId, {
-				fullChart: false
+				timeframe: '1Y',
+				includeCoinData: true
 			}).catch(() => null)
 		: null
 	const cgMarketData = cgChart?.data?.coinData?.market_data
