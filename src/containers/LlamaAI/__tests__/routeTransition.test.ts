@@ -1,7 +1,25 @@
 import { describe, expect, it } from 'vitest'
-import { isSameAgenticRouteTransition, shouldSkipCurrentSessionRouteRestore } from '../routeTransition'
+import {
+	isSameAgenticRouteTransition,
+	shouldSkipCurrentSessionRouteRestore,
+	toAgenticRouteTransition
+} from '../routeTransition'
 
 describe('routeTransition', () => {
+	it('maps page routes to chat transitions and ignores unknown routes', () => {
+		expect(toAgenticRouteTransition({ kind: 'chat-new' }, (id) => id)).toEqual({ kind: 'new-chat' })
+		expect(
+			toAgenticRouteTransition({ kind: 'chat-session', sessionId: 'alias-1', aroundMessageId: 'message-a' }, (id) =>
+				id === 'alias-1' ? 'session-1' : id
+			)
+		).toEqual({ kind: 'session', sessionId: 'session-1', aroundMessageId: 'message-a' })
+		expect(toAgenticRouteTransition({ kind: 'project-list' }, (id) => id)).toEqual({ kind: 'project-list' })
+		expect(
+			toAgenticRouteTransition({ kind: 'project', projectId: 'project-1', initialTab: 'chats' }, (id) => id)
+		).toEqual({ kind: 'project', projectId: 'project-1' })
+		expect(toAgenticRouteTransition({ kind: 'unknown' }, (id) => id)).toBeNull()
+	})
+
 	it('compares new-chat and project transitions by kind and identity', () => {
 		expect(isSameAgenticRouteTransition({ kind: 'new-chat' }, { kind: 'new-chat' })).toBe(true)
 		expect(

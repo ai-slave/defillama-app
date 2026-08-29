@@ -269,6 +269,7 @@ The current useful test seams are:
   `__tests__/fetchAgenticResponse.test.ts`,
   `__tests__/streamCallbacks.test.ts`, and markdown renderer/helper tests.
 - Route and operation ownership: `__tests__/routeTransition.test.ts`,
+  `hooks/useAgenticRouteTransition.test.tsx`,
   `__tests__/executionCoordinator.test.ts`.
 - Integration state helpers:
   `hooks/__tests__/useIntegrationLink.test.ts`.

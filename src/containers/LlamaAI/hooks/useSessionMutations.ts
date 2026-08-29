@@ -2,7 +2,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { useAuthContext } from '~/auth'
 import { llamaAIRequest } from '~/containers/LlamaAI/api/transport'
-import { decodeExecutionSnapshot, type AgenticExecutionSnapshot } from '~/containers/LlamaAI/executionProtocol'
 import {
 	prependSessionToInfiniteData,
 	removeSessionFromInfiniteData,
@@ -43,7 +42,6 @@ type SessionRestoreResponse = {
 	projectId?: string | null
 	queuedMessages?: unknown
 	queueRevision?: number
-	execution?: AgenticExecutionSnapshot | null
 }
 
 function getSessionRestoreMessages(result: SessionRestoreResponse | null | undefined): unknown[] {
@@ -499,8 +497,7 @@ export function useSessionMutations() {
 					todos: result?.todos,
 					projectId: result?.projectId ?? null,
 					queuedMessages: result?.queuedMessages,
-					queueRevision: result?.queueRevision,
-					execution: decodeExecutionSnapshot(result?.execution)
+					queueRevision: result?.queueRevision
 				}
 			} catch (error) {
 				if (!signal?.aborted) console.error('[llama-ai] [restoreSession] failed:', getErrorMessage(error))

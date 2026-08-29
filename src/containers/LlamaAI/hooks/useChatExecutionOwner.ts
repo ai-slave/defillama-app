@@ -39,7 +39,6 @@ type AttachExecutionInput = {
 	buffer?: StreamBuffer
 	resetStream?: boolean
 	onTemporaryDisconnect?: (error: Error, streamBuffer: StreamBuffer) => void
-	executionHint?: AgenticExecutionSnapshot | null
 	operation?: ExecutionOperation
 }
 
@@ -90,10 +89,9 @@ export function useChatExecutionOwner({
 			resetStream = true,
 			replayCompleted,
 			onTemporaryDisconnect,
-			executionHint = null,
 			operation: existingOperation
 		}: AttachExecutionInput & { replayCompleted: boolean }): Promise<ResumeExecutionOutcome> => {
-			let nextExecutionHint = executionHint
+			let nextExecutionHint: AgenticExecutionSnapshot | null = null
 			const execute = async (operation: ExecutionOperation, replacementCount = 0): Promise<ResumeExecutionOutcome> => {
 				let activeMessageId: string | undefined
 				{

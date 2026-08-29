@@ -50,8 +50,8 @@ import {
 	waitForAbortableDelay,
 	type ExecutionOperation
 } from '~/containers/LlamaAI/executionCoordinator'
-import type { AgenticExecutionSnapshot } from '~/containers/LlamaAI/executionProtocol'
 import { fetchAgenticResponse, stopAgenticExecution } from '~/containers/LlamaAI/fetchAgenticResponse'
+import { useAgenticRouteTransition } from '~/containers/LlamaAI/hooks/useAgenticRouteTransition'
 import { useChatExecutionOwner } from '~/containers/LlamaAI/hooks/useChatExecutionOwner'
 import { useChatQueueController, type QueueSurface } from '~/containers/LlamaAI/hooks/useChatQueueController'
 import { useChatScroll } from '~/containers/LlamaAI/hooks/useChatScroll'
@@ -126,11 +126,6 @@ import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatUsd } from '~/utils/numberFormat'
 import { DuelPanel, type DuelChoice } from './components/DuelPanel'
 import { useDuelStream } from './hooks/useDuelStream'
-import {
-	isSameAgenticRouteTransition,
-	shouldSkipCurrentSessionRouteRestore,
-	type AgenticRouteTransition
-} from './routeTransition'
 
 const SubscribeProModal = lazy(() =>
 	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
@@ -142,9 +137,7 @@ const DashboardPanel = lazy(() =>
 	import('~/containers/LlamaAI/components/DashboardPanel').then((m) => ({ default: m.DashboardPanel }))
 )
 
-type RestoreSessionSnapshotResult =
-	| { status: 'restored'; execution: AgenticExecutionSnapshot | null }
-	| { status: 'failed' | 'aborted'; execution: null }
+type RestoreSessionSnapshotResult = { status: 'restored' | 'failed' | 'aborted' }
 
 function buildFreeLimitMessage(err: UsageLimitError & { code: FreeLimitOffer['code'] }): Message {
 	const isDaily = err.code === 'FREE_DAILY_LIMIT'
@@ -268,7 +261,6 @@ export function AgenticChat({
 	const route = useLlamaAIRouteContext()
 	const navigate = useLlamaAINavigate()
 	const projectHomeSignal = useProjectHomeSignal()
-	const projectHomeSignalRef = useRef(projectHomeSignal)
 	const sessionAliases = useOptionalSessionAliases()
 	const resolveSessionAlias = useCallback((id: string) => sessionAliases?.resolve(id) ?? id, [sessionAliases])
 	const registerSessionAlias = useCallback(
@@ -457,8 +449,8 @@ export function AgenticChat({
 	currentSessionIdRef.current = sessionId
 	const routeSessionIdRef = useRef(routeSessionId)
 	routeSessionIdRef.current = routeSessionId
-	const currentSessionProjectIdRef = useRef<string | null>(null)
-	const previousRouteTransitionRef = useRef<AgenticRouteTransition | null>(null)
+	const currentSessionProjectIdRef = useRef(currentSessionProjectId)
+	currentSessionProjectIdRef.current = currentSessionProjectId
 	const {
 		phase: streamPhase,
 		isStreaming,
@@ -647,10 +639,6 @@ export function AgenticChat({
 	useEffect(() => {
 		closeCitationSheet()
 	}, [sessionId, closeCitationSheet])
-
-	useEffect(() => {
-		currentSessionProjectIdRef.current = currentSessionProjectId
-	}, [currentSessionProjectId])
 
 	useEffect(() => {
 		const timer = setTimeout(() => window.dispatchEvent(new CustomEvent('chartResize')), 250)
@@ -1098,12 +1086,9 @@ export function AgenticChat({
 			try {
 				result = (await restoreSession(targetSessionId, 10, options?.around, operation.signal)) as SessionRestoreResult
 			} catch {
-				return {
-					status: operation.signal.aborted || !operation.isCurrent() ? 'aborted' : 'failed',
-					execution: null
-				}
+				return { status: operation.signal.aborted || !operation.isCurrent() ? 'aborted' : 'failed' }
 			}
-			if (!operation.isCurrent()) return { status: 'aborted', execution: null }
+			if (!operation.isCurrent()) return { status: 'aborted' }
 
 			const restored: Message[] = (result.messages || []).map(mapPersistedMessage)
 			const projected = options?.around
@@ -1140,13 +1125,6 @@ export function AgenticChat({
 			if (!options?.around) {
 				attach()
 			}
-			const restoredCompletedResult =
-				result.execution?.status === 'completed' &&
-				!!result.execution.hasResult &&
-				projected.some((message) => message.id === result.execution?.messageId)
-			if (restoredCompletedResult && result.execution) {
-				markWebCompletionSeen(targetSessionId, result.execution.messageId)
-			}
 			setPaginationState({
 				hasMore: result.pagination?.hasMore ?? false,
 				cursor: result.pagination?.cursor ?? null,
@@ -1158,12 +1136,9 @@ export function AgenticChat({
 			dispatchStream({ type: 'SET_ERROR', value: null })
 			dispatchStream({ type: 'RESET_RECOVERY' })
 
-			return {
-				status: 'restored',
-				execution: result.execution ?? null
-			}
+			return { status: 'restored' }
 		},
-		[attach, markWebCompletionSeen, restoreQueueSnapshot, restoreSession, sessions]
+		[attach, restoreQueueSnapshot, restoreSession, sessions]
 	)
 
 	const exhaustRecovery = useCallback(
@@ -1227,14 +1202,7 @@ export function AgenticChat({
 			restoreSessionSnapshot(latest.sessionId, operation)
 		)
 		if (recoveryControllerRef.current?.id !== recoveryId) return
-		if (restoreResult.status === 'restored' && restoreResult.execution?.status !== 'running') {
-			if (
-				latest.failedRequest &&
-				latest.buffer.executionId &&
-				restoreResult.execution?.messageId === latest.buffer.executionId
-			) {
-				clearPromptFailure(latest.sessionId, latest.failedRequest.mutation.clientMutationId)
-			}
+		if (restoreResult.status === 'restored') {
 			dispatchStream({ type: 'RESET_STREAM' })
 			clearRecoveryController()
 			return
@@ -1381,9 +1349,6 @@ export function AgenticChat({
 
 	useLayoutEffect(() => {
 		return () => {
-			// Strict Mode replays effects after cleanup. Let the replacement lifecycle
-			// restore the same route instead of treating the aborted attempt as handled.
-			previousRouteTransitionRef.current = null
 			executionCoordinator.invalidate()
 			restoreCoordinator.invalidate()
 			paginationCoordinator.invalidate()
@@ -1468,7 +1433,6 @@ export function AgenticChat({
 
 			await resumeIfRunning({
 				targetSessionId: selectedSessionId,
-				executionHint: restoreResult.execution,
 				onTemporaryDisconnect: (disconnectError, buffer) => {
 					startRecoveryCycle({
 						targetSessionId: selectedSessionId,
@@ -1499,85 +1463,32 @@ export function AgenticChat({
 		[navigate]
 	)
 
-	const routeTransition = useMemo<AgenticRouteTransition | null>(() => {
-		if (readOnly || sharedSession) return null
-		if (route.kind === 'chat-new') return { kind: 'new-chat' }
-		if (route.kind === 'chat-session') {
-			return {
-				kind: 'session',
-				sessionId: resolveSessionAlias(route.sessionId),
-				aroundMessageId: route.aroundMessageId
-			}
+	useAgenticRouteTransition({
+		route,
+		readOnly,
+		sharedSession: !!sharedSession,
+		resolveSessionAlias,
+		projectHomeSignal,
+		getCurrentSessionId: () => currentSessionIdRef.current,
+		onNewChat: () => {
+			clearConversationState()
+			promptInputRef.current?.focus()
+		},
+		onOpenSession: (nextSessionId, aroundMessageId) => {
+			setQuotedText(null)
+			setMessages([])
+			setActiveLeafMessageId(null)
+			setSessionTitle(null)
+			resetDuel()
+			dispatchDashboardPanel({ type: 'RESET' })
+			setPaginationState({ hasMore: false, cursor: null })
+			restoredSessionIdRef.current = null
+			return handleSessionSelect(nextSessionId, aroundMessageId ? { around: aroundMessageId } : undefined)
+		},
+		onClearChat: () => {
+			void clearConversationState()
 		}
-		if (route.kind === 'project-list') return { kind: 'project-list' }
-		if (route.kind === 'project') return { kind: 'project', projectId: route.projectId }
-		return null
-	}, [readOnly, sharedSession, route, resolveSessionAlias])
-
-	// Same-URL project clicks (sidebar click while already on /ai/projects/[id]) bump the project-home
-	// signal so we can reset the inline chat back to the project landing — Next.js doesn't fire route
-	// change events for same-URL navigation, so we need a separate trigger.
-	useEffect(() => {
-		if (projectHomeSignal === projectHomeSignalRef.current) return
-		projectHomeSignalRef.current = projectHomeSignal
-		if (readOnly || sharedSession) return
-		if (route.kind !== 'project') return
-		void clearConversationState()
-	}, [projectHomeSignal, route.kind, readOnly, sharedSession, clearConversationState])
-
-	useLayoutEffect(() => {
-		if (!routeTransition) return
-
-		const previousTransition = previousRouteTransitionRef.current
-
-		// Bail out if the route hasn't actually changed. The effect can re-fire if a callback
-		// in its dep list re-creates (e.g. after we dispatch state changes inside the transition),
-		// and re-running the transition body would loop the clear/restore actions indefinitely.
-		if (previousTransition && isSameAgenticRouteTransition(previousTransition, routeTransition)) return
-		previousRouteTransitionRef.current = routeTransition
-
-		const transition = async () => {
-			if (routeTransition.kind === 'new-chat') {
-				clearConversationState()
-				promptInputRef.current?.focus()
-				return
-			}
-
-			if (routeTransition.kind === 'session') {
-				const nextSessionId = routeTransition.sessionId
-				if (shouldSkipCurrentSessionRouteRestore(routeTransition, previousTransition, currentSessionIdRef.current))
-					return
-
-				setQuotedText(null)
-				setMessages([])
-				setActiveLeafMessageId(null)
-				setSessionTitle(null)
-				resetDuel()
-				dispatchDashboardPanel({ type: 'RESET' })
-				setPaginationState({ hasMore: false, cursor: null })
-				restoredSessionIdRef.current = null
-				await handleSessionSelect(
-					nextSessionId,
-					routeTransition.aroundMessageId ? { around: routeTransition.aroundMessageId } : undefined
-				)
-				return
-			}
-
-			if (routeTransition.kind === 'project-list') {
-				clearConversationState()
-				return
-			}
-
-			if (routeTransition.kind === 'project') {
-				// Always reset to the project landing on navigation. The submit-from-landing flow
-				// keeps the inline chat visible because URL doesn't change (no transition fires);
-				// any actual navigation to /ai/projects/[id] should land you on the project home.
-				clearConversationState()
-			}
-		}
-
-		void transition()
-	}, [routeTransition, clearConversationState, handleSessionSelect, resetDuel])
+	})
 
 	const startPromptSubmission = useCallback(
 		(effectiveMode: AgenticAnswerMode, prepare: () => PreparedPromptSubmission): boolean => {
@@ -2426,9 +2337,6 @@ export function AgenticChat({
 			restoreSessionSnapshot(targetSessionId, operation)
 		)
 		if (!ownsTarget() || restoreResult.status !== 'restored') return
-		if (restoreResult.execution?.status === 'running') {
-			await resumeIfRunning({ targetSessionId, executionHint: restoreResult.execution })
-		}
 	})
 
 	// Immediately attempt to reconnect to a running or completed server-side execution.
