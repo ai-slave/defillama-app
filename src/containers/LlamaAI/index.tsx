@@ -7,7 +7,6 @@ import {
 	Suspense,
 	useCallback,
 	useEffect,
-	useEffectEvent,
 	useLayoutEffect,
 	useMemo,
 	useReducer,
@@ -17,11 +16,6 @@ import {
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
-import {
-	consumePendingPrompt,
-	consumePendingPageContext,
-	consumePendingSuggestedFlag
-} from '~/components/LlamaAIFloatingButton'
 import { AI_SERVER } from '~/constants'
 import { AbortScope } from '~/containers/LlamaAI/abortScope'
 import { LlamaAITransportError } from '~/containers/LlamaAI/api/transport'
@@ -62,6 +56,9 @@ import { useChatExecutionOwner } from '~/containers/LlamaAI/hooks/useChatExecuti
 import { useChatQueueController, type QueueSurface } from '~/containers/LlamaAI/hooks/useChatQueueController'
 import { useChatScroll } from '~/containers/LlamaAI/hooks/useChatScroll'
 import { useClearUnseenCompletion } from '~/containers/LlamaAI/hooks/useClearUnseenCompletion'
+import { useDeepLinkPrompt } from '~/containers/LlamaAI/hooks/useDeepLinkPrompt'
+import { useForegroundRecovery } from '~/containers/LlamaAI/hooks/useForegroundRecovery'
+import { useForkInitialPrompt } from '~/containers/LlamaAI/hooks/useForkInitialPrompt'
 import { useLlamaAISetting, useLlamaAISettings } from '~/containers/LlamaAI/hooks/useLlamaAISettings'
 import { movePromptDraft } from '~/containers/LlamaAI/hooks/usePromptDraft'
 import { useSessionList } from '~/containers/LlamaAI/hooks/useSessionList'
@@ -90,7 +87,6 @@ import { ProjectsGrid } from '~/containers/LlamaAI/projects/ProjectsGrid'
 import { getProjectTier } from '~/containers/LlamaAI/projects/tier'
 import {
 	canProbeSessionAfterEmptyResponse,
-	getForegroundRecoveryIntent,
 	getPromptFailurePolicy,
 	isPromptMutationConfirmed,
 	materializeFailedPrompt,
@@ -380,8 +376,29 @@ export function AgenticChat({
 	const [showShareModal, setShowShareModal] = useState(false)
 	const [shareTargetMessageId, setShareTargetMessageId] = useState<string | null>(null)
 	const [initialIntegrationsState, setInitialIntegrationsState] = useState<SettingsInitialState | null>(null)
-	const [deepLinkConfirmationPrompt, setDeepLinkConfirmationPrompt] = useState<string | null>(null)
 	const router = useRouter()
+	const submitPendingPromptRef = useRef<
+		(prompt: string, pageContext?: ChatPageContext, isSuggestedQuestion?: boolean) => void
+	>(() => {})
+	const deepLinkPrompt = route.kind === 'chat-new' ? route.initialPrompt?.trim() || undefined : undefined
+	const deepLinkUtmSource = typeof router.query.utm_source === 'string' ? router.query.utm_source : null
+	const deepLinkUtmCampaign = typeof router.query.utm_campaign === 'string' ? router.query.utm_campaign : null
+	const {
+		confirmationPrompt: deepLinkConfirmationPrompt,
+		confirm: handleConfirmDeepLinkPrompt,
+		dismiss: handleCloseDeepLinkPrompt
+	} = useDeepLinkPrompt({
+		isNewChat: route.kind === 'chat-new',
+		sharedSession: !!sharedSession,
+		deepLinkPrompt,
+		utmSource: deepLinkUtmSource,
+		utmCampaign: deepLinkUtmCampaign,
+		clearDeepLinkFromUrl: () => {
+			void navigate.refineCurrent('/ai/chat')
+		},
+		submitPrompt: (prompt, pageContext, isSuggestedQuestion) =>
+			submitPendingPromptRef.current(prompt, pageContext, isSuggestedQuestion)
+	})
 	const {
 		settings,
 		actions,
@@ -442,7 +459,6 @@ export function AgenticChat({
 	routeSessionIdRef.current = routeSessionId
 	const currentSessionProjectIdRef = useRef<string | null>(null)
 	const previousRouteTransitionRef = useRef<AgenticRouteTransition | null>(null)
-	const consumedInitialPromptRef = useRef<{ sessionId: string; prompt: string } | null>(null)
 	const {
 		phase: streamPhase,
 		isStreaming,
@@ -2448,215 +2464,47 @@ export function AgenticChat({
 		setMessages((current) => current.filter((message) => message.id !== request.optimisticMessageId))
 	}, [clearPromptFailure, sessionId, sessionPromptFailure])
 
-	// Consume pending prompts injected by the floating button once the base chat page mounts.
-	const submitPendingPromptEvent = useStableCallback(
-		(
-			prompt: string,
-			pageContext?: { entitySlug?: string; entityType?: 'protocol' | 'chain' | 'page'; route: string },
-			isSuggestedQuestion?: boolean
-		) => {
-			handleSubmit(prompt, undefined, undefined, pageContext, { isSuggestedQuestion })
-		}
-	)
+	submitPendingPromptRef.current = (prompt, pageContext, isSuggestedQuestion) => {
+		handleSubmit(prompt, undefined, undefined, pageContext, { isSuggestedQuestion })
+	}
 
-	// Confirm shareable deep-link prompts before spending a user request. Prompts that were already
-	// confirmed before auth are still delivered through the existing pending-prompt queue.
-	const deepLinkPrompt = route.kind === 'chat-new' ? route.initialPrompt?.trim() || undefined : undefined
-	const deepLinkUtmSource = typeof router.query.utm_source === 'string' ? router.query.utm_source : null
-	const deepLinkUtmCampaign = typeof router.query.utm_campaign === 'string' ? router.query.utm_campaign : null
-	const deepLinkConsumedKeyRef = useRef<string | null>(null)
-
-	useEffect(() => {
-		if (route.kind !== 'chat-new' || sharedSession) return
-
-		const pendingPrompt = consumePendingPrompt()
-		const pendingPageContext = consumePendingPageContext()
-		const isSuggested = consumePendingSuggestedFlag()
-		if (pendingPrompt) {
-			if (deepLinkPrompt) {
-				deepLinkConsumedKeyRef.current = `${deepLinkPrompt}\n${deepLinkUtmSource ?? ''}\n${deepLinkUtmCampaign ?? ''}`
-				setDeepLinkConfirmationPrompt(null)
-				void navigate.refineCurrent('/ai/chat')
-			}
-			submitPendingPromptEvent(pendingPrompt, pendingPageContext ?? undefined, isSuggested || undefined)
-			return
-		}
-
-		if (deepLinkPrompt) {
-			const deepLinkKey = `${deepLinkPrompt}\n${deepLinkUtmSource ?? ''}\n${deepLinkUtmCampaign ?? ''}`
-			if (deepLinkConsumedKeyRef.current === deepLinkKey) return
-			deepLinkConsumedKeyRef.current = deepLinkKey
-			setDeepLinkConfirmationPrompt(deepLinkPrompt)
-			trackUmamiEvent('llamaai-deeplink-view', {
-				source: deepLinkUtmSource,
-				campaign: deepLinkUtmCampaign,
-				prompt: deepLinkPrompt.replace(/\s+/g, ' ').slice(0, 100)
-			})
-			return
-		}
-
-		deepLinkConsumedKeyRef.current = null
-		setDeepLinkConfirmationPrompt(null)
-	}, [
-		route.kind,
-		deepLinkPrompt,
-		deepLinkUtmSource,
-		deepLinkUtmCampaign,
-		sharedSession,
-		navigate,
-		submitPendingPromptEvent
-	])
-
-	const handleConfirmDeepLinkPrompt = useCallback(() => {
-		const prompt = deepLinkConfirmationPrompt?.trim()
-		if (!prompt) return
-		deepLinkConsumedKeyRef.current = `${prompt}\n${deepLinkUtmSource ?? ''}\n${deepLinkUtmCampaign ?? ''}`
-		setDeepLinkConfirmationPrompt(null)
-		trackUmamiEvent('llamaai-deeplink-run', {
-			source: deepLinkUtmSource,
-			campaign: deepLinkUtmCampaign,
-			prompt: prompt.replace(/\s+/g, ' ').slice(0, 100)
-		})
-		void navigate.refineCurrent('/ai/chat')
-		submitPendingPromptEvent(prompt)
-	}, [deepLinkConfirmationPrompt, deepLinkUtmSource, deepLinkUtmCampaign, navigate, submitPendingPromptEvent])
-
-	const handleCloseDeepLinkPrompt = useCallback(() => {
-		if (deepLinkConfirmationPrompt) {
-			trackUmamiEvent('llamaai-deeplink-dismiss', {
-				source: deepLinkUtmSource,
-				campaign: deepLinkUtmCampaign,
-				prompt: deepLinkConfirmationPrompt.replace(/\s+/g, ' ').slice(0, 100)
-			})
-		}
-		setDeepLinkConfirmationPrompt(null)
-		void navigate.refineCurrent('/ai/chat')
-	}, [deepLinkConfirmationPrompt, deepLinkUtmSource, deepLinkUtmCampaign, navigate])
-
-	// When returning to the tab after a dropped stream, try to reconnect to any still-running execution.
-	// Resets the recovery grace period so it doesn't immediately exhaust after mobile sleep
-	// (setTimeout timers are frozen during sleep but wall clock advances).
-	const reconnectVisibleExecutionEvent = useEffectEvent(() => {
-		if (readOnly || isRouteSessionPending) return
-		const controller = recoveryControllerRef.current
-		switch (
-			getForegroundRecoveryIntent({
-				hasActiveRecovery: controller !== null,
-				promptFailure: sessionPromptFailure,
-				hasGenericError: !!error
-			})
-		) {
-			case 'resume-recovery':
-				if (!controller) return
-				controller.startedAt = Date.now()
-				scheduleRecoveryAttempt(controller, 0, () => void attemptRecoveryForController(controller.id))
-				return
-			case 'replay-prompt':
-				handlePromptFailureAction()
-				return
-			case 'probe-session':
-				if (sessionId && !isStreaming) void reconcileSessionExecution(sessionId)
-				return
-			case 'none':
-				return
+	useForegroundRecovery({
+		readOnly,
+		isRouteSessionPending,
+		isStreaming,
+		sessionId,
+		hasGenericError: !!error,
+		promptFailure: sessionPromptFailure,
+		getHasActiveRecovery: () => recoveryControllerRef.current !== null,
+		onResumeRecovery: () => {
+			const controller = recoveryControllerRef.current
+			if (!controller) return
+			controller.startedAt = Date.now()
+			scheduleRecoveryAttempt(controller, 0, () => void attemptRecoveryForController(controller.id))
+		},
+		onReplayPrompt: handlePromptFailureAction,
+		onProbeSession: (targetSessionId) => {
+			void reconcileSessionExecution(targetSessionId)
 		}
 	})
 
-	useEffect(() => {
-		const onVisibilityChange = () => {
-			if (!document.hidden) {
-				reconnectVisibleExecutionEvent()
-			}
-		}
-		const onPageShow = (e: PageTransitionEvent) => {
-			if (e.persisted) {
-				reconnectVisibleExecutionEvent()
-			}
-		}
-
-		document.addEventListener('visibilitychange', onVisibilityChange)
-		window.addEventListener('pageshow', onPageShow)
-		return () => {
-			document.removeEventListener('visibilitychange', onVisibilityChange)
-			window.removeEventListener('pageshow', onPageShow)
-		}
-	}, [])
-
-	useEffect(() => {
-		const onOnline = () => {
-			reconnectVisibleExecutionEvent()
-		}
-
-		window.addEventListener('online', onOnline)
-		return () => window.removeEventListener('online', onOnline)
-	}, [])
-
-	// After recovery exhausts, periodically check if the server-side execution completed
-	// so we can restore the result without requiring user interaction.
-	useEffect(() => {
-		const recoveryIntent = getForegroundRecoveryIntent({
-			hasActiveRecovery: false,
-			promptFailure: sessionPromptFailure,
-			hasGenericError: !!error
-		})
-		if (
-			isRouteSessionPending ||
-			isStreaming ||
-			!sessionId ||
-			readOnly ||
-			(recoveryIntent !== 'replay-prompt' && recoveryIntent !== 'probe-session')
-		)
-			return
-		const intervalId = window.setInterval(() => {
-			if (document.hidden) return
-			if (recoveryIntent === 'replay-prompt') {
-				handlePromptFailureAction()
-			} else {
-				void reconcileSessionExecution(sessionId)
-			}
-		}, 30_000)
-		return () => window.clearInterval(intervalId)
-	}, [
-		isRouteSessionPending,
-		isStreaming,
-		error,
+	useForkInitialPrompt({
+		initialPrompt: routeInitialPrompt,
+		routeSessionId,
+		sharedSession: !!sharedSession,
+		restoringSessionId,
 		sessionId,
-		readOnly,
-		sessionPromptFailure,
-		handlePromptFailureAction,
-		reconcileSessionExecution
-	])
+		resolveSessionAlias,
+		submitPrompt: (prompt) => {
+			handleSubmit(prompt)
+		}
+	})
 
 	// Shared/public sessions are read-only snapshots, so they should never create a fake local session.
 	useEffect(() => {
 		if (!sharedSession) return
 		isFirstMessageRef.current = false
 	}, [sharedSession])
-
-	// Auto-send the initial prompt after a forked session finishes restoring.
-	useEffect(() => {
-		if (!routeInitialPrompt) return
-		if (!sharedSession && !routeSessionId) return
-		const nextToken = { sessionId: routeSessionId ?? 'shared', prompt: routeInitialPrompt }
-		const currentToken = consumedInitialPromptRef.current
-		if (currentToken?.sessionId === nextToken.sessionId && currentToken.prompt === nextToken.prompt) return
-		consumedInitialPromptRef.current = nextToken
-	}, [routeInitialPrompt, routeSessionId, sharedSession])
-
-	useEffect(() => {
-		const token = consumedInitialPromptRef.current
-		if (!token) return
-		if (restoringSessionId) return
-		if (!sharedSession && resolveSessionAlias(token.sessionId) !== sessionId) return
-		consumedInitialPromptRef.current = null
-		const frameId = window.requestAnimationFrame(() => {
-			handleSubmit(token.prompt)
-		})
-
-		return () => {
-			window.cancelAnimationFrame(frameId)
-		}
-	}, [restoringSessionId, sessionId, sharedSession, resolveSessionAlias, handleSubmit])
 
 	const handleAlertPrefillPrompt = useCallback(
 		(text: string) => {
