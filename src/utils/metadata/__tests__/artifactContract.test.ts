@@ -192,3 +192,62 @@ describe('metadata artifact contract', () => {
 		expect(validateCoreMetadataPayload(payload).tokenDirectory).toEqual({ aave: { name: 'Aave' } })
 	})
 })
+
+describe('routes for renamed protocols', () => {
+	it('resolves a protocol by a name it used to have', () => {
+		const metadata = createMetadataCacheFromArtifacts(
+			createPayload({
+				protocols: {
+					'parent#aave': { name: 'aave', displayName: 'Aave', previousNames: ['Aave V1'], tvl: true }
+				}
+			})
+		)
+
+		expect(metadata.protocolRouteIdBySlug['aave-v1']).toBe('parent#aave')
+		expect(metadata.protocolRouteIdBySlug.aave).toBe('parent#aave')
+	})
+
+	it('resolves an exchange by every name it used to have', () => {
+		const metadata = createMetadataCacheFromArtifacts(
+			createPayload({
+				protocols: {
+					'7248': { name: 'osl-exchange', displayName: 'OSL Exchange', previousNames: ['OSL HK', 'OSL'], cex: true }
+				}
+			})
+		)
+
+		expect(metadata.cexRouteIdBySlug['osl-exchange']).toBe('7248')
+		expect(metadata.cexRouteIdBySlug['osl-hk']).toBe('7248')
+		expect(metadata.cexRouteIdBySlug['osl']).toBe('7248')
+	})
+
+	// setSlugAlias is first-wins, so registering previous names in the same pass as current
+	// ones would hand the route to whichever protocol object key order reached first.
+	it('never lets an abandoned name outrank the protocol that carries it now', () => {
+		const renamed = { name: 'new-name', displayName: 'New Name', previousNames: ['Shared'], tvl: true }
+		const current = { name: 'shared', displayName: 'Shared', tvl: true }
+
+		for (const protocols of [
+			{ renamed, current },
+			{ current, renamed }
+		]) {
+			const metadata = createMetadataCacheFromArtifacts(createPayload({ protocols }))
+
+			expect(metadata.protocolRouteIdBySlug.shared).toBe('current')
+		}
+	})
+
+	it('never lets an abandoned exchange name outrank the exchange that carries it now', () => {
+		const renamed = { name: 'new-exchange', displayName: 'New Exchange', previousNames: ['Shared'], cex: true }
+		const current = { name: 'shared', displayName: 'Shared', cex: true }
+
+		for (const protocols of [
+			{ renamed, current },
+			{ current, renamed }
+		]) {
+			const metadata = createMetadataCacheFromArtifacts(createPayload({ protocols }))
+
+			expect(metadata.cexRouteIdBySlug.shared).toBe('current')
+		}
+	})
+})

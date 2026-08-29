@@ -404,6 +404,16 @@ function createProtocolRouteIdBySlug(protocols: Record<string, IProtocolMetadata
 		setSlugAlias(routeIdBySlug, protocolId, protocolId)
 	}
 
+	// Previous names are registered only after every current name is claimed. setSlugAlias is
+	// first-wins, so running them in the loop above would let a name a protocol has abandoned
+	// beat the protocol that carries it now, decided by object key order.
+	for (const [protocolId, metadata] of Object.entries(protocols)) {
+		if (metadata.cex || !metadata.previousNames?.length) continue
+		for (const previousName of metadata.previousNames) {
+			setSlugAlias(routeIdBySlug, previousName, protocolId)
+		}
+	}
+
 	return routeIdBySlug
 }
 
@@ -448,6 +458,15 @@ function createCexRouteIndexes(
 		const protocolId = protocolIdByCanonicalSlug[cexSlug]
 		if (protocolId && !routeIdBySlug[nameSlug]) {
 			routeIdBySlug[nameSlug] = protocolId
+		}
+	}
+
+	// Same ordering rule as the protocol routes: an exchange's old name must never outrank
+	// the exchange that answers to that name today.
+	for (const [protocolId, metadata] of Object.entries(protocols)) {
+		if (!metadata.cex || !metadata.previousNames?.length) continue
+		for (const previousName of metadata.previousNames) {
+			setSlugAlias(routeIdBySlug, previousName, protocolId)
 		}
 	}
 

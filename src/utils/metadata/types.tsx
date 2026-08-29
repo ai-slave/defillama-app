@@ -36,6 +36,7 @@ export interface IChainMetadata {
 
 export interface IProtocolMetadata {
 	name?: string
+	previousNames?: Array<string>
 	category?: string
 	parentProtocol?: string
 	tvl?: boolean
