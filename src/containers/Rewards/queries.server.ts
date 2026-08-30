@@ -16,7 +16,8 @@ import type { RewardProgram, RewardSource, RewardsPageProps } from './types'
 // action, and require a real host so a source can always name its publisher.
 const PUBLIC_HTTP_URL = /^https?:\/\/(?:www\.)?([^/?#\s]+)/i
 
-function publicHttpUrl(value: string): RewardSource | null {
+function publicHttpUrl(value: string | undefined): RewardSource | null {
+	if (!value) return null
 	const trimmed = value.trim()
 	const host = PUBLIC_HTTP_URL.exec(trimmed)?.[1]
 	return host ? { url: trimmed, label: host } : null

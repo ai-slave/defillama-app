@@ -73,6 +73,16 @@ describe('rewards public page boundary', () => {
 		})
 	})
 
+	it('retains programs when the API omits the referral URL', () => {
+		const entry = apiRecord({})
+		delete entry.referral_url
+		expect(buildRewardsPageData([entry], {}, rankings).programs[0]).toMatchObject({
+			programId: entry.program_id,
+			referralUrl: null,
+			sources: [{ url: entry.source_url, label: 'example.com' }]
+		})
+	})
+
 	it('labels dates at the month granularity editors record, and sorts by the earliest known date', () => {
 		const [both, startOnly, endOnly, neither] = buildRewardsPageData(
 			[
