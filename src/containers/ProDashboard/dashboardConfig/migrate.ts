@@ -29,6 +29,12 @@ import type {
 
 type AssertNoMissingDashboardItemKind<Missing extends never> = Missing
 
+const POCKETBASE_OFFSET_INSTANT = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2}))$/i
+
+function normalizeDashboardTimestamp(value: string): string {
+	return value.replace(POCKETBASE_OFFSET_INSTANT, '$1T$2')
+}
+
 /** Adding a current card kind must also extend the persisted input union and migration dispatcher. */
 type MigratedDashboardItemConfig = [
 	AssertNoMissingDashboardItemKind<Exclude<DashboardItemConfig['kind'], PersistedDashboardItemConfig['kind']>>
@@ -122,6 +128,9 @@ export function migrateDashboardConfig(dashboard: PersistedDashboard): Dashboard
 	const { items, aiUndoState, ...data } = dashboard.data
 	return {
 		...dashboard,
+		created: normalizeDashboardTimestamp(dashboard.created),
+		updated: normalizeDashboardTimestamp(dashboard.updated),
+		...(dashboard.editedAt === undefined ? {} : { editedAt: normalizeDashboardTimestamp(dashboard.editedAt) }),
 		data: {
 			...data,
 			items: migrateDashboardItems(items),

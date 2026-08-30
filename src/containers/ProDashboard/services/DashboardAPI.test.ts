@@ -68,4 +68,47 @@ describe('Dashboard API save contract', () => {
 		expect(urls).toHaveLength(1)
 		expect(urls[0]).toContain('/dashboards/slug%2Fwith-separator?_=')
 	})
+
+	it('normalizes PocketBase timestamps returned by public dashboard search', async () => {
+		const authorizedFetch = async () =>
+			new Response(
+				JSON.stringify({
+					items: [
+						{
+							id: 'public-dashboard',
+							created: '2026-08-29 14:47:36.555Z',
+							updated: '2026-08-30 15:03:41.147Z',
+							editedAt: '2026-08-29 15:14:53.567Z',
+							visibility: 'public',
+							data: { dashboardName: 'Public Dashboard', items: [] }
+						}
+					],
+					page: 1,
+					perPage: 20,
+					totalItems: 1,
+					totalPages: 1,
+					searchParams: {
+						query: '',
+						tags: [],
+						visibility: 'public',
+						sortBy: 'trending',
+						timeFrame: '7d',
+						page: 1,
+						limit: 20
+					}
+				}),
+				{ status: 200 }
+			)
+
+		const result = await dashboardAPI.searchDashboards(
+			{ visibility: 'public', sortBy: 'trending', timeFrame: '7d' },
+			authorizedFetch
+		)
+
+		expect(result.items[0]).toMatchObject({
+			created: '2026-08-29T14:47:36.555Z',
+			updated: '2026-08-30T15:03:41.147Z',
+			editedAt: '2026-08-29T15:14:53.567Z'
+		})
+	})
 })
