@@ -22,10 +22,19 @@ import type { ProtocolTableLeafRow, ProtocolTableRow } from '../types'
 import { UnifiedVirtualTable } from './UnifiedVirtualTable'
 import { useUnifiedTable } from './useUnifiedTable'
 
+const dashboardMocks = vi.hoisted(() => ({
+	handleDuplicateUnifiedTable: vi.fn(),
+	handleEditItem: vi.fn(),
+	permissions: { isReadOnly: true, hideDuplicateButton: false }
+}))
+
 vi.mock('../../../ProDashboardAPIContext', () => ({
 	useProDashboardCatalog: () => ({ getProtocolInfo: () => null }),
-	useProDashboardEditorActions: () => ({ handleEditItem: vi.fn() }),
-	useProDashboardPermissions: () => ({ isReadOnly: true })
+	useProDashboardEditorActions: () => ({
+		handleDuplicateUnifiedTable: dashboardMocks.handleDuplicateUnifiedTable,
+		handleEditItem: dashboardMocks.handleEditItem
+	}),
+	useProDashboardPermissions: () => dashboardMocks.permissions
 }))
 
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/pro/test' }) }))
@@ -231,6 +240,10 @@ describe('UnifiedTable rendering', () => {
 		document.body.appendChild(container)
 		root = createRoot(container)
 		virtualizer.scrollToOffset.mockReset()
+		dashboardMocks.handleDuplicateUnifiedTable.mockReset()
+		dashboardMocks.handleEditItem.mockReset()
+		dashboardMocks.permissions.isReadOnly = true
+		dashboardMocks.permissions.hideDuplicateButton = false
 	})
 
 	afterEach(async () => {
@@ -297,6 +310,33 @@ describe('UnifiedTable rendering', () => {
 		await act(async () => button('Reverse data').click())
 
 		expect(rowNames()).toEqual(Array.from({ length: 10 }, (_, index) => `Row ${21 - index}`))
+	})
+
+	it('confirms before duplicating an editable unified table', async () => {
+		dashboardMocks.permissions.isReadOnly = false
+
+		await act(async () =>
+			root.render(
+				<QueryClientProvider client={createQueryClient()}>
+					<StreamDoneContext.Provider value={false}>
+						<UnifiedTable config={unifiedTableConfig} />
+					</StreamDoneContext.Provider>
+				</QueryClientProvider>
+			)
+		)
+
+		await act(async () => button('Duplicate').click())
+		expect(dashboardMocks.handleDuplicateUnifiedTable).not.toHaveBeenCalled()
+		await waitForContent(document.body, 'Create a duplicate of this table in the dashboard?')
+
+		const dialog = document.body.querySelector('[role="dialog"]')
+		const confirmButton = Array.from(dialog?.querySelectorAll('button') ?? []).find(
+			(element) => element.textContent === 'Duplicate'
+		)
+		if (!confirmButton) throw new Error('Expected duplicate confirmation button')
+		await act(async () => confirmButton.click())
+
+		expect(dashboardMocks.handleDuplicateUnifiedTable).toHaveBeenCalledWith(unifiedTableConfig)
 	})
 
 	it('shows an initial query failure distinctly from an empty table and retries from the error state', async () => {

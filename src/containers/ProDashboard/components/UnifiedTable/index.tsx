@@ -12,6 +12,7 @@ import {
 	sanitizeUnifiedTableRowHeaders
 } from '../../unifiedTable/config/layoutPolicy'
 import type { CustomColumnDefinition, UnifiedRowHeaderType } from '../../unifiedTable/config/types'
+import { ConfirmationModal } from '../ConfirmationModal'
 import { LoadingSpinner } from '../LoadingSpinner'
 import { TablePagination } from '../Table/TablePagination'
 import { sanitizeConfigColumns } from './config/metricCapabilities'
@@ -122,9 +123,10 @@ const rowHeadersMatch = (a: UnifiedRowHeaderType[], b: UnifiedRowHeaderType[]) =
 }
 
 function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
-	const { handleEditItem } = useProDashboardEditorActions()
-	const { isReadOnly } = useProDashboardPermissions()
+	const { handleDuplicateUnifiedTable, handleEditItem } = useProDashboardEditorActions()
+	const { isReadOnly, hideDuplicateButton } = useProDashboardPermissions()
 	const [searchTerm, setSearchTerm] = useState('')
+	const [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false)
 	const canEditFilters = !isReadOnly
 	const resolvedRowHeaders = useMemo(() => sanitizeUnifiedTableRowHeaders(config.rowHeaders), [config.rowHeaders])
 	const configuredFilters = useMemo(
@@ -414,6 +416,7 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 				scopeDescription={scopeDescription}
 				rowHeadersSummary={rowHeadersSummary}
 				onCustomizeColumns={canCustomizeColumns ? handleCustomizeColumns : undefined}
+				onDuplicate={!isReadOnly && !hideDuplicateButton ? () => setShowDuplicateConfirm(true) : undefined}
 				onCsvExport={handleCsvClick}
 				onCsvExportLevel={handleExportAtLevel}
 				rowHeaders={resolvedRowHeaders}
@@ -478,6 +481,16 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 				nextPage={unifiedTable.nextPage}
 				setPageSize={unifiedTable.setPageSize}
 				showPageSizes
+			/>
+			<ConfirmationModal
+				isOpen={showDuplicateConfirm}
+				onClose={() => setShowDuplicateConfirm(false)}
+				onConfirm={() => handleDuplicateUnifiedTable(config)}
+				title="Duplicate Table"
+				message="Create a duplicate of this table in the dashboard?"
+				confirmText="Duplicate"
+				cancelText="Cancel"
+				confirmButtonClass="pro-btn-primary"
 			/>
 		</div>
 	)

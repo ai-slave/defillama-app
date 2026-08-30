@@ -5,7 +5,11 @@ import type { DashboardAction, DashboardState } from './dashboardReducer'
 import type { CustomTimePeriod, Dashboard, TimePeriod } from './dashboardTypes'
 import type { ChartBuilderConfig, DashboardGrouping, MultiChartConfig, SqlChartConfig } from './types'
 import { limitMultiChartItems } from './types'
-import { UNIFIED_TABLE_CONFIG_VERSION, type UnifiedTableConfig } from './unifiedTable/config/current'
+import {
+	UNIFIED_TABLE_CONFIG_VERSION,
+	type UnifiedTableConfig,
+	type UnifiedTableFilters
+} from './unifiedTable/config/current'
 import { DEFAULT_COLUMN_ORDER } from './unifiedTable/config/defaults'
 import {
 	DEFAULT_UNIFIED_TABLE_ROW_HEADERS,
@@ -23,6 +27,44 @@ type AutoSaveOverrides = {
 
 type AutoSaveFunction = (items: DashboardItemConfig[], overrides?: AutoSaveOverrides) => void
 type DashboardItemsFactory = (existingItems: readonly DashboardItemConfig[]) => DashboardItemConfig[]
+
+function cloneUnifiedTableFilters(filters: UnifiedTableFilters): UnifiedTableFilters {
+	const clone: UnifiedTableFilters = {}
+	const writableClone = clone as Record<string, unknown>
+	for (const key in filters) {
+		const value = filters[key as keyof UnifiedTableFilters]
+		writableClone[key] = Array.isArray(value) ? [...value] : value
+	}
+	return clone
+}
+
+function cloneUnifiedTable(table: UnifiedTableConfig): UnifiedTableConfig {
+	return {
+		...table,
+		id: generateItemId('unified-table', 'protocols'),
+		rowHeaders: [...table.rowHeaders],
+		...(table.defaultSorting === undefined
+			? {}
+			: { defaultSorting: table.defaultSorting.map((sort) => ({ ...sort })) }),
+		...(table.params === undefined
+			? {}
+			: {
+					params:
+						table.params === null
+							? null
+							: {
+									...table.params,
+									...(table.params.chains === undefined ? {} : { chains: [...table.params.chains] })
+								}
+				}),
+		...(table.filters === undefined ? {} : { filters: cloneUnifiedTableFilters(table.filters) }),
+		...(table.columnOrder === undefined ? {} : { columnOrder: [...table.columnOrder] }),
+		...(table.columnVisibility === undefined ? {} : { columnVisibility: { ...table.columnVisibility } }),
+		...(table.customColumns === undefined
+			? {}
+			: { customColumns: table.customColumns.map((column) => ({ ...column })) })
+	}
+}
 
 export function useDashboardActions(
 	dispatch: Dispatch<DashboardAction>,
@@ -117,6 +159,15 @@ export function useDashboardActions(
 				}
 				return [...prev, newBuilder]
 			})
+		},
+		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
+	)
+
+	const handleDuplicateUnifiedTable = useCallback(
+		(table: UnifiedTableConfig) => {
+			if (isReadOnlyUntilDashboardLoaded) return
+
+			dispatchItemsAndSave((prev) => [...prev, cloneUnifiedTable(table)])
 		},
 		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
 	)
@@ -420,6 +471,7 @@ export function useDashboardActions(
 			handleAppendItems,
 			handleAddUnifiedTable,
 			handleDuplicateChartBuilder,
+			handleDuplicateUnifiedTable,
 			handleDuplicateMultiChart,
 			handleEditItem,
 			handleRemoveItem,
@@ -448,6 +500,7 @@ export function useDashboardActions(
 			handleAppendItems,
 			handleAddUnifiedTable,
 			handleDuplicateChartBuilder,
+			handleDuplicateUnifiedTable,
 			handleDuplicateMultiChart,
 			handleEditItem,
 			handleRemoveItem,

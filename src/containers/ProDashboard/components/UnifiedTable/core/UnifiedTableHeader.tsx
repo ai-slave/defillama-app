@@ -14,6 +14,7 @@ interface UnifiedTableHeaderProps {
 	scopeDescription: string
 	rowHeadersSummary: string | null
 	onCustomizeColumns?: (() => void) | undefined
+	onDuplicate?: (() => void) | undefined
 	onCsvExport?: (() => void) | undefined
 	onCsvExportLevel?: ((level: CsvExportLevel) => void) | undefined
 	rowHeaders?: UnifiedRowHeaderType[]
@@ -36,6 +37,7 @@ export function UnifiedTableHeader({
 	scopeDescription,
 	rowHeadersSummary,
 	onCustomizeColumns,
+	onDuplicate,
 	onCsvExport,
 	onCsvExportLevel,
 	rowHeaders,
@@ -136,6 +138,16 @@ export function UnifiedTableHeader({
 						<Icon name="settings" height={14} width={14} />
 						<span>Customize Columns</span>
 					</button>
+					{onDuplicate ? (
+						<button
+							type="button"
+							onClick={onDuplicate}
+							className="inline-flex items-center gap-2 rounded-md border pro-border pro-hover-bg pro-panel-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors"
+						>
+							<Icon name="copy" height={14} width={14} />
+							<span>Duplicate</span>
+						</button>
+					) : null}
 					{hasGrouping && onCsvExportLevel && rowHeaders ? (
 						<CsvExportDropdown
 							rowHeaders={rowHeaders}
