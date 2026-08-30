@@ -6,6 +6,7 @@ import { DashboardAuthorProfileCard } from '~/containers/Authors/DashboardAuthor
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { useIsClient } from '~/hooks/useIsClient'
 import { AuthenticationCard } from './AuthenticationCard'
+import { DeleteAccountCard } from './DeleteAccountCard'
 import { ReferralCard } from './ReferralCard'
 import { SettingsCard } from './SettingsCard'
 import { SubscriptionSection } from './SubscriptionSection'
@@ -112,6 +113,7 @@ export function ManageAccount() {
 						<SettingsCard />
 						<NewsletterSignup layout="card" />
 						<SubscriptionSection />
+						<DeleteAccountCard />
 					</div>
 				</Ariakit.TabPanel>
 
