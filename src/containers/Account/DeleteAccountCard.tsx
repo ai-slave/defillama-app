@@ -329,7 +329,7 @@ function DeleteAccountModal({ isOpen, onClose, onDeleted, sessionToken }: Delete
 	return (
 		<Ariakit.DialogProvider open={isOpen} setOpen={(open) => !open && !deleteMutation.isPending && onClose()}>
 			<Ariakit.Dialog
-				backdrop={<div className="bg-black/80" />}
+				backdrop={<div className="bg-screen-dim" />}
 				className="dialog max-h-[90vh] min-h-0 gap-0 overflow-y-auto rounded-2xl border-0 p-0 md:max-w-[420px]"
 				portal
 				unmountOnHide
@@ -444,7 +444,7 @@ export function DeleteAccountCard() {
 
 	return (
 		<>
-			<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
+			<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-surface p-4 dark:border-sub-border-strong">
 				<div className="flex items-center gap-2">
 					<Icon name="trash-2" height={28} width={28} className="text-error" />
 					<span className="text-base font-medium text-sub-text-primary">Delete Account</span>
