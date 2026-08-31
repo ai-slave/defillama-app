@@ -5,6 +5,7 @@ const pb = new PocketBase(POCKETBASE_URL)
 
 export interface AuthModel extends RecordModel {
 	id: string
+	authMethod?: string
 	email?: string
 	walletAddress?: string
 	name?: string

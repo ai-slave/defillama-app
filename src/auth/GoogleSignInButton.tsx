@@ -8,10 +8,16 @@ type CredentialResponse = {
 	state?: string
 }
 
+type RevocationResponse = {
+	error?: string
+	successful: boolean
+}
+
 type GoogleIdentity = {
 	accounts: {
 		id: {
 			initialize: (options: { callback: (response: CredentialResponse) => void; client_id: string }) => void
+			revoke: (loginHint: string, callback: (response: RevocationResponse) => void) => void
 			renderButton: (
 				parent: HTMLElement,
 				options: {
@@ -34,7 +40,77 @@ declare global {
 }
 
 const credentialHandlers = new Map<string, (credential: string) => void>()
+const GOOGLE_IDENTITY_SCRIPT_URL = 'https://accounts.google.com/gsi/client'
+const GOOGLE_IDENTITY_TIMEOUT_MS = 10_000
 let initialized = false
+let googleIdentityLoadPromise: Promise<GoogleIdentity> | null = null
+
+function loadGoogleIdentity(): Promise<GoogleIdentity> {
+	if (window.google) return Promise.resolve(window.google)
+	if (googleIdentityLoadPromise) return googleIdentityLoadPromise
+
+	googleIdentityLoadPromise = new Promise<GoogleIdentity>((resolve, reject) => {
+		const existingScript = document.querySelector<HTMLScriptElement>(`script[src="${GOOGLE_IDENTITY_SCRIPT_URL}"]`)
+		const script = existingScript ?? document.createElement('script')
+		const timeout = window.setTimeout(
+			() => reject(new Error('Google Identity Services failed to load')),
+			GOOGLE_IDENTITY_TIMEOUT_MS
+		)
+		const settle = () => {
+			window.clearTimeout(timeout)
+			if (window.google) resolve(window.google)
+			else reject(new Error('Google Identity Services is unavailable'))
+		}
+		script.addEventListener('load', settle, { once: true })
+		script.addEventListener(
+			'error',
+			() => {
+				window.clearTimeout(timeout)
+				reject(new Error('Google Identity Services failed to load'))
+			},
+			{ once: true }
+		)
+		if (!existingScript) {
+			script.async = true
+			script.src = GOOGLE_IDENTITY_SCRIPT_URL
+			document.head.appendChild(script)
+		}
+	}).catch((error) => {
+		googleIdentityLoadPromise = null
+		throw error
+	})
+
+	return googleIdentityLoadPromise
+}
+
+export async function revokeGoogleCredentialSharing(loginHint: string): Promise<void> {
+	const google = await loadGoogleIdentity()
+	return new Promise((resolve, reject) => {
+		let settled = false
+		const settle = (callback: () => void) => {
+			if (settled) return
+			settled = true
+			window.clearTimeout(timeout)
+			callback()
+		}
+		const timeout = window.setTimeout(
+			() => settle(() => reject(new Error('Google credential revocation timed out'))),
+			GOOGLE_IDENTITY_TIMEOUT_MS
+		)
+
+		try {
+			google.accounts.id.revoke(loginHint, (response) => {
+				if (response.successful) {
+					settle(resolve)
+					return
+				}
+				settle(() => reject(new Error(response.error || 'Google credential revocation failed')))
+			})
+		} catch (error) {
+			settle(() => reject(error))
+		}
+	})
+}
 
 function initializeGoogle() {
 	if (initialized || !window.google) return
@@ -87,7 +163,7 @@ export function GoogleSignInButton({
 		<>
 			<Script
 				id="google-identity-services"
-				src="https://accounts.google.com/gsi/client"
+				src={GOOGLE_IDENTITY_SCRIPT_URL}
 				strategy="afterInteractive"
 				onReady={renderButton}
 			/>

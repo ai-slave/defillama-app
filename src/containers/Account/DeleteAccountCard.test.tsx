@@ -11,13 +11,19 @@ import { DeleteAccountCard } from './DeleteAccountCard'
 
 const auth = vi.hoisted(() => ({
 	authToken: 'session-a',
-	user: { id: 'account-a', email: 'a@example.com' },
+	user: { id: 'account-a', email: 'a@example.com' } as { authMethod?: string; email: string; id: string },
 	logout: vi.fn()
 }))
 const router = vi.hoisted(() => ({ replace: vi.fn() }))
+const google = vi.hoisted(() => ({ revokeCredentialSharing: vi.fn() }))
+const toaster = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn() }))
 
 vi.mock('~/auth', () => ({ useAuthContext: () => auth }))
+vi.mock('~/auth/GoogleSignInButton', () => ({
+	revokeGoogleCredentialSharing: google.revokeCredentialSharing
+}))
 vi.mock('next/router', () => ({ useRouter: () => router }))
+vi.mock('react-hot-toast', () => ({ default: toaster }))
 
 const typedConfirmation = { text: 'DELETE', type: 'typed_confirmation' as const }
 const otpConfirmation = { text: 'DELETE', type: 'otp' as const }
@@ -46,6 +52,10 @@ beforeEach(() => {
 	auth.user = { id: 'account-a', email: 'a@example.com' }
 	auth.logout.mockReset()
 	router.replace.mockReset()
+	google.revokeCredentialSharing.mockReset()
+	google.revokeCredentialSharing.mockResolvedValue(undefined)
+	toaster.error.mockReset()
+	toaster.success.mockReset()
 	pb.authStore.save('session-a', { id: 'account-a', collectionId: '_pb_users_auth_', collectionName: 'users' })
 	eligibilityResponse = () => json(eligibility)
 	requestResponse = () =>
@@ -81,6 +91,7 @@ afterEach(async () => {
 	client.clear()
 	container.remove()
 	vi.unstubAllGlobals()
+	vi.restoreAllMocks()
 	pb.authStore.clear()
 	localStorage.clear()
 })
@@ -102,6 +113,14 @@ function setInput(input: HTMLInputElement, value: string) {
 	const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
 	setter.call(input, value)
 	input.dispatchEvent(new Event('input', { bubbles: true }))
+}
+
+function deferred<T>() {
+	let resolve!: (value: T) => void
+	const promise = new Promise<T>((done) => {
+		resolve = done
+	})
+	return { promise, resolve }
 }
 
 async function openDialog() {
@@ -143,6 +162,7 @@ it('deletes a typed-confirmation account with the session that opened the flow',
 		}
 	])
 	expect(router.replace).toHaveBeenCalledWith('/')
+	expect(google.revokeCredentialSharing).not.toHaveBeenCalled()
 })
 
 it('requires the email code and sends it with the final deletion request', async () => {
@@ -207,6 +227,137 @@ it('keeps the user signed in when deletion fails', async () => {
 
 	expect(auth.logout).not.toHaveBeenCalled()
 	expect(router.replace).not.toHaveBeenCalled()
+})
+
+it.each([
+	['does not report completion', { status: 'processing', deletedAt: '2026-08-30T00:00:00.000Z' }],
+	['omits the deletion time', { status: 'completed' }],
+	['returns an invalid deletion time', { status: 'completed', deletedAt: 'not-a-date' }]
+])('keeps the user signed in when a 2xx deletion response %s', async (_case, response) => {
+	deleteResponse = () => json(response)
+	await openDialog()
+	await continueToConfirmation()
+
+	const confirmationInput = document.querySelector<HTMLInputElement>('#delete-account-confirmation')!
+	await act(async () => setInput(confirmationInput, 'DELETE'))
+	await act(async () =>
+		confirmationInput.closest('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+	)
+	await waitFor(() => expect(document.body.textContent).toContain('Account deletion did not complete'))
+
+	expect(auth.logout).not.toHaveBeenCalled()
+	expect(router.replace).not.toHaveBeenCalled()
+})
+
+it('revokes Google credential sharing once after confirmed deletion', async () => {
+	const revocation = deferred<void>()
+	auth.user.authMethod = 'google'
+	google.revokeCredentialSharing.mockReturnValueOnce(revocation.promise)
+	await openDialog()
+	await continueToConfirmation()
+
+	const confirmationInput = document.querySelector<HTMLInputElement>('#delete-account-confirmation')!
+	await act(async () => setInput(confirmationInput, 'DELETE'))
+	await act(async () =>
+		confirmationInput.closest('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+	)
+	await waitFor(() => expect(auth.logout).toHaveBeenCalledOnce())
+
+	expect(google.revokeCredentialSharing).toHaveBeenCalledOnce()
+	expect(google.revokeCredentialSharing).toHaveBeenCalledWith('a@example.com')
+	await act(async () => revocation.resolve())
+	await waitFor(() => expect(toaster.success).toHaveBeenCalledWith('Your account has been deleted'))
+})
+
+it('logs out after confirmed deletion when Google revocation fails', async () => {
+	const revocationError = new Error('Google is unavailable')
+	vi.spyOn(console, 'error').mockImplementation(() => undefined)
+	auth.user.authMethod = 'google'
+	google.revokeCredentialSharing.mockRejectedValueOnce(revocationError)
+	await openDialog()
+	await continueToConfirmation()
+
+	const confirmationInput = document.querySelector<HTMLInputElement>('#delete-account-confirmation')!
+	await act(async () => setInput(confirmationInput, 'DELETE'))
+	await act(async () =>
+		confirmationInput.closest('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+	)
+	await waitFor(() => expect(auth.logout).toHaveBeenCalledOnce())
+
+	expect(toaster.error).toHaveBeenCalledWith(
+		'Your account was deleted, but Google sign-in access could not be revoked.'
+	)
+	expect(router.replace).toHaveBeenCalledWith('/')
+})
+
+it('ignores a completed deletion response after the session changes', async () => {
+	const pendingResponse = deferred<Response>()
+	deleteResponse = () => pendingResponse.promise
+	await openDialog()
+	await continueToConfirmation()
+
+	const confirmationInput = document.querySelector<HTMLInputElement>('#delete-account-confirmation')!
+	await act(async () => setInput(confirmationInput, 'DELETE'))
+	await act(async () =>
+		confirmationInput.closest('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+	)
+	await waitFor(() => expect(calls.filter((call) => call.url === `${AUTH_SERVER}/user/delete-account`)).toHaveLength(1))
+
+	pb.authStore.save('session-b', { id: 'account-b', collectionId: '_pb_users_auth_', collectionName: 'users' })
+	await act(async () =>
+		pendingResponse.resolve(await json({ status: 'completed', deletedAt: '2026-08-30T00:00:00.000Z' }))
+	)
+	await settle()
+
+	expect(auth.logout).not.toHaveBeenCalled()
+	expect(google.revokeCredentialSharing).not.toHaveBeenCalled()
+})
+
+it('logs out the deleted principal after its token refreshes', async () => {
+	const pendingResponse = deferred<Response>()
+	deleteResponse = () => pendingResponse.promise
+	await openDialog()
+	await continueToConfirmation()
+
+	const confirmationInput = document.querySelector<HTMLInputElement>('#delete-account-confirmation')!
+	await act(async () => setInput(confirmationInput, 'DELETE'))
+	await act(async () =>
+		confirmationInput.closest('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+	)
+	await waitFor(() => expect(calls.filter((call) => call.url === `${AUTH_SERVER}/user/delete-account`)).toHaveLength(1))
+
+	pb.authStore.save('session-a-refreshed', {
+		id: 'account-a',
+		collectionId: '_pb_users_auth_',
+		collectionName: 'users'
+	})
+	await act(async () =>
+		pendingResponse.resolve(await json({ status: 'completed', deletedAt: '2026-08-30T00:00:00.000Z' }))
+	)
+	await waitFor(() => expect(auth.logout).toHaveBeenCalledOnce())
+
+	expect(router.replace).toHaveBeenCalledWith('/')
+})
+
+it('prevents duplicate deletion submissions while the request is pending', async () => {
+	const pendingResponse = deferred<Response>()
+	deleteResponse = () => pendingResponse.promise
+	await openDialog()
+	await continueToConfirmation()
+
+	const confirmationInput = document.querySelector<HTMLInputElement>('#delete-account-confirmation')!
+	const form = confirmationInput.closest('form')!
+	await act(async () => setInput(confirmationInput, 'DELETE'))
+	await act(async () => {
+		form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+		form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+	})
+
+	expect(calls.filter((call) => call.url === `${AUTH_SERVER}/user/delete-account`)).toHaveLength(1)
+	await act(async () =>
+		pendingResponse.resolve(await json({ status: 'completed', deletedAt: '2026-08-30T00:00:00.000Z' }))
+	)
+	await waitFor(() => expect(auth.logout).toHaveBeenCalledOnce())
 })
 
 it('does not delete through a dialog that belongs to an older session', async () => {
