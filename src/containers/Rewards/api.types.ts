@@ -1,4 +1,4 @@
-import type { RewardLifecycle, RewardType, RewardVerification } from './types'
+import type { RewardBenefitAudience, RewardLifecycle, RewardType, RewardVerification } from './types'
 
 // /rewards returns Airtable fields directly; empty cells are omitted.
 export interface RewardsApiRecord {
@@ -17,6 +17,7 @@ export interface RewardsApiRecord {
 	end_date?: string
 	last_verified?: string
 	summary: string
+	benefit_audience: RewardBenefitAudience
 	visitor_benefit: string
 	referrer_benefit: string
 	referral_url?: string

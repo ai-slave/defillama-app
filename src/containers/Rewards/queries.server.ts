@@ -69,6 +69,7 @@ export function buildRewardsPageData(
 			sortDate: entry.start_date ?? entry.end_date ?? null,
 			dateRangeLabel: dateRangeLabel(entry.start_date, entry.end_date),
 			summary: entry.summary,
+			benefitAudience: entry.benefit_audience,
 			visitorBenefit: entry.visitor_benefit,
 			// Published for every program: reward_types describes what a program pays
 			// out, never whether inviting others earns anything, so it cannot gate this.

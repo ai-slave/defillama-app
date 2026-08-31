@@ -58,7 +58,8 @@ export const columns = [
 			</div>
 		)
 	}),
-	helper.accessor('visitorBenefit', {
+	helper.accessor((row) => (row.benefitAudience === 'Referrer only' ? row.referrerBenefit : row.visitorBenefit), {
+		id: 'primaryBenefit',
 		header: 'What you get',
 		enableSorting: false,
 		// The page's primary content, so it takes the width the viewport can spare.
@@ -69,7 +70,14 @@ export const columns = [
 		meta: {
 			headerClassName: 'w-[320px] min-w-[320px] xl:w-[420px] xl:min-w-[420px] 2xl:w-[520px] 2xl:min-w-[520px]'
 		},
-		cell: ({ getValue }) => <span className="line-clamp-2 text-secondary">{getValue()}</span>
+		cell: ({ row, getValue }) => (
+			<span className="line-clamp-2 text-secondary">
+				{row.original.benefitAudience === 'Referrer only' ? (
+					<span className="label-sm text-primary">Referrer only: </span>
+				) : null}
+				{getValue()}
+			</span>
+		)
 	}),
 	helper.accessor('rewardTypes', {
 		header: 'Reward Type',

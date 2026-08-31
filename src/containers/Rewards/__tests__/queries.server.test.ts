@@ -135,6 +135,16 @@ describe('rewards public page boundary', () => {
 		])
 	})
 
+	it('preserves the benefit audience used to choose the primary table benefit', () => {
+		expect(
+			buildRewardsPageData([apiRecord({ benefit_audience: 'Referrer only' })], {}, rankings).programs[0]
+		).toMatchObject({
+			benefitAudience: 'Referrer only',
+			visitorBenefit: 'Earn points on deposits.',
+			referrerBenefit: 'Referrers earn 5% of referred deposits.'
+		})
+	})
+
 	it('does not expose executable or hostless editor-entered links', () => {
 		const { programs } = buildRewardsPageData(
 			[

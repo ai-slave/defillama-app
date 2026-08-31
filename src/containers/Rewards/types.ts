@@ -10,10 +10,12 @@ export const REWARD_TYPES = [
 	'Signup Bonus'
 ] as const
 export const LIFECYCLES = ['Live', 'Upcoming', 'Season Gap', 'Ended', 'Unknown'] as const
+export const BENEFIT_AUDIENCES = ['Visitor only', 'Referrer only', 'Both', 'Unknown'] as const
 
 export type RewardType = (typeof REWARD_TYPES)[number]
 export type RewardLifecycle = (typeof LIFECYCLES)[number]
 export type RewardVerification = 'Verified' | 'Unverified'
+export type RewardBenefitAudience = (typeof BENEFIT_AUDIENCES)[number]
 
 export interface RewardSource {
 	url: string
@@ -37,6 +39,7 @@ export interface RewardProgram {
 	sortDate: string | null
 	dateRangeLabel: string | null
 	summary: string
+	benefitAudience: RewardBenefitAudience
 	visitorBenefit: string
 	referrerBenefit: string
 	referralUrl: string | null
