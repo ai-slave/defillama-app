@@ -58,7 +58,7 @@ export const columns = [
 			</div>
 		)
 	}),
-	helper.accessor((row) => (row.benefitAudience === 'Referrer only' ? row.referrerBenefit : row.visitorBenefit), {
+	helper.accessor((row) => (row.benefitAudience === 'Referrer only' ? '' : row.visitorBenefit), {
 		id: 'primaryBenefit',
 		header: 'What you get',
 		enableSorting: false,

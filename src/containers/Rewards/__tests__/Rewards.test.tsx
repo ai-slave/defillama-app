@@ -99,7 +99,7 @@ describe('Rewards dashboard', () => {
 		expect(tableRows()[0]?.textContent).toContain('Protocol 64')
 	})
 
-	it('shows the benefit for the selected audience in the primary table cell', async () => {
+	it('shows only benefits available to users who follow the link', async () => {
 		const programs = [
 			program({
 				programId: 'referrer-only',
@@ -120,8 +120,7 @@ describe('Rewards dashboard', () => {
 		const rows = tableRows()
 		const referrerRow = rows.find((row) => row.textContent?.includes('Referrer Program'))
 		const bothRow = rows.find((row) => row.textContent?.includes('Both Program'))
-		expect(referrerRow?.textContent).toContain('Referrers earn a share of fees.')
-		expect(referrerRow?.textContent).not.toContain('Referrer only:')
+		expect(referrerRow?.textContent).not.toContain('Referrers earn a share of fees.')
 		expect(referrerRow?.textContent).not.toContain('Visitors receive no direct benefit.')
 		expect(bothRow?.textContent).toContain('Visitors receive a discount.')
 		expect(bothRow?.textContent).not.toContain('Referrers earn a commission.')
