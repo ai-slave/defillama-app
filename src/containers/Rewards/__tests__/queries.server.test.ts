@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
+import type { RewardsPopularity } from '../api.types'
 import { buildRewardsPageData } from '../queries.server'
-import { buildRewardsRankings } from '../rankings.server'
 import { apiRecord } from './fixtures'
 
 vi.mock('~/utils/telemetry', () => ({ recordDomainEvent: vi.fn() }))
-const rankings = buildRewardsRankings([], [])
+const rankings: RewardsPopularity = { version: 1, startAt: 0, endAt: 0, viewsByPath: {} }
 
 describe('rewards public page boundary', () => {
 	it('requires both publication and explicit public visibility, independent of lifecycle or verification', () => {
@@ -83,7 +83,7 @@ describe('rewards public page boundary', () => {
 		})
 	})
 
-	it('labels dates at the month granularity editors record, and sorts by the earliest known date', () => {
+	it('labels dates at month granularity and provides the earliest known date for local sorting', () => {
 		const [both, startOnly, endOnly, neither] = buildRewardsPageData(
 			[
 				apiRecord({ program_id: 'a-both', start_date: '2025-10-01', end_date: '2026-10-01' }),
@@ -96,7 +96,6 @@ describe('rewards public page boundary', () => {
 		).programs
 		expect(both).toMatchObject({ dateRangeLabel: 'Oct 2025 – Oct 2026', sortDate: '2025-10-01' })
 		expect(startOnly).toMatchObject({ dateRangeLabel: 'From Oct 2025', sortDate: '2025-10-01' })
-		// End-only rows still carry a sort key, so they cannot be forced last.
 		expect(endOnly).toMatchObject({ dateRangeLabel: 'Until Oct 2026', sortDate: '2026-10-01' })
 		expect(neither).toMatchObject({ dateRangeLabel: null, sortDate: null })
 	})
@@ -110,7 +109,6 @@ describe('rewards public page boundary', () => {
 			logo: null,
 			category: null,
 			rewardTypes: [],
-			sortDate: null,
 			dateRangeLabel: null,
 			programName: null
 		})

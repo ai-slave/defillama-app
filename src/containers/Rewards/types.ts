@@ -24,9 +24,7 @@ export interface RewardSource {
 export interface RewardProgram {
 	programId: string
 	defillamaId: string
-	/** Project-wide totals, shared by programs belonging to the same parent. */
-	fees30d: number | null
-	tvl: number | null
+	projectPath: string | null
 	protocol: string
 	programName: string | null
 	category: string | null
@@ -35,7 +33,7 @@ export interface RewardProgram {
 	rewardTypes: readonly RewardType[]
 	lifecycle: RewardLifecycle
 	verification: RewardVerification
-	/** Earliest known date, so rows carrying only an end date still sort sensibly. */
+	/** Earliest known date, including programs that only specify an end date. */
 	sortDate: string | null
 	dateRangeLabel: string | null
 	summary: string
@@ -48,7 +46,10 @@ export interface RewardProgram {
 
 export interface RewardsPageProps {
 	programs: RewardProgram[]
+	analyticsMode: RewardsAnalyticsMode
 }
+
+export type RewardsAnalyticsMode = 'off' | 'test' | 'production'
 
 export interface RewardsFilters {
 	search: string

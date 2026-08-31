@@ -2,13 +2,12 @@ import {
 	getCoreRowModel,
 	getPaginationRowModel,
 	getSortedRowModel,
-	functionalUpdate,
 	useReactTable,
-	type PaginationState,
-	type SortingState
+	type PaginationState
 } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { useMemo, useState } from 'react'
+import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
@@ -21,20 +20,18 @@ import { pushShallowQuery } from '~/utils/routerQuery'
 import { columns, renderProgramDetails } from './columns'
 import { readRewardsQuery, serializeRewardsQuery } from './query'
 import { LIFECYCLES, REWARD_TYPES, type RewardsPageProps } from './types'
+import { useRewardsAnalytics } from './useRewardsAnalytics'
 import { getRewardsView } from './utils'
 
 const PAGE_SIZES = [10, 25, 50, 100] as const
-// Ranking accessors participate in sorting without adding visible columns.
-const COLUMN_VISIBILITY = { fees30d: false, tvl: false }
 const LIFECYCLE_OPTIONS = ['All', ...LIFECYCLES] as const
 
-export default function Rewards({ programs }: RewardsPageProps) {
+export default function Rewards({ programs, analyticsMode }: RewardsPageProps) {
 	const router = useRouter()
 	const query = useMemo(() => readRewardsQuery(router.query), [router.query])
 	const [search, setSearch] = useState('')
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 })
 	const view = useMemo(() => getRewardsView(programs, { ...query, search }), [programs, query, search])
-	const sorting = useMemo<SortingState>(() => [{ id: query.sort, desc: query.desc }], [query.sort, query.desc])
 	function updateQuery(patch: Partial<typeof query>) {
 		void pushShallowQuery(router, serializeRewardsQuery({ ...query, ...patch }))
 	}
@@ -43,20 +40,16 @@ export default function Rewards({ programs }: RewardsPageProps) {
 		columns,
 		getRowId: (row) => row.programId,
 		getRowCanExpand: () => true,
-		state: { sorting, pagination, columnVisibility: COLUMN_VISIBILITY },
+		state: { pagination },
 		enableMultiSort: false,
-		enableSortingRemoval: false,
-		onSortingChange: (updater) => {
-			const next = functionalUpdate(updater, sorting)[0]
-			if (next) updateQuery({ sort: readRewardsQuery({ sort: next.id }).sort, desc: next.desc })
-		},
 		onPaginationChange: setPagination,
 		getCoreRowModel: getCoreRowModel(),
 		getSortedRowModel: getSortedRowModel(),
 		getPaginationRowModel: getPaginationRowModel()
 	})
+	const analyticsRef = useRewardsAnalytics(analyticsMode, table.getRowModel().rows)
 	return (
-		<div className="flex flex-col gap-2">
+		<div ref={analyticsRef} className="flex flex-col gap-2">
 			<Panel padding="none">
 				<PanelHeader>
 					<PanelTitle as="h1">Rewards</PanelTitle>
@@ -89,10 +82,17 @@ export default function Rewards({ programs }: RewardsPageProps) {
 							updateQuery(readRewardsQuery({}))
 							setPagination({ pageIndex: 0, pageSize: 50 })
 							table.resetExpanded()
+							table.resetSorting()
 						}}
 					>
 						Reset
 					</Button>
+					<ExternalLinkButton
+						href="https://docs.google.com/forms/d/e/1FAIpQLSdx-uFrc7rWy7tIjjPCCbe3VXbcoWv4BFLH1DTDNrUj5fjK6Q/viewform?usp=dialog"
+						icon="plus"
+					>
+						Add Your Rewards
+					</ExternalLinkButton>
 				</PanelHeader>
 				<TableToolbar>
 					<div role="group" aria-label="Lifecycle" className="flex flex-wrap items-center gap-1.5">

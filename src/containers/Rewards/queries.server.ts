@@ -1,15 +1,11 @@
-import { SERVER_URL } from '~/constants'
-import { fetchAdapterChainMetrics } from '~/containers/AdapterMetrics/api'
-import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
-import { fetchProtocols } from '~/containers/ProtocolLists/api'
+import { DATASETS_SERVER_URL, SERVER_URL } from '~/constants'
 import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { formatDate, formatMonthYear } from '~/utils/dateFormat'
 import { tokenIconUrl } from '~/utils/icons'
 import type { IProtocolMetadata } from '~/utils/metadata/types'
 import { recordDomainEvent } from '~/utils/telemetry'
-import type { RewardsApiRecord } from './api.types'
-import { buildRewardsRankings } from './rankings.server'
+import type { RewardsApiRecord, RewardsPopularity } from './api.types'
 import type { RewardProgram, RewardSource, RewardsPageProps } from './types'
 
 // Editors supply these links. Never turn a javascript: or data: value into an
@@ -37,17 +33,22 @@ function dateRangeLabel(start: string | undefined, end: string | undefined) {
 export function buildRewardsPageData(
 	entries: RewardsApiRecord[],
 	metadata: Record<string, IProtocolMetadata>,
-	rankings: ReturnType<typeof buildRewardsRankings>
-): RewardsPageProps {
+	popularity: RewardsPopularity
+): Pick<RewardsPageProps, 'programs'> {
 	const programs: RewardProgram[] = []
 	const missingMetadata = new Set<string>()
 	for (const entry of entries) {
+		// The catalog and page deploy independently; omitted paths mean an old producer, not an unresolved project.
+		if (entry.project_path === undefined) {
+			throw new Error(
+				'Rewards catalog is missing project_path; refresh the backend catalog before publishing this page'
+			)
+		}
 		// Publication is independent of lifecycle: public ended programs remain searchable.
 		if (entry.publish_status !== 'Published' || entry.visibility !== 'Public') continue
 		const protocol = metadata[entry.defillama_id]
 		if (!protocol) missingMetadata.add(entry.defillama_id)
 		const name = protocol?.displayName ?? protocol?.name ?? entry.protocol
-		const rankingId = rankings.parentById.get(entry.defillama_id) ?? entry.defillama_id
 		const sources: RewardSource[] = []
 		for (const value of entry.source_url?.split('|') ?? []) {
 			const source = publicHttpUrl(value)
@@ -56,8 +57,7 @@ export function buildRewardsPageData(
 		programs.push({
 			programId: entry.program_id,
 			defillamaId: entry.defillama_id,
-			fees30d: rankings.feesById.get(rankingId) ?? null,
-			tvl: rankings.tvlById.get(rankingId) ?? null,
+			projectPath: entry.project_path,
 			protocol: name,
 			programName: entry.program_name ?? null,
 			category: protocol?.category ?? null,
@@ -79,14 +79,17 @@ export function buildRewardsPageData(
 			lastVerified: formatDate(entry.last_verified)
 		})
 	}
-	// Stable alphabetical input breaks metric ties without displaying a second
-	// active sort arrow on the protocol column. The table applies the URL sort.
-	programs.sort(
-		(a, b) =>
+	// Counts stay server-side. Unmeasured projects follow measured zeroes; ties are alphabetical.
+	programs.sort((a, b) => {
+		const aViews = a.projectPath ? (popularity.viewsByPath[a.projectPath] ?? -1) : -1
+		const bViews = b.projectPath ? (popularity.viewsByPath[b.projectPath] ?? -1) : -1
+		return (
+			bViews - aViews ||
 			a.protocol.localeCompare(b.protocol) ||
 			(a.programName ?? '').localeCompare(b.programName ?? '') ||
 			a.programId.localeCompare(b.programId)
-	)
+		)
+	})
 	if (missingMetadata.size) {
 		recordDomainEvent('rewards.missing_metadata', 'warn', 'rewards', 'Rewards programs missing protocol metadata', {
 			defillama_ids: [...missingMetadata]
@@ -96,11 +99,14 @@ export function buildRewardsPageData(
 }
 
 export async function getRewardsPageData(): Promise<RewardsPageProps> {
-	const [entries, { default: metadata }, { protocols }, fees] = await Promise.all([
+	const [entries, { default: metadata }, popularity] = await Promise.all([
 		fetchJson<RewardsApiRecord[]>(`${SERVER_URL}/rewards`),
 		import('~/utils/metadata'),
-		fetchProtocols(),
-		fetchAdapterChainMetrics({ adapterType: ADAPTER_TYPES.FEES, chain: 'All', dataType: ADAPTER_DATA_TYPES.DAILY_FEES })
+		fetchJson<RewardsPopularity>(`${DATASETS_SERVER_URL}/rewards-popularity.json`)
 	])
-	return buildRewardsPageData(entries, metadata.protocolMetadata, buildRewardsRankings(protocols, fees.protocols))
+	const analyticsMode = process.env.REWARDS_ANALYTICS_MODE ?? 'off'
+	if (analyticsMode !== 'off' && analyticsMode !== 'test' && analyticsMode !== 'production') {
+		throw new Error('REWARDS_ANALYTICS_MODE must be off, test, or production')
+	}
+	return { ...buildRewardsPageData(entries, metadata.protocolMetadata, popularity), analyticsMode }
 }

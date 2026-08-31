@@ -58,18 +58,6 @@ export const columns = [
 			</div>
 		)
 	}),
-	helper.accessor((row) => row.fees30d ?? undefined, {
-		id: 'fees30d',
-		sortUndefined: 'last',
-		sortDescFirst: true,
-		sortingFn: 'basic'
-	}),
-	helper.accessor((row) => row.tvl ?? undefined, {
-		id: 'tvl',
-		sortUndefined: 'last',
-		sortDescFirst: true,
-		sortingFn: 'basic'
-	}),
 	helper.accessor('visitorBenefit', {
 		header: 'What you get',
 		enableSorting: false,
@@ -131,6 +119,8 @@ export const columns = [
 			row.original.referralUrl ? (
 				<ExternalLinkButton
 					href={row.original.referralUrl}
+					data-reward-program-id={row.original.programId}
+					data-reward-project-path={row.original.projectPath ?? undefined}
 					rel="noopener noreferrer sponsored"
 					aria-label={`Open ${row.original.protocol}${row.original.programName ? ` ${row.original.programName}` : ''} program`}
 				>

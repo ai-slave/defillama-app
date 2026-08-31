@@ -16,6 +16,7 @@ import { useAuthBridge } from '~/hooks/useAuthBridge'
 import { useParentAuthTracker } from '~/hooks/useParentAuthTracker'
 import { useReferrer } from '~/hooks/useReferrer'
 import { useUmamiIdentityTracker } from '~/hooks/useUmamiIdentityTracker'
+import { UMAMI_READY_EVENT } from '~/utils/analytics/umami'
 
 type NextPageWithLayout = AppProps['Component'] & {
 	getLayout?: (page: ReactElement) => ReactElement
@@ -114,6 +115,9 @@ function App({ Component, pageProps }: AppPropsWithLayout) {
 			<Script
 				src="/script2.js"
 				strategy="lazyOnload"
+				onReady={() => {
+					window.dispatchEvent(new Event(UMAMI_READY_EVENT))
+				}}
 				data-website-id={UMAMI_WEBSITE_ID}
 				data-host-url="https://tasty.defillama.com"
 			/>

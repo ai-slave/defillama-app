@@ -5,6 +5,7 @@ export function apiRecord(overrides: Partial<RewardsApiRecord>): RewardsApiRecor
 	return {
 		program_id: 'referral',
 		defillama_id: '1',
+		project_path: '/protocol/example',
 		protocol: 'Example',
 		reward_types: ['Points'],
 		lifecycle: 'Live',
@@ -24,8 +25,7 @@ export function program(overrides: Partial<RewardProgram>): RewardProgram {
 	return {
 		programId: 'referral',
 		defillamaId: '1',
-		fees30d: null,
-		tvl: null,
+		projectPath: '/protocol/example',
 		protocol: 'Example',
 		programName: null,
 		category: 'Lending',
@@ -34,8 +34,8 @@ export function program(overrides: Partial<RewardProgram>): RewardProgram {
 		rewardTypes: ['Points'],
 		lifecycle: 'Live',
 		verification: 'Verified',
-		sortDate: null,
 		dateRangeLabel: null,
+		sortDate: null,
 		summary: 'Earn points.',
 		visitorBenefit: 'Earn points on deposits.',
 		referrerBenefit: 'Referrers earn 5% of referred deposits.',

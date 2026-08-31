@@ -2,28 +2,22 @@ import { describe, expect, it } from 'vitest'
 import { readRewardsQuery, serializeRewardsQuery } from '../query'
 
 describe('rewards URL state', () => {
-	it('omits defaults and restores a shared multi-filter and ranking selection', () => {
+	it('omits defaults and restores shared filters', () => {
 		expect(serializeRewardsQuery(readRewardsQuery({}))).toEqual({
 			status: undefined,
 			reward: undefined,
-			hideUnverified: undefined,
-			sort: undefined,
-			order: undefined
+			hideUnverified: undefined
 		})
 		const shared = {
 			status: 'Ended',
 			reward: ['Points', 'Commission'],
-			hideUnverified: 'true',
-			sort: 'tvl',
-			order: 'asc'
+			hideUnverified: 'true'
 		}
 		const selection = readRewardsQuery(shared)
 		expect(selection).toEqual({
 			lifecycle: 'Ended',
 			rewardTypes: ['Points', 'Commission'],
-			hideUnverified: true,
-			sort: 'tvl',
-			desc: false
+			hideUnverified: true
 		})
 		expect(serializeRewardsQuery(selection)).toEqual(shared)
 	})
@@ -32,17 +26,14 @@ describe('rewards URL state', () => {
 			readRewardsQuery({
 				status: 'invalid',
 				reward: ['Points', 'Points', 'invalid'],
-				sort: 'invalid',
-				order: 'invalid',
 				hideUnverified: 'false'
 			})
 		).toEqual({
 			lifecycle: 'All',
 			rewardTypes: ['Points'],
-			hideUnverified: false,
-			sort: 'fees30d',
-			desc: true
+			hideUnverified: false
 		})
 		expect(readRewardsQuery({ status: 'Upcoming', reward: 'Commission' }).lifecycle).toBe('Upcoming')
+		expect(readRewardsQuery({ sort: 'pageViews', order: 'asc' })).toEqual(readRewardsQuery({}))
 	})
 })
