@@ -3,6 +3,8 @@ import {
 	createRwaChartModeState,
 	getChartBreakdownOptions,
 	getChartBreakdownQueryValue,
+	getChartMetricOptions,
+	getChartMetricQueryValue,
 	getDefaultChartBreakdown,
 	getTreemapNestedByOptions,
 	parseRwaChartState
@@ -114,5 +116,32 @@ describe('chartState options', () => {
 			'assetName',
 			'category'
 		])
+	})
+})
+
+describe('chart metric availability', () => {
+	const mode = createRwaChartModeState('platform', true, null)
+	const noActiveMcap = { hasActiveMcapData: false }
+
+	it('offers all three metrics and defaults to active mcap when it is tracked', () => {
+		expect(getChartMetricOptions().map(({ key }) => key)).toEqual(['activeMcap', 'onChainMcap', 'defiActiveTvl'])
+		expect(parseRwaChartState({}, mode).metric).toBe('activeMcap')
+	})
+
+	it('drops active mcap and normalizes its default and stale query value to onchain mcap', () => {
+		expect(getChartMetricOptions(noActiveMcap).map(({ key }) => key)).toEqual(['onChainMcap', 'defiActiveTvl'])
+		expect(parseRwaChartState({}, mode, noActiveMcap).metric).toBe('onChainMcap')
+		expect(parseRwaChartState({ chartType: 'activeMcap' }, mode, noActiveMcap).metric).toBe('onChainMcap')
+	})
+
+	it('still honours the other metrics from the query string', () => {
+		expect(parseRwaChartState({ chartType: 'defiActiveTvl' }, mode, noActiveMcap).metric).toBe('defiActiveTvl')
+	})
+
+	it('omits the effective default from the url and keeps non-defaults explicit', () => {
+		expect(getChartMetricQueryValue('activeMcap')).toBeUndefined()
+		expect(getChartMetricQueryValue('onChainMcap')).toBe('onChainMcap')
+		expect(getChartMetricQueryValue('onChainMcap', noActiveMcap)).toBeUndefined()
+		expect(getChartMetricQueryValue('defiActiveTvl', noActiveMcap)).toBe('defiActiveTvl')
 	})
 })

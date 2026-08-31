@@ -9,6 +9,7 @@ import {
 	getRWAFlowDefaultStartTimestamp,
 	getRWAFlowModeQueryValue,
 	getRWAFlowOverlayQueryValue,
+	getRWAFlowOverlayOptions,
 	getRWAFlowRotationSeriesNames,
 	getRWAFlowVsPriceAssetSummaries,
 	getRWAFlowVsPriceSummary,
@@ -87,6 +88,13 @@ describe('RWA flow chart data', () => {
 		expect(getRWAFlowOverlayQueryValue([])).toBe('none')
 		expect(getRWAFlowOverlayQueryValue(['onChainMcap'])).toBeUndefined()
 		expect(getRWAFlowOverlayQueryValue(['activeMcap', 'defiActiveTvl'])).toEqual(['activeMcap', 'defiActiveTvl'])
+	})
+
+	it('drops unavailable active mcap flow overlays from options and url state', () => {
+		const availability = { hasActiveMcapData: false }
+
+		expect(getRWAFlowOverlayOptions(availability).map(({ key }) => key)).toEqual(['onChainMcap', 'defiActiveTvl'])
+		expect(parseRWAFlowOverlayMetrics(['activeMcap', 'defiActiveTvl'], availability)).toEqual(['defiActiveTvl'])
 	})
 
 	it('renders ascending daily flows and every selected level overlay on the secondary axis', () => {

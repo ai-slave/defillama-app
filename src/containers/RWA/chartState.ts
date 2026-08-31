@@ -9,6 +9,7 @@ export type RWATimeSeriesChartBreakdown = Exclude<RWAChartBreakdown, 'chain'>
 export type RwaTreemapParentGrouping = RWAChartBreakdown
 export type RwaTreemapNestedBy = 'none' | 'assetClass' | 'assetName' | 'category'
 export type RWAChartOption<T extends string> = { key: T; name: string }
+export type RWAChartMetricAvailability = { hasActiveMcapData: boolean }
 export type RWAChartModeState =
 	| { mode: 'chain'; canBreakdownByChain: boolean; timeSeriesDefaultBreakdown: RWATimeSeriesChartBreakdown }
 	| { mode: 'category'; canBreakdownByChain: boolean; timeSeriesDefaultBreakdown: RWATimeSeriesChartBreakdown }
@@ -115,6 +116,18 @@ const TREEMAP_DEFAULT_NESTED_BY: Record<RwaTreemapParentGrouping, RwaTreemapNest
 
 const DEFAULT_CHART_VIEW: RWAChartView = 'timeSeries'
 const DEFAULT_CHART_METRIC: RWAChartMetric = 'activeMcap'
+const FALLBACK_CHART_METRIC: RWAChartMetric = 'onChainMcap'
+const AVAILABLE_BY_DEFAULT: RWAChartMetricAvailability = { hasActiveMcapData: true }
+
+// Platforms whose whole supply sits in `holdersToRemove` wallets have no activeMcap series at all
+// (e.g. Crypto.com), so the metric is dropped rather than rendered as an empty chart.
+export function getDefaultChartMetric(availability: RWAChartMetricAvailability = AVAILABLE_BY_DEFAULT): RWAChartMetric {
+	return availability.hasActiveMcapData ? DEFAULT_CHART_METRIC : FALLBACK_CHART_METRIC
+}
+
+function isChartMetricAvailable(metric: RWAChartMetric, availability: RWAChartMetricAvailability): boolean {
+	return metric === 'activeMcap' ? availability.hasActiveMcapData : true
+}
 function assert(condition: unknown, message: string): asserts condition {
 	if (!condition) {
 		throw new Error(message)
@@ -157,8 +170,11 @@ export function getChartViewOptions(): readonly RWAChartOption<RWAChartView>[] {
 	return CHART_VIEW_OPTIONS
 }
 
-export function getChartMetricOptions(): ReadonlyArray<{ key: RWAChartMetric; label: string }> {
-	return CHART_METRIC_OPTIONS
+export function getChartMetricOptions(
+	availability: RWAChartMetricAvailability = AVAILABLE_BY_DEFAULT
+): ReadonlyArray<{ key: RWAChartMetric; label: string }> {
+	if (availability.hasActiveMcapData) return CHART_METRIC_OPTIONS
+	return CHART_METRIC_OPTIONS.filter((option) => isChartMetricAvailable(option.key, availability))
 }
 
 export function getChartMetricLabel(metric: RWAChartMetric): string {
@@ -202,9 +218,13 @@ export function getTreemapNestedByOptions(
 	}))
 }
 
-export function parseRwaChartState(query: ParsedUrlQuery, mode: RWAChartModeState): RWAChartState {
+export function parseRwaChartState(
+	query: ParsedUrlQuery,
+	mode: RWAChartModeState,
+	availability: RWAChartMetricAvailability = AVAILABLE_BY_DEFAULT
+): RWAChartState {
 	const view = normalizeChartView(readSingleQueryValue(query.chartView))
-	const metric = normalizeChartMetric(readSingleQueryValue(query.chartType))
+	const metric = normalizeChartMetric(readSingleQueryValue(query.chartType), availability)
 	const breakdownQueryKey = getBreakdownQueryKey(view)
 	const breakdown = normalizeBreakdown(mode, view, readSingleQueryValue(query[breakdownQueryKey]))
 	const treemapNestedBy = normalizeTreemapNestedBy(
@@ -242,8 +262,11 @@ export function getChartViewQueryValue(view: RWAChartView): string | undefined {
 	return view === DEFAULT_CHART_VIEW ? undefined : view
 }
 
-export function getChartMetricQueryValue(metric: RWAChartMetric): string | undefined {
-	return metric === DEFAULT_CHART_METRIC ? undefined : metric
+export function getChartMetricQueryValue(
+	metric: RWAChartMetric,
+	availability: RWAChartMetricAvailability = AVAILABLE_BY_DEFAULT
+): string | undefined {
+	return metric === getDefaultChartMetric(availability) ? undefined : metric
 }
 
 export function getChartBreakdownQueryValue(state: RWAChartState): string | undefined {
@@ -275,10 +298,10 @@ function normalizeChartView(value: string | undefined): RWAChartView {
 	return DEFAULT_CHART_VIEW
 }
 
-function normalizeChartMetric(value: string | undefined): RWAChartMetric {
+function normalizeChartMetric(value: string | undefined, availability: RWAChartMetricAvailability): RWAChartMetric {
 	const matchedMetric = CHART_METRIC_OPTIONS.find((option) => option.key === value)?.key
-	if (matchedMetric) return matchedMetric
-	return DEFAULT_CHART_METRIC
+	if (matchedMetric && isChartMetricAvailable(matchedMetric, availability)) return matchedMetric
+	return getDefaultChartMetric(availability)
 }
 
 function normalizeBreakdown(mode: RWAChartModeState, view: RWAChartView, value: string | undefined): RWAChartBreakdown {

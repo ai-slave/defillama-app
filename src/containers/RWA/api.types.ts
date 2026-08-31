@@ -1,5 +1,6 @@
 import type { EarnPageRow } from '~/containers/Yields/data/types'
 import type { RWAChartDataset, RWAPositionalChartDataset } from './chartDataset'
+import type { RWAChartMetricAvailability } from './chartState'
 import type { RWAOverviewInclusionDefaults } from './constants'
 import type { RWAPerpsVenueType } from './Perps/api.types'
 import type { RWAPlatformAssetSummary, RWAPlatformPageData } from './PlatformPage/types'
@@ -243,6 +244,7 @@ export interface IRWAAssetsOverview {
 	}
 	initialChartDataset: IRWAInitialChartDataset | null
 	initialOpenInterestChartDataset: IRWAInitialTimeSeriesDataset | null
+	chartMetricAvailability: RWAChartMetricAvailability
 	chainSlug: string | null
 	categorySlug: string | null
 	platformSlug: string | null

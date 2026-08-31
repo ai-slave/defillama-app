@@ -20,6 +20,7 @@ import type {
 	RWAChartMetricKey
 } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
+import type { RWAChartMetricAvailability } from './chartState'
 import { definitions } from './definitions'
 import { getPrimaryRwaCategory } from './grouping'
 
@@ -55,12 +56,20 @@ export const RWA_FLOW_OVERLAY_OPTIONS = [
 	}
 ] as const
 
-export function parseRWAFlowOverlayMetrics(values: readonly string[]): RWAFlowOverlayMetric[] {
+export function getRWAFlowOverlayOptions(availability: RWAChartMetricAvailability) {
+	if (availability.hasActiveMcapData) return RWA_FLOW_OVERLAY_OPTIONS
+	return RWA_FLOW_OVERLAY_OPTIONS.filter((option) => option.key !== 'activeMcap')
+}
+
+export function parseRWAFlowOverlayMetrics(
+	values: readonly string[],
+	availability: RWAChartMetricAvailability = { hasActiveMcapData: true }
+): RWAFlowOverlayMetric[] {
 	if (values.length === 0) return ['onChainMcap']
 	if (values.includes('none')) return []
 
 	const selected: RWAFlowOverlayMetric[] = []
-	for (const option of RWA_FLOW_OVERLAY_OPTIONS) {
+	for (const option of getRWAFlowOverlayOptions(availability)) {
 		if (values.includes(option.key)) selected.push(option.key)
 	}
 	return selected

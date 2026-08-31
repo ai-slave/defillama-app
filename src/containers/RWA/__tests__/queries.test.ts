@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { buildRwaDefiTvlProtocolChainBreakdown, getRWAAssetsOverview, getRWACategoriesOverview } from '../queries'
 
 const fetchRWAActiveTVLsMock = vi.fn()
+const fetchRWAChartDataByAssetMock = vi.fn()
 const fetchRWAChartMetricDataByAssetMock = vi.fn()
 const fetchRWAChainBreakdownChartDataMock = vi.fn()
 const fetchRWAStatsMock = vi.fn()
@@ -13,17 +14,22 @@ const fetchRWAAssetChartDataMock = vi.fn()
 const fetchRWAPerpsCurrentMock = vi.fn()
 const fetchRWAPerpsContractBreakdownChartDataMock = vi.fn()
 
-vi.mock('../api', () => ({
-	fetchRWAActiveTVLs: (...args: unknown[]) => fetchRWAActiveTVLsMock(...args),
-	fetchRWAChartMetricDataByAsset: (...args: unknown[]) => fetchRWAChartMetricDataByAssetMock(...args),
-	fetchRWAChainBreakdownChartData: (...args: unknown[]) => fetchRWAChainBreakdownChartDataMock(...args),
-	fetchRWAStats: (...args: unknown[]) => fetchRWAStatsMock(...args),
-	fetchRWACategoryBreakdownChartData: (...args: unknown[]) => fetchRWACategoryBreakdownChartDataMock(...args),
-	fetchRWAPlatformBreakdownChartData: (...args: unknown[]) => fetchRWAPlatformBreakdownChartDataMock(...args),
-	fetchRWAAssetGroupBreakdownChartData: (...args: unknown[]) => fetchRWAAssetGroupBreakdownChartDataMock(...args),
-	fetchRWAAssetDataById: (...args: unknown[]) => fetchRWAAssetDataByIdMock(...args),
-	fetchRWAAssetChartData: (...args: unknown[]) => fetchRWAAssetChartDataMock(...args)
-}))
+vi.mock('../api', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('../api')>()
+	return {
+		...actual,
+		fetchRWAActiveTVLs: (...args: unknown[]) => fetchRWAActiveTVLsMock(...args),
+		fetchRWAChartDataByAsset: (...args: unknown[]) => fetchRWAChartDataByAssetMock(...args),
+		fetchRWAChartMetricDataByAsset: (...args: unknown[]) => fetchRWAChartMetricDataByAssetMock(...args),
+		fetchRWAChainBreakdownChartData: (...args: unknown[]) => fetchRWAChainBreakdownChartDataMock(...args),
+		fetchRWAStats: (...args: unknown[]) => fetchRWAStatsMock(...args),
+		fetchRWACategoryBreakdownChartData: (...args: unknown[]) => fetchRWACategoryBreakdownChartDataMock(...args),
+		fetchRWAPlatformBreakdownChartData: (...args: unknown[]) => fetchRWAPlatformBreakdownChartDataMock(...args),
+		fetchRWAAssetGroupBreakdownChartData: (...args: unknown[]) => fetchRWAAssetGroupBreakdownChartDataMock(...args),
+		fetchRWAAssetDataById: (...args: unknown[]) => fetchRWAAssetDataByIdMock(...args),
+		fetchRWAAssetChartData: (...args: unknown[]) => fetchRWAAssetChartDataMock(...args)
+	}
+})
 
 vi.mock('../Perps/api', () => ({
 	fetchRWAPerpsCurrent: (...args: unknown[]) => fetchRWAPerpsCurrentMock(...args),
@@ -33,6 +39,7 @@ vi.mock('../Perps/api', () => ({
 describe('rwa queries', () => {
 	beforeEach(() => {
 		fetchRWAActiveTVLsMock.mockReset()
+		fetchRWAChartDataByAssetMock.mockReset()
 		fetchRWAChartMetricDataByAssetMock.mockReset()
 		fetchRWAChainBreakdownChartDataMock.mockReset()
 		fetchRWAStatsMock.mockReset()
@@ -44,6 +51,7 @@ describe('rwa queries', () => {
 		fetchRWAPerpsCurrentMock.mockReset()
 		fetchRWAPerpsContractBreakdownChartDataMock.mockReset()
 		fetchRWAChartMetricDataByAssetMock.mockResolvedValue(null)
+		fetchRWAChartDataByAssetMock.mockResolvedValue(null)
 		fetchRWAChainBreakdownChartDataMock.mockResolvedValue([])
 		fetchRWACategoryBreakdownChartDataMock.mockResolvedValue([])
 		fetchRWAPlatformBreakdownChartDataMock.mockResolvedValue([])
@@ -115,15 +123,18 @@ describe('rwa queries', () => {
 				defiActiveTvl: {}
 			}
 		])
-		fetchRWAChartMetricDataByAssetMock.mockResolvedValue([{ timestamp: 1_000, alpha: 10 }])
+		fetchRWAChartDataByAssetMock.mockResolvedValue({
+			activeMcap: [{ timestamp: 1, alpha: 10 }],
+			onChainMcap: [],
+			defiActiveTvl: []
+		})
 
 		const result = await getRWAAssetsOverview({
 			rwaList: { chains: ['Ethereum'], categories: ['Treasuries'], platforms: [], assetGroups: ['Treasuries'] } as never
 		})
 
-		expect(fetchRWAChartMetricDataByAssetMock).toHaveBeenCalledWith({
+		expect(fetchRWAChartDataByAssetMock).toHaveBeenCalledWith({
 			target: { kind: 'all' },
-			metric: 'activeMcap',
 			includeStablecoins: false,
 			includeGovernance: false
 		})
@@ -163,7 +174,11 @@ describe('rwa queries', () => {
 				suspiciousReason: 'Unverified valuation source'
 			}
 		])
-		fetchRWAChartMetricDataByAssetMock.mockResolvedValue([{ timestamp: 1_000, alpha: 10, beta: 20 }])
+		fetchRWAChartDataByAssetMock.mockResolvedValue({
+			activeMcap: [{ timestamp: 1, alpha: 10, beta: 20 }],
+			onChainMcap: [],
+			defiActiveTvl: []
+		})
 
 		const result = await getRWAAssetsOverview({
 			rwaList: { chains: ['Ethereum'], categories: ['Treasuries'], platforms: [], assetGroups: ['Treasuries'] } as never
@@ -209,7 +224,11 @@ describe('rwa queries', () => {
 				defiActiveTvl: {}
 			}
 		])
-		fetchRWAChartMetricDataByAssetMock.mockResolvedValue([{ timestamp: 1_000, alpha: 10, beta: 20 }])
+		fetchRWAChartDataByAssetMock.mockResolvedValue({
+			activeMcap: [{ timestamp: 1, alpha: 10, beta: 20 }],
+			onChainMcap: [],
+			defiActiveTvl: []
+		})
 
 		const result = await getRWAAssetsOverview({
 			assetGroup: 'public-equities',
@@ -459,7 +478,7 @@ describe('rwa queries', () => {
 		]
 
 		for (const category of stablecoinCategories) {
-			fetchRWAChartMetricDataByAssetMock.mockClear()
+			fetchRWAChartDataByAssetMock.mockClear()
 
 			await getRWAAssetsOverview({
 				category: category.slug,
@@ -471,9 +490,8 @@ describe('rwa queries', () => {
 				} as never
 			})
 
-			expect(fetchRWAChartMetricDataByAssetMock).toHaveBeenCalledWith({
+			expect(fetchRWAChartDataByAssetMock).toHaveBeenCalledWith({
 				target: { kind: 'category', slug: category.slug },
-				metric: 'activeMcap',
 				includeStablecoins: true,
 				includeGovernance: false
 			})
@@ -493,9 +511,8 @@ describe('rwa queries', () => {
 			} as never
 		})
 
-		expect(fetchRWAChartMetricDataByAssetMock).toHaveBeenCalledWith({
+		expect(fetchRWAChartDataByAssetMock).toHaveBeenCalledWith({
 			target: { kind: 'category', slug: 'other-rwas' },
-			metric: 'activeMcap',
 			includeStablecoins: true,
 			includeGovernance: true
 		})
@@ -689,6 +706,117 @@ describe('rwa queries', () => {
 		expect(result?.assets.map((asset) => asset.kind)).toEqual(['perps'])
 	})
 
+	it('drops the active mcap chart metric for a platform whose whole supply is excluded', async () => {
+		// Crypto.com shape: onChainMcap is tracked but activeMcapData is off, so the API omits activeMcap.
+		fetchRWAActiveTVLsMock.mockResolvedValue([
+			{
+				id: 'cdc-nvda',
+				ticker: 'NVDA',
+				assetName: 'NVIDIA Corporation (Crypto.com Tokenized Stock)',
+				parentPlatform: 'Crypto.com',
+				category: ['Stocks & Equities'],
+				stablecoin: false,
+				governance: false,
+				activeMcapData: false,
+				onChainMcap: { Cronos: 249813 },
+				defiActiveTvl: {}
+			}
+		])
+		fetchRWAChartMetricDataByAssetMock.mockResolvedValue([{ timestamp: 1787702400, 'cdc-nvda': 249813 }])
+
+		const result = await getRWAAssetsOverview({
+			platform: 'crypto-com',
+			rwaList: {
+				chains: ['Cronos'],
+				categories: ['Stocks & Equities'],
+				platforms: ['Crypto.com'],
+				assetGroups: ['Public Equities']
+			} as never
+		})
+
+		expect(result?.chartMetricAvailability.hasActiveMcapData).toBe(false)
+		expect(result?.initialChartDataset?.metric).toBe('onChainMcap')
+		expect(fetchRWAChartMetricDataByAssetMock).toHaveBeenCalledWith({
+			target: { kind: 'platform', slug: 'crypto-com' },
+			metric: 'onChainMcap',
+			includeStablecoins: false,
+			includeGovernance: false
+		})
+	})
+
+	it('preloads the onchain fallback for an untracked regular-page scope', async () => {
+		fetchRWAActiveTVLsMock.mockResolvedValue([
+			{
+				id: 'cdc-nvda',
+				canonicalMarketId: 'cdc-nvda',
+				ticker: 'NVDA',
+				assetName: 'NVIDIA Corporation',
+				assetGroup: 'Public Equities',
+				category: ['Stocks & Equities'],
+				stablecoin: false,
+				governance: false,
+				activeMcapData: false,
+				onChainMcap: { Cronos: 249813 },
+				defiActiveTvl: {}
+			}
+		])
+		fetchRWAChartDataByAssetMock.mockResolvedValue({
+			activeMcap: [],
+			onChainMcap: [{ timestamp: 1, 'cdc-nvda': 249813 }],
+			defiActiveTvl: []
+		})
+
+		const result = await getRWAAssetsOverview({
+			rwaList: {
+				chains: ['Cronos'],
+				categories: ['Stocks & Equities'],
+				platforms: ['Crypto.com'],
+				assetGroups: ['Public Equities']
+			} as never
+		})
+
+		expect(result?.chartMetricAvailability.hasActiveMcapData).toBe(false)
+		expect(result?.initialChartDataset?.metric).toBe('onChainMcap')
+		expect(result?.initialChartDataset?.dataset.source).toHaveLength(1)
+	})
+
+	it('keeps active mcap when configured even if the current breakdown is empty', async () => {
+		fetchRWAActiveTVLsMock.mockResolvedValue([
+			{
+				id: 'rh-nvda',
+				ticker: 'NVDA',
+				assetName: 'NVIDIA Corporation',
+				parentPlatform: 'Robinhood',
+				category: ['Stocks & Equities'],
+				stablecoin: false,
+				governance: false,
+				activeMcapData: true,
+				onChainMcap: { Arbitrum: 7379058 },
+				defiActiveTvl: {}
+			}
+		])
+		fetchRWAChartMetricDataByAssetMock.mockResolvedValue([{ timestamp: 1787702400, 'rh-nvda': 7379058 }])
+
+		const result = await getRWAAssetsOverview({
+			platform: 'robinhood',
+			rwaList: {
+				chains: ['Arbitrum'],
+				categories: ['Stocks & Equities'],
+				platforms: ['Robinhood'],
+				assetGroups: ['Public Equities']
+			} as never
+		})
+
+		expect(result?.chartMetricAvailability.hasActiveMcapData).toBe(true)
+		expect(result?.initialChartDataset?.metric).toBe('activeMcap')
+		expect(fetchRWAChartMetricDataByAssetMock).toHaveBeenCalledWith({
+			target: { kind: 'platform', slug: 'robinhood' },
+			metric: 'activeMcap',
+			includeStablecoins: false,
+			includeGovernance: false
+		})
+	})
+
 	it('resolves active metadata-only platforms without inventing assets', async () => {
 		fetchRWAActiveTVLsMock.mockResolvedValue([])
 
@@ -707,6 +835,8 @@ describe('rwa queries', () => {
 
 		expect(result?.selectedPlatform).toBe('Metadata Only')
 		expect(result?.assets).toEqual([])
+		// No spot assets is not evidence that activeMcap is untracked, so the metric switch is left alone.
+		expect(result?.chartMetricAvailability.hasActiveMcapData).toBe(true)
 	})
 
 	it('excludes the RWA Perps bucket from category overview rows', async () => {

@@ -67,13 +67,13 @@ import {
 	getRWAFlowDefaultStartTimestamp,
 	getRWAFlowModeQueryValue,
 	getRWAFlowOverlayQueryValue,
+	getRWAFlowOverlayOptions,
 	getRWAFlowVsPriceAssetSummaries,
 	getRWAFlowVsPriceSummary,
 	parseRWAFlowGrouping,
 	parseRWAFlowQueryState,
 	parseRWAFlowOverlayMetrics,
 	RWA_FLOW_GROUPING_OPTIONS,
-	RWA_FLOW_OVERLAY_OPTIONS,
 	type RWAFlowChartSelection,
 	type RWAFlowGrouping,
 	type RWAFlowOverlay,
@@ -198,7 +198,8 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	}, [])
 	const canBreakdownByChain = isCategoryMode || isPlatformMode || isAssetGroupMode || props.selectedChain === 'All'
 	const chartMode = createRwaChartModeState(mode, canBreakdownByChain, props.assetGroupSlug)
-	const chartState = parseRwaChartState(router.query, chartMode)
+	const chartMetricAvailability = props.chartMetricAvailability
+	const chartState = parseRwaChartState(router.query, chartMode, chartMetricAvailability)
 	const isFlowMetric = flowQueryState.view != null
 	const chartTypeKey = chartState.metric
 	const chartView = isFlowMetric ? 'timeSeries' : chartState.view
@@ -392,9 +393,10 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	)
 	const flowGroupBy = flowQueryState.groupBy
 	const selectedFlowOverlayMetrics = useMemo(
-		() => parseRWAFlowOverlayMetrics(toNonEmptyArrayParam(router.query.flowOverlays)),
-		[router.query.flowOverlays]
+		() => parseRWAFlowOverlayMetrics(toNonEmptyArrayParam(router.query.flowOverlays), chartMetricAvailability),
+		[router.query.flowOverlays, chartMetricAvailability]
 	)
+	const flowOverlayOptions = getRWAFlowOverlayOptions(chartMetricAvailability)
 	const { chartDataset, isChartLoading, chartError } = useRwaChartDataset({
 		selectedMetric: chartTypeKey,
 		initialDataset: getInitialMetricDataset(chartTypeKey),
@@ -646,7 +648,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 			? 'Net Flows'
 			: getChartMetricLabel(chartTypeKey)
 	const chartMetricOptions = [
-		...getChartMetricOptions(),
+		...getChartMetricOptions(chartMetricAvailability),
 		{ key: 'flows' as const, label: definitions.flows.overviewNetFlows.label },
 		...(isPlatformMode ? [{ key: 'flowVsPrice' as const, label: definitions.flows.flowVsPrice.label }] : [])
 	]
@@ -753,7 +755,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 					return
 				}
 				void pushShallowQuery(router, {
-					chartType: getChartMetricQueryValue(key),
+					chartType: getChartMetricQueryValue(key, chartMetricAvailability),
 					flowMode: undefined
 				})
 			}}
@@ -784,7 +786,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	const flowOverlaySelect = (
 		<Tooltip content={definitions.flows.marketcapOverlay.description}>
 			<Select
-				allValues={RWA_FLOW_OVERLAY_OPTIONS}
+				allValues={flowOverlayOptions}
 				selectedValues={selectedFlowOverlayMetrics}
 				setSelectedValues={(values: string[]) => {
 					void pushShallowQuery(router, { flowOverlays: getRWAFlowOverlayQueryValue(values) })

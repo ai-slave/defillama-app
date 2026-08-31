@@ -125,19 +125,15 @@ export async function fetchRWAFlowAssetBreakdown(target: RWAAssetChartTarget): P
 	)
 }
 
-export async function fetchRWAChartMetricDataByAsset({
+export async function fetchRWAChartDataByAsset({
 	target,
-	metric,
 	includeStablecoins,
-	includeGovernance,
-	includeBridgeTvl = true
+	includeGovernance
 }: {
 	target: RWAAssetChartTarget
-	metric: RWAChartMetricKey
 	includeStablecoins: boolean
 	includeGovernance: boolean
-	includeBridgeTvl?: boolean
-}): Promise<IRWAChartMetricRows | null> {
+}): Promise<IRWAChartDataByAsset> {
 	let chartUrl = `${RWA_SERVER_URL}/chart/chain/all`
 	switch (target.kind) {
 		case 'all':
@@ -163,6 +159,22 @@ export async function fetchRWAChartMetricDataByAsset({
 		includeGovernance: String(includeGovernance)
 	})
 	return fetchJson<IRWAChartDataByAsset>(`${chartUrl}/asset-breakdown?${searchParams.toString()}`)
+}
+
+export async function fetchRWAChartMetricDataByAsset({
+	target,
+	metric,
+	includeStablecoins,
+	includeGovernance,
+	includeBridgeTvl = true
+}: {
+	target: RWAAssetChartTarget
+	metric: RWAChartMetricKey
+	includeStablecoins: boolean
+	includeGovernance: boolean
+	includeBridgeTvl?: boolean
+}): Promise<IRWAChartMetricRows | null> {
+	return fetchRWAChartDataByAsset({ target, includeStablecoins, includeGovernance })
 		.then((data) => normalizeRWAChartMetricRows(data, metric, includeBridgeTvl))
 		.catch((error) => {
 			console.error(`Failed to fetch RWA ${metric} chart data by asset:`, error)
