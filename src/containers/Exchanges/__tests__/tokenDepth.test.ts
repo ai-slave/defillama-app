@@ -7,24 +7,42 @@ const BANDS = [0.01, 0.02, 0.25]
 const ladder = (scale: number): ExchangeDepthLadder =>
 	BANDS.map((band, index) => ({ band, bidUsd: (index + 1) * scale, askUsd: (index + 1) * scale, coverage: 1 }))
 
-/** Fills that matched the quote: present, so the venue is charted, but no discount. */
-const FILLS = { predictedBps: 10, realizedBps: 10 }
+/** Fills that matched the quote: measured, so no discount. */
+const FILLS = { symbol: 'BTCUSDT', predictedBps: 10, realizedBps: 10 }
 
-const pair = (venueSlug: string, depthLadder: ExchangeDepthLadder | null): TokenDepthPair =>
-	({ venueSlug, venue: venueSlug, depthLadder }) as unknown as TokenDepthPair
+const pair = (venueSlug: string, depthLadder: ExchangeDepthLadder | null, pairId = 'BTCUSDT'): TokenDepthPair =>
+	({ venueSlug, venue: venueSlug, pairId, depthLadder }) as unknown as TokenDepthPair
 
-/** Every venue used below has measured fills unless a test says otherwise. */
 const MEASURED = { thin: FILLS, deep: FILLS, some: FILLS, none: FILLS, honest: FILLS }
 
 describe('tokenDepthVenues', () => {
-	it('adds a venue’s pairs together and ranks the deepest first', () => {
+	// The token page's question is how deep a venue is in this asset's USD perps, which
+	// is all of its books for the asset, not whichever one execution happens to sample.
+	it('adds a venue’s USD perp books together and ranks the deepest first', () => {
 		const venues = tokenDepthVenues(
-			[pair('thin', ladder(1)), pair('deep', ladder(10)), pair('deep', ladder(10))],
+			[pair('thin', ladder(1)), pair('deep', ladder(10)), pair('deep', ladder(10), 'BTCUSDC')],
 			MEASURED
 		)
 		expect(venues.map((venue) => venue.slug)).toEqual(['deep', 'thin'])
-		// Two pairs of the same size on one venue: the widest band is both of them.
 		expect(venues[0].ladder[2].bidUsd).toBe(60)
+	})
+
+	// A measured symbol that names no charted book (Bitfinex's `t` prefix, a numeric
+	// market id, or fills taken on the venue's COIN perp) costs the discount, not the
+	// venue: an undiscounted book is still a book we captured.
+	it('charts the venue undiscounted when the measured symbol matches no book', () => {
+		const venues = tokenDepthVenues([pair('binance', ladder(10), 'BTCUSDC')], {
+			binance: { symbol: 'BTCUSDT', predictedBps: 100, realizedBps: 200 }
+		})
+		expect(venues[0].ladder.map((band) => band.bidUsd)).toEqual([10, 20, 30])
+	})
+
+	// Only bands a book actually reached may be added: past its reach the upstream
+	// numbers are forward-filled, and adding those in invents depth.
+	it('adds only the books that reached each band', () => {
+		const shallow = ladder(10).map((point, index) => ({ ...point, coverage: index === 0 ? 1 : 0 }))
+		const venues = tokenDepthVenues([pair('deep', ladder(10)), pair('deep', shallow, 'BTCUSDC')], MEASURED)
+		expect(venues[0].ladder.map((band) => band.bidUsd)).toEqual([20, 20, 30])
 	})
 
 	// A venue listing the token with no snapshot has nothing to contribute. Drawing it
@@ -36,25 +54,42 @@ describe('tokenDepthVenues', () => {
 		expect(tokenDepthVenues([pair('none', null)], MEASURED)).toEqual([])
 	})
 
-	// A book we have never seen a fill against is unverified depth. Charted beside books
-	// that were checked, the unchecked one can only look better than it has earned.
-	it('leaves out venues with no measured fills for this token', () => {
+	// Fills discount a book; they are not a licence to show it. Most venues running a
+	// token's perp are never in the execution basket, and hiding their captured books
+	// understated the token's real venue set.
+	it('charts venues with no measured fills, undiscounted', () => {
 		const pairs = [pair('measured', ladder(10)), pair('unmeasured', ladder(10))]
-		expect(tokenDepthVenues(pairs, { measured: FILLS }).map((venue) => venue.slug)).toEqual(['measured'])
-		// No feed at all means nothing to chart, rather than everything unchecked.
-		expect(tokenDepthVenues(pairs)).toEqual([])
+		expect(
+			tokenDepthVenues(pairs, { measured: FILLS })
+				.map((venue) => venue.slug)
+				.sort()
+		).toEqual(['measured', 'unmeasured'])
+		expect(
+			tokenDepthVenues(pairs)
+				.map((venue) => venue.slug)
+				.sort()
+		).toEqual(['measured', 'unmeasured'])
 	})
 
 	it('discounts a venue by its own measured slippage and leaves the others alone', () => {
 		const venues = tokenDepthVenues([pair('missed', ladder(10)), pair('honest', ladder(10))], {
 			// Quoted 1%, delivered 2%: the 1% and 2% bands halve on this venue only.
-			missed: { predictedBps: 100, realizedBps: 200 },
+			missed: { symbol: 'BTCUSDT', predictedBps: 100, realizedBps: 200 },
 			honest: FILLS
 		})
 		const missed = venues.find((venue) => venue.slug === 'missed')!
 		const honest = venues.find((venue) => venue.slug === 'honest')!
 		expect(missed.ladder.map((band) => band.bidUsd)).toEqual([5, 10, 30])
 		expect(honest.ladder.map((band) => band.bidUsd)).toEqual([10, 20, 30])
+	})
+
+	// One pair's fills cannot vouch for its sister market, so the discount stops at the
+	// book it was measured on: BTCUSDT halves, BTCUSDC is added in at full size.
+	it('discounts only the book its fills were measured on', () => {
+		const venues = tokenDepthVenues([pair('venue', ladder(10)), pair('venue', ladder(10), 'BTCUSDC')], {
+			venue: { symbol: 'BTCUSDT', predictedBps: 100, realizedBps: 200 }
+		})
+		expect(venues[0].ladder.map((band) => band.bidUsd)).toEqual([15, 30, 60])
 	})
 
 	it('is untouched for a venue whose fills matched its quote', () => {

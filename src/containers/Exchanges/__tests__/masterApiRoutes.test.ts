@@ -36,6 +36,37 @@ const metadata = {
 }
 
 describe('master Exchanges API routes', () => {
+	it('keeps the exact execution symbol with token slippage', async () => {
+		const { masterExchangeExecutionSlippage } = await import('../server/master.api')
+		fetchJsonMock.mockResolvedValue({
+			venues: {
+				binance: {
+					pairs: {
+						BTC: {
+							symbol: 'BTCUSDT',
+							predicted_slippage_bps_10k: 0.03,
+							realized_slippage_bps_10k: 0.05
+						}
+					}
+				}
+			}
+		})
+		const request = { method: 'GET', url: '/api/public/exchanges/execution-slippage', headers: {}, query: {} }
+
+		const response = await masterExchangeExecutionSlippage.handle(request)
+
+		expect(response).toMatchObject({
+			status: 200,
+			body: {
+				venues: {
+					binance: {
+						BTC: { symbol: 'BTCUSDT', predictedBps: 0.03, realizedBps: 0.05 }
+					}
+				}
+			}
+		})
+	})
+
 	it('loads global chart parts independently', async () => {
 		const { masterExchangeChart } = await import('../server/master.api')
 		fetchJsonMock.mockImplementation(async (url: string) => ({ url }))

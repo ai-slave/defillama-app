@@ -166,14 +166,12 @@ export const exchangeDefinitions = {
 			description: 'Active liquidity across the venue’s spot markets. N/A means it runs no spot market.'
 		},
 		perpActiveLiquidity: {
-			label: 'Perp liq.',
-			description:
-				'Active liquidity across the venue’s perpetual markets. Hover for the split by class. Computed for USD perps only; COIN perps have no figure.'
+			label: 'USD perp liq.',
+			description: 'Active liquidity across the venue’s USD perpetual markets. COIN perps remain separate.'
 		},
 		perpOpenInterest: {
-			label: 'Perp OI',
-			description:
-				'USD value of open positions across the venue’s perpetual markets, USD and COIN perps added together. Hover for the split by class.'
+			label: 'USD perp OI',
+			description: 'USD value of open positions across the venue’s USD perpetual markets. COIN perps remain separate.'
 		},
 		spotNormalizedVolume: {
 			label: 'Spot n. vol',
@@ -181,9 +179,9 @@ export const exchangeDefinitions = {
 				'24h spot volume capped at what the visible book could plausibly support. Where we have no book to judge against, reported volume is shown instead and marked.'
 		},
 		perpNormalizedVolume: {
-			label: 'Perp n. vol',
+			label: 'USD perp n. vol',
 			description:
-				'24h perpetual volume capped at what the visible book could plausibly support. COIN perps have no normalized figure and contribute their reported volume. A * means a USD perp book was missing too.'
+				'24h USD perpetual volume capped at what the visible book could plausibly support. Where no book was captured, reported volume is marked with a *.'
 		},
 		sparkline: {
 			label: 'Volume trend',

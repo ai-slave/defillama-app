@@ -573,6 +573,7 @@ export function mapExchangePair(
 	const capturedBook = capturedBookUsd(pair)
 	return {
 		pairUrl: pair.pair_url,
+		pairId: pair.pair_id,
 		symbol: pair.symbol,
 		base: pair.base,
 		quote: pair.quote,

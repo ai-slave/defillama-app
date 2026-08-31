@@ -311,10 +311,10 @@ export interface MasterExecutionVenueMetrics extends MasterExecutionMeasurements
 	pairs: Record<string, MasterExecutionPairMetrics>
 }
 
-/** The trimmed slippage feed the token order-book chart reads: two numbers per
- *  venue-asset, keyed by venue slug then uppercase asset. */
+/** The trimmed slippage feed the token order-book chart reads, keyed by venue slug
+ *  then uppercase asset. `symbol` identifies the exact book those fills measured. */
 export interface MasterExecutionSlippageResponse {
-	venues: Record<string, Record<string, { predictedBps: number | null; realizedBps: number | null }>>
+	venues: Record<string, Record<string, { symbol: string; predictedBps: number | null; realizedBps: number | null }>>
 }
 
 export interface MasterExecutionQualityResponse {

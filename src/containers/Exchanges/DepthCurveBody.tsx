@@ -9,7 +9,7 @@
 import * as React from 'react'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import { ChartPanelBody, ChartPanelBodyFallback } from '~/ui/ChartPanel'
-import { depthCurveDataset, type DepthCurveEntry } from './depthCurve'
+import { depthCurveAriaLabel, depthCurveDataset, type DepthCurveEntry } from './depthCurve'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -39,6 +39,7 @@ export const DEPTH_COLORS = [
 
 export function DepthCurveBody({ entries }: { entries: DepthCurveEntry[] }) {
 	const dataset = React.useMemo(() => depthCurveDataset(entries), [entries])
+	const ariaLabel = React.useMemo(() => depthCurveAriaLabel(entries), [entries])
 	const charts = React.useMemo(
 		() =>
 			(dataset?.series ?? []).map((name, index) => ({
@@ -59,13 +60,13 @@ export function DepthCurveBody({ entries }: { entries: DepthCurveEntry[] }) {
 	if (!dataset) {
 		return (
 			<ChartPanelBodyFallback role="status" className="body-sm text-tertiary">
-				No order-book snapshots to chart yet.
+				No fully measured order-book depth to chart yet.
 			</ChartPanelBodyFallback>
 		)
 	}
 
 	return (
-		<ChartPanelBody>
+		<ChartPanelBody role="img" aria-label={ariaLabel}>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
 				<MultiSeriesChart
 					dataset={{ source: dataset.source, dimensions: dataset.dimensions }}

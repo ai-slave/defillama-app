@@ -259,6 +259,8 @@ export interface ExchangeDirectoryModel {
 
 export interface ExchangePairModel {
 	pairUrl: string
+	/** Exact producer pair ID, used when joining pair-specific measurements. */
+	pairId: string
 	symbol: string
 	base: string
 	quote: string

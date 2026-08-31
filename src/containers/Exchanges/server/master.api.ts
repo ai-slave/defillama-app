@@ -142,12 +142,12 @@ export const masterExchangeRegions = defineApiRoute({
 })
 
 /**
- * Per-venue, per-asset measured slippage: what the book promised a $10k fill would
- * cost against what those fills paid.
+ * Per-venue, per-asset measured slippage: what one exact book promised a $10k fill
+ * would cost against what those fills paid.
  *
- * Trimmed to those two numbers on purpose. The full execution payload is large and the
- * only consumer here is the token order-book chart, which uses it to discount a
- * displayed book and to decide which venues have measured fills at all.
+ * Trimmed to the exact symbol and two slippage values. The full execution payload is
+ * large and the only consumer here is the token order-book chart, which uses it to
+ * select and discount the measured book.
  */
 export const masterExchangeExecutionSlippage = defineApiRoute({
 	route: '/api/public/exchanges/execution-slippage',
@@ -167,6 +167,7 @@ export const masterExchangeExecutionSlippage = defineApiRoute({
 					// so it is left out rather than published as a pair of nulls.
 					if (pair.predicted_slippage_bps_10k == null && pair.realized_slippage_bps_10k == null) continue
 					;(venues[slug] ??= {})[asset.toUpperCase()] = {
+						symbol: pair.symbol,
 						predictedBps: pair.predicted_slippage_bps_10k,
 						realizedBps: pair.realized_slippage_bps_10k
 					}

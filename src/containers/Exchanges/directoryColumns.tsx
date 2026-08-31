@@ -228,11 +228,11 @@ function segmentColumn(spec: {
 	})
 }
 
-const PERP_SEGMENTS = ['linear_perp', 'inverse_perp'] as const satisfies readonly ExchangeSegment[]
+/** The perpetual class the merged view reports. COIN perps settle differently and are
+ *  left to their own segment table rather than folded into a USD-perp column. */
+const ALL_PERP_SEGMENTS = ['linear_perp'] as const satisfies readonly ExchangeSegment[]
 
-/** Segments normalized volume is computed for. A COIN perp has no normalized figure by
- *  design, so its reported volume standing in is the expected case, not a caveat worth
- *  marking on the row: flagging it put a star on nearly every venue that runs one. */
+/** Segments normalized volume is computed for. */
 const NVOL_SEGMENTS = ['spot', 'linear_perp'] as const satisfies readonly ExchangeSegment[]
 
 const fellBackWithBook = (row: ExchangeDirectoryRowModel, segments: readonly ExchangeSegment[]) =>
@@ -244,15 +244,10 @@ const fellBackWithBook = (row: ExchangeDirectoryRowModel, segments: readonly Exc
 	)
 
 /**
- * A "Perp" column in the merged view: both perpetual classes added together, with the
- * split always available on hover.
- *
- * Summing them is safe because every figure here is already USD-denominated — a COIN
- * perp's open interest is valued in dollars like any other. What is NOT safe is a
- * total that hides which classes are in it, because the two settle differently and
- * only some venues run both; hence the breakdown, on every cell, even when only one
- * class contributed. Metrics that exist for only one class (normalized volume and
- * active liquidity are not computed for COIN perps) simply say so there.
+ * A "USD perp" column in the merged view, kept parameterised over `ALL_PERP_SEGMENTS`
+ * so a second class can be folded back in by editing that list alone. With one class
+ * it renders exactly like `segmentColumn`, minus the hover breakdown a single segment
+ * has nothing to break down.
  */
 function perpColumn(spec: {
 	id: string
@@ -263,7 +258,7 @@ function perpColumn(spec: {
 	suffix?: (row: ExchangeDirectoryRowModel) => string
 }): ColumnDef<ExchangeDirectoryRowModel, any> {
 	const parts = (row: ExchangeDirectoryRowModel) =>
-		PERP_SEGMENTS.filter((segment) => row.segments[segment]).map((segment) => ({
+		ALL_PERP_SEGMENTS.filter((segment) => row.segments[segment]).map((segment) => ({
 			segment,
 			value: spec.pick(row, segment)
 		}))
@@ -498,9 +493,9 @@ export function buildDirectoryColumns(
 			id: 'perpNormalizedVolume',
 			definition: definitions.perpNormalizedVolume,
 			pick: (row, segment) => normalizedOrReported(row, segment).value,
-			suffix: (row) => (fellBackWithBook(row, PERP_SEGMENTS) ? '*' : ''),
+			suffix: (row) => (fellBackWithBook(row, ALL_PERP_SEGMENTS) ? '*' : ''),
 			extraNote: (row) =>
-				fellBackWithBook(row, PERP_SEGMENTS)
+				fellBackWithBook(row, ALL_PERP_SEGMENTS)
 					? REPORTED_NOTE
 					: normalizedVolumeNote(row.normalizedVolume?.linear_perp ?? null)
 		}),

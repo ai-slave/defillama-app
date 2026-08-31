@@ -3,6 +3,7 @@ import {
 	aggregateEntries,
 	applySlippageHaircut,
 	bandLabel,
+	depthCurveAriaLabel,
 	depthCurveDataset,
 	depthCurveVenues,
 	MAX_SLIPPAGE_HAIRCUT,
@@ -73,6 +74,33 @@ describe('depthCurveDataset', () => {
 		expect(dataset.source.map((entry) => entry[column])).toEqual([60, 40, 20, 0, 24, 48, 72])
 	})
 
+	it('omits bands that were forward-filled past the measured book', () => {
+		const partial = DEEP.map((point, index) => ({ ...point, coverage: index < 2 ? 1 : 0.5 }))
+		const partialDataset = depthCurveDataset([{ name: 'Partial', ladder: partial }])!
+		expect(partialDataset.source.map((entry) => entry[1])).toEqual([null, 20, 10, 0, 12, 24, null])
+	})
+
+	// Venue coverage is the share of the segment's volume whose book reached the band,
+	// so a sliver of volume on an uncrawled market lands it at 0.9987 rather than 1.
+	// Demanding exactly 1 there erased three quarters of the drawable points.
+	it('draws a band a rounding error short of complete coverage', () => {
+		const nearly = DEEP.map((point) => ({ ...point, coverage: 0.9987 }))
+		const nearlyDataset = depthCurveDataset([{ name: 'Nearly', ladder: nearly }])!
+		expect(nearlyDataset.source.map((entry) => entry[1])).toEqual([30, 20, 10, 0, 12, 24, 36])
+	})
+
+	it('has nothing to draw when every band is unmeasured', () => {
+		const unmeasured = DEEP.map((point) => ({ ...point, coverage: 0 }))
+		expect(depthCurveDataset([{ name: 'Unmeasured', ladder: unmeasured }])).toBeNull()
+	})
+
+	it('summarizes the widest fully measured point for screen readers', () => {
+		const partial = DEEP.map((point, index) => ({ ...point, coverage: index < 2 ? 1 : 0.5 }))
+		const label = depthCurveAriaLabel([{ name: 'Venue A', ladder: partial }])
+		expect(label).toContain('Venue A: $20 bid and $24 ask within 2% of mid.')
+		expect(label).toContain('Unmeasured outer bands are omitted.')
+	})
+
 	it('labels sub-percent bands precisely enough to tell them apart', () => {
 		expect(bandLabel(0.001, 'bid')).toBe('-0.1%')
 		expect(bandLabel(0.0025, 'ask')).toBe('+0.25%')
@@ -81,6 +109,28 @@ describe('depthCurveDataset', () => {
 	it('has nothing to draw without an entry', () => {
 		expect(depthCurveDataset([])).toBeNull()
 		expect(aggregateEntries([])).toEqual([])
+	})
+})
+
+describe('summing books', () => {
+	// Past a book's reach the upstream sums are forward-filled. Adding that in would
+	// put depth nobody quoted into the total, so the short book drops out of the wide
+	// bands and the sum says so by reporting itself measured only where it is.
+	it('adds only the ladders that reached the band', () => {
+		const shallow = DEEP.map((point, index) => ({ ...point, coverage: index === 0 ? 1 : 0 }))
+		const [entry] = aggregateEntries([
+			{ slug: 'deep', name: 'deep', ladder: DEEP },
+			{ slug: 'shallow', name: 'shallow', ladder: shallow }
+		])
+		expect(entry.ladder.map((point) => point.bidUsd)).toEqual([20, 20, 30])
+		expect(entry.ladder.map((point) => point.coverage)).toEqual([1, 1, 1])
+	})
+
+	it('reports a band no book reached as unmeasured, and charts nothing for it', () => {
+		const unmeasured = DEEP.map((point) => ({ ...point, coverage: 0 }))
+		const [entry] = aggregateEntries([{ slug: 'a', name: 'a', ladder: unmeasured }])
+		expect(entry.ladder.map((point) => point.coverage)).toEqual([0, 0, 0])
+		expect(depthCurveDataset([entry])).toBeNull()
 	})
 })
 

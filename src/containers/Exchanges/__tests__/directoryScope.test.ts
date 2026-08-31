@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { EXECUTION_COLUMN_IDS } from '../directoryColumns'
+import { buildDirectoryColumns, EXECUTION_COLUMN_IDS } from '../directoryColumns'
 import { directoryColumnVisibility } from '../DirectoryTable'
+import type { ExchangeDirectoryRowModel } from '../models'
 import { DIRECTORY_ALL_SEGMENTS, type DirectoryScope } from '../queryState'
 
 const visibleIds = (scope: DirectoryScope) =>
@@ -20,6 +21,25 @@ const MERGED_ONLY = [
 describe('merged directory scope', () => {
 	it('merges spot and USD perps only — COIN perps stay in their own table', () => {
 		expect(DIRECTORY_ALL_SEGMENTS).toEqual(['spot', 'linear_perp'])
+	})
+
+	it('does not add COIN-perp values to the merged Perp columns', () => {
+		const row = {
+			segments: {
+				linear_perp: { openInterestUsd: 100, volume24h: 80 },
+				inverse_perp: { openInterestUsd: 900, volume24h: 700 }
+			},
+			normalizedVolume: {
+				linear_perp: { activeLiquidity: 40, normalized: 60 },
+				inverse_perp: null
+			}
+		} as unknown as ExchangeDirectoryRowModel
+		const columns = buildDirectoryColumns('all', false)
+		const value = (id: string) => (columns.find((column) => column.id === id) as any).accessorFn(row, 0)
+
+		expect(value('perpActiveLiquidity')).toBe(40)
+		expect(value('perpOpenInterest')).toBe(100)
+		expect(value('perpNormalizedVolume')).toBe(60)
 	})
 
 	// The point of the merged view is a row that fits without horizontal scroll and

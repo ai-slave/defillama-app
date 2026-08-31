@@ -20,7 +20,7 @@
  * Every value is cumulative outward from mid: the point at 2% is everything within 2%,
  * not a slice at 2%.
  */
-import { formatPercent } from '~/utils/numberFormat'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { ExchangeDepthLadder, ExchangeLiquidityRelation, ExchangeSegment } from './models'
 
 export interface DepthCurveVenue {
@@ -85,23 +85,43 @@ export function depthCurveVenues(rows: DepthCurveRow[], segment: ExchangeSegment
 	return kept.map(({ slug, name, ladder }) => ({ slug, name, ladder }))
 }
 
-/** Band-wise sum across ladders. Coverage is averaged; it rides along for shape parity
- *  and is not plotted. */
+/**
+ * How much of a band's book has to be genuinely measured before it is drawn.
+ *
+ * Per-pair coverage is 1 or 0, but a venue-level band is volume-weighted and lands on
+ * values like 0.9987 whenever a sliver of volume trades on a book we did not crawl
+ * that far. Demanding exactly 1 there threw away almost every wide band: on today's
+ * feed it drew 23% of venue band-points, against 40% at this threshold.
+ */
+export const MEASURED_COVERAGE = 0.99
+
+export const isMeasured = (point: ExchangeDepthLadder[number] | undefined) =>
+	point != null && point.coverage >= MEASURED_COVERAGE
+
+/**
+ * Band-wise sum across ladders, counting only the books that reached the band.
+ *
+ * Past a book's reach the upstream sums are forward-filled, so adding an unmeasured
+ * band in would put invented depth into the total. Skipping it keeps every drawn point
+ * something we observed, at the cost of a curve that can step down where a shallow
+ * book drops out — honest, and cheaper than either truncating the whole curve at the
+ * shallowest contributor or plotting fill.
+ */
 export function sumLadders(ladders: ExchangeDepthLadder[]): ExchangeDepthLadder | null {
 	const bands = ladders[0]
 	if (!bands?.length) return null
 	return bands.map((band, index) => {
 		let bidUsd: number | null = null
 		let askUsd: number | null = null
-		let coverage = 0
+		let measured = false
 		for (const ladder of ladders) {
 			const entry = ladder[index]
-			if (!entry) continue
+			if (!isMeasured(entry)) continue
 			if (entry.bidUsd != null) bidUsd = (bidUsd ?? 0) + entry.bidUsd
 			if (entry.askUsd != null) askUsd = (askUsd ?? 0) + entry.askUsd
-			coverage += entry.coverage
+			measured = true
 		}
-		return { band: band.band, bidUsd, askUsd, coverage: coverage / ladders.length }
+		return { band: band.band, bidUsd, askUsd, coverage: measured ? 1 : 0 }
 	})
 }
 
@@ -138,14 +158,53 @@ export function depthCurveDataset(entries: DepthCurveEntry[]): DepthCurveDataset
 	if (!bands?.length) return null
 	const series = entries.map((entry) => entry.name)
 	const source: Array<Array<string | number | null>> = []
+	let hasMeasuredValue = false
 	for (let index = bands.length - 1; index >= 0; index--) {
-		source.push([bandLabel(bands[index].band, 'bid'), ...entries.map((entry) => entry.ladder[index]?.bidUsd ?? null)])
+		const row: Array<string | number | null> = [bandLabel(bands[index].band, 'bid')]
+		for (const entry of entries) {
+			const point = entry.ladder[index]
+			const value = isMeasured(point) ? (point.bidUsd ?? null) : null
+			if (value != null) hasMeasuredValue = true
+			row.push(value)
+		}
+		source.push(row)
 	}
 	source.push(['0%', ...entries.map(() => 0)])
 	for (let index = 0; index < bands.length; index++) {
-		source.push([bandLabel(bands[index].band, 'ask'), ...entries.map((entry) => entry.ladder[index]?.askUsd ?? null)])
+		const row: Array<string | number | null> = [bandLabel(bands[index].band, 'ask')]
+		for (const entry of entries) {
+			const point = entry.ladder[index]
+			const value = isMeasured(point) ? (point.askUsd ?? null) : null
+			if (value != null) hasMeasuredValue = true
+			row.push(value)
+		}
+		source.push(row)
 	}
+	if (!hasMeasuredValue) return null
 	return { source, dimensions: ['band', ...series], series }
+}
+
+/** Text equivalent for the canvas: the widest fully measured point on each curve. */
+export function depthCurveAriaLabel(entries: DepthCurveEntry[]): string {
+	const summaries: string[] = []
+	for (const entry of entries) {
+		const widest = entry.ladder.findLast((point) => isMeasured(point) && (point.bidUsd != null || point.askUsd != null))
+		if (!widest) {
+			summaries.push(`${entry.name}: no fully measured depth.`)
+			continue
+		}
+		const band = formatPercent(widest.band, { input: 'fraction', maximumFractionDigits: 2 })
+		const bid =
+			widest.bidUsd == null
+				? 'no bid value'
+				: `${formatUsd(widest.bidUsd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} bid`
+		const ask =
+			widest.askUsd == null
+				? 'no ask value'
+				: `${formatUsd(widest.askUsd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} ask`
+		summaries.push(`${entry.name}: ${bid} and ${ask} within ${band} of mid.`)
+	}
+	return `Order-book depth. Cumulative measured USD by distance from mid. ${summaries.join(' ')} Unmeasured outer bands are omitted.`
 }
 
 /**
