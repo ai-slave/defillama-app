@@ -135,6 +135,15 @@ describe('rewards public page boundary', () => {
 		])
 	})
 
+	it('serializes programs when the API omits the referrer benefit', () => {
+		const entry = apiRecord({})
+		delete entry.referrer_benefit
+		const { programs } = buildRewardsPageData([entry], {}, rankings)
+
+		expect(programs[0].referrerBenefit).toBeNull()
+		expect(JSON.parse(JSON.stringify(programs))).toEqual(programs)
+	})
+
 	it('preserves the benefit audience used to choose the primary table benefit', () => {
 		expect(
 			buildRewardsPageData([apiRecord({ benefit_audience: 'Referrer only' })], {}, rankings).programs[0]

@@ -74,7 +74,7 @@ export function buildRewardsPageData(
 			// Published for every program: reward_types describes what a program pays
 			// out, never whether inviting others earns anything, so it cannot gate this.
 			// Entries with no referral payout say so in their own copy.
-			referrerBenefit: entry.referrer_benefit,
+			referrerBenefit: entry.referrer_benefit ?? null,
 			referralUrl: publicHttpUrl(entry.referral_url)?.url ?? null,
 			sources,
 			lastVerified: formatDate(entry.last_verified)

@@ -41,7 +41,7 @@ export interface RewardProgram {
 	summary: string
 	benefitAudience: RewardBenefitAudience
 	visitorBenefit: string
-	referrerBenefit: string
+	referrerBenefit: string | null
 	referralUrl: string | null
 	sources: RewardSource[]
 	lastVerified: string | null
