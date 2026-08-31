@@ -53,7 +53,7 @@ const PerpsVolumeOnAllChains = (props) => {
 			canonicalUrl={`/perps`}
 			pageName={pageName}
 		>
-			<AdapterByChain {...props} type={type} defaultSorting={[{ id: 'normalizedVolume24h', desc: true }]} />
+			<AdapterByChain {...props} type={type} defaultSorting={[{ id: 'openInterest', desc: true }]} />
 		</Layout>
 	)
 }
