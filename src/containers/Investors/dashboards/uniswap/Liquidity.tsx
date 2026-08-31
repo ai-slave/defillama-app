@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { formatPercent } from '~/utils/numberFormat'
+import { lazy, useState } from 'react'
+import type { ISankeyChartProps } from '~/components/ECharts/SankeyChart/types'
+import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import type { Chart, Kpi as KpiT } from './transform'
 import {
 	BarListCard,
@@ -33,9 +34,18 @@ interface LiquidityData {
 	tvlByVersion: Chart
 	topPools: { title?: string; rows: TopPoolRow[] }
 	activeLps: Chart
-	/** Both null until the ir-server serving this deployment ships the LP breakdowns. */
+	/** Null until the ir-server serving this deployment ships the LP breakdowns. */
 	activeLpsByVersion: Chart | null
 	activeLpsByChain: Chart | null
+	/** Null until the lp-custody Dune view is materialized (see ir-server sql/lp-custody.sql). */
+	activeLpsByCustody: (Chart & { note?: string }) | null
+	/** Latest custody x activity snapshot; each owner counted once. */
+	lpCustodySankey: {
+		title?: string
+		note?: string
+		asOf?: string
+		links: Array<{ source: string; target: string; value: number }>
+	} | null
 	liquidityBySegment: Chart
 }
 
@@ -75,6 +85,49 @@ const TVL_SUBTITLES = [
 
 const LP_OVERLAP_NOTE =
 	'A wallet providing liquidity on several chains or versions is counted in each of them, so the Chains and Versions stacks run above the deduplicated All total.'
+
+const SankeyChart = lazy(() => import('~/components/ECharts/SankeyChart')) as React.FC<ISankeyChartProps>
+
+const SANKEY_COLORS: Record<string, string> = {
+	v2: '#FF5F52',
+	v3: '#FFB238',
+	v4: '#00C3A0',
+	'Wallet-Custodied': '#4C82FB',
+	'Contract-Managed': '#9E62FF',
+	Active: '#40B66B',
+	Passive: '#94A3B8'
+}
+
+// Latest snapshot as a sankey (version → custody → activity), each owner counted once, in the
+// version and custody of their most recently active open position.
+function CustodySankeyCard({ sankey }: { sankey: NonNullable<LiquidityData['lpCustodySankey']> }) {
+	// A node's size is its incoming flow (outgoing for the leftmost layer, which has none);
+	// summing both sides would double-count the middle custody layer.
+	const inflow = new Map<string, number>()
+	const outflow = new Map<string, number>()
+	for (const link of sankey.links) {
+		outflow.set(link.source, (outflow.get(link.source) ?? 0) + link.value)
+		inflow.set(link.target, (inflow.get(link.target) ?? 0) + link.value)
+	}
+	const nodes = ['v2', 'v3', 'v4', 'Wallet-Custodied', 'Contract-Managed', 'Active', 'Passive']
+		.filter((name) => inflow.has(name) || outflow.has(name))
+		.map((name) => {
+			const total = inflow.get(name) ?? outflow.get(name) ?? 0
+			return {
+				name,
+				color: SANKEY_COLORS[name],
+				displayValue: formatCompactNumber(total) ?? String(total)
+			}
+		})
+	return (
+		<ChartCard
+			title={sankey.title ?? 'LP Owners - Custody & Activity'}
+			subtitle={sankey.note ?? 'Each owner counted once; Active = a liquidity action in the last 7 days.'}
+		>
+			<SankeyChart nodes={nodes} links={sankey.links} nodeColors={SANKEY_COLORS} height="360px" />
+		</ChartCard>
+	)
+}
 
 const POOL_COLUMNS = 'minmax(140px,1.5fr) minmax(110px,1fr) minmax(70px,0.5fr) minmax(110px,1fr) minmax(90px,0.8fr)'
 const POOL_HEADERS: Array<[string, 'left' | 'right']> = [
@@ -239,6 +292,22 @@ export default function Liquidity() {
 						? { control: <SegToggle<LpView> options={lpOptions} value={resolvedLpView} onChange={setLpView} /> }
 						: {})}
 				/>
+				{/* Two standalone custody charts: the full-history weekly split as a stacked
+				    area, the latest snapshot as a sankey. */}
+				{(data.activeLpsByCustody || data.lpCustodySankey) && (
+					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+						{data.activeLpsByCustody && (
+							<TimeAreaCard
+								chart={data.activeLpsByCustody}
+								title="LP Owners by Custody"
+								stacked
+								valueSymbol=""
+								subtitle="Wallet-custodied vs contract-managed owners of open positions, weekly, v2-v4."
+							/>
+						)}
+						{data.lpCustodySankey && <CustodySankeyCard sankey={data.lpCustodySankey} />}
+					</div>
+				)}
 			</section>
 
 			<section className="flex flex-col gap-6">

@@ -3,7 +3,7 @@ import { useMemo } from 'react'
 import { fetchAdapterProtocolChartDataByBreakdownType } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import type { Chart, Kpi as KpiT } from './transform'
-import { breakdownToSeries, groupTopN, SeriesTrendChart } from './TrendChart'
+import { breakdownToSeries, groupTopN, SeriesTrendChart, trimLeadingZeros } from './TrendChart'
 import {
 	countKpi,
 	KpiGrid,
@@ -80,6 +80,26 @@ export default function Overview() {
 			),
 		...QUERY_OPTS
 	})
+	// Protocol fees (the fee-switch cut) by version, so the Fees section shows what accrues
+	// to the protocol alongside what users pay. Trimmed to start at the fee switch.
+	const protocolFeesByVersion = useQuery({
+		queryKey: ['uniswap-breakdown', 'protocol-fees-by-version'],
+		queryFn: async () =>
+			trimLeadingZeros(
+				breakdownToSeries(
+					await fetchAdapterProtocolChartDataByBreakdownType({
+						adapterType: ADAPTER_TYPES.FEES,
+						protocol: PROTOCOL,
+						dataType: ADAPTER_DATA_TYPES.DAILY_HOLDERS_REVENUE,
+						type: 'version'
+					})
+				)
+			),
+		...QUERY_OPTS
+	})
+	// TVL belongs on the overview for visitors who never click past it; the total series is
+	// already assembled by the ir-server for the Liquidity tab.
+	const liquidity = useUniswapData<{ kpis: Record<string, KpiT | undefined>; tvlTotal: Chart }>('liquidity')
 
 	const kpis: Record<string, KpiT | undefined> = useMemo(() => {
 		const dune = data?.kpis ?? {}
@@ -96,10 +116,10 @@ export default function Overview() {
 			volume24h: usdKpi(dex.data?.total24h),
 			chainsLive: countKpi(dex.data?.chains?.length, 'chains'),
 			feesAllTime: usdKpi(fees.data?.totalAllTime),
-			fees30d: usdKpi(fees.data?.total30d),
-			fees24h: usdKpi(fees.data?.total24h),
-			// Fees that accrue to LPs: total fees minus the UNI buyback-and-burn cut. Only shown
-			// once both totals are in, so a failed buyback fetch never inflates the figure.
+			// Protocol fees = holders revenue: the fee-switch cut burned as UNI via the TokenJar.
+			protocolFeesAllTime: usdKpi(holders.data?.totalAllTime),
+			// Fees that accrue to LPs: total fees minus the fee-switch cut. Only shown once both
+			// totals are in, so a failed holders-revenue fetch never inflates the figure.
 			lpFeesAllTime:
 				fees.data?.totalAllTime != null && holders.data?.totalAllTime != null
 					? usdKpi(fees.data.totalAllTime - holders.data.totalAllTime)
@@ -123,14 +143,16 @@ export default function Overview() {
 						['volume24h', 'Volume (24h)', undefined]
 					]}
 				/>
+				{/* Exactly three fee cards: fees paid by users, fees to LPs, then the protocol cut.
+				    The 30d/24h splits live on the Economic Model tab. */}
 				<KpiGrid
 					label="Fees"
 					kpis={kpis}
+					cols={3}
 					items={[
-						['feesAllTime', 'Fees (Lifetime)', defs.fees],
-						['fees30d', 'Fees (30d)', undefined],
-						['fees24h', 'Fees (24h)', undefined],
-						['lpFeesAllTime', 'Fees to Liquidity Providers (Lifetime)', defs.lpFees]
+						['feesAllTime', 'Fees Paid by Users (Lifetime)', defs.fees],
+						['lpFeesAllTime', 'Fees to LPs (Lifetime)', defs.lpFees],
+						['protocolFeesAllTime', 'Protocol Fees / UNI Burn (Lifetime)', defs.holdersRevenue]
 					]}
 				/>
 				<KpiGrid
@@ -138,7 +160,7 @@ export default function Overview() {
 					kpis={kpis}
 					cols={3}
 					items={[
-						['trades', 'Trades (Lifetime)', undefined],
+						['trades', 'Swaps (Lifetime)', undefined],
 						['wallets', 'Wallets (Lifetime)', defs.wallets],
 						['walletShare', 'Share of All DEX Wallets (30d)', defs.walletShare]
 					]}
@@ -177,14 +199,36 @@ export default function Overview() {
 				/>
 			</section>
 
+			{liquidity.data?.tvlTotal && (
+				<section className="flex flex-col gap-6">
+					<SectionHeader>TVL</SectionHeader>
+					<TimeAreaCard
+						chart={liquidity.data.tvlTotal}
+						title="Total Value Locked"
+						valueSymbol="$"
+						value={liquidity.data.kpis?.totalTvl?.formatted}
+						subtitle="Total value locked across all versions and chains."
+					/>
+				</section>
+			)}
+
 			<section className="flex flex-col gap-6">
 				<SectionHeader>Fees</SectionHeader>
 				<SeriesTrendChart
-					title="Fees by Version"
+					title="Fees Paid by Users, by Version"
 					subtitle="Swap fees paid by users, split by protocol version."
 					series={feesByVersion.data}
 					isLoading={feesByVersion.isLoading}
 					isError={feesByVersion.isError}
+					defaultView="month"
+					minBucket="week"
+				/>
+				<SeriesTrendChart
+					title="Protocol Fees by Version"
+					subtitle="The protocol's cut of swap fees, split by version, since the fee-switch activation."
+					series={protocolFeesByVersion.data}
+					isLoading={protocolFeesByVersion.isLoading}
+					isError={protocolFeesByVersion.isError}
 					defaultView="month"
 					minBucket="week"
 				/>
@@ -194,15 +238,18 @@ export default function Overview() {
 				<SectionHeader>Activity</SectionHeader>
 				{/* Weekly unique counts must not be re-summed into coarser periods (a monthly sum of
 				    weekly uniques double-counts returning wallets), so these render as plain weekly
-				    lines instead of getting the aggregation toggle. */}
+				    lines instead of getting the aggregation toggle. Titles are fixed here so the tab
+				    reads swaps/swappers even against an older ir-server payload. */}
 				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 					<TimeAreaCard
 						chart={data.tradersWeekly}
+						title="Swappers (Weekly Unique)"
 						valueSymbol=""
 						subtitle={defs.traders ?? 'Weekly unique swapping wallets across all chains and versions.'}
 					/>
 					<TimeAreaCard
 						chart={data.tradesWeekly}
+						title="Swaps (Weekly)"
 						valueSymbol=""
 						subtitle="Weekly swap count, all chains and versions."
 					/>

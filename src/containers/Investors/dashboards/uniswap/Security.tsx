@@ -209,6 +209,24 @@ export default function Security() {
 	const { data } = useUniswapData<SecurityData>('security')
 	if (!data) return <PageLoader />
 
+	// Older ir-server payloads bake sentence copy into `formatted` ("7.8 years of continuous
+	// uptime"); show just the figure, the card label carries the words.
+	// Rebuild the display from the raw `value` so the terse copy never waits on an ir-server
+	// redeploy.
+	const terse = (k: KpiT | undefined, format: (value: number) => string): KpiT | undefined =>
+		k ? { ...k, formatted: format(k.value) } : undefined
+	const usd = (value: number) => formatUsd(value, { compact: true, maximumFractionDigits: 2 })
+	const kpis: Record<string, KpiT | undefined> = {
+		...data.kpis,
+		uptime: terse(data.kpis.uptime, String),
+		totalAudits: terse(data.kpis.totalAudits, String),
+		v4Audits: terse(data.kpis.v4Audits, String),
+		auditFirms: terse(data.kpis.auditFirms, String),
+		bugBounty: terse(data.kpis.bugBounty, usd),
+		securityCompetition: terse(data.kpis.securityCompetition, usd),
+		exploits: terse(data.kpis.exploits, (value) => (value === 0 ? '0 · $0 lost' : String(value)))
+	}
+
 	const byFirm = (data.auditsByFirm?.rows ?? [])
 		.map((row) => ({ name: row.firm, value: row.count }))
 		.sort((a, b) => b.value - a.value)
@@ -220,11 +238,13 @@ export default function Security() {
 		<div className="flex flex-col gap-10">
 			<section className="flex flex-col gap-6">
 				<SectionHeader>Track Record</SectionHeader>
+				{/* Terse values, labels carry the words; cols=3 spreads the row out. */}
 				<KpiGrid
-					kpis={data.kpis}
+					kpis={kpis}
+					cols={3}
 					items={[
-						['uptime', 'Continuous Uptime', undefined],
-						['exploits', 'Exploit History', 'No core-protocol exploit since the v1 launch (November 2018).'],
+						['uptime', 'Continuous Uptime (Years)', undefined],
+						['exploits', 'Core Protocol Exploits', 'No core-protocol exploit since the v1 launch (November 2018).'],
 						['bugBounty', 'Bug Bounty', undefined],
 						['securityCompetition', 'Security Competition', undefined]
 					]}
@@ -234,7 +254,7 @@ export default function Security() {
 			<section className="flex flex-col gap-6">
 				<SectionHeader>Audits</SectionHeader>
 				<KpiGrid
-					kpis={data.kpis}
+					kpis={kpis}
 					cols={3}
 					items={[
 						['totalAudits', 'Total Audits', undefined],
@@ -266,7 +286,7 @@ export default function Security() {
 			<section className="flex flex-col gap-6">
 				<SectionHeader>Governance</SectionHeader>
 				<KpiGrid
-					kpis={data.kpis}
+					kpis={kpis}
 					cols={3}
 					items={[
 						['delegatedUni', 'Delegated UNI', undefined],

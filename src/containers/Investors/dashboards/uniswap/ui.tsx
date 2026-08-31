@@ -114,11 +114,42 @@ const CATEGORY_COLORS: Record<string, string> = {
 	Memecoins: '#FACC15'
 }
 
-// Color follows the entity: a known asset category keeps its own color, catch-all buckets are always
-// gray, everything else takes palette hues in series order.
+// Chain series wear their brand color on every chart (positional palette assignment painted
+// Base pink and Ethereum in Base blue, which fights brand recognition).
+// Covers every chain the marketshare/LP/fee charts currently emit; unmapped chains fall through
+// to the positional palette.
+const CHAIN_COLORS: Record<string, string> = {
+	Ethereum: '#627EEA',
+	Base: '#0052FF',
+	Arbitrum: '#28A0F0',
+	'OP Mainnet': '#FF0420',
+	Optimism: '#FF0420',
+	Polygon: '#8247E5',
+	Unichain: '#F50DB4',
+	'BNB Chain': '#F0B90B',
+	BSC: '#F0B90B',
+	Avalanche: '#E84142',
+	'Robinhood Chain': '#00C805',
+	Celo: '#FBCC5C',
+	Ink: '#7132F5',
+	'ZKsync Era': '#8C8DFC',
+	Monad: '#836EF9'
+}
+
+// Router-vs-aggregator split: Uniswap's own routers are always Uniswap pink. The LP custody
+// hues match the custody sankey's node colors (SANKEY_COLORS in Liquidity.tsx).
+const FLOW_COLORS: Record<string, string> = {
+	'Uniswap Routers': UNI_PINK,
+	'Third-Party Aggregators': '#4C82FB',
+	'Wallet-Custodied': '#4C82FB',
+	'Contract-Managed': '#9E62FF'
+}
+
+// Color follows the entity: a known asset category or chain keeps its own color, catch-all
+// buckets are always gray, everything else takes palette hues in series order.
 export function seriesColor(name: string, index: number): string {
-	const category = CATEGORY_COLORS[name]
-	if (category) return category
+	const fixed = CATEGORY_COLORS[name] ?? CHAIN_COLORS[name] ?? FLOW_COLORS[name]
+	if (fixed) return fixed
 	if (/^others?\b/i.test(name) || /^(direct \/ other|non-uniswap routers \/ direct)$/i.test(name)) return OTHERS_GRAY
 	return paletteColor(index)
 }

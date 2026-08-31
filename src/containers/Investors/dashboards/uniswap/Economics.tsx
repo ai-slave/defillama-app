@@ -66,6 +66,33 @@ const ANNUALIZE_30D = 365 / 30
 
 const DAY_MS = 86_400_000
 
+// How the protocol's cut is collected on each version, verified against
+// docs.uniswap.org/concepts/protocol/fees. Rendered as a compact strip at the top of the
+// Protocol Fees section: three short rows beat a paragraph for scanning.
+const FEE_MECHANICS: Array<[string, string]> = [
+	['v2', 'The swap fee stays 0.30% - 0.25% goes to LPs, 0.05% to the protocol.'],
+	['v3', 'The protocol takes 1/4 of LP fees in the 0.01% and 0.05% tiers, 1/6 in the 0.30% and 1.00% tiers.'],
+	['v4', 'The protocol fee is charged to the trader on the swap input first; the LP fee applies to the remainder.']
+]
+
+function FeeMechanics() {
+	return (
+		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
+			<div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+				{FEE_MECHANICS.map(([version, text]) => (
+					<div key={version} className="flex flex-col gap-1">
+						<span className="font-jetbrains text-sm font-semibold text-pro-text-primary">{version}</span>
+						<p className="text-xs leading-relaxed text-pro-text-secondary">{text}</p>
+					</div>
+				))}
+			</div>
+			<p className="mt-3 text-xs leading-relaxed text-pro-text-tertiary">
+				Protocol fees are set by governance-controlled policy and can be adjusted per pool.
+			</p>
+		</div>
+	)
+}
+
 // The activation waves as a horizontal timeline: a dot per wave with its date and the
 // activated chains' logos, spaced in proportion to the real day gaps between waves
 // (each labeled on the rail). Waves wrap onto a second row on narrow screens.
@@ -328,18 +355,20 @@ export default function Economics() {
 						['lpFeesLifetime', 'LP Fees (Lifetime)', defs.lpFees]
 					]}
 				/>
+				{/* "Protocol Fees", not "buyback": fees accrue to the TokenJar and UNI is burned
+				    against it - there is no market buyback. */}
 				<KpiGrid
-					label="Holders Revenue (UNI Buyback & Burn)"
+					label="Protocol Fees (Holders Revenue)"
 					kpis={kpis}
 					items={[
 						[
 							'holdersRevenueAnnualized',
-							'Holders Revenue (Annualized)',
-							'Trailing 30-day holders revenue scaled to a year.'
+							'Protocol Fees (Annualized)',
+							'Trailing 30-day protocol fees scaled to a year.'
 						],
-						['holdersRevenue30d', 'Holders Revenue (30d)', undefined],
-						['holdersRevenue24h', 'Holders Revenue (24h)', undefined],
-						['holdersRevenueLifetime', 'Holders Revenue (Lifetime)', defs.holdersRevenue]
+						['holdersRevenue30d', 'Protocol Fees (30d)', undefined],
+						['holdersRevenue24h', 'Protocol Fees (24h)', undefined],
+						['holdersRevenueLifetime', 'Protocol Fees (Lifetime)', defs.holdersRevenue]
 					]}
 				/>
 				<KpiGrid
@@ -347,7 +376,7 @@ export default function Economics() {
 					kpis={kpis}
 					items={[
 						['totalUniBurned', 'Total UNI Burned', undefined],
-						['uniBurnedBuyback', 'Fee-Switch Buybacks', undefined],
+						['uniBurnedBuyback', 'UNI Burned (Fee Switch)', undefined],
 						['uniBurnedTreasury', 'Treasury Burn (One-off)', undefined],
 						['uniBurnAnnualizedUnits', 'Burn Rate (Annualized)', undefined]
 					]}
@@ -356,6 +385,7 @@ export default function Economics() {
 
 			<section className="flex flex-col gap-6">
 				<SectionHeader>Protocol Fees</SectionHeader>
+				<FeeMechanics />
 				{/* With a single month of history a time axis renders one giant block, so show
 				    that month as ranked category bars until the backfill grows. */}
 				{data.protocolFeesByCategory.dates.length < 2 ? (
@@ -406,10 +436,10 @@ export default function Economics() {
 			</section>
 
 			<section className="flex flex-col gap-6">
-				<SectionHeader>Holders Revenue & UNI Burn</SectionHeader>
+				<SectionHeader>Protocol Fees & UNI Burn</SectionHeader>
 				<SeriesTrendChart
-					title="Holders Revenue (USD Spent on UNI Buybacks)"
-					subtitle="USD spent buying back and burning UNI, from the fee-switch activation onward."
+					title="Protocol Fees (Holders Revenue)"
+					subtitle="The protocol's cut of swap fees since the fee-switch activation, collected in the TokenJar and burned as UNI."
 					series={burnView === 'total' ? burnUsdSeries.data : burnByChainSeries.data}
 					isLoading={burnView === 'total' ? burnUsdSeries.isLoading : burnByChainSeries.isLoading}
 					isError={burnView === 'total' ? burnUsdSeries.isError : burnByChainSeries.isError}
@@ -428,9 +458,10 @@ export default function Economics() {
 				/>
 				<TimeAreaCard
 					chart={data.uniBurnUnits}
+					title="UNI Burned by Source (Cumulative)"
 					stacked
 					valueSymbol=""
-					subtitle="Cumulative UNI burned onchain, fee-switch buybacks and the one-off treasury burn shown separately. Click a legend entry to toggle a source."
+					subtitle="Cumulative UNI burned onchain, fee-switch burns and the one-off treasury burn shown separately."
 				/>
 			</section>
 

@@ -1,21 +1,16 @@
 import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import type { Chart, Kpi as KpiT } from './transform'
 import { chartToTrendSeries, groupTopN, SeriesTrendChart } from './TrendChart'
-import {
-	BarListCard,
-	ChartCard,
-	KpiGrid,
-	MiniTable,
-	PageLoader,
-	SectionHeader,
-	TimeAreaCard,
-	useUniswapData
-} from './ui'
+import { BarListCard, ChartCard, MiniTable, PageLoader, SectionHeader, TimeAreaCard, useUniswapData } from './ui'
 
+// The ir-server switched the window from 30d to 3 months; the old
+// field names are kept as fallbacks so an older payload still renders.
 interface MarketshareRow {
 	chain: string
-	uniswapVolume30dFormatted: string
-	chainVolume30dFormatted: string
+	uniswapVolumeFormatted?: string
+	chainVolumeFormatted?: string
+	uniswapVolume30dFormatted?: string
+	chainVolume30dFormatted?: string
 	sharePct: number
 }
 
@@ -83,17 +78,7 @@ export default function Integrations() {
 
 	return (
 		<div className="flex flex-col gap-10">
-			<KpiGrid
-				kpis={{ ...data.kpis, ...data.hooks.kpis }}
-				items={[
-					['uniqueRouters30d', 'Unique Routers (30d)', undefined],
-					['uniRouterShare', 'Uniswap Router Share of Routed Flow', undefined],
-					['topAggregator', 'Top Aggregator (30d)', undefined],
-					['hooksTotal', 'v4 Hooks Deployed (Ethereum)', undefined],
-					['hookedPoolShare', 'v4 Pools Using a Hook', undefined]
-				]}
-			/>
-
+			{/* No KPI stat cards on this tab. */}
 			<section className="flex flex-col gap-6">
 				<SectionHeader>Market Share</SectionHeader>
 				{/* Open on the last ~2 years: the full weekly history back to 2018 is unreadable
@@ -102,24 +87,24 @@ export default function Integrations() {
 					chart={data.marketshareByChain}
 					valueSymbol="%"
 					zoomLastPoints={104}
-					subtitle="Uniswap's weekly share of each chain's total DEX volume (fee-active chains with real volume). Click a legend entry to toggle a chain."
+					subtitle="Uniswap's weekly share of each chain's spot-DEX volume. Click a legend entry to toggle a chain."
 				/>
 				<ChartCard
-					title={data.currentMarketshare.title ?? 'Uniswap DEX Marketshare by Chain (30d)'}
-					subtitle="Trailing 30-day Uniswap volume against each chain's total DEX volume."
+					title={data.currentMarketshare.title ?? 'Uniswap DEX Market Share by Chain (3 Months)'}
+					subtitle="Trailing 3-month Uniswap volume against each chain's spot-DEX volume."
 				>
 					<MiniTable
 						grid="minmax(120px,1.2fr) minmax(120px,1fr) minmax(130px,1fr) minmax(90px,0.7fr)"
 						headers={[
 							['Chain', 'left'],
-							['Uniswap (30d)', 'right'],
-							['Chain DEXs (30d)', 'right'],
+							['Uniswap', 'right'],
+							['Chain DEXs', 'right'],
 							['Share', 'right']
 						]}
 						rows={data.currentMarketshare.rows.map((row) => [
 							row.chain,
-							row.uniswapVolume30dFormatted,
-							row.chainVolume30dFormatted,
+							row.uniswapVolumeFormatted ?? row.uniswapVolume30dFormatted ?? '-',
+							row.chainVolumeFormatted ?? row.chainVolume30dFormatted ?? '-',
 							pct(row.sharePct)
 						])}
 					/>
@@ -129,7 +114,7 @@ export default function Integrations() {
 			<section className="flex flex-col gap-6">
 				<SectionHeader>Order Flow</SectionHeader>
 				<SeriesTrendChart
-					title="Order Flow Routed to Uniswap by Entity"
+					title="Entity-Driven Protocol Order Flow"
 					subtitle="Weekly volume by the third-party integrator or aggregator that routed the swap (tx_to labeling); top 12 entities plus Others."
 					series={orderFlowSeries}
 				/>
