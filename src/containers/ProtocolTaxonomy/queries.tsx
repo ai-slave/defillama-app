@@ -28,6 +28,7 @@ import { fetchCardBreakdownChart, fetchCategoriesSummary, fetchCategoryChart, fe
 import type { CardBreakdownChartResponse, CategoriesSummaryResponse } from './api.types'
 import {
 	CARD_ISSUER_CATEGORY,
+	HIDDEN_PARENT_TVL_BY_CATEGORY,
 	PROTOCOL_TAXONOMY_BREAKDOWN_KEYS,
 	getProtocolCategoryChartMetricLabel,
 	getProtocolCategoryChartMetrics,
@@ -457,6 +458,7 @@ export async function getProtocolTaxonomyPageData(
 	const taxonomyName = params.kind === 'category' ? params.category : params.tag
 	// For tag pages, we use the tag's parent category for category-specific logic.
 	const effectiveCategory = params.kind === 'category' ? params.category : params.tagCategory
+	const hiddenParentTvls = category ? HIDDEN_PARENT_TVL_BY_CATEGORY[category] : undefined
 	const dimensionCategory = slug(taxonomyName)
 	const config = effectiveCategory ? protocolCategoryConfig[effectiveCategory] : null
 	const categoryMetrics: ProtocolCategoryMetrics | undefined = config?.metrics
@@ -1001,13 +1003,14 @@ export async function getProtocolTaxonomyPageData(
 		for (const childProtocol of childRows) {
 			for (const childTag of childProtocol.tags) tags.add(childTag)
 		}
+		const parentSlug = slug(parentProtocol.name)
 		finalProtocols.push({
 			name: parentProtocol.name,
-			slug: slug(parentProtocol.name),
+			slug: parentSlug,
 			logo: parentProtocol.logo,
 			chains: parentProtocol.chains,
 			mcap: parentProtocol.mcap,
-			tvl,
+			tvl: hiddenParentTvls?.has(parentSlug) ? null : tvl,
 			...(effectiveCategory && ['Lending'].includes(effectiveCategory) ? { borrowed, supplied, suppliedTvl } : {}),
 			extraTvls,
 			fees,

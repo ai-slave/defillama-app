@@ -112,6 +112,10 @@ const DEX_VOLUME_LABEL_BY_CATEGORY: Record<string, string> = {
 
 export const CARD_ISSUER_CATEGORY = 'Crypto Card Issuer'
 
+export const HIDDEN_PARENT_TVL_BY_CATEGORY: Partial<Record<string, ReadonlySet<string>>> = {
+	Options: new Set(['derive'])
+}
+
 export const PROTOCOL_TAXONOMY_BREAKDOWN_KEYS = [
 	'protocol',
 	'chain',

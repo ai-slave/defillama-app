@@ -738,6 +738,64 @@ describe('ProtocolTaxonomy queries', () => {
 		expect(parent?.subRows?.map((row) => row.name)).toEqual(['Jupiter Lend', 'Jupiter Orderbook'])
 	})
 
+	it('hides denylisted Options TVL from the parent only', async () => {
+		fetchProtocolsMock.mockResolvedValue(
+			protocolsResponse({
+				protocols: [
+					makeLiteProtocol({
+						defillamaId: 'derive-options',
+						name: 'Derive Options',
+						category: 'Options',
+						parentProtocol: 'parent#derive',
+						tvl: 0
+					}),
+					makeLiteProtocol({
+						defillamaId: 'derive-v1',
+						name: 'Derive V1',
+						category: 'Options',
+						parentProtocol: 'parent#derive',
+						tvl: 134_470
+					}),
+					makeLiteProtocol({
+						defillamaId: 'other-options',
+						name: 'Other Options',
+						category: 'Options',
+						tvl: 50_000
+					})
+				],
+				parentProtocols: [
+					{
+						id: 'parent#derive',
+						name: 'Derive',
+						chains: ['Ethereum'],
+						logo: '',
+						mcap: null,
+						gecko_id: null
+					}
+				]
+			})
+		)
+		fetchAdapterChainMetricsMock.mockResolvedValue(makeAdapterMetrics([]))
+		fetchAdapterChainChartDataMock.mockResolvedValue([])
+
+		const result = await getProtocolTaxonomyPageData({
+			kind: 'category',
+			category: 'Options',
+			categoriesAndTags: {
+				categories: ['Options'],
+				tags: [],
+				tagCategoryMap: {},
+				configs: { Options: { category: 'Options', slug: 'options' } }
+			},
+			chainMetadata: {}
+		})
+
+		const derive = result?.protocols.find((protocol) => protocol.name === 'Derive')
+		expect(derive?.tvl).toBeNull()
+		expect(derive?.subRows?.map((protocol) => protocol.tvl)).toEqual([134_470, 0])
+		expect(result?.protocols.find((protocol) => protocol.name === 'Other Options')?.tvl).toBe(50_000)
+	})
+
 	it('matches a hyphenated selected chain exactly and preserves zero borrowed TVL', async () => {
 		fetchProtocolsMock.mockResolvedValue(
 			protocolsResponse({
