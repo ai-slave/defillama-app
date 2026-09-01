@@ -14,7 +14,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl, letterLogoDataUri } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
-import { exchangeDefinitions } from './definitions'
+import { exchangeDefinitions, usdPerpLabel } from './definitions'
 import { EXCHANGE_SEGMENT_LABELS, type ExchangeProfileModel } from './models'
 import { executionUsd, MarkoutHorizons, NA, SlippageLadder } from './ProfileExecution'
 import { exchangeTokenRows, type ExchangeTokenRow } from './profileTokens'
@@ -83,6 +83,49 @@ const TOKEN_COLUMNS: ColumnDef<ExchangeTokenRow, any>[] = (() => {
 					'Base asset, with the highest leverage its perps offer here. Hover for which segments trade it.'
 			}
 		}),
+		// Cost, slippage and markout answer different questions, so they get a column
+		// each, presented exactly as the Execution tab presents them. One metric shown
+		// two different ways across two surfaces is its own kind of confusion.
+		columnHelper.accessor((row) => row.execution?.costToTradeBps ?? undefined, {
+			id: 'perpCost',
+			// Short on purpose; the tooltip carries the USD-perp qualifier.
+			header: definitions.execCostToTrade.label,
+			sortDescFirst: false,
+			cell: ({ row }) => {
+				const execution = row.original.execution
+				return execution?.costToTradeBps == null ? NA : <>{executionUsd(execution.costToTradeBps)}</>
+			},
+			meta: {
+				headerClassName: 'w-[160px]',
+				align: 'end',
+				headerHelperText:
+					'All-in cost of a $10k market order on this token’s USD perp: base-tier taker fee plus half the effective spread.'
+			}
+		}),
+		columnHelper.accessor((row) => row.execution?.realizedSlippage10kBps ?? undefined, {
+			id: 'perpSlippage',
+			header: usdPerpLabel(definitions.execSlippage10k.label),
+			sortDescFirst: false,
+			cell: ({ row }) => (row.original.execution ? <SlippageLadder execution={row.original.execution} /> : NA),
+			meta: {
+				headerClassName: 'w-[186px]',
+				align: 'end',
+				headerHelperText:
+					'Predicted first (what walking the pre-trade book promised), then what fills actually paid, in dollars at each order size. The Execution tab adds the $1M rung.'
+			}
+		}),
+		columnHelper.accessor((row) => row.execution?.markout1mBps ?? undefined, {
+			id: 'perpMarkout',
+			header: usdPerpLabel(definitions.execMarkout1m.label),
+			sortDescFirst: false,
+			cell: ({ row }) => (row.original.execution ? <MarkoutHorizons execution={row.original.execution} /> : NA),
+			meta: {
+				headerClassName: 'w-[161px]',
+				align: 'end',
+				headerHelperText:
+					'Where the price went after a fill, in dollars per $10k, at one and five minutes. Lower is better; positive (red) means it kept moving against the taker. The Execution tab adds the 1s and 15s horizons.'
+			}
+		}),
 		columnHelper.accessor((row) => row.spotActiveLiquidity ?? undefined, {
 			id: 'spotActiveLiquidity',
 			header: definitions.spotActiveLiquidity.label,
@@ -98,7 +141,7 @@ const TOKEN_COLUMNS: ColumnDef<ExchangeTokenRow, any>[] = (() => {
 			header: definitions.perpActiveLiquidity.label,
 			cell: ({ getValue }) => money(getValue()),
 			meta: {
-				headerClassName: 'w-[112px]',
+				headerClassName: 'w-[116px]',
 				align: 'end',
 				headerHelperText: definitions.perpActiveLiquidity.description
 			}
@@ -107,7 +150,11 @@ const TOKEN_COLUMNS: ColumnDef<ExchangeTokenRow, any>[] = (() => {
 			id: 'perpOpenInterest',
 			header: definitions.perpOpenInterest.label,
 			cell: ({ getValue }) => money(getValue()),
-			meta: { headerClassName: 'w-[112px]', align: 'end', headerHelperText: definitions.perpOpenInterest.description }
+			meta: {
+				headerClassName: 'w-[112px]',
+				align: 'end',
+				headerHelperText: definitions.perpOpenInterest.description
+			}
 		}),
 		columnHelper.accessor((row) => row.spotNormalizedVolume ?? undefined, {
 			id: 'spotNormalizedVolume',
@@ -128,51 +175,9 @@ const TOKEN_COLUMNS: ColumnDef<ExchangeTokenRow, any>[] = (() => {
 				<Volume value={row.original.perpNormalizedVolume} reported={row.original.perpVolumeIsReported} />
 			),
 			meta: {
-				headerClassName: 'w-[112px]',
+				headerClassName: 'w-[128px]',
 				align: 'end',
 				headerHelperText: definitions.perpNormalizedVolume.description
-			}
-		}),
-		// Cost, slippage and markout answer different questions, so they get a column
-		// each, presented exactly as the Execution tab presents them. One metric shown
-		// two different ways across two surfaces is its own kind of confusion.
-		columnHelper.accessor((row) => row.execution?.costToTradeBps ?? undefined, {
-			id: 'perpCost',
-			header: 'Perp cost',
-			sortDescFirst: false,
-			cell: ({ row }) => {
-				const execution = row.original.execution
-				return execution?.costToTradeBps == null ? NA : <>{executionUsd(execution.costToTradeBps)}</>
-			},
-			meta: {
-				headerClassName: 'w-[112px]',
-				align: 'end',
-				headerHelperText:
-					'All-in cost of a $10k market order on this token’s USD perp: base-tier taker fee plus half the effective spread.'
-			}
-		}),
-		columnHelper.accessor((row) => row.execution?.realizedSlippage10kBps ?? undefined, {
-			id: 'perpSlippage',
-			header: 'Perp slippage',
-			sortDescFirst: false,
-			cell: ({ row }) => (row.original.execution ? <SlippageLadder execution={row.original.execution} /> : NA),
-			meta: {
-				headerClassName: 'w-[186px]',
-				align: 'end',
-				headerHelperText:
-					'Predicted first (what walking the pre-trade book promised), then what fills actually paid, in dollars at each order size. The Execution tab adds the $1M rung.'
-			}
-		}),
-		columnHelper.accessor((row) => row.execution?.markout1mBps ?? undefined, {
-			id: 'perpMarkout',
-			header: 'Perp markout',
-			sortDescFirst: false,
-			cell: ({ row }) => (row.original.execution ? <MarkoutHorizons execution={row.original.execution} /> : NA),
-			meta: {
-				headerClassName: 'w-[140px]',
-				align: 'end',
-				headerHelperText:
-					'Where the price went after a fill, in dollars per $10k, at one and five minutes. Lower is better; positive (red) means it kept moving against the taker. The Execution tab adds the 1s and 15s horizons.'
 			}
 		})
 	]

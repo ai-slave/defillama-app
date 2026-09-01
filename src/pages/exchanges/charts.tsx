@@ -3,8 +3,12 @@ import { ExchangeAccessGate } from '~/containers/Exchanges/ExchangeAccessGate'
 import { ExchangeResearch } from '~/containers/Exchanges/ExchangeResearch'
 import { ExchangesNav } from '~/containers/Exchanges/ExchangesNav'
 import { fetchExchangeResearchReport } from '~/containers/Exchanges/master.api'
-import type { ExchangeDirectoryRowModel } from '~/containers/Exchanges/models'
-import { loadMasterExchangeDirectory, loadMasterResearchReports } from '~/containers/Exchanges/server/master.loaders'
+import { mapBtcExecutionTable } from '~/containers/Exchanges/master.mappers'
+import type { BtcExecutionRowModel, ExchangeDirectoryRowModel } from '~/containers/Exchanges/models'
+import {
+	loadMasterExchangeDirectoryWithExecution,
+	loadMasterResearchReports
+} from '~/containers/Exchanges/server/master.loaders'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -31,8 +35,20 @@ function depthRowsFrom(rows: ExchangeDirectoryRowModel[]): DepthCurveRow[] {
 }
 
 export const getStaticProps = withPerformanceLogging('exchanges/charts', async () => {
-	const [, directory] = await Promise.all([loadMasterResearchReports(), loadMasterExchangeDirectory()])
-	return { props: { depthRows: depthRowsFrom(directory.rows) }, revalidate: maxAgeForNext([22]) }
+	// One execution-quality fetch feeds both the directory mapping and the BTC table,
+	// so the two never read different snapshots; it stays fail-soft — a missing file
+	// renders the page without the BTC execution table.
+	const [, { directory, execution }] = await Promise.all([
+		loadMasterResearchReports(),
+		loadMasterExchangeDirectoryWithExecution()
+	])
+	return {
+		props: {
+			depthRows: depthRowsFrom(directory.rows),
+			btcExecutionRows: mapBtcExecutionTable(directory.rows, execution)
+		},
+		revalidate: maxAgeForNext([22])
+	}
 })
 
 export const EXCHANGE_RESEARCH_PAGE_METADATA = {
@@ -43,12 +59,22 @@ export const EXCHANGE_RESEARCH_PAGE_METADATA = {
 	pageName: ['Exchanges']
 }
 
-export default function ExchangeChartsPage({ depthRows }: { depthRows: DepthCurveRow[] }) {
+export default function ExchangeChartsPage({
+	depthRows,
+	btcExecutionRows
+}: {
+	depthRows: DepthCurveRow[]
+	btcExecutionRows: BtcExecutionRowModel[]
+}) {
 	return (
 		<ExchangeAccessGate>
 			<Layout {...EXCHANGE_RESEARCH_PAGE_METADATA}>
 				<ExchangesNav activePage="charts" />
-				<ExchangeResearch loadReport={fetchExchangeResearchReport} depthRows={depthRows} />
+				<ExchangeResearch
+					loadReport={fetchExchangeResearchReport}
+					depthRows={depthRows}
+					btcExecutionRows={btcExecutionRows}
+				/>
 			</Layout>
 		</ExchangeAccessGate>
 	)

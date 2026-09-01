@@ -68,6 +68,16 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, readonly ResearchPrese
 	],
 	oi: [
 		{
+			id: 'open-interest-btc-vs-alt',
+			label: 'BTC vs Alt',
+			metric: 'open-interest',
+			segment: 'linear_perp',
+			grouping: 'segment',
+			title: 'USD perp open interest · BTC vs Alt',
+			description: `Daily USD perp open interest split between BTC and every other base combined, across all exchanges. ${LINEAR_PERPS}`,
+			valueSymbol: '$'
+		},
+		{
 			id: 'open-interest-linear-exchanges',
 			label: 'USD Perps',
 			metric: 'open-interest',

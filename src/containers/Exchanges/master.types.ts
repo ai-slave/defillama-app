@@ -646,7 +646,7 @@ type MasterExchangeRegionVariantBase = {
 	country_overrides: Partial<Record<string, MasterExchangeCountryOverride>>
 }
 
-type MasterExchangeRegionVariant = MasterExchangeRegionVariantBase &
+export type MasterExchangeRegionVariant = MasterExchangeRegionVariantBase &
 	(
 		| { status: 'unavailable'; segments: [] }
 		| { status: Exclude<MasterEuStatus, 'unavailable'>; segments: MasterSegment[] }
@@ -733,6 +733,94 @@ export interface MasterMicaResponse {
 	last_updated: string
 }
 
+// --- exchanges/ramps.json -----------------------------------------------------------
+// Fiat on/off-ramp cost, BTC-only, priced per fiat currency and per region variant.
+// Each variant IS a region-manifest variant (same status/segments/note/source/
+// country_overrides contract) plus the ramp payload, so a country resolves through
+// the same `resolveCountryAvailability` the profile surfaces use.
+
+/** One end-to-end direction: the four legs, and a total only when every leg is known. */
+export interface MasterRampLeg {
+	fiat_fee_usd: number | null
+	trade_fee_usd: number | null
+	slippage_usd: number | null
+	transfer_fee_usd: number | null
+	total_usd: number | null
+	total_pct: number | null
+}
+
+/** Currency-independent baseline: execution plus the two BTC transfer legs. */
+export interface MasterRampTradeLegs {
+	pair: string | null
+	trade_fee_usd: number | null
+	slippage_buy_usd: number | null
+	slippage_sell_usd: number | null
+	btc_withdrawal_usd: number | null
+	btc_network_usd: number | null
+}
+
+export interface MasterRampCurrencyCost {
+	pair: string | null
+	on_ramp: MasterRampLeg
+	off_ramp: MasterRampLeg
+	on_rail: string | null
+	off_rail: string | null
+}
+
+export interface MasterRampMatrix {
+	sizes: number[]
+	currencies: string[]
+	/** Keyed by notional in USD, as a string. */
+	trade: Partial<Record<string, MasterRampTradeLegs>>
+	/** currency → notional → both directions. */
+	cost: Partial<Record<string, Partial<Record<string, MasterRampCurrencyCost>>>>
+	assumptions: {
+		taker_fee: number | null
+		btc_withdrawal_fee_btc: number | null
+		btc_network_fee_btc: number | null
+		btc_price_usd: number | null
+		half_spread_pct: number | null
+	}
+}
+
+export interface MasterCryptoFeeRow {
+	asset: string
+	network: string
+	direction: 'deposit' | 'withdraw'
+	fee: string
+	min: string
+	note: string
+	src: MasterMetadataLink
+	time: string
+}
+
+export interface MasterCryptoRails {
+	deposit: MasterCryptoFeeRow[]
+	withdraw: MasterCryptoFeeRow[]
+}
+
+export type MasterRampVariant = MasterExchangeRegionVariant & {
+	fiat_currencies: string[] | null
+	rails: MasterFiatFees | null
+	/** Chain-side routes: (asset x network x direction), L2s included. */
+	crypto_rails: MasterCryptoRails | null
+	kyc: { required: boolean | null; short: string | null; summary: string | null }
+	regulator: string | null
+	mica_licensed: boolean | null
+	ramp: MasterRampMatrix
+}
+
+export interface MasterRampVenue extends MasterVenueCore {
+	variants: Partial<Record<string, MasterRampVariant>>
+}
+
+export interface MasterRampsResponse {
+	sizes: number[]
+	btc_network_fee_btc: number | null
+	exchanges: MasterRampVenue[]
+	last_updated: string
+}
+
 // --- charts/{volume,oi,depth,nvol}/{range}.json --------------------------------------
 
 export const MASTER_CHART_PARTS = ['volume', 'oi', 'depth', 'nvol'] as const
@@ -777,7 +865,8 @@ export const MASTER_CHART_KEYS = {
  * `key[keyIdx]`, aligned to `days`, or null when that venue lacks the metric.
  * `exchanges[]` and `names` keys are canonical public slugs; all four parts share
  * identical exchanges/types/names. Each part trims its own empty leading period,
- * so day axes may differ. `btc_depth` (depth part only) is keyed by all three segments.
+ * so day axes may differ. `btc_depth` (depth part only) and `btc_oi` (oi part only)
+ * are each keyed by all three segments.
  */
 interface MasterChartColumnarBase {
 	days: number[]
@@ -785,6 +874,7 @@ interface MasterChartColumnarBase {
 	types: MasterVenueType[]
 	series: Array<Array<Array<number | null> | null>>
 	btc_depth?: Record<MasterSegment, Array<number | null>>
+	btc_oi?: Record<MasterSegment, Array<number | null>>
 	names: Record<string, string>
 	range: '30d' | '90d' | '1y' | '2y' | 'all'
 	last_updated?: string

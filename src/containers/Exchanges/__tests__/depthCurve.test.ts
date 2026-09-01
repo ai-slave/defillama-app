@@ -113,16 +113,16 @@ describe('depthCurveDataset', () => {
 })
 
 describe('summing books', () => {
-	// Past a book's reach the upstream sums are forward-filled. Adding that in would
-	// put depth nobody quoted into the total, so the short book drops out of the wide
-	// bands and the sum says so by reporting itself measured only where it is.
-	it('adds only the ladders that reached the band', () => {
+	// Past a book's reach its widest measured total is carried forward: everything
+	// within 0.9% is also within 1%, so the carry is a floor we observed. Dropping the
+	// book instead let the sum decrease outward, which no cumulative curve may do.
+	it('carries a ladder forward past the band it reached', () => {
 		const shallow = DEEP.map((point, index) => ({ ...point, coverage: index === 0 ? 1 : 0 }))
 		const [entry] = aggregateEntries([
 			{ slug: 'deep', name: 'deep', ladder: DEEP },
 			{ slug: 'shallow', name: 'shallow', ladder: shallow }
 		])
-		expect(entry.ladder.map((point) => point.bidUsd)).toEqual([20, 20, 30])
+		expect(entry.ladder.map((point) => point.bidUsd)).toEqual([20, 30, 40])
 		expect(entry.ladder.map((point) => point.coverage)).toEqual([1, 1, 1])
 	})
 

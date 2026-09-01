@@ -15,7 +15,7 @@ import {
 	KycRequirementValue,
 	MicaLicenseValue
 } from './ComplianceCells'
-import { exchangeDefinitions } from './definitions'
+import { exchangeDefinitions, usdPerpLabel } from './definitions'
 import { FeeValue, feeLabel } from './feePresentation'
 import { FiatFeesValue, fiatFeeSummary } from './FiatFeesValue'
 import { MiniSparkline } from './MiniSparkline'
@@ -212,6 +212,8 @@ function segmentColumn(spec: {
 	note?: (row: ExchangeDirectoryRowModel) => string | undefined
 	/** Marks a value that is not what the header says, e.g. a reported-volume fallback. */
 	suffix?: (row: ExchangeDirectoryRowModel) => string
+	/** For labels wider than the default 112px column (see COLUMN_WIDTHS.md). */
+	headerClassName?: string
 }): ColumnDef<ExchangeDirectoryRowModel, any> {
 	return columnHelper.accessor(spec.value, {
 		id: spec.id,
@@ -221,7 +223,7 @@ function segmentColumn(spec: {
 			return linkedMetric(`${money(getValue())}${spec.suffix?.(row.original) ?? ''}`, spec.note?.(row.original))
 		},
 		meta: {
-			headerClassName: 'w-[112px] min-w-[112px]',
+			headerClassName: spec.headerClassName ?? 'w-[112px] min-w-[112px]',
 			align: 'end',
 			headerHelperText: spec.definition.description
 		}
@@ -256,6 +258,8 @@ function perpColumn(spec: {
 	extraNote?: (row: ExchangeDirectoryRowModel) => string | undefined
 	/** Marks a value that is not what the header says, e.g. a reported-volume fallback. */
 	suffix?: (row: ExchangeDirectoryRowModel) => string
+	/** For labels wider than the default 112px column (see COLUMN_WIDTHS.md). */
+	headerClassName?: string
 }): ColumnDef<ExchangeDirectoryRowModel, any> {
 	const parts = (row: ExchangeDirectoryRowModel) =>
 		ALL_PERP_SEGMENTS.filter((segment) => row.segments[segment]).map((segment) => ({
@@ -283,7 +287,7 @@ function perpColumn(spec: {
 			)
 		},
 		meta: {
-			headerClassName: 'w-[112px] min-w-[112px]',
+			headerClassName: spec.headerClassName ?? 'w-[112px] min-w-[112px]',
 			align: 'end',
 			headerHelperText: spec.definition.description
 		}
@@ -321,6 +325,9 @@ export function buildDirectoryColumns(
 	const scopedActivity = (row: ExchangeDirectoryRowModel) => (scope === 'all' ? null : activityForScope(row, scope))
 	const scopedNvol = (row: ExchangeDirectoryRowModel) => (scope === 'all' ? null : normalizedVolumeForScope(row, scope))
 	const scopedSpark = (row: ExchangeDirectoryRowModel) => (scope === 'all' ? [] : sparklineForScope(row, scope))
+	// The merged view names the segment in every header (see the segment columns below);
+	// execution is measured on USD perps only, so it says so there too.
+	const execLabel = (label: string) => (scope === 'all' ? usdPerpLabel(label) : label)
 	const costNote = executionScopeNote(executionCostBasket)
 	const fillNote = executionScopeNote(executionFillBasket)
 	const columns: ColumnDef<ExchangeDirectoryRowModel, any>[] = [
@@ -455,6 +462,72 @@ export function buildDirectoryColumns(
 			cell: ({ getValue }) => <KindBadge kind={getValue()} />,
 			meta: { headerClassName: 'w-[71px] min-w-[71px]', headerHelperText: definitions.kind.description }
 		}),
+		// Measured execution quality — tick-level fills on the shared perp basket, so it
+		// exists for linear-perp scope only today (hidden elsewhere via scope visibility).
+		// 1bp of $10k = $1, so bps figures ARE dollars per $10k trade.
+		columnHelper.accessor((row) => row.execution?.costToTradeBps ?? undefined, {
+			id: 'execCostToTrade',
+			// Stays short in every scope; the merged view says "USD perps only" in the
+			// tooltip instead, because the qualified header did not fit its column.
+			header: definitions.execCostToTrade.label,
+			sortDescFirst: false,
+			cell: ({ row, getValue }) => {
+				const cost = getValue()
+				if (cost == null) return NA
+				const execution = row.original.execution
+				// One number. Showing the effective spread beside it read as a breakdown, but
+				// the all-in figure carries HALF the spread, so the two never added up to
+				// anything and invited arithmetic that does not hold. The split belongs in the
+				// tooltip, where it can say so.
+				return (
+					<Tooltip
+						content={`Base-tier taker fee plus half the effective spread of ${executionUsd(
+							execution?.effectiveSpreadBps ?? null
+						)}. Median across ${execution?.costAssets?.join(', ') ?? 'the measured'} perps over ${
+							execution?.hoursCovered ?? 'n/a'
+						}h of tick data; VIP tiers can lower the fee part.`}
+						className="ms-auto w-fit"
+					>
+						<span className="underline decoration-dotted">{executionUsd(cost)}</span>
+					</Tooltip>
+				)
+			},
+			meta: {
+				headerClassName: 'w-[160px] min-w-[160px]',
+				align: 'end',
+				headerHelperText: `${definitions.execCostToTrade.description} ${costNote}${scope === 'all' ? ' USD perps only.' : ''}`,
+				csvValue: (row) =>
+					row.execution?.costToTradeBps == null ? '' : String(roundNumber(row.execution.costToTradeBps, 2))
+			}
+		}),
+		columnHelper.accessor((row) => row.execution?.realizedSlippage10kBps ?? undefined, {
+			id: 'execSlippage10k',
+			header: execLabel(definitions.execSlippage10k.label),
+			sortDescFirst: false,
+			cell: ({ row, getValue }) => (getValue() == null ? NA : <SlippageLadder execution={row.original.execution} />),
+			meta: {
+				headerClassName: 'w-[186px] min-w-[186px]',
+				align: 'end',
+				headerHelperText: `${definitions.execSlippage10k.description} ${fillNote}`,
+				csvValue: (row) =>
+					row.execution?.realizedSlippage10kBps == null
+						? ''
+						: String(roundNumber(row.execution.realizedSlippage10kBps, 2))
+			}
+		}),
+		columnHelper.accessor((row) => row.execution?.markout1mBps ?? undefined, {
+			id: 'execMarkout1m',
+			header: execLabel(definitions.execMarkout1m.label),
+			sortDescFirst: false,
+			cell: ({ row, getValue }) => (getValue() == null ? NA : <MarkoutHorizons execution={row.original.execution} />),
+			meta: {
+				headerClassName: scope === 'all' ? 'w-[161px] min-w-[161px]' : 'w-[140px] min-w-[140px]',
+				align: 'end',
+				headerHelperText: `${definitions.execMarkout1m.description} ${fillNote}`,
+				csvValue: (row) =>
+					row.execution?.markout1mBps == null ? '' : String(roundNumber(row.execution.markout1mBps, 2))
+			}
+		}),
 		// ── merged `all` view ────────────────────────────────────────────────────
 		// Segment-qualified twins of the scoped columns above. They exist so one row can
 		// carry spot and USD perps at once; each names its segment in the header, because
@@ -470,7 +543,8 @@ export function buildDirectoryColumns(
 		perpColumn({
 			id: 'perpActiveLiquidity',
 			definition: definitions.perpActiveLiquidity,
-			pick: (row, segment) => row.normalizedVolume?.[segment]?.activeLiquidity ?? null
+			pick: (row, segment) => row.normalizedVolume?.[segment]?.activeLiquidity ?? null,
+			headerClassName: 'w-[116px] min-w-[116px]'
 		}),
 		perpColumn({
 			id: 'perpOpenInterest',
@@ -493,6 +567,7 @@ export function buildDirectoryColumns(
 			id: 'perpNormalizedVolume',
 			definition: definitions.perpNormalizedVolume,
 			pick: (row, segment) => normalizedOrReported(row, segment).value,
+			headerClassName: 'w-[128px] min-w-[128px]',
 			suffix: (row) => (fellBackWithBook(row, ALL_PERP_SEGMENTS) ? '*' : ''),
 			extraNote: (row) =>
 				fellBackWithBook(row, ALL_PERP_SEGMENTS)
@@ -601,70 +676,6 @@ export function buildDirectoryColumns(
 				}
 			}
 		),
-		// Measured execution quality — tick-level fills on the shared perp basket, so it
-		// exists for linear-perp scope only today (hidden elsewhere via scope visibility).
-		// 1bp of $10k = $1, so bps figures ARE dollars per $10k trade.
-		columnHelper.accessor((row) => row.execution?.costToTradeBps ?? undefined, {
-			id: 'execCostToTrade',
-			header: definitions.execCostToTrade.label,
-			sortDescFirst: false,
-			cell: ({ row, getValue }) => {
-				const cost = getValue()
-				if (cost == null) return NA
-				const execution = row.original.execution
-				// One number. Showing the effective spread beside it read as a breakdown, but
-				// the all-in figure carries HALF the spread, so the two never added up to
-				// anything and invited arithmetic that does not hold. The split belongs in the
-				// tooltip, where it can say so.
-				return (
-					<Tooltip
-						content={`Base-tier taker fee plus half the effective spread of ${executionUsd(
-							execution?.effectiveSpreadBps ?? null
-						)}. Median across ${execution?.costAssets?.join(', ') ?? 'the measured'} perps over ${
-							execution?.hoursCovered ?? 'n/a'
-						}h of tick data; VIP tiers can lower the fee part.`}
-						className="ms-auto w-fit"
-					>
-						<span className="underline decoration-dotted">{executionUsd(cost)}</span>
-					</Tooltip>
-				)
-			},
-			meta: {
-				headerClassName: 'w-[118px] min-w-[118px]',
-				align: 'end',
-				headerHelperText: `${definitions.execCostToTrade.description} ${costNote}`,
-				csvValue: (row) =>
-					row.execution?.costToTradeBps == null ? '' : String(roundNumber(row.execution.costToTradeBps, 2))
-			}
-		}),
-		columnHelper.accessor((row) => row.execution?.realizedSlippage10kBps ?? undefined, {
-			id: 'execSlippage10k',
-			header: definitions.execSlippage10k.label,
-			sortDescFirst: false,
-			cell: ({ row, getValue }) => (getValue() == null ? NA : <SlippageLadder execution={row.original.execution} />),
-			meta: {
-				headerClassName: 'w-[186px] min-w-[186px]',
-				align: 'end',
-				headerHelperText: `${definitions.execSlippage10k.description} ${fillNote}`,
-				csvValue: (row) =>
-					row.execution?.realizedSlippage10kBps == null
-						? ''
-						: String(roundNumber(row.execution.realizedSlippage10kBps, 2))
-			}
-		}),
-		columnHelper.accessor((row) => row.execution?.markout1mBps ?? undefined, {
-			id: 'execMarkout1m',
-			header: definitions.execMarkout1m.label,
-			sortDescFirst: false,
-			cell: ({ row, getValue }) => (getValue() == null ? NA : <MarkoutHorizons execution={row.original.execution} />),
-			meta: {
-				headerClassName: 'w-[140px] min-w-[140px]',
-				align: 'end',
-				headerHelperText: `${definitions.execMarkout1m.description} ${fillNote}`,
-				csvValue: (row) =>
-					row.execution?.markout1mBps == null ? '' : String(roundNumber(row.execution.markout1mBps, 2))
-			}
-		}),
 		columnHelper.accessor((row) => scopedNvol(row)?.normalized ?? undefined, {
 			id: 'normalizedVolume',
 			header: definitions.normalizedVolume.label,

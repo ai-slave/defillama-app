@@ -99,28 +99,39 @@ export const isMeasured = (point: ExchangeDepthLadder[number] | undefined) =>
 	point != null && point.coverage >= MEASURED_COVERAGE
 
 /**
- * Band-wise sum across ladders, counting only the books that reached the band.
+ * Band-wise sum across ladders, carrying each book forward past its own reach.
  *
- * Past a book's reach the upstream sums are forward-filled, so adding an unmeasured
- * band in would put invented depth into the total. Skipping it keeps every drawn point
- * something we observed, at the cost of a curve that can step down where a shallow
- * book drops out — honest, and cheaper than either truncating the whole curve at the
- * shallowest contributor or plotting fill.
+ * A book we crawled to 0.9% contributes its widest measured total to every band beyond
+ * that: cumulative depth within 1% is at least the depth within 0.9%, so the carried
+ * value is a floor we observed, not a number we invented. Dropping the book instead
+ * made the curve FALL outward — BingX's BTC perps read $1.1b within 0.75% and $18m
+ * within 1%, where its deepest book's crawl ended and only the shallow sister market
+ * was left. A cumulative curve that decreases is simply wrong.
+ *
+ * A band no contributing book reached is still marked unmeasured, so a venue whose
+ * every book stops at 1% ends its curve there rather than running flat to 25%.
  */
 export function sumLadders(ladders: ExchangeDepthLadder[]): ExchangeDepthLadder | null {
 	const bands = ladders[0]
 	if (!bands?.length) return null
+	const carried = ladders.map(() => ({ bidUsd: null as number | null, askUsd: null as number | null, seen: false }))
 	return bands.map((band, index) => {
 		let bidUsd: number | null = null
 		let askUsd: number | null = null
 		let measured = false
-		for (const ladder of ladders) {
+		ladders.forEach((ladder, ladderIndex) => {
 			const entry = ladder[index]
-			if (!isMeasured(entry)) continue
-			if (entry.bidUsd != null) bidUsd = (bidUsd ?? 0) + entry.bidUsd
-			if (entry.askUsd != null) askUsd = (askUsd ?? 0) + entry.askUsd
-			measured = true
-		}
+			const last = carried[ladderIndex]
+			if (isMeasured(entry)) {
+				last.bidUsd = entry.bidUsd ?? last.bidUsd
+				last.askUsd = entry.askUsd ?? last.askUsd
+				last.seen = true
+				measured = true
+			}
+			if (!last.seen) return
+			if (last.bidUsd != null) bidUsd = (bidUsd ?? 0) + last.bidUsd
+			if (last.askUsd != null) askUsd = (askUsd ?? 0) + last.askUsd
+		})
 		return { band: band.band, bidUsd, askUsd, coverage: measured ? 1 : 0 }
 	})
 }

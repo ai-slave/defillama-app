@@ -53,8 +53,8 @@ export function tokenDepthVenues(pairs: TokenDepthPair[], slippage: VenueSlippag
 	for (const [slug, { name, ladders }] of byVenue) {
 		const ladder = sumLadders(ladders)
 		if (!ladder) continue
-		// Rank on the widest band the sum actually measured: outer bands come back empty
-		// once no contributing book reached that far.
+		// Rank on the widest total the sum actually measured. sumLadders carries each
+		// book's widest measured value outward, so the outermost non-null band holds it.
 		const widest = ladder.findLast((point) => point.bidUsd != null || point.askUsd != null)
 		const size = (widest?.bidUsd ?? 0) + (widest?.askUsd ?? 0)
 		if (size <= 0) continue
@@ -86,7 +86,7 @@ export function TokenDepthChart({
 			<div className="flex flex-col gap-0.5 px-1">
 				<h3 className="label-md text-secondary">USD perp order book</h3>
 				<p className="body-sm text-tertiary">
-					{`Cumulative USD resting within each distance of mid across each venue's USD perp ${symbol} books. Where we measure fills, the book they were measured on is discounted by how far they missed its quote. Only books our snapshot reached that far are counted, so a curve can step down where a shallower book drops out. Curves are drawn on their own, not stacked.`}
+					{`Cumulative USD resting within each distance of mid across each venue's USD perp ${symbol} books. Where we measure fills, the book they were measured on is discounted by how far they missed its quote. Past where a book's snapshot reached, its widest measured total is carried forward, so a curve never falls outward. Curves are drawn on their own, not stacked.`}
 				</p>
 			</div>
 			<DepthCurveBody entries={entries} />

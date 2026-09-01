@@ -13,6 +13,7 @@ import type {
 	MasterExchangeRegionCatalogResponse,
 	MasterExchangeRegionManifestResponse,
 	MasterMicaResponse,
+	MasterRampsResponse,
 	MasterVenueSeriesResponse
 } from '../master.types'
 import type { ExchangeResearchRange } from '../queryState'
@@ -83,6 +84,10 @@ export function fetchMasterExchangeRegionalMetadataFromNetwork(
 
 export function fetchMasterMicaFromNetwork(): Promise<MasterMicaResponse> {
 	return fetchJson<MasterMicaResponse>(`${MARKETS_SERVER_URL}/exchanges/mica.json`)
+}
+
+export function fetchMasterRampsFromNetwork(): Promise<MasterRampsResponse> {
+	return fetchJson<MasterRampsResponse>(`${MARKETS_SERVER_URL}/exchanges/ramps.json`)
 }
 
 export function fetchMasterChartFromNetwork<Part extends MasterChartPart>(

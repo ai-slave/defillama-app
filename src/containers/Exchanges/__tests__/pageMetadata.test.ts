@@ -3,6 +3,7 @@ import { CEXS_PAGE_METADATA } from '~/pages/cexs'
 import { EXCHANGES_PAGE_METADATA } from '~/pages/exchanges'
 import { EXCHANGE_RESEARCH_PAGE_METADATA } from '~/pages/exchanges/charts'
 import { MICA_PAGE_METADATA } from '~/pages/mica'
+import { RAMP_PAGE_METADATA } from '~/pages/ramp'
 
 describe('Exchanges page metadata', () => {
 	it('uses the shared Exchanges product breadcrumb with route-specific identity', () => {
@@ -10,8 +11,9 @@ describe('Exchanges page metadata', () => {
 			EXCHANGES_PAGE_METADATA.pageName,
 			CEXS_PAGE_METADATA.pageName,
 			EXCHANGE_RESEARCH_PAGE_METADATA.pageName,
-			MICA_PAGE_METADATA.pageName
-		]).toEqual([['Exchanges'], ['CEXs'], ['Exchanges'], ['Exchanges']])
+			MICA_PAGE_METADATA.pageName,
+			RAMP_PAGE_METADATA.pageName
+		]).toEqual([['Exchanges'], ['CEXs'], ['Exchanges'], ['Exchanges'], ['Exchanges']])
 
 		expect(EXCHANGES_PAGE_METADATA).toMatchObject({
 			title: 'Crypto Exchange Volume, Liquidity and Transparency - DefiLlama',
@@ -28,6 +30,10 @@ describe('Exchanges page metadata', () => {
 		expect(MICA_PAGE_METADATA).toMatchObject({
 			title: 'MiCA-regulated exchanges - DefiLlama',
 			canonicalUrl: '/mica'
+		})
+		expect(RAMP_PAGE_METADATA).toMatchObject({
+			title: 'Fiat on-ramp and off-ramp costs - DefiLlama',
+			canonicalUrl: '/ramp'
 		})
 	})
 })

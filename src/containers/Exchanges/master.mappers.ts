@@ -22,7 +22,11 @@ import type {
 	MasterMicaResponse,
 	MasterMicaVenue,
 	MasterPromotion,
+	MasterCryptoRails,
 	MasterRampCost,
+	MasterRampLeg,
+	MasterRampsResponse,
+	MasterRampVariant,
 	MasterRelatedEntity,
 	MasterSegment,
 	MasterSegmentNormalizedVolume,
@@ -32,6 +36,7 @@ import { MASTER_SEGMENTS } from './master.types'
 import { sumNullable } from './modelHelpers'
 import {
 	EXCHANGE_SEGMENTS,
+	type BtcExecutionRowModel,
 	type ExchangeDepthLadder,
 	type ExchangeDirectoryModel,
 	type ExchangeDirectoryRowModel,
@@ -52,7 +57,13 @@ import {
 	type ExchangeResearchReportModel,
 	type ExchangeResearchView,
 	type ExchangeSegment,
-	type MicaVenueModel
+	type MicaVenueModel,
+	type CryptoRailsModel,
+	type RampCatalogModel,
+	type RampCurrencyCostModel,
+	type RampLegModel,
+	type RampVariantModel,
+	type RampVenueModel
 } from './models'
 import { getResearchPresentation } from './researchPresentation'
 
@@ -539,6 +550,50 @@ export function mapMasterDirectory(
 	}
 }
 
+/**
+ * BTC execution + fee comparison, one row per venue that has a measured BTC pair —
+ * unlike `directoryExecution`'s basket median, this reads `pairs.BTC` directly so
+ * every figure is BTC specifically, not diluted by whatever else is in the basket.
+ * `directoryRows` supplies the name/profile link/quality tier already computed for
+ * the directory (same join key: venue slug), so this never re-derives that.
+ */
+export function mapBtcExecutionTable(
+	directoryRows: ExchangeDirectoryRowModel[],
+	execution: MasterExecutionQualityResponse | null
+): BtcExecutionRowModel[] {
+	if (!execution) return []
+	const rows: BtcExecutionRowModel[] = []
+	for (const row of directoryRows) {
+		const btc = execution.venues[row.slug]?.pairs.BTC
+		if (!btc) continue
+		rows.push({
+			exchange: row.slug,
+			name: row.name,
+			profileHref: row.profileHref,
+			tier: row.quality?.tier ?? null,
+			rank: row.quality?.rank ?? null,
+			costToTradeBps: btc.cost_to_trade_bps,
+			effectiveSpreadBps: btc.effective_spread_bps,
+			quotedSpreadBps: btc.quoted_spread_bps,
+			realizedSlippage10kBps: btc.realized_slippage_bps_10k,
+			realizedSlippage100kBps: btc.realized_slippage_bps_100k,
+			predictedSlippage10kBps: btc.predicted_slippage_bps_10k,
+			predictedSlippage100kBps: btc.predicted_slippage_bps_100k,
+			markout1sBps: btc.markout_bps_1s,
+			markout15sBps: btc.markout_bps_15s,
+			markout1mBps: btc.markout_bps_1m,
+			markout5mBps: btc.markout_bps_5m,
+			takerFeeBps: btc.taker_fee_bps,
+			hoursCovered: btc.hours_covered,
+			nTrades: btc.n_trades
+		})
+	}
+	// Same ordering the directory itself uses: best measured quality first, since a
+	// tier the table already shows is the more legible "who's good" signal than
+	// sorting on any one execution figure.
+	return rows.sort((a, b) => (a.rank ?? Infinity) - (b.rank ?? Infinity))
+}
+
 function depthAt(values: Array<number | null> | null, index: number, pair: string): number | null {
 	if (values === null) return null
 	const value = values[index]
@@ -1020,10 +1075,14 @@ export function decodeMasterChart(response: MasterChartColumnarResponse): Decode
 	if (response.types.length !== response.exchanges.length || response.series.length !== response.exchanges.length) {
 		throw new Error('Chart type and series axes do not match the exchange axis')
 	}
-	if (response.btc_depth) {
-		for (const segment of ['spot', 'linear_perp', 'inverse_perp'] as const) {
-			if (response.btc_depth[segment].length !== response.days.length) {
-				throw new Error('BTC depth columns do not match the day axis')
+	for (const [label, columns] of [
+		['depth', response.btc_depth],
+		['OI', response.btc_oi]
+	] as const) {
+		if (!columns) continue
+		for (const segment of MASTER_SEGMENTS) {
+			if (columns[segment].length !== response.days.length) {
+				throw new Error(`BTC ${label} columns do not match the day axis`)
 			}
 		}
 	}
@@ -1243,13 +1302,33 @@ export function mapMasterResearchReport(
 	}
 
 	if (part === 'oi') {
-		return {
-			views: [
-				exchangeView('open-interest-linear-exchanges', 'linear_perp'),
-				exchangeView('open-interest-inverse-exchanges', 'inverse_perp'),
-				typeView('open-interest-types', PERP_CHART_SEGMENTS)
-			]
+		const views: ExchangeResearchReportModel['views'] = [
+			exchangeView('open-interest-linear-exchanges', 'linear_perp'),
+			exchangeView('open-interest-inverse-exchanges', 'inverse_perp'),
+			typeView('open-interest-types', PERP_CHART_SEGMENTS)
+		]
+		// Shown first (need-of-the-hour: compare BTC against the rest before
+		// drilling into per-exchange lines) — the total is the same cross-exchange
+		// sum exchangeView/summedOther already compute, just over every exchange
+		// rather than the top N, so "Alt" reconciles exactly with the other views.
+		if (response.btc_oi) {
+			const total = summedOther(dayCount)(
+				exchangeSeriesItems(decoded, (exchange) => metricSeries(exchange, 'linear_perp'))
+			)
+			const btc = response.btc_oi.linear_perp
+			const alt = total.map((value, index) =>
+				value == null || btc[index] == null ? null : Math.max(value - btc[index]!, 0)
+			)
+			views.unshift({
+				id: 'open-interest-btc-vs-alt',
+				label: getResearchPresentation(part, 'open-interest-btc-vs-alt').label,
+				chart: researchChart(part, response, 'open-interest-btc-vs-alt', [
+					{ id: 'btc', label: 'BTC', values: btc },
+					{ id: 'alt', label: 'Alt (ex-BTC)', values: alt }
+				])
+			})
 		}
+		return { views }
 	}
 
 	if (part === 'depth') {
@@ -1345,4 +1424,107 @@ export function mapMasterMica(response: MasterMicaResponse): MicaVenueModel[] {
 				rampCost: venue.ramp_cost_1k ? mapRampCost(venue.ramp_cost_1k) : null
 			}
 		})
+}
+
+function mapCryptoRails(rails: MasterRampVariant['crypto_rails']): CryptoRailsModel | null {
+	if (!rails) return null
+	const mapRow = (row: MasterCryptoRails['deposit'][number]) => ({
+		asset: row.asset,
+		network: row.network,
+		fee: row.fee,
+		minimum: row.min,
+		note: row.note,
+		processingTime: row.time,
+		source: row.src
+	})
+	return { deposit: rails.deposit.map(mapRow), withdraw: rails.withdraw.map(mapRow) }
+}
+
+function mapRampLeg(leg: MasterRampLeg): RampLegModel {
+	return {
+		fiatFeeUsd: leg.fiat_fee_usd,
+		tradeFeeUsd: leg.trade_fee_usd,
+		slippageUsd: leg.slippage_usd,
+		transferFeeUsd: leg.transfer_fee_usd,
+		totalUsd: leg.total_usd,
+		totalFraction: leg.total_pct
+	}
+}
+
+function mapRampVariant(region: string, variant: MasterRampVariant): RampVariantModel {
+	const cost: RampVariantModel['cost'] = {}
+	for (const [currency, sizes] of Object.entries(variant.ramp.cost)) {
+		if (!sizes) continue
+		const bySize: Partial<Record<string, RampCurrencyCostModel>> = {}
+		for (const [size, row] of Object.entries(sizes)) {
+			if (!row) continue
+			bySize[size] = {
+				currency,
+				pair: row.pair,
+				onRamp: mapRampLeg(row.on_ramp),
+				offRamp: mapRampLeg(row.off_ramp),
+				onRail: row.on_rail,
+				offRail: row.off_rail
+			}
+		}
+		cost[currency] = bySize
+	}
+
+	const trade: RampVariantModel['trade'] = {}
+	for (const [size, legs] of Object.entries(variant.ramp.trade)) {
+		if (!legs) continue
+		trade[size] = {
+			pair: legs.pair,
+			tradeFeeUsd: legs.trade_fee_usd,
+			slippageBuyUsd: legs.slippage_buy_usd
+		}
+	}
+
+	const countryOverrides: RampVariantModel['countryOverrides'] = {}
+	for (const [country, override] of Object.entries(variant.country_overrides)) {
+		if (!override) continue
+		countryOverrides[country] = { status: override.status, note: override.note ?? null }
+	}
+
+	return {
+		region,
+		status: variant.status,
+		note: variant.note,
+		countryOverrides,
+		fiatCurrencies: variant.fiat_currencies ?? [],
+		rails: mapFiatFees(variant.rails),
+		cryptoRails: mapCryptoRails(variant.crypto_rails),
+		kyc: variant.kyc.required === null ? null : { ...variant.kyc, required: variant.kyc.required },
+		regulator: variant.regulator,
+		micaLicensed: variant.mica_licensed,
+		trade,
+		cost,
+		assumptions: {
+			takerFee: variant.ramp.assumptions.taker_fee,
+			btcWithdrawalFeeBtc: variant.ramp.assumptions.btc_withdrawal_fee_btc,
+			btcNetworkFeeBtc: variant.ramp.assumptions.btc_network_fee_btc
+		}
+	}
+}
+
+export function mapMasterRamps(response: MasterRampsResponse): RampCatalogModel {
+	return {
+		sizes: [...response.sizes],
+		btcNetworkFeeBtc: response.btc_network_fee_btc,
+		venues: response.exchanges.map((venue) => {
+			const { websiteUrl, referralUrl } = websiteDestination(venue)
+			const variants: RampVenueModel['variants'] = {}
+			for (const [region, variant] of Object.entries(venue.variants)) {
+				if (variant) variants[region] = mapRampVariant(region, variant)
+			}
+			return {
+				exchange: venue.slug,
+				name: venue.display_name,
+				profileHref: venue.links.profile,
+				website: websiteUrl,
+				referralUrl,
+				variants
+			}
+		})
+	}
 }

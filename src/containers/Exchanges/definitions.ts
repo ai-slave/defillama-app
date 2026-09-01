@@ -92,19 +92,19 @@ export const exchangeDefinitions = {
 			description: 'Shortcuts to the venue’s reserves page, its DefiLlama profile, and its website.'
 		},
 		execCostToTrade: {
-			label: 'Cost to trade',
+			label: 'Cost to trade $10k',
 			description:
 				'What a $10k market order costs all in: taker fee plus half the spread you cross, measured from real fills. VIP tiers can lower the fee part.'
 		},
 		execSlippage10k: {
-			label: 'Slippage $10k',
+			label: 'Slippage',
 			description:
-				'What $10k fills actually paid beyond the mid price, with what the order book promised shown first. Actual far above predicted means displayed depth moves before fills land.'
+				'What fills actually paid beyond the mid price at $10k and $100k, with what the order book promised shown first. Actual far above predicted means displayed depth moves before fills land.'
 		},
 		execMarkout1m: {
-			label: 'Markout 1m',
+			label: 'Markout',
 			description:
-				'Where the price went one minute after a fill, per $10k traded. Positive (red) means it kept moving against the taker, a sign of trading against faster flow. Lower is better.'
+				'Where the price went one and five minutes after a fill, per $10k traded. Positive (red) means it kept moving against the taker, a sign of trading against faster flow. Lower is better.'
 		},
 		kind: {
 			label: 'Type',
@@ -397,3 +397,11 @@ export const exchangeDefinitions = {
 	directory: Record<string, ExchangeDefinition>
 	markets: Record<string, ExchangeDefinition>
 }
+
+/**
+ * A metric label qualified with the segment it is measured on, for surfaces that mix
+ * segments in one table (the merged directory view, the profile's per-token table).
+ * Execution is USD perps only, so those columns say so where a spot row sits beside
+ * them; exact-segment tables keep the short label.
+ */
+export const usdPerpLabel = (label: string) => `USD perp ${label.toLowerCase()}`

@@ -5,16 +5,18 @@ import {
 	mapMasterMetadataOnlyProfile,
 	mapMasterMica,
 	mapMasterProfile,
+	mapMasterRamps,
 	mapMasterResearchReport
 } from '../master.mappers'
 import type { MasterChartPart } from '../master.types'
-import type { MasterExchangeMetadataResponse } from '../master.types'
+import type { MasterExchangeMetadataResponse, MasterExecutionQualityResponse } from '../master.types'
 import type {
 	ExchangeDirectoryModel,
 	ExchangeOverviewChartModel,
 	ExchangeProfileModel,
 	ExchangeResearchReportModel,
-	MicaVenueModel
+	MicaVenueModel,
+	RampCatalogModel
 } from '../models'
 import type { ExchangeResearchRange } from '../queryState'
 import {
@@ -25,18 +27,28 @@ import {
 	fetchMasterExchangeIndexFromNetwork,
 	fetchMasterExchangeMetadataFromNetwork,
 	fetchMasterMicaFromNetwork,
+	fetchMasterRampsFromNetwork,
 	fetchMasterQualityRanksFromNetwork,
 	fetchMasterRankMethodologyFromNetwork
 } from './master.upstream'
 
 export async function loadMasterExchangeDirectory(): Promise<ExchangeDirectoryModel> {
+	return (await loadMasterExchangeDirectoryWithExecution()).directory
+}
+
+/** For pages that also need the raw execution file (the BTC execution table): one
+ *  fetch, one snapshot, instead of the directory and the page fetching it separately. */
+export async function loadMasterExchangeDirectoryWithExecution(): Promise<{
+	directory: ExchangeDirectoryModel
+	execution: MasterExecutionQualityResponse | null
+}> {
 	// Execution quality is fail-soft: a missing/unreachable file renders the directory
 	// without execution columns rather than failing the whole page build.
 	const [directory, execution] = await Promise.all([
 		fetchMasterDirectoryFromNetwork(),
 		fetchMasterExecutionQualityFromNetwork().catch(() => null)
 	])
-	return mapMasterDirectory(directory, execution)
+	return { directory: mapMasterDirectory(directory, execution), execution }
 }
 
 export async function loadMasterExchangeOverview(range: ExchangeResearchRange): Promise<ExchangeOverviewChartModel> {
@@ -45,6 +57,10 @@ export async function loadMasterExchangeOverview(range: ExchangeResearchRange): 
 
 export async function loadMasterMicaVenues(): Promise<MicaVenueModel[]> {
 	return mapMasterMica(await fetchMasterMicaFromNetwork())
+}
+
+export async function loadMasterRampCatalog(): Promise<RampCatalogModel> {
+	return mapMasterRamps(await fetchMasterRampsFromNetwork())
 }
 
 type ExchangeResearchReports = Record<MasterChartPart, ExchangeResearchReportModel>

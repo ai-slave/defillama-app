@@ -4,10 +4,11 @@ import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { pushShallowQuery } from '~/utils/routerQuery'
+import { BtcExecutionTable } from './BtcExecutionTable'
 import { ChartRangeControl } from './ChartRangeControl'
 import type { DepthCurveRow } from './depthCurve'
 import { DepthCurveChart } from './DepthCurveChart'
-import type { ExchangeResearchReportModel, ExchangeResearchView } from './models'
+import type { BtcExecutionRowModel, ExchangeResearchReportModel, ExchangeResearchView } from './models'
 import {
 	getResearchRange,
 	getResearchView,
@@ -22,8 +23,11 @@ import { useLazyVisible } from './useLazyVisible'
 
 const STALE_TIME = 6 * 60 * 60 * 1000
 
+// Order within a section, and the sections themselves further down, follows what
+// people actually reach for first: open interest between exchanges (who's carrying
+// the risk right now) before volume/market-share trends over time.
 const RESEARCH_SECTIONS: Array<{ title: string; description: string; charts: ExchangeResearchPart[] }> = [
-	{ title: 'Activity', description: 'Traded volume and open positions across venues.', charts: ['volume', 'oi'] },
+	{ title: 'Activity', description: 'Traded volume and open positions across venues.', charts: ['oi', 'volume'] },
 	{
 		title: 'Liquidity',
 		description: 'Order-book depth and how much reported volume is backed by real liquidity.',
@@ -33,11 +37,14 @@ const RESEARCH_SECTIONS: Array<{ title: string; description: string; charts: Exc
 
 export function ExchangeResearch({
 	loadReport,
-	depthRows = []
+	depthRows = [],
+	btcExecutionRows = []
 }: {
 	loadReport: (part: ExchangeResearchPart, range: ExchangeResearchRange) => Promise<ExchangeResearchReportModel>
 	/** Venue rows carrying only what the depth curve reads. Empty means no snapshots. */
 	depthRows?: DepthCurveRow[]
+	/** One row per venue with a measured BTC pair. Empty means execution data is unavailable. */
+	btcExecutionRows?: BtcExecutionRowModel[]
 }) {
 	const router = useRouter()
 	const range = getResearchRange(router.query)
@@ -46,6 +53,19 @@ export function ExchangeResearch({
 			<div className="flex justify-end">
 				<ChartRangeControl range={range} />
 			</div>
+			{RESEARCH_SECTIONS.map((section) => (
+				<section key={section.title} className="flex flex-col gap-2">
+					<div className="flex flex-col gap-0.5 px-1">
+						<h2 className="heading-xs">{section.title}</h2>
+						<p className="body-sm text-secondary">{section.description}</p>
+					</div>
+					<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
+						{section.charts.map((part) => (
+							<ResearchChartCard key={part} part={part} range={range} loadReport={loadReport} />
+						))}
+					</div>
+				</section>
+			))}
 			{depthRows.length > 0 ? (
 				<section className="flex flex-col gap-2">
 					<div className="flex flex-col gap-0.5 px-1">
@@ -60,19 +80,20 @@ export function ExchangeResearch({
 					</Panel>
 				</section>
 			) : null}
-			{RESEARCH_SECTIONS.map((section) => (
-				<section key={section.title} className="flex flex-col gap-2">
+			{btcExecutionRows.length > 0 ? (
+				<section className="flex flex-col gap-2">
 					<div className="flex flex-col gap-0.5 px-1">
-						<h2 className="heading-xs">{section.title}</h2>
-						<p className="body-sm text-secondary">{section.description}</p>
+						<h2 className="heading-xs">BTC execution</h2>
+						<p className="body-sm text-secondary">
+							Measured, not advertised: tick-level fill quality and fees on the BTC market at every exchange we have
+							data for. Rank is the same quality tier shown on the exchange directory.
+						</p>
 					</div>
-					<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
-						{section.charts.map((part) => (
-							<ResearchChartCard key={part} part={part} range={range} loadReport={loadReport} />
-						))}
-					</div>
+					<Panel padding="none">
+						<BtcExecutionTable rows={btcExecutionRows} />
+					</Panel>
 				</section>
-			))}
+			) : null}
 		</div>
 	)
 }

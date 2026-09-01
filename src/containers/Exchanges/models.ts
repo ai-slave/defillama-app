@@ -220,6 +220,34 @@ export interface ExchangeDirectoryRowModel {
 	} | null
 }
 
+/**
+ * One venue's measured BTC execution quality plus fee, restricted to the BTC pair
+ * specifically (not the shared basket median `ExchangeDirectoryRowModel.execution`
+ * mixes several assets into) — for the cross-venue BTC comparison table on the
+ * research charts page. Null fields mean not measured for this venue, never zero.
+ */
+export interface BtcExecutionRowModel {
+	exchange: string
+	name: string
+	profileHref: string
+	tier: string | null
+	rank: number | null
+	costToTradeBps: number | null
+	effectiveSpreadBps: number | null
+	quotedSpreadBps: number | null
+	realizedSlippage10kBps: number | null
+	realizedSlippage100kBps: number | null
+	predictedSlippage10kBps: number | null
+	predictedSlippage100kBps: number | null
+	markout1sBps: number | null
+	markout15sBps: number | null
+	markout1mBps: number | null
+	markout5mBps: number | null
+	takerFeeBps: number | null
+	hoursCovered: number
+	nTrades: number
+}
+
 export interface ExchangeVolumeSplit {
 	spot: number | null
 	linearPerp: number | null
@@ -584,6 +612,7 @@ export type ExchangeResearchView =
 	| 'linear-perp-exchanges'
 	| 'inverse-perp-exchanges'
 	| 'volume-types'
+	| 'open-interest-btc-vs-alt'
 	| 'open-interest-linear-exchanges'
 	| 'open-interest-inverse-exchanges'
 	| 'open-interest-types'
@@ -667,4 +696,90 @@ export interface MicaVenueModel {
 			btcPriceUsd: number | null
 		}
 	} | null
+}
+
+// --- /ramp: fiat on/off-ramp cost -------------------------------------------
+// Country resolution stays client-side (the country is URL state), so a venue
+// carries every region variant the producer published and the table picks one.
+
+export interface RampLegModel {
+	fiatFeeUsd: number | null
+	tradeFeeUsd: number | null
+	slippageUsd: number | null
+	transferFeeUsd: number | null
+	/** Null unless every leg above is known — a missing leg is never treated as zero. */
+	totalUsd: number | null
+	totalFraction: number | null
+}
+
+/** Currency-independent baseline: execution plus the two BTC transfer legs. */
+export interface RampTradeLegsModel {
+	pair: string | null
+	tradeFeeUsd: number | null
+	slippageBuyUsd: number | null
+}
+
+export interface RampCurrencyCostModel {
+	currency: string
+	pair: string | null
+	onRamp: RampLegModel
+	offRamp: RampLegModel
+	/** The rail actually priced for this currency and size, e.g. 'SEPA Instant'. */
+	onRail: string | null
+	offRail: string | null
+}
+
+export interface RampAssumptionsModel {
+	takerFee: number | null
+	btcWithdrawalFeeBtc: number | null
+	btcNetworkFeeBtc: number | null
+}
+
+export interface CryptoRailRowModel {
+	asset: string
+	network: string
+	fee: string
+	minimum: string
+	note: string
+	processingTime: string
+	source: ExchangeMetadataLink
+}
+
+export interface CryptoRailsModel {
+	deposit: CryptoRailRowModel[]
+	withdraw: CryptoRailRowModel[]
+}
+
+export interface RampVariantModel {
+	region: string
+	status: ExchangeRegionStatus
+	note: string | null
+	countryOverrides: Partial<Record<string, { status: ExchangeRegionStatus; note: string | null }>>
+	fiatCurrencies: string[]
+	rails: ExchangeFiatFees | null
+	cryptoRails: CryptoRailsModel | null
+	kyc: { required: boolean; short: string | null; summary: string | null } | null
+	regulator: string | null
+	micaLicensed: boolean | null
+	/** Keyed by notional in USD, as a string. */
+	trade: Partial<Record<string, RampTradeLegsModel>>
+	/** currency → notional → both directions. Only currencies with a usable rail. */
+	cost: Partial<Record<string, Partial<Record<string, RampCurrencyCostModel>>>>
+	assumptions: RampAssumptionsModel
+}
+
+export interface RampVenueModel {
+	exchange: string
+	name: string
+	profileHref: string
+	website: string | null
+	referralUrl: string | null
+	/** Keyed by region; `global` is always present and is the fallback. */
+	variants: Partial<Record<string, RampVariantModel>>
+}
+
+export interface RampCatalogModel {
+	sizes: number[]
+	btcNetworkFeeBtc: number | null
+	venues: RampVenueModel[]
 }

@@ -3,9 +3,9 @@ import { Icon } from '~/ui/Icon'
 import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatPercent, formatUsd, formatNumber } from '~/utils/numberFormat'
-import { FEE_TONE_CLASS, type FeeTone } from './feePresentation'
 import type { ExchangePromotionModel, MicaProduct, MicaVenueModel } from './models'
 import { promotionLinks } from './promotions'
+import { btcAmount, Breakdown, CostBadge, LEG_TONE_LIMITS } from './RampCells'
 
 function liquidity(value: number): string {
 	return formatUsd(value, { compact: true }) ?? '–'
@@ -146,21 +146,9 @@ export function PromotionGift({ promotion, venue }: { promotion: ExchangePromoti
 
 type RampDirection = 'onRamp' | 'offRamp'
 
-const RAMP_COST_TIER_LIMITS = { low: 0.005, medium: 0.01 }
 const RAMP_DIRECTION_STEPS: Record<RampDirection, string> = {
 	onRamp: 'Deposit EUR (SEPA) → buy BTC → withdraw to your wallet',
 	offRamp: 'Deposit BTC → sell → withdraw EUR (SEPA)'
-}
-
-function rampCostTone(value: number | null): FeeTone | null {
-	if (value == null) return null
-	if (value <= RAMP_COST_TIER_LIMITS.low) return 'low'
-	if (value <= RAMP_COST_TIER_LIMITS.medium) return 'medium'
-	return 'high'
-}
-
-function formatBtcAmount(value: number | null): string | null {
-	return value == null ? null : `${formatNumber(value, { maximumFractionDigits: 8 })} BTC`
 }
 
 function formatEur(value: number | null): string | null {
@@ -169,79 +157,47 @@ function formatEur(value: number | null): string | null {
 		: formatNumber(value, { currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
+/** Same badge and breakdown the /ramp table uses, priced in EUR on the SEPA rail. */
 export function RampCostValue({ row, direction }: { row: MicaVenueModel; direction: RampDirection }) {
 	const cost = row.rampCost
 	if (!cost) return <span className="text-tertiary">–</span>
 	const leg = cost[direction]
 	if (leg.totalUsd == null) return <span className="text-tertiary">–</span>
-	const transferBtc = formatBtcAmount(
+	const transferBtc = btcAmount(
 		direction === 'onRamp' ? cost.assumptions.btcWithdrawalFeeBtc : cost.assumptions.btcNetworkFeeBtc
 	)
-	const breakdown = [
-		{ label: `SEPA ${direction === 'onRamp' ? 'deposit' : 'withdrawal'}`, value: formatEur(leg.fiatFeeUsd) },
-		{
-			label:
-				cost.assumptions.takerFee == null
-					? 'Taker fee'
-					: `Taker fee (${formatPercent(cost.assumptions.takerFee, { input: 'fraction' })})`,
-			value: formatEur(leg.tradeFeeUsd)
-		},
-		{ label: 'Slippage vs mid price', value: formatEur(leg.slippageUsd) },
-		{
-			label:
-				direction === 'onRamp'
-					? `BTC withdrawal fee${transferBtc ? ` (${transferBtc})` : ''}`
-					: `BTC network fee${transferBtc ? ` (${transferBtc})` : ''}`,
-			value: formatEur(leg.transferFeeUsd)
-		}
-	]
-	const tone = rampCostTone(leg.totalFraction)
-	const directionLabel = direction === 'onRamp' ? 'on-ramp' : 'off-ramp'
+	const notional = formatNumber(cost.notionalUsd, { currency: 'EUR', maximumFractionDigits: 0 })
 	return (
-		<Ariakit.HovercardProvider placement="left-start" showTimeout={0} hideTimeout={80}>
-			<Ariakit.HovercardAnchor
-				render={<button />}
-				type="button"
-				className={`inline-flex rounded-md border px-2 py-0.5 label-sm whitespace-nowrap ${tone ? FEE_TONE_CLASS[tone] : 'border-subtle text-primary'}`}
-				aria-label={`${row.name} ${formatNumber(cost.notionalUsd, { currency: 'EUR', maximumFractionDigits: 0 })} ${directionLabel} cost breakdown`}
-			>
-				{formatNumber(leg.totalUsd, { currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-			</Ariakit.HovercardAnchor>
-			<Ariakit.Hovercard
-				unmountOnHide
-				gutter={6}
-				overflowPadding={16}
-				className={`${popoverHovercardSurfaceStyles} w-80 p-3 text-primary`}
-				portal
-			>
-				<div className="flex flex-col gap-2">
-					<span className="body-sm text-secondary">{RAMP_DIRECTION_STEPS[direction]}</span>
-					<span className="label-sm text-tertiary">
-						{formatNumber(cost.notionalUsd, { currency: 'EUR' })} notional on {cost.pair ?? '–'}
-					</span>
-					<span className="flex flex-col gap-1 border-t border-subtle pt-2">
-						{breakdown.map(({ label, value }) => (
-							<span key={label} className="flex items-baseline justify-between gap-3 body-sm">
-								<span className="text-secondary">{label}</span>
-								<span className={value == null ? 'text-tertiary' : 'text-primary'}>{value ?? 'unknown'}</span>
-							</span>
-						))}
-					</span>
-					<span className="flex items-baseline justify-between gap-3 border-t border-subtle pt-2 label-md">
-						<span>Total</span>
-						<span>
-							{formatNumber(leg.totalUsd, {
-								currency: 'EUR',
-								minimumFractionDigits: 2,
-								maximumFractionDigits: 2
-							})}
-							{leg.totalFraction == null ? null : (
-								<span className="text-tertiary"> ({formatPercent(leg.totalFraction, { input: 'fraction' })})</span>
-							)}
-						</span>
-					</span>
-				</div>
-			</Ariakit.Hovercard>
-		</Ariakit.HovercardProvider>
+		<CostBadge
+			label={formatEur(leg.totalUsd) ?? '–'}
+			fraction={leg.totalFraction}
+			limits={LEG_TONE_LIMITS}
+			ariaLabel={`${row.name} ${notional} ${direction === 'onRamp' ? 'on-ramp' : 'off-ramp'} cost breakdown`}
+		>
+			<Breakdown
+				steps={RAMP_DIRECTION_STEPS[direction]}
+				scope={`${notional} notional on ${cost.pair ?? '–'}`}
+				rows={[
+					{ label: `SEPA ${direction === 'onRamp' ? 'deposit' : 'withdrawal'}`, value: formatEur(leg.fiatFeeUsd) },
+					{
+						label:
+							cost.assumptions.takerFee == null
+								? 'Taker fee'
+								: `Taker fee (${formatPercent(cost.assumptions.takerFee, { input: 'fraction' })})`,
+						value: formatEur(leg.tradeFeeUsd)
+					},
+					{ label: 'Slippage vs mid price', value: formatEur(leg.slippageUsd) },
+					{
+						label:
+							direction === 'onRamp'
+								? `BTC withdrawal fee${transferBtc ? ` (${transferBtc})` : ''}`
+								: `BTC network fee${transferBtc ? ` (${transferBtc})` : ''}`,
+						value: formatEur(leg.transferFeeUsd)
+					}
+				]}
+				total={formatEur(leg.totalUsd)}
+				totalFraction={leg.totalFraction}
+			/>
+		</CostBadge>
 	)
 }

@@ -2,6 +2,7 @@ import { isSerializableProps } from 'next/dist/lib/is-serializable-props'
 import { describe, expect, it } from 'vitest'
 import {
 	decodeMasterChart,
+	mapBtcExecutionTable,
 	mapMasterDirectory as mapMasterDirectoryContract,
 	mapMasterDirectoryOverview,
 	mapMasterMetadataOnlyProfile,
@@ -918,6 +919,53 @@ describe('master directory mapper', () => {
 	})
 })
 
+describe('BTC execution table mapper', () => {
+	it('reads the BTC pair directly (not a basket median) and skips venues with no measured BTC pair', () => {
+		const rows = mapMasterDirectory(
+			directoryResponse([
+				directoryVenue({ slug: 'venue', rank: { score: 90, rank: 1, tier: 'A', segments: {}, components: {} } }),
+				directoryVenue({ slug: 'no-execution-data', rank: null })
+			])
+		).rows
+
+		const table = mapBtcExecutionTable(rows, executionResponse())
+
+		expect(table).toHaveLength(1)
+		expect(table[0]).toMatchObject({
+			exchange: 'venue',
+			tier: 'A',
+			rank: 1,
+			costToTradeBps: 4,
+			effectiveSpreadBps: 2,
+			quotedSpreadBps: 3,
+			realizedSlippage10kBps: 1,
+			predictedSlippage10kBps: 1.5,
+			markout1sBps: 0.1,
+			markout15sBps: 0.2,
+			markout1mBps: 0.3,
+			markout5mBps: 0.4,
+			takerFeeBps: 2,
+			hoursCovered: 24,
+			nTrades: 10
+		})
+	})
+
+	it('returns nothing when execution data is unavailable, and sorts by rank when it is', () => {
+		const rows = mapMasterDirectory(directoryResponse([directoryVenue()])).rows
+		expect(mapBtcExecutionTable(rows, null)).toEqual([])
+
+		const execution = executionResponse()
+		execution.venues['second'] = { ...execution.venues.venue! }
+		const ranked = mapMasterDirectory(
+			directoryResponse([
+				directoryVenue({ slug: 'venue', rank: { score: 80, rank: 2, tier: 'B', segments: {}, components: {} } }),
+				directoryVenue({ slug: 'second', rank: { score: 90, rank: 1, tier: 'A', segments: {}, components: {} } })
+			])
+		).rows
+		expect(mapBtcExecutionTable(ranked, execution).map((row) => row.exchange)).toEqual(['second', 'venue'])
+	})
+})
+
 describe('execution basket', () => {
 	// Two venues, uneven coverage: the deep one measures BTC+ETH, the thin one only
 	// BTC. Before the shared basket, the deep venue's columns were a BTC/ETH median
@@ -1505,6 +1553,41 @@ describe('canonical research charts', () => {
 			{ id: 'btc-spot', label: 'BTC spot depth', values: [100, 200] },
 			{ id: 'btc-linear-perp', label: 'BTC linear perp depth', values: [10, 20] },
 			{ id: 'btc-inverse-perp', label: 'BTC inverse perp depth', values: [1, null] }
+		])
+	})
+
+	it('shows BTC vs Alt open interest first, with Alt as the cross-exchange total minus BTC', () => {
+		const response: MasterChartColumnarResponse<'oi'> = {
+			days: [1, 2],
+			key: ['linear_perp', 'inverse_perp'],
+			exchanges: ['venue-a', 'venue-b'],
+			types: ['cex', 'cex'],
+			series: [
+				[
+					[10, 20],
+					[0, 0]
+				],
+				[
+					[5, 15],
+					[0, 0]
+				]
+			],
+			btc_oi: {
+				spot: [0, 0],
+				linear_perp: [4, 10],
+				inverse_perp: [0, 0]
+			},
+			names: { 'venue-a': 'venue-a', 'venue-b': 'venue-b' },
+			last_updated: '2026-07-14T00:00:00Z',
+			built_at: '2026-07-14T00:02:00Z',
+			range: '1y'
+		}
+		const report = mapMasterResearchReport('oi', response)
+
+		expect(report.views[0]?.id).toBe('open-interest-btc-vs-alt')
+		expect(report.views[0]?.chart.lines).toEqual([
+			{ id: 'btc', label: 'BTC', values: [4, 10] },
+			{ id: 'alt', label: 'Alt (ex-BTC)', values: [11, 25] }
 		])
 	})
 

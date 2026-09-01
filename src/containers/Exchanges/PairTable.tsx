@@ -310,7 +310,11 @@ export function buildPairColumns(
 						</Tooltip>
 					)
 				},
-				meta: { headerClassName: 'w-[105px]', align: 'end', headerHelperText: definitions.fundingRate8h.description }
+				meta: {
+					headerClassName: 'w-[105px]',
+					align: 'end',
+					headerHelperText: definitions.fundingRate8h.description
+				}
 			}),
 			columnHelper.accessor((row) => row.nextFundingAt ?? undefined, {
 				id: 'nextFundingAt',
@@ -327,7 +331,11 @@ export function buildPairColumns(
 					) : (
 						<UnsupportedMetric />
 					),
-				meta: { headerClassName: 'w-[220px]', align: 'end', headerHelperText: definitions.nextFundingAt.description }
+				meta: {
+					headerClassName: 'w-[220px]',
+					align: 'end',
+					headerHelperText: definitions.nextFundingAt.description
+				}
 			}),
 			columnHelper.accessor((row) => row.maxLeverage ?? undefined, {
 				id: 'maxLeverage',
@@ -348,7 +356,11 @@ export function buildPairColumns(
 			id: 'volumeFreshness',
 			header: definitions.volumeFreshness.label,
 			cell: ({ getValue }) => getValue()?.slice(0, 10) ?? '–',
-			meta: { headerClassName: 'w-[115px]', align: 'end', headerHelperText: definitions.volumeFreshness.description }
+			meta: {
+				headerClassName: 'w-[115px]',
+				align: 'end',
+				headerHelperText: definitions.volumeFreshness.description
+			}
 		}),
 		columnHelper.accessor((row) => row.makerFee ?? undefined, {
 			id: 'makerFee',

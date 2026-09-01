@@ -39,7 +39,9 @@ export const EXCHANGES_QUERY_KEYS = {
 	venueHistory: 'history',
 	researchRange: 'range',
 	tokenFinderTokens: 'tokens',
-	tokenFinderMode: 'match'
+	tokenFinderMode: 'match',
+	rampCurrency: 'ccy',
+	rampSize: 'size'
 } as const
 
 export const DEFAULT_DIRECTORY_QUERY_STATE = {
@@ -138,6 +140,18 @@ export function getProfileSegment(query: ParsedUrlQuery): ProfileSegmentSelectio
 	return value === 'all' || value === 'spot' || value === 'linear_perp' || value === 'inverse_perp' ? value : null
 }
 
+/** Selected fiat currency on /ramp; null means "cheapest rail in any currency". */
+export function getRampCurrency(query: ParsedUrlQuery): string | null {
+	const value = readSingleQueryValue(query[EXCHANGES_QUERY_KEYS.rampCurrency])
+	return value && /^[a-z]{3}$/i.test(value) ? value.toUpperCase() : null
+}
+
+/** Order size on /ramp, in USD. Validated against the sizes the producer published. */
+export function getRampSize(query: ParsedUrlQuery, sizes: number[]): number {
+	const value = Number(readSingleQueryValue(query[EXCHANGES_QUERY_KEYS.rampSize]))
+	return sizes.includes(value) ? value : (sizes[0] ?? 1000)
+}
+
 export function parseExchangeCountry(query: ParsedUrlQuery): string | null {
 	const value = readSingleQueryValue(query[EXCHANGES_QUERY_KEYS.country])
 	return value && /^[a-z]{2}$/i.test(value) ? value.toUpperCase() : null
@@ -173,6 +187,7 @@ export function getResearchView(query: ParsedUrlQuery, part: ExchangeResearchPar
 		value === 'linear-perp-exchanges' ||
 		value === 'inverse-perp-exchanges' ||
 		value === 'volume-types' ||
+		value === 'open-interest-btc-vs-alt' ||
 		value === 'open-interest-linear-exchanges' ||
 		value === 'open-interest-inverse-exchanges' ||
 		value === 'open-interest-types' ||

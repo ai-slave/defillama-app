@@ -37,12 +37,21 @@ describe('tokenDepthVenues', () => {
 		expect(venues[0].ladder.map((band) => band.bidUsd)).toEqual([10, 20, 30])
 	})
 
-	// Only bands a book actually reached may be added: past its reach the upstream
-	// numbers are forward-filled, and adding those in invents depth.
-	it('adds only the books that reached each band', () => {
+	// Past a book's reach its widest measured total is carried forward, never dropped:
+	// depth within 25% is at least depth within 1%, so a cumulative curve cannot fall.
+	// Dropping it made BingX's BTC curve go $1.1b within 0.75% to $18m within 1%.
+	it('carries a book forward past its reach instead of dropping it', () => {
 		const shallow = ladder(10).map((point, index) => ({ ...point, coverage: index === 0 ? 1 : 0 }))
 		const venues = tokenDepthVenues([pair('deep', ladder(10)), pair('deep', shallow, 'BTCUSDC')], MEASURED)
-		expect(venues[0].ladder.map((band) => band.bidUsd)).toEqual([20, 20, 30])
+		expect(venues[0].ladder.map((band) => band.bidUsd)).toEqual([20, 30, 40])
+	})
+
+	// A band no book reached stays unmeasured, so the curve ends where the crawls did
+	// rather than running flat to the widest band.
+	it('leaves bands no book reached unmeasured', () => {
+		const shallow = ladder(10).map((point, index) => ({ ...point, coverage: index === 0 ? 1 : 0 }))
+		const venues = tokenDepthVenues([pair('only', shallow)], MEASURED)
+		expect(venues[0].ladder.map((band) => band.coverage)).toEqual([1, 0, 0])
 	})
 
 	// A venue listing the token with no snapshot has nothing to contribute. Drawing it
