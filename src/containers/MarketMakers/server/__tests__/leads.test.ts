@@ -1,6 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ApiRequest } from '~/server/api/types'
-import { clientIp, validateClaimBody, validateConnectBody } from '../leads'
+import { clientIp, sendClaimToUserAnalytics, validateClaimBody, validateConnectBody } from '../leads'
+
+afterEach(() => {
+	vi.unstubAllEnvs()
+	vi.unstubAllGlobals()
+})
 
 const validConnect = {
 	interest: 'engage-market-maker',
@@ -127,6 +132,48 @@ describe('validateClaimBody', () => {
 
 	it('rejects a filled honeypot field', () => {
 		expect(validateClaimBody({ ...validClaim, hp: 'bot' }).ok).toBe(false)
+	})
+})
+
+describe('sendClaimToUserAnalytics', () => {
+	it('posts the validated claim when analytics is configured', async () => {
+		vi.stubEnv('USER_ANALYTICS_URL', 'https://analytics.example.com/')
+		vi.stubEnv('UTR_CLAIMS_SHARED_SECRET', 'test-secret')
+		const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 201 }))
+		vi.stubGlobal('fetch', fetchMock)
+
+		const validated = validateClaimBody(validClaim)
+		expect(validated.ok).toBe(true)
+		if (!validated.ok) return
+		await sendClaimToUserAnalytics(validated.payload)
+
+		expect(fetchMock).toHaveBeenCalledWith(
+			'https://analytics.example.com/api/ingestion/utr-claims',
+			expect.objectContaining({
+				method: 'POST',
+				headers: expect.objectContaining({ 'X-Shared-Secret': 'test-secret' }),
+				body: JSON.stringify(validated.payload)
+			})
+		)
+	})
+
+	it('does nothing when analytics is not configured', async () => {
+		vi.stubEnv('USER_ANALYTICS_URL', '')
+		vi.stubEnv('UTR_CLAIMS_SHARED_SECRET', '')
+		const fetchMock = vi.fn()
+		vi.stubGlobal('fetch', fetchMock)
+
+		await sendClaimToUserAnalytics(validClaim)
+
+		expect(fetchMock).not.toHaveBeenCalled()
+	})
+
+	it('does not fail the submission when analytics rejects the copy', async () => {
+		vi.stubEnv('USER_ANALYTICS_URL', 'https://analytics.example.com')
+		vi.stubEnv('UTR_CLAIMS_SHARED_SECRET', 'test-secret')
+		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 500 })))
+
+		await expect(sendClaimToUserAnalytics(validClaim)).resolves.toBeUndefined()
 	})
 })
 

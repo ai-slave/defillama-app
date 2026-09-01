@@ -18,6 +18,7 @@ export type UtrClaimRequestInput = {
 
 export function buildUtrClaimRequest(input: UtrClaimRequestInput): Record<string, unknown> {
 	return {
+		analytics_source: 'utr',
 		position: input.position.trim(),
 		has_forgd_contact: input.hasForgdContact,
 		forgd_contact_name: input.hasForgdContact ? input.forgdContactName.trim() || null : null,

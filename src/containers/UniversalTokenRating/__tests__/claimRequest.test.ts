@@ -22,6 +22,7 @@ describe('buildUtrClaimRequest', () => {
 
 		expect(validateClaimBody(payload).ok).toBe(true)
 		expect(payload).toMatchObject({
+			analytics_source: 'utr',
 			position: 'Core Contributor',
 			full_name: 'Alice Example',
 			social_profile_url: 'https://x.com/alice',
