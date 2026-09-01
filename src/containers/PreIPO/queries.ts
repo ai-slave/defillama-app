@@ -25,7 +25,7 @@ export async function getPreIpoCompanyPageData(company: string): Promise<PreIpoC
 		summary: summary.data,
 		raises: raises.data,
 		integrations: integrations.data,
-		chart: buildPreIpoValuationChart(valuations.data, raises.data),
+		chart: buildPreIpoValuationChart(valuations.data, raises.data, Date.now()),
 		valuationDataUpdatedAt: summary.updatedAt,
 		marketDataUpdatedAt: integrations.updatedAt
 	}

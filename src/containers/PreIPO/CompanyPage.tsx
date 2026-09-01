@@ -96,6 +96,7 @@ export function PreIpoCompanyPage({
 							<MultiSeriesChart
 								dataset={chart.dataset}
 								charts={chart.charts}
+								chartOptions={{ xAxis: { max: chart.xAxisMaxTimestamp } }}
 								valueSymbol="$"
 								hideDefaultLegend={false}
 								title={HISTORY_CHART_TITLE}

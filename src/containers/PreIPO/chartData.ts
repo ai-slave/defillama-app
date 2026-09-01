@@ -11,15 +11,19 @@ function utcDateTimestamp(date: string): number {
 
 export function buildPreIpoValuationChart(
 	valuations: PreIpoValuation[],
-	raises: PreIpoRaise[]
+	raises: PreIpoRaise[],
+	chartEndTimestamp: number
 ): PreIpoValuationChart | null {
 	if (valuations.length === 0 && raises.length === 0) return null
 
 	const charts: PreIpoValuationChart['charts'] = []
+	let xAxisMaxTimestamp = chartEndTimestamp
 
 	const valuationData: Array<[number, number]> = []
 	for (const valuation of valuations) {
-		valuationData.push([utcDateTimestamp(valuation.date), valuation.estimatedValuation])
+		const timestamp = utcDateTimestamp(valuation.date)
+		valuationData.push([timestamp, valuation.estimatedValuation])
+		if (timestamp > xAxisMaxTimestamp) xAxisMaxTimestamp = timestamp
 	}
 	if (valuationData.length > 0) {
 		charts.push({
@@ -40,6 +44,7 @@ export function buildPreIpoValuationChart(
 		roundValuationData.push([timestamp, raise.valuation])
 		raisedData.push([timestamp, raise.amountRaised])
 		if (raise.valuation != null) hasRoundValuation = true
+		if (timestamp > xAxisMaxTimestamp) xAxisMaxTimestamp = timestamp
 	}
 	if (hasRoundValuation) {
 		charts.push({
@@ -69,6 +74,7 @@ export function buildPreIpoValuationChart(
 
 	return {
 		dataset: { dimensions: ['timestamp'], source: [] },
-		charts
+		charts,
+		xAxisMaxTimestamp
 	}
 }

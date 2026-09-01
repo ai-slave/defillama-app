@@ -9,6 +9,7 @@ export type PreIpoOverviewPageProps = {
 export type PreIpoValuationChart = {
 	dataset: MultiSeriesChartDataset
 	charts: MultiSeriesChartSeriesConfig[]
+	xAxisMaxTimestamp: number
 }
 
 export type PreIpoCompanyPageProps = {
