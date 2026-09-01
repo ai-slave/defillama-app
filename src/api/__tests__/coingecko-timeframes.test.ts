@@ -123,4 +123,49 @@ describe('CoinGecko chart timeframes', () => {
 		expect(requestedUrl('/market_chart').searchParams.get('days')).toBe('max')
 		expect(mocks.getObjectCache).toHaveBeenCalledWith('cgchart_bitcoin_timeframe_MAX')
 	})
+
+	it('removes negative market caps before caching fresh charts', async () => {
+		const prices = [[1_000, 10]]
+		const volumes = [[1_000, 20]]
+		mocks.fetchJson.mockResolvedValue({
+			prices,
+			market_caps: [
+				[1_000, -1],
+				[2_000, 0],
+				[3_000, 30]
+			],
+			total_volumes: volumes
+		})
+
+		const chart = await fetchCoinGeckoChartByIdWithCacheFallback('bitcoin', { timeframe: '24H' })
+
+		expect(chart?.data).toEqual({
+			prices,
+			mcaps: [
+				[2_000, 0],
+				[3_000, 30]
+			],
+			volumes
+		})
+		expect(mocks.setObjectCache).toHaveBeenCalledWith('cgchart_bitcoin_timeframe_24H', chart?.data, expect.any(Number))
+	})
+
+	it('removes negative market caps from existing cached charts', async () => {
+		mocks.getObjectCache.mockResolvedValue({
+			prices: [[1_000, 10]],
+			mcaps: [
+				[1_000, 10],
+				[2_000, -1],
+				[3_000, 30]
+			]
+		})
+
+		const chart = await fetchCoinGeckoChartByIdWithCacheFallback('bitcoin', { timeframe: '24H' })
+
+		expect(chart?.data?.mcaps).toEqual([
+			[1_000, 10],
+			[3_000, 30]
+		])
+		expect(mocks.fetchJson).not.toHaveBeenCalled()
+	})
 })

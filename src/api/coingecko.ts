@@ -372,6 +372,27 @@ async function fetchCgChartFresh({
 	}
 }
 
+function removeNegativeMarketCaps(data: NonNullable<CgChartResponse['data']>): NonNullable<CgChartResponse['data']> {
+	const mcaps = data.mcaps
+	if (!mcaps) return data
+
+	let firstNegativeIndex = -1
+	for (let i = 0; i < mcaps.length; i++) {
+		if (mcaps[i]![1] < 0) {
+			firstNegativeIndex = i
+			break
+		}
+	}
+	if (firstNegativeIndex === -1) return data
+
+	const validMcaps = mcaps.slice(0, firstNegativeIndex)
+	for (let i = firstNegativeIndex + 1; i < mcaps.length; i++) {
+		const point = mcaps[i]!
+		if (point[1] >= 0) validMcaps.push(point)
+	}
+	return { ...data, mcaps: validMcaps }
+}
+
 async function getCachedCgChartData(
 	geckoId: string,
 	timeframe: PriceChartTimeframe
@@ -381,12 +402,13 @@ async function getCachedCgChartData(
 	const cacheTimeframe = timeframe === 'YTD' ? `${timeframe}_${new Date(now).getUTCFullYear()}` : timeframe
 	const cacheKey = `cgchart_${geckoId}_timeframe_${cacheTimeframe}`
 	const cached = await getObjectCache<CgChartResponse['data']>(cacheKey)
-	if (cached?.prices?.length) return cached
+	if (cached?.prices?.length) return removeNegativeMarketCaps(cached)
 
-	const fresh = await fetchCgChartFresh({
+	const rawFresh = await fetchCgChartFresh({
 		geckoId,
 		range: getCoinGeckoChartRange(timeframe, now)
 	})
+	const fresh = rawFresh ? removeNegativeMarketCaps(rawFresh) : null
 	if (fresh?.prices?.length) {
 		await setObjectCache(cacheKey, fresh, CG_CHART_CACHE_TTL_SECONDS)
 	}
