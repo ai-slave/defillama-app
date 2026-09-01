@@ -13,7 +13,6 @@ export type UtrClaimRequestInput = {
 	alignmentConsent: boolean
 	termsConsent: boolean
 	sourceUrl: string | null
-	honeypot: string
 }
 
 export function buildUtrClaimRequest(input: UtrClaimRequestInput): Record<string, unknown> {
@@ -31,7 +30,6 @@ export function buildUtrClaimRequest(input: UtrClaimRequestInput): Record<string
 		market_maker_id: null,
 		market_maker_name: input.projectName.trim() || null,
 		click_id: null,
-		source_url: input.sourceUrl,
-		hp: input.honeypot
+		source_url: input.sourceUrl
 	}
 }

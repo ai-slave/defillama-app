@@ -16,8 +16,7 @@ describe('buildUtrClaimRequest', () => {
 			telegram: ' @alice ',
 			alignmentConsent: true,
 			termsConsent: true,
-			sourceUrl: 'https://defillama.com/universal-token-rating/claim',
-			honeypot: ''
+			sourceUrl: 'https://defillama.com/universal-token-rating/claim'
 		})
 
 		expect(validateClaimBody(payload).ok).toBe(true)
@@ -31,5 +30,6 @@ describe('buildUtrClaimRequest', () => {
 			market_maker_name: 'Uniswap',
 			forgd_contact_name: null
 		})
+		expect(payload).not.toHaveProperty('hp')
 	})
 })

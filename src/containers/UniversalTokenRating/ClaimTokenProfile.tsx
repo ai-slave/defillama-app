@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { useSubmitLead } from '~/containers/MarketMakers/client'
-import { LeadError, LeadHoneypot } from '~/containers/MarketMakers/LeadDialog'
+import { LeadError } from '~/containers/MarketMakers/LeadDialog'
 import { EMAIL_PATTERN, SOCIAL_PROFILE_PATTERN } from '~/containers/MarketMakers/leadShared'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
@@ -68,7 +68,6 @@ export function ClaimTokenProfile({
 	const [telegram, setTelegram] = useState('')
 	const [alignmentConsent, setAlignmentConsent] = useState(false)
 	const [termsConsent, setTermsConsent] = useState(false)
-	const [honeypot, setHoneypot] = useState('')
 	const [submitAttempted, setSubmitAttempted] = useState(false)
 	const submit = useSubmitLead('claim')
 
@@ -129,8 +128,7 @@ export function ClaimTokenProfile({
 				telegram,
 				alignmentConsent,
 				termsConsent,
-				sourceUrl: typeof window === 'undefined' ? null : window.location.href,
-				honeypot
+				sourceUrl: typeof window === 'undefined' ? null : window.location.href
 			}),
 			{ onSuccess: () => window.scrollTo({ top: 0 }) }
 		)
@@ -274,7 +272,6 @@ export function ClaimTokenProfile({
 							</Checkbox>
 							{showError('consents') ? <span className="body-sm text-error">{showError('consents')}</span> : null}
 						</div>
-						<LeadHoneypot value={honeypot} onChange={setHoneypot} />
 					</Card>
 
 					{submit.isError ? (
