@@ -1,9 +1,11 @@
+import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { useEffect, useRef, useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
 import { Input, inputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { ClaimTurnstile, isClaimTurnstileEnabled } from './ClaimTurnstile'
 import { requestLeadClickId, useSubmitLead } from './client'
 import { LeadCancelButton, LeadDialog, LeadError, LeadField, LeadHoneypot, LeadSuccess } from './LeadDialog'
 import { EMAIL_PATTERN, normalizeSocialUrl, SOCIAL_PROFILE_PATTERN } from './leadShared'
@@ -36,11 +38,14 @@ export function ClaimDialog({
 	const [alignmentConsent, setAlignmentConsent] = useState(false)
 	const [termsConsent, setTermsConsent] = useState(false)
 	const [honeypot, setHoneypot] = useState('')
+	const [turnstileToken, setTurnstileToken] = useState('')
 	const [touched, setTouched] = useState<Record<string, boolean>>({})
 	const [submitAttempted, setSubmitAttempted] = useState(false)
 	const clickIdRef = useRef<string | null>(null)
+	const turnstileRef = useRef<TurnstileInstance | undefined>(undefined)
 	const submit = useSubmitLead('claim')
 	const resetSubmit = submit.reset
+	const captchaEnabled = isClaimTurnstileEnabled()
 
 	useEffect(() => {
 		if (!open) return
@@ -55,6 +60,8 @@ export function ClaimDialog({
 		setAlignmentConsent(false)
 		setTermsConsent(false)
 		setHoneypot('')
+		setTurnstileToken('')
+		turnstileRef.current?.reset()
 		setTouched({})
 		setSubmitAttempted(false)
 		clickIdRef.current = null
@@ -90,22 +97,31 @@ export function ClaimDialog({
 			setSubmitAttempted(true)
 			return
 		}
-		submit.mutate({
-			position,
-			has_forgd_contact: hasContact === 'yes',
-			forgd_contact_name: hasContact === 'yes' ? contactName : null,
-			full_name: fullName,
-			social_profile_url: normalizeSocialUrl(socialProfileUrl.trim()),
-			organization_email: organizationEmail.trim(),
-			telegram: telegram || null,
-			alignment_consent: alignmentConsent,
-			terms_consent: termsConsent,
-			market_maker_id: marketMakerId,
-			market_maker_name: marketMakerName,
-			click_id: clickIdRef.current,
-			source_url: typeof window === 'undefined' ? null : window.location.href,
-			hp: honeypot
-		})
+		submit.mutate(
+			{
+				position,
+				has_forgd_contact: hasContact === 'yes',
+				forgd_contact_name: hasContact === 'yes' ? contactName : null,
+				full_name: fullName,
+				social_profile_url: normalizeSocialUrl(socialProfileUrl.trim()),
+				organization_email: organizationEmail.trim(),
+				telegram: telegram || null,
+				alignment_consent: alignmentConsent,
+				terms_consent: termsConsent,
+				market_maker_id: marketMakerId,
+				market_maker_name: marketMakerName,
+				click_id: clickIdRef.current,
+				source_url: typeof window === 'undefined' ? null : window.location.href,
+				hp: honeypot,
+				turnstile_token: turnstileToken
+			},
+			{
+				onError: () => {
+					setTurnstileToken('')
+					turnstileRef.current?.reset()
+				}
+			}
+		)
 	}
 
 	return (
@@ -118,7 +134,13 @@ export function ClaimDialog({
 				submit.isSuccess ? null : (
 					<>
 						<LeadCancelButton />
-						<Button type="button" variant="primary" size="md" disabled={submit.isPending} onClick={onSubmit}>
+						<Button
+							type="button"
+							variant="primary"
+							size="md"
+							disabled={submit.isPending || (captchaEnabled && turnstileToken === '')}
+							onClick={onSubmit}
+						>
 							{submit.isPending ? 'Submitting…' : 'Submit Claim Request'}
 						</Button>
 					</>
@@ -250,6 +272,14 @@ export function ClaimDialog({
 						{showError('consents') ? <span className="body-sm text-error">{showError('consents')}</span> : null}
 					</div>
 					<LeadHoneypot value={honeypot} onChange={setHoneypot} />
+					{captchaEnabled ? (
+						<ClaimTurnstile
+							ref={turnstileRef}
+							onVerify={setTurnstileToken}
+							onError={() => setTurnstileToken('')}
+							className="mx-auto w-full max-w-md"
+						/>
+					) : null}
 					{submit.isError ? (
 						<LeadError
 							message={submit.error instanceof Error ? submit.error.message : 'Failed to submit the claim request'}

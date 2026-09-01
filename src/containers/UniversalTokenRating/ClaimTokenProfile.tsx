@@ -1,4 +1,6 @@
-import { useState, type ReactNode } from 'react'
+import type { TurnstileInstance } from '@marsidev/react-turnstile'
+import { useRef, useState, type ReactNode } from 'react'
+import { ClaimTurnstile, isClaimTurnstileEnabled } from '~/containers/MarketMakers/ClaimTurnstile'
 import { useSubmitLead } from '~/containers/MarketMakers/client'
 import { LeadError } from '~/containers/MarketMakers/LeadDialog'
 import { EMAIL_PATTERN, SOCIAL_PROFILE_PATTERN } from '~/containers/MarketMakers/leadShared'
@@ -68,8 +70,11 @@ export function ClaimTokenProfile({
 	const [telegram, setTelegram] = useState('')
 	const [alignmentConsent, setAlignmentConsent] = useState(false)
 	const [termsConsent, setTermsConsent] = useState(false)
+	const [turnstileToken, setTurnstileToken] = useState('')
 	const [submitAttempted, setSubmitAttempted] = useState(false)
+	const turnstileRef = useRef<TurnstileInstance | undefined>(undefined)
 	const submit = useSubmitLead('claim')
+	const captchaEnabled = isClaimTurnstileEnabled()
 
 	const errors: Record<string, string | null> = {
 		token:
@@ -85,7 +90,8 @@ export function ClaimTokenProfile({
 					? 'Enter a valid email address'
 					: null,
 		profileUrl: !SOCIAL_PROFILE_PATTERN.test(profileUrl.trim()) ? 'Enter a valid LinkedIn or X URL' : null,
-		consents: !alignmentConsent || !termsConsent ? 'Both consents are required to submit' : null
+		consents: !alignmentConsent || !termsConsent ? 'Both consents are required to submit' : null,
+		captcha: captchaEnabled && turnstileToken === '' ? 'Complete the CAPTCHA verification' : null
 	}
 	const isValid = Object.values(errors).every((error) => error == null)
 	const showError = (key: string) => (submitAttempted ? errors[key] : null)
@@ -128,9 +134,16 @@ export function ClaimTokenProfile({
 				telegram,
 				alignmentConsent,
 				termsConsent,
-				sourceUrl: typeof window === 'undefined' ? null : window.location.href
+				sourceUrl: typeof window === 'undefined' ? null : window.location.href,
+				turnstileToken
 			}),
-			{ onSuccess: () => window.scrollTo({ top: 0 }) }
+			{
+				onSuccess: () => window.scrollTo({ top: 0 }),
+				onError: () => {
+					setTurnstileToken('')
+					turnstileRef.current?.reset()
+				}
+			}
 		)
 	}
 
@@ -272,6 +285,17 @@ export function ClaimTokenProfile({
 							</Checkbox>
 							{showError('consents') ? <span className="body-sm text-error">{showError('consents')}</span> : null}
 						</div>
+						{captchaEnabled ? (
+							<div className="flex flex-col items-center gap-1.5">
+								<ClaimTurnstile
+									ref={turnstileRef}
+									onVerify={setTurnstileToken}
+									onError={() => setTurnstileToken('')}
+									className="w-full max-w-md"
+								/>
+								{showError('captcha') ? <span className="body-sm text-error">{showError('captcha')}</span> : null}
+							</div>
+						) : null}
 					</Card>
 
 					{submit.isError ? (
@@ -284,7 +308,7 @@ export function ClaimTokenProfile({
 						variant="primary"
 						size="md"
 						className="w-full justify-center"
-						disabled={submit.isPending}
+						disabled={submit.isPending || (captchaEnabled && turnstileToken === '')}
 						onClick={onSubmit}
 					>
 						{submit.isPending ? 'Submitting…' : variant === 'claim' ? 'Submit Claim Request' : 'Submit Application'}

@@ -16,10 +16,13 @@ describe('buildUtrClaimRequest', () => {
 			telegram: ' @alice ',
 			alignmentConsent: true,
 			termsConsent: true,
-			sourceUrl: 'https://defillama.com/universal-token-rating/claim'
+			sourceUrl: 'https://defillama.com/universal-token-rating/claim',
+			turnstileToken: 'claim-token'
 		})
 
-		expect(validateClaimBody(payload).ok).toBe(true)
+		const validated = validateClaimBody(payload)
+		expect(validated.ok).toBe(true)
+		if (!validated.ok) return
 		expect(payload).toMatchObject({
 			analytics_source: 'utr',
 			position: 'Core Contributor',
@@ -28,8 +31,10 @@ describe('buildUtrClaimRequest', () => {
 			organization_email: 'alice@uniswap.org',
 			market_maker_id: null,
 			market_maker_name: 'Uniswap',
-			forgd_contact_name: null
+			forgd_contact_name: null,
+			turnstile_token: 'claim-token'
 		})
+		expect(validated.payload).not.toHaveProperty('turnstile_token')
 		expect(payload).not.toHaveProperty('hp')
 	})
 })

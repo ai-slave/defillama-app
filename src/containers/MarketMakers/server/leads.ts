@@ -3,6 +3,8 @@ import { defineApiRoute } from '~/server/api/types'
 import type { ApiRequest, ApiResult } from '~/server/api/types'
 import { recordRouteRuntimeError } from '~/utils/telemetry'
 import { EMAIL_PATTERN, normalizeSocialUrl, SOCIAL_PROFILE_PATTERN } from '../leadShared'
+import { sendClaimToDiscord, type ClaimSubmissionSource } from './claimDiscord'
+import { isClaimTurnstileEnabled, verifyClaimTurnstile } from './claimTurnstile'
 import { forgdPost } from './client'
 
 const MM_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/
@@ -180,23 +182,65 @@ export function validateClaimBody(raw: unknown): Validated {
 	}
 }
 
-function leadRoute(route: string, forgdPath: string, validate: (raw: unknown) => Validated, mirrorClaim = false) {
+type LeadRouteOptions = {
+	requireCaptcha?: boolean
+	mirrorUtrClaim?: boolean
+	notifyDiscord?: boolean
+}
+
+function claimSubmissionSource(body: Body): ClaimSubmissionSource {
+	return body.analytics_source === 'utr' ? 'utr' : 'market-maker'
+}
+
+function requestId(value: unknown): string | null {
+	if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+	const id = (value as Record<string, unknown>).request_id
+	return typeof id === 'string' && id.trim() ? id.trim() : null
+}
+
+function leadRoute(
+	route: string,
+	forgdPath: string,
+	validate: (raw: unknown) => Validated,
+	options: LeadRouteOptions = {}
+) {
 	return defineApiRoute({
 		route,
 		methods: ['POST'],
 		cacheControl: 'no-store',
 		handle: async (req) => {
 			if (isRateLimited(`${route}:${clientIp(req)}`, LEAD_RATE_LIMIT)) return tooManyRequests()
+			const body = asBody(req.body)
 			const validated = validate(req.body)
 			if (validated.ok === false) return badRequest(validated.error)
-			if (mirrorClaim && asBody(req.body).analytics_source === 'utr') {
+			if (options.requireCaptcha && isClaimTurnstileEnabled()) {
+				const captcha = await verifyClaimTurnstile(body.turnstile_token, clientIp(req))
+				if (captcha.ok === false) {
+					if (captcha.reason === 'invalid') return badRequest('Complete the CAPTCHA verification and try again')
+					recordRouteRuntimeError(new Error('Claim CAPTCHA verification is unavailable'), 'apiRoute')
+					return upstreamError('CAPTCHA verification is unavailable')
+				}
+			}
+			if (options.mirrorUtrClaim && body.analytics_source === 'utr') {
 				void sendClaimToUserAnalytics(validated.payload)
 			}
 			try {
 				const result = await forgdPost(forgdPath, validated.payload)
+				if (options.notifyDiscord) {
+					await sendClaimToDiscord(validated.payload, claimSubmissionSource(body), {
+						ok: true,
+						requestId: requestId(result)
+					})
+				}
 				return ok(result, { 'Cache-Control': 'no-store' })
 			} catch (error) {
 				recordRouteRuntimeError(error, 'apiRoute')
+				if (options.notifyDiscord) {
+					await sendClaimToDiscord(validated.payload, claimSubmissionSource(body), {
+						ok: false,
+						reason: 'forgd_failed'
+					})
+				}
 				return upstreamError('Failed to submit request')
 			}
 		}
@@ -208,12 +252,11 @@ export const leadConnect = leadRoute(
 	'/affiliate/lead/connect',
 	validateConnectBody
 )
-export const leadClaim = leadRoute(
-	'/api/public/market-makers/lead/claim',
-	'/affiliate/lead/claim',
-	validateClaimBody,
-	true
-)
+export const leadClaim = leadRoute('/api/public/market-makers/lead/claim', '/affiliate/lead/claim', validateClaimBody, {
+	requireCaptcha: true,
+	mirrorUtrClaim: true,
+	notifyDiscord: true
+})
 
 export const leadCta = defineApiRoute({
 	route: '/api/public/market-makers/cta',
