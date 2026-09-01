@@ -40,17 +40,17 @@ export default function FAssets() {
 			<SectionHeader>FXRP</SectionHeader>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 				<KpiCard label="Total FXRP Supply" value={k.totalFxrpSupply} />
-				<KpiCard label="% Locked in DeFi" value={k.pctLockedInDefi} />
-				<KpiCard label="Value Locked in DeFi" value={k.valueLockedInDefiUsd} />
-				<KpiCard label="FXRP Locked in DeFi" value={k.fxrpLockedInDefi} />
+				<KpiCard label="% Locked in DeFi" value={k.pctLockedInDefi} sub="All networks" />
+				<KpiCard label="Value Locked in DeFi" value={k.valueLockedInDefiUsd} sub="Flare only" />
+				<KpiCard label="FXRP Locked in DeFi" value={k.fxrpLockedInDefi} sub="Flare only" />
 			</div>
 
 			{charts.locked && (
-				<ChartCard title={charts.locked.title} subtitle="USD value of FXRP locked in DeFi over time, on Flare.">
+				<ChartCard title={charts.locked.title} subtitle="FXRP locked in DeFi over time — Flare vs. all networks.">
 					<MultiSeriesChart
 						dataset={charts.locked.dataset}
 						charts={charts.locked.charts}
-						valueSymbol="$"
+						valueSymbol=""
 						title=""
 						height="360px"
 						chartOptions={charts.locked.chartOptions}
@@ -58,9 +58,9 @@ export default function FAssets() {
 				</ChartCard>
 			)}
 
-			{charts.dist && (
-				<ChartCard title={charts.dist.title} subtitle="Share of FXRP locked, by DeFi protocol, on Flare.">
-					<div className="mx-auto w-full max-w-3xl">
+			<div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+				{charts.dist && (
+					<ChartCard title={charts.dist.title} subtitle="Share of FXRP locked, by DeFi protocol, on Flare.">
 						<PieChart
 							chartData={charts.dist.data}
 							stackColors={charts.dist.colors}
@@ -75,9 +75,31 @@ export default function FAssets() {
 							title=""
 							height="360px"
 						/>
-					</div>
-				</ChartCard>
-			)}
+					</ChartCard>
+				)}
+
+				{charts.allNetworksDist && (
+					<ChartCard
+						title={charts.allNetworksDist.title}
+						subtitle="Share of FXRP locked, by DeFi protocol, across all networks."
+					>
+						<PieChart
+							chartData={charts.allNetworksDist.data}
+							stackColors={charts.allNetworksDist.colors}
+							radius={['45%', '72%']}
+							showLegend
+							legendPosition={{
+								orient: 'vertical',
+								left: 'right',
+								top: 'middle'
+							}}
+							valueSymbol="$"
+							title=""
+							height="360px"
+						/>
+					</ChartCard>
+				)}
+			</div>
 
 			<SectionHeader>Activity</SectionHeader>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">

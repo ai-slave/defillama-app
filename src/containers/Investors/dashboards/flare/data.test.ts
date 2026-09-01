@@ -184,16 +184,18 @@ describe('Flare query data builders', () => {
 						series: [
 							{ name: 'FDC', type: 'bar', data: [0, 5] },
 							{ name: 'FAssets Minting Fee', type: 'bar', data: [3, 1] },
+							{ name: 'FAssets Redemption Fee', type: 'bar', data: [0, 0.2] },
 							{ name: 'Tags', type: 'bar', data: [7, 0.5] },
-							{ name: 'Cumulative', type: 'line', data: [10, 16.5] }
+							{ name: 'Cumulative', type: 'line', data: [10, 16.7] }
 						]
 					},
 					wallets: [wallet],
 					kpis: {
-						totalCollectedUsd: formatted(16.5),
-						collected30dUsd: formatted(16.5),
+						totalCollectedUsd: formatted(16.7),
+						collected30dUsd: formatted(16.7),
 						fdcCollectedUsd: formatted(5),
 						mintingFeeCollectedUsd: formatted(4),
+						redemptionFeeCollectedUsd: formatted(0.2),
 						tagsCollectedUsd: formatted(7.5)
 					}
 				},
@@ -259,16 +261,25 @@ describe('Flare query data builders', () => {
 		const fire = result.fire
 		expect(fire).not.toBeNull()
 		expect(fire?.liveSince).toBe('2026-05-12')
-		expect(fire?.dataset.dimensions).toEqual(['timestamp', 'FDC', 'FAssets Minting Fee', 'Tags', 'Cumulative'])
-		expect(fire?.dataset.source[0]).toEqual([Date.UTC(2026, 4, 12), 0, 3, 7, 10])
+		expect(fire?.dataset.dimensions).toEqual([
+			'timestamp',
+			'FDC',
+			'FAssets Minting Fee',
+			'FAssets Redemption Fee',
+			'Tags',
+			'Cumulative'
+		])
+		expect(fire?.dataset.source[0]).toEqual([Date.UTC(2026, 4, 12), 0, 3, 0, 7, 10])
 		expect(fire?.charts.map(({ name, type, stack }) => [name, type, stack])).toEqual([
 			['FDC', 'bar', 'fire'],
 			['FAssets Minting Fee', 'bar', 'fire'],
+			['FAssets Redemption Fee', 'bar', 'fire'],
 			['Tags', 'bar', 'fire'],
 			['Cumulative', 'line', undefined]
 		])
 		expect(fire?.wallets).toEqual([wallet])
-		expect(fire?.kpis.totalCollectedUsd).toBe('formatted:16.5')
+		expect(fire?.kpis.totalCollectedUsd).toBe('formatted:16.7')
+		expect(fire?.kpis.redemptionFeeCollectedUsd).toBe('formatted:0.2')
 
 		const inf = result.inflation
 		expect(inf).not.toBeNull()
@@ -328,12 +339,16 @@ describe('Flare query data builders', () => {
 		expect(liveWithoutChart.burn.firePoolNote).toBe('n')
 	})
 
-	test('retains FAssets USD preference, fallback, pie order, and line-area styling', () => {
+	test('passes FAssets locked-over-time series through (Flare vs. all networks), plus pie order', () => {
 		const base: Omit<FAssetsAPIResponse, 'lockedOverTimeChart'> = {
 			narrative: 'FAssets narrative',
 			distributionChart: {
 				labels: ['Protocol B', 'Protocol A'],
 				series: [{ name: 'USD', data: [20] }]
+			},
+			allNetworksDistributionChart: {
+				labels: ['Protocol A (Flare)', 'Protocol A (Ethereum)'],
+				series: [{ name: 'USD', data: [15, 5] }]
 			},
 			kpis: {
 				totalFxrpSupply: formatted(1),
@@ -347,37 +362,33 @@ describe('Flare query data builders', () => {
 				swapCount: formatted(9)
 			}
 		}
-		const usd = buildFlareFAssetsData({
+		const result = buildFlareFAssetsData({
 			...base,
 			lockedOverTimeChart: chart(
 				['2026-01-02'],
 				[
-					{ name: 'FXRP', data: [1] },
-					{ name: 'FXRP USD', data: [2] },
-					{ name: 'Collateral USD', data: [3] }
-				]
-			)
-		})
-		const fallback = buildFlareFAssetsData({
-			...base,
-			lockedOverTimeChart: chart(
-				['2026-01-02'],
-				[
-					{ name: 'FXRP', data: [1] },
-					{ name: 'Collateral', data: [2] }
+					{ name: 'FXRP Locked (Flare)', data: [1] },
+					{ name: 'FXRP Locked (All Networks)', type: 'line', data: [2] }
 				]
 			)
 		})
 
-		expect(usd.charts.locked?.dataset.dimensions).toEqual(['timestamp', 'FXRP USD', 'Collateral USD'])
-		expect(usd.charts.locked?.charts).toMatchObject([
-			{ name: 'FXRP USD', color: '#E62058' },
-			{ name: 'Collateral USD', hideAreaStyle: true }
+		expect(result.charts.locked?.dataset.dimensions).toEqual([
+			'timestamp',
+			'FXRP Locked (Flare)',
+			'FXRP Locked (All Networks)'
 		])
-		expect(fallback.charts.locked?.dataset.dimensions).toEqual(['timestamp', 'FXRP'])
-		expect(usd.charts.dist?.data).toEqual([
+		expect(result.charts.locked?.charts).toMatchObject([
+			{ name: 'FXRP Locked (Flare)', color: '#E62058' },
+			{ name: 'FXRP Locked (All Networks)', hideAreaStyle: true }
+		])
+		expect(result.charts.dist?.data).toEqual([
 			{ name: 'Protocol B', value: 20 },
 			{ name: 'Protocol A', value: 0 }
+		])
+		expect(result.charts.allNetworksDist?.data).toEqual([
+			{ name: 'Protocol A (Flare)', value: 15 },
+			{ name: 'Protocol A (Ethereum)', value: 5 }
 		])
 	})
 

@@ -65,6 +65,7 @@ export interface FAssetsAPIResponse {
 	narrative?: string
 	lockedOverTimeChart?: UpstreamChart
 	distributionChart?: DistributionChart
+	allNetworksDistributionChart?: DistributionChart
 	kpis: {
 		totalFxrpSupply: FormattedValue
 		pctLockedInDefi: FormattedValue
@@ -104,6 +105,7 @@ export interface FirePoolAPI {
 		collected30dUsd: FormattedValue
 		fdcCollectedUsd: FormattedValue
 		mintingFeeCollectedUsd: FormattedValue
+		redemptionFeeCollectedUsd?: FormattedValue
 		tagsCollectedUsd: FormattedValue
 	}
 }
@@ -358,13 +360,9 @@ export function buildFlareStakingData(data: StakingAPIResponse) {
 
 export function buildFlareFAssetsData(data: FAssetsAPIResponse) {
 	const locked = data.lockedOverTimeChart
-	const lockedSeries: UpstreamSeries[] = []
-	if (locked) {
-		for (const series of locked.series) {
-			if (/USD/i.test(series.name)) lockedSeries.push(series)
-		}
-		if (lockedSeries.length === 0 && locked.series[0]) lockedSeries.push(locked.series[0])
-	}
+	// FXRP units (Flare vs. all networks) since the Sept-2026 Dune dashboard
+	// migration — the old dual USD/FXRP-unit shape no longer applies.
+	const lockedSeries: UpstreamSeries[] = locked?.series ?? []
 
 	let lockedChart = null
 	if (locked && lockedSeries.length > 0) {
@@ -381,27 +379,16 @@ export function buildFlareFAssetsData(data: FAssetsAPIResponse) {
 		lockedChart = {
 			title: locked.title ?? 'FXRP Locked in DeFi Over Time',
 			dataset: buildColumnarTimeSeriesDataset(locked.dates, lockedSeries, parseDateToTimestampMs, 0),
-			chartOptions: timeSeriesChartOptions(locked.dates.length, '$'),
+			chartOptions: timeSeriesChartOptions(locked.dates.length, ''),
 			charts
 		}
 	}
 
-	const dist = data.distributionChart
-	let distribution = null
-	if (dist && dist.series[0] && dist.labels.length > 0) {
-		const rows = new Array<{ name: string; value: number }>(dist.labels.length)
-		const colors = {}
-		for (let i = 0; i < dist.labels.length; i++) {
-			const name = dist.labels[i]
-			rows[i] = { name, value: dist.series[0].data[i] ?? 0 }
-			colors[name] = DONUT_PALETTE[i % DONUT_PALETTE.length]
-		}
-		distribution = {
-			title: dist.title ?? 'FXRP Distribution Across DeFi Protocols',
-			data: rows,
-			colors
-		}
-	}
+	const distribution = buildDonut(data.distributionChart, 'FXRP Distribution Across DeFi Protocols')
+	const allNetworksDistribution = buildDonut(
+		data.allNetworksDistributionChart,
+		'FXRP Distribution Across DeFi Protocols (All Networks)'
+	)
 
 	return {
 		narrative: data.narrative,
@@ -416,13 +403,26 @@ export function buildFlareFAssetsData(data: FAssetsAPIResponse) {
 			burnCount: data.kpis.burnCount.formatted,
 			swapCount: data.kpis.swapCount.formatted
 		},
-		charts: { locked: lockedChart, dist: distribution }
+		charts: { locked: lockedChart, dist: distribution, allNetworksDist: allNetworksDistribution }
 	}
+}
+
+function buildDonut(dist: DistributionChart | undefined, fallbackTitle: string) {
+	if (!dist || !dist.series[0] || dist.labels.length === 0) return null
+	const rows = new Array<{ name: string; value: number }>(dist.labels.length)
+	const colors: Record<string, string> = {}
+	for (let i = 0; i < dist.labels.length; i++) {
+		const name = dist.labels[i]
+		rows[i] = { name, value: dist.series[0].data[i] ?? 0 }
+		colors[name] = DONUT_PALETTE[i % DONUT_PALETTE.length]
+	}
+	return { title: dist.title ?? fallbackTitle, data: rows, colors }
 }
 
 const FIRE_SOURCE_COLORS: Record<string, string> = {
 	FDC: FLARE_BLUE,
 	'FAssets Minting Fee': FLARE_ORANGE,
+	'FAssets Redemption Fee': '#7C2D9C',
 	Tags: FLARE_GREEN
 }
 
@@ -466,6 +466,7 @@ function buildFireView(firePool: FirePoolAPI) {
 			collected30dUsd: firePool.kpis.collected30dUsd.formatted,
 			fdcCollectedUsd: firePool.kpis.fdcCollectedUsd.formatted,
 			mintingFeeCollectedUsd: firePool.kpis.mintingFeeCollectedUsd.formatted,
+			redemptionFeeCollectedUsd: firePool.kpis.redemptionFeeCollectedUsd?.formatted ?? null,
 			tagsCollectedUsd: firePool.kpis.tagsCollectedUsd.formatted
 		}
 	}

@@ -42,7 +42,7 @@ const FAQ_ITEMS: { q: string; a: React.ReactNode }[] = [
 	},
 	{
 		q: 'What is the FIRE protocol?',
-		a: 'FIRE (Flare Income Reinvestment Entity) is a protocol-level pool that collects revenues from transaction fees, FDC data requests, FAsset activity, and future MEV capture. Its primary mandate is to reduce FLR supply through open-market buybacks and burns. Secondary mandates include funding ecosystem incentives and supporting Foundation sustainability. FIRE went live in May 2026, and the FIRE section above tracks fees collected (FDC, FAssets minting, Tags) in real time.'
+		a: 'FIRE (Flare Income Reinvestment Entity) is a protocol-level pool that collects revenues from transaction fees, FDC data requests, FAsset activity, and future MEV capture. Its primary mandate is to reduce FLR supply through open-market buybacks and burns. Secondary mandates include funding ecosystem incentives and supporting Foundation sustainability. FIRE went live in May 2026, and the FIRE section above tracks fees collected (FDC, FAssets minting, FAssets redemption, Tags) in real time.'
 	},
 	{
 		q: 'What is the 300M FLR/year burn target?',
@@ -289,11 +289,14 @@ export default function Tokenomics() {
 			<SectionHeader>FIRE (FIP.16)</SectionHeader>
 			{fire ? (
 				<>
-					<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+					<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
 						<KpiCard label="Total Collected" value={fire.kpis.totalCollectedUsd} />
 						<KpiCard label="Collected 30d" value={fire.kpis.collected30dUsd} />
 						<KpiCard label="FDC Fees" value={fire.kpis.fdcCollectedUsd} />
 						<KpiCard label="Minting Fees" value={fire.kpis.mintingFeeCollectedUsd} />
+						{fire.kpis.redemptionFeeCollectedUsd != null && (
+							<KpiCard label="Redemption Fees" value={fire.kpis.redemptionFeeCollectedUsd} />
+						)}
 						<KpiCard label="Tag Fees" value={fire.kpis.tagsCollectedUsd} />
 					</div>
 					<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">

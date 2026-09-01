@@ -53,8 +53,8 @@ export default function Overview() {
 					<SectionHeader>FXRP</SectionHeader>
 					<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
 						<KpiCard label="Total FXRP Supply" value={fxrp.totalFxrpSupply} />
-						<KpiCard label="% Locked in DeFi" value={fxrp.pctLockedInDefi} />
-						<KpiCard label="Value Locked in DeFi" value={fxrp.valueLockedInDefiUsd} />
+						<KpiCard label="% Locked in DeFi" value={fxrp.pctLockedInDefi} sub="All networks" />
+						<KpiCard label="Value Locked in DeFi" value={fxrp.valueLockedInDefiUsd} sub="Flare only" />
 					</div>
 				</>
 			)}
