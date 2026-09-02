@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ArticleApiError, getSectionBanner, listArticles } from '~/containers/Articles/api'
 import type { ArticleListResponse } from '~/containers/Articles/api'
 import { ArticleProxyAuthProvider } from '~/containers/Articles/ArticleProxyAuthProvider'
+import { useResearchSectionEngagement } from '~/containers/Articles/landing/Analytics'
 import { GenericCard } from '~/containers/Articles/landing/GenericCard'
 import { ResearchFooter } from '~/containers/Articles/landing/ResearchFooter'
 import { articleHref, formatDate, readingMinutes } from '~/containers/Articles/landing/utils'
@@ -204,6 +205,7 @@ export default function SectionLandingPage({
 	initialArticles,
 	sectionBanner
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
+	useResearchSectionEngagement(section)
 	const canonical = `/research/${ARTICLE_SECTION_SLUGS[section]}`
 
 	return (

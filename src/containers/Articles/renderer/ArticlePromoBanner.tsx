@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { getAllArticlesBanner } from '~/containers/Articles/api'
 import { useEligibleBanner } from '~/containers/Articles/bannerTargeting'
+import { InViewAnalytics, pushResearchAnalyticsEvent } from '~/containers/Articles/landing/Analytics'
 import { PromoDisclosure } from '~/containers/Articles/PromoDisclosure'
 import { allArticlesBannerForArticle } from '~/containers/Articles/renderer/bannerExclusion'
 import type { Banner, BannerLookupResult } from '~/containers/Articles/types'
@@ -38,6 +39,8 @@ export function cardPromoImageUrl(banner: Banner | null): string | undefined {
 function PromoFrame({ banner, imageUrl }: { banner: Banner; imageUrl: string }) {
 	const alt = banner.imageAlt?.trim() ?? ''
 	const linkUrl = banner.linkUrl?.trim() ?? ''
+	const widgetLabel = 'DefiLlama Research article promo banner'
+	const trackClick = () => pushResearchAnalyticsEvent(null, 'widget_click', widgetLabel)
 
 	const frame = (
 		<div className="overflow-hidden rounded-md border border-medium bg-surface transition-colors hover:border-link/40">
@@ -49,17 +52,18 @@ function PromoFrame({ banner, imageUrl }: { banner: Banner; imageUrl: string }) 
 	const content = !linkUrl ? (
 		frame
 	) : isExternalUrl(linkUrl) ? (
-		<a href={linkUrl} target="_blank" rel="noopener noreferrer sponsored" className="block">
+		<a href={linkUrl} target="_blank" rel="noopener noreferrer sponsored" className="block" onClick={trackClick}>
 			{frame}
 		</a>
 	) : (
-		<Link href={linkUrl} className="block">
+		<Link href={linkUrl} className="block" onClick={trackClick}>
 			{frame}
 		</Link>
 	)
 
 	return (
 		<div>
+			<InViewAnalytics eventParams={[null, 'widget_impression', widgetLabel]} />
 			{content}
 			<PromoDisclosure banner={banner} />
 		</div>

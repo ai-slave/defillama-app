@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Announcement } from '~/components/Announcement'
 import { getAllArticlesBanner, getArticleBanner, getLandingBanner, getSectionBanner } from '~/containers/Articles/api'
 import { useEligibleBanner } from '~/containers/Articles/bannerTargeting'
+import { pushResearchAnalyticsEvent } from '~/containers/Articles/landing/Analytics'
 import { allArticlesBannerForArticle } from '~/containers/Articles/renderer/bannerExclusion'
 import type { ArticleSection, Banner, BannerLookupResult } from '~/containers/Articles/types'
 import { Icon } from '~/ui/Icon'
@@ -95,6 +96,13 @@ export function ArticleBannerStrip({ scope, section, articleId, initialData }: P
 	const linkLabel = banner.linkLabel?.trim() || 'Read more'
 	const linkUrl = banner.linkUrl?.trim() || ''
 	const hasLink = !!linkUrl
+	const widgetLabel =
+		scope === 'landing'
+			? 'DefiLlama Research landing top bar'
+			: scope === 'article'
+				? 'DefiLlama Research article top bar'
+				: null
+	const trackClick = widgetLabel ? () => pushResearchAnalyticsEvent(null, 'widget_click', widgetLabel) : undefined
 
 	return (
 		<Announcement
@@ -115,6 +123,7 @@ export function ArticleBannerStrip({ scope, section, articleId, initialData }: P
 								href={linkUrl}
 								target="_blank"
 								rel="noopener noreferrer"
+								onClick={trackClick}
 								className="inline-flex items-center gap-1 underline underline-offset-2 transition-opacity hover:opacity-80"
 							>
 								{linkLabel}
@@ -123,6 +132,7 @@ export function ArticleBannerStrip({ scope, section, articleId, initialData }: P
 						) : (
 							<Link
 								href={linkUrl}
+								onClick={trackClick}
 								className="inline-flex items-center gap-1 underline underline-offset-2 transition-opacity hover:opacity-80"
 							>
 								{linkLabel}
