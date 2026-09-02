@@ -87,10 +87,34 @@ describe('resolveSeriesAxisLayout', () => {
 	})
 
 	it('uses a single axis for a single repeated metric', () => {
-		const layout = resolveSeriesAxisLayout([{ metricType: 'volume' }, { metricType: 'volume' }])
+		const layout = resolveSeriesAxisLayout([
+			{ metricType: 'volume', magnitude: 1_000 },
+			{ metricType: 'volume', magnitude: 1_000_000 }
+		])
 
 		expect(layout.needMultipleAxes).toBe(false)
 		expect(layout.axisCount).toBe(1)
+	})
+
+	it('keeps similarly scaled dollar metrics on one axis', () => {
+		const layout = resolveSeriesAxisLayout([
+			{ metricType: 'fees', magnitude: 10_000_000 },
+			{ metricType: 'holdersRevenue', magnitude: 50_000_000 }
+		])
+
+		expect(layout.needMultipleAxes).toBe(false)
+		expect(layout.seriesAxisIndexes).toEqual([0, 0])
+	})
+
+	it('splits different dollar metrics whose magnitudes would flatten the smaller series', () => {
+		const layout = resolveSeriesAxisLayout([
+			{ metricType: 'tokenPrice', magnitude: 65_000 },
+			{ metricType: 'tokenVolume', magnitude: 2_300_000_000 }
+		])
+
+		expect(layout.needMultipleAxes).toBe(true)
+		expect(layout.axisUnitGroups).toEqual(['usd', 'usd'])
+		expect(layout.seriesAxisIndexes).toEqual([0, 1])
 	})
 
 	it('maps unit groups to display symbols', () => {

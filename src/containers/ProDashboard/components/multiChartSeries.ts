@@ -19,6 +19,15 @@ export type MultiChartSeriesView = {
 	solidChartAreaStyle: boolean
 }
 
+function getSeriesMagnitude(data: MultiChartInputSeries['data']): number | undefined {
+	let magnitude = 0
+	for (const [, value] of data) {
+		if (!Number.isFinite(value)) continue
+		magnitude = Math.max(magnitude, Math.abs(value))
+	}
+	return magnitude > 0 ? magnitude : undefined
+}
+
 export function buildMultiChartCsvRows({ dataset, charts }: MultiChartSeriesView): string[][] {
 	const rows = new Array<string[]>(dataset.source.length + 1)
 	rows[0] = ['Date', ...charts.map((chart) => chart.name)]
@@ -148,7 +157,9 @@ export function buildMultiChartSeriesView({
 		}
 	}
 
-	const axisLayout = resolveSeriesAxisLayout(series)
+	const axisLayout = resolveSeriesAxisLayout(
+		series.map((item) => ({ metricType: item.metricType, magnitude: getSeriesMagnitude(item.data) }))
+	)
 	const chartOrder = new Array<number>(series.length)
 	for (let i = 0; i < series.length; i++) chartOrder[i] = i
 	if (showPercentage && source.length > 0) {

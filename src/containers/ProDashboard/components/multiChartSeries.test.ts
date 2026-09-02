@@ -123,6 +123,23 @@ describe('buildMultiChartSeriesView', () => {
 		])
 	})
 
+	it('separates same-unit series when one scale would flatten the smaller metric', () => {
+		const result = buildMultiChartSeriesView({
+			series: [
+				{ ...SNAPSHOT, name: 'Token Price', metricType: 'tokenPrice', data: [[1, 63_780.9]] },
+				{ ...FLOW, name: 'Token Volume', metricType: 'tokenVolume', data: [[1, 785_170_000]] }
+			],
+			showCumulative: false,
+			showPercentage: false,
+			stackSeries: false
+		})
+
+		expect(result.charts).toEqual([
+			expect.objectContaining({ name: 'Token Price', yAxisIndex: 0, valueSymbol: '$' }),
+			expect.objectContaining({ name: 'Token Volume', yAxisIndex: 1, valueSymbol: '$' })
+		])
+	})
+
 	it('exports the row-major dataset in displayed chart order', () => {
 		const result = buildMultiChartSeriesView({
 			series: [
