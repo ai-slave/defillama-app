@@ -37,8 +37,8 @@ describe('pre-IPO valuation chart', () => {
 			lineStyle: { type: 'dashed' }
 		})
 		expect(chart?.charts[1]?.data).toEqual([
-			[Date.UTC(2025, 0, 15), null],
-			[Date.UTC(2025, 0, 15), 1_500]
+			[Date.UTC(2025, 0, 15), 1_500],
+			[TODAY, 1_500]
 		])
 		expect(chart?.charts[2]?.data).toEqual([
 			[Date.UTC(2025, 0, 15), 10],
@@ -70,11 +70,46 @@ describe('pre-IPO valuation chart', () => {
 		expect(chart?.charts.map((series) => series.name)).toEqual(['Round valuation', 'Raised'])
 		expect(chart?.charts[0]?.data).toEqual([
 			[Date.UTC(2025, 0, 1), 100],
-			[Date.UTC(2025, 1, 1), 200]
+			[Date.UTC(2025, 1, 1), 200],
+			[TODAY, 200]
 		])
 		expect(chart?.charts[1]?.data).toEqual([
 			[Date.UTC(2025, 0, 1), 10],
 			[Date.UTC(2025, 1, 1), 20]
+		])
+	})
+
+	it('carries the last disclosed valuation through an undisclosed latest raise', () => {
+		const chart = buildPreIpoValuationChart(
+			[],
+			[
+				{ date: '2025-01-01', amountRaised: 10, valuation: 100, series: 'Seed' },
+				{ date: '2026-02-27', amountRaised: 20, valuation: null, series: 'Series A' }
+			],
+			TODAY
+		)
+
+		expect(chart?.charts[0]?.data).toEqual([
+			[Date.UTC(2025, 0, 1), 100],
+			[TODAY, 100]
+		])
+	})
+
+	it('does not create gaps for undisclosed rounds between disclosed valuations', () => {
+		const chart = buildPreIpoValuationChart(
+			[],
+			[
+				{ date: '2025-01-01', amountRaised: 10, valuation: 100, series: 'Seed' },
+				{ date: '2025-10-01', amountRaised: 20, valuation: null, series: 'Series A' },
+				{ date: '2026-01-01', amountRaised: 30, valuation: 200, series: 'Series B' }
+			],
+			TODAY
+		)
+
+		expect(chart?.charts[0]?.data).toEqual([
+			[Date.UTC(2025, 0, 1), 100],
+			[Date.UTC(2026, 0, 1), 200],
+			[TODAY, 200]
 		])
 	})
 

@@ -36,17 +36,22 @@ export function buildPreIpoValuationChart(
 		})
 	}
 
-	const roundValuationData: Array<[number, number | null]> = []
+	const roundValuationData: Array<[number, number]> = []
 	const raisedData: Array<[number, number]> = []
-	let hasRoundValuation = false
 	for (const raise of raises.toSorted((a, b) => a.date.localeCompare(b.date))) {
 		const timestamp = utcDateTimestamp(raise.date)
-		roundValuationData.push([timestamp, raise.valuation])
 		raisedData.push([timestamp, raise.amountRaised])
-		if (raise.valuation != null) hasRoundValuation = true
+		// A raise without a disclosed valuation should not interrupt the step series.
+		// It still belongs in the funding bars, but there is no valuation observation
+		// to plot at this timestamp.
+		if (raise.valuation != null) roundValuationData.push([timestamp, raise.valuation])
 		if (timestamp > xAxisMaxTimestamp) xAxisMaxTimestamp = timestamp
 	}
-	if (hasRoundValuation) {
+	if (roundValuationData.length > 0) {
+		const lastValuation = roundValuationData[roundValuationData.length - 1]!
+		if (lastValuation[0] < xAxisMaxTimestamp) {
+			roundValuationData.push([xAxisMaxTimestamp, lastValuation[1]])
+		}
 		charts.push({
 			type: 'line',
 			name: 'Round valuation',
