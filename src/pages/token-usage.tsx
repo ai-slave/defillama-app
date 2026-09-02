@@ -68,7 +68,7 @@ const columnHelper = createColumnHelper<TokenUsagePageRow>()
 export default function Tokens() {
 	const router = useRouter()
 	const isClient = useIsClient()
-	const { authorizedFetch, hasActiveSubscription, isAuthenticated } = useAuthContext()
+	const { authorizedFetch, hasActiveSubscription, isAuthenticated, loaders } = useAuthContext()
 	const { chartInstance: treemapChartInstance, handleChartReady: handleTreemapChartReady } = useGetChartInstance()
 	const signInDialogStore = Ariakit.useDialogStore()
 
@@ -155,7 +155,7 @@ export default function Tokens() {
 
 			<TokenUsageSearch />
 
-			{!isClient || isLoading || !router.isReady ? (
+			{!isClient || isLoading || !router.isReady || loaders.userLoading ? (
 				<PanelLoadingStatus className="min-h-[380px]" />
 			) : error ? (
 				<PanelStatus variant="error" className="min-h-[380px]">

@@ -17,6 +17,7 @@ import { OAuthWelcomeDialog } from '~/auth/OAuthWelcomeDialog'
 import { getReferrer } from '~/auth/referrer'
 import { isGoogleLinkChallenge, type GoogleLinkChallenge } from '~/auth/signInFlowStore'
 import { clearSignupSource, getSignupSource } from '~/auth/signupSource'
+import { clearPersistedSubscriptionStatus, subscriptionStatusQueryOptions } from '~/auth/subscriptionStatus'
 import { VerifyEmailConfirmDialog } from '~/auth/VerifyEmailConfirmDialog'
 import { VerifyEmailDialog } from '~/auth/VerifyEmailDialog'
 import { AUTH_SERVER } from '~/constants'
@@ -99,6 +100,7 @@ const loadCreateSiweMessage = async (): Promise<CreateSiweMessage> => {
 }
 
 const clearUserSession = () => {
+	clearPersistedSubscriptionStatus(pb.authStore.record?.id)
 	pb.authStore.clear()
 	localStorage.removeItem('userHash')
 	localStorage.removeItem('lite-dashboards')
@@ -225,7 +227,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 	const isAuthenticated = authStoreState.isValid && !!authStoreState.token
 
 	const queryClient = useQueryClient()
-
+	const subscriptionUserId = isAuthenticated ? (authStoreState.record?.id ?? null) : null
+	const subscriptionToken = isAuthenticated ? authStoreState.token : null
+	const subscriptionQueryOptions = useMemo(
+		() => subscriptionStatusQueryOptions({ userId: subscriptionUserId, token: subscriptionToken }),
+		[subscriptionUserId, subscriptionToken]
+	)
+	const subscriptionQuery = useQuery(subscriptionQueryOptions)
 	useEffect(() => {
 		if (oauthWelcomeOpen && (authStoreState.record?.id ?? null) !== oauthWelcomeUserRef.current) {
 			setOauthWelcomeOpen(false)
@@ -281,7 +289,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 		}
 	})
 
-	const userLoading = !authStoreState.token || !authStoreState.record ? userQueryIsLoading : false
+	const authUserLoading = !authStoreState.token || !authStoreState.record ? userQueryIsLoading : false
+	const userLoading = authUserLoading || (isAuthenticated && subscriptionQuery.data === undefined)
 
 	const login = useCallback(
 		async (email: string, password: string, onSuccess?: () => void) => {
@@ -865,7 +874,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 		promptVerifyEmail,
 		isAuthenticated,
 		authToken: isAuthenticated ? authStoreState.token : null,
-		hasActiveSubscription: userData?.has_active_subscription ?? false,
+		hasActiveSubscription: subscriptionQuery.data?.status === 'active',
 		isTrial: Boolean(userData?.flags?.is_trial),
 		loaders: {
 			login: loginMutation.isPending,

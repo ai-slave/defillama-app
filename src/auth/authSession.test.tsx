@@ -31,6 +31,9 @@ beforeEach(() => {
 	vi.stubGlobal(
 		'fetch',
 		vi.fn((url: string | URL, config?: RequestInit) => {
+			if (String(url).endsWith('/subscription/status')) {
+				return jsonResponse({ message: 'No active subscription' }, 404)
+			}
 			if (!String(url).endsWith('/api/collections/users/auth-refresh')) {
 				throw new Error(`Unexpected fetch in test: ${url}`)
 			}

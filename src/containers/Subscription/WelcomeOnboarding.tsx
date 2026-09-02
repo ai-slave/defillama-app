@@ -78,9 +78,8 @@ export function WelcomeOnboarding() {
 	const [slackAcquisition, setSlackAcquisition] = useState<SlackAcquisition | null>(null)
 	const slackAcquisitionHandledRef = useRef(false)
 
-	// Stripe redirects here before the webhook grants the entitlement. The page reads
-	// has_active_subscription from the auth record, so the auth-status query must be
-	// re-read too — and a bounded number of times, since one read can race the webhook.
+	// Stripe redirects here before the webhook grants the entitlement. Re-read the
+	// canonical status a bounded number of times because one read can race the webhook.
 	// The Refresh button below stays as the manual recovery path.
 	const CONFIRMATION_READS = 6
 	const [confirmationReads, setConfirmationReads] = useState(0)
@@ -89,7 +88,6 @@ export function WelcomeOnboarding() {
 		if (confirmationReads >= CONFIRMATION_READS) return
 		const id = window.setTimeout(
 			() => {
-				void queryClient.invalidateQueries({ queryKey: ['auth', 'status'] })
 				void queryClient.invalidateQueries({ queryKey: ['subscription'] })
 				setConfirmationReads((reads) => reads + 1)
 			},

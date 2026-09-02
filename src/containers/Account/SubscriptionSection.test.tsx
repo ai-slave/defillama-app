@@ -10,6 +10,7 @@ import { SubscriptionSection } from './SubscriptionSection'
 const session = vi.hoisted(() => ({
 	user: { id: 'account-a', email: 'a@example.com', has_active_subscription: false },
 	isAuthenticated: true,
+	authToken: 'test-token',
 	isTrial: false,
 	hasActiveSubscription: false,
 	loaders: { userLoading: false }

@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { Icon } from '~/ui/Icon'
+import { LoadingIndicator } from '~/ui/Status'
 import { DashboardPaywallModal, type PaywallReason } from './DashboardPaywallModal'
 
 interface PremiumFeatureGateProps {
@@ -12,12 +13,20 @@ interface PremiumFeatureGateProps {
 }
 
 export function PremiumFeatureGate({ featureName, paywallReason = 'pro-feature', children }: PremiumFeatureGateProps) {
-	const { hasActiveSubscription } = useAuthContext()
+	const { hasActiveSubscription, loaders } = useAuthContext()
 	const [paywallOpen, setPaywallOpen] = useState(false)
 	const paywallDialogStore = Ariakit.useDialogStore({ open: paywallOpen, setOpen: setPaywallOpen })
 
 	if (hasActiveSubscription) {
 		return <>{children}</>
+	}
+
+	if (loaders.userLoading) {
+		return (
+			<div className="flex min-h-[300px] items-center justify-center">
+				<LoadingIndicator />
+			</div>
+		)
 	}
 
 	return (

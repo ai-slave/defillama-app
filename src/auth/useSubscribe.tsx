@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useMemo } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { getReferrer } from '~/auth/referrer'
+import { subscriptionStatusQueryOptions, type Subscription } from '~/auth/subscriptionStatus'
 import { AUTH_SERVER } from '~/constants'
 import { getStorageItem, removeStorageItem, setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { handleSimpleFetchResponse } from '~/utils/async'
@@ -24,27 +25,7 @@ interface SubscriptionCreateResponse {
 	checkoutUrl: string
 }
 
-export interface Subscription {
-	PK: string
-	checkoutUrl: string
-	id: string
-	status: string
-	updatedAt: string
-	expires_at: string
-	started_at?: string
-	type: string
-	provider: string
-	billing_interval?: 'year' | 'month'
-	overage?: boolean
-	// Set on seat-derived records billed through a team, not the user's own provider account
-	team_id?: string
-	metadata?: {
-		isTrial?: boolean
-		trial_started_at?: string
-		isCanceled?: string
-		isPastDue?: string
-	}
-}
+export type { Subscription } from '~/auth/subscriptionStatus'
 
 interface SubscriptionResponse {
 	subscription: Subscription
@@ -104,32 +85,6 @@ const parseGeneratedApiKey = (payload: unknown): string | null => {
 	return typeof value === 'string' && value.length > 0 ? value : null
 }
 
-// A 404 is the only response that proves "no active subscription"; any other
-// failure is unknown and must surface as an error, never render as Free.
-async function fetchSubscription({ isAuthenticated }: { isAuthenticated: boolean }): Promise<Subscription> {
-	if (!isAuthenticated) {
-		return defaultInactiveSubscription
-	}
-
-	const response = await fetch(`${AUTH_SERVER}/subscription/status`, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${pb.authStore.token}`
-		}
-	})
-
-	if (response.status === 404) {
-		return defaultInactiveSubscription
-	}
-
-	const normalized = await handleSimpleFetchResponse(response).catch((error) => {
-		throw new Error(getErrorMessage(error, 'Failed to load subscription'))
-	})
-	const data: SubscriptionResponse = await normalized.json()
-	return data.subscription
-}
-
 // Same contract: 404 means "no past-due subscription", anything else is unknown.
 async function fetchPastDueSubscription({
 	isAuthenticated
@@ -157,8 +112,14 @@ async function fetchPastDueSubscription({
 
 export const useSubscribe = () => {
 	const router = useRouter()
-	const { user, isAuthenticated, authorizedFetch } = useAuthContext()!
+	const { user, isAuthenticated, authToken, authorizedFetch } = useAuthContext()!
 	const queryClient = useQueryClient()
+	const subscriptionUserId = isAuthenticated ? (user?.id ?? null) : null
+	const subscriptionToken = isAuthenticated ? authToken : null
+	const subscriptionQueryConfig = useMemo(
+		() => subscriptionStatusQueryOptions({ userId: subscriptionUserId, token: subscriptionToken }),
+		[subscriptionUserId, subscriptionToken]
+	)
 
 	const createSubscription = useMutation<SubscriptionCreateResponse, Error, SubscriptionRequest>({
 		mutationFn: async (subscriptionData) => {
@@ -283,14 +244,7 @@ export const useSubscribe = () => {
 		}
 	})
 
-	const subscriptionQuery = useQuery({
-		queryKey: ['subscription', user?.id],
-		queryFn: () => fetchSubscription({ isAuthenticated }),
-		retry: false,
-		refetchOnWindowFocus: false,
-		enabled: isAuthenticated,
-		staleTime: 1000 * 60 * 15
-	})
+	const subscriptionQuery = useQuery(subscriptionQueryConfig)
 
 	const subscriptionData = subscriptionQuery?.data ?? null
 
@@ -309,14 +263,8 @@ export const useSubscribe = () => {
 
 	const llamafeedSubscription = subscriptionData?.type === 'llamafeed' ? subscriptionData : defaultInactiveSubscription
 
-	useEffect(() => {
-		if (subscriptionData?.status === 'active' && !user?.has_active_subscription) {
-			void queryClient.invalidateQueries({ queryKey: ['auth', 'status'] })
-		}
-	}, [subscriptionData?.status, user?.has_active_subscription, queryClient])
-
-	const isSubscriptionLoading = subscriptionQuery.isLoading && subscriptionData == null
-	const isSubscriptionError = subscriptionQuery.isError && !subscriptionData
+	const isSubscriptionLoading = isAuthenticated && subscriptionQuery.data === undefined && !subscriptionQuery.isError
+	const isSubscriptionError = isAuthenticated && subscriptionQuery.isError
 
 	const trialAvailabilityQuery = useQuery({
 		queryKey: ['subscription', 'trial-available', user?.id],
