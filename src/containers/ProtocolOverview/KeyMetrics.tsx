@@ -452,19 +452,6 @@ const buildMetrics = (
 			metrics.push({ name: `Cumulative ${prefix}`, tooltipContent: defs?.cumulative, value: data.emissionsAllTime })
 		}
 	} else {
-		if (data.annualized1y != null) {
-			metrics.push({
-				name: `${label} (Annualized)`,
-				tooltipContent: defs?.annualized,
-				value: data.annualized1y
-			})
-		} else if (data.total30d != null) {
-			metrics.push({
-				name: `${label} (30d Run Rate)`,
-				tooltipContent: defs?.runRate,
-				value: data.total30d * ANNUALIZATION_FACTOR
-			})
-		}
 		if (data.total30d != null) {
 			metrics.push({
 				name: `${label} 30d`,

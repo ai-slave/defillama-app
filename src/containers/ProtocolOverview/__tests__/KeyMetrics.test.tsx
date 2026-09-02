@@ -275,7 +275,7 @@ describe('KeyMetrics', () => {
 		expect(unavailableMarkup).not.toContain('Total Value Locked')
 	})
 
-	it('uses the annualized1y fees value for annualized metrics when available', async () => {
+	it('shows actual 30d fees and revenue when annualized values are available', async () => {
 		const markup = await renderKeyMetrics({
 			...baseProps,
 			fees: {
@@ -286,15 +286,29 @@ describe('KeyMetrics', () => {
 				annualized1y: 3500,
 				totalAllTime: null,
 				chainBreakdown: null
+			},
+			revenue: {
+				total24h: null,
+				total7d: null,
+				total30d: 40,
+				total1y: 500,
+				annualized1y: 500,
+				totalAllTime: null,
+				chainBreakdown: null
 			}
 		})
 
-		expect(markup).toContain('Fees (Annualized)')
-		expect(markup).toContain('$3500')
-		expect(markup).not.toContain('$1220')
+		expect(markup).toContain('Fees 30d')
+		expect(markup).toContain('$100')
+		expect(markup).toContain('Revenue 30d')
+		expect(markup).toContain('$40')
+		expect(markup).not.toContain('Fees (Annualized)')
+		expect(markup).not.toContain('Revenue (Annualized)')
+		expect(markup).not.toContain('$3500')
+		expect(markup).not.toContain('$500')
 	})
 
-	it('renders annualized1y fees even when 30d fees are missing', async () => {
+	it('does not use an annualized fee value when observed periods are missing', async () => {
 		const markup = await renderKeyMetrics({
 			...baseProps,
 			fees: {
@@ -308,12 +322,11 @@ describe('KeyMetrics', () => {
 			}
 		})
 
-		expect(markup).toContain('Fees (Annualized)')
-		expect(markup).toContain('$3500')
-		expect(markup).not.toContain('Fees 30d')
+		expect(markup).not.toContain('Fees')
+		expect(markup).not.toContain('$3500')
 	})
 
-	it('shows a 30d run-rate fees label when using the 30d fallback value', async () => {
+	it('does not annualize 30d fees when no annualized value is available', async () => {
 		const markup = await renderKeyMetrics({
 			...baseProps,
 			fees: {
@@ -327,9 +340,10 @@ describe('KeyMetrics', () => {
 			}
 		})
 
-		expect(markup).toContain('Fees (30d Run Rate)')
-		expect(markup).not.toContain('Fees (Annualized)')
-		expect(markup).toContain('$1220')
+		expect(markup).toContain('Fees 30d')
+		expect(markup).toContain('$100')
+		expect(markup).not.toContain('Fees (30d Run Rate)')
+		expect(markup).not.toContain('$1220')
 	})
 
 	it('does not render fee rows for unavailable base periods', async () => {

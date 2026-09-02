@@ -79,7 +79,7 @@ Important rules:
 - Protocol fees/revenue charts use protocol adapter endpoints, not chain-native fee/revenue ranking semantics.
 - `chartDescriptors.ts` owns protocol-level adapter chart request descriptors.
 - Chain Fees, Chain Revenue, App Fees, App Revenue, and REV semantics live in `src/metrics` only where they cross ChainOverview, AdapterMetrics, CompareChains, and public chart validation. Do not move ProtocolOverview descriptors there unless another container or API endpoint needs the same invariant.
-- Annualized fee/revenue cards use `annualized1y` values when available; missing annualized values should stay missing rather than falling back to 30-day totals.
+- Fee, revenue, and holder-revenue cards lead with observed 30-day totals instead of annualized values or 30-day run rates.
 - TVL chart composition in `useFetchProtocolChartData.ts` is local and has timestamp alignment and denomination behavior. Add characterization tests before extracting it.
 
 ## TVL Notes
