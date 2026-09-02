@@ -1,9 +1,8 @@
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
-import { useRef, useState, type ReactNode } from 'react'
+import { useMutation } from '@tanstack/react-query'
+import { Fragment, useRef, useState, type ReactNode } from 'react'
 import { ClaimTurnstile, isClaimTurnstileEnabled } from '~/containers/MarketMakers/ClaimTurnstile'
-import { useSubmitLead } from '~/containers/MarketMakers/client'
 import { LeadError } from '~/containers/MarketMakers/LeadDialog'
-import { EMAIL_PATTERN, SOCIAL_PROFILE_PATTERN } from '~/containers/MarketMakers/leadShared'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
@@ -11,20 +10,298 @@ import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formatNumber } from '~/utils/numberFormat'
-import { buildUtrClaimRequest } from './claimRequest'
-import type { UtrClaimProjectOption, UtrScoringConfig } from './types'
+import { submitUtrClaim, uploadUtrClaimDocuments } from './claimClient'
+import { CLAIM_BLOCKS, type ClaimColumn, type ClaimSelectOption, type ClaimTableSection } from './claimFormConfig'
+import {
+	buildUtrClaimRequest,
+	createEmptyUtrClaimRows,
+	UTR_CLAIM_DOCUMENT_KEYS,
+	UTR_CLAIM_FILE_ACCEPT,
+	validateUtrClaimFiles,
+	type UtrClaimDocumentKey,
+	type UtrClaimDocuments,
+	type UtrClaimFormRow,
+	type UtrClaimRows
+} from './claimRequest'
+import { scrollToFirstUtrClaimError } from './scrollToClaimError'
+import type {
+	UtrClaimExchangeOption,
+	UtrClaimMarketMakerOption,
+	UtrClaimProjectOption,
+	UtrScoringConfig
+} from './types'
+import { UtrDocsDrawer } from './UtrDocsDrawer'
 
-const CONTACT_OPTIONS = [
-	{ value: 'yes', label: 'Yes' },
-	{ value: 'no', label: 'No' }
-] as const
+const ATTACH_HINT = 'Supported formats: PDF, DOCX, XLSX, TXT, MD - Max file size: 10mb'
+
+type UploadStatus = { pending: boolean; error: string | null }
+
+function createEmptyDocuments(): UtrClaimDocuments {
+	return Object.fromEntries(UTR_CLAIM_DOCUMENT_KEYS.map((key) => [key, []])) as UtrClaimDocuments
+}
+
+function createUploadStatuses(): Record<UtrClaimDocumentKey, UploadStatus> {
+	return Object.fromEntries(UTR_CLAIM_DOCUMENT_KEYS.map((key) => [key, { pending: false, error: null }])) as Record<
+		UtrClaimDocumentKey,
+		UploadStatus
+	>
+}
 
 function LabeledField({ label, error, children }: { label: string; error?: string | null; children: ReactNode }) {
 	return (
 		<div className="flex flex-col gap-1.5">
 			<span className="label-md text-primary">{label}</span>
 			{children}
-			{error ? <span className="body-sm text-error">{error}</span> : null}
+			{error ? (
+				<span data-utr-claim-error className="body-sm text-error">
+					{error}
+				</span>
+			) : null}
+		</div>
+	)
+}
+
+function CellInput({
+	column,
+	value,
+	onChange
+}: {
+	column: ClaimColumn
+	value: string
+	onChange: (value: string) => void
+}) {
+	if (column.type === 'select') {
+		const options = column.options ?? []
+		return (
+			<select
+				className={`${inputStyles} w-full cursor-pointer`}
+				aria-label={column.label}
+				value={value}
+				disabled={column.optionSource != null && !options.length}
+				onChange={(event) => onChange(event.target.value)}
+			>
+				<option value="" />
+				{options.map((option) => (
+					<option key={option.value} value={option.value}>
+						{option.label}
+					</option>
+				))}
+			</select>
+		)
+	}
+	if (column.type === 'percent' || column.type === 'months') {
+		return (
+			<span className={`${inputStyles} flex w-full items-center gap-1`}>
+				<input
+					aria-label={column.label}
+					value={value}
+					onChange={(event) => onChange(event.target.value)}
+					inputMode={column.type === 'months' ? 'numeric' : 'decimal'}
+					className="w-full min-w-0 bg-transparent focus:outline-hidden"
+				/>
+				<span className="shrink-0 text-tertiary">{column.type === 'percent' ? '%' : 'months'}</span>
+			</span>
+		)
+	}
+	return (
+		<Input
+			aria-label={column.label}
+			type={column.type === 'url' ? 'url' : 'text'}
+			value={value}
+			onChange={(event) => onChange(event.target.value)}
+			inputMode={column.type === 'integer' ? 'numeric' : undefined}
+			placeholder={column.placeholder}
+			maxLength={column.key === 'signerNames' ? 1000 : 500}
+			className="w-full"
+		/>
+	)
+}
+
+function sectionWithOptions(
+	section: ClaimTableSection,
+	marketMakerOptions: UtrClaimMarketMakerOption[],
+	exchangeOptions: UtrClaimExchangeOption[]
+): ClaimTableSection {
+	return {
+		...section,
+		columns: section.columns.map((column) => {
+			let options: ClaimSelectOption[] | undefined
+			if (column.optionSource === 'marketMakers') {
+				options = marketMakerOptions.map(({ marketMakerId, marketMakerName }) => ({
+					value: marketMakerId,
+					label: marketMakerName
+				}))
+			} else if (column.optionSource === 'exchanges') {
+				options = exchangeOptions.map(({ id, displayName }) => ({ value: id, label: displayName }))
+			}
+			return options ? { ...column, options } : column
+		})
+	}
+}
+
+function firstSectionError(errors: Record<string, string>, sectionId: string): string | null {
+	return Object.entries(errors).find(([path]) => path === sectionId || path.startsWith(`${sectionId}.`))?.[1] ?? null
+}
+
+function InlineTableSection({
+	section,
+	rows,
+	error,
+	onChange
+}: {
+	section: ClaimTableSection
+	rows: UtrClaimFormRow[]
+	error: string | null
+	onChange: (rows: UtrClaimFormRow[]) => void
+}) {
+	return (
+		<div className="flex flex-col gap-3">
+			<h3 className="heading-xs">{section.title}</h3>
+			{section.description ? <p className="body-sm text-secondary">{section.description}</p> : null}
+			{rows.length ? (
+				<div className="overflow-x-auto rounded-lg border border-subtle">
+					<table className="w-full border-collapse body-sm">
+						<thead>
+							<tr className="border-b border-subtle">
+								{section.columns.map((column) => (
+									<th key={column.key} className="px-3 py-2.5 text-left label-sm whitespace-nowrap text-secondary">
+										{column.label}
+									</th>
+								))}
+								<th aria-label="Row actions" />
+							</tr>
+						</thead>
+						<tbody>
+							{rows.map((row, rowIndex) => (
+								<tr key={rowIndex} className="border-b border-subtle last:border-b-0">
+									{section.columns.map((column) => (
+										<td key={column.key} className="min-w-[160px] px-2 py-2">
+											<CellInput
+												column={column}
+												value={row[column.key] ?? ''}
+												onChange={(value) => {
+													const selectedOption = column.options?.find((option) => option.value === value)
+													onChange(
+														rows.map((entry, entryIndex) =>
+															entryIndex === rowIndex
+																? {
+																		...entry,
+																		[column.key]: value,
+																		...(column.linkedNameKey
+																			? { [column.linkedNameKey]: selectedOption?.label ?? '' }
+																			: null)
+																	}
+																: entry
+														)
+													)
+												}}
+											/>
+										</td>
+									))}
+									<td className="w-10 px-2 py-2">
+										<Button
+											type="button"
+											size="sm"
+											square
+											aria-label={`Delete row ${rowIndex + 1} from ${section.title}`}
+											onClick={() => onChange(rows.filter((_, entryIndex) => entryIndex !== rowIndex))}
+										>
+											<Icon name="trash-2" height={14} width={14} />
+										</Button>
+									</td>
+								</tr>
+							))}
+						</tbody>
+					</table>
+				</div>
+			) : null}
+			{error ? (
+				<span data-utr-claim-error className="body-sm text-error">
+					{error}
+				</span>
+			) : null}
+			<span>
+				<Button type="button" size="md" disabled={rows.length >= 100} onClick={() => onChange([...rows, {}])}>
+					Add More
+					<Icon name="plus" height={14} width={14} />
+				</Button>
+			</span>
+		</div>
+	)
+}
+
+function AttachDocuments({
+	id,
+	receipts,
+	status,
+	onFiles,
+	onRemove,
+	onClearError
+}: {
+	id: string
+	receipts: UtrClaimDocuments[UtrClaimDocumentKey]
+	status: UploadStatus
+	onFiles: (files: File[]) => void
+	onRemove: (index: number) => void
+	onClearError: () => void
+}) {
+	return (
+		<div className="flex flex-col gap-2">
+			<div className="flex flex-wrap items-center gap-3">
+				<label
+					htmlFor={id}
+					className={`flex items-center gap-1.5 rounded-lg border border-medium px-3 py-1.5 label-md text-primary ${
+						status.pending || receipts.length >= 10
+							? 'cursor-not-allowed opacity-60'
+							: 'cursor-pointer hover:bg-hover-row'
+					}`}
+				>
+					<input
+						id={id}
+						type="file"
+						multiple
+						accept={UTR_CLAIM_FILE_ACCEPT}
+						className="sr-only"
+						disabled={status.pending || receipts.length >= 10}
+						onChange={(event) => {
+							const files = Array.from(event.target.files ?? [])
+							event.target.value = ''
+							if (files.length) onFiles(files)
+						}}
+					/>
+					{status.pending ? 'Uploading…' : 'Attach Documents'}
+					<Icon name="link" height={14} width={14} />
+				</label>
+				<span className="body-sm text-tertiary">{ATTACH_HINT}</span>
+			</div>
+			{receipts.length ? (
+				<div className="flex flex-wrap gap-2">
+					{receipts.map((receipt, index) => (
+						<span
+							key={`${receipt.key}-${index}`}
+							className="flex items-center gap-1.5 rounded-full border border-medium bg-surface-elevated-1 px-3 py-1 mono-sm"
+						>
+							{receipt.fileName}
+							<button
+								type="button"
+								aria-label={`Remove ${receipt.fileName}`}
+								className="cursor-pointer text-secondary hover:text-primary"
+								onClick={() => onRemove(index)}
+							>
+								<Icon name="x" height={12} width={12} />
+							</button>
+						</span>
+					))}
+				</div>
+			) : null}
+			{status.error ? (
+				<div data-utr-claim-error className="flex items-center gap-2 body-sm text-error">
+					<span>{status.error}</span>
+					<button type="button" className="underline" onClick={onClearError}>
+						Dismiss
+					</button>
+				</div>
+			) : null}
 		</div>
 	)
 }
@@ -52,49 +329,38 @@ function ClaimConfirmation() {
 
 export function ClaimTokenProfile({
 	variant = 'claim',
-	projects = []
+	projects = [],
+	exchangeOptions = [],
+	marketMakerOptions = [],
+	scoringConfig
 }: {
 	variant?: 'claim' | 'join'
 	projects?: UtrClaimProjectOption[]
-	exchangeOptions?: string[]
+	exchangeOptions?: UtrClaimExchangeOption[]
+	marketMakerOptions?: UtrClaimMarketMakerOption[]
 	scoringConfig?: UtrScoringConfig | null
 }) {
 	const [token, setToken] = useState<string>(variant === 'claim' ? (projects[0]?.arcticId ?? '') : '')
 	const [firstName, setFirstName] = useState('')
 	const [lastName, setLastName] = useState('')
 	const [position, setPosition] = useState('')
-	const [hasContact, setHasContact] = useState<'yes' | 'no'>('no')
-	const [contactName, setContactName] = useState('')
 	const [profileUrl, setProfileUrl] = useState('')
 	const [email, setEmail] = useState('')
 	const [telegram, setTelegram] = useState('')
 	const [alignmentConsent, setAlignmentConsent] = useState(false)
 	const [termsConsent, setTermsConsent] = useState(false)
 	const [turnstileToken, setTurnstileToken] = useState('')
-	const [submitAttempted, setSubmitAttempted] = useState(false)
 	const turnstileRef = useRef<TurnstileInstance | undefined>(undefined)
-	const submit = useSubmitLead('claim')
 	const captchaEnabled = isClaimTurnstileEnabled()
-
-	const errors: Record<string, string | null> = {
-		token:
-			token.trim() === '' ? (variant === 'claim' ? 'Select the token to claim' : 'Project name is required') : null,
-		firstName: firstName.trim() === '' ? 'First name is required' : null,
-		lastName: lastName.trim() === '' ? 'Last name is required' : null,
-		position: position.trim() === '' ? 'Position is required' : null,
-		contactName: hasContact === 'yes' && contactName.trim() === '' ? 'Enter the Forgd team member name' : null,
-		email:
-			email.trim() === ''
-				? 'Organization email is required'
-				: !EMAIL_PATTERN.test(email.trim())
-					? 'Enter a valid email address'
-					: null,
-		profileUrl: !SOCIAL_PROFILE_PATTERN.test(profileUrl.trim()) ? 'Enter a valid LinkedIn or X URL' : null,
-		consents: !alignmentConsent || !termsConsent ? 'Both consents are required to submit' : null,
-		captcha: captchaEnabled && turnstileToken === '' ? 'Complete the CAPTCHA verification' : null
-	}
-	const isValid = Object.values(errors).every((error) => error == null)
-	const showError = (key: string) => (submitAttempted ? errors[key] : null)
+	const [verifyMmEngagements, setVerifyMmEngagements] = useState(true)
+	const [rows, setRows] = useState<UtrClaimRows>(createEmptyUtrClaimRows)
+	const [documents, setDocuments] = useState<UtrClaimDocuments>(createEmptyDocuments)
+	const [uploadStatuses, setUploadStatuses] = useState<Record<UtrClaimDocumentKey, UploadStatus>>(createUploadStatuses)
+	const [submitAttempted, setSubmitAttempted] = useState(false)
+	const [scoringCriteriaOpen, setScoringCriteriaOpen] = useState(false)
+	const formRef = useRef<HTMLDivElement>(null)
+	const submit = useMutation({ mutationFn: submitUtrClaim })
+	const scrollToError = () => window.requestAnimationFrame(() => scrollToFirstUtrClaimError(formRef.current))
 	const selectedProject = variant === 'claim' ? (projects.find((project) => project.arcticId === token) ?? null) : null
 	const selectedProjectStatus = selectedProject
 		? [
@@ -114,41 +380,94 @@ export function ClaimTokenProfile({
 				.join(' · ')
 		: null
 
-	const onSubmit = () => {
-		if (submit.isPending) return
-		if (!isValid) {
-			setSubmitAttempted(true)
+	const requestInput = (clickId: string | null) => ({
+		coingeckoId: selectedProject?.coingeckoId ?? null,
+		tokenName: selectedProject?.projectName ?? token,
+		tokenTicker: selectedProject?.symbol ?? '',
+		firstName,
+		lastName,
+		position,
+		profileUrl,
+		email,
+		telegram,
+		rows,
+		verifyMmEngagements,
+		documents,
+		alignmentConsent,
+		termsConsent,
+		turnstileToken,
+		clickId
+	})
+	const validation = buildUtrClaimRequest(requestInput(null))
+	const errors = {
+		...validation.errors,
+		...(captchaEnabled && !turnstileToken ? { captcha: 'Complete the CAPTCHA verification' } : null)
+	}
+	const showError = (key: string) => (submitAttempted ? errors[key] : null)
+	const hasPendingUpload = Object.values(uploadStatuses).some((status) => status.pending)
+	const hasUploadError = Object.values(uploadStatuses).some((status) => status.error)
+
+	const uploadDocuments = async (key: UtrClaimDocumentKey, files: File[]) => {
+		const validationError = validateUtrClaimFiles(files, documents[key].length)
+		if (validationError) {
+			setUploadStatuses((current) => ({ ...current, [key]: { pending: false, error: validationError } }))
 			return
 		}
-		const projectName = selectedProject?.projectName ?? token
-		submit.mutate(
-			buildUtrClaimRequest({
-				projectName,
-				position,
-				hasForgdContact: hasContact === 'yes',
-				forgdContactName: contactName,
-				firstName,
-				lastName,
-				profileUrl,
-				email,
-				telegram,
-				alignmentConsent,
-				termsConsent,
-				sourceUrl: typeof window === 'undefined' ? null : window.location.href,
-				turnstileToken
-			}),
-			{
-				onSuccess: () => window.scrollTo({ top: 0 }),
-				onError: () => {
-					setTurnstileToken('')
-					turnstileRef.current?.reset()
+		setUploadStatuses((current) => ({ ...current, [key]: { pending: true, error: null } }))
+		try {
+			const receipts = await uploadUtrClaimDocuments(files)
+			if (receipts.some((receipt) => !receipt.signature)) throw new Error('A document receipt is missing its signature')
+			setDocuments((current) => ({ ...current, [key]: [...current[key], ...receipts] }))
+			setUploadStatuses((current) => ({ ...current, [key]: { pending: false, error: null } }))
+		} catch (error) {
+			setUploadStatuses((current) => ({
+				...current,
+				[key]: {
+					pending: false,
+					error: error instanceof Error ? error.message : 'Failed to upload supporting documents'
 				}
+			}))
+		}
+	}
+
+	const documentUploader = (key: UtrClaimDocumentKey, id: string) => (
+		<AttachDocuments
+			id={id}
+			receipts={documents[key]}
+			status={uploadStatuses[key]}
+			onFiles={(files) => void uploadDocuments(key, files)}
+			onRemove={(index) =>
+				setDocuments((current) => ({
+					...current,
+					[key]: current[key].filter((_, receiptIndex) => receiptIndex !== index)
+				}))
 			}
-		)
+			onClearError={() => setUploadStatuses((current) => ({ ...current, [key]: { ...current[key], error: null } }))}
+		/>
+	)
+
+	const onSubmit = () => {
+		if (submit.isPending || hasPendingUpload || hasUploadError) return
+		setSubmitAttempted(true)
+		const clickId =
+			typeof window === 'undefined' ? null : new URL(window.location.href).searchParams.get('fgclick')?.trim() || null
+		const result = buildUtrClaimRequest(requestInput(clickId))
+		if (!result.payload || (captchaEnabled && !turnstileToken)) {
+			scrollToError()
+			return
+		}
+		submit.mutate(result.payload, {
+			onSuccess: () => window.scrollTo({ top: 0 }),
+			onError: () => {
+				setTurnstileToken('')
+				turnstileRef.current?.reset()
+				scrollToError()
+			}
+		})
 	}
 
 	return (
-		<div className="flex flex-col gap-6">
+		<div ref={formRef} className="flex flex-col gap-6">
 			<div className="flex flex-col items-center gap-1 pt-4 text-center">
 				<h1 className="text-xl">
 					{variant === 'claim' ? (
@@ -156,10 +475,12 @@ export function ClaimTokenProfile({
 							<strong className="font-bold">Universal Token Rating</strong> - Claim Your Token Profile
 						</>
 					) : (
-						<strong className="font-bold">Apply for the Universal Token Rating</strong>
+						<strong className="font-bold">Join the Universal Token Rating profile</strong>
 					)}
 				</h1>
-				<p className="body-sm text-tertiary">Submit your affiliation details for verification. Powered by Forgd</p>
+				<p className="body-sm text-tertiary">
+					Provide as much information as possible. All fields are optional unless otherwise noted. Powered by Forgd
+				</p>
 			</div>
 
 			{submit.isSuccess ? (
@@ -179,9 +500,10 @@ export function ClaimTokenProfile({
 								<span className="flex flex-wrap items-center gap-2">
 									<select
 										className={`${inputStyles} min-w-64 flex-1 cursor-pointer`}
+										aria-label="Token to claim"
 										value={token}
 										disabled={!projects.length}
-										onChange={(e) => setToken(e.target.value)}
+										onChange={(event) => setToken(event.target.value)}
 									>
 										{projects.length ? null : <option value="">Token list unavailable</option>}
 										{projects.map((project) => (
@@ -196,71 +518,84 @@ export function ClaimTokenProfile({
 								</span>
 							</LabeledField>
 						) : (
-							<LabeledField label="Project name" error={showError('token')}>
-								<Input value={token} onChange={(e) => setToken(e.target.value)} maxLength={200} />
+							<LabeledField label="Token to claim*" error={showError('token')}>
+								<Input
+									aria-label="Token to claim"
+									value={token}
+									onChange={(event) => setToken(event.target.value)}
+									maxLength={200}
+								/>
 							</LabeledField>
 						)}
 						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-							<LabeledField label="First Name" error={showError('firstName')}>
-								<Input value={firstName} onChange={(e) => setFirstName(e.target.value)} maxLength={200} />
-							</LabeledField>
-							<LabeledField label="Last Name" error={showError('lastName')}>
-								<Input value={lastName} onChange={(e) => setLastName(e.target.value)} maxLength={200} />
-							</LabeledField>
-							<LabeledField label="Position at organization" error={showError('position')}>
+							<LabeledField label="First Name*" error={showError('firstName')}>
 								<Input
+									aria-label="First Name"
+									value={firstName}
+									onChange={(event) => setFirstName(event.target.value)}
+									maxLength={100}
+								/>
+							</LabeledField>
+							<LabeledField label="Last Name*" error={showError('lastName')}>
+								<Input
+									aria-label="Last Name"
+									value={lastName}
+									onChange={(event) => setLastName(event.target.value)}
+									maxLength={100}
+								/>
+							</LabeledField>
+							<LabeledField label="Position at organization*" error={showError('position')}>
+								<Input
+									aria-label="Position at organization"
 									value={position}
-									onChange={(e) => setPosition(e.target.value)}
+									onChange={(event) => setPosition(event.target.value)}
 									maxLength={200}
 									placeholder="E.g., CEO"
 								/>
 							</LabeledField>
 							<LabeledField label="Your LinkedIn or X profile" error={showError('profileUrl')}>
 								<Input
+									aria-label="Your LinkedIn or X profile"
 									value={profileUrl}
-									onChange={(e) => setProfileUrl(e.target.value)}
+									onChange={(event) => setProfileUrl(event.target.value)}
 									maxLength={500}
 									placeholder="Enter a valid LinkedIn or X URL"
 								/>
 							</LabeledField>
-							<LabeledField label="Your organization email address" error={showError('email')}>
-								<Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={320} />
-							</LabeledField>
-							<LabeledField label="Telegram handle (optional)">
-								<Input value={telegram} onChange={(e) => setTelegram(e.target.value)} maxLength={64} />
-							</LabeledField>
-						</div>
-						<div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-surface-elevated-1 px-3 py-2">
-							<span className="label-md text-primary">Do you have direct contact with a Forgd team member?</span>
-							<SegmentedControl
-								value={hasContact}
-								onValueChange={(value) => setHasContact(value)}
-								options={CONTACT_OPTIONS}
-								label="Forgd contact"
-								variant="default"
-								size="sm"
-								className="w-fit"
-							/>
-						</div>
-						{hasContact === 'yes' ? (
-							<LabeledField label="Forgd team member name" error={showError('contactName')}>
+							<LabeledField label="Your email address*" error={showError('email')}>
 								<Input
-									value={contactName}
-									onChange={(e) => setContactName(e.target.value)}
-									maxLength={200}
-									placeholder="Name the person you know"
+									aria-label="Your email address"
+									type="email"
+									value={email}
+									onChange={(event) => setEmail(event.target.value)}
+									maxLength={320}
 								/>
 							</LabeledField>
-						) : null}
+							<LabeledField label="Telegram handle">
+								<Input
+									aria-label="Telegram handle"
+									value={telegram}
+									onChange={(event) => setTelegram(event.target.value)}
+									maxLength={100}
+								/>
+							</LabeledField>
+						</div>
+						<LabeledField label="Other support document (optional)">
+							{documentUploader('alignment', 'attach-alignment')}
+						</LabeledField>
 						<div className="flex flex-col gap-1 border-t border-subtle pt-4">
 							<Checkbox
 								variant="inline"
 								checked={alignmentConsent}
-								onChange={(e) => setAlignmentConsent(e.target.checked)}
+								onChange={(event) => setAlignmentConsent(event.target.checked)}
 							>
-								I agree to verify my alignment with the organization to confirm the claim.
+								I agree to verify my alignment with the organization to confirm the claim.*
 							</Checkbox>
-							<Checkbox variant="inline" checked={termsConsent} onChange={(e) => setTermsConsent(e.target.checked)}>
+							<Checkbox
+								variant="inline"
+								checked={termsConsent}
+								onChange={(event) => setTermsConsent(event.target.checked)}
+							>
 								<span>
 									I understand and agree to the Forgd{' '}
 									<a
@@ -280,10 +615,15 @@ export function ClaimTokenProfile({
 									>
 										Privacy Policy
 									</a>
-									.
+									.*
 								</span>
 							</Checkbox>
-							{showError('consents') ? <span className="body-sm text-error">{showError('consents')}</span> : null}
+							{showError('consents') ? (
+								<span data-utr-claim-error className="body-sm text-error">
+									{showError('consents')}
+								</span>
+							) : null}
+							<span className="body-sm text-tertiary">*Mandatory fields</span>
 						</div>
 						{captchaEnabled ? (
 							<div className="flex flex-col items-center gap-1.5">
@@ -293,29 +633,114 @@ export function ClaimTokenProfile({
 									onError={() => setTurnstileToken('')}
 									className="w-full max-w-md"
 								/>
-								{showError('captcha') ? <span className="body-sm text-error">{showError('captcha')}</span> : null}
+								{showError('captcha') ? (
+									<span data-utr-claim-error className="body-sm text-error">
+										{showError('captcha')}
+									</span>
+								) : null}
 							</div>
 						) : null}
 					</Card>
 
+					<h2 className="heading-sm">Disclosures Details</h2>
+					{CLAIM_BLOCKS.map((block) => (
+						<Card key={block.id} padding="md" className="flex flex-col gap-5">
+							<div className="flex flex-wrap items-center justify-between gap-2 border-b border-subtle pb-3">
+								<h2 className="heading-sm">{block.title}</h2>
+								<Button type="button" size="md" onClick={() => setScoringCriteriaOpen(true)}>
+									View Scoring Criteria
+								</Button>
+							</div>
+							{block.id !== 'legal' ? (
+								<p className="body-sm text-secondary">
+									Complete each section to the best of your ability. You may also upload supporting materials containing
+									the requested information, including exchange intake forms, internal project documentation or similar
+									records.
+								</p>
+							) : null}
+							{block.additionalDocumentSection ? (
+								<div className="flex flex-col gap-2">
+									<h3 className="heading-xs">{block.additionalDocumentSection.title}</h3>
+									<p className="body-sm text-secondary">{block.additionalDocumentSection.description}</p>
+									{documentUploader(
+										block.additionalDocumentSection.key,
+										`attach-${block.additionalDocumentSection.key}`
+									)}
+								</div>
+							) : null}
+							{block.sections.map((rawSection) => {
+								const section = sectionWithOptions(rawSection, marketMakerOptions, exchangeOptions)
+								return (
+									<Fragment key={section.id}>
+										<InlineTableSection
+											section={section}
+											rows={rows[section.id]}
+											error={submitAttempted ? firstSectionError(errors, section.id) : null}
+											onChange={(nextRows) => setRows((current) => ({ ...current, [section.id]: nextRows }))}
+										/>
+										{block.extras?.mmMonitoringQuestion && section.id === 'marketMakerEngagements' ? (
+											<div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-surface-elevated-1 px-3 py-2">
+												<span className="label-md text-primary">
+													Are you willing to verify these engagements through Forgd's free-to-use Market Maker
+													Monitoring tool?
+												</span>
+												<SegmentedControl
+													value={verifyMmEngagements ? 'yes' : 'no'}
+													onValueChange={(value) => setVerifyMmEngagements(value === 'yes')}
+													options={[
+														{ value: 'no', label: 'No' },
+														{ value: 'yes', label: 'Yes' }
+													]}
+													label="Market Maker Monitoring"
+													variant="default"
+													size="sm"
+													className="w-fit"
+												/>
+											</div>
+										) : null}
+									</Fragment>
+								)
+							})}
+							<div className="flex flex-col gap-2 border-t border-subtle pt-4">
+								<h3 className="heading-xs">
+									{block.id === 'team' ? '4.' : block.id === 'tokenomics' ? '4.' : block.id === 'legal' ? '3.' : '4.'}{' '}
+									Other support document (optional)
+								</h3>
+								<p className="body-sm text-secondary">
+									{block.documentDescription ??
+										'Upload any additional documentation that supports or provides further context for the disclosures above.'}
+								</p>
+								{documentUploader(block.documentKey, `attach-${block.documentKey}`)}
+							</div>
+						</Card>
+					))}
+
 					{submit.isError ? (
-						<LeadError
-							message={submit.error instanceof Error ? submit.error.message : 'Failed to submit the claim request'}
-						/>
+						<div data-utr-claim-error>
+							<LeadError
+								message={submit.error instanceof Error ? submit.error.message : 'Failed to submit the claim request'}
+							/>
+						</div>
 					) : null}
 					<Button
 						type="button"
 						variant="primary"
 						size="md"
 						className="w-full justify-center"
-						disabled={submit.isPending || (captchaEnabled && turnstileToken === '')}
+						disabled={submit.isPending || hasPendingUpload || hasUploadError || (captchaEnabled && !turnstileToken)}
 						onClick={onSubmit}
 					>
-						{submit.isPending ? 'Submitting…' : variant === 'claim' ? 'Submit Claim Request' : 'Submit Application'}
+						{submit.isPending ? 'Submitting…' : 'Submit Disclosure Details'}
 						<Icon name="arrow-up-right" height={14} width={14} />
 					</Button>
 				</div>
 			)}
+			<UtrDocsDrawer
+				open={scoringCriteriaOpen}
+				onClose={() => setScoringCriteriaOpen(false)}
+				initialChapterId="disclosure-axis"
+				scoringConfig={scoringConfig}
+			/>
 		</div>
 	)
 }

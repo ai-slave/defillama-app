@@ -1,188 +1,217 @@
-export type ClaimFieldType = 'text' | 'percent' | 'select' | 'months' | 'url'
+export type ClaimDisclosureSectionId =
+	| 'insiderIdentities'
+	| 'organizationalStructure'
+	| 'insiderWallets'
+	| 'tokenomicsGroups'
+	| 'externalAllocations'
+	| 'multisigWallets'
+	| 'licenses'
+	| 'marketMakerEngagements'
+	| 'exchangeEngagements'
+	| 'auditors'
+
+export type ClaimFieldType = 'text' | 'percent' | 'select' | 'months' | 'url' | 'integer'
+
+export type ClaimSelectOption = { value: string; label: string }
 
 export type ClaimColumn = {
 	key: string
 	label: string
 	type: ClaimFieldType
-	options?: readonly string[]
+	options?: readonly ClaimSelectOption[]
+	optionSource?: 'marketMakers' | 'exchanges'
+	linkedNameKey?: 'marketMakerName' | 'exchangeName'
 	placeholder?: string
 }
 
 export type ClaimTableSection = {
-	id: string
+	id: ClaimDisclosureSectionId
 	title: string
 	description?: string
 	columns: ClaimColumn[]
-	initialRows: Record<string, string>[]
 }
 
 export type ClaimBlock = {
-	id: string
+	id: 'team' | 'tokenomics' | 'legal' | 'providers'
 	title: string
+	documentKey: 'teamOrg' | 'tokenomics' | 'legal' | 'serviceProviders'
+	documentDescription?: string
 	sections: ClaimTableSection[]
+	additionalDocumentSection?: {
+		key: 'treasuryCashFlows'
+		title: string
+		description: string
+	}
 	extras?: { mmMonitoringQuestion?: boolean }
 }
 
-export const GROUP_CATEGORIES = [
+const GROUP_CATEGORIES = [
 	'Founders & Team',
 	'Private Investors',
 	'Public Sale',
 	'Ecosystem',
 	'Treasury',
 	'Advisors'
-] as const
+].map((value) => ({ value, label: value }))
 
-export const UNLOCK_FREQUENCIES = ['Monthly', 'Quarterly', 'Weekly', 'Daily', 'At TGE'] as const
+const UNLOCK_FREQUENCIES = ['Daily', 'Monthly'].map((value) => ({ value, label: value }))
 
-export const ENGAGEMENT_TYPES = ['Loan + Call Option', 'Retainer + Working Capital', 'Retainer'] as const
+const ENGAGEMENT_TYPES = ['Loan + Call Option', 'Retainer + Working Capital', 'Retainer'].map((value) => ({
+	value,
+	label: value
+}))
 
-export const YES_NO = ['Yes', 'No'] as const
+const YES_NO = [
+	{ value: 'true', label: 'Yes' },
+	{ value: 'false', label: 'No' }
+]
 
 export const CLAIM_BLOCKS: ClaimBlock[] = [
 	{
 		id: 'team',
 		title: 'Team & Organizational Structure',
+		documentKey: 'teamOrg',
+		documentDescription:
+			'Upload any additional documentation that provides context on your team’s organizational structure, including core contributor biographies, professional responsibilities, governance processes, legal entity relationships (e.g., Foundation, Association, Labs, or other affiliated entities), and how each entity interacts with the protocol.',
 		sections: [
 			{
-				id: 'insiders',
+				id: 'insiderIdentities',
 				title: '1. Insider Identities',
 				columns: [
 					{ key: 'name', label: 'Name', type: 'text' },
 					{ key: 'role', label: 'Role', type: 'text' },
-					{ key: 'profile', label: 'LinkedIn, GitHub or X Profile', type: 'url' }
-				],
-				initialRows: [{}]
+					{ key: 'profileUrl', label: 'LinkedIn, GitHub or X Profile', type: 'url' }
+				]
 			},
 			{
-				id: 'organizations',
+				id: 'organizationalStructure',
 				title: '2. Organizational Structure',
 				columns: [
-					{ key: 'company', label: 'Company Name', type: 'text' },
+					{ key: 'companyName', label: 'Company Name', type: 'text' },
 					{ key: 'jurisdiction', label: 'Jurisdiction', type: 'text' },
 					{ key: 'description', label: 'Description of Company', type: 'text' }
-				],
-				initialRows: [{}]
+				]
 			},
 			{
-				id: 'wallets',
+				id: 'insiderWallets',
 				title: '3. Anonymized Insider Wallets',
 				columns: [
-					{ key: 'address', label: 'Wallet Address', type: 'text' },
-					{ key: 'allocation', label: 'Allocation (% Total Supply)', type: 'percent' },
-					{ key: 'owner', label: 'Type of Owner', type: 'text' }
-				],
-				initialRows: [{}]
+					{ key: 'walletAddress', label: 'Wallet Address', type: 'text' },
+					{ key: 'allocationPct', label: 'Allocation (% Total Supply)', type: 'percent' },
+					{ key: 'ownerType', label: 'Type of Owner', type: 'text' }
+				]
 			}
 		]
 	},
 	{
 		id: 'tokenomics',
 		title: 'Tokenomics',
+		documentKey: 'tokenomics',
 		sections: [
 			{
-				id: 'distribution',
-				title: '1. Distribution Schedule',
+				id: 'tokenomicsGroups',
+				title: '1. Distribution & Vesting Schedule',
 				columns: [
-					{ key: 'group', label: 'Group name', type: 'text' },
-					{ key: 'allocation', label: 'Allocation (% Total Supply)', type: 'percent' },
-					{ key: 'category', label: 'Group category', type: 'select', options: GROUP_CATEGORIES }
-				],
-				initialRows: [{}]
+					{ key: 'groupName', label: 'Group Name', type: 'text' },
+					{ key: 'allocationPct', label: 'Allocation', type: 'percent' },
+					{ key: 'groupCategory', label: 'Group Category', type: 'select', options: GROUP_CATEGORIES },
+					{ key: 'tgeUnlockPct', label: 'Unlock at TGE', type: 'percent' },
+					{ key: 'lockUpDurationMonths', label: 'Lock-up', type: 'months' },
+					{ key: 'cliffUnlockPct', label: 'Unlock at Cliff', type: 'percent' },
+					{ key: 'unlockDurationMonths', label: 'Unlock Duration', type: 'months' },
+					{ key: 'unlockFrequency', label: 'Frequency', type: 'select', options: UNLOCK_FREQUENCIES }
+				]
 			},
 			{
-				id: 'vesting',
-				title: '2. Vesting Schedule',
+				id: 'externalAllocations',
+				title: '2. External Allocations',
 				columns: [
-					{ key: 'group', label: 'Group Name', type: 'text' },
-					{ key: 'unlockTge', label: '% Unlock at TGE', type: 'percent' },
-					{ key: 'lockup', label: 'Lock Up Duration', type: 'months' },
-					{ key: 'unlockCliff', label: '% Unlock at Init. Cliff', type: 'percent' },
-					{ key: 'unlockDuration', label: 'Unlock Duration', type: 'months' },
-					{ key: 'frequency', label: 'Unlock Frequency', type: 'select', options: UNLOCK_FREQUENCIES }
-				],
-				initialRows: [{}]
+					{ key: 'counterpartyName', label: 'Counterparty Name', type: 'text' },
+					{ key: 'allocationPct', label: 'Allocation (% Total Supply)', type: 'percent' },
+					{ key: 'categorization', label: 'Categorization', type: 'text' }
+				]
 			},
 			{
-				id: 'external',
-				title: '3. External Allocations',
+				id: 'multisigWallets',
+				title: '3. Multi-sig Information',
 				columns: [
-					{ key: 'counterparty', label: 'Counterparty Name', type: 'text' },
-					{ key: 'allocation', label: 'Allocation (% Total Supply)', type: 'percent' },
-					{ key: 'category', label: 'Categorization', type: 'text' }
-				],
-				initialRows: [{}]
-			},
-			{
-				id: 'multisig',
-				title: '4. Multi-sig Information',
-				columns: [
-					{ key: 'wallet', label: 'Multisig Wallet', type: 'text' },
-					{ key: 'quorum', label: 'Quorum Threshold', type: 'text', placeholder: '4 of 7' },
-					{ key: 'signers', label: 'Names of Signers', type: 'text' }
-				],
-				initialRows: [{}]
+					{ key: 'walletAddress', label: 'Multisig Wallet', type: 'text' },
+					{ key: 'thresholdRequired', label: 'Required Signers', type: 'integer' },
+					{ key: 'thresholdTotal', label: 'Total Signers', type: 'integer' },
+					{ key: 'signerNames', label: 'Names of Signers', type: 'text' }
+				]
 			}
 		]
 	},
 	{
 		id: 'legal',
 		title: 'Legal & Financial',
+		documentKey: 'legal',
+		additionalDocumentSection: {
+			key: 'treasuryCashFlows',
+			title: '1. Treasury & Cash Flows',
+			description:
+				"Share financial documentation detailing the project's assets and liabilities, revenue and expenses, and uses of cash."
+		},
 		sections: [
-			{
-				id: 'treasury',
-				title: '1. Treasury & Cash Flows',
-				description:
-					"Share financial documentation detailing the project's assets and liabilities, revenue and expenses, and uses of cash.",
-				columns: [],
-				initialRows: []
-			},
 			{
 				id: 'licenses',
 				title: '2. Licenses & Patents',
 				columns: [
-					{ key: 'name', label: 'Name of License Patent', type: 'text' },
-					{ key: 'link', label: 'Link', type: 'url' },
+					{ key: 'name', label: 'Name of License or Patent', type: 'text' },
+					{ key: 'link', label: 'Link (optional)', type: 'url' },
 					{ key: 'description', label: 'Description', type: 'text' }
-				],
-				initialRows: [{}]
+				]
 			}
 		]
 	},
 	{
 		id: 'providers',
 		title: 'Service Provider Engagements',
+		documentKey: 'serviceProviders',
 		extras: { mmMonitoringQuestion: true },
 		sections: [
 			{
-				id: 'marketMakers',
+				id: 'marketMakerEngagements',
 				title: '1. Market Maker Engagements',
 				columns: [
-					{ key: 'marketMaker', label: 'Market Maker', type: 'select', options: [] },
-					{ key: 'allocation', label: 'Allocation (% Total Supply)', type: 'percent' },
-					{ key: 'engagement', label: 'Engagement Type', type: 'select', options: ENGAGEMENT_TYPES }
-				],
-				initialRows: [{}]
+					{
+						key: 'marketMakerId',
+						label: 'Market Maker',
+						type: 'select',
+						optionSource: 'marketMakers',
+						linkedNameKey: 'marketMakerName'
+					},
+					{ key: 'allocationPct', label: 'Allocation (% Total Supply)', type: 'percent' },
+					{ key: 'engagementType', label: 'Engagement Type', type: 'select', options: ENGAGEMENT_TYPES }
+				]
 			},
 			{
-				id: 'exchanges',
+				id: 'exchangeEngagements',
 				title: '2. Exchange Engagements',
 				columns: [
-					{ key: 'exchange', label: 'Exchange', type: 'select', options: [] },
-					{ key: 'commitment', label: 'Commercial Commitment', type: 'select', options: YES_NO },
-					{ key: 'details', label: 'Additional Commercial Details', type: 'text' }
-				],
-				initialRows: [{}]
+					{
+						key: 'exchangeId',
+						label: 'Exchange',
+						type: 'select',
+						optionSource: 'exchanges',
+						linkedNameKey: 'exchangeName'
+					},
+					{ key: 'commercialCommitment', label: 'Commercial Commitment', type: 'select', options: YES_NO },
+					{ key: 'details', label: 'Additional Details (optional)', type: 'text' }
+				]
 			},
 			{
 				id: 'auditors',
 				title: '3. Auditors',
 				columns: [
-					{ key: 'auditor', label: 'Auditor', type: 'text' },
+					{ key: 'name', label: 'Auditor', type: 'text' },
 					{ key: 'type', label: 'Type', type: 'text' },
-					{ key: 'link', label: 'Accessible Link', type: 'url' }
-				],
-				initialRows: [{}]
+					{ key: 'link', label: 'Accessible Link (optional)', type: 'url' }
+				]
 			}
 		]
 	}
 ]
+
+export const CLAIM_DISCLOSURE_SECTIONS = CLAIM_BLOCKS.flatMap((block) => block.sections)

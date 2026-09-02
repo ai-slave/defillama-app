@@ -3,6 +3,7 @@ import { ClaimTokenProfile } from '~/containers/UniversalTokenRating/ClaimTokenP
 import {
 	fetchUtrDisclosureScoreSummaries,
 	exchangeOptionsFromScoringConfig,
+	fetchUtrClaimMarketMakerOptions,
 	fetchUtrScoringConfig,
 	fetchUtrProjects
 } from '~/containers/UniversalTokenRating/server'
@@ -12,10 +13,11 @@ import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging('universal-token-rating/claim', async () => {
-	const [projects, scoreSummaries, scoringConfig] = await Promise.all([
+	const [projects, scoreSummaries, scoringConfig, marketMakerOptions] = await Promise.all([
 		fetchUtrProjects(),
 		fetchUtrDisclosureScoreSummaries(),
-		fetchUtrScoringConfig()
+		fetchUtrScoringConfig(),
+		fetchUtrClaimMarketMakerOptions()
 	])
 	const exchangeOptions = exchangeOptionsFromScoringConfig(scoringConfig)
 	const scoreByProject = new Map(scoreSummaries.map((summary) => [summary.arcticId, summary]))
@@ -26,6 +28,7 @@ export const getStaticProps = withPerformanceLogging('universal-token-rating/cla
 				arcticId: project.arcticId,
 				projectName: project.projectName,
 				symbol: project.symbol,
+				coingeckoId: project.coingeckoId,
 				tgeStatus: project.tgeStatus,
 				disclosureScore: summary?.disclosureScore ?? null,
 				gradedCount: summary?.gradedCount ?? 0,
@@ -37,7 +40,7 @@ export const getStaticProps = withPerformanceLogging('universal-token-rating/cla
 	projectOptions.sort((a, b) => a.projectName.localeCompare(b.projectName))
 
 	return {
-		props: { projects: projectOptions, exchangeOptions, scoringConfig },
+		props: { projects: projectOptions, exchangeOptions, marketMakerOptions, scoringConfig },
 		revalidate: maxAgeForNext([22])
 	}
 })
@@ -45,6 +48,7 @@ export const getStaticProps = withPerformanceLogging('universal-token-rating/cla
 export default function UniversalTokenRatingClaimPage({
 	projects,
 	exchangeOptions,
+	marketMakerOptions,
 	scoringConfig
 }: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
@@ -54,7 +58,12 @@ export default function UniversalTokenRatingClaimPage({
 			canonicalUrl="/universal-token-rating/claim"
 			pageName={['Universal Token Rating', 'Claim']}
 		>
-			<ClaimTokenProfile projects={projects} exchangeOptions={exchangeOptions} scoringConfig={scoringConfig} />
+			<ClaimTokenProfile
+				projects={projects}
+				exchangeOptions={exchangeOptions}
+				marketMakerOptions={marketMakerOptions}
+				scoringConfig={scoringConfig}
+			/>
 		</Layout>
 	)
 }

@@ -1,3 +1,4 @@
+import { forgdFetch } from '~/containers/MarketMakers/server/client'
 import { fetchJson } from '~/utils/async'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import type {
@@ -13,7 +14,9 @@ import type {
 	UtrScoringConfig,
 	UtrUniverse,
 	UtrExchangesResponse,
-	UtrDisclosureScoreSummary
+	UtrDisclosureScoreSummary,
+	UtrClaimExchangeOption,
+	UtrClaimMarketMakerOption
 } from './types'
 
 const FORGD_HOST = 'https://quant.forgd.com'
@@ -202,8 +205,28 @@ export async function fetchUtrScoringConfig(): Promise<UtrScoringConfig | null> 
 	}
 }
 
-export function exchangeOptionsFromScoringConfig(config: UtrScoringConfig | null): string[] {
-	return config ? [...config.exchanges.tier1, ...config.exchanges.tier2].map((exchange) => exchange.displayName) : []
+export function exchangeOptionsFromScoringConfig(config: UtrScoringConfig | null): UtrClaimExchangeOption[] {
+	return config
+		? [...config.exchanges.tier1, ...config.exchanges.tier2].map(({ id, displayName }) => ({ id, displayName }))
+		: []
+}
+
+export async function fetchUtrClaimMarketMakerOptions(): Promise<UtrClaimMarketMakerOption[]> {
+	try {
+		const payload = await forgdFetch<unknown[]>('/market-maker/leaderboard/performance')
+		if (!Array.isArray(payload)) return []
+		const options = new Map<string, UtrClaimMarketMakerOption>()
+		for (const row of payload) {
+			if (!row || typeof row !== 'object') continue
+			const value = row as Record<string, unknown>
+			const marketMakerId = typeof value.marketMakerId === 'string' ? value.marketMakerId.trim() : ''
+			const marketMakerName = typeof value.marketMakerName === 'string' ? value.marketMakerName.trim() : ''
+			if (marketMakerId && marketMakerName) options.set(marketMakerId, { marketMakerId, marketMakerName })
+		}
+		return [...options.values()].sort((a, b) => a.marketMakerName.localeCompare(b.marketMakerName))
+	} catch {
+		return []
+	}
 }
 
 export async function fetchUtrLeaderboardMom(): Promise<UtrMomResponse | null> {

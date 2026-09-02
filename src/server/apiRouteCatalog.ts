@@ -210,6 +210,8 @@ export const allApiRoutePaths = [
 	'token-unlocks/[protocol]',
 	'token-usage/[symbol]',
 	'uniswap/[tab]',
+	'utr/claim',
+	'utr/claim/documents',
 	'utr/leaderboard',
 	'visitor-region',
 	'yields/borrow-markets',
@@ -237,6 +239,8 @@ const routeMethodOverrides: Partial<Record<ApiRoutePath, readonly ApiRouteMethod
 	'protocol-rankings/rows': ['POST'],
 	'chains-by-category/rows': ['POST'],
 	'revalidate-instances': ['POST'],
+	'utr/claim': ['POST'],
+	'utr/claim/documents': ['POST'],
 	'utr/leaderboard': ['GET']
 }
 

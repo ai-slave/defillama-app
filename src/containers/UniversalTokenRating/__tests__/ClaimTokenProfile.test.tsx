@@ -8,6 +8,7 @@ const projects = [
 		arcticId: 'ee2e1b0a-6618-4e8e-8096-28f6fc959929',
 		projectName: 'Ethereum',
 		symbol: 'ETH',
+		coingeckoId: 'ethereum',
 		tgeStatus: 'post' as const,
 		disclosureScore: 8.72,
 		gradedCount: 13,
@@ -17,6 +18,7 @@ const projects = [
 		arcticId: 'project-pre',
 		projectName: 'Upcoming',
 		symbol: 'UP',
+		coingeckoId: null,
 		tgeStatus: 'pre' as const,
 		disclosureScore: null,
 		gradedCount: 0,
@@ -35,16 +37,27 @@ function renderClaim(props: Parameters<typeof ClaimTokenProfile>[0]) {
 
 describe('ClaimTokenProfile', () => {
 	it('renders live project options and disclosure coverage', () => {
-		const html = renderClaim({ projects, exchangeOptions: ['Binance', 'Kraken'] })
+		const html = renderClaim({
+			projects,
+			exchangeOptions: [
+				{ id: 'binance', displayName: 'Binance' },
+				{ id: 'kraken', displayName: 'Kraken' }
+			],
+			marketMakerOptions: [{ marketMakerId: 'keyrock', marketMakerName: 'Keyrock' }]
+		})
 
 		expect(html).toContain('Ethereum (ETH)')
 		expect(html).toContain('Upcoming (UP)')
 		expect(html).toContain('13/13 criteria scored')
 		expect(html).toContain('Disclosure 8.72/10')
-		expect(html).toContain('Submit Claim Request')
-		expect(html).toContain('Do you have direct contact with a Forgd team member?')
-		expect(html).not.toContain('Attach Documents')
-		expect(html).not.toContain('Disclosures Details')
+		expect(html).toContain('Submit Disclosure Details')
+		expect(html).toContain('Attach Documents')
+		expect(html).toContain('Disclosures Details')
+		expect(html).toContain('Distribution &amp; Vesting Schedule')
+		expect(html).toContain('Market Maker Engagements')
+		expect(html).toContain('Add More')
+		expect(html).not.toContain('<table')
+		expect(html).not.toContain('Do you have direct contact with a Forgd team member?')
 		expect(html).not.toContain('NO DATA YET')
 		expect(html).not.toContain('Fableborne (FAB)')
 		expect(html).not.toContain('Alice Adams')
@@ -58,10 +71,10 @@ describe('ClaimTokenProfile', () => {
 		expect(html).not.toContain('Abeezee (ABC)')
 	})
 
-	it('uses application language for the join variant', () => {
+	it('uses the Forgd reference language for the join variant', () => {
 		const html = renderClaim({ variant: 'join' })
 
-		expect(html).toContain('Apply for the Universal Token Rating')
-		expect(html).not.toContain('Join the Universal Token Rating')
+		expect(html).toContain('Join the Universal Token Rating profile')
+		expect(html).toContain('Token to claim*')
 	})
 })

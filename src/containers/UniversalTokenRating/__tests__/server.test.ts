@@ -94,7 +94,10 @@ describe('UTR project API', () => {
 			rubric: ['All named', 'Partially named']
 		})
 		expect(scoringConfig?.performance.categories[0].criteria[0].applicability).toBe('postTge')
-		expect(exchangeOptionsFromScoringConfig(scoringConfig)).toEqual(['Binance', 'Kraken'])
+		expect(exchangeOptionsFromScoringConfig(scoringConfig)).toEqual([
+			{ id: 'binance', displayName: 'Binance' },
+			{ id: 'kraken', displayName: 'Kraken' }
+		])
 		expect(fetchJson).toHaveBeenNthCalledWith(
 			1,
 			'https://quant.forgd.com/api/utr/projects',

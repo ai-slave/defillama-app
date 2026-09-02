@@ -1,3 +1,4 @@
+import { sendClaimToUserAnalytics } from '~/containers/UniversalTokenRating/server/userAnalytics'
 import { badRequest, ok, upstreamError } from '~/server/api/respond'
 import { defineApiRoute } from '~/server/api/types'
 import type { ApiRequest, ApiResult } from '~/server/api/types'
@@ -15,7 +16,6 @@ export const TOKEN_STATUSES = ['pre-tge', 'listed', 'no-token'] as const
 const RATE_WINDOW_MS = 10 * 60 * 1000
 const LEAD_RATE_LIMIT = 5
 const CTA_RATE_LIMIT = 30
-const USER_ANALYTICS_TIMEOUT_MS = 2_000
 
 const rateBuckets = new Map<string, number[]>()
 
@@ -73,26 +73,7 @@ function str(body: Body, key: string, maxLength = 200): string | null {
 
 type Validated = { ok: true; payload: Body } | { ok: false; error: string }
 
-export async function sendClaimToUserAnalytics(payload: Body): Promise<void> {
-	const baseUrl = process.env.USER_ANALYTICS_URL?.trim()
-	const sharedSecret = process.env.UTR_CLAIMS_SHARED_SECRET?.trim()
-	if (!baseUrl || !sharedSecret) return
-
-	try {
-		const response = await fetch(`${baseUrl.replace(/\/$/, '')}/api/ingestion/utr-claims`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'X-Shared-Secret': sharedSecret
-			},
-			body: JSON.stringify(payload),
-			signal: AbortSignal.timeout(USER_ANALYTICS_TIMEOUT_MS)
-		})
-		if (!response.ok) throw new Error(`User Analytics returned HTTP ${response.status}`)
-	} catch (error) {
-		recordRouteRuntimeError(error, 'apiRoute')
-	}
-}
+export { sendClaimToUserAnalytics }
 
 function commonLeadFields(body: Body): Validated {
 	if (typeof body.hp === 'string' && body.hp.trim() !== '') return { ok: false, error: 'Invalid submission' }

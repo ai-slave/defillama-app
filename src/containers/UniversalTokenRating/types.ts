@@ -146,10 +146,21 @@ export type UtrClaimProjectOption = {
 	arcticId: string
 	projectName: string
 	symbol: string
+	coingeckoId: string | null
 	tgeStatus: 'pre' | 'post'
 	disclosureScore: number | null
 	gradedCount: number
 	criteriaCount: number
+}
+
+export type UtrClaimExchangeOption = {
+	id: string
+	displayName: string
+}
+
+export type UtrClaimMarketMakerOption = {
+	marketMakerId: string
+	marketMakerName: string
 }
 
 export type UtrTopMover = {
