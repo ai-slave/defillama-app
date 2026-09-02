@@ -340,8 +340,15 @@ export interface MasterQualityRanksResponse {
 			/** Execution sub-scores (markout/cost/slip, 0–100 peer-relative) behind
 			 * components.E; present only when at least one sub was measured. */
 			exec_subs?: Record<string, number | null>
+			/** Delivery-vs-quote score (0–100) whose shortfall discounts components.E. */
+			exec_delivery?: number | null
+			/** Reserves sub-scores (magnitude/consistency, 0–100) behind components.R;
+			 * present whenever the venue has a reserves figure. */
+			reserve_subs?: Record<string, number | null>
 		}
 	>
+	/** Venues with no observed book — listed, never scored. */
+	insufficient_data?: string[]
 }
 
 /** Published ranking catalog — `exchanges/rank-methodology.json`: what each pillar
@@ -349,6 +356,8 @@ export interface MasterQualityRanksResponse {
 export interface MasterRankMethodologyResponse {
 	components: Array<{ key: string; label: string; weight: number; what: string; na: string }>
 	exec_subs: Array<{ key: string; label: string; weight: number; what: string }>
+	/** Optional until every upstream build ships it. */
+	reserve_subs?: Array<{ key: string; label: string; weight: number; what: string }>
 	flags: Array<{ key: string; label: string; what: string }>
 	ranks_generated_at: string | null
 	last_updated: string

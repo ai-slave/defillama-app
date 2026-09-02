@@ -10,6 +10,12 @@ const EXCHANGES_PAGES = {
 		heading: 'Exchanges',
 		description: 'Activity, liquidity, fees, and compliance across CEXs and DEXs.'
 	},
+	rank: {
+		href: '/exchanges/rank',
+		label: 'Ranking',
+		heading: 'Exchange quality ranking',
+		description: 'How every exchange scores on reserves, execution, activity and liquidity, and how the score is built.'
+	},
 	reserves: {
 		href: '/cexs',
 		label: 'Reserves',
@@ -30,7 +36,7 @@ const EXCHANGES_PAGES = {
 	}
 } as const
 
-const EXCHANGES_PAGE_ORDER = ['exchanges', 'reserves', 'charts', 'tokens'] as const
+const EXCHANGES_PAGE_ORDER = ['exchanges', 'rank', 'reserves', 'charts', 'tokens'] as const
 
 export type ExchangesPage = keyof typeof EXCHANGES_PAGES
 

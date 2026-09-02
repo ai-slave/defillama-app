@@ -1,4 +1,5 @@
 import { Fragment } from 'react'
+import { BasicLink } from '~/components/Link'
 import { Card } from '~/ui/Card'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatUsd } from '~/utils/numberFormat'
@@ -7,7 +8,7 @@ import type { ExchangeExecutionModel, ExchangeProfileModel, ExchangeProfileQuali
 
 // Score → hue: 0 red, ~50 amber, 100 green. Moderate saturation so the fills sit
 // comfortably on both themes.
-const scoreColor = (score: number) => `hsl(${Math.round(Math.max(0, Math.min(100, score)) * 1.2)}, 55%, 42%)`
+export const scoreColor = (score: number) => `hsl(${Math.round(Math.max(0, Math.min(100, score)) * 1.2)}, 55%, 42%)`
 
 // Fixed public bands: S ≥85 (requires measured execution), A ≥70, B ≥55, C ≥40, else D.
 const TIER_BANDS = [
@@ -189,7 +190,10 @@ export function ProfileRanking({ profile }: { profile: ExchangeProfileModel }) {
 				execution quality measured from tick-level fills, and how steadily it all holds. Inputs we could not measure
 				never count as zero; their weight redistributes. The indented rows split the Execution pillar into its
 				sub-metrics, each with its peer-relative score and the measured figure behind it. Experimental; weights will
-				move.
+				move.{' '}
+				<BasicLink href="/exchanges/rank" className="text-link hover:underline">
+					Compare every exchange and read how the score is built
+				</BasicLink>
 			</p>
 		</Card>
 	)

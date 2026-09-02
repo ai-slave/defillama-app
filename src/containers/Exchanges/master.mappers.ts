@@ -44,6 +44,8 @@ import {
 	type ExchangeExecutionModel,
 	type ExchangeExecutionPairModel,
 	type ExchangeProfileQualityModel,
+	type ExchangeRankingModel,
+	type ExchangeRankingRowModel,
 	type ExchangeFiatFees,
 	type ExchangeMetadataFieldModel,
 	type ExchangeMetadataGroupModel,
@@ -871,6 +873,70 @@ function mapProfileExecution(
 				}
 			: null,
 		pairs
+	}
+}
+
+/** The ranking page: every scored venue the directory knows, in score order, with the
+ * catalog that labels the pillars. Null when either upstream file is missing or they
+ * describe different computations — the page then says so instead of rendering a
+ * breakdown the catalog cannot explain. */
+export function mapExchangeRanking(
+	directory: ExchangeDirectoryModel,
+	ranks: MasterQualityRanksResponse | null,
+	methodology: MasterRankMethodologyResponse | null
+): ExchangeRankingModel | null {
+	if (ranks === null || methodology === null) return null
+	if (methodology.ranks_generated_at !== ranks.generated_at) return null
+	const rowsBySlug = new Map<string, ExchangeDirectoryRowModel>()
+	for (const row of directory.rows) rowsBySlug.set(row.slug, row)
+	const rows: ExchangeRankingRowModel[] = []
+	for (const slug in ranks.venues) {
+		const entry = ranks.venues[slug]
+		const venue = rowsBySlug.get(slug)
+		if (!entry || !venue) continue
+		rows.push({
+			slug,
+			name: venue.name,
+			kind: venue.kind,
+			profileHref: venue.profileHref,
+			score: entry.score,
+			tier: entry.tier,
+			rankInKind: entry.rank,
+			overallRank: 0,
+			components: entry.components,
+			execSubs: entry.exec_subs ?? null,
+			execDelivery: entry.exec_delivery ?? null,
+			reserveSubs: entry.reserve_subs ?? null
+		})
+	}
+	rows.sort((a, b) => b.score - a.score || a.rankInKind - b.rankInKind)
+	rows.forEach((row, index) => {
+		row.overallRank = index + 1
+	})
+	const insufficient: ExchangeRankingModel['insufficient'] = []
+	for (const slug of ranks.insufficient_data ?? []) {
+		const venue = rowsBySlug.get(slug)
+		if (venue) insufficient.push({ slug, name: venue.name, kind: venue.kind, profileHref: venue.profileHref })
+	}
+	const sub = (definition: { key: string; label: string; weight: number; what: string }) => ({
+		key: definition.key,
+		label: definition.label,
+		weight: definition.weight,
+		what: definition.what
+	})
+	return {
+		generatedAt: ranks.generated_at,
+		pillars: methodology.components.map((definition) => ({
+			key: definition.key,
+			label: definition.label,
+			weight: definition.weight,
+			what: definition.what,
+			na: definition.na
+		})),
+		execSubs: methodology.exec_subs.map(sub),
+		reserveSubs: (methodology.reserve_subs ?? []).map(sub),
+		rows,
+		insufficient
 	}
 }
 

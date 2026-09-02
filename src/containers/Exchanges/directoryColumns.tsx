@@ -99,18 +99,16 @@ export function TierBadge({ tier }: { tier: string }) {
 }
 
 export const RANK_PILLAR_LABELS: Record<string, string> = {
-	E: 'Execution',
-	L: 'Liquidity',
-	O: 'Open interest',
-	V: 'Volume',
 	R: 'Reserves',
-	S: 'Stability',
-	U: 'Reach'
+	E: 'Execution',
+	A: 'Activity',
+	L: 'Liquidity'
 }
 
-// Pillar weights restated for the hover card only (the Information tab reads them
-// live from rank-methodology.json). Must match upstream lib/rank-components.ts.
-export const RANK_PILLAR_WEIGHTS: Record<string, number> = { E: 33, L: 20, O: 15, V: 10, R: 10, S: 7, U: 5 }
+// Pillar weights restated for the hover card only (the profile and the /exchanges/rank
+// page read them live from rank-methodology.json). Must match upstream
+// lib/rank-components.ts — R, E, A, L.
+export const RANK_PILLAR_WEIGHTS: Record<string, number> = { R: 30, E: 30, A: 20, L: 20 }
 
 /** Hover card behind the tier chip: score, in-kind rank, and the pillar breakdown. */
 export function QualityHover({
@@ -157,7 +155,10 @@ export function QualityHover({
 			</div>
 			<span className="text-tertiary">
 				Built only on measured or independently verifiable inputs. n/a never counts as zero; its weight redistributes.
-				Tiers: S 85+ (needs measured execution), A 70+, B 55+, C 40+, else D.
+				Tiers: S 85+ (needs measured execution), A 70+, B 55+, C 40+, else D.{' '}
+				<BasicLink href="/exchanges/rank" className="text-link hover:underline">
+					How the score is built
+				</BasicLink>
 			</span>
 		</div>
 	)

@@ -510,6 +510,52 @@ export interface ExchangeExecutionModel {
 
 /** The venue's quality ranking, joined with the published methodology catalog so the
  * breakdown can name each pillar and its weight. */
+/** One pillar of the published ranking catalog, as the ranking page lists it. */
+export interface ExchangeRankingPillarModel {
+	key: string
+	label: string
+	weight: number
+	what: string
+	/** What an absence means — always "not measured", never "measured as bad". */
+	na: string
+}
+
+export interface ExchangeRankingSubModel {
+	key: string
+	label: string
+	weight: number
+	what: string
+}
+
+/** One ranked venue on the ranking page: score, tier, positions and the pillar
+ * breakdown, plus the sub-scores the profile page also shows. */
+export interface ExchangeRankingRowModel {
+	slug: string
+	name: string
+	kind: ExchangeVenueKind
+	profileHref: string
+	score: number
+	tier: string
+	rankInKind: number
+	overallRank: number
+	components: Record<string, number | null>
+	execSubs: Record<string, number | null> | null
+	execDelivery: number | null
+	reserveSubs: Record<string, number | null> | null
+}
+
+/** The cross-venue ranking page: every scored venue in score order plus the catalog
+ * that explains the pillars. Built only when the ranks file and the catalog describe
+ * the same computation (matching generated_at). */
+export interface ExchangeRankingModel {
+	generatedAt: string
+	pillars: ExchangeRankingPillarModel[]
+	execSubs: ExchangeRankingSubModel[]
+	reserveSubs: ExchangeRankingSubModel[]
+	rows: ExchangeRankingRowModel[]
+	insufficient: Array<{ slug: string; name: string; kind: ExchangeVenueKind; profileHref: string }>
+}
+
 export interface ExchangeProfileQualityModel {
 	score: number
 	tier: string

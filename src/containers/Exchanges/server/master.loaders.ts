@@ -1,5 +1,6 @@
 import { isHttpNotFoundMessage } from '~/server/api/common'
 import {
+	mapExchangeRanking,
 	mapMasterDirectoryOverview,
 	mapMasterDirectory,
 	mapMasterMetadataOnlyProfile,
@@ -14,6 +15,7 @@ import type {
 	ExchangeDirectoryModel,
 	ExchangeOverviewChartModel,
 	ExchangeProfileModel,
+	ExchangeRankingModel,
 	ExchangeResearchReportModel,
 	MicaVenueModel,
 	RampCatalogModel
@@ -49,6 +51,18 @@ export async function loadMasterExchangeDirectoryWithExecution(): Promise<{
 		fetchMasterExecutionQualityFromNetwork().catch(() => null)
 	])
 	return { directory: mapMasterDirectory(directory, execution), execution }
+}
+
+/** The ranking page: directory rows for names and links, the committed ranks for the
+ *  numbers, the catalog for the labels. Ranks and catalog are fail-soft — the page
+ *  explains the absence rather than failing the build. */
+export async function loadMasterExchangeRanking(): Promise<ExchangeRankingModel | null> {
+	const [directory, ranks, methodology] = await Promise.all([
+		loadMasterExchangeDirectory(),
+		fetchMasterQualityRanksFromNetwork().catch(() => null),
+		fetchMasterRankMethodologyFromNetwork().catch(() => null)
+	])
+	return mapExchangeRanking(directory, ranks, methodology)
 }
 
 export async function loadMasterExchangeOverview(range: ExchangeResearchRange): Promise<ExchangeOverviewChartModel> {
