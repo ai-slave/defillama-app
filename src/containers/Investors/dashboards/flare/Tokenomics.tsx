@@ -6,34 +6,11 @@ import { formatNumber } from '~/utils/numberFormat'
 import { readInvestorApiJson } from '../../api.types'
 import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { buildFlareTokenomicsData, type TokenomicsAPIResponse } from './data'
-import { ChartCard, KpiCard, NarrativeCallout, SectionHeader } from './ui'
+import { ChartCard, KpiCard, NarrativeCallout, SectionHeader, ToggleButton } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 type BurnView = 'daily' | 'cumulative'
-
-function ToggleButton({
-	active,
-	onClick,
-	children
-}: {
-	active: boolean
-	onClick: () => void
-	children: React.ReactNode
-}) {
-	return (
-		<button
-			onClick={onClick}
-			className={`rounded-md px-3 py-1 text-xs font-semibold tracking-wide transition-colors ${
-				active
-					? 'bg-sl-accent-muted text-sl-accent'
-					: 'text-pro-text-secondary hover:bg-sl-hover-bg hover:text-pro-text-primary'
-			}`}
-		>
-			{children}
-		</button>
-	)
-}
 
 const FAQ_ITEMS: { q: string; a: React.ReactNode }[] = [
 	{
@@ -104,7 +81,7 @@ export default function Tokenomics() {
 
 	const onContentReady = useContentReady()
 	const [burnView, setBurnView] = useState<BurnView>('daily')
-	const [protocolView, setProtocolView] = useState<'emitted' | 'burned'>('emitted')
+	const [protocolView, setProtocolView] = useState<'emitted' | 'burned'>('burned')
 
 	useEffect(() => {
 		if (query.data) onContentReady()
@@ -127,7 +104,11 @@ export default function Tokenomics() {
 					<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
 						<KpiCard label="Annualized Inflation" value={inf.kpis.annualizedInflationPct} />
 						<KpiCard label="Circulating Supply" value={inf.kpis.circulatingSupply} />
-						<KpiCard label="On-chain Burned (Total)" value={inf.kpis.cumulativeOnchainBurned} />
+						<KpiCard
+							label="On-chain Burned (Total)"
+							value={inf.kpis.cumulativeOnchainBurned}
+							def="All on-chain burn mechanisms combined (FTSOv1, FSP, fee burns and more), so it's larger than the transaction-fee burn tracked below."
+						/>
 						<KpiCard label="Emitted (Last Month)" value={inf.kpis.lastMonthEmitted} />
 						<KpiCard label="Burned (Last Month)" value={inf.kpis.lastMonthBurned} />
 					</div>
@@ -173,11 +154,11 @@ export default function Tokenomics() {
 										)}
 									</div>
 									<div className="flex gap-1 rounded-md border border-pro-cards-border p-0.5">
-										<ToggleButton active={protocolView === 'emitted'} onClick={() => setProtocolView('emitted')}>
-											Emitted
-										</ToggleButton>
 										<ToggleButton active={protocolView === 'burned'} onClick={() => setProtocolView('burned')}>
 											Burned
+										</ToggleButton>
+										<ToggleButton active={protocolView === 'emitted'} onClick={() => setProtocolView('emitted')}>
+											Emitted
 										</ToggleButton>
 									</div>
 								</div>
@@ -267,10 +248,26 @@ export default function Tokenomics() {
 
 			<SectionHeader>Burn vs. Emit & Net Inflation</SectionHeader>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-				<KpiCard label="Burn / Emit (latest)" value={ek.latestBurnVsEmitPct} />
-				<KpiCard label="Net Inflation (latest)" value={ek.latestNetInflation} />
-				<KpiCard label="Burn / Emit (30d)" value={ek.burnVsEmit30dPct} />
-				<KpiCard label="Net Inflation (30d)" value={ek.netInflation30d} />
+				<KpiCard
+					label="Burn / Emit (latest)"
+					value={ek.latestBurnVsEmitPct}
+					def="Transaction-fee burn as a percent of FLR emitted, for the latest reward epoch. 100% would mean burn fully offsets new emission."
+				/>
+				<KpiCard
+					label="Net Inflation (latest)"
+					value={ek.latestNetInflation}
+					def="FLR emitted minus FLR burned, for the latest reward epoch."
+				/>
+				<KpiCard
+					label="Burn / Emit (30d)"
+					value={ek.burnVsEmit30dPct}
+					def="Transaction-fee burn as a percent of FLR emitted, over the trailing 30 days."
+				/>
+				<KpiCard
+					label="Net Inflation (30d)"
+					value={ek.netInflation30d}
+					def="FLR emitted minus FLR burned, over the trailing 30 days."
+				/>
 			</div>
 			<ChartCard title={e.burnVsEmitTitle}>
 				<MultiSeriesChart
@@ -292,12 +289,20 @@ export default function Tokenomics() {
 					<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
 						<KpiCard label="Total Collected" value={fire.kpis.totalCollectedUsd} />
 						<KpiCard label="Collected 30d" value={fire.kpis.collected30dUsd} />
-						<KpiCard label="FDC Fees" value={fire.kpis.fdcCollectedUsd} />
-						<KpiCard label="Minting Fees" value={fire.kpis.mintingFeeCollectedUsd} />
+						<KpiCard
+							label="FDC Fees"
+							value={fire.kpis.fdcCollectedUsd}
+							def="Fees paid for FDC (Flare Data Connector) data requests."
+						/>
+						<KpiCard label="Minting Fees" value={fire.kpis.mintingFeeCollectedUsd} def="Fees paid when minting FXRP." />
 						{fire.kpis.redemptionFeeCollectedUsd != null && (
-							<KpiCard label="Redemption Fees" value={fire.kpis.redemptionFeeCollectedUsd} />
+							<KpiCard
+								label="Redemption Fees"
+								value={fire.kpis.redemptionFeeCollectedUsd}
+								def="Fees paid when redeeming FXRP back to XRP."
+							/>
 						)}
-						<KpiCard label="Tag Fees" value={fire.kpis.tagsCollectedUsd} />
+						<KpiCard label="Tag Fees" value={fire.kpis.tagsCollectedUsd} def="Fees from Flare's Tags product." />
 					</div>
 					<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 						<div className="mb-3 flex flex-wrap items-end justify-between gap-2">

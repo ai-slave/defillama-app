@@ -30,15 +30,30 @@ describe('Flare query data builders', () => {
 	test('builds overview datasets once while retaining stablecoin filtering and stack order', () => {
 		const result = buildFlareOverviewData({
 			tvl: {
-				tvlChart: chart(
-					['2026-01-02', '1700000000'],
-					[
-						{ name: 'TVL A', data: [10, 11] },
-						{ name: 'TVL B', data: [20, 21] }
-					]
-				),
-				kpis: { currentTvl: formatted(31) }
+				tvlChart: {
+					...chart(
+						['2026-01-02', '1700000000'],
+						[
+							{ name: 'TVL', data: [10, 11] },
+							{ name: 'Bridged TVL', data: [null, 21] }
+						]
+					),
+					tooltip: 'TVL explainer'
+				},
+				kpis: { currentTvl: formatted(11), currentBridgedTvl: formatted(21) }
 			},
+			protocolRankings: [
+				{
+					name: 'Firelight',
+					category: 'Farm',
+					logo: null,
+					url: null,
+					tvl: 100,
+					tvlFormatted: 'formatted:100',
+					change24h: 1,
+					change24hFormatted: '+1.00%'
+				}
+			],
 			stablecoins: {
 				stablecoinChart: chart(
 					['1700000000000'],
@@ -64,9 +79,18 @@ describe('Flare query data builders', () => {
 		} satisfies OverviewAPIResponse)
 
 		expect(result.tvl.dataset.source).toEqual([
-			[Date.UTC(2026, 0, 2), 10, 20],
+			[Date.UTC(2026, 0, 2), 10, null],
 			[1_700_000_000_000, 11, 21]
 		])
+		expect(result.tvl.charts).toMatchObject([
+			{ name: 'TVL', color: '#E62058' },
+			{ name: 'Bridged TVL', color: '#2D63F6' }
+		])
+		expect(result.tvl.currentFormatted).toBe('formatted:11')
+		expect(result.tvl.currentBridgedFormatted).toBe('formatted:21')
+		expect(result.tvl.titleTooltip).toBe('TVL explainer')
+		expect(result.protocolRankings).toHaveLength(1)
+		expect(result.protocolRankings[0].name).toBe('Firelight')
 		expect(result.stables.dataset.dimensions).toEqual(['timestamp', 'Native', 'Bridged'])
 		expect(result.stables.charts.map(({ name, stack }) => [name, stack])).toEqual([
 			['Native', 'Total'],
@@ -418,8 +442,10 @@ describe('Flare query data builders', () => {
 					{ name: 'FTSO Delegation', data: [8] }
 				]
 			),
+			stakedOrDelegatedPctChart: chart(['2026-01-02'], [{ name: '% Staked or Delegated', data: [15] }]),
 			kpis: {
 				pctStakedOrDelegated: formatted(1),
+				totalStakedOrDelegated: formatted(15),
 				ftsoDelegated: formatted(2),
 				totalStake: formatted(3),
 				validatorCount: formatted(4),
@@ -435,8 +461,10 @@ describe('Flare query data builders', () => {
 		})
 		expect(staking.chart?.seriesNames).toEqual(['P-Chain Stake', 'FTSO Delegation'])
 		expect(staking.chart?.charts).toMatchObject([
-			{ name: 'P-Chain Stake', color: '#FF7A1A', hideAreaStyle: true },
-			{ name: 'FTSO Delegation', color: '#2D63F6', hideAreaStyle: true }
+			{ name: 'P-Chain Stake', color: '#FF7A1A', stack: 'total' },
+			{ name: 'FTSO Delegation', color: '#2D63F6', stack: 'total' }
 		])
+		expect(staking.pctChart?.dataset.source).toEqual([[Date.UTC(2026, 0, 2), 15]])
+		expect(staking.kpis.totalStakedOrDelegated).toBe('formatted:15')
 	})
 })

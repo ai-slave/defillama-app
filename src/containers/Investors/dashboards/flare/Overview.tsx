@@ -28,33 +28,90 @@ export default function Overview() {
 
 	if (!query.data) return null
 
-	const { tvl, stables, fxrp } = query.data
+	const { tvl, stables, fxrp, protocolRankings } = query.data
 
 	return (
 		<div className="flex flex-col gap-6">
 			<SectionHeader>Chain Ecosystem</SectionHeader>
-			<ChartCard
-				title={tvl.title}
-				subtitle="DefiLlama chain TVL, deduplicated: liquid staking, bridges and vault-on-vault TVL are excluded, so it reads below single-asset views such as FXRP locked in DeFi."
-				value={tvl.currentFormatted}
-			>
+			<div className="grid grid-cols-2 gap-4">
+				<KpiCard label="Chain TVL" value={tvl.currentFormatted} />
+				{tvl.currentBridgedFormatted && <KpiCard label="Bridged TVL" value={tvl.currentBridgedFormatted} />}
+			</div>
+			<ChartCard title={tvl.title} subtitle={tvl.subtitle} titleTooltip={tvl.titleTooltip}>
 				<MultiSeriesChart
 					dataset={tvl.dataset}
 					charts={tvl.charts}
 					valueSymbol="$"
 					title=""
+					hideDefaultLegend={false}
 					height="360px"
 					chartOptions={tvl.chartOptions}
 				/>
 			</ChartCard>
+
+			{protocolRankings.length > 0 && (
+				<>
+					<SectionHeader>Protocol Rankings</SectionHeader>
+					<div className="overflow-x-auto rounded-lg border border-pro-cards-border bg-pro-cards-bg">
+						<table className="w-full text-left text-sm">
+							<thead>
+								<tr className="border-b border-pro-cards-border text-sm font-medium tracking-wider text-pro-text-label uppercase">
+									<th className="p-3">#</th>
+									<th className="p-3">Protocol</th>
+									<th className="p-3">Category</th>
+									<th className="p-3 text-right">TVL</th>
+									<th className="p-3 text-right">24h</th>
+								</tr>
+							</thead>
+							<tbody>
+								{protocolRankings.map((p, i) => (
+									<tr key={p.name} className="border-b border-pro-cards-border last:border-b-0">
+										<td className="p-3 text-pro-text-label">{i + 1}</td>
+										<td className="p-3 font-medium text-pro-text-primary">
+											<a
+												href={p.url ?? undefined}
+												target="_blank"
+												rel="noopener noreferrer"
+												className="flex items-center gap-2 hover:text-sl-accent"
+											>
+												{p.logo && <img src={p.logo} alt="" className="size-5 shrink-0 rounded-full" loading="lazy" />}
+												{p.name}
+											</a>
+										</td>
+										<td className="p-3 text-pro-text-label">{p.category ?? '-'}</td>
+										<td className="p-3 text-right font-mono text-xs text-pro-text-primary tabular-nums">
+											{p.tvlFormatted}
+										</td>
+										<td
+											className={`p-3 text-right font-mono text-xs tabular-nums ${p.change24h >= 0 ? 'text-success' : 'text-error'}`}
+										>
+											{p.change24hFormatted}
+										</td>
+									</tr>
+								))}
+							</tbody>
+						</table>
+					</div>
+				</>
+			)}
 
 			{fxrp && (
 				<>
 					<SectionHeader>FXRP</SectionHeader>
 					<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
 						<KpiCard label="Total FXRP Supply" value={fxrp.totalFxrpSupply} />
-						<KpiCard label="% Locked in DeFi" value={fxrp.pctLockedInDefi} sub="All networks" />
-						<KpiCard label="Value Locked in DeFi" value={fxrp.valueLockedInDefiUsd} sub="Flare only" />
+						<KpiCard
+							label="% Locked in DeFi"
+							value={fxrp.pctLockedInDefi}
+							sub="All networks"
+							def="Share of total FXRP supply deployed in DeFi, across all networks, not just Flare."
+						/>
+						<KpiCard
+							label="Value Locked in DeFi"
+							value={fxrp.valueLockedInDefiUsd}
+							sub="Flare only"
+							def="FXRP deployed in DeFi on Flare only. Can exceed Flare's chain TVL, which excludes liquid staking, bridges and vault-on-vault positions."
+						/>
 					</div>
 				</>
 			)}

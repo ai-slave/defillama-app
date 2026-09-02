@@ -40,13 +40,32 @@ export default function FAssets() {
 			<SectionHeader>FXRP</SectionHeader>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 				<KpiCard label="Total FXRP Supply" value={k.totalFxrpSupply} />
-				<KpiCard label="% Locked in DeFi" value={k.pctLockedInDefi} sub="All networks" />
-				<KpiCard label="Value Locked in DeFi" value={k.valueLockedInDefiUsd} sub="Flare only" />
-				<KpiCard label="FXRP Locked in DeFi" value={k.fxrpLockedInDefi} sub="Flare only" />
+				<KpiCard
+					label="% Locked in DeFi"
+					value={k.pctLockedInDefi}
+					sub="All networks"
+					def="Share of total FXRP supply deployed in DeFi, across all networks, not just Flare."
+				/>
+				<KpiCard
+					label="Value Locked in DeFi"
+					value={k.valueLockedInDefiUsd}
+					sub="Flare only"
+					def="FXRP deployed in DeFi on Flare only. Can exceed Flare's chain TVL, which excludes liquid staking, bridges and vault-on-vault positions."
+				/>
+				<KpiCard
+					label="FXRP Locked in DeFi"
+					value={k.fxrpLockedInDefi}
+					sub="Flare only"
+					def="Same figure as Value Locked in DeFi, in FXRP token units instead of USD."
+				/>
 			</div>
 
 			{charts.locked && (
-				<ChartCard title={charts.locked.title} subtitle="FXRP locked in DeFi over time — Flare vs. all networks.">
+				<ChartCard
+					title={charts.locked.title}
+					subtitle={charts.locked.subtitle}
+					titleTooltip={charts.locked.titleTooltip}
+				>
 					<MultiSeriesChart
 						dataset={charts.locked.dataset}
 						charts={charts.locked.charts}
@@ -60,7 +79,7 @@ export default function FAssets() {
 
 			<div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
 				{charts.dist && (
-					<ChartCard title={charts.dist.title} subtitle="Share of FXRP locked, by DeFi protocol, on Flare.">
+					<ChartCard title={charts.dist.title} subtitle={charts.dist.subtitle} titleTooltip={charts.dist.titleTooltip}>
 						<PieChart
 							chartData={charts.dist.data}
 							stackColors={charts.dist.colors}
@@ -81,7 +100,8 @@ export default function FAssets() {
 				{charts.allNetworksDist && (
 					<ChartCard
 						title={charts.allNetworksDist.title}
-						subtitle="Share of FXRP locked, by DeFi protocol, across all networks."
+						subtitle={charts.allNetworksDist.subtitle}
+						titleTooltip={charts.allNetworksDist.titleTooltip}
 					>
 						<PieChart
 							chartData={charts.allNetworksDist.data}
@@ -104,9 +124,13 @@ export default function FAssets() {
 			<SectionHeader>Activity</SectionHeader>
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
 				<KpiCard label="Total DeFi Txns" value={k.totalDefiTransactions} />
-				<KpiCard label="Total Minters" value={k.totalMinters} />
+				<KpiCard
+					label="Total Minters"
+					value={k.totalMinters}
+					def="Distinct wallets with DeFi activity in FXRP protocols, not a count of mint transactions."
+				/>
 				<KpiCard label="Mints" value={k.mintCount} />
-				<KpiCard label="Burns" value={k.burnCount} />
+				<KpiCard label="Burns" value={k.burnCount} def="FXRP redemptions." />
 				<KpiCard label="Swaps" value={k.swapCount} />
 			</div>
 		</div>

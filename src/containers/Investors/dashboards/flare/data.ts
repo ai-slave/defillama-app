@@ -8,10 +8,21 @@ interface FormattedValue {
 	formatted: string
 }
 
+interface ProtocolRankingEntry {
+	name: string
+	category: string | null
+	logo: string | null
+	url: string | null
+	tvl: number
+	tvlFormatted: string
+	change24h: number
+	change24hFormatted: string
+}
+
 export interface OverviewAPIResponse {
 	tvl: {
 		tvlChart: UpstreamChart
-		kpis: { currentTvl: FormattedValue }
+		kpis: { currentTvl: FormattedValue; currentBridgedTvl?: FormattedValue }
 	}
 	stablecoins: {
 		stablecoinChart: UpstreamChart
@@ -28,6 +39,7 @@ export interface OverviewAPIResponse {
 			valueLockedInDefiUsd: FormattedValue
 		}
 	}
+	protocolRankings?: ProtocolRankingEntry[]
 }
 
 export interface NetworkAPIResponse {
@@ -45,8 +57,10 @@ export interface NetworkAPIResponse {
 export interface StakingAPIResponse {
 	narrative?: string
 	stakingDelegationChart?: UpstreamChart
+	stakedOrDelegatedPctChart?: UpstreamChart
 	kpis: {
 		pctStakedOrDelegated: FormattedValue
+		totalStakedOrDelegated?: FormattedValue
 		ftsoDelegated: FormattedValue
 		ftsoDelegatedUsd?: FormattedValue
 		totalStake: FormattedValue
@@ -57,6 +71,8 @@ export interface StakingAPIResponse {
 
 interface DistributionChart {
 	title?: string
+	subtitle?: string
+	tooltip?: string
 	labels: string[]
 	series: { name: string; data: number[] }[]
 }
@@ -212,18 +228,34 @@ const BURN_VS_EMIT_CHARTS: MultiSeriesChartSeriesConfig[] = [
 
 const DONUT_PALETTE = [FLARE_ORANGE, FLARE_PINK, '#7C2D9C', FLARE_BLUE, FLARE_GREEN, '#FBBF24', '#06B6D4', '#A855F7']
 
-export function buildFlareOverviewData(data: OverviewAPIResponse) {
-	const tvlChartConfigs = new Array<MultiSeriesChartSeriesConfig>(data.tvl.tvlChart.series.length)
-	for (let i = 0; i < data.tvl.tvlChart.series.length; i++) {
-		const name = data.tvl.tvlChart.series[i].name
-		tvlChartConfigs[i] = {
+// TVL + Bridged TVL, overlaid (not stacked, the two overlap since bridged
+// assets already deployed in DeFi count in both) as two filled areas in
+// different colors, both on one shared axis pre-aligned by the adapter.
+// `null` before a series starts (e.g. bridged TVL's tracking start date)
+// leaves a gap rather than drawing a flat 0.
+function buildTvlChart(chart: UpstreamChart, fallbackTitle: string) {
+	const colors = [FLARE_PINK, FLARE_BLUE]
+	const charts = new Array<MultiSeriesChartSeriesConfig>(chart.series.length)
+	for (let i = 0; i < chart.series.length; i++) {
+		const name = chart.series[i].name
+		charts[i] = {
 			type: 'line',
 			name,
 			encode: { x: 'timestamp', y: name },
-			color: FLARE_PINK
+			color: colors[i % colors.length]
 		}
 	}
+	return {
+		title: chart.title ?? fallbackTitle,
+		subtitle: chart.subtitle,
+		titleTooltip: chart.tooltip,
+		dataset: buildColumnarTimeSeriesDataset(chart.dates, chart.series, parseDateToTimestampMs, null),
+		chartOptions: timeSeriesChartOptions(chart.dates.length, '$'),
+		charts
+	}
+}
 
+export function buildFlareOverviewData(data: OverviewAPIResponse) {
 	const stableSeries: UpstreamSeries[] = []
 	const stableChartConfigs: MultiSeriesChartSeriesConfig[] = []
 	for (const series of data.stablecoins.stablecoinChart.series) {
@@ -238,6 +270,7 @@ export function buildFlareOverviewData(data: OverviewAPIResponse) {
 	}
 
 	const fxrp = data.fxrp?.kpis
+
 	return {
 		fxrp: fxrp
 			? {
@@ -247,17 +280,11 @@ export function buildFlareOverviewData(data: OverviewAPIResponse) {
 				}
 			: null,
 		tvl: {
-			title: data.tvl.tvlChart.title ?? 'Flare TVL',
-			dataset: buildColumnarTimeSeriesDataset(
-				data.tvl.tvlChart.dates,
-				data.tvl.tvlChart.series,
-				parseDateToTimestampMs,
-				0
-			),
-			chartOptions: timeSeriesChartOptions(data.tvl.tvlChart.dates.length, '$'),
-			charts: tvlChartConfigs,
-			currentFormatted: data.tvl.kpis.currentTvl.formatted
+			...buildTvlChart(data.tvl.tvlChart, 'Flare TVL & Bridged TVL'),
+			currentFormatted: data.tvl.kpis.currentTvl.formatted,
+			currentBridgedFormatted: data.tvl.kpis.currentBridgedTvl?.formatted ?? null
 		},
+		protocolRankings: data.protocolRankings ?? [],
 		stables: {
 			title: data.stablecoins.stablecoinChart.title ?? 'Stablecoin Supply on Flare',
 			dataset: buildColumnarTimeSeriesDataset(
@@ -319,6 +346,8 @@ export function buildFlareStakingData(data: StakingAPIResponse) {
 	if (upstreamChart) {
 		const colors = {}
 		const seriesNames = new Array<string>(upstreamChart.series.length)
+		// Stacked (not overlaid): both series get area fill + a shared stack
+		// group, so the top of the stack reads as the combined total.
 		const charts = new Array<MultiSeriesChartSeriesConfig>(upstreamChart.series.length)
 		for (let i = 0; i < upstreamChart.series.length; i++) {
 			const name = upstreamChart.series[i].name
@@ -330,12 +359,13 @@ export function buildFlareStakingData(data: StakingAPIResponse) {
 				name,
 				encode: { x: 'timestamp', y: name },
 				color,
-				hideAreaStyle: true
+				stack: 'total'
 			}
 		}
 		chart = {
-			title: upstreamChart.title ?? 'P-Chain Staking vs. FTSO Delegation',
+			title: upstreamChart.title ?? 'P-Chain Staking + FTSO Delegation',
 			subtitle: upstreamChart.subtitle,
+			titleTooltip: upstreamChart.tooltip,
 			dataset: buildColumnarTimeSeriesDataset(upstreamChart.dates, upstreamChart.series, parseDateToTimestampMs, 0),
 			chartOptions: timeSeriesChartOptions(upstreamChart.dates.length, ''),
 			charts,
@@ -344,17 +374,21 @@ export function buildFlareStakingData(data: StakingAPIResponse) {
 		}
 	}
 
+	const pctChart = buildLineChartView(data.stakedOrDelegatedPctChart, '%', FLARE_PINK)
+
 	return {
 		narrative: data.narrative,
 		kpis: {
 			pctStakedOrDelegated: data.kpis.pctStakedOrDelegated.formatted,
+			totalStakedOrDelegated: data.kpis.totalStakedOrDelegated?.formatted,
 			ftsoDelegated: data.kpis.ftsoDelegated.formatted,
 			ftsoDelegatedUsd: data.kpis.ftsoDelegatedUsd?.formatted,
 			totalStake: data.kpis.totalStake.formatted,
 			validatorCount: data.kpis.validatorCount.formatted,
 			averageUptime: data.kpis.averageUptime.formatted
 		},
-		chart
+		chart,
+		pctChart
 	}
 }
 
@@ -378,8 +412,12 @@ export function buildFlareFAssetsData(data: FAssetsAPIResponse) {
 		}
 		lockedChart = {
 			title: locked.title ?? 'FXRP Locked in DeFi Over Time',
+			subtitle: locked.subtitle,
+			titleTooltip: locked.tooltip,
 			dataset: buildColumnarTimeSeriesDataset(locked.dates, lockedSeries, parseDateToTimestampMs, 0),
-			chartOptions: timeSeriesChartOptions(locked.dates.length, ''),
+			// Full range by default (Sept-2026 IR feedback) instead of the usual
+			// trailing-90-day zoom.
+			chartOptions: timeSeriesChartOptions(0, ''),
 			charts
 		}
 	}
@@ -416,7 +454,7 @@ function buildDonut(dist: DistributionChart | undefined, fallbackTitle: string) 
 		rows[i] = { name, value: dist.series[0].data[i] ?? 0 }
 		colors[name] = DONUT_PALETTE[i % DONUT_PALETTE.length]
 	}
-	return { title: dist.title ?? fallbackTitle, data: rows, colors }
+	return { title: dist.title ?? fallbackTitle, subtitle: dist.subtitle, titleTooltip: dist.tooltip, data: rows, colors }
 }
 
 const FIRE_SOURCE_COLORS: Record<string, string> = {
@@ -487,6 +525,7 @@ function buildLineChartView(chart: UpstreamChart | undefined, valueSymbol: strin
 	return {
 		title: chart.title,
 		subtitle: chart.subtitle,
+		titleTooltip: chart.tooltip,
 		dataset: buildColumnarTimeSeriesDataset(chart.dates, chart.series, parseDateToTimestampMs, 0),
 		// zoom=false shows the full history (e.g. the FIP.16 5% → 3% inflation cut).
 		chartOptions: timeSeriesChartOptions(zoom ? chart.dates.length : 0, valueSymbol),

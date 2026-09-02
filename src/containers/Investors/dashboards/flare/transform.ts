@@ -3,12 +3,15 @@ import type { ApiDate } from '../../api.types'
 export interface UpstreamSeries {
 	name: string
 	type?: 'bar' | 'line'
-	data: number[]
+	/** `null` for a period the metric wasn't tracked yet, so it's simply not drawn. */
+	data: (number | null)[]
 }
 
 export interface UpstreamChart {
 	title?: string
 	subtitle?: string
+	/** Longer explainer, shown in a hover tooltip rather than inline. */
+	tooltip?: string
 	// Flare cache adapters normalize daily and epoch observations to UTC YYYY-MM-DD.
 	dates: ApiDate[]
 	series: UpstreamSeries[]
