@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import ts from 'typescript'
+import { policyTargetFiles } from '../lib/sourceFiles'
 
 const root = path.resolve(import.meta.dirname, '../..')
 const sourceRoot = path.join(root, 'src')
@@ -85,13 +86,6 @@ const legacyNames = [
 	'toNiceHour',
 	'toYearMonth'
 ]
-
-function sourceFiles(directory: string): string[] {
-	return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-		const fullPath = path.join(directory, entry.name)
-		return entry.isDirectory() ? sourceFiles(fullPath) : /\.tsx?$/.test(entry.name) ? [fullPath] : []
-	})
-}
 
 function isTestFile(relative: string) {
 	return /(?:^|\/)(?:__tests__\/.*|[^/]+\.(?:test|spec)\.[^/]+)$/.test(relative)
@@ -293,7 +287,7 @@ if (process.argv.includes('--self-test')) {
 	process.exit(0)
 }
 
-const violations = sourceFiles(sourceRoot).flatMap((file) => {
+const violations = policyTargetFiles(root, sourceRoot).flatMap((file) => {
 	const relative = path.relative(root, file)
 	return scanSource(relative, file, fs.readFileSync(file, 'utf8'))
 })

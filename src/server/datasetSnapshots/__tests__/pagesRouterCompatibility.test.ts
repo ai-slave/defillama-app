@@ -1,30 +1,10 @@
 import { spawnSync } from 'node:child_process'
 import { promises as fs } from 'node:fs'
-import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-async function collectSourceFiles(rootDir: string): Promise<string[]> {
-	const files: string[] = []
-	for (const entry of await fs.readdir(rootDir, { withFileTypes: true })) {
-		const filePath = path.join(rootDir, entry.name)
-		if (entry.isDirectory()) files.push(...(await collectSourceFiles(filePath)))
-		else if (/\.[jt]sx?$/.test(entry.name)) files.push(filePath)
-	}
-	return files
-}
-
+// The App Router `server-only` marker is blocked repo-wide by
+// eslint/no-restricted-imports in .oxlintrc.json.
 describe('dataset snapshot Pages Router compatibility', () => {
-	it('does not use the App Router server-only marker', async () => {
-		const invalid = []
-
-		for (const filePath of await collectSourceFiles('src')) {
-			const source = await fs.readFile(filePath, 'utf8')
-			if (/import\s+['"]server-only['"]/.test(source)) invalid.push(filePath)
-		}
-
-		expect(invalid).toEqual([])
-	})
-
 	it('does not change React package resolution for Bun preparation commands', async () => {
 		const commandFiles = [
 			'package.json',

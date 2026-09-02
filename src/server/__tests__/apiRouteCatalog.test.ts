@@ -1,7 +1,8 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join, relative, sep } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { apiRouteCatalog, type ApiRouteCatalogEntry } from '~/server/apiRouteCatalog'
+import { collectSourceFiles } from '../../../scripts/lib/sourceFiles'
 
 const pagesApiDir = join(process.cwd(), 'src/pages/api')
 const srcDir = join(process.cwd(), 'src')
@@ -10,24 +11,6 @@ const apiRouteCatalogTestFile = join(srcDir, 'server/__tests__/apiRouteCatalog.t
 
 function staleReference(...parts: string[]) {
 	return parts.join('')
-}
-
-function walkFiles(dir: string, extensions = ['.ts']): string[] {
-	const files: string[] = []
-
-	for (const name of readdirSync(dir)) {
-		const filePath = join(dir, name)
-		const stat = statSync(filePath)
-		if (stat.isDirectory()) {
-			files.push(...walkFiles(filePath, extensions))
-			continue
-		}
-		if (extensions.some((extension) => filePath.endsWith(extension))) {
-			files.push(filePath)
-		}
-	}
-
-	return files
 }
 
 function routePathFromFile(filePath: string) {
@@ -53,10 +36,24 @@ function isProductionSourceFile(filePath: string) {
 	return true
 }
 
+// /api/collections/ is PocketBase's namespace: those paths are sent through the
+// PocketBase client against POCKETBASE_URL, not this app's API routes.
+const legacyRelativeApiPathPattern = /['"`](\/api\/(?!public\/|private\/|dynamic\/|collections\/)[^'"`\s)]*)/g
+
+function findLegacyRelativeApiPaths(line: string) {
+	const paths: string[] = []
+	for (const match of line.matchAll(legacyRelativeApiPathPattern)) {
+		// A parsed external URL can share the /api namespace without calling this app.
+		if (/\.pathname\.startsWith\(\s*$/.test(line.slice(0, match.index))) continue
+		paths.push(match[1])
+	}
+	return paths
+}
+
 describe('api route catalog', () => {
 	it('lists every pages/api route exactly once', () => {
 		const catalogPaths = apiRouteCatalog.map((entry) => entry.canonicalPath).toSorted()
-		const filePaths = walkFiles(pagesApiDir).map(routePathFromFile).toSorted()
+		const filePaths = collectSourceFiles(pagesApiDir, ['.ts']).map(routePathFromFile).toSorted()
 
 		expect(new Set(catalogPaths).size).toBe(catalogPaths.length)
 		expect(filePaths).toEqual(catalogPaths)
@@ -111,19 +108,15 @@ describe('api route catalog', () => {
 
 	it('keeps production relative API paths on canonical grouped URLs', () => {
 		const legacyApiPaths: string[] = []
-		// /api/collections/ is PocketBase's namespace: those paths are sent through the
-		// PocketBase client against POCKETBASE_URL, not this app's API routes.
-		const legacyRelativeApiPathPattern = /['"`](\/api\/(?!public\/|private\/|dynamic\/|collections\/)[^'"`\s)]*)/g
 
-		for (const filePath of walkFiles(srcDir, ['.ts', '.tsx']).filter(isProductionSourceFile)) {
+		for (const filePath of collectSourceFiles(srcDir, ['.ts', '.tsx']).filter(isProductionSourceFile)) {
 			const relativePath = relative(process.cwd(), filePath)
 			const lines = readFileSync(filePath, 'utf8').split('\n')
 
 			for (const [index, line] of lines.entries()) {
 				if (line.trim().startsWith('//')) continue
 
-				for (const match of line.matchAll(legacyRelativeApiPathPattern)) {
-					const apiPath = match[1]
+				for (const apiPath of findLegacyRelativeApiPaths(line)) {
 					if (apiPath === '/api/:path*') continue
 					legacyApiPaths.push(`${relativePath}:${index + 1} ${apiPath}`)
 				}
@@ -131,6 +124,11 @@ describe('api route catalog', () => {
 		}
 
 		expect(legacyApiPaths).toEqual([])
+	})
+
+	it('distinguishes external URL checks from app API requests', () => {
+		expect(findLegacyRelativeApiPaths("url.pathname.startsWith('/api/webhooks/')")).toEqual([])
+		expect(findLegacyRelativeApiPaths("fetch('/api/webhooks/create')")).toEqual(['/api/webhooks/create'])
 	})
 
 	it('keeps removed route buckets and imports from returning', () => {
@@ -147,7 +145,7 @@ describe('api route catalog', () => {
 			staleReference('protocol', 'Split')
 		]
 
-		for (const filePath of walkFiles(srcDir, ['.ts', '.tsx', '.md']).filter((filePath) => {
+		for (const filePath of collectSourceFiles(srcDir, ['.ts', '.tsx', '.md']).filter((filePath) => {
 			if (filePath === apiRouteCatalogFile) return false
 			if (filePath === apiRouteCatalogTestFile) return false
 			return !filePath.includes(`${sep}node_modules${sep}`)

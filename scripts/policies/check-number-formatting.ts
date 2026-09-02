@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import ts from 'typescript'
+import { policyTargetFiles } from '../lib/sourceFiles'
 
 const root = path.resolve(import.meta.dirname, '../..')
 const sourceRoot = path.join(root, 'src')
@@ -42,13 +43,6 @@ const fixedFormattingFiles = new Set([
 	'src/containers/Yields/Tables/Sparkline.tsx',
 	'src/server/datasetSnapshots/publish.server.ts'
 ])
-
-function sourceFiles(directory: string): string[] {
-	return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-		const fullPath = path.join(directory, entry.name)
-		return entry.isDirectory() ? sourceFiles(fullPath) : /\.tsx?$/.test(entry.name) ? [fullPath] : []
-	})
-}
 
 const violations: string[] = []
 
@@ -113,7 +107,7 @@ function followingLiteral(node: ts.Expression): string | null {
 	return null
 }
 
-for (const file of sourceFiles(sourceRoot)) {
+for (const file of policyTargetFiles(root, sourceRoot)) {
 	const relative = path.relative(root, file)
 	const source = fs.readFileSync(file, 'utf8')
 	const sourceFile = ts.createSourceFile(

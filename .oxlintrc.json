@@ -8,6 +8,18 @@
 	"rules": {
 		"eslint/eqeqeq": ["error", "always", { "null": "ignore" }],
 		"eslint/no-fallthrough": "warn",
+		"eslint/no-restricted-imports": [
+			"error",
+			{
+				"paths": [{ "name": "server-only", "message": "App Router marker; this app runs on the Pages Router." }],
+				"patterns": [
+					{
+						"group": ["**/.cache/app-metadata", "**/.cache/app-metadata/**"],
+						"message": "Generated metadata artifacts are read through the filesystem loader in ~/utils/metadata."
+					}
+				]
+			}
+		],
 		"eslint/no-shadow": ["error", { "ignoreOnInitialization": true }],
 		"eslint/no-throw-literal": "error",
 		"eslint/no-underscore-dangle": "off",
@@ -30,5 +42,67 @@
 		"nextjs/no-html-link-for-pages": "off",
 		"nextjs/no-img-element": "off"
 	},
+	// Overrides replace the root rule config, so each one restates the global restrictions.
+	// Note: oxlint's no-restricted-imports also flags dynamic import(); boundaries whose
+	// sanctioned escape hatch is a dynamic import inside getStaticProps (metadata, dataset
+	// snapshots, routeRegistry) stay in vitest import-boundary tests instead.
+	"overrides": [
+		{
+			// Client entry roots must never import tablePages .server modules at runtime.
+			// Server-side code inside these roots (server/ dirs, .server files, API routes, tests) is exempt.
+			"files": ["src/pages/**", "src/components/**", "src/containers/**", "src/hooks/**", "src/layout/**"],
+			"excludeFiles": [
+				"src/pages/api/**",
+				"**/server/**",
+				"**/*.server.ts",
+				"**/*.server.tsx",
+				"**/__tests__/**",
+				"**/*.test.ts",
+				"**/*.test.tsx"
+			],
+			"rules": {
+				"eslint/no-restricted-imports": [
+					"error",
+					{
+						"paths": [{ "name": "server-only", "message": "App Router marker; this app runs on the Pages Router." }],
+						"patterns": [
+							{
+								"group": ["**/.cache/app-metadata", "**/.cache/app-metadata/**"],
+								"message": "Generated metadata artifacts are read through the filesystem loader in ~/utils/metadata."
+							},
+							{
+								"group": ["~/server/tablePages/*.server", "~/server/tablePages/**/*.server"],
+								"allowTypeImports": true,
+								"message": "tablePages .server modules are server-only; call them from a container server module or API route."
+							}
+						]
+					}
+				]
+			}
+		},
+		{
+			// Shared breakdown chart utilities are imported by client and server alike.
+			"files": ["src/utils/breakdowns.ts"],
+			"rules": {
+				"eslint/no-restricted-imports": [
+					"error",
+					{
+						"paths": [{ "name": "server-only", "message": "App Router marker; this app runs on the Pages Router." }],
+						"patterns": [
+							{
+								"group": ["**/.cache/app-metadata", "**/.cache/app-metadata/**"],
+								"message": "Generated metadata artifacts are read through the filesystem loader in ~/utils/metadata."
+							},
+							{
+								"group": ["~/server/**", "~/containers/**"],
+								"allowTypeImports": true,
+								"message": "breakdowns.ts is shared client/server code; keep server and container imports out."
+							}
+						]
+					}
+				]
+			}
+		}
+	],
 	"ignorePatterns": ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts", "public/**", ".agents/**"]
 }

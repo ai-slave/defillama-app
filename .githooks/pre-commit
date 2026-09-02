@@ -3,8 +3,9 @@
 status=0
 staged_files=$(mktemp)
 partially_staged_files=$(mktemp)
+policy_files=$(mktemp)
 
-trap 'rm -f "$staged_files" "$partially_staged_files"' EXIT HUP INT TERM
+trap 'rm -f "$staged_files" "$partially_staged_files" "$policy_files"' EXIT HUP INT TERM
 
 git diff --cached --name-only -z --diff-filter=ACMR |
 	xargs -0 sh -c '
@@ -43,6 +44,28 @@ if [ -s "$staged_files" ]; then
 	if [ "$status" -eq 0 ]; then
 		echo "Linting staged files..."
 		xargs -0 bunx oxlint --no-error-on-unmatched-pattern -- < "$staged_files" || status=$?
+	fi
+
+	# The formatting policies check only the staged src/ TypeScript files here;
+	# CI runs them over the whole tree.
+	xargs -0 sh -c '
+		for file do
+			case "$file" in
+				src/*.ts|src/*.tsx)
+					printf "%s\0" "$file"
+					;;
+			esac
+		done
+	' sh < "$staged_files" > "$policy_files"
+
+	if [ "$status" -eq 0 ] && [ -s "$policy_files" ]; then
+		echo "Checking date formatting policy on staged files..."
+		xargs -0 bun scripts/policies/check-date-formatting.ts < "$policy_files" || status=$?
+	fi
+
+	if [ "$status" -eq 0 ] && [ -s "$policy_files" ]; then
+		echo "Checking number formatting policy on staged files..."
+		xargs -0 bun scripts/policies/check-number-formatting.ts < "$policy_files" || status=$?
 	fi
 else
 	echo "No staged source files to format or lint."

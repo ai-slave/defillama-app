@@ -161,8 +161,8 @@ it('keeps the upgrade success pane mounted after its own invalidations land', as
 	const confirm = [...document.querySelectorAll('button')].find((b) => b.textContent === 'Confirm & Upgrade Now')!
 	await act(async () => confirm.click())
 
-	// The page behind switched to the paid layout...
-	await waitFor(() => expect(document.body.textContent).toContain('Current plan'))
+	// The page behind switched from the trial card to the paid layout...
+	await waitFor(() => expect(document.body.textContent).toContain('Monthly ($49/month)'))
 	// ...and the success pane is still on screen for the user to read.
 	expect(document.body.textContent).toContain('Upgrade Successful')
 })

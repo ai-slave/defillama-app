@@ -76,6 +76,7 @@ one extra day in an inclusive preset.
 - Invalid or missing values return `null`; the consumer chooses the appropriate UI copy.
 - Raw `Intl.DateTimeFormat`, Date locale methods, and Day.js display formatting are limited to reviewed domain-owned paths.
 
-`scripts/policies/check-date-formatting.ts` enforces these boundaries in CI. Its
-allowlists are exceptions for the protected behavior above, not alternative generic
-formatting APIs.
+`scripts/policies/check-date-formatting.ts` enforces these boundaries. CI runs it over
+the whole tree; the pre-commit hook runs it on the staged `src/` TypeScript files by
+passing their paths as arguments. Its allowlists are exceptions for the protected
+behavior above, not alternative generic formatting APIs.

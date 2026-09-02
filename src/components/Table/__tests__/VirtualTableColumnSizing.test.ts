@@ -1,57 +1,18 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { parseSync } from 'oxc-parser'
 import { describe, expect, it } from 'vitest'
+import { type AstNode, identifierName, isNode, lineOf, walkAst } from '../../../../scripts/lib/oxcAst'
+import { collectSourceFiles } from '../../../../scripts/lib/sourceFiles'
 
 const SRC_DIR = path.join(process.cwd(), 'src')
 const TABLE_USAGE_PATTERN =
 	/components\/Table\/(Table|TableWithSearch)['"]|<VirtualTable\b|<TableWithSearch\b|\b\w+TableWrapper\b|<\w+TableWrapper\b/
 
-/** Minimal ESTree node as produced by oxc-parser: typed, with byte offsets. */
-interface AstNode {
-	type: string
-	start: number
-	end: number
-	[key: string]: unknown
-}
-
-function isNode(value: unknown): value is AstNode {
-	return typeof value === 'object' && value !== null && typeof (value as AstNode).type === 'string'
-}
-
-function walk(node: AstNode, visit: (node: AstNode) => void) {
-	visit(node)
-	for (const key of Object.keys(node)) {
-		const value = node[key]
-		if (Array.isArray(value)) {
-			for (const item of value) if (isNode(item)) walk(item, visit)
-		} else if (isNode(value)) {
-			walk(value, visit)
-		}
-	}
-}
-
-function lineOf(source: string, offset: number): number {
-	let line = 1
-	for (let i = 0; i < offset; i++) if (source.charCodeAt(i) === 10) line++
-	return line
-}
-
-function sourceFiles(dir: string): string[] {
-	const files: string[] = []
-	for (const entry of readdirSync(dir)) {
-		const fullPath = path.join(dir, entry)
-		if (fullPath.includes(`${path.sep}containers${path.sep}ProDashboard${path.sep}`)) {
-			continue
-		}
-		const stats = statSync(fullPath)
-		if (stats.isDirectory()) {
-			files.push(...sourceFiles(fullPath))
-		} else if (fullPath.endsWith('.ts') || fullPath.endsWith('.tsx')) {
-			files.push(fullPath)
-		}
-	}
-	return files
+function sourceFiles(): string[] {
+	return collectSourceFiles(SRC_DIR, ['.ts', '.tsx']).filter(
+		(file) => !file.includes(`${path.sep}containers${path.sep}ProDashboard${path.sep}`)
+	)
 }
 
 function propertyName(prop: AstNode): string | undefined {
@@ -93,7 +54,7 @@ describe('VirtualTable column sizing', () => {
 	it('keeps shared VirtualTable leaf columns explicitly CSS-sized through headerClassName', () => {
 		const failures: string[] = []
 
-		for (const file of sourceFiles(SRC_DIR)) {
+		for (const file of sourceFiles()) {
 			const source = readFileSync(file, 'utf8')
 			if (!TABLE_USAGE_PATTERN.test(source)) {
 				continue
@@ -103,11 +64,11 @@ describe('VirtualTable column sizing', () => {
 			expect(parsed.errors).toEqual([])
 			const relativePath = path.relative(process.cwd(), file)
 
-			walk(parsed.program as unknown as AstNode, (node) => {
+			walkAst(parsed.program as unknown as AstNode, (node) => {
 				if (node.type !== 'CallExpression' || !isNode(node.callee)) return
 				if (node.callee.type !== 'MemberExpression' || (node.callee.computed as boolean)) return
 
-				const method = identifier(node.callee.property)
+				const method = identifierName(node.callee.property)
 				if (method !== 'accessor' && method !== 'display') return
 
 				const callArguments = node.arguments as AstNode[]
@@ -135,10 +96,6 @@ describe('VirtualTable column sizing', () => {
 		expect(failures).toEqual([])
 	}, 30_000)
 })
-
-function identifier(node: unknown): string | undefined {
-	return isNode(node) && node.type === 'Identifier' ? (node.name as string) : undefined
-}
 
 if (!existsSync(SRC_DIR)) {
 	throw new Error(`Missing source directory: ${SRC_DIR}`)
