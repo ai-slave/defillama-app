@@ -67,6 +67,36 @@ describe('sendClaimToDiscord', () => {
 		)
 	})
 
+	it('renders the camelCase payload used by the full UTR form', async () => {
+		vi.stubEnv('UTR_DISCORD_WEBHOOK_URL', 'https://discord.com/api/webhooks/123/token')
+		const fetchMock = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
+		vi.stubGlobal('fetch', fetchMock)
+
+		await sendClaimToDiscord(
+			{
+				tokenName: 'Test Token',
+				firstName: 'Test',
+				lastName: 'User',
+				position: 'CEO',
+				email: 'test@example.com',
+				socialProfileUrl: 'https://x.com/test',
+				telegram: '@test'
+			},
+			'utr',
+			{ ok: true, requestId: 'claim-1' }
+		)
+
+		const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+		expect(body.embeds[0].fields).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ name: 'Project', value: 'Test Token' }),
+				expect.objectContaining({ name: 'Name', value: 'Test User' }),
+				expect.objectContaining({ name: 'Organization Email', value: 'test@example.com' }),
+				expect.objectContaining({ name: 'Social Profile', value: 'https://x.com/test' })
+			])
+		)
+	})
+
 	it('does nothing when the webhook is missing or not an official Discord webhook URL', async () => {
 		const fetchMock = vi.fn()
 		vi.stubGlobal('fetch', fetchMock)

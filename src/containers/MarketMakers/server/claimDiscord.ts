@@ -26,6 +26,12 @@ function field(name: string, value: unknown, inline = false) {
 	return safeValue ? { name, value: safeValue, inline } : null
 }
 
+function claimantName(payload: ClaimPayload): unknown {
+	const firstName = typeof payload.firstName === 'string' ? payload.firstName.trim() : ''
+	const lastName = typeof payload.lastName === 'string' ? payload.lastName.trim() : ''
+	return [firstName, lastName].filter(Boolean).join(' ') || payload.full_name
+}
+
 function webhookUrl(raw: string): URL | null {
 	try {
 		const url = new URL(raw)
@@ -58,11 +64,11 @@ export async function sendClaimToDiscord(
 	const fields = [
 		{ name: 'Result', value: outcome.ok ? 'Successful' : 'Unsuccessful', inline: true },
 		{ name: 'Form', value: sourceLabel, inline: true },
-		field(source === 'utr' ? 'Project' : 'Market Maker', payload.market_maker_name),
-		field('Name', payload.full_name, true),
+		field(source === 'utr' ? 'Project' : 'Market Maker', payload.tokenName ?? payload.market_maker_name),
+		field('Name', claimantName(payload), true),
 		field('Position', payload.position, true),
-		field('Organization Email', payload.organization_email),
-		field('Social Profile', payload.social_profile_url),
+		field('Organization Email', payload.email ?? payload.organization_email),
+		field('Social Profile', payload.socialProfileUrl ?? payload.social_profile_url),
 		field('Telegram', payload.telegram, true),
 		field('Source URL', payload.source_url),
 		payload.has_forgd_contact === true ? field('Forgd Contact', payload.forgd_contact_name ?? 'Yes') : null,

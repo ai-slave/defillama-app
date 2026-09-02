@@ -1,3 +1,4 @@
+import { sendClaimToDiscord } from '~/containers/MarketMakers/server/claimDiscord'
 import type { ApiRequest } from '~/server/api/types'
 import { defineApiRoute } from '~/server/api/types'
 import { recordRouteRuntimeError } from '~/utils/telemetry'
@@ -19,6 +20,11 @@ export function utrClaimUpstreamUrl(path: '/utr/claim' | '/utr/claim/documents')
 
 function isBody(value: unknown): value is Record<string, unknown> {
 	return value != null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function claimRequestId(value: unknown): string | null {
+	if (!isBody(value)) return null
+	return typeof value.id === 'string' && value.id.trim() ? value.id.trim() : null
 }
 
 function upstreamMessage(body: unknown): string | null {
@@ -72,6 +78,14 @@ export const utrClaimSubmit = defineApiRoute({
 	handle: async (req: ApiRequest) => {
 		if (!isBody(req.body)) return { status: 400, body: { error: 'Invalid claim request' } }
 		void sendClaimToUserAnalytics(req.body)
-		return proxyUtrClaim(req.body)
+		const result = await proxyUtrClaim(req.body)
+		await sendClaimToDiscord(
+			req.body,
+			'utr',
+			result.status === 201
+				? { ok: true, requestId: claimRequestId(result.body) }
+				: { ok: false, reason: 'forgd_failed' }
+		)
+		return result
 	}
 })

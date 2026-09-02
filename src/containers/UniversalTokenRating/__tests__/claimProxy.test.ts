@@ -90,6 +90,43 @@ describe('proxyUtrClaim', () => {
 			)
 		})
 	})
+
+	it('waits for the Discord webhook after a successful full-form claim', async () => {
+		vi.stubEnv('API_KEY_FORGD', 'prod-key')
+		vi.stubEnv('USER_ANALYTICS_URL', '')
+		vi.stubEnv('UTR_CLAIMS_SHARED_SECRET', '')
+		vi.stubEnv('UTR_DISCORD_WEBHOOK_URL', 'https://discord.com/api/webhooks/123/token')
+		const payload = {
+			tokenName: 'Test Token',
+			firstName: 'Test',
+			lastName: 'User',
+			position: 'CEO',
+			email: 'test@example.com'
+		}
+		const fetchMock = vi.fn().mockImplementation((url: string | URL) => {
+			if (String(url).startsWith('https://discord.com/api/webhooks/')) {
+				return Promise.resolve(new Response('{}', { status: 200 }))
+			}
+			return Promise.resolve(new Response(JSON.stringify({ id: 'claim-id' }), { status: 201 }))
+		})
+		vi.stubGlobal('fetch', fetchMock)
+
+		await expect(
+			utrClaimSubmit.handle({ method: 'POST', url: '', query: {}, headers: {}, body: payload })
+		).resolves.toEqual({ status: 201, body: { id: 'claim-id' } })
+
+		const discordCall = fetchMock.mock.calls.find(([url]) =>
+			String(url).startsWith('https://discord.com/api/webhooks/')
+		)
+		expect(discordCall).toBeDefined()
+		const webhookBody = JSON.parse(discordCall?.[1]?.body as string)
+		expect(webhookBody.embeds[0].fields).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ name: 'Project', value: 'Test Token' }),
+				expect.objectContaining({ name: 'Request ID', value: 'claim-id' })
+			])
+		)
+	})
 })
 
 describe('UTR document proxy', () => {
