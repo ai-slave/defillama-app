@@ -221,7 +221,7 @@ export function ProjectFilesPanel({
 					<div className="flex h-full flex-col items-center justify-center gap-1.5 p-6 text-center text-xs text-ai-tertiary">
 						<Icon name="file-plus" height={16} width={16} className="text-ai-muted" />
 						<p>Drop files here or use the Add menu.</p>
-						<p className="text-[11px]">Markdown, text, code, JSON, CSV. Up to 30 MB per file.</p>
+						<p className="text-[11px]">Markdown, text, code, JSON, CSV. Up to 100 MB per file.</p>
 					</div>
 				) : (
 					<ul className="flex flex-col">

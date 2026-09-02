@@ -27,7 +27,8 @@ const ACCEPTED_TYPES = new Set([
 const ACCEPTED_EXTENSIONS = new Set(['.pdf', '.csv', '.md', '.txt', '.docx', '.doc', '.xlsx'])
 const IMAGE_MAX_SIZE = 10 * 1024 * 1024
 const FILE_MAX_SIZE = 30 * 1024 * 1024
-const MAX_TOTAL_BYTES = 50 * 1024 * 1024
+const DATA_FILE_MAX_SIZE = 100 * 1024 * 1024
+const MAX_TOTAL_BYTES = 100 * 1024 * 1024
 
 function isImageType(type: string) {
 	return type.startsWith('image/')
@@ -54,8 +55,10 @@ export function isReadableTextFile(file: File): boolean {
 	return READABLE_TEXT_EXTENSIONS.some((ext) => lower.endsWith(ext))
 }
 
-function maxSizeForType(type: string) {
-	return isImageType(type) ? IMAGE_MAX_SIZE : FILE_MAX_SIZE
+export function maxSizeForFile(file: File) {
+	if (isImageType(file.type)) return IMAGE_MAX_SIZE
+	if (isReadableTextFile(file)) return DATA_FILE_MAX_SIZE
+	return FILE_MAX_SIZE
 }
 
 interface UseImageUploadOptions {
@@ -102,7 +105,7 @@ export function useImageUpload({
 			for (const f of files) {
 				if (!isAcceptedFile(f)) {
 					rejected.push({ type: 'format', file: f })
-				} else if (f.size > (maxSizeBytes ?? maxSizeForType(f.type))) {
+				} else if (f.size > (maxSizeBytes ?? maxSizeForFile(f))) {
 					rejected.push({ type: 'size', file: f })
 				} else {
 					valid.push(f)
@@ -114,9 +117,7 @@ export function useImageUpload({
 				const formatRejected = rejected.filter((r) => r.type === 'format')
 				if (sizeRejected.length > 0) {
 					const uniqueMBs = [
-						...new Set(
-							sizeRejected.map((r) => Math.round((maxSizeBytes ?? maxSizeForType(r.file.type)) / (1024 * 1024)))
-						)
+						...new Set(sizeRejected.map((r) => Math.round((maxSizeBytes ?? maxSizeForFile(r.file)) / (1024 * 1024))))
 					]
 					queueMicrotask(() => {
 						const limitsText = uniqueMBs.join('MB, ') + 'MB'
