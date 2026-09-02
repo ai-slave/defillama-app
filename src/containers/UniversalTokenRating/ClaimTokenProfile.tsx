@@ -1,6 +1,6 @@
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { useMutation } from '@tanstack/react-query'
-import { Fragment, useRef, useState, type ReactNode } from 'react'
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ClaimTurnstile, isClaimTurnstileEnabled } from '~/containers/MarketMakers/ClaimTurnstile'
 import { LeadError } from '~/containers/MarketMakers/LeadDialog'
 import { Button } from '~/ui/Button'
@@ -23,6 +23,7 @@ import {
 	type UtrClaimFormRow,
 	type UtrClaimRows
 } from './claimRequest'
+import { resolveRequestedProjectId } from './navigation'
 import { scrollToFirstUtrClaimError } from './scrollToClaimError'
 import type {
 	UtrClaimExchangeOption,
@@ -352,6 +353,13 @@ export function ClaimTokenProfile({
 	const [turnstileToken, setTurnstileToken] = useState('')
 	const turnstileRef = useRef<TurnstileInstance | undefined>(undefined)
 	const captchaEnabled = isClaimTurnstileEnabled()
+
+	useEffect(() => {
+		if (variant !== 'claim' || typeof window === 'undefined') return
+		const requested = new URL(window.location.href).searchParams.get('token')
+		const projectId = resolveRequestedProjectId(projects, requested)
+		if (projectId) setToken(projectId)
+	}, [projects, variant])
 	const [verifyMmEngagements, setVerifyMmEngagements] = useState(true)
 	const [rows, setRows] = useState<UtrClaimRows>(createEmptyUtrClaimRows)
 	const [documents, setDocuments] = useState<UtrClaimDocuments>(createEmptyDocuments)

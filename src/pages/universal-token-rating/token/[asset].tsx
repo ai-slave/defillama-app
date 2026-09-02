@@ -1,4 +1,5 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
+import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import {
 	fetchIconDataUrl,
 	fetchUtrAssetExchanges,
@@ -15,6 +16,15 @@ export async function getStaticPaths() {
 	return { paths: [], fallback: 'blocking' }
 }
 
+async function fetchDefillamaDescription(protocolId: string | null | undefined): Promise<string | null> {
+	if (!protocolId) return null
+	try {
+		return (await fetchProtocolOverviewMetrics(protocolId)).description?.trim() || null
+	} catch {
+		return null
+	}
+}
+
 export const getStaticProps = withPerformanceLogging(
 	'universal-token-rating/token',
 	async ({ params }: GetStaticPropsContext) => {
@@ -22,14 +32,18 @@ export const getStaticProps = withPerformanceLogging(
 		if (!asset || !/^[a-z0-9-]{1,64}$/.test(asset)) return { notFound: true, revalidate: maxAgeForNext([22]) }
 		const live = await fetchUtrAssetResponse(asset)
 		if (!live) return { notFound: true, revalidate: maxAgeForNext([22]) }
-		const [batch, exchanges, scoringConfig, iconDataUrl] = await Promise.all([
+		const [batch, exchanges, scoringConfig, iconDataUrl, defillamaDescription] = await Promise.all([
 			live.coingeckoId ? fetchUtrBatchMetrics([live.coingeckoId]) : null,
 			fetchUtrAssetExchanges(asset),
 			fetchUtrScoringConfig(),
-			live.coingeckoId ? fetchIconDataUrl(live.coingeckoId) : null
+			live.coingeckoId ? fetchIconDataUrl(live.coingeckoId) : null,
+			fetchDefillamaDescription(live.defillamaId)
 		])
 		const legacy = batch?.assets[0] ?? null
-		return { props: { live, legacy, exchanges, scoringConfig, iconDataUrl }, revalidate: maxAgeForNext([22]) }
+		return {
+			props: { live, legacy, exchanges, scoringConfig, iconDataUrl, defillamaDescription },
+			revalidate: maxAgeForNext([22])
+		}
 	}
 )
 
@@ -38,7 +52,8 @@ export default function UniversalTokenRatingTokenPage({
 	legacy,
 	exchanges,
 	scoringConfig,
-	iconDataUrl
+	iconDataUrl,
+	defillamaDescription
 }: InferGetStaticPropsType<typeof getStaticProps>) {
 	const name = live.projectName
 	const asset = live.coingeckoId ?? live.arcticId
@@ -55,6 +70,7 @@ export default function UniversalTokenRatingTokenPage({
 				exchanges={exchanges}
 				scoringConfig={scoringConfig}
 				iconDataUrl={iconDataUrl}
+				defillamaDescription={defillamaDescription}
 			/>
 		</Layout>
 	)

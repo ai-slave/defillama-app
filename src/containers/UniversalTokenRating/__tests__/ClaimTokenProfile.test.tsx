@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { ClaimTokenProfile } from '../ClaimTokenProfile'
+import { resolveRequestedProjectId } from '../navigation'
 
 const projects = [
 	{
@@ -36,6 +37,13 @@ function renderClaim(props: Parameters<typeof ClaimTokenProfile>[0]) {
 }
 
 describe('ClaimTokenProfile', () => {
+	it('resolves claim links by Arctic id, CoinGecko id, name, or ticker', () => {
+		expect(resolveRequestedProjectId(projects, 'ethereum')).toBe(projects[0].arcticId)
+		expect(resolveRequestedProjectId(projects, 'ETH')).toBe(projects[0].arcticId)
+		expect(resolveRequestedProjectId(projects, 'project-pre')).toBe('project-pre')
+		expect(resolveRequestedProjectId(projects, 'missing')).toBeNull()
+	})
+
 	it('renders live project options and disclosure coverage', () => {
 		const html = renderClaim({
 			projects,

@@ -10,7 +10,7 @@ import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
 import { CriteriaDrawer, type CriteriaDrawerState } from './CriteriaDrawer'
 import { GradeBadge, GradeChip, ScoreBar } from './grades'
-import { LpPerformanceInsights } from './LiquidityProviders'
+import { MarketMakerPerformance } from './MarketMakerPerformance'
 import { PerformanceMatrix } from './PerformanceMatrix'
 import { PreTgePerformance } from './PreTgePerformance'
 import {
@@ -27,11 +27,11 @@ import {
 	CardDivider,
 	ClaimProfileBanner,
 	GradeFooter,
-	GradeFooterColumns,
 	GradeFooterStacked,
 	KvTable,
 	MetricCard,
-	TickScoreStrip
+	TickScoreStrip,
+	UtrDisclaimer
 } from './TokenPage'
 import type {
 	UtrAssetMetrics,
@@ -42,7 +42,6 @@ import type {
 	UtrLeaderboardRow,
 	UtrScoringConfig
 } from './types'
-import { marketMakerCriterionRawPercent } from './units'
 
 const EXCHANGE_LABELS: Record<string, string> = {
 	binance_futures: 'Binance (Futures)',
@@ -102,12 +101,6 @@ function withDisclosureTitles(criteria: UtrCriterionBreakdown[]): UtrCriterionBr
 		...criterion,
 		label: DISCLOSURE_CRITERION_TITLES[criterion.key] ?? criterion.label
 	}))
-}
-
-const MM_CRITERION_TITLES: Record<string, string> = {
-	mm_volume_pct: 'Market Maker Volume (as a % of total volume)',
-	mm_depth_pct: 'Market Maker Depth (as a % of total depth)',
-	mm_uptime_sla: 'Market Maker Uptime / KPI Adherence'
 }
 
 const TIER1_EXCHANGE_IDS = ['binance', 'okx', 'coinbase', 'upbit']
@@ -186,6 +179,7 @@ function VenueList({ title, venues }: { title: string; venues: { displayName: st
 
 function AboutDrawer({
 	asset,
+	defillamaDescription,
 	exchanges,
 	iconDataUrl,
 	scoringConfig,
@@ -193,6 +187,7 @@ function AboutDrawer({
 	onClose
 }: {
 	asset: UtrAssetResponse
+	defillamaDescription?: string | null
 	exchanges?: UtrExchangesResponse | null
 	iconDataUrl?: string | null
 	scoringConfig?: UtrScoringConfig | null
@@ -200,6 +195,7 @@ function AboutDrawer({
 	onClose: () => void
 }) {
 	if (!open) return null
+	const description = defillamaDescription?.trim() || asset.description?.trim() || null
 	const matrixRow: UtrLeaderboardRow = {
 		asset: asset.coingeckoId ?? asset.arcticId,
 		name: asset.projectName,
@@ -232,10 +228,10 @@ function AboutDrawer({
 	return (
 		<Drawer open onClose={onClose} title={`About ${asset.projectName}`}>
 			<div className="flex min-h-full flex-col gap-4 bg-(--bg-page) p-4">
-				{asset.description ? (
+				{description ? (
 					<div className="flex flex-col gap-2">
 						<h4 className="label-lg">Project Description</h4>
-						<p className="body-lg text-secondary">{asset.description}</p>
+						<p className="body-lg text-secondary">{description}</p>
 					</div>
 				) : null}
 				<div className="flex flex-wrap items-center gap-2">
@@ -332,13 +328,15 @@ export function TokenPageLive({
 	legacy,
 	exchanges,
 	scoringConfig,
-	iconDataUrl
+	iconDataUrl,
+	defillamaDescription
 }: {
 	asset: UtrAssetResponse
 	legacy?: UtrAssetMetrics | null
 	exchanges?: UtrExchangesResponse | null
 	scoringConfig?: UtrScoringConfig | null
 	iconDataUrl?: string | null
+	defillamaDescription?: string | null
 }) {
 	const axisColor = useChartAxisColor()
 	const [criteriaDrawer, setCriteriaDrawer] = useState<CriteriaDrawerState | null>(null)
@@ -513,11 +511,6 @@ export function TokenPageLive({
 		hasPriceData ||
 		hasOpenInterestData ||
 		hasFundingData
-	const visibleMarketMakerCriteria = marketMakerCriteria.filter((entry) => entry.raw != null)
-	const hasMarketMakerSummary = Boolean(
-		asset.hasMmData && hasAnyValue(metrics?.mmDepthPct, metrics?.mmVolumePct, metrics?.mmUptimePct)
-	)
-	const hasLiquidityProviderData = hasMarketMakerSummary || visibleMarketMakerCriteria.length > 0
 	const hasLiquidityFootprintData = tier1Covered != null || visibleFootprintCharts.length > 0
 
 	return (
@@ -592,7 +585,7 @@ export function TokenPageLive({
 				</div>
 			</Panel>
 
-			<ClaimProfileBanner />
+			<ClaimProfileBanner asset={asset.coingeckoId ?? asset.arcticId} />
 
 			{disclosureCategories.length ? (
 				<>
@@ -949,55 +942,23 @@ export function TokenPageLive({
 						</>
 					) : null}
 
-					{hasLiquidityProviderData ? (
-						<>
-							<h2 className="heading-sm">Performance Overview: Liquidity Providers</h2>
-							{hasMarketMakerSummary ? (
-								<LpPerformanceInsights
-									mmDepthPct={metrics?.mmDepthPct ?? null}
-									mmVolumePct={metrics?.mmVolumePct ?? null}
-									avgSpreadPct={metrics?.vwasBps == null ? null : metrics.vwasBps / 100}
-								/>
-							) : null}
-							{visibleMarketMakerCriteria.length ? (
-								<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-									{visibleMarketMakerCriteria.map((entry) => (
-										<Panel key={entry.key} padding="none">
-											<div className="flex items-center justify-between gap-2 px-4 py-3">
-												<div className="flex flex-col gap-0.5">
-													<h3 className="body-sm text-secondary">{MM_CRITERION_TITLES[entry.key] ?? entry.label}</h3>
-													<span className="label-lg">{pct(marketMakerCriterionRawPercent(entry.raw))}</span>
-												</div>
-												<Button
-													type="button"
-													size="sm"
-													square
-													aria-label={`Open ${entry.label} details`}
-													onClick={() =>
-														openCriteria(
-															'Performance Overview: Market Makers',
-															'performance',
-															'market_makers',
-															visibleMarketMakerCriteria,
-															entry.key
-														)
-													}
-												>
-													<Icon name="arrow-right" height={14} width={14} />
-												</Button>
-											</div>
-											<GradeFooterColumns
-												score={entry.score}
-												grade={entry.grade}
-												gradingScale={scoringConfig?.grading.performance.scale}
-												percentile={entry.percentile}
-											/>
-										</Panel>
-									))}
-								</div>
-							) : null}
-						</>
-					) : null}
+					<MarketMakerPerformance
+						metrics={metrics}
+						providers={asset.marketMakers ?? []}
+						breakdown={asset.performanceBreakdown ?? null}
+						uptimeCalculations={asset.uptimeCalculations ?? []}
+						criteria={marketMakerCriteria}
+						gradingScale={scoringConfig?.grading.performance.scale}
+						onOpenCriterion={(criterion) =>
+							openCriteria(
+								'Performance Overview: Market Makers',
+								'performance',
+								'market_makers',
+								marketMakerCriteria,
+								criterion.key
+							)
+						}
+					/>
 
 					{hasLiquidityFootprintData ? (
 						<>
@@ -1266,9 +1227,11 @@ export function TokenPageLive({
 				Data as of {asset.asOf ? asset.asOf.slice(0, 10) : 'N/A'} · Scoring config v{asset.configVersion} · Rated{' '}
 				{asset.ratedCount} of {asset.totalCount} projects
 			</p>
+			<UtrDisclaimer />
 
 			<AboutDrawer
 				asset={asset}
+				defillamaDescription={defillamaDescription}
 				exchanges={exchanges}
 				iconDataUrl={iconDataUrl}
 				scoringConfig={scoringConfig}

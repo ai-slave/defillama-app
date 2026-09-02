@@ -1,0 +1,537 @@
+import { useMemo, useState } from 'react'
+import { CHART_COLORS } from '~/constants/colors'
+import { Button } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
+import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { SegmentedControl } from '~/ui/SegmentedControl'
+import { formatNumber, formatPercent } from '~/utils/numberFormat'
+import { LpPerformanceInsights } from './LiquidityProviders'
+import { buildSeriesOption, ChartLegend, SimpleChart, useChartAxisColor, type SimpleSeries } from './SimpleChart'
+import { GradeFooterColumns } from './TokenPage'
+import type {
+	UtrCriterionBreakdown,
+	UtrGradeScaleEntry,
+	UtrMarketMakerBreakdownMetric,
+	UtrMarketMakerPerformanceBreakdown,
+	UtrMarketMakerProvider,
+	UtrMarketMakerUptime,
+	UtrSnapshotMetrics
+} from './types'
+import { marketMakerCriterionRawPercent } from './units'
+
+const CRITERIA = [
+	{ key: 'mm_volume_pct', label: 'Market Maker Volume (as a % of total volume)' },
+	{ key: 'mm_depth_pct', label: 'Market Maker Depth (as a % of total depth)' },
+	{ key: 'mm_uptime_sla', label: 'Market Maker Uptime / KPI Adherence' }
+] as const
+
+const ALL_OTHERS_COLOR = '#284ca3'
+
+function pct(value: number | null | undefined, digits = 2): string {
+	return (
+		formatPercent(value, {
+			input: 'percent',
+			minimumFractionDigits: digits,
+			maximumFractionDigits: digits,
+			smallValueDisplay: 'rounded',
+			useGrouping: false
+		}) ?? 'N/A'
+	)
+}
+
+function usd(value: number | null | undefined): string {
+	return value == null ? 'N/A' : `$${formatNumber(Math.round(value))}`
+}
+
+function normalizedEngagementType(value: string | null | undefined): string {
+	if (!value) return 'Engagement not disclosed'
+	return value.replaceAll('_', ' ').replace(/\b\w/g, (character) => character.toUpperCase())
+}
+
+function CriterionCards({
+	criteria,
+	gradingScale,
+	onOpen
+}: {
+	criteria: UtrCriterionBreakdown[]
+	gradingScale?: UtrGradeScaleEntry[] | null
+	onOpen: (criterion: UtrCriterionBreakdown) => void
+}) {
+	return (
+		<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+			{CRITERIA.map((definition) => {
+				const criterion = criteria.find((entry) => entry.key === definition.key) ?? null
+				return (
+					<Panel key={definition.key} padding="none">
+						<div className="flex min-h-20 items-start justify-between gap-2 px-4 py-3">
+							<div className="flex flex-col gap-1">
+								<h3 className="body-sm text-secondary">{definition.label}</h3>
+								<span className="label-lg">{pct(marketMakerCriterionRawPercent(criterion?.raw ?? null))}</span>
+							</div>
+							<Button
+								type="button"
+								size="sm"
+								square
+								disabled={!criterion}
+								aria-label={`Open ${definition.label} details`}
+								onClick={() => criterion && onOpen(criterion)}
+							>
+								<Icon name="arrow-right" height={14} width={14} />
+							</Button>
+						</div>
+						<GradeFooterColumns
+							score={criterion?.score ?? null}
+							grade={criterion?.grade}
+							gradingScale={gradingScale}
+							percentile={criterion?.percentile}
+						/>
+					</Panel>
+				)
+			})}
+		</div>
+	)
+}
+
+function EmptyState() {
+	return (
+		<Panel padding="none" className="min-h-32">
+			<div className="flex flex-1 flex-col items-center justify-center gap-2 p-6 text-tertiary">
+				<Icon name="eye-off" height={22} width={22} />
+				<p className="body-sm">Data not disclosed</p>
+			</div>
+		</Panel>
+	)
+}
+
+function PerformanceSummary({ providers }: { providers: UtrMarketMakerProvider[] }) {
+	return (
+		<Panel padding="none">
+			<PanelHeader>
+				<PanelTitle as="h3">Performance Summary</PanelTitle>
+				<span className="rounded-full border border-medium bg-brand-muted px-2 py-0.5 body-xs text-link-on-tint">
+					Prev. 30D
+				</span>
+			</PanelHeader>
+			<div className="overflow-x-auto">
+				<table className="w-full min-w-[760px] body-sm">
+					<thead>
+						<tr className="border-b border-subtle text-left label-sm text-secondary">
+							<th className="px-4 py-2.5">Provider</th>
+							<th className="px-3 py-2.5">Engagement</th>
+							<th className="px-3 py-2.5 text-right">Avg. spread</th>
+							<th className="px-3 py-2.5 text-right">Depth ±0.50%</th>
+							<th className="px-3 py-2.5 text-right">Depth ±1.00%</th>
+							<th className="px-3 py-2.5 text-right">Depth ±2.00%</th>
+							<th className="px-4 py-2.5 text-right">Avg. volume</th>
+						</tr>
+					</thead>
+					<tbody>
+						{providers.map((provider) => (
+							<tr
+								key={`${provider.name}-${provider.engagementType ?? ''}`}
+								className="border-b border-subtle last:border-b-0"
+							>
+								<td className="px-4 py-2.5 label-md">{provider.name}</td>
+								<td className="px-3 py-2.5 text-secondary">{normalizedEngagementType(provider.engagementType)}</td>
+								<td className="px-3 py-2.5 text-right mono-sm">{pct(provider.avgSpread)}</td>
+								<td className="px-3 py-2.5 text-right mono-sm">{usd(provider.avgBidAskDepth50)}</td>
+								<td className="px-3 py-2.5 text-right mono-sm">{usd(provider.avgBidAskDepth100)}</td>
+								<td className="px-3 py-2.5 text-right mono-sm">{usd(provider.avgBidAskDepth200)}</td>
+								<td className="px-4 py-2.5 text-right mono-sm">{usd(provider.avgFillVolumeTotal)}</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			</div>
+			<div className="border-t border-subtle px-4 py-2 body-sm text-secondary">
+				{providers.length} active market maker{providers.length === 1 ? '' : 's'}
+			</div>
+		</Panel>
+	)
+}
+
+type BreakdownMode = 'depth' | 'volume'
+type DepthSide = 'bidAsk' | 'bid' | 'ask'
+type DepthBand = 'depth50' | 'depth100' | 'depth200'
+type VolumeSide = 'total' | 'maker' | 'taker'
+type ValueUnit = 'usd' | 'percent'
+
+function selectBreakdownMetric(
+	breakdown: UtrMarketMakerPerformanceBreakdown | null | undefined,
+	mode: BreakdownMode,
+	depthSide: DepthSide,
+	depthBand: DepthBand,
+	volumeSide: VolumeSide
+): UtrMarketMakerBreakdownMetric | null {
+	if (mode === 'depth') return breakdown?.depth?.[depthSide]?.[depthBand] ?? null
+	return breakdown?.volume?.[volumeSide] ?? null
+}
+
+function breakdownSeries(metric: UtrMarketMakerBreakdownMetric, unit: ValueUnit): SimpleSeries[] {
+	const providerSeries: SimpleSeries[] = metric.series.map((entry, index) => ({
+		name: entry.name,
+		type: 'bar',
+		stack: 'providers',
+		color: CHART_COLORS[index % CHART_COLORS.length],
+		data: entry.dailyBreakdown.map((point) => [
+			Date.parse(point.date),
+			unit === 'percent' ? (point.percentage ?? 0) : (point.value ?? 0)
+		])
+	}))
+	return [
+		...providerSeries,
+		{
+			name: 'All Others',
+			type: 'bar',
+			stack: 'providers',
+			color: ALL_OTHERS_COLOR,
+			data: metric.dailyBreakdown.map((point) => [
+				Date.parse(point.date),
+				unit === 'percent' ? (point.allOthersPercentage ?? 0) : (point.allOthers ?? 0)
+			])
+		}
+	]
+}
+
+function PerformanceBreakdown({ breakdown }: { breakdown: UtrMarketMakerPerformanceBreakdown }) {
+	const axisColor = useChartAxisColor()
+	const [mode, setMode] = useState<BreakdownMode>('depth')
+	const [depthSide, setDepthSide] = useState<DepthSide>('bidAsk')
+	const [depthBand, setDepthBand] = useState<DepthBand>('depth200')
+	const [volumeSide, setVolumeSide] = useState<VolumeSide>('total')
+	const [unit, setUnit] = useState<ValueUnit>('usd')
+	const [display, setDisplay] = useState<'chart' | 'table'>('chart')
+	const metric = selectBreakdownMetric(breakdown, mode, depthSide, depthBand, volumeSide)
+	const series = useMemo(() => (metric ? breakdownSeries(metric, unit) : []), [metric, unit])
+	const providerShare = metric?.avgBreakdown.marketMakersPercentage ?? null
+
+	return (
+		<Panel padding="none">
+			<PanelHeader>
+				<PanelTitle as="h3">Performance Breakdown</PanelTitle>
+				<SegmentedControl
+					label="Breakdown metric"
+					variant="default"
+					size="md"
+					value={mode}
+					onValueChange={(value) => setMode(value as BreakdownMode)}
+					options={[
+						{ value: 'depth', label: 'Depth' },
+						{ value: 'volume', label: 'Volume' }
+					]}
+				/>
+				{mode === 'depth' ? (
+					<>
+						<SegmentedControl
+							label="Order book side"
+							variant="default"
+							size="md"
+							value={depthSide}
+							onValueChange={(value) => setDepthSide(value as DepthSide)}
+							options={[
+								{ value: 'bidAsk', label: 'Bid & Ask' },
+								{ value: 'bid', label: 'Bid' },
+								{ value: 'ask', label: 'Ask' }
+							]}
+						/>
+						<SegmentedControl
+							label="Depth band"
+							variant="default"
+							size="md"
+							value={depthBand}
+							onValueChange={(value) => setDepthBand(value as DepthBand)}
+							options={[
+								{ value: 'depth50', label: '±0.50%' },
+								{ value: 'depth100', label: '±1.00%' },
+								{ value: 'depth200', label: '±2.00%' }
+							]}
+						/>
+					</>
+				) : (
+					<SegmentedControl
+						label="Volume side"
+						variant="default"
+						size="md"
+						value={volumeSide}
+						onValueChange={(value) => setVolumeSide(value as VolumeSide)}
+						options={[
+							{ value: 'total', label: 'Total' },
+							{ value: 'maker', label: 'Maker' },
+							{ value: 'taker', label: 'Taker' }
+						]}
+					/>
+				)}
+			</PanelHeader>
+			{metric ? (
+				<div className="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)]">
+					<div className="flex flex-col gap-5 border-b border-subtle p-4 lg:border-r lg:border-b-0">
+						<div className="flex items-center justify-between gap-4">
+							<div className="flex flex-col gap-1">
+								<span className="body-sm text-secondary">All Market Makers</span>
+								<strong className="heading-sm">{pct(providerShare)}</strong>
+								<span className="mono-md">{usd(metric.avgBreakdown.marketMakers)}</span>
+							</div>
+							<div
+								className="size-28 shrink-0 rounded-full"
+								aria-label={`Market makers account for ${pct(providerShare)}`}
+								style={{
+									background: `radial-gradient(circle at center, var(--bg-surface) 0 44%, transparent 45%), conic-gradient(var(--bg-brand) 0 ${Math.max(0, Math.min(100, providerShare ?? 0))}%, var(--bg-surface-elevated-2) 0)`
+								}}
+							/>
+						</div>
+						<div className="flex flex-col gap-1 border-t border-subtle pt-3">
+							<span className="body-sm text-secondary">All Others</span>
+							<strong className="label-lg">{pct(metric.avgBreakdown.allOthersPercentage)}</strong>
+							<span className="mono-sm">{usd(metric.avgBreakdown.allOthers)}</span>
+						</div>
+						<div className="rounded-lg bg-surface-elevated-1 p-3 body-sm text-secondary">
+							Market makers supplied the highest tracked share during this 30-day window on the peak day shown in the
+							daily breakdown.
+						</div>
+					</div>
+					<div className="flex min-w-0 flex-col gap-3 p-4">
+						<div className="flex flex-wrap items-center justify-between gap-2">
+							<h4 className="label-md">Daily Breakdown</h4>
+							<div className="flex flex-wrap gap-2">
+								<SegmentedControl
+									label="Breakdown unit"
+									variant="solid"
+									size="md"
+									value={unit}
+									onValueChange={(value) => setUnit(value as ValueUnit)}
+									options={[
+										{ value: 'usd', label: '$' },
+										{ value: 'percent', label: '%' }
+									]}
+								/>
+								<SegmentedControl
+									label="Breakdown display"
+									variant="default"
+									size="md"
+									value={display}
+									onValueChange={(value) => setDisplay(value as 'chart' | 'table')}
+									options={[
+										{ value: 'chart', label: 'Chart' },
+										{ value: 'table', label: 'Table' }
+									]}
+								/>
+							</div>
+						</div>
+						{display === 'chart' ? (
+							<>
+								<SimpleChart
+									className="h-[280px] w-full"
+									option={buildSeriesOption(series, axisColor, unit === 'percent' ? 'pct' : 'usd')}
+								/>
+								<ChartLegend items={series.map((entry) => ({ label: entry.name, color: entry.color }))} />
+							</>
+						) : (
+							<div className="max-h-[320px] overflow-auto rounded-lg border border-subtle">
+								<table className="w-full body-sm">
+									<thead className="sticky top-0 bg-surface">
+										<tr className="border-b border-subtle text-left label-sm text-secondary">
+											<th className="px-3 py-2">Date</th>
+											<th className="px-3 py-2 text-right">Market Makers</th>
+											<th className="px-3 py-2 text-right">All Others</th>
+										</tr>
+									</thead>
+									<tbody>
+										{metric.dailyBreakdown.map((point) => (
+											<tr key={point.date} className="border-b border-subtle last:border-b-0">
+												<td className="px-3 py-2">{point.date.slice(0, 10)}</td>
+												<td className="px-3 py-2 text-right mono-sm">
+													{unit === 'percent' ? pct(point.marketMakersPercentage) : usd(point.marketMakers)}
+												</td>
+												<td className="px-3 py-2 text-right mono-sm">
+													{unit === 'percent' ? pct(point.allOthersPercentage) : usd(point.allOthers)}
+												</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
+						)}
+					</div>
+				</div>
+			) : (
+				<div className="flex min-h-60 items-center justify-center body-sm text-tertiary">
+					No breakdown data available
+				</div>
+			)}
+		</Panel>
+	)
+}
+
+function UptimeCalculations({ rows }: { rows: UtrMarketMakerUptime[] }) {
+	const [mode, setMode] = useState<'comparison' | 'breakdown'>('comparison')
+	const [providerName, setProviderName] = useState(rows[0]?.name ?? '')
+	const provider = rows.find((entry) => entry.name === providerName) ?? rows[0] ?? null
+	return (
+		<Panel padding="none">
+			<PanelHeader>
+				<PanelTitle as="h3">Uptime Calculations</PanelTitle>
+				<span className="rounded-full border border-medium bg-brand-muted px-2 py-0.5 body-xs text-link-on-tint">
+					Prev. 30D
+				</span>
+				<SegmentedControl
+					label="Uptime view"
+					variant="default"
+					size="md"
+					value={mode}
+					onValueChange={(value) => setMode(value as 'comparison' | 'breakdown')}
+					options={[
+						{ value: 'comparison', label: 'Uptime Comparison' },
+						{ value: 'breakdown', label: 'Uptime Breakdown' }
+					]}
+				/>
+			</PanelHeader>
+			{mode === 'comparison' ? (
+				<div className="overflow-x-auto">
+					<table className="w-full min-w-[760px] body-sm">
+						<thead>
+							<tr className="border-b border-subtle text-left label-sm text-secondary">
+								<th className="px-4 py-2.5">Market Maker</th>
+								<th className="px-3 py-2.5 text-right">Avg. spread</th>
+								<th className="px-3 py-2.5 text-right">Depth ±0.50%</th>
+								<th className="px-3 py-2.5 text-right">Depth ±1.00%</th>
+								<th className="px-3 py-2.5 text-right">Depth ±2.00%</th>
+								<th className="px-3 py-2.5 text-right">Combined uptime</th>
+								<th className="px-4 py-2.5 text-right">Status</th>
+							</tr>
+						</thead>
+						<tbody>
+							{rows.map((entry) => {
+								const achieved = (entry.performance?.avgUptime ?? 0) >= (entry.uptimeObligation ?? 0)
+								return (
+									<tr key={entry.name} className="border-b border-subtle last:border-b-0">
+										<td className="px-4 py-2.5">
+											<span className="flex flex-col gap-0.5">
+												<strong className="label-md">{entry.name}</strong>
+												<span className="body-xs text-tertiary">{normalizedEngagementType(entry.engagementType)}</span>
+											</span>
+										</td>
+										<td className="px-3 py-2.5 text-right mono-sm">{pct(entry.performance?.avgBidAskSpread)}</td>
+										<td className="px-3 py-2.5 text-right mono-sm">{pct(entry.performance?.avgDepth50)}</td>
+										<td className="px-3 py-2.5 text-right mono-sm">{pct(entry.performance?.avgDepth100)}</td>
+										<td className="px-3 py-2.5 text-right mono-sm">{pct(entry.performance?.avgDepth200)}</td>
+										<td className="px-3 py-2.5 text-right mono-sm">{pct(entry.performance?.avgUptime)}</td>
+										<td className="px-4 py-2.5 text-right">
+											<span
+												className={`rounded-full px-2 py-1 body-xs ${
+													achieved ? 'bg-success/15 text-success' : 'bg-error/15 text-error'
+												}`}
+											>
+												{achieved ? 'Achieved' : 'Lagging'}
+											</span>
+										</td>
+									</tr>
+								)
+							})}
+						</tbody>
+					</table>
+				</div>
+			) : (
+				<div className="flex flex-col gap-3 p-4">
+					<label className="flex flex-wrap items-center gap-2 label-md">
+						Provider
+						<select
+							className="min-h-8 rounded-lg border border-medium bg-page px-3 py-1.5 body-sm"
+							value={provider?.name ?? ''}
+							onChange={(event) => setProviderName(event.target.value)}
+						>
+							{rows.map((entry) => (
+								<option key={entry.name} value={entry.name}>
+									{entry.name}
+								</option>
+							))}
+						</select>
+					</label>
+					<div className="max-h-[360px] overflow-auto rounded-lg border border-subtle">
+						<table className="w-full min-w-[620px] body-sm">
+							<thead className="sticky top-0 bg-surface">
+								<tr className="border-b border-subtle text-left label-sm text-secondary">
+									<th className="px-3 py-2">Date</th>
+									<th className="px-3 py-2 text-right">Uptime</th>
+									<th className="px-3 py-2 text-right">Spread target</th>
+									<th className="px-3 py-2 text-right">Spread reported</th>
+									<th className="px-3 py-2 text-right">Spread status</th>
+								</tr>
+							</thead>
+							<tbody>
+								{(provider?.breakdown ?? []).map((entry) => (
+									<tr key={entry.date} className="border-b border-subtle last:border-b-0">
+										<td className="px-3 py-2">{entry.date.slice(0, 10)}</td>
+										<td className="px-3 py-2 text-right mono-sm">{pct(entry.uptimeRatio)}</td>
+										<td className="px-3 py-2 text-right mono-sm">{pct(entry.targetSpread)}</td>
+										<td className="px-3 py-2 text-right mono-sm">{pct(entry.reportedSpread)}</td>
+										<td className="px-3 py-2 text-right">
+											{entry.achievedSpread == null ? 'N/A' : entry.achievedSpread ? 'Achieved' : 'Lagging'}
+										</td>
+									</tr>
+								))}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			)}
+		</Panel>
+	)
+}
+
+export function MarketMakerPerformance({
+	metrics,
+	providers,
+	breakdown,
+	uptimeCalculations,
+	criteria,
+	gradingScale,
+	onOpenCriterion
+}: {
+	metrics: UtrSnapshotMetrics | null
+	providers: UtrMarketMakerProvider[]
+	breakdown: UtrMarketMakerPerformanceBreakdown | null
+	uptimeCalculations: UtrMarketMakerUptime[]
+	criteria: UtrCriterionBreakdown[]
+	gradingScale?: UtrGradeScaleEntry[] | null
+	onOpenCriterion: (criterion: UtrCriterionBreakdown) => void
+}) {
+	const providerSpreads = providers.flatMap((provider) => (provider.avgSpread == null ? [] : [provider.avgSpread]))
+	const avgProviderSpread = providerSpreads.length
+		? providerSpreads.reduce((total, value) => total + value, 0) / providerSpreads.length
+		: metrics?.vwasBps == null
+			? null
+			: metrics.vwasBps / 100
+	const hasData = Boolean(
+		providers.length ||
+		breakdown ||
+		uptimeCalculations.length ||
+		metrics?.mmDepthPct != null ||
+		metrics?.mmVolumePct != null ||
+		metrics?.mmUptimePct != null ||
+		criteria.some((criterion) => criterion.raw != null)
+	)
+	return (
+		<section className="flex flex-col gap-4" aria-labelledby="liquidity-providers-heading">
+			<h2 id="liquidity-providers-heading" className="heading-sm">
+				Performance Overview: Liquidity Providers
+			</h2>
+			{hasData ? (
+				<>
+					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+						<LpPerformanceInsights
+							mmDepthPct={metrics?.mmDepthPct ?? null}
+							mmVolumePct={metrics?.mmVolumePct ?? null}
+							avgSpreadPct={avgProviderSpread}
+						/>
+						{providers.length ? <PerformanceSummary providers={providers} /> : <EmptyState />}
+					</div>
+					{breakdown ? <PerformanceBreakdown breakdown={breakdown} /> : null}
+					{uptimeCalculations.length ? <UptimeCalculations rows={uptimeCalculations} /> : null}
+				</>
+			) : (
+				<EmptyState />
+			)}
+			<CriterionCards criteria={criteria} gradingScale={gradingScale} onOpen={onOpenCriterion} />
+		</section>
+	)
+}

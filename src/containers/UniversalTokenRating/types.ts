@@ -351,6 +351,89 @@ export type UtrSnapshotMetrics = {
 	hasVestingDisclosure: boolean
 }
 
+export type UtrMarketMakerProvider = {
+	name: string
+	engagementType?: string | null
+	avgFillVolumeTotal?: number | null
+	avgBidAskDepth50?: number | null
+	avgBidAskDepth100?: number | null
+	avgBidAskDepth200?: number | null
+	avgSpread?: number | null
+	percentageOfTotalVolume?: number | null
+	percentageOfTotalLiquidity?: number | null
+	activeEngagementsCount?: number | null
+}
+
+export type UtrMarketMakerDailyBreakdown = {
+	date: string
+	marketMakers: number | null
+	allOthers: number | null
+	total: number | null
+	marketMakersPercentage: number | null
+	allOthersPercentage: number | null
+	hasMarketTotals?: boolean
+}
+
+export type UtrMarketMakerSeries = {
+	name: string
+	avgValue: number | null
+	avgPercentage: number | null
+	dailyBreakdown: { date: string; value: number | null; percentage: number | null }[]
+}
+
+export type UtrMarketMakerBreakdownMetric = {
+	avgBreakdown: {
+		marketMakers: number | null
+		allOthers: number | null
+		total: number | null
+		marketMakersPercentage: number | null
+		allOthersPercentage: number | null
+	}
+	dailyBreakdown: UtrMarketMakerDailyBreakdown[]
+	isOverreporting?: boolean
+	series: UtrMarketMakerSeries[]
+}
+
+export type UtrMarketMakerPerformanceBreakdown = {
+	depth?: Partial<
+		Record<
+			'bidAsk' | 'bid' | 'ask',
+			Partial<Record<'depth50' | 'depth100' | 'depth200', UtrMarketMakerBreakdownMetric>>
+		>
+	>
+	volume?: Partial<Record<'total' | 'maker' | 'taker', UtrMarketMakerBreakdownMetric>>
+}
+
+export type UtrMarketMakerUptime = {
+	name: string
+	engagementType?: string | null
+	kpiEngagementType?: string | null
+	uptimeObligation?: number | null
+	performance?: {
+		avgBidAskSpread?: number | null
+		avgDepth50?: number | null
+		avgDepth100?: number | null
+		avgDepth200?: number | null
+		avgUptime?: number | null
+	} | null
+	breakdown?: Array<{
+		date: string
+		reportedDepth50?: number | null
+		reportedDepth100?: number | null
+		reportedDepth200?: number | null
+		reportedSpread?: number | null
+		targetDepth50?: number | null
+		targetDepth100?: number | null
+		targetDepth200?: number | null
+		targetSpread?: number | null
+		achievedDepth50?: boolean | null
+		achievedDepth100?: boolean | null
+		achievedDepth200?: boolean | null
+		achievedSpread?: boolean | null
+		uptimeRatio?: number | null
+	}>
+}
+
 export type UtrLeaderboardApiRow = {
 	rank: number | null
 	arcticId: string
@@ -494,6 +577,7 @@ export type UtrExchangesResponse = {
 
 export type UtrAssetResponse = {
 	arcticId: string
+	defillamaId?: string | null
 	projectName: string
 	symbol: string
 	sector: string | null
@@ -527,4 +611,7 @@ export type UtrAssetResponse = {
 	performance: UtrAxisBreakdown | null
 	metrics: UtrSnapshotMetrics | null
 	charts: UtrAssetCharts
+	marketMakers?: UtrMarketMakerProvider[]
+	performanceBreakdown?: UtrMarketMakerPerformanceBreakdown | null
+	uptimeCalculations?: UtrMarketMakerUptime[]
 }

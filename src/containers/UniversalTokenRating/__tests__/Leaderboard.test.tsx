@@ -7,6 +7,7 @@ vi.mock('../PerformanceMatrix', () => ({
 }))
 
 import { Leaderboard, LEADERBOARD_COLUMN_COUNT } from '../Leaderboard'
+import { pageForUtrAsset } from '../navigation'
 
 const grading: UtrGradingConfig = {
 	overall: {
@@ -54,6 +55,14 @@ const row: UtrLeaderboardRow = {
 }
 
 describe('Leaderboard', () => {
+	it('returns the page that contains a searched asset', () => {
+		const rows = Array.from({ length: 205 }, (_, index) => ({ ...row, asset: `asset-${index}` }))
+		expect(pageForUtrAsset(rows, 'asset-0')).toBe(0)
+		expect(pageForUtrAsset(rows, 'asset-100')).toBe(1)
+		expect(pageForUtrAsset(rows, 'asset-204')).toBe(2)
+		expect(pageForUtrAsset(rows, 'missing')).toBeNull()
+	})
+
 	it('renders the API grade after Protocol without a Status or pin column', () => {
 		const html = renderToStaticMarkup(
 			<Leaderboard rows={[row]} grading={grading} sort={{ key: 'rank', desc: false }} setSort={() => undefined} />

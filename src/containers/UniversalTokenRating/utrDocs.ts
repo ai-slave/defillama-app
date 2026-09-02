@@ -1049,6 +1049,29 @@ function replaceCoreComponents(chapter: UtrDocChapter, blocks: UtrDocBlock[]): U
 	return { ...chapter, blocks: [...chapter.blocks.slice(0, start), ...blocks, ...chapter.blocks.slice(end)] }
 }
 
+function replacePerformanceCalculationMethodology(chapter: UtrDocChapter): UtrDocChapter {
+	const start = chapter.blocks.findIndex(
+		(block) => block.type === 'heading' && block.text === 'Calculation Methodology'
+	)
+	const end = chapter.blocks.findIndex(
+		(block, index) => index > start && block.type === 'heading' && block.text === 'How to Interpret'
+	)
+	if (start === -1 || end === -1) return chapter
+	const blocks: UtrDocBlock[] = [
+		{ type: 'heading', text: 'Calculation Methodology' },
+		{
+			type: 'paragraph',
+			text: "Each active sub-criterion is scored on a 0–10 scale and multiplied by its weight from Forgd's current scoring configuration. The weighted sub-criterion scores are summed to produce the Performance axis score."
+		},
+		{ type: 'formula', text: 'P(t) = ∑ (sub-criterion score × active sub-criterion weight)' },
+		{
+			type: 'paragraph',
+			text: 'The category and criterion tables above are generated from the active scoring configuration, so this documentation remains aligned when weights or applicability rules change.'
+		}
+	]
+	return { ...chapter, blocks: [...chapter.blocks.slice(0, start), ...blocks, ...chapter.blocks.slice(end)] }
+}
+
 function gradeRangeRows(scale: UtrGradeScaleEntry[]): string[][] {
 	const formatScore = (score: number) =>
 		formatNumber(score, { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })
@@ -1201,7 +1224,9 @@ export function buildUtrDocChapters(config: UtrScoringConfig | null): UtrDocChap
 		blocks: sourceChapter.blocks.map(modernizeBlock)
 	})).map((chapter) => {
 		if (chapter.id === 'disclosure-axis') return replaceCoreComponents(chapter, disclosureCoreBlocks(config))
-		if (chapter.id === 'performance-axis') return replaceCoreComponents(chapter, performanceCoreBlocks(config))
+		if (chapter.id === 'performance-axis') {
+			return replacePerformanceCalculationMethodology(replaceCoreComponents(chapter, performanceCoreBlocks(config)))
+		}
 		if (chapter.id === 'grading-methodology') return gradingChapter(config)
 		if (chapter.id === 'appendix') return appendixChapter(chapter, config)
 		if (chapter.id === 'glossary') return glossaryChapter(chapter, config)

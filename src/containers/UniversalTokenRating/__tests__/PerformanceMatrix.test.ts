@@ -55,13 +55,14 @@ function row(grade?: string | null): UtrLeaderboardRow {
 
 describe('buildMatrixOption', () => {
 	it('colors points and tooltip bars from runtime grade thresholds', () => {
-		const option = buildMatrixOption([row(null)], undefined, {}, false, grading) as any
+		const option = buildMatrixOption([{ ...row(null), claimed: false }], undefined, {}, false, grading) as any
 
 		expect(option.animation).toBe(false)
 		expect(option.series[0].data[0].itemStyle.color).toBe('#11935f')
 		const tooltip = option.tooltip.formatter({ dataIndex: 0 })
 		expect(tooltip).toContain('#11935f')
 		expect(tooltip).toContain('#b23a38')
+		expect(tooltip).toContain('/universal-token-rating/claim?token=example')
 	})
 
 	it('uses an explicit API grade before deriving from the score', () => {
@@ -102,5 +103,6 @@ describe('buildMatrixOption', () => {
 		expect(html).toContain('role="status"')
 		expect(html).toContain('Loading chart')
 		expect(html).toContain('invisible')
+		expect(html).toContain('h-[494px]')
 	})
 })

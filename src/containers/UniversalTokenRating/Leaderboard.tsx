@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState, type CSSProperties } from 'react'
+import { Fragment, useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { BasicLink } from '~/components/Link'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -10,6 +10,7 @@ import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { CategoryBreakdownTable, rowBreakdownColumns, type BreakdownColumn } from './CategoryBreakdown'
 import { GradeBadge, ScoreBar } from './grades'
+import { pageForUtrAsset, UTR_LEADERBOARD_PAGE_SIZE, type UtrFocusRequest } from './navigation'
 import { PerformanceMatrix } from './PerformanceMatrix'
 import { ClaimProfileBanner } from './TokenPage'
 import type { UtrGradeScaleEntry, UtrGradingConfig, UtrLeaderboardRow } from './types'
@@ -58,7 +59,7 @@ function ExpandedRow({ row, grading }: { row: UtrLeaderboardRow; grading?: UtrGr
 					</div>
 				</div>
 			</div>
-			{!row.claimed ? <ClaimProfileBanner /> : null}
+			{!row.claimed ? <ClaimProfileBanner asset={row.asset} /> : null}
 		</div>
 	)
 }
@@ -176,7 +177,7 @@ function MobileExpandedRow({ row, grading }: { row: UtrLeaderboardRow; grading?:
 					<Icon name="arrow-right" height={14} width={14} />
 				</Button>
 			</div>
-			{!row.claimed ? <ClaimProfileBanner /> : null}
+			{!row.claimed ? <ClaimProfileBanner asset={row.asset} /> : null}
 		</div>
 	)
 }
@@ -215,7 +216,6 @@ function sortValue(row: UtrLeaderboardRow, key: UtrSortKey): number {
 	}
 }
 
-const PAGE_SIZE = 100
 export const LEADERBOARD_COLUMN_COUNT = 8
 
 const RANK_WIDTH = 48
@@ -245,12 +245,14 @@ export function Leaderboard({
 	rows,
 	grading,
 	sort,
-	setSort
+	setSort,
+	focusRequest
 }: {
 	rows: UtrLeaderboardRow[]
 	grading?: UtrGradingConfig | null
 	sort: UtrSort
 	setSort: (updater: (prev: UtrSort) => UtrSort) => void
+	focusRequest?: UtrFocusRequest | null
 }) {
 	const [expandedAssets, setExpandedAssets] = useState<Set<string>>(() => new Set())
 	const [page, setPage] = useState(0)
@@ -272,9 +274,32 @@ export function Leaderboard({
 		return next
 	}, [rows, sort])
 
-	const pageCount = Math.max(1, Math.ceil(sortedRows.length / PAGE_SIZE))
+	const pageCount = Math.max(1, Math.ceil(sortedRows.length / UTR_LEADERBOARD_PAGE_SIZE))
 	const currentPage = Math.min(page, pageCount - 1)
-	const pagedRows = sortedRows.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE)
+	const pagedRows = sortedRows.slice(
+		currentPage * UTR_LEADERBOARD_PAGE_SIZE,
+		(currentPage + 1) * UTR_LEADERBOARD_PAGE_SIZE
+	)
+
+	useEffect(() => {
+		if (!focusRequest || typeof window === 'undefined') return
+		const targetPage = pageForUtrAsset(sortedRows, focusRequest.asset)
+		if (targetPage == null) return
+		setPage(targetPage)
+		let secondFrame = 0
+		const firstFrame = window.requestAnimationFrame(() => {
+			secondFrame = window.requestAnimationFrame(() => {
+				document.getElementById(`utr-row-${focusRequest.asset}`)?.scrollIntoView({
+					behavior: 'smooth',
+					block: 'center'
+				})
+			})
+		})
+		return () => {
+			window.cancelAnimationFrame(firstFrame)
+			if (secondFrame) window.cancelAnimationFrame(secondFrame)
+		}
+	}, [focusRequest, sortedRows])
 
 	const toggleSort = (key: UtrSortKey) =>
 		setSort((prev) => (prev.key === key ? { key, desc: !prev.desc } : { key, desc: key !== 'rank' }))

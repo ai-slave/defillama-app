@@ -2,13 +2,15 @@ import { useMemo, useState } from 'react'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Input } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { formatNumber } from '~/utils/numberFormat'
 import { FDV_RANGES, LISTING_STATUS_LABELS, UTR_SECTORS } from './constants'
 import { Leaderboard, type UtrSort } from './Leaderboard'
 import { MobileFiltersDrawer } from './MobileFiltersDrawer'
+import { findUtrSearchMatch, type UtrFocusRequest } from './navigation'
 import { PerformanceMatrix } from './PerformanceMatrix'
-import { CantFindTokenBanner } from './TokenPage'
+import { CantFindTokenBanner, UtrDisclaimer } from './TokenPage'
 import { TopMovers } from './TopMovers'
 import type { UtrScoringConfig, UtrTopMover, UtrUniverse } from './types'
 import { UtrDocsDrawer } from './UtrDocsDrawer'
@@ -35,6 +37,9 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 	const [listingStatuses, setListingStatuses] = useState<string[]>(() => Object.keys(LISTING_STATUS_LABELS))
 	const [sort, setSort] = useState<UtrSort>({ key: 'rank', desc: false })
 	const [filtersOpen, setFiltersOpen] = useState(false)
+	const [searchQuery, setSearchQuery] = useState('')
+	const [searchError, setSearchError] = useState<string | null>(null)
+	const [focusRequest, setFocusRequest] = useState<UtrFocusRequest | null>(null)
 
 	const activeFilterCount =
 		(fdvRanges.length === FDV_RANGES.length ? 0 : 1) +
@@ -47,6 +52,17 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 		setSectors(sectorOptions)
 		setListingStatuses(Object.keys(LISTING_STATUS_LABELS))
 		setSort({ key: 'rank', desc: false })
+	}
+
+	const searchProject = () => {
+		const match = findUtrSearchMatch(universe.rows, searchQuery)
+		if (!match) {
+			setSearchError(searchQuery.trim() ? 'No matching token found' : 'Enter a token name or ticker')
+			return
+		}
+		resetFilters()
+		setSearchError(null)
+		setFocusRequest((current) => ({ asset: match.asset, nonce: (current?.nonce ?? 0) + 1 }))
 	}
 
 	const filterChips: { key: string; label: string; onRemove: () => void }[] = []
@@ -113,6 +129,42 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 			<TopMovers movers={topMovers} />
 
 			<div className="flex flex-wrap items-center gap-2 rounded-lg border border-subtle bg-surface p-2">
+				<form
+					className="flex min-w-0 flex-1 items-center gap-2 lg:max-w-[360px]"
+					onSubmit={(event) => {
+						event.preventDefault()
+						searchProject()
+					}}
+				>
+					<label className="min-w-0 flex-1">
+						<span className="sr-only">Search tokens</span>
+						<Input
+							list="utr-project-options"
+							value={searchQuery}
+							onChange={(event) => {
+								setSearchQuery(event.target.value)
+								setSearchError(null)
+							}}
+							placeholder="Search token or ticker"
+							aria-invalid={searchError ? true : undefined}
+							aria-describedby={searchError ? 'utr-search-error' : undefined}
+							className="w-full"
+						/>
+						<datalist id="utr-project-options">
+							{universe.rows.map((row) => (
+								<option key={row.asset} value={`${row.name} (${row.symbol})`} />
+							))}
+						</datalist>
+					</label>
+					<Button type="submit" size="md" square aria-label="Find token in leaderboard">
+						<Icon name="search" height={14} width={14} />
+					</Button>
+				</form>
+				{searchError ? (
+					<span id="utr-search-error" role="alert" className="w-full body-sm text-error lg:order-last">
+						{searchError}
+					</span>
+				) : null}
 				<span className="max-lg:hidden">
 					<SelectWithCombobox
 						allValues={FDV_RANGES.map((range) => ({ key: range.key, name: range.label }))}
@@ -209,10 +261,17 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 					<PanelTitle>Leaderboard Ranking</PanelTitle>
 					{scoredLabel}
 				</PanelHeader>
-				<Leaderboard rows={filteredRows} grading={scoringConfig?.grading} sort={sort} setSort={setSort} />
+				<Leaderboard
+					rows={filteredRows}
+					grading={scoringConfig?.grading}
+					sort={sort}
+					setSort={setSort}
+					focusRequest={focusRequest}
+				/>
 			</Panel>
 
 			<CantFindTokenBanner />
+			<UtrDisclaimer />
 
 			<UtrDocsDrawer open={docsOpen} onClose={() => setDocsOpen(false)} scoringConfig={scoringConfig} />
 			<MobileFiltersDrawer

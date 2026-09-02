@@ -92,6 +92,7 @@ export function buildMatrixOption(
 		grid: { left: 40, right: 20, top: 12, bottom: 26 },
 		tooltip: {
 			trigger: 'item',
+			triggerOn: 'mousemove|click|mousewheel',
 			enterable: true,
 			confine: true,
 			backgroundColor: isDark ? '#181a1c' : '#ffffff',
@@ -119,7 +120,7 @@ export function buildMatrixOption(
 					${
 						row.claimed
 							? ''
-							: '<a href="/universal-token-rating/claim" style="display:block;margin-top:10px;border:1px solid rgba(128,128,128,0.5);border-radius:999px;padding:4px 12px;text-align:center;color:inherit;text-decoration:none;">Claim this Token Profile</a>'
+							: `<a href="/universal-token-rating/claim?token=${encodeURIComponent(row.asset)}" style="display:block;margin-top:10px;border:1px solid rgba(128,128,128,0.5);border-radius:999px;padding:4px 12px;text-align:center;color:inherit;text-decoration:none;">Claim this Token Profile</a>`
 					}
 					<div style="display:flex;gap:8px;margin-top:8px;">
 						<a href="#utr-row-${encodeURIComponent(row.asset)}" style="flex:1;white-space:nowrap;border:1px solid rgba(128,128,128,0.5);border-radius:999px;padding:4px 12px;text-align:center;color:inherit;text-decoration:none;">Show in Table</a>
@@ -202,7 +203,7 @@ function MatrixLoadingState() {
 export function PerformanceMatrix({
 	rows,
 	grading,
-	className = 'h-[380px] w-full'
+	className = 'h-[494px] w-full'
 }: {
 	rows: UtrLeaderboardRow[]
 	grading?: UtrGradingConfig | null
@@ -212,6 +213,8 @@ export function PerformanceMatrix({
 	const axisColor = useChartTheme(isDark).axisLabel
 	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
+	const cleanupChartEventsRef = useRef<(() => void) | null>(null)
+	const pinnedDataIndexRef = useRef<number | null>(null)
 	const [icons, setIcons] = useState<MatrixIconMap>({})
 	const [chartReady, setChartReady] = useState(false)
 	const iconsReady = areMatrixIconsReady(rows, icons)
@@ -221,6 +224,12 @@ export function PerformanceMatrix({
 		const instance = chartRef.current
 		if (!iconsReady || !instance || instance.isDisposed()) return
 		instance.setOption(buildMatrixOption(rows, axisColor, icons, isDark, grading), { notMerge: true })
+		const pinnedDataIndex = pinnedDataIndexRef.current
+		if (pinnedDataIndex != null && pinnedDataIndex < rows.length) {
+			instance.dispatchAction({ type: 'showTip', seriesIndex: 0, dataIndex: pinnedDataIndex })
+		} else if (pinnedDataIndex != null) {
+			pinnedDataIndexRef.current = null
+		}
 		setChartReady(true)
 	}, [rows, axisColor, icons, iconsReady, isDark, grading])
 
@@ -231,6 +240,43 @@ export function PerformanceMatrix({
 		if (chartDom.clientWidth <= 0 || chartDom.clientHeight <= 0) return
 		const instance = echarts.init(chartDom, null, { renderer: 'canvas' })
 		chartRef.current = instance
+		const handleChartClick = (params: { componentType?: string; dataIndex?: number }) => {
+			if (params.componentType !== 'series' || typeof params.dataIndex !== 'number') return
+			if (pinnedDataIndexRef.current === params.dataIndex) {
+				pinnedDataIndexRef.current = null
+				instance.dispatchAction({ type: 'hideTip' })
+				return
+			}
+			pinnedDataIndexRef.current = params.dataIndex
+			instance.dispatchAction({ type: 'showTip', seriesIndex: 0, dataIndex: params.dataIndex })
+		}
+		const restorePinnedTooltip = () => {
+			const pinnedDataIndex = pinnedDataIndexRef.current
+			if (pinnedDataIndex == null) return
+			window.requestAnimationFrame(() => {
+				if (!instance.isDisposed()) {
+					instance.dispatchAction({ type: 'showTip', seriesIndex: 0, dataIndex: pinnedDataIndex })
+				}
+			})
+		}
+		const restorePinnedTooltipAfterExit = () => {
+			const pinnedDataIndex = pinnedDataIndexRef.current
+			if (pinnedDataIndex == null) return
+			window.requestAnimationFrame(() => {
+				if (!instance.isDisposed()) {
+					instance.dispatchAction({ type: 'showTip', seriesIndex: 0, dataIndex: pinnedDataIndex })
+				}
+			})
+		}
+		const renderer = instance.getZr()
+		instance.on('click', handleChartClick)
+		instance.on('mouseover', restorePinnedTooltip)
+		renderer.on('globalout', restorePinnedTooltipAfterExit)
+		cleanupChartEventsRef.current = () => {
+			instance.off('click', handleChartClick)
+			instance.off('mouseover', restorePinnedTooltip)
+			renderer.off('globalout', restorePinnedTooltipAfterExit)
+		}
 		applyOption()
 	}, [applyOption, iconsReady])
 
@@ -266,9 +312,30 @@ export function PerformanceMatrix({
 	}, [applyOption, initializeChart])
 
 	useEffect(() => {
+		const closePinnedTooltip = (event: PointerEvent) => {
+			if (pinnedDataIndexRef.current == null || containerRef.current?.contains(event.target as Node)) return
+			pinnedDataIndexRef.current = null
+			chartRef.current?.dispatchAction({ type: 'hideTip' })
+		}
+		const closePinnedTooltipOnEscape = (event: KeyboardEvent) => {
+			if (event.key !== 'Escape' || pinnedDataIndexRef.current == null) return
+			pinnedDataIndexRef.current = null
+			chartRef.current?.dispatchAction({ type: 'hideTip' })
+		}
+		document.addEventListener('pointerdown', closePinnedTooltip)
+		window.addEventListener('keydown', closePinnedTooltipOnEscape)
+		return () => {
+			document.removeEventListener('pointerdown', closePinnedTooltip)
+			window.removeEventListener('keydown', closePinnedTooltipOnEscape)
+		}
+	}, [])
+
+	useEffect(() => {
 		return () => {
 			const instance = chartRef.current
 			chartRef.current = null
+			cleanupChartEventsRef.current?.()
+			cleanupChartEventsRef.current = null
 			if (instance && !instance.isDisposed()) instance.dispose()
 		}
 	}, [])

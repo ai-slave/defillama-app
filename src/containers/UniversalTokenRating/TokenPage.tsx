@@ -65,7 +65,10 @@ export function GradeFooter({
 	)
 }
 
-export function ClaimProfileBanner() {
+export function ClaimProfileBanner({ asset }: { asset?: string | null }) {
+	const href = asset
+		? `/universal-token-rating/claim?token=${encodeURIComponent(asset)}`
+		: '/universal-token-rating/claim'
 	return (
 		<div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-brand p-4">
 			<div className="flex gap-3">
@@ -75,18 +78,24 @@ export function ClaimProfileBanner() {
 					<p className="body-sm text-on-brand/70">
 						Core team members can claim this profile to verify project information and update disclosures.
 					</p>
-					<BasicLink
-						href="/universal-token-rating/claim"
-						className={`${forgdCtaSecondaryButtonStyles} mt-2 w-fit lg:hidden`}
-					>
+					<BasicLink href={href} className={`${forgdCtaSecondaryButtonStyles} mt-2 w-fit lg:hidden`}>
 						Claim Token Profile
 					</BasicLink>
 				</div>
 			</div>
-			<BasicLink href="/universal-token-rating/claim" className={`${forgdCtaSecondaryButtonStyles} max-lg:hidden`}>
+			<BasicLink href={href} className={`${forgdCtaSecondaryButtonStyles} max-lg:hidden`}>
 				Claim Token Profile
 			</BasicLink>
 		</div>
+	)
+}
+
+export function UtrDisclaimer() {
+	return (
+		<p className="body-sm text-tertiary">
+			UTR scores evaluate disclosure quality and token market structure. The score is informational and should not be
+			interpreted as an assessment of expected returns or as an investment recommendation.
+		</p>
 	)
 }
 
