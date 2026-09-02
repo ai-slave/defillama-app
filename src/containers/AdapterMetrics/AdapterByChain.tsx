@@ -585,13 +585,16 @@ const definitionColumn = columnHelper.accessor((protocol) => protocol.methodolog
 	}
 })
 
-type MetricColumnSize = 128 | 152 | 160 | 180
+type MetricColumnSize = 128 | 152 | 160 | 169 | 172 | 180 | 184
 
 const metricColumnWidthClassBySize: Record<MetricColumnSize, string> = {
 	128: 'w-[128px]',
 	152: 'w-[152px]',
 	160: 'w-[160px]',
-	180: 'w-[min(180px,40vw)]'
+	169: 'w-[169px] min-w-[169px]',
+	172: 'w-[172px] min-w-[172px]',
+	180: 'w-[min(180px,40vw)]',
+	184: 'w-[184px] min-w-[184px]'
 }
 
 const getMetricColumnWidthClass = (size: MetricColumnSize) => metricColumnWidthClassBySize[size]
@@ -1009,22 +1012,23 @@ const getColumnsByType = (isChain: boolean = false) => {
 				'Perp Agg Vol 24h',
 				(protocol) => protocol.total24h,
 				definitions.perpsAggregators.protocol['24h'],
-				160,
+				172,
 				'Perp Aggregator Volume 24h'
 			),
 			centeredMetricColumn(
 				'total7d',
-				'Perp Agg Volume 7d',
+				'Perp Agg Vol 7d',
 				(protocol) => protocol.total7d,
 				definitions.perpsAggregators.protocol['7d'],
-				160
+				172,
+				'Perp Aggregator Volume 7d'
 			),
 			centeredMetricColumn(
 				'total30d',
 				'Perp Agg Vol 30d',
 				(protocol) => protocol.total30d,
 				definitions.perpsAggregators.protocol['30d'],
-				160,
+				172,
 				'Perp Aggregator Volume 30d'
 			)
 		],
@@ -1035,22 +1039,23 @@ const getColumnsByType = (isChain: boolean = false) => {
 				'Bridge Agg Vol 24h',
 				(protocol) => protocol.total24h,
 				definitions.bridgeAggregators.chain['24h'],
-				160,
+				184,
 				'Bridge Aggregator Volume 24h'
 			),
 			centeredMetricColumn(
 				'total7d',
-				'Bridge Aggregator Volume 7d',
+				'Bridge Agg Vol 7d',
 				(protocol) => protocol.total7d,
 				definitions.bridgeAggregators.chain['7d'],
-				160
+				184,
+				'Bridge Aggregator Volume 7d'
 			),
 			centeredMetricColumn(
 				'total30d',
 				'Bridge Agg Vol 30d',
 				(protocol) => protocol.total30d,
 				definitions.bridgeAggregators.chain['30d'],
-				160,
+				184,
 				'Bridge Aggregator Volume 30d'
 			)
 		],
@@ -1061,22 +1066,23 @@ const getColumnsByType = (isChain: boolean = false) => {
 				'DEX Agg Vol 24h',
 				(protocol) => protocol.total24h,
 				definitions.dexAggregators.protocol['24h'],
-				160,
+				169,
 				'DEX Aggregator Volume 24h'
 			),
 			centeredMetricColumn(
 				'total7d',
-				'DEX Aggregator Volume 7d',
+				'DEX Agg Vol 7d',
 				(protocol) => protocol.total7d,
 				definitions.dexAggregators.protocol['7d'],
-				160
+				169,
+				'DEX Aggregator Volume 7d'
 			),
 			centeredMetricColumn(
 				'total30d',
 				'DEX Agg Vol 30d',
 				(protocol) => protocol.total30d,
 				definitions.dexAggregators.protocol['30d'],
-				160,
+				169,
 				'DEX Aggregator Volume 30d'
 			)
 		],

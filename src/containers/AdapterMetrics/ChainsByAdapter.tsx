@@ -171,7 +171,10 @@ const metricColumnWidthClassBySize: Record<number, string> = {
 	128: 'w-[128px]',
 	152: 'w-[152px]',
 	160: 'w-[160px]',
+	169: 'w-[169px] min-w-[169px]',
+	172: 'w-[172px] min-w-[172px]',
 	180: 'w-[min(180px,40vw)]',
+	184: 'w-[184px] min-w-[184px]',
 	200: 'w-[min(200px,40vw)]'
 }
 
@@ -363,31 +366,26 @@ const columnsByType = {
 		NameColumn('perps-aggregators'),
 		metricColumn(
 			'total24h',
-			<>
-				<span className="md:hidden">Perp Agg Vol 24h</span>
-				<span className="hidden md:block">Perp Aggregator Volume 24h</span>
-			</>,
+			'Perp Agg Vol 24h',
 			(protocol) => protocol.total24h,
 			definitions.perpsAggregators.chain['24h'],
-			160,
+			172,
 			'Perp Aggregator Volume 24h'
 		),
 		metricColumn(
 			'total7d',
-			'Perp Aggregator Volume 7d',
+			'Perp Agg Vol 7d',
 			(protocol) => protocol.total7d,
 			definitions.perpsAggregators.chain['7d'],
-			160
+			172,
+			'Perp Aggregator Volume 7d'
 		),
 		metricColumn(
 			'total30d',
-			<>
-				<span className="md:hidden">Perps Agg Vol 30d</span>
-				<span className="hidden md:block">Perps Aggregator Volume 30d</span>
-			</>,
+			'Perp Agg Vol 30d',
 			(protocol) => protocol.total30d,
 			definitions.perpsAggregators.chain['30d'],
-			160,
+			172,
 			'Perp Aggregator Volume 30d'
 		)
 	],
@@ -395,31 +393,26 @@ const columnsByType = {
 		NameColumn('bridge-aggregators'),
 		metricColumn(
 			'total24h',
-			<>
-				<span className="md:hidden">Bridge Agg Vol 24h</span>
-				<span className="hidden md:block">Bridge Aggregator Volume 24h</span>
-			</>,
+			'Bridge Agg Vol 24h',
 			(protocol) => protocol.total24h,
 			definitions.bridgeAggregators.chain['24h'],
-			160,
+			184,
 			'Bridge Aggregator Volume 24h'
 		),
 		metricColumn(
 			'total7d',
-			'Bridge Aggregator Volume 7d',
+			'Bridge Agg Vol 7d',
 			(protocol) => protocol.total7d,
 			definitions.bridgeAggregators.chain['7d'],
-			160
+			184,
+			'Bridge Aggregator Volume 7d'
 		),
 		metricColumn(
 			'total30d',
-			<>
-				<span className="md:hidden">Bridge Agg Vol 30d</span>
-				<span className="hidden md:block">Bridge Aggregator Volume 30d</span>
-			</>,
+			'Bridge Agg Vol 30d',
 			(protocol) => protocol.total30d,
 			definitions.bridgeAggregators.chain['30d'],
-			160,
+			184,
 			'Bridge Aggregator Volume 30d'
 		)
 	],
@@ -427,31 +420,26 @@ const columnsByType = {
 		NameColumn('dex-aggregators'),
 		metricColumn(
 			'total24h',
-			<>
-				<span className="md:hidden">DEX Agg Vol 24h</span>
-				<span className="hidden md:block">DEX Aggregator Volume 24h</span>
-			</>,
+			'DEX Agg Vol 24h',
 			(protocol) => protocol.total24h,
 			definitions.dexAggregators.chain['24h'],
-			160,
+			169,
 			'DEX Aggregator Volume 24h'
 		),
 		metricColumn(
 			'total7d',
-			'DEX Aggregator Volume 7d',
+			'DEX Agg Vol 7d',
 			(protocol) => protocol.total7d,
 			definitions.dexAggregators.chain['7d'],
-			160
+			169,
+			'DEX Aggregator Volume 7d'
 		),
 		metricColumn(
 			'total30d',
-			<>
-				<span className="md:hidden">DEX Agg Vol 30d</span>
-				<span className="hidden md:block">DEX Aggregator Volume 30d</span>
-			</>,
+			'DEX Agg Vol 30d',
 			(protocol) => protocol.total30d,
 			definitions.dexAggregators.chain['30d'],
-			160,
+			169,
 			'DEX Aggregator Volume 30d'
 		)
 	]
