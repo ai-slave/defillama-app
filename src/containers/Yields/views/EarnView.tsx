@@ -1,4 +1,5 @@
 import { useRouter } from 'next/router'
+import type * as React from 'react'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { useEntityQuestions } from '~/containers/LlamaAI/hooks/useEntityQuestions'
@@ -31,6 +32,15 @@ export type EarnViewProps = EarnPageMeta & {
 	entityQuestions: string[]
 	initialEarnPage: YieldsPaginatedTableResponse<IYieldTableRow>
 	initialEarnPageGeneratedAt: number
+	/**
+	 * Route-level filters for a standalone earn document (e.g. /yields/stablecoins).
+	 * Merged over the URL-derived params so the route's subject cannot be filtered
+	 * away, and folded into the seed's default query so the ISR rows still render at
+	 * SSR. Pair with a reduced `attributeIds` so the UI can't offer to unset them.
+	 */
+	lockedQuery?: Record<string, string>
+	/** Above-table copy that makes the page its own document rather than a filter state. */
+	intro?: React.ReactNode
 }
 
 const EarnView = ({
@@ -42,7 +52,9 @@ const EarnView = ({
 	attributeIds,
 	entityQuestions: baseQuestions,
 	initialEarnPage,
-	initialEarnPageGeneratedAt
+	initialEarnPageGeneratedAt,
+	lockedQuery,
+	intro
 }: EarnViewProps) => {
 	const router = useRouter()
 
@@ -78,7 +90,9 @@ const EarnView = ({
 		noIlRisk: attributeSet.has('no_il') ? 'true' : undefined,
 		hasAudit: attributeSet.has('audited') ? 'true' : undefined,
 		protocolHasToken: attributeSet.has('no_protocol_token') ? 'false' : undefined,
-		includeMemeTokens: attributeSet.has('include_meme_tokens') ? 'true' : undefined
+		includeMemeTokens: attributeSet.has('include_meme_tokens') ? 'true' : undefined,
+		// Last so a locked route filter wins over anything the URL says.
+		...lockedQuery
 	}
 
 	const {
@@ -153,6 +167,8 @@ const EarnView = ({
 					</p>
 				}
 			/>
+
+			{intro}
 
 			<YieldFilters
 				tokenSearch={<IncludeTokens tokens={tokens} matchOn data-alwaysdisplay={false} />}

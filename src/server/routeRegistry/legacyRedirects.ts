@@ -672,11 +672,6 @@ export const legacyRedirects = [
 		permanent: true
 	},
 	{
-		source: '/yields/stablecoins',
-		destination: '/yields?attribute=stablecoins&attribute=no_il',
-		permanent: true
-	},
-	{
 		source: '/yields/overview',
 		destination: '/yields',
 		permanent: true

@@ -3,6 +3,7 @@ import type { DatasetSnapshotDomain } from './contract'
 /** Pure build configuration: routes receive only the snapshot domains they can read at runtime. */
 export const DATASET_SNAPSHOT_ROUTE_DOMAINS = {
 	'/yields': ['yields'],
+	'/yields/stablecoins': ['yields'],
 	'/yields/borrow': ['yields'],
 	'/yields/loop': ['yields'],
 	'/yields/pool/*': ['yields'],
