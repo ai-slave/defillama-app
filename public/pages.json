@@ -876,13 +876,6 @@
       "totalTrackedKey": "safeHarbor.protocols"
     },
     {
-      "name": "Rewards",
-      "route": "/rewards",
-      "category": "Others",
-      "description": "Explore protocol rewards, points, referral programs, and trading contests",
-      "tab": "Protocols"
-    },
-    {
       "name": "Token Rights",
       "route": "/token-rights",
       "category": "Others",
@@ -1004,6 +997,13 @@
       "route": "/roundup",
       "category": "Tools",
       "description": "Recent round-up of the most important news in the ecosystem"
+    },
+    {
+      "name": "Rewards",
+      "route": "/rewards",
+      "category": "Tools",
+      "description": "Explore protocol rewards, points, referral programs, and trading contests",
+      "tab": "Protocols"
     },
     {
       "name": "ChainList",
