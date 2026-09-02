@@ -434,7 +434,9 @@ export function MessageBubble({
 		const isPersistedId = !!message.id && !/^(local|persisted|shared)-/.test(message.id)
 		const canEdit = isPersistedId && !!onEditMessage
 		const canSwitchBranch = isPersistedId && !!onBranchSwitch
-		const hasControls = isPersistedId && !isDraft && !readOnly && (canEdit || canSwitchBranch)
+		// Render the controls row before the optimistic id is persisted so the row's
+		// height is reserved from the first frame and the response below does not jump.
+		const hasControls = !isDraft && !readOnly && (!!onEditMessage || !!onBranchSwitch)
 		return (
 			<div
 				id={anchorId}
@@ -585,7 +587,7 @@ export function MessageBubble({
 						</button>
 					</div>
 				) : hasControls ? (
-					<div className="mt-1 flex items-center gap-0.5 opacity-100 transition-opacity duration-150 sm:opacity-0 sm:group-hover/msg:opacity-100 sm:focus-within:opacity-100">
+					<div className="mt-1 flex min-h-[26px] items-center gap-0.5 opacity-100 transition-opacity duration-150 sm:opacity-0 sm:group-hover/msg:opacity-100 sm:focus-within:opacity-100">
 						{canSwitchBranch && message.siblingInfo && message.siblingInfo.totalVersions > 1 && onBranchSwitch ? (
 							<BranchArrows info={message.siblingInfo} onSwitch={onBranchSwitch} disabled={isBranchSwitching} />
 						) : null}

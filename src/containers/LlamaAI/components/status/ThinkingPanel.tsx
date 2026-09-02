@@ -64,8 +64,8 @@ export function ThinkingPanel({ thinking, defaultOpen = false }: { thinking: str
 				onScroll={syncAutoScrollIntent}
 				className={
 					hackerMode
-						? 'mt-1 h-[160px] min-h-[40px] resize-y overflow-y-auto rounded-md border border-ai-terminal/20 bg-ai-ink p-3 font-mono text-xs leading-[1.6] whitespace-pre-wrap text-ai-terminal shadow-ai-terminal-inset drop-shadow-ai-terminal-soft'
-						: 'mt-1 h-[120px] min-h-[40px] resize-y overflow-y-auto pl-3 font-mono text-xs leading-[1.6] whitespace-pre-wrap text-ai-secondary'
+						? 'mt-1 max-h-[160px] min-h-[40px] resize-y overflow-y-auto rounded-md border border-ai-terminal/20 bg-ai-ink p-3 font-mono text-xs leading-[1.6] whitespace-pre-wrap text-ai-terminal shadow-ai-terminal-inset drop-shadow-ai-terminal-soft'
+						: 'mt-1 max-h-[120px] min-h-[40px] resize-y overflow-y-auto pl-3 font-mono text-xs leading-[1.6] whitespace-pre-wrap text-ai-secondary'
 				}
 				style={hackerMode ? HACKER_THINKING_STYLE : undefined}
 			>
