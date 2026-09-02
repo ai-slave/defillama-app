@@ -177,7 +177,7 @@ function ProtocolYieldsTab({
 		protocol: protocolNames,
 		chain: chainList.length > 0 ? selectedSubsetQuery(selectedChains, chainList) : undefined
 	}
-	const { rows, total, rowsQuery, tableProps } = useYieldsServerTable<IYieldTableRow>({
+	const { rows, total, isLoading, rowsQuery, tableProps } = useYieldsServerTable<IYieldTableRow>({
 		endpoint: YIELD_EARN_DATASET_API,
 		enabled: hasProtocols,
 		extraQuery
@@ -209,7 +209,7 @@ function ProtocolYieldsTab({
 					pathname={resolvedPathname}
 				/>
 			</div>
-			{!rowsQuery.data && !rowsQuery.isError ? (
+			{isLoading ? (
 				<PanelLoadingStatus label="Loading pools" />
 			) : rowsQuery.isError && !rowsQuery.data ? (
 				<PanelStatus variant="error">Couldn't load pools.</PanelStatus>

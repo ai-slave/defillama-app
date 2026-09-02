@@ -71,7 +71,7 @@ const BorrowView = ({
 	const endpoint = routesMode ? YIELD_BORROW_ROUTES_DATASET_API : YIELD_BORROW_MARKETS_DATASET_API
 	const defaultSorting = routesMode ? ROUTES_DEFAULT_SORT : MARKETS_DEFAULT_SORT
 
-	const { rows, total, rowsQuery, tableProps, buildAllRowsQueryString } = useYieldsServerTable<
+	const { rows, total, isLoading, rowsQuery, tableProps, buildAllRowsQueryString } = useYieldsServerTable<
 		MarketTableRow | RouteTableRow
 	>({
 		endpoint,
@@ -133,7 +133,7 @@ const BorrowView = ({
 				prepareCsv={prepareCsv}
 			/>
 
-			{!rowsQuery.data && !rowsQuery.isError ? (
+			{isLoading ? (
 				<PanelLoadingStatus label={routesMode ? 'Loading routes' : 'Loading borrow markets'} />
 			) : rowsQuery.isError && !rowsQuery.data ? (
 				<PanelStatus variant="error">{errorMessage}</PanelStatus>

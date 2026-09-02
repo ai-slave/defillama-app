@@ -57,12 +57,13 @@ const LoopView = ({
 		includeMemeTokens: attributeSet.has('include_meme_tokens') ? 'true' : undefined
 	}
 
-	const { rows, total, rowsQuery, tableProps, buildAllRowsQueryString, query } = useYieldsServerTable<LoopTableRow>({
-		endpoint: YIELD_LOOPS_DATASET_API,
-		enabled: normalized,
-		extraQuery,
-		defaultSorting: LOOPS_DEFAULT_SORT
-	})
+	const { rows, total, isLoading, rowsQuery, tableProps, buildAllRowsQueryString, query } =
+		useYieldsServerTable<LoopTableRow>({
+			endpoint: YIELD_LOOPS_DATASET_API,
+			enabled: normalized,
+			extraQuery,
+			defaultSorting: LOOPS_DEFAULT_SORT
+		})
 
 	async function prepareCsv() {
 		const url = `${YIELD_LOOPS_DATASET_API}${buildAllRowsQueryString()}`
@@ -110,7 +111,7 @@ const LoopView = ({
 				prepareCsv={prepareCsv}
 			/>
 
-			{!rowsQuery.data && !rowsQuery.isError ? (
+			{isLoading ? (
 				<PanelLoadingStatus label="Loading looping strategies" />
 			) : rowsQuery.isError && !rowsQuery.data ? (
 				<PanelStatus variant="error">Couldn't load looping strategies.</PanelStatus>

@@ -83,6 +83,7 @@ describe('useYieldsServerTable ISR seed', () => {
 		expect(latest.rows.map((row) => row.id)).toEqual(['seeded-1', 'seeded-2'])
 		expect(latest.total).toBe(2)
 		expect(latest.medianApy).toBe(4.2)
+		expect(latest.isLoading).toBe(false)
 		expect(fetchJson).not.toHaveBeenCalled()
 	})
 
@@ -97,6 +98,7 @@ describe('useYieldsServerTable ISR seed', () => {
 		expect(String(fetchJson.mock.calls[0]?.[0])).toContain('minApy=5')
 		// The URL claims filters the seed does not represent.
 		expect(latest.rows).toEqual([])
+		expect(latest.isLoading).toBe(true)
 		expect(latest.rowsQuery.isFetching).toBe(true)
 
 		await act(async () => {
@@ -106,6 +108,7 @@ describe('useYieldsServerTable ISR seed', () => {
 			await act(async () => {})
 			expect(latest.rows.map((row) => row.id)).toEqual(['filtered'])
 		})
+		expect(latest.isLoading).toBe(false)
 		expect(latest.rowsQuery.isFetching).toBe(false)
 	})
 
@@ -125,6 +128,8 @@ describe('useYieldsServerTable ISR seed', () => {
 
 		expect(latest.rows).toEqual([])
 		expect(latest.total).toBe(0)
+		// Errors surface through rowsQuery.isError, not the loading state.
+		expect(latest.isLoading).toBe(false)
 	})
 
 	it('renders seeded rows before the router is ready, still without fetching', async () => {
@@ -133,6 +138,9 @@ describe('useYieldsServerTable ISR seed', () => {
 		await render()
 
 		expect(latest.rows.map((row) => row.id)).toEqual(['seeded-1', 'seeded-2'])
+		// SSR/pre-hydration takes this path - a true here would strand the seed
+		// behind the views' loading panel and strip the rows from static HTML.
+		expect(latest.isLoading).toBe(false)
 		expect(fetchJson).not.toHaveBeenCalled()
 	})
 })

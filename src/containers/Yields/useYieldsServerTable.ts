@@ -124,6 +124,9 @@ export function useYieldsServerTable<TRow>(options: YieldsServerTableOptions<TRo
 		rows,
 		total,
 		medianApy,
+		// Seed-aware: false during SSR/pre-hydration when the ISR seed is visible,
+		// unlike rowsQuery.data which is always empty before router.isReady.
+		isLoading: !data && !rowsQuery.isError,
 		rowsQuery,
 		tableProps,
 		buildAllRowsQueryString

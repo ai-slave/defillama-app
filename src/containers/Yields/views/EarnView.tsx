@@ -85,6 +85,7 @@ const EarnView = ({
 		rows: serverRows,
 		total: serverTotal,
 		medianApy,
+		isLoading,
 		rowsQuery,
 		tableProps,
 		buildAllRowsQueryString
@@ -189,7 +190,7 @@ const EarnView = ({
 				/>
 			) : null}
 
-			{!rowsQuery.data && !rowsQuery.isError ? (
+			{isLoading ? (
 				<PanelLoadingStatus label="Loading pools" />
 			) : rowsQuery.isError && !rowsQuery.data ? (
 				<PanelStatus variant="error">Couldn't load pools.</PanelStatus>
