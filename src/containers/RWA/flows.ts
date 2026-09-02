@@ -19,10 +19,8 @@ import type {
 	IRWAFlowPointWithMcap,
 	RWAChartMetricKey
 } from './api.types'
-import { normalizeRwaAssetGroup } from './assetGroup'
 import type { RWAChartMetricAvailability } from './chartState'
 import { definitions } from './definitions'
-import { getPrimaryRwaCategory } from './grouping'
 
 export type RWAFlowGrouping = ChartTimeGroupingWithCumulative
 export type RWAFlowOverlayMetric = RWAChartMetricKey
@@ -216,69 +214,6 @@ export function aggregateRWAFlowRows(
 		points.push({ timestamp: row.timestamp, netFlowUsd: hasFlow ? netFlowUsd : null, coverage: hasFlow ? 1 : 0 })
 	}
 	return points
-}
-
-function getFlowChainKey(assetId: string, chain: string): string {
-	return `chain:${encodeURIComponent(assetId)}:${encodeURIComponent(chain)}`
-}
-
-export function buildRWAFilteredFlowBreakdown(
-	rows: IRWAFlowAssetBreakdownRow[],
-	assets: IRWAAssetsOverview['assets'],
-	splitBy: 'assetGroup' | 'category' | 'platform' | 'chain'
-): IRWAFlowOverviewSplitPoint[] {
-	const plans: Array<{ sourceKey: string; target: string }> = []
-	const platformPlans: Array<{ sourceKey: string; target: string }> = []
-	for (const asset of assets) {
-		if (asset.kind !== 'spot') continue
-		if (splitBy === 'chain') {
-			for (const chain of asset.chain ?? []) {
-				plans.push({ sourceKey: getFlowChainKey(asset.canonicalMarketId, chain), target: chain })
-			}
-			continue
-		}
-
-		if (splitBy === 'assetGroup') {
-			plans.push({ sourceKey: asset.canonicalMarketId, target: normalizeRwaAssetGroup(asset.assetGroup) })
-			continue
-		}
-
-		if (splitBy === 'category') {
-			const category = getPrimaryRwaCategory(asset.category)
-			if (category) {
-				plans.push({ sourceKey: asset.canonicalMarketId, target: category })
-			}
-			continue
-		}
-
-		const platform = asset.parentPlatform?.trim()
-		if (!platform) continue
-		platformPlans.push({
-			sourceKey: asset.canonicalMarketId,
-			target: platform
-		})
-	}
-
-	// Resolve grouping labels and encoded chain lookup keys once; the same plan is reused for every timestamp.
-	const breakdown: IRWAFlowOverviewSplitPoint[] = []
-	for (const row of rows) {
-		const result: IRWAFlowOverviewSplitPoint = { timestamp: row.timestamp }
-		if (splitBy === 'platform') {
-			for (const plan of platformPlans) {
-				const value = row[plan.sourceKey]
-				if (value == null) continue
-				result[plan.target] = (result[plan.target] ?? 0) + value
-			}
-		} else {
-			for (const plan of plans) {
-				const value = row[plan.sourceKey]
-				if (value == null) continue
-				result[plan.target] = (result[plan.target] ?? 0) + value
-			}
-		}
-		breakdown.push(result)
-	}
-	return breakdown
 }
 
 const INFLOWS = definitions.flows.inflows.label

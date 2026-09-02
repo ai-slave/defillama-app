@@ -83,6 +83,7 @@ const CHART_QUERY_KEYS = [
 	'flowMode',
 	'flowOverlays',
 	'flowRotationView',
+	// Legacy key kept for cleanup when present in shared links/bookmarks.
 	'flowRotationBy',
 	'flowRotationFrequency',
 	'flowHeatmapSize',

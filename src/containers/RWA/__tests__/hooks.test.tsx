@@ -9,7 +9,6 @@ import {
 	getRwaAssetChartQueryKey,
 	getRwaOpenInterestChartQueryKey,
 	hasActiveChartFilters,
-	hasActiveFlowFilters,
 	resolveRWAOverviewInclusionFlag,
 	useRWAAssetCategoryPieChartData,
 	useFilteredRwaAssets,
@@ -717,10 +716,8 @@ describe('hasActiveChartFilters', () => {
 		expect(hasActiveChartFilters({ minActiveMcapToOnChainMcapPct: '10' }, DEFAULT_ALL_INCLUSION)).toBe(true)
 	})
 
-	it('does not refetch flow values for the metric-only bridge toggle', () => {
+	it('treats the bridge toggle as an active chart filter', () => {
 		expect(hasActiveChartFilters({ includeBridgeTvl: 'false' }, DEFAULT_INCLUSION)).toBe(true)
-		expect(hasActiveFlowFilters({ includeBridgeTvl: 'false' }, DEFAULT_INCLUSION)).toBe(false)
-		expect(hasActiveFlowFilters({ includeStablecoins: 'true' }, DEFAULT_INCLUSION)).toBe(true)
 	})
 })
 

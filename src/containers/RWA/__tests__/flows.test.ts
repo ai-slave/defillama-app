@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import type { IRWAAssetsOverview, IRWAFlowAggregatePoint, IRWAFlowOverviewSplitPoint } from '../api.types'
 import {
 	aggregateRWAFlowRows,
-	buildRWAFilteredFlowBreakdown,
 	buildRWAFlowChart,
 	buildRWAFlowRotationChart,
 	formatSignedRWAFlow,
@@ -493,33 +492,6 @@ describe('RWA flow chart data', () => {
 		).toEqual([
 			{ timestamp: 1, netFlowUsd: 6, coverage: 1 },
 			{ timestamp: 2, netFlowUsd: null, coverage: 0 }
-		])
-	})
-
-	it('builds filtered platform and chain rotation from scalar platform metadata', () => {
-		const assets = [
-			{
-				kind: 'spot',
-				canonicalMarketId: 'bond/a',
-				parentPlatform: 'Platform A',
-				chain: ['Ethereum', 'Solana Mainnet']
-			},
-			{ kind: 'spot', canonicalMarketId: 'no-platform' }
-		] as IRWAAssetsOverview['assets']
-		const rows = [
-			{
-				timestamp: 1,
-				'bond/a': 10,
-				'chain:bond%2Fa:Ethereum': 7,
-				'chain:bond%2Fa:Solana%20Mainnet': 3,
-				'no-platform': 8,
-				excluded: 100
-			}
-		]
-
-		expect(buildRWAFilteredFlowBreakdown(rows, assets, 'platform')).toEqual([{ timestamp: 1, 'Platform A': 10 }])
-		expect(buildRWAFilteredFlowBreakdown(rows, assets, 'chain')).toEqual([
-			{ timestamp: 1, Ethereum: 7, 'Solana Mainnet': 3 }
 		])
 	})
 })

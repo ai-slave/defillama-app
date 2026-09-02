@@ -1019,21 +1019,6 @@ export function hasActiveChartFilters(
 	query: NextRouter['query'],
 	defaultInclusion: RWAOverviewInclusionDefaults
 ): boolean {
-	return hasActiveRwaFilters(query, defaultInclusion, true)
-}
-
-export function hasActiveFlowFilters(
-	query: NextRouter['query'],
-	defaultInclusion: RWAOverviewInclusionDefaults
-): boolean {
-	return hasActiveRwaFilters(query, defaultInclusion, false)
-}
-
-function hasActiveRwaFilters(
-	query: NextRouter['query'],
-	defaultInclusion: RWAOverviewInclusionDefaults,
-	bridgeAffectsResult: boolean
-): boolean {
 	for (const key of CHART_FILTER_QUERY_KEYS) {
 		if (key === 'includeStablecoins') {
 			if (hasActiveInclusionOverride(query.includeStablecoins, defaultInclusion.includeStablecoins)) return true
@@ -1047,11 +1032,7 @@ function hasActiveRwaFilters(
 			continue
 		}
 		if (key === 'includeBridgeTvl') {
-			if (
-				bridgeAffectsResult &&
-				hasActiveInclusionOverride(query.includeBridgeTvl, defaultInclusion.includeBridgeTvl ?? true)
-			)
-				return true
+			if (hasActiveInclusionOverride(query.includeBridgeTvl, defaultInclusion.includeBridgeTvl ?? true)) return true
 			continue
 		}
 		if (key in query) return true

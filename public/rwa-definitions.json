@@ -269,22 +269,6 @@
 			"label": "Cumulative Net Flows",
 			"description": "The running total after adding each day's measured flow. Days we could not measure do not move the line."
 		},
-		"capitalRotation": {
-			"label": "Capital Rotation",
-			"description": "Where money is moving between types of RWAs over time. Bars above the line are money coming in, bars below are money leaving."
-		},
-		"rotationGrouping": {
-			"label": "Asset Groups / Categories",
-			"description": "Groups the bars by type of RWA or by category."
-		},
-		"rotationChains": {
-			"label": "Chains",
-			"description": "The same picture grouped by blockchain."
-		},
-		"rotationFrequency": {
-			"label": "Weekly / Monthly",
-			"description": "Weekly shows short-lived rotations that monthly smooths over. Monthly is better for the long trend."
-		},
 		"netFlow7d": {
 			"label": "Net Flow 7d",
 			"description": "New tokens created minus tokens redeemed over the last 7 days, in dollar value, counting only the chains where we have price data. Click the header to sort. A dash means we could not measure those days. That is not the same as zero."
