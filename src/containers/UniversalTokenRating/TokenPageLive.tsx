@@ -371,7 +371,13 @@ export function TokenPageLive({
 	const totalMarketCategory = asset.performance?.categories.find((entry) => entry.key === 'total_market')
 	const openTotalMarket = (activeKey?: string | null) =>
 		totalMarketCategory &&
-		openCriteria('Performance Overview', 'performance', 'total_market', totalMarketCategory.criteria, activeKey ?? null)
+		openCriteria(
+			'Performance Overview: Market Quality',
+			'performance',
+			'total_market',
+			totalMarketCategory.criteria,
+			activeKey ?? null
+		)
 	const openFootprint = (activeKey?: string | null) =>
 		footprintCategory &&
 		openCriteria(

@@ -2,6 +2,7 @@ import { SecondaryBadge } from '~/containers/MarketMakers/badges'
 import { Drawer } from '~/containers/MarketMakers/Drawer'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
+import { getCriterionDrawerCopy, MARKET_MAKER_MATURITY_EXCEPTION } from './criterionDrawerCopy'
 import { GradeBadge, ScoreBar } from './grades'
 import type { UtrCriterionBreakdown, UtrCriterionDoc, UtrGradingConfig } from './types'
 
@@ -57,6 +58,7 @@ export function CriteriaDrawer({
 	const active = state.criteria.find((criterion) => criterion.key === state.activeKey) ?? state.criteria[0]
 	const activeIndex = state.criteria.indexOf(active)
 	const doc = state.docs.find((entry) => entry.key === active.key) ?? null
+	const activeCopy = getCriterionDrawerCopy(state.axis, active.key, active.label, doc?.definition)
 
 	return (
 		<Drawer
@@ -64,7 +66,13 @@ export function CriteriaDrawer({
 			onClose={onClose}
 			title={state.title}
 			widthClassName="sm:max-w-[1110px]"
-			headerExtra={lastEditedAt ? <SecondaryBadge>{`Last Edited: ${lastEditedAt.slice(0, 10)}`}</SecondaryBadge> : null}
+			headerExtra={
+				state.axis === 'performance' ? (
+					<SecondaryBadge>Auto-Graded</SecondaryBadge>
+				) : lastEditedAt ? (
+					<SecondaryBadge>{`Last Edited: ${lastEditedAt.slice(0, 10)}`}</SecondaryBadge>
+				) : null
+			}
 		>
 			<div className="flex min-h-0 flex-1 flex-col bg-(--bg-page) sm:flex-row">
 				<nav className="flex shrink-0 flex-col gap-1 border-b border-subtle p-2 sm:w-[290px] sm:border-r sm:border-b-0">
@@ -77,15 +85,39 @@ export function CriteriaDrawer({
 								criterion.key === active.key ? 'bg-surface-elevated-1 text-primary' : 'text-secondary'
 							}`}
 						>
-							{index + 1}. {criterion.label}
+							{index + 1}.{' '}
+							{
+								getCriterionDrawerCopy(
+									state.axis,
+									criterion.key,
+									criterion.label,
+									state.docs.find((entry) => entry.key === criterion.key)?.definition
+								).navigationLabel
+							}
 						</button>
 					))}
 				</nav>
 				<div className="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
 					<h3 className="heading-xs">
-						{activeIndex + 1}. {active.label}
+						{activeIndex + 1}. {activeCopy.heading}
 					</h3>
-					{doc?.definition ? <p className="body-lg text-secondary">{doc.definition}</p> : null}
+					{activeCopy.definition ? <p className="body-lg text-secondary">{activeCopy.definition}</p> : null}
+					{activeCopy.showMarketMakerMaturityException ? (
+						<div className="flex max-w-[75ch] flex-col gap-3 body-lg text-secondary">
+							<p>
+								{state.axis === 'disclosure'
+									? MARKET_MAKER_MATURITY_EXCEPTION.disclosureNote
+									: MARKET_MAKER_MATURITY_EXCEPTION.performanceNote}
+							</p>
+							<p>{MARKET_MAKER_MATURITY_EXCEPTION.intro}</p>
+							<ul className="list-disc space-y-1 pl-6">
+								{MARKET_MAKER_MATURITY_EXCEPTION.criteria.map((criterion) => (
+									<li key={criterion}>{criterion}</li>
+								))}
+							</ul>
+							<p>{MARKET_MAKER_MATURITY_EXCEPTION.outro}</p>
+						</div>
+					) : null}
 					{state.axis === 'performance' && assetLabel ? (
 						<p className="label-lg">
 							{assetLabel} was calculated as &quot;{active.raw == null ? 'N/A' : formatNumber(active.raw)}&quot; for

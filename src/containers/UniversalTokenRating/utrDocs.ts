@@ -504,7 +504,7 @@ const UTR_FIGMA_DOC_CHAPTERS: UtrDocChapter[] = [
 			},
 			{
 				type: 'paragraph',
-				text: 'The Market Makers category is only measurable for projects where Forgd has active MM monitoring data. Projects without tracked market maker engagements will carry a null or provisional score in this category until data becomes available.'
+				text: 'Where Forgd does not have market maker trade activity data, a project receives an AAA rating for the Market Maker metrics when it meets all three maturity criteria: spot plus perpetual market depth is at least 1% of market capitalization, the token is listed on at least three Tier-1 centralized exchanges, and fully diluted valuation is at least $2.5 billion. At sufficient scale, a project may have enough organic liquidity and market participation that contracted market makers are no longer necessary.'
 			},
 			{
 				type: 'paragraph',
