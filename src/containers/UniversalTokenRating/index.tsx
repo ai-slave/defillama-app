@@ -117,8 +117,8 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 
 	const scoredLabel = (
 		<span className="body-sm text-secondary">
-			<strong className="text-primary">{filteredRows.length}</strong> of {formatNumber(universe.totalCount)} tokens
-			scored
+			<strong className="text-primary">{formatNumber(universe.scoredCount)}</strong> of{' '}
+			{formatNumber(universe.totalCount)} tokens scored
 		</span>
 	)
 

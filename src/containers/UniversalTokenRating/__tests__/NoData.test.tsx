@@ -1,5 +1,17 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+vi.mock('next/router', () => ({
+	useRouter: () => ({
+		pathname: '/universal-token-rating',
+		query: {},
+		asPath: '/universal-token-rating',
+		push: vi.fn(),
+		replace: vi.fn()
+	})
+}))
+
+import { UniversalTokenRating } from '..'
 import { PreTgePerformance } from '../PreTgePerformance'
 import { CantFindTokenBanner } from '../TokenPage'
 import { TopMovers } from '../TopMovers'
@@ -42,5 +54,41 @@ describe('UTR empty states', () => {
 		expect(html).toContain('/universal-token-rating/join')
 		expect(html).not.toContain('Join Forgd')
 		expect(html).not.toContain('Create an account')
+	})
+
+	it('uses the API scored count instead of the number of rendered rows', () => {
+		const html = renderToStaticMarkup(
+			<UniversalTokenRating
+				universe={{
+					scoredCount: 128,
+					totalCount: 139,
+					rows: [
+						{
+							asset: 'example',
+							name: 'Example',
+							symbol: 'EXP',
+							sector: 'DeFi',
+							listingStatus: 'listed',
+							disclosureLevel: 'full',
+							claimed: false,
+							fdvUsd: null,
+							scores: {
+								overall: null,
+								overallMomChangePct: null,
+								disclosure: null,
+								performance: null,
+								rank: null,
+								disclosureRubrics: [],
+								performanceRubrics: []
+							}
+						}
+					]
+				}}
+				topMovers={[]}
+			/>
+		)
+
+		expect(html).toContain('<strong class="text-primary">128</strong> of 139 tokens scored')
+		expect(html).not.toContain('<strong class="text-primary">1</strong> of 139 tokens scored')
 	})
 })
