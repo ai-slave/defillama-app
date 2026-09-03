@@ -112,6 +112,16 @@ function FlareIcon() {
 	)
 }
 
+function KpkIcon() {
+	return (
+		<img
+			src={tokenIconUrl('kpk', 64)}
+			alt="KPK"
+			className="size-9 shrink-0 rounded-full bg-pro-cards-bg object-contain"
+		/>
+	)
+}
+
 function ThorchainIcon() {
 	return (
 		<img
@@ -383,6 +393,7 @@ const PROJECT_CARD_CONTENT = {
 
 const COMING_SOON_ICONS: Partial<Record<InvestorsProjectId, ReactNode>> = {
 	flare: <FlareIcon />,
+	kpk: <KpkIcon />,
 	thorchain: <ThorchainIcon />
 }
 

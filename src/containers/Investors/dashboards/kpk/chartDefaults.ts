@@ -112,8 +112,10 @@ function compositionTooltipFormatter(params: unknown, overlaySeries?: string): s
  * carry an overlay line need one held out of the total.
  */
 export function kpkCompositionChartOptions(overlaySeries?: string): IMultiSeriesChartProps['chartOptions'] {
+	const base = createCategoryChartOptions('$')
 	return {
-		...createCategoryChartOptions('$'),
+		...base,
+		xAxis: { ...base.xAxis, axisLabel: { showMaxLabel: true, alignMaxLabel: 'right' } },
 		tooltip: { formatter: (params: unknown) => compositionTooltipFormatter(params, overlaySeries) }
 	}
 }

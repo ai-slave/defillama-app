@@ -7,11 +7,6 @@ import { readInvestorApiJson, type ApiDate, type ApiIsoTimestamp } from '../../a
  *
  * Every monetary field is in **$m** unless its name ends in `Usd` or it arrives
  * pre-formatted as a string. `transform.ts` does the conversion once.
- *
- * `overview` and `mandates` are still partly placeholder upstream and ship a
- * `notice` string describing exactly which figures are not sourced yet; the tab
- * renders it as a banner. When a tab goes live the field disappears — hence the
- * optional type, not a flag we maintain here.
  */
 
 const BASE = '/api/public/kpk'
@@ -91,21 +86,33 @@ export const useKpkMetadata = () => useTab<KpkMetadata>('metadata')
 
 /* ──────────────────────────── overview ──────────────────────────── */
 
-/** A ledger tile whose headline is a brief-stated fact rather than a measured number. */
+/**
+ * A ledger tile. `value` and `metric` are `null` where the query behind them
+ * failed, and the tile reads `—` rather than dropping out of the strip. A metric
+ * with no query behind it at all — the transaction count — is a brief-stated
+ * fact and is always a string.
+ */
 export interface KpkLedgerFact {
-	value: string
+	value: string | null
 	suffix?: string
 	sub: string
-	metric?: string
+	metric?: string | null
 	metricLabel?: string
+}
+
+export type KpkOverviewAsOf = {
+	mandates: ApiDate | null
+	vaults: ApiDate | null
 }
 
 export type KpkOverviewCompKey = 'line' | 'denom' | 'chain' | 'protocol'
 
 export interface KpkOverview {
-	notice?: string
-	/** $m */
+	asOf: KpkOverviewAsOf
 	tva: number
+	tvaAdjusted: number | null
+	tvaAdjustedLabel: string | null
+	doubleCountNote: string | null
 	deployedOnchain: KpkLedgerFact
 	rebalancing: KpkLedgerFact
 	fundsLost: { value: number; since: number; years: number[] }
@@ -121,47 +128,101 @@ export const useKpkOverview = () => useTab<KpkOverview>('overview')
 export interface KpkMandateSleeve {
 	/** Percent of the client's AUM in this denomination. */
 	mix: number
-	/** Alpha over benchmark in bps, or null where the sleeve is empty. */
+	/** Alpha over benchmark in bps, or null where no benchmark resolved. */
 	alpha: number | null
 }
 
 export interface KpkMandateClient {
 	name: string
-	/** $m */
-	aum: number
-	deployedPct: number
-	usd: KpkMandateSleeve
-	eth: KpkMandateSleeve
-	since: string
+	aum: number | null
+	share: number | null
+	deployedPct: number | null
+	usd: KpkMandateSleeve | null
+	eth: KpkMandateSleeve | null
+	since: string | null
 	url?: string
-	share: number
 	/** AUM-weighted alpha across both sleeves, bps. */
-	alphaBps: number
+	alphaBps: number | null
 	/** Annual excess return, $m. */
-	excess: number
+	excess: number | null
+	yieldAum: number | null
+	defiUsd: number | null
+	opsUsd: number | null
+	coveragePct: number | null
+}
+
+export interface KpkMandateWindow {
+	label: string
+	apy: number | null
+	bench: number | null
+	spread: number | null
+	spreadBps: number | null
+	excessAnnualUsd: number
+}
+
+export interface KpkMandateScope {
+	defiUsd: number
+	unresolvedUsd: number
+	coveragePct: number
+	opsUsd: number
+	opsBuckets: Array<{ name: string; usd: number }>
 }
 
 export interface KpkMandatePerf {
-	bench: number
+	denom: string
+	usd: number
+	bench: number | null
 	benchLabel: string
-	/** Annual excess return for this denomination, $m. */
+	/** Annual excess return at the 30-day spread, $m. */
 	excess: number
-	windows: Array<{ label: string; apy: number; spread: number; spreadBps: number }>
+	windows: KpkMandateWindow[]
+	scope: KpkMandateScope
+}
+
+export interface KpkOpsBucket {
+	name: string
+	/** $m */
+	usd: number
+	positions: number
+}
+
+export interface KpkMandateOps {
+	/** $m */
+	usd: number
+	pctOfTvl: number
+	/** $m */
+	defiUsd: number
+	buckets: KpkOpsBucket[]
+	coveragePct: number
+	/** $m */
+	unresolvedUsd: number
+	unbenchmarked: { usd: number; denoms: Array<{ name: string; usd: number }> }
+}
+
+export interface KpkDydxChain {
+	stakedDydx: number
+	months: number
+	usd: number
 }
 
 export interface KpkMandates {
-	notice?: string
+	asOf: ApiDate | null
+	yieldAsOf: ApiDate | null
+	yieldIsSample: boolean | null
+	dydxChain: KpkDydxChain | null
 	/** $m */
 	aum: number
 	clientCount: number
 	/** Pre-formatted cumulative deployment, e.g. `"$8.03bn"`. Absent on a Dune outage. */
 	deployedOnchain?: string
 	deployedOnchainUsd?: number
+	/** Empty when the positions report is unavailable, which hides the performance section. */
 	denominations: string[]
 	comp: Record<string, KpkComposition>
 	perf: Record<string, KpkMandatePerf>
+	ops: KpkMandateOps | null
 	clients: KpkMandateClient[]
-	totals: { aum: number; weightedDeployedPct: number; excess: number }
+	totals: { aum: number; weightedDeployedPct: number | null; excess: number | null }
 	refs: KpkRef[]
 }
 

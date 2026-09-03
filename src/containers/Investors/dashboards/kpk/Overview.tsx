@@ -1,37 +1,43 @@
 import { formatNumber } from '~/utils/numberFormat'
 import { useKpkOverview } from './api'
 import { CompositionSection } from './CompositionSection'
-import { ContinuityRule, LedgerStrip, LedgerTile, NoticeBanner, QueryError, RefLinks, usdFromMillions } from './ui'
+import { asOfLabel, ContinuityRule, LedgerStrip, LedgerTile, QueryError, RefLinks, usdFromMillions } from './ui'
 
 export default function Overview() {
 	const { data, isError } = useKpkOverview()
 
 	if (isError) return <QueryError label="Overview" />
 
+	const adjusted = data?.tvaAdjusted
+	const asOf = asOfLabel(data?.asOf)
+
 	return (
 		<div className="flex flex-col gap-5">
-			{data?.notice && <NoticeBanner>{data.notice}</NoticeBanner>}
-
 			<LedgerStrip>
 				<LedgerTile
 					label="Total Value Allocated"
 					value={data ? usdFromMillions(data.tva) : undefined}
-					sub="Current value KPK manages onchain"
+					sub={`Current value KPK manages onchain${asOf ? ` · ${asOf}` : ''}`}
+					metric={adjusted == null ? undefined : usdFromMillions(adjusted)}
+					metricLabel={adjusted == null ? undefined : (data?.tvaAdjustedLabel ?? 'adjusted')}
+					metricTitle={adjusted == null ? undefined : (data?.doubleCountNote ?? undefined)}
 				/>
+				{/* A guarded query that failed sends `null`, so the tile reads "—" while the
+				    rest of the strip stands. A loading tile is the skeleton, not a dash. */}
 				<LedgerTile
 					label="Deployed onchain"
-					value={data?.deployedOnchain.value}
+					value={data ? (data.deployedOnchain.value ?? '—') : undefined}
 					suffix={data?.deployedOnchain.suffix}
 					sub={data?.deployedOnchain.sub}
-					metric={data?.deployedOnchain.metric}
+					metric={data ? (data.deployedOnchain.metric ?? '—') : undefined}
 					metricLabel={data?.deployedOnchain.metricLabel}
 				/>
 				<LedgerTile
 					label="Agent rebalancing volume"
-					value={data?.rebalancing.value}
+					value={data ? (data.rebalancing.value ?? '—') : undefined}
 					suffix={data?.rebalancing.suffix}
 					sub={data?.rebalancing.sub}
-					metric={data?.rebalancing.metric}
+					metric={data ? (data.rebalancing.metric ?? '—') : undefined}
 					metricLabel={data?.rebalancing.metricLabel}
 				/>
 				<LedgerTile

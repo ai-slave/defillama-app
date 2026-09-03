@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { formatDate } from '~/utils/dateFormat'
 import { formatNumber } from '~/utils/numberFormat'
 import type { KpkVault } from './api'
 import { useKpkVaults } from './api'
@@ -6,6 +7,7 @@ import { KPK_MINT_TEXT } from './chartDefaults'
 import { CompositionSection } from './CompositionSection'
 import { vaultTotals } from './transform'
 import {
+	andList,
 	Card,
 	DataTable,
 	Disclaimer,
@@ -30,11 +32,6 @@ import {
 const ALL_VENUES = 'all'
 
 const DOUBLE_COUNT_NOTE = 'Counted inside another vault on this table. Excluded from the adjusted totals.'
-
-function andList(names: readonly string[]): string {
-	if (names.length < 2) return names[0] ?? ''
-	return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
-}
 
 function count(value: number | undefined) {
 	return value == null ? '—' : formatNumber(value, { maximumFractionDigits: 0 })
@@ -140,7 +137,7 @@ export default function Vaults() {
 
 			<CompositionSection
 				title="Curated Total Value Allocated"
-				subtitle={data ? `Daily readings through ${data.compAsOf}` : undefined}
+				subtitle={data ? `Daily readings through ${formatDate(data.compAsOf)}` : undefined}
 				comps={data?.comp}
 				initialKey="venue"
 			/>

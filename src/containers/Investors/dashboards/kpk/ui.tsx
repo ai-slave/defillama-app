@@ -1,6 +1,7 @@
 import * as React from 'react'
+import { formatDate } from '~/utils/dateFormat'
 import { formatNumber, formatPercent, formatUsd, roundNumber } from '~/utils/numberFormat'
-import type { KpkRef } from './api'
+import type { KpkMandateScope, KpkRef } from './api'
 import { KPK_BENCH_BG, KPK_MINT_BG, KPK_MINT_TEXT } from './chartDefaults'
 import { MILLION } from './transform'
 
@@ -51,6 +52,44 @@ export function signedInt(value: number | null | undefined): string {
 /** A gain is KPK's own performance, so it wears mint rather than the generic success green. */
 export const signClass = (value: number | null | undefined) =>
 	value == null ? 'text-pro-text-secondary' : value >= 0 ? KPK_MINT_TEXT : 'text-error'
+
+const PROSE_DUST_M = 0.0005
+
+export function andList(names: readonly string[]): string {
+	if (names.length < 2) return names[0] ?? ''
+	return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+}
+
+export function asOfLabel(asOf: Record<string, string | null> | null | undefined): string {
+	const legs = Object.entries(asOf ?? {})
+		.filter((leg): leg is [string, string] => !!leg[1])
+		.map(([leg, date]) => [leg, formatDate(date) ?? date] as const)
+	if (!legs.length) return ''
+	const dates = [...new Set(legs.map(([, date]) => date))]
+	return dates.length === 1 ? `as of ${dates[0]}` : legs.map(([leg, date]) => `${leg} as of ${date}`).join(', ')
+}
+
+const OPS_BUCKET_LABELS: Record<string, string> = {
+	'ops:idle': 'idle',
+	'ops:market-making': 'market making',
+	'ops:stream': 'streams',
+	'ops:strategic': 'strategic'
+}
+
+const opsBucketLabel = (name: string): string => OPS_BUCKET_LABELS[name] ?? name.replace(/^ops:/, '').replace(/-/g, ' ')
+
+export function scopeLine(denom: string, scope: KpkMandateScope | undefined): string {
+	if (!scope) return ''
+	const ops =
+		scope.opsUsd > PROSE_DUST_M
+			? `${usdFromMillions(scope.opsUsd)} of ${denom} sits in ops positions — ` +
+				`${andList(scope.opsBuckets.map((bucket) => `${opsBucketLabel(bucket.name)} ${usdFromMillions(bucket.usd)}`))} — ` +
+				`held to meet a requirement rather than to earn, so no benchmark applies. Excluded from the rate above, ` +
+				`not counted as earning nothing.`
+			: `No ${denom} is held in ops positions.`
+
+	return `Rates cover ${usdFromMillions(scope.defiUsd)} of ${denom} defi positions. ${ops}`
+}
 
 /* ──────────────────────────── layout ──────────────────────────── */
 
@@ -103,12 +142,12 @@ export function LedgerTile({
 			{metric && (
 				<span
 					title={metricTitle}
-					className={`mt-auto flex items-baseline gap-1.5 border-t border-pro-cards-border pt-2.5 body-sm text-pro-text-secondary ${
+					className={`mt-auto flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 border-t border-pro-cards-border pt-2.5 body-sm text-pro-text-secondary ${
 						metricTitle ? 'cursor-help' : ''
 					}`}
 				>
-					<b className="font-mono text-sm font-medium text-pro-text-primary tabular-nums">{metric}</b>
-					{metricLabel}
+					<b className="shrink-0 font-mono text-sm font-medium text-pro-text-primary tabular-nums">{metric}</b>
+					{metricLabel && <span>{metricLabel}</span>}
 				</span>
 			)}
 			{children}
@@ -181,19 +220,6 @@ export function ToggleGroup<T extends string>({
 					</button>
 				)
 			})}
-		</div>
-	)
-}
-
-/**
- * The upstream `notice` string, verbatim. It names which figures on the tab are
- * not sourced yet, so it must never be paraphrased or suppressed.
- */
-export function NoticeBanner({ children }: { children: React.ReactNode }) {
-	return (
-		<div className="flex items-start gap-2.5 rounded-lg border border-l-[3px] border-pro-cards-border border-l-warning bg-pro-cards-bg p-3 pl-4 text-xs leading-relaxed text-pro-text-secondary">
-			<span aria-hidden className="mt-1.5 size-1.5 shrink-0 rounded-full bg-warning" />
-			{children}
 		</div>
 	)
 }
