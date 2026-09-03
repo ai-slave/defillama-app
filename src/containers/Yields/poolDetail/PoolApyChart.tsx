@@ -287,7 +287,6 @@ export function PoolApyChart({
 			: undefined
 	const apyWindow = getPoolChartWindow(router.query[getPoolSeriesQueryKey(kind, 'window')] ?? legacyWindow)
 
-	// A lone unsplit bar is not listed: it has nothing to configure and stays always-on.
 	const seriesDefs = useMemo<SeriesDef[]>(() => {
 		const defs: SeriesDef[] = []
 		if (currentModel.net && currentModel.netLine) {
@@ -300,10 +299,8 @@ export function PoolApyChart({
 				group: 'apy'
 			})
 		}
-		if (currentModel.bars.length > 1) {
-			for (const bar of currentModel.bars) {
-				defs.push({ key: bar.key, label: bar.label, colorKey: bar.colorKey, defaultEnabled: true, group: 'apy' })
-			}
+		for (const bar of currentModel.bars) {
+			defs.push({ key: bar.key, label: bar.label, colorKey: bar.colorKey, defaultEnabled: true, group: 'apy' })
 		}
 		for (const line of currentModel.lines) {
 			defs.push({ key: line.key, label: line.label, colorKey: line.colorKey, defaultEnabled: false, group: 'overlay' })
@@ -315,8 +312,6 @@ export function PoolApyChart({
 	// the history transform and chart props stable across unrelated renders.
 	const { enabled, dataset, charts, hasData } = useMemo(() => {
 		const enabled: Record<string, boolean> = {}
-		// Pre-set bars on: a lone unsplit bar has no def and must always render.
-		for (const bar of currentModel.bars) enabled[bar.key] = true
 		for (const def of seriesDefs) {
 			enabled[def.key] = getSeriesVisibility(router.query[getPoolSeriesQueryKey(kind, def.key)], def.defaultEnabled)
 		}
