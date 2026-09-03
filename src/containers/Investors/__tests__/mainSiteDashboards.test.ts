@@ -26,6 +26,7 @@ describe('mainSiteDashboards', () => {
 		expect(getMainSiteIrDashboard('chain', 'near')?.dashboardId).toBe('n34rr3v3nu3d4sh')
 		expect(getMainSiteIrDashboard('chain', 'sonic')?.dashboardId).toBe('s0n1cd4shb0ard1')
 		expect(getMainSiteIrDashboard('chain', 'thorchain')?.dashboardId).toBe('bfqwxro9m0xnc9z')
+		expect(getMainSiteIrDashboard('chain', 'flare')?.dashboardId).toBe('fl4r3d4shb0ard1')
 	})
 
 	it('does not resolve a dashboard under the wrong entity type', () => {
@@ -52,8 +53,8 @@ describe('mainSiteDashboards', () => {
 
 	it('exposes protocol and chain slug lists that match the dashboard table', () => {
 		expect(new Set(MAIN_SITE_IR_PROTOCOL_SLUGS)).toEqual(new Set(['spark', 'odyssey-finance', 'near', 'thorchain']))
-		expect(new Set(MAIN_SITE_IR_CHAIN_SLUGS)).toEqual(new Set(['near', 'sonic', 'thorchain']))
-		expect(MAIN_SITE_IR_DASHBOARDS).toHaveLength(7)
+		expect(new Set(MAIN_SITE_IR_CHAIN_SLUGS)).toEqual(new Set(['near', 'sonic', 'thorchain', 'flare']))
+		expect(MAIN_SITE_IR_DASHBOARDS).toHaveLength(8)
 	})
 
 	it('uses a non-empty brand gradient for every dashboard', () => {

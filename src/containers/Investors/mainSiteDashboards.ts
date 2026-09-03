@@ -94,6 +94,16 @@ export const MAIN_SITE_IR_DASHBOARDS: MainSiteIrDashboard[] = [
 		tabLabel: 'Enterprise'
 	},
 	{
+		irProjectId: 'flare',
+		dashboardId: 'fl4r3d4shb0ard1',
+		entityType: 'chain',
+		slug: 'flare',
+		entityName: 'Flare',
+		customOnly: true,
+		brandGradient: 'linear-gradient(90deg, #E62058, #FF7A8A)',
+		tabLabel: 'Enterprise'
+	},
+	{
 		irProjectId: 'odyssey-ecosystem',
 		dashboardId: '0dyss3y3c0sys7m1',
 		entityType: 'protocol',

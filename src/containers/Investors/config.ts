@@ -20,10 +20,11 @@ const INVESTORS_LIVE_PROJECT_IDS = [
 	'spark',
 	'sonic',
 	'near',
-	'thorchain'
+	'thorchain',
+	'flare'
 ] as const satisfies readonly InvestorsProjectId[]
-const INVESTORS_PREVIEW_PROJECT_IDS = ['flare', 'kpk', 'uniswap'] as const satisfies readonly InvestorsProjectId[]
-const INVESTORS_COMING_SOON_PROJECT_IDS = ['flare', 'kpk'] as const satisfies readonly InvestorsProjectId[]
+const INVESTORS_PREVIEW_PROJECT_IDS = ['kpk', 'uniswap'] as const satisfies readonly InvestorsProjectId[]
+const INVESTORS_COMING_SOON_PROJECT_IDS = ['kpk'] as const satisfies readonly InvestorsProjectId[]
 const INVESTORS_PREVIEW_ENABLED = process.env.NEXT_PUBLIC_INVESTORS_PREVIEW === 'true'
 const INVESTORS_DOMAIN_PROJECT_IDS = [
 	...INVESTORS_LIVE_PROJECT_IDS,
