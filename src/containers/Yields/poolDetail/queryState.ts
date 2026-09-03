@@ -22,6 +22,19 @@ export function getSeriesVisibility(value: QueryValue, defaultEnabled: boolean):
 	return defaultEnabled
 }
 
+export type PoolChartWindow = 'daily' | '7d' | '30d'
+
+// Exclusive smoothing window for the APY chart: every rate series renders the same window.
+// Daily is the default and stays out of the URL.
+export function getPoolChartWindow(value: QueryValue): PoolChartWindow {
+	const window = readSingleQueryValue(value)
+	return window === '7d' || window === '30d' ? window : 'daily'
+}
+
+export function getWindowQueryValue(window: PoolChartWindow): '7d' | '30d' | undefined {
+	return window === 'daily' ? undefined : window
+}
+
 export function getPoolSeriesQueryKey(kind: PoolChartKind, seriesKey: string): string {
 	return `${kind}${seriesKey.slice(0, 1).toUpperCase()}${seriesKey.slice(1)}`
 }

@@ -6,7 +6,9 @@ import {
 	getPoolHistoryRange,
 	getPoolSeriesQueryKey,
 	getRangeQueryValue,
-	getSeriesVisibility
+	getSeriesVisibility,
+	getPoolChartWindow,
+	getWindowQueryValue
 } from './queryState'
 
 describe('pool detail query state', () => {
@@ -38,6 +40,17 @@ describe('pool detail query state', () => {
 
 	it('names supply and borrow series independently', () => {
 		expect(getPoolSeriesQueryKey('supply', 'daily')).toBe('supplyDaily')
-		expect(getPoolSeriesQueryKey('borrow', 'avg30d')).toBe('borrowAvg30d')
+		expect(getPoolSeriesQueryKey('borrow', 'window')).toBe('borrowWindow')
+	})
+
+	it('resolves the chart smoothing window with daily as the silent default', () => {
+		expect(getPoolChartWindow(undefined)).toBe('daily')
+		expect(getPoolChartWindow('7d')).toBe('7d')
+		expect(getPoolChartWindow('30d')).toBe('30d')
+		expect(getPoolChartWindow('bogus')).toBe('daily')
+		expect(getPoolChartWindow(['30d', '7d'])).toBe('30d')
+		expect(getWindowQueryValue('daily')).toBeUndefined()
+		expect(getWindowQueryValue('7d')).toBe('7d')
+		expect(getWindowQueryValue('30d')).toBe('30d')
 	})
 })

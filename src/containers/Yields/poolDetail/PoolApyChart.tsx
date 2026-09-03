@@ -11,12 +11,11 @@ import { ChartGroupingSelector, type ChartGroupingOption } from '~/components/EC
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { metricSeriesToggleStyles } from '~/ui/MetricChip'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { LoadingIndicator } from '~/ui/Status'
-import { Tooltip } from '~/ui/Tooltip'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
+import { ChartMetricsPicker, type ChartMetricGroup, type ChartMetricOption } from './ChartMetricsPicker'
 import { fetchBorrowMarketDetailHistory, fetchPoolDetailHistory } from './fetch'
 import { YIELD_PERCENT_OPTIONS, YIELD_USD_OPTIONS } from './format'
 import {
@@ -28,10 +27,13 @@ import {
 } from './poolCharts'
 import {
 	getBooleanOverride,
+	getPoolChartWindow,
 	getPoolHistoryRange,
 	getPoolSeriesQueryKey,
 	getRangeQueryValue,
-	getSeriesVisibility
+	getSeriesVisibility,
+	getWindowQueryValue,
+	type PoolChartWindow
 } from './queryState'
 import { getChartTooltipItems, getChartTooltipTimestamp, getChartTooltipValue, type ChartTooltipItem } from './tooltip'
 
@@ -39,9 +41,22 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 
 type Range = '30d' | '90d' | 'max'
 
-const AVG_KEYS = ['7d', '30d'] as const
-type AvgKey = (typeof AVG_KEYS)[number]
-const AVG_COLORS: Record<AvgKey, string> = { '7d': '#2962ff', '30d': '#9c27b0' }
+// ChartGroupingSelector renders shortLabel (falling back to the label's first letter).
+const WINDOW_OPTIONS = [
+	{ value: 'daily', label: 'Daily values', shortLabel: 'Daily' },
+	{ value: '7d', label: '7-day average', shortLabel: '7d avg' },
+	{ value: '30d', label: '30-day average', shortLabel: '30d avg' }
+] as const satisfies readonly ChartGroupingOption<PoolChartWindow>[]
+
+// Single source for a toggleable series: its default feeds the URL override read, the picker
+// option, and getBooleanOverride, so the three can never disagree.
+interface SeriesDef {
+	key: string
+	label: string
+	colorKey: ChartColorKey
+	defaultEnabled: boolean
+	group: 'apy' | 'overlay'
+}
 
 const RANGE_OPTIONS = [
 	{ value: '30d', label: '', shortLabel: '30d' },
@@ -63,46 +78,36 @@ function fmtVal(v: number, symbol: string): string {
 	return symbol === '$' ? formatUsd(v, YIELD_USD_OPTIONS) : formatPercent(v, YIELD_PERCENT_OPTIONS)
 }
 
-// Averages re-sum over the *enabled* breakdown components (or use the net line's own
-// averages in net mode), so the overlay always reconciles with what's plotted.
+// One smoothing window governs every rate series — bars and the net line render their
+// precomputed daily/7d/30d arrays — so whatever is plotted stays like-for-like.
 function buildChartInputs(
 	model: PoolChartModel,
 	enabled: Record<string, boolean>,
-	avgEnabled: Record<AvgKey, boolean>,
-	showBars: boolean,
+	apyWindow: PoolChartWindow,
 	range: Range,
 	isDark: boolean
-): { dataset: MultiSeriesChartDataset; charts: MultiSeriesChartSeriesConfig[] } {
+): { dataset: MultiSeriesChartDataset; charts: MultiSeriesChartSeriesConfig[]; hasData: boolean } {
 	const resolve = (key: ChartColorKey) => CHART_PALETTE[key][isDark ? 1 : 0]
 	const total = model.dates.length
 	const start = total - rangeCount(range, total)
-	const enabledBars = model.bars.filter((b) => enabled[b.key] ?? true)
-	// Net mode always draws its signed context bars; supply mode's "Daily" toggle can
-	// hide them while the averages (computed over enabledBars) survive.
-	const renderedBars = model.net || showBars ? enabledBars : []
-	const averageKeys = AVG_KEYS.filter((key) => avgEnabled[key])
-	const netLine = model.net && model.netLine && (enabled[model.netLine.key] ?? true) ? model.netLine : null
-	const enabledLines = model.lines.filter((line) => enabled[line.key] ?? false)
-	const hasValueInRange = (values: Array<number | null>) => {
-		for (let index = start; index < total; index++) if (values[index] != null) return true
-		return false
-	}
-	const visibleAverageKeys = averageKeys.filter((averageKey) => {
-		if (model.net && model.netLine) {
-			return hasValueInRange(averageKey === '7d' ? model.netLine.avg7 : model.netLine.avg30)
-		}
-		return enabledBars.some((bar) => hasValueInRange(averageKey === '7d' ? bar.avg7 : bar.avg30))
-	})
+	const renderedBars = model.bars.filter((b) => enabled[b.key] === true)
+	const netLine = model.net && model.netLine && enabled[model.netLine.key] === true ? model.netLine : null
+	const enabledLines = model.lines.filter((line) => enabled[line.key] === true)
+	const windowValues = (series: { values: (number | null)[]; avg7: (number | null)[]; avg30: (number | null)[] }) =>
+		apyWindow === 'daily' ? series.values : apyWindow === '7d' ? series.avg7 : series.avg30
+	// Rate series carry the window in their name so the tooltip, legend and CSV export can
+	// never present an averaged value under a daily label.
+	const rateSuffix = apyWindow === 'daily' ? '' : ` (${apyWindow} avg)`
 
 	const dimensions: string[] = ['timestamp']
 	const charts: MultiSeriesChartSeriesConfig[] = []
 
 	for (const b of renderedBars) {
 		const dimensionIndex = dimensions.length
-		dimensions.push(b.label)
+		dimensions.push(b.label + rateSuffix)
 		charts.push({
 			type: 'bar',
-			name: b.label,
+			name: b.label + rateSuffix,
 			encode: { x: 0, y: dimensionIndex },
 			stack: 'apy',
 			color: resolve(b.colorKey),
@@ -112,27 +117,12 @@ function buildChartInputs(
 		})
 	}
 
-	for (const avgKey of visibleAverageKeys) {
-		const name = `${avgKey} avg`
-		const dimensionIndex = dimensions.length
-		dimensions.push(name)
-		charts.push({
-			type: 'line',
-			name,
-			encode: { x: 0, y: dimensionIndex },
-			color: AVG_COLORS[avgKey],
-			yAxisIndex: 0,
-			hideAreaStyle: true,
-			excludeFromTooltipTotal: true
-		})
-	}
-
 	if (netLine) {
 		const dimensionIndex = dimensions.length
-		dimensions.push(netLine.label)
+		dimensions.push(netLine.label + rateSuffix)
 		charts.push({
 			type: 'line',
-			name: netLine.label,
+			name: netLine.label + rateSuffix,
 			encode: { x: 0, y: dimensionIndex },
 			color: resolve(netLine.colorKey),
 			yAxisIndex: 0,
@@ -159,37 +149,25 @@ function buildChartInputs(
 		row[0] = model.dates[sourceIndex]!
 		let dimensionIndex = 1
 		for (const bar of renderedBars) {
-			const value = bar.values[sourceIndex]
+			const value = windowValues(bar)[sourceIndex]
 			row[dimensionIndex++] = value == null ? null : value * (bar.sign ?? 1)
 		}
-		for (const averageKey of visibleAverageKeys) {
-			if (model.net && model.netLine) {
-				row[dimensionIndex++] = (averageKey === '7d' ? model.netLine.avg7 : model.netLine.avg30)[sourceIndex] ?? null
-			} else {
-				let sum = 0
-				let hasValue = false
-				for (const bar of enabledBars) {
-					const value = (averageKey === '7d' ? bar.avg7 : bar.avg30)[sourceIndex]
-					if (value != null) {
-						sum += value
-						hasValue = true
-					}
-				}
-				row[dimensionIndex++] = hasValue ? sum : null
-			}
-		}
-		if (netLine) row[dimensionIndex++] = netLine.values[sourceIndex] ?? null
+		if (netLine) row[dimensionIndex++] = windowValues(netLine)[sourceIndex] ?? null
 		for (const line of enabledLines) row[dimensionIndex++] = line.values[sourceIndex] ?? null
 		rows[rowIndex] = row
 	}
 
-	return { dataset: { source: rows, dimensions }, charts }
+	// An all-null window (a young pool's 30d average) must show a message, not blank axes.
+	const hasData = rows.some((row) => row.some((value, index) => index > 0 && value != null))
+
+	return { dataset: { source: rows, dimensions }, charts, hasData }
 }
 
 // Components keep their declared order (never re-sorted by value).
-function buildTooltipFormatter(model: PoolChartModel) {
-	const barLabels = model.bars.map((b) => b.label)
-	const netLabel = model.netLine?.label ?? null
+function buildTooltipFormatter(model: PoolChartModel, apyWindow: PoolChartWindow) {
+	const rateSuffix = apyWindow === 'daily' ? '' : ` (${apyWindow} avg)`
+	const barLabels = model.bars.map((b) => b.label + rateSuffix)
+	const netLabel = model.netLine ? model.netLine.label + rateSuffix : null
 	const magLabels = model.lines.map((l) => l.label)
 
 	return (params: unknown) => {
@@ -234,12 +212,7 @@ function buildTooltipFormatter(model: PoolChartModel) {
 			const v = item ? valueOf(item) : null
 			if (v != null) html += li(`${netLabel}: ${fmtVal(v, '%')}`, summaryStyle)
 		} else if (!model.net && hasBar) {
-			html += li(`Total APY: ${fmtVal(total, '%')}`, summaryStyle)
-		}
-
-		for (const name of ['7d avg', '30d avg']) {
-			const p = byName.get(name)
-			if (p) html += row(p, '%')
+			html += li(`Total APY${rateSuffix}: ${fmtVal(total, '%')}`, summaryStyle)
 		}
 
 		for (const label of magLabels) {
@@ -250,55 +223,6 @@ function buildTooltipFormatter(model: PoolChartModel) {
 		return html
 	}
 }
-
-function Chip({
-	active,
-	onClick,
-	color,
-	children,
-	title
-}: {
-	active: boolean
-	onClick: () => void
-	color?: string
-	children: React.ReactNode
-	title?: string
-}) {
-	const className = metricSeriesToggleStyles
-	const style = active && color ? { borderColor: color } : undefined
-	if (title)
-		return (
-			<Tooltip
-				content={title}
-				render={
-					<button
-						type="button"
-						aria-pressed={active}
-						onClick={onClick}
-						className={className}
-						style={style}
-						data-active={active}
-					/>
-				}
-			>
-				{children}
-			</Tooltip>
-		)
-	return (
-		<button
-			type="button"
-			aria-pressed={active}
-			onClick={onClick}
-			className={className}
-			style={style}
-			data-active={active}
-		>
-			{children}
-		</button>
-	)
-}
-
-const Divider = () => <span className="mx-1 h-4 w-px shrink-0 bg-border-medium" aria-hidden />
 
 export function PoolApyChart({
 	model,
@@ -355,49 +279,76 @@ export function PoolApyChart({
 	}, [kind, model.lines, poolId, range, widest.range])
 
 	const currentModel = widest.model
-	// MultiSeriesChart reapplies its ECharts model when these input references change, so keep
-	// the history transform and chart props stable across unrelated renders.
-	const { hasBreakdownControls, enabled, avgEnabled, showBars, dataset, charts } = useMemo(() => {
-		const hasBreakdownControls = currentModel.bars.length > 1
-		const enabled: Record<string, boolean> = {}
-		for (const bar of currentModel.bars) {
-			// A lone component has no breakdown toggle, so an old or hand-edited URL must not hide it.
-			enabled[bar.key] = hasBreakdownControls
-				? getSeriesVisibility(router.query[getPoolSeriesQueryKey(kind, bar.key)], true)
-				: true
+	// Old links may carry the retired additive avg toggles; map them to the nearest window.
+	const legacyWindow = getSeriesVisibility(router.query[getPoolSeriesQueryKey(kind, 'avg30d')], false)
+		? '30d'
+		: getSeriesVisibility(router.query[getPoolSeriesQueryKey(kind, 'avg7d')], false)
+			? '7d'
+			: undefined
+	const apyWindow = getPoolChartWindow(router.query[getPoolSeriesQueryKey(kind, 'window')] ?? legacyWindow)
+
+	// A lone unsplit bar is not listed: it has nothing to configure and stays always-on.
+	const seriesDefs = useMemo<SeriesDef[]>(() => {
+		const defs: SeriesDef[] = []
+		if (currentModel.net && currentModel.netLine) {
+			const netLine = currentModel.netLine
+			defs.push({
+				key: netLine.key,
+				label: netLine.label,
+				colorKey: netLine.colorKey,
+				defaultEnabled: true,
+				group: 'apy'
+			})
+		}
+		if (currentModel.bars.length > 1) {
+			for (const bar of currentModel.bars) {
+				defs.push({ key: bar.key, label: bar.label, colorKey: bar.colorKey, defaultEnabled: true, group: 'apy' })
+			}
 		}
 		for (const line of currentModel.lines) {
-			enabled[line.key] = getSeriesVisibility(router.query[getPoolSeriesQueryKey(kind, line.key)], false)
+			defs.push({ key: line.key, label: line.label, colorKey: line.colorKey, defaultEnabled: false, group: 'overlay' })
 		}
-		if (currentModel.netLine) {
-			enabled[currentModel.netLine.key] = getSeriesVisibility(
-				router.query[getPoolSeriesQueryKey(kind, currentModel.netLine.key)],
-				true
-			)
-		}
-		const avgEnabled: Record<AvgKey, boolean> = {
-			'7d': getSeriesVisibility(router.query[getPoolSeriesQueryKey(kind, 'avg7d')], false),
-			'30d': getSeriesVisibility(router.query[getPoolSeriesQueryKey(kind, 'avg30d')], false)
-		}
-		const showBars = getSeriesVisibility(router.query[getPoolSeriesQueryKey(kind, 'daily')], true)
+		return defs
+	}, [currentModel])
 
+	// MultiSeriesChart reapplies its ECharts model when these input references change, so keep
+	// the history transform and chart props stable across unrelated renders.
+	const { enabled, dataset, charts, hasData } = useMemo(() => {
+		const enabled: Record<string, boolean> = {}
+		// Pre-set bars on: a lone unsplit bar has no def and must always render.
+		for (const bar of currentModel.bars) enabled[bar.key] = true
+		for (const def of seriesDefs) {
+			enabled[def.key] = getSeriesVisibility(router.query[getPoolSeriesQueryKey(kind, def.key)], def.defaultEnabled)
+		}
 		return {
-			hasBreakdownControls,
 			enabled,
-			avgEnabled,
-			showBars,
-			...buildChartInputs(currentModel, enabled, avgEnabled, showBars, range, isDark)
+			...buildChartInputs(currentModel, enabled, apyWindow, range, isDark)
 		}
-	}, [currentModel, isDark, kind, range, router.query])
-	const chartOptions = useMemo(() => ({ tooltip: { formatter: buildTooltipFormatter(currentModel) } }), [currentModel])
+	}, [apyWindow, currentModel, isDark, kind, range, router.query, seriesDefs])
+	const chartOptions = useMemo(
+		() => ({ tooltip: { formatter: buildTooltipFormatter(currentModel, apyWindow) } }),
+		[apyWindow, currentModel]
+	)
 
-	const color = (key: ChartColorKey) => CHART_PALETTE[key][isDark ? 1 : 0]
 	const toggle = (key: string, active: boolean, defaultEnabled: boolean) => {
 		const queryKey = getPoolSeriesQueryKey(kind, key)
 		void pushShallowQuery(router, { [queryKey]: getBooleanOverride(!active, defaultEnabled) }, router.pathname)
 	}
 
-	const netOn = currentModel.netLine ? (enabled[currentModel.netLine.key] ?? false) : false
+	const metricGroups: ChartMetricGroup[] = useMemo(() => {
+		const resolve = (key: ChartColorKey) => CHART_PALETTE[key][isDark ? 1 : 0]
+		const toOption = (def: SeriesDef): ChartMetricOption => ({
+			key: def.key,
+			label: def.label,
+			color: resolve(def.colorKey),
+			active: enabled[def.key] === true,
+			defaultEnabled: def.defaultEnabled
+		})
+		return [
+			{ label: 'APY', options: seriesDefs.filter((def) => def.group === 'apy').map(toOption) },
+			{ label: 'Overlays', options: seriesDefs.filter((def) => def.group === 'overlay').map(toOption) }
+		]
+	}, [enabled, isDark, seriesDefs])
 
 	return (
 		<ChartPanel className="h-full">
@@ -420,65 +371,22 @@ export function PoolApyChart({
 			</PanelHeader>
 
 			<ChartPanelToolbar>
-				<span className="body-sm text-secondary">Series</span>
-				{currentModel.net && currentModel.netLine ? (
-					<Chip
-						active={netOn}
-						onClick={() => toggle(currentModel.netLine!.key, netOn, true)}
-						color={color(currentModel.netLine.colorKey)}
-					>
-						{currentModel.netLine.label}
-					</Chip>
-				) : (
-					<Chip active={showBars} onClick={() => toggle('daily', showBars, true)} title="Show the raw daily bars">
-						Daily
-					</Chip>
-				)}
-
-				{AVG_KEYS.map((key) => (
-					<Chip
-						key={key}
-						active={avgEnabled[key] ?? false}
-						onClick={() => toggle(`avg${key}`, avgEnabled[key] ?? false, false)}
-						color={AVG_COLORS[key]}
-					>
-						{key} avg
-					</Chip>
-				))}
-
-				{hasBreakdownControls ? (
-					<>
-						<Divider />
-						<span className="body-sm text-secondary">Breakdown</span>
-						{currentModel.bars.map((b) => (
-							<Chip
-								key={b.key}
-								active={enabled[b.key] ?? true}
-								onClick={() => toggle(b.key, enabled[b.key] ?? true, true)}
-								color={color(b.colorKey)}
-							>
-								{b.label}
-							</Chip>
-						))}
-					</>
-				) : null}
-
-				{currentModel.lines.length ? (
-					<>
-						<Divider />
-						<span className="body-sm text-secondary">Overlays</span>
-						{currentModel.lines.map((line) => (
-							<Chip
-								key={line.key}
-								active={enabled[line.key] ?? false}
-								onClick={() => toggle(line.key, enabled[line.key] ?? false, false)}
-								color={color(line.colorKey)}
-							>
-								{line.label}
-							</Chip>
-						))}
-					</>
-				) : null}
+				<ChartMetricsPicker
+					groups={metricGroups}
+					onToggle={(option) => toggle(option.key, option.active, option.defaultEnabled)}
+				/>
+				<ChartGroupingSelector
+					className="ml-auto"
+					value={apyWindow}
+					options={WINDOW_OPTIONS}
+					onValueChange={(next) =>
+						void pushShallowQuery(
+							router,
+							{ [getPoolSeriesQueryKey(kind, 'window')]: getWindowQueryValue(next) },
+							router.pathname
+						)
+					}
+				/>
 			</ChartPanelToolbar>
 
 			<ChartPanelBody>
@@ -489,6 +397,10 @@ export function PoolApyChart({
 				) : error ? (
 					<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
 						Couldn't load {range} history.
+					</ChartPanelBodyFallback>
+				) : !hasData ? (
+					<ChartPanelBodyFallback role="status" className="body-sm text-secondary">
+						No data in this range for the selected series and window.
 					</ChartPanelBodyFallback>
 				) : (
 					<Suspense
