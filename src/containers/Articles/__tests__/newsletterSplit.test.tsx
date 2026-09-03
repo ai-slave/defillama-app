@@ -5,6 +5,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { ResearchFooter } from '~/containers/Articles/landing/ResearchFooter'
 import { ResearchHero } from '~/containers/Articles/landing/ResearchHero'
 import { ResearchLatest } from '~/containers/Articles/landing/ResearchLatest'
+import { ResearchNewsletters } from '~/containers/Articles/landing/ResearchNewsletters'
+import type { ResearchNewsletterItem } from '~/containers/Articles/newsletterFeed'
 import type { ArticleDocument } from '~/containers/Articles/types'
 import NewslettersPage from '~/pages/newsletters'
 
@@ -97,5 +99,35 @@ describe('newsletter and media-kit split', () => {
 		const html = renderWithQueryClient(<ResearchLatest articles={[article]} />)
 
 		expect(html).toMatch(/<span class="[^"]*border-research-white[^"]*"[^>]*>INTERVIEW<\/span>/)
+	})
+
+	it('renders newsletter discovery, archive and subscription links with interviews', () => {
+		const newsletter = {
+			id: 'newsletter-1',
+			title: 'Weekly DeFi market structure',
+			description: 'Research Notes',
+			href: 'https://defillama-research.beehiiv.com/p/market-structure',
+			imageUrl: 'https://media.beehiiv.com/market-structure.png',
+			publishedAt: '2026-08-27T18:10:12.000Z'
+		} satisfies ResearchNewsletterItem
+		const interview = {
+			id: 'interview-1',
+			title: 'Protocol founder interview',
+			slug: 'protocol-founder',
+			section: 'interview',
+			coverImage: null
+		} as ArticleDocument
+
+		const html = renderWithQueryClient(<ResearchNewsletters newsletters={[newsletter]} interviews={[interview]} />)
+
+		expect(html).toContain('Research Notes Newsletters')
+		expect(html).toContain('Weekly DeFi market structure')
+		expect(html).toContain('27 Aug 2026')
+		expect(html).toContain('href="https://defillama-research.beehiiv.com/p/market-structure"')
+		expect(html).toContain('href="/newsletters"')
+		expect(html).toContain('View all newsletters')
+		expect(html).toContain('href="https://defillama-research.beehiiv.com/"')
+		expect(html).toContain('Interviews')
+		expect(html).toContain('href="/research/interview/protocol-founder"')
 	})
 })

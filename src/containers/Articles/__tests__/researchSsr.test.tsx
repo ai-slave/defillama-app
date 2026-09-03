@@ -15,6 +15,7 @@ import {
 	listArticlesByTopic
 } from '~/containers/Articles/api'
 import { ReportsCarousel } from '~/containers/Articles/landing/ReportsCarousel'
+import { getResearchNewsletterItems } from '~/containers/Articles/newsletterFeed.server'
 import type { ArticleDocument, BannerLookupResult, TrustedByLookupResult } from '~/containers/Articles/types'
 import ArticlesPage, { getServerSideProps as getResearchServerSideProps } from '~/pages/research'
 import SectionLandingPage, { getServerSideProps as getSectionLandingServerSideProps } from '~/pages/research/[section]'
@@ -46,6 +47,10 @@ vi.mock('~/containers/Articles/api', () => ({
 	listArticles: vi.fn(),
 	listArticlesByTag: vi.fn(),
 	listArticlesByTopic: vi.fn()
+}))
+
+vi.mock('~/containers/Articles/newsletterFeed.server', () => ({
+	getResearchNewsletterItems: vi.fn()
 }))
 
 vi.mock('~/containers/Articles/ArticleProxyAuthProvider', () => ({
@@ -207,6 +212,16 @@ describe('research SSR data loading', () => {
 		vi.mocked(getSectionBanner).mockResolvedValue(emptyBanner)
 		vi.mocked(getAllArticlesBanner).mockResolvedValue(emptyBanner)
 		vi.mocked(getTrustedBySection).mockResolvedValue(emptyTrustedBy)
+		vi.mocked(getResearchNewsletterItems).mockResolvedValue([
+			{
+				id: 'newsletter-1',
+				title: 'Research Notes newsletter',
+				description: 'Research Notes',
+				href: 'https://defillama-research.beehiiv.com/p/research-notes',
+				imageUrl: null,
+				publishedAt: '2026-08-27T18:10:12.000Z'
+			}
+		])
 	})
 
 	it('loads landing page props for SSR and renders article content immediately', async () => {
@@ -221,10 +236,30 @@ describe('research SSR data loading', () => {
 		if (!('props' in result)) throw new Error('expected props')
 		const props = await Promise.resolve(result.props)
 		expect(props.landingData.heroReports[0]?.title).toBe('Canonical Research')
+		expect(props.newsletterItems[0]?.title).toBe('Research Notes newsletter')
 		expect(getLandingBanner).toHaveBeenCalledTimes(1)
 
 		const html = renderWithQueryClient(<ArticlesPage {...props} />)
 		expect(html).toContain('Canonical Research')
+		expect(html).toContain('Research Notes newsletter')
+	})
+
+	it('keeps the interviews section when the Beehiiv feed is unavailable', async () => {
+		vi.mocked(getResearchNewsletterItems).mockRejectedValueOnce(new Error('Beehiiv unavailable'))
+
+		const result = await getResearchServerSideProps({
+			req: { method: 'GET' },
+			res: { setHeader: vi.fn() },
+			resolvedUrl: '/research'
+		} as never)
+
+		if (!('props' in result)) throw new Error('expected props')
+		const props = await Promise.resolve(result.props)
+		expect(props.newsletterItems).toEqual([])
+
+		const html = renderWithQueryClient(<ArticlesPage {...props} />)
+		expect(html).toContain('Interviews')
+		expect(html).not.toContain('Research Notes Newsletters')
 	})
 
 	it('server-renders the reports carousel centered before client measurement', () => {

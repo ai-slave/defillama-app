@@ -10,6 +10,7 @@ import { ResearchGridWithScrollbar } from '~/containers/Articles/landing/Researc
 import { ResearchHero } from '~/containers/Articles/landing/ResearchHero'
 import { ResearchInterviews } from '~/containers/Articles/landing/ResearchInterviews'
 import { ResearchLatest } from '~/containers/Articles/landing/ResearchLatest'
+import { ResearchNewsletters } from '~/containers/Articles/landing/ResearchNewsletters'
 import { ResearchPromoBanner } from '~/containers/Articles/landing/ResearchPromoBanner'
 import { ResearchReportHighlightWithHeight } from '~/containers/Articles/landing/ResearchReportHighlight'
 import ResearchSearch from '~/containers/Articles/landing/ResearchSearch'
@@ -26,6 +27,8 @@ import {
 	RESEARCH_LANDING_SECTION_LIMITS,
 	takeUniqueArticles
 } from '~/containers/Articles/landing/utils'
+import type { ResearchNewsletterItem } from '~/containers/Articles/newsletterFeed'
+import { getResearchNewsletterItems } from '~/containers/Articles/newsletterFeed.server'
 import { ArticleBannerStrip } from '~/containers/Articles/renderer/ArticleBannerStrip'
 import { ResearchLoader } from '~/containers/Articles/ResearchLoader'
 import type { ArticleDocument, BannerLookupResult, TrustedByLookupResult } from '~/containers/Articles/types'
@@ -46,10 +49,14 @@ export type ResearchLandingArticles = {
 	collections: ArticleDocument[]
 }
 
-type ArticlesPageProps = {
+type ResearchLandingPageData = {
 	landingData: ResearchLandingArticles
 	landingBanner: BannerLookupResult | null
 	trustedBy: TrustedByLookupResult | null
+}
+
+type ArticlesPageProps = ResearchLandingPageData & {
+	newsletterItems: ResearchNewsletterItem[]
 }
 
 async function getResearchLandingArticles(): Promise<ResearchLandingArticles> {
@@ -99,7 +106,7 @@ async function getResearchLandingArticles(): Promise<ResearchLandingArticles> {
 	}
 }
 
-export async function loadResearchLandingData(): Promise<ArticlesPageProps> {
+export async function loadResearchLandingData(): Promise<ResearchLandingPageData> {
 	const [articlesResult, bannerResult, trustedByResult] = await Promise.allSettled([
 		getResearchLandingArticles(),
 		getLandingBanner(),
@@ -118,20 +125,33 @@ export async function loadResearchLandingData(): Promise<ArticlesPageProps> {
 }
 
 const getServerSidePropsHandler: GetServerSideProps<ArticlesPageProps> = async ({ res }) => {
-	const { landingData, landingBanner, trustedBy } = await loadResearchLandingData()
+	const [landingResult, newsletterResult] = await Promise.allSettled([
+		loadResearchLandingData(),
+		getResearchNewsletterItems()
+	])
+	if (landingResult.status === 'rejected') throw landingResult.reason
+
+	const { landingData, landingBanner, trustedBy } = landingResult.value
 	res.setHeader('Cache-Control', RESEARCH_LANDING_CACHE_CONTROL)
 	return {
 		props: {
 			landingData,
 			landingBanner,
-			trustedBy
+			trustedBy,
+			newsletterItems: newsletterResult.status === 'fulfilled' ? newsletterResult.value : []
 		}
 	}
 }
 
 export const getServerSideProps = withServerSidePropsTelemetry('/research', getServerSidePropsHandler)
 
-function ArticlesLandingInner({ initialData }: { initialData: ArticlesPageProps }) {
+function ArticlesLandingInner({
+	initialData,
+	newsletterItems
+}: {
+	initialData: ResearchLandingPageData
+	newsletterItems: ResearchNewsletterItem[]
+}) {
 	const landingQuery = useQuery({
 		queryKey: ['research-landing'],
 		retry: false,
@@ -212,7 +232,11 @@ function ArticlesLandingInner({ initialData }: { initialData: ArticlesPageProps 
 
 					<ResearchSpotlight title="In the spotlight" articles={landingData?.spotlight ?? []} />
 
-					<ResearchInterviews title="Interviews" articles={landingData?.interviews ?? []} />
+					{newsletterItems.length > 0 ? (
+						<ResearchNewsletters newsletters={newsletterItems} interviews={landingData?.interviews ?? []} />
+					) : (
+						<ResearchInterviews title="Interviews" articles={landingData?.interviews ?? []} />
+					)}
 
 					<div id="reports">
 						{(landingData?.highlight ?? []).length > 0 ? (
@@ -274,7 +298,8 @@ function ArticlesLandingInner({ initialData }: { initialData: ArticlesPageProps 
 export default function ArticlesPage({
 	landingData,
 	landingBanner,
-	trustedBy
+	trustedBy,
+	newsletterItems
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
 	const { showSearch } = useResearchSearchParams()
 
@@ -301,7 +326,10 @@ export default function ArticlesPage({
 					) : (
 						<>
 							<ArticleBannerStrip scope="landing" initialData={{ landing: landingBanner }} />
-							<ArticlesLandingInner initialData={{ landingData, landingBanner, trustedBy }} />
+							<ArticlesLandingInner
+								initialData={{ landingData, landingBanner, trustedBy }}
+								newsletterItems={newsletterItems}
+							/>
 						</>
 					)}
 				</div>
