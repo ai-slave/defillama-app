@@ -36,6 +36,12 @@ describe('Rewards popularity boundary', () => {
 		const { programs } = buildRewardsPageData(
 			[
 				apiRecord({
+					program_id: 'featured-6',
+					protocol: 'Featured 6',
+					project_path: '/protocol/featured-6',
+					featured_rank: '6'
+				}),
+				apiRecord({
 					program_id: 'featured-5',
 					protocol: 'Featured 5',
 					project_path: '/protocol/featured-5',
@@ -80,6 +86,7 @@ describe('Rewards popularity boundary', () => {
 			'featured-3',
 			'featured-4',
 			'featured-5',
+			'featured-6',
 			'popular-a',
 			'popular-z',
 			'zero',
@@ -91,8 +98,8 @@ describe('Rewards popularity boundary', () => {
 
 	it('rejects invalid and duplicate featured ranks', () => {
 		expect(() =>
-			buildRewardsPageData([apiRecord({ program_id: 'invalid', featured_rank: '6' })], {}, rankings)
-		).toThrow('Rewards program invalid has invalid featured_rank 6')
+			buildRewardsPageData([apiRecord({ program_id: 'invalid', featured_rank: '0' })], {}, rankings)
+		).toThrow('Rewards program invalid has invalid featured_rank 0')
 		expect(() =>
 			buildRewardsPageData(
 				[

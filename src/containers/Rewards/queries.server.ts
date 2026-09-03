@@ -8,7 +8,7 @@ import { recordDomainEvent } from '~/utils/telemetry'
 import type { RewardsApiRecord, RewardsPopularity } from './api.types'
 import type { RewardProgram, RewardSource, RewardsPageProps } from './types'
 
-const FEATURED_PROGRAM_RANKS: Record<string, number> = { '1': 1, '2': 2, '3': 3, '4': 4, '5': 5 }
+const POSITIVE_INTEGER = /^[1-9]\d*$/
 
 // Editors supply these links. Never turn a javascript: or data: value into an
 // action, and require a real host so a source can always name its publisher.
@@ -51,8 +51,8 @@ export function buildRewardsPageData(
 		// Publication is independent of lifecycle: public ended programs remain searchable.
 		if (entry.publish_status !== 'Published' || entry.visibility !== 'Public') continue
 		if (entry.featured_rank !== undefined) {
-			const featuredRank = FEATURED_PROGRAM_RANKS[entry.featured_rank]
-			if (featuredRank === undefined) {
+			const featuredRank = Number(entry.featured_rank)
+			if (!POSITIVE_INTEGER.test(entry.featured_rank) || !Number.isSafeInteger(featuredRank)) {
 				throw new Error(`Rewards program ${entry.program_id} has invalid featured_rank ${entry.featured_rank}`)
 			}
 			const rankedProgramId = programIdByFeaturedRank.get(featuredRank)
