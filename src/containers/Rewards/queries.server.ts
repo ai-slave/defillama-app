@@ -8,6 +8,8 @@ import { recordDomainEvent } from '~/utils/telemetry'
 import type { RewardsApiRecord, RewardsPopularity } from './api.types'
 import type { RewardProgram, RewardSource, RewardsPageProps } from './types'
 
+const FEATURED_PROGRAM_RANKS: Record<string, number> = { '1': 1, '2': 2, '3': 3, '4': 4, '5': 5 }
+
 // Editors supply these links. Never turn a javascript: or data: value into an
 // action, and require a real host so a source can always name its publisher.
 const PUBLIC_HTTP_URL = /^https?:\/\/(?:www\.)?([^/?#\s]+)/i
@@ -37,6 +39,8 @@ export function buildRewardsPageData(
 ): Pick<RewardsPageProps, 'programs'> {
 	const programs: RewardProgram[] = []
 	const missingMetadata = new Set<string>()
+	const featuredRankByProgramId = new Map<string, number>()
+	const programIdByFeaturedRank = new Map<number, string>()
 	for (const entry of entries) {
 		// The catalog and page deploy independently; omitted paths mean an old producer, not an unresolved project.
 		if (entry.project_path === undefined) {
@@ -46,6 +50,20 @@ export function buildRewardsPageData(
 		}
 		// Publication is independent of lifecycle: public ended programs remain searchable.
 		if (entry.publish_status !== 'Published' || entry.visibility !== 'Public') continue
+		if (entry.featured_rank !== undefined) {
+			const featuredRank = FEATURED_PROGRAM_RANKS[entry.featured_rank]
+			if (featuredRank === undefined) {
+				throw new Error(`Rewards program ${entry.program_id} has invalid featured_rank ${entry.featured_rank}`)
+			}
+			const rankedProgramId = programIdByFeaturedRank.get(featuredRank)
+			if (rankedProgramId) {
+				throw new Error(
+					`Rewards programs ${rankedProgramId} and ${entry.program_id} share featured_rank ${featuredRank}`
+				)
+			}
+			featuredRankByProgramId.set(entry.program_id, featuredRank)
+			programIdByFeaturedRank.set(featuredRank, entry.program_id)
+		}
 		const protocol = metadata[entry.defillama_id]
 		if (!protocol) missingMetadata.add(entry.defillama_id)
 		const name = protocol?.displayName ?? protocol?.name ?? entry.protocol
@@ -80,8 +98,15 @@ export function buildRewardsPageData(
 			lastVerified: formatDate(entry.last_verified)
 		})
 	}
-	// Counts stay server-side. Unmeasured projects follow measured zeroes; ties are alphabetical.
+	// Counts and editor ranks stay server-side. Unmeasured projects follow measured zeroes; ties are alphabetical.
 	programs.sort((a, b) => {
+		const aFeaturedRank = featuredRankByProgramId.get(a.programId)
+		const bFeaturedRank = featuredRankByProgramId.get(b.programId)
+		if (aFeaturedRank !== undefined || bFeaturedRank !== undefined) {
+			if (aFeaturedRank === undefined) return 1
+			if (bFeaturedRank === undefined) return -1
+			return aFeaturedRank - bFeaturedRank
+		}
 		const aViews = a.projectPath ? (popularity.viewsByPath[a.projectPath] ?? -1) : -1
 		const bViews = b.projectPath ? (popularity.viewsByPath[b.projectPath] ?? -1) : -1
 		return (

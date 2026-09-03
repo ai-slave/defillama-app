@@ -13,6 +13,7 @@ export interface RewardsApiRecord {
 	verification: RewardVerification
 	publish_status: 'Draft' | 'Published' | 'Needs Review'
 	visibility?: 'Public' | 'Hidden'
+	featured_rank?: string
 	start_date?: string
 	end_date?: string
 	last_verified?: string
