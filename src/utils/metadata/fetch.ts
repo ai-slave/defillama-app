@@ -10,7 +10,7 @@ import { fetchMetadataJson } from './http'
 import { extractLiquidationsTokenSymbols } from './liquidations'
 import { fetchMetadataRouteIndexes } from './routeIndexes'
 import { fetchCoreMetadataSources } from './sources'
-import type { IEmissionsHistoricalPrices, ITokenListEntry, ProtocolLlamaswapMetadata } from './types'
+import type { IEmissionsHistoricalPrices, ITokenListEntry } from './types'
 
 const normalizeSlug = (value: string | null | undefined): string =>
 	String(value ?? '')
@@ -128,8 +128,6 @@ export async function fetchCoreMetadata(): Promise<CoreMetadataPayload> {
 	const bridgeProtocolSlugs = Array.from(bridgeProtocolSlugsSet)
 	const bridgeChainSlugs = Array.from(bridgeChainSlugsSet)
 
-	const protocolLlamaswapDataset: ProtocolLlamaswapMetadata = {}
-
 	const protocolDisplayNames = buildProtocolDisplayNameLookupRecord(protocols)
 	const chainDisplayNames = buildChainDisplayNameLookupRecord(chains)
 	const liquidationsTokenSymbols = extractLiquidationsTokenSymbols(liquidationsResponse)
@@ -170,7 +168,6 @@ export async function fetchCoreMetadata(): Promise<CoreMetadataPayload> {
 		bridgeProtocolSlugs,
 		bridgeChainSlugs,
 		bridgeChainSlugToName,
-		protocolLlamaswapDataset,
 		narrativeCategories: routeIndexes.narrativeCategories,
 		oracleRoutes: routeIndexes.oracleRoutes,
 		digitalAssetTreasuryRoutes: routeIndexes.digitalAssetTreasuryRoutes,

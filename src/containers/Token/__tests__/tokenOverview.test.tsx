@@ -239,13 +239,6 @@ const overviewFixture: TokenOverviewData = {
 	name: 'Bitcoin',
 	displayName: 'BTC',
 	symbol: 'BTC',
-	llamaswapChains: [
-		{
-			chain: 'ethereum',
-			address: '0x0000000000000000000000000000000000000000',
-			displayName: 'Ethereum'
-		}
-	],
 	marketData: {
 		currentPrice: 100,
 		percentChange24h: 5,
@@ -407,7 +400,6 @@ describe('tokenOverview helpers', () => {
 			tokenEntry: tokenEntryFixture,
 			protocolMetadata: protocolMetadataFixture,
 			cgExchangeIdentifiers: ['binance'],
-			llamaswapChains: null,
 			emissionsSupplyMetrics: emissionsSupplyMetricsFixture,
 			source: { kind: 'network' }
 		})
@@ -425,7 +417,6 @@ describe('tokenOverview helpers', () => {
 			cex: 300,
 			dex: 200
 		})
-		expect(result.llamaswapChains).toBeNull()
 		expect(result.outstandingFDV).toBe(99900)
 		expect(mocks.fetchTreasuryById).not.toHaveBeenCalled()
 	})
@@ -442,7 +433,6 @@ describe('tokenOverview helpers', () => {
 			tokenEntry: tokenEntryFixture,
 			protocolMetadata: protocolMetadataFixture,
 			cgExchangeIdentifiers: ['binance'],
-			llamaswapChains: overviewFixture.llamaswapChains,
 			emissionsSupplyMetrics: emissionsSupplyMetricsFixture,
 			source: { kind: 'network' }
 		})
@@ -454,7 +444,6 @@ describe('tokenOverview helpers', () => {
 			others: 40,
 			total: 100
 		})
-		expect(result.llamaswapChains).toEqual(overviewFixture.llamaswapChains)
 		expect(result.raises).toEqual([
 			expect.objectContaining({
 				round: 'Series A',
@@ -476,7 +465,6 @@ describe('tokenOverview helpers', () => {
 			tokenEntry: tokenEntryFixture,
 			protocolMetadata: protocolMetadataFixture,
 			cgExchangeIdentifiers: ['binance'],
-			llamaswapChains: null,
 			emissionsSupplyMetrics: emissionsSupplyMetricsFixture,
 			source: {
 				kind: 'prefetched',
@@ -582,7 +570,6 @@ describe('tokenOverview helpers', () => {
 				displayName: 'Uniswap'
 			} as IProtocolMetadata,
 			cgExchangeIdentifiers: ['binance'],
-			llamaswapChains: null,
 			emissionsSupplyMetrics: emissionsSupplyMetricsFixture,
 			source: { kind: 'network' }
 		})
@@ -609,7 +596,6 @@ describe('tokenOverview helpers', () => {
 				emissions: true
 			} as IProtocolMetadata,
 			cgExchangeIdentifiers: ['binance'],
-			llamaswapChains: null,
 			emissionsSupplyMetrics: emissionsSupplyMetricsFixture,
 			source: { kind: 'network' }
 		})
@@ -633,7 +619,6 @@ describe('tokenOverview helpers', () => {
 				emissions: true
 			} as IProtocolMetadata,
 			cgExchangeIdentifiers: ['binance'],
-			llamaswapChains: null,
 			emissionsSupplyMetrics: emissionsSupplyMetricsFixture,
 			source: { kind: 'network' }
 		})
@@ -654,7 +639,6 @@ describe('tokenOverview helpers', () => {
 			tokenEntry: tokenEntryFixture,
 			protocolMetadata: null,
 			cgExchangeIdentifiers: ['binance'],
-			llamaswapChains: null,
 			emissionsSupplyMetrics: emissionsSupplyMetricsFixture,
 			source: { kind: 'network' }
 		})
@@ -674,7 +658,6 @@ describe('tokenOverview helpers', () => {
 			tokenEntry: tokenEntryFixture,
 			protocolMetadata: null,
 			cgExchangeIdentifiers: ['binance'],
-			llamaswapChains: null,
 			emissionsSupplyMetrics: emissionsSupplyMetricsFixture,
 			source: { kind: 'network' },
 			prefetchedCharts: ['Token Price']
@@ -710,7 +693,6 @@ describe('tokenOverview helpers', () => {
 			tokenEntry: tokenEntryFixture,
 			protocolMetadata: protocolMetadataFixture,
 			cgExchangeIdentifiers: ['binance'],
-			llamaswapChains: null,
 			emissionsSupplyMetrics: emissionsSupplyMetricsFixture,
 			source: { kind: 'network' }
 		})
@@ -736,7 +718,6 @@ describe('tokenOverview helpers', () => {
 			tokenEntry: tokenEntryFixture,
 			protocolMetadata: null,
 			cgExchangeIdentifiers: ['binance'],
-			llamaswapChains: null,
 			emissionsSupplyMetrics: emissionsSupplyMetricsFixture,
 			source: { kind: 'network' }
 		})
@@ -748,7 +729,6 @@ describe('tokenOverview helpers', () => {
 		expect(result.raises).toBeNull()
 		expect(result.tokenLiquidity).toBeNull()
 		expect(result.outstandingFDV).toBeNull()
-		expect(result.llamaswapChains).toBeNull()
 		expect(mocks.fetchCoinGeckoCoinById).not.toHaveBeenCalled()
 		expect(mocks.fetchCoinPriceByCoinGeckoIdViaLlamaPrices).toHaveBeenCalledWith('bitcoin')
 	})
@@ -764,7 +744,6 @@ describe('tokenOverview helpers', () => {
 			tokenEntry: null,
 			protocolMetadata: null,
 			cgExchangeIdentifiers: ['binance'],
-			llamaswapChains: null,
 			emissionsSupplyMetrics: emissionsSupplyMetricsFixture,
 			currentMetrics: {
 				currentPrice: 2,
@@ -809,7 +788,6 @@ describe('tokenOverview helpers', () => {
 			},
 			protocolMetadata: null,
 			cgExchangeIdentifiers: ['binance'],
-			llamaswapChains: null,
 			emissionsSupplyMetrics: emissionsSupplyMetricsFixture,
 			source: { kind: 'network' }
 		})
@@ -835,7 +813,6 @@ describe('tokenOverview helpers', () => {
 			},
 			protocolMetadata: null,
 			cgExchangeIdentifiers: ['binance'],
-			llamaswapChains: null,
 			emissionsSupplyMetrics: emissionsSupplyMetricsFixture,
 			source: { kind: 'network' }
 		})
@@ -867,7 +844,6 @@ describe('tokenOverview helpers', () => {
 			},
 			protocolMetadata: null,
 			cgExchangeIdentifiers: ['binance'],
-			llamaswapChains: null,
 			emissionsSupplyMetrics: emissionsSupplyMetricsFixture,
 			source: { kind: 'network' }
 		})
@@ -888,7 +864,6 @@ describe('tokenOverview helpers', () => {
 			tokenEntry: null,
 			protocolMetadata: null,
 			cgExchangeIdentifiers: ['binance'],
-			llamaswapChains: null,
 			emissionsSupplyMetrics: emissionsSupplyMetricsFixture,
 			source: { kind: 'network' }
 		})

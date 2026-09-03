@@ -14,7 +14,6 @@ const overview: TokenOverviewData = {
 	name: 'Bitcoin',
 	displayName: 'Bitcoin',
 	symbol: 'BTC',
-	llamaswapChains: null,
 	marketData: {
 		currentPrice: 100,
 		percentChange24h: null,

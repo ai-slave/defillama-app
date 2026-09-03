@@ -1,4 +1,3 @@
-import type { ProtocolLlamaswapMetadata } from '~/utils/metadata/types'
 import type { TokenRiskBorrowCapacityMethodologies, TokenRiskBorrowCapacityTokenEntry } from './api.types'
 import type {
 	TokenRiskCandidate,
@@ -39,7 +38,7 @@ const NATIVE_TOKEN_ADDRESSES = new Set([
 	'0x0000000000000000000000000000000000000000',
 	'0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
 ])
-export const CANONICAL_NATIVE_TOKEN_ADDRESS = '0x0000000000000000000000000000000000000000'
+const CANONICAL_NATIVE_TOKEN_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 const NATIVE_WRAPPED_SYMBOL_GROUPS = [
 	['ETH', 'WETH'],
@@ -70,10 +69,6 @@ function getTokenRiskSymbolAliases(symbol: string | null | undefined): Set<strin
 	return TOKEN_RISK_SYMBOL_ALIASES.get(normalizedSymbol) ?? new Set(normalizedSymbol ? [normalizedSymbol] : [])
 }
 
-export function hasNativeWrappedTokenRiskAlias(symbol: string | null | undefined): boolean {
-	return getTokenRiskSymbolAliases(symbol).size > 1
-}
-
 function buildAssetKey(chain: string, address: string, symbol?: string | null): string {
 	const normalizedAddress = normalizeRiskAssetAddress(address)
 	const normalizedChain = normalizeChain(chain)
@@ -93,36 +88,6 @@ function hasActionableRiskMetrics(
 ): boolean {
 	if (row.currentMaxBorrowUsd > 0) return true
 	return (row.minBadDebtAtPriceZeroUsd ?? 0) > 0
-}
-
-export function resolveTokenRiskCandidates(
-	geckoId: string | null | undefined,
-	tokenSymbol: string | null | undefined,
-	protocolLlamaswapDataset: ProtocolLlamaswapMetadata | null | undefined
-): TokenRiskCandidate[] {
-	if (!geckoId || !protocolLlamaswapDataset?.[geckoId]?.length) return []
-
-	const seen = new Set<string>()
-	const candidates: TokenRiskCandidate[] = []
-
-	for (const chainEntry of protocolLlamaswapDataset[geckoId] ?? []) {
-		const chain = chainEntry.chain?.trim()
-		const address = normalizeAddress(chainEntry.address)
-		if (!chain || !address) continue
-
-		const key = buildAssetKey(chain, address, tokenSymbol)
-		if (seen.has(key)) continue
-		seen.add(key)
-
-		candidates.push({
-			key,
-			chain,
-			address: normalizeRiskAssetAddress(address),
-			displayName: chainEntry.displayName || chain
-		})
-	}
-
-	return candidates
 }
 
 export function inferTokenRiskCandidatesFromBorrowCapacity({
@@ -156,25 +121,6 @@ export function inferTokenRiskCandidatesFromBorrowCapacity({
 			address: normalizeRiskAssetAddress(address),
 			displayName: chainDisplayNames?.get(token.chain) ?? token.chain
 		})
-	}
-
-	return candidates
-}
-
-export function mergeTokenRiskCandidates(
-	primaryCandidates: TokenRiskCandidate[],
-	supplementalCandidates: TokenRiskCandidate[]
-): TokenRiskCandidate[] {
-	if (primaryCandidates.length === 0) return supplementalCandidates
-	if (supplementalCandidates.length === 0) return primaryCandidates
-
-	const seen = new Set<string>()
-	const candidates: TokenRiskCandidate[] = []
-
-	for (const candidate of [...primaryCandidates, ...supplementalCandidates]) {
-		if (seen.has(candidate.key)) continue
-		seen.add(candidate.key)
-		candidates.push(candidate)
 	}
 
 	return candidates

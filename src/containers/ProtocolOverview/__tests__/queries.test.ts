@@ -175,7 +175,6 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
-			protocolLlamaswapDataset: {},
 			yieldsSnapshot
 		})
 
@@ -242,7 +241,6 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
-			protocolLlamaswapDataset: {},
 			yieldsSnapshot
 		})
 
@@ -314,7 +312,6 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
-			protocolLlamaswapDataset: {},
 			yieldsSnapshot
 		})
 		const faqPeers =
@@ -338,7 +335,6 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
-			protocolLlamaswapDataset: {},
 			yieldsSnapshot
 		}
 
@@ -400,7 +396,6 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
-			protocolLlamaswapDataset: {},
 			yieldsSnapshot
 		}
 
@@ -446,7 +441,6 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
-			protocolLlamaswapDataset: {},
 			yieldsSnapshot
 		})
 
@@ -477,7 +471,6 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
-			protocolLlamaswapDataset: {},
 			yieldsSnapshot
 		})
 
@@ -513,7 +506,6 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
-			protocolLlamaswapDataset: {},
 			yieldsSnapshot
 		})
 
@@ -540,7 +532,6 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
-			protocolLlamaswapDataset: {},
 			yieldsSnapshot
 		})
 
@@ -566,7 +557,6 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
-			protocolLlamaswapDataset: {},
 			yieldsSnapshot
 		})
 
@@ -586,7 +576,6 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
-			protocolLlamaswapDataset: {},
 			yieldsSnapshot
 		})
 
@@ -619,7 +608,6 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
-			protocolLlamaswapDataset: {},
 			yieldsSnapshot
 		})
 
@@ -647,7 +635,6 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
-			protocolLlamaswapDataset: {},
 			yieldsSnapshot
 		})
 
@@ -673,7 +660,6 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
-			protocolLlamaswapDataset: {},
 			yieldsSnapshot
 		})
 
@@ -694,7 +680,6 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
-			protocolLlamaswapDataset: {},
 			yieldsSnapshot
 		})
 
@@ -740,7 +725,6 @@ describe('getProtocolOverviewPageData', () => {
 			},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
-			protocolLlamaswapDataset: {},
 			yieldsSnapshot,
 			getTokenMarketSummary: getTokenMarketSummaryByGeckoId
 		})
@@ -765,7 +749,6 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
-			protocolLlamaswapDataset: {},
 			yieldsSnapshot,
 			includeFaq: false,
 			getTokenMarketSummary: getTokenMarketSummaryByGeckoId
@@ -790,7 +773,6 @@ describe('getProtocolOverviewPageData', () => {
 				tokenlist: {},
 				cgExchangeIdentifiers: [],
 				emissionsSupplyMetrics: {},
-				protocolLlamaswapDataset: {},
 				yieldsSnapshot
 			})
 
@@ -820,7 +802,6 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
-			protocolLlamaswapDataset: {},
 			yieldsSnapshot
 		})
 
@@ -841,7 +822,6 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
-			protocolLlamaswapDataset: {},
 			yieldsSnapshot
 		})
 
@@ -863,7 +843,6 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
-			protocolLlamaswapDataset: {},
 			yieldsSnapshot: null
 		})
 
@@ -961,8 +940,7 @@ describe('getProtocolOverviewPageData', () => {
 						nonIncentiveAmount: 500
 					}
 				}
-			},
-			protocolLlamaswapDataset: {}
+			}
 		})
 
 		expect(data.outstandingFDV).toBe(1000)
@@ -1012,8 +990,7 @@ describe('getProtocolOverviewPageData', () => {
 						nonIncentiveAmount: adjustedSupply
 					}
 				}
-			},
-			protocolLlamaswapDataset: {}
+			}
 		})
 
 		expect(data.outstandingFDV).toBe(0)

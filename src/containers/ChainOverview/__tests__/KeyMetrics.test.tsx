@@ -12,10 +12,6 @@ vi.mock('~/ui/Tooltip', () => ({
 	Tooltip: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children)
 }))
 
-vi.mock('~/components/BuyOnLlamaswap', () => ({
-	BuyOnLlamaswap: () => null
-}))
-
 vi.mock('../KeyMetricsPngExport', () => ({
 	KeyMetricsPngExportButton: () => null
 }))
@@ -46,8 +42,7 @@ const baseProps: React.ComponentProps<typeof KeyMetrics> = {
 		token_symbol: 'MEGA',
 		current_price: null,
 		market_cap: null,
-		fully_diluted_valuation: null,
-		llamaswapChains: null
+		fully_diluted_valuation: null
 	}
 }
 

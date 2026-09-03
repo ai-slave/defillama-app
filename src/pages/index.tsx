@@ -27,7 +27,6 @@ export const getStaticProps = withPerformanceLogging<IChainOverviewData>(
 					chainMetadata: metadataCache.chainMetadata,
 					protocolMetadata: metadataCache.protocolMetadata,
 					categoriesAndTagsMetadata: metadataCache.categoriesAndTags,
-					protocolLlamaswapDataset: metadataCache.protocolLlamaswapDataset,
 					phaseTimer
 				})
 			)

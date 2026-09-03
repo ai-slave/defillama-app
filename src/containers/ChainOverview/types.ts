@@ -2,7 +2,7 @@ import type { SponsoredResearchReportSummary } from '~/containers/Articles/types
 import type { ProtocolRankingInitialPage } from '~/containers/ProtocolRankings/tableQuery'
 import type { IProtocol } from '~/containers/ProtocolRankings/types'
 import type { Raise } from '~/containers/Raises/model'
-import type { IChainMetadata, IProtocolLlamaswapChain as BuyOnLlamaswapChain } from '~/utils/metadata/types'
+import type { IChainMetadata } from '~/utils/metadata/types'
 import type { ChainChartLabels } from './constants'
 
 export type ChainOverviewChartData = Partial<
@@ -66,7 +66,6 @@ export interface IChainOverviewData {
 		current_price: number | null
 		market_cap: number | null
 		fully_diluted_valuation: number | null
-		llamaswapChains?: BuyOnLlamaswapChain[] | null
 	} | null
 	stablecoins: {
 		mcap: number | null

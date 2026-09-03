@@ -74,7 +74,6 @@ const metadataCache = vi.hoisted(
 		bridgeChainSlugs: ['ethereum'],
 		bridgeChainSlugsSet: new Set(['ethereum']),
 		bridgeChainSlugToName: { ethereum: 'Ethereum' },
-		protocolLlamaswapDataset: {},
 		narrativeCategories: { ids: ['ai'], nameById: { ai: 'AI' } },
 		narrativeCategoryIdsSet: new Set(['ai']),
 		oracleRoutes: {

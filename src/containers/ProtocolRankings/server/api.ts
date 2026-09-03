@@ -79,8 +79,7 @@ export async function loadProtocolRankingSnapshot(chain: string, requestedSnapsh
 				chain,
 				chainMetadata: metadataCache.chainMetadata,
 				protocolMetadata: metadataCache.protocolMetadata,
-				categoriesAndTagsMetadata: metadataCache.categoriesAndTags,
-				protocolLlamaswapDataset: metadataCache.protocolLlamaswapDataset
+				categoriesAndTagsMetadata: metadataCache.categoriesAndTags
 			})
 	})
 }

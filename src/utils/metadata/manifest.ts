@@ -1,7 +1,7 @@
 import { METADATA_ARTIFACT_FILES } from './artifactContract'
 import { getMetadataCacheMaxAgeMs } from './config'
 
-export const METADATA_ARTIFACT_VERSION = 4
+export const METADATA_ARTIFACT_VERSION = 5
 export const METADATA_MANIFEST_FILE = 'manifest.json'
 
 export type MetadataArtifactStatus = 'ready' | 'stub'

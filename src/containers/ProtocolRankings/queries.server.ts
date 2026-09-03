@@ -14,7 +14,7 @@ import {
 	type ProtocolsResponse
 } from '~/containers/ProtocolLists/api.types'
 import { getMarketCapToAnnualizedMetricRatio, getPercentChange, slug } from '~/utils'
-import type { IChainMetadata, IProtocolMetadata, ProtocolLlamaswapMetadata } from '~/utils/metadata/types'
+import type { IChainMetadata, IProtocolMetadata } from '~/utils/metadata/types'
 import {
 	buildDimensionProtocolMetrics,
 	type ProtocolRankingActivitySourceKey,
@@ -410,7 +410,6 @@ export const getProtocolsByChain = async ({
 	chain,
 	chainMetadata,
 	protocolMetadata,
-	protocolLlamaswapDataset = null,
 	shouldFetchDexs,
 	shouldFetchPerps,
 	includeExtendedMetrics = false,
@@ -419,7 +418,6 @@ export const getProtocolsByChain = async ({
 	chain: string
 	chainMetadata: Record<string, IChainMetadata>
 	protocolMetadata: Record<string, IProtocolMetadata>
-	protocolLlamaswapDataset?: ProtocolLlamaswapMetadata | null
 	shouldFetchDexs?: boolean
 	shouldFetchPerps?: boolean
 	includeExtendedMetrics?: boolean
@@ -695,7 +693,6 @@ export const getProtocolsByChain = async ({
 
 		const childMcapTvl = protocol.category === 'Bridge' ? null : getMcapTvlRatio(protocol.mcap, tvls.default.tvl)
 
-		const llamaswapChains = protocol.geckoId ? (protocolLlamaswapDataset?.[protocol.geckoId] ?? null) : null
 		const displayName = metadata.displayName
 		const metadataChains = metadata.chains
 		if (!displayName || !metadataChains) continue
@@ -712,7 +709,6 @@ export const getProtocolsByChain = async ({
 			tvlChange: hasDisplayTvl ? tvlChange : null,
 			mcap: protocol.mcap,
 			tokenPrice: protocol.geckoId ? (protocolTokenPrices[`coingecko:${protocol.geckoId}`]?.price ?? null) : null,
-			...(llamaswapChains?.length ? { llamaswapChains } : {}),
 			mcaptvl: childMcapTvl,
 			strikeTvl:
 				protocol.category !== 'Bridge'
@@ -863,9 +859,6 @@ export const getProtocolsByChain = async ({
 				: null
 		const parentProtocolTvl = parentTvl?.default.tvl ?? null
 		const parentMcapTvl = getMcapTvlRatio(parentProtocol.mcap, parentProtocolTvl)
-		const parentLlamaswapChains = parentProtocol.gecko_id
-			? (protocolLlamaswapDataset?.[parentProtocol.gecko_id] ?? null)
-			: null
 		const publicChildren: IChildProtocol[] = []
 		for (const child of childProtocols) publicChildren.push(child.row)
 		const parentRow: IProtocol = {
@@ -883,7 +876,6 @@ export const getProtocolsByChain = async ({
 			tokenPrice: parentProtocol.gecko_id
 				? (protocolTokenPrices[`coingecko:${parentProtocol.gecko_id}`]?.price ?? null)
 				: null,
-			...(parentLlamaswapChains?.length ? { llamaswapChains: parentLlamaswapChains } : {}),
 			mcaptvl: parentMcapTvl,
 			...(parentFees ? { fees: parentFees } : {}),
 			...(parentRevenue ? { revenue: parentRevenue } : {}),

@@ -20,7 +20,6 @@ import type {
 	IChainMetadata,
 	IEmissionsHistoricalPrices,
 	IProtocolMetadata,
-	ProtocolLlamaswapMetadata,
 	IRWAList,
 	IRWAPerpsList,
 	ITokenListEntry
@@ -47,7 +46,6 @@ export type CoreMetadataPayload = {
 	bridgeProtocolSlugs: string[]
 	bridgeChainSlugs: string[]
 	bridgeChainSlugToName: Record<string, string>
-	protocolLlamaswapDataset: ProtocolLlamaswapMetadata
 	narrativeCategories: NarrativeCategoriesMetadata
 	oracleRoutes: OracleRoutesMetadata
 	digitalAssetTreasuryRoutes: DigitalAssetTreasuryRoutesMetadata
@@ -91,7 +89,6 @@ export type MetadataCache = {
 	bridgeChainSlugs: string[]
 	bridgeChainSlugsSet: Set<string>
 	bridgeChainSlugToName: Record<string, string>
-	protocolLlamaswapDataset: ProtocolLlamaswapMetadata
 	narrativeCategories: NarrativeCategoriesMetadata
 	narrativeCategoryIdsSet: Set<string>
 	oracleRoutes: OracleRoutesMetadata
@@ -236,11 +233,6 @@ export const METADATA_ARTIFACT_REGISTRY = defineMetadataArtifactRegistry({
 		stub: {},
 		parse: parseArtifact<Record<string, string>>
 	},
-	protocolLlamaswapDataset: {
-		file: 'llamaswap-protocols.json',
-		stub: {},
-		parse: parseArtifact<ProtocolLlamaswapMetadata>
-	},
 	narrativeCategories: {
 		file: 'narrativeCategories.json',
 		stub: { ids: [], nameById: {} },
@@ -346,7 +338,6 @@ export function hydrateMetadataCache(payload: CoreMetadataPayload): MetadataCach
 		bridgeChainSlugs: payload.bridgeChainSlugs,
 		bridgeChainSlugsSet: new Set(payload.bridgeChainSlugs),
 		bridgeChainSlugToName: payload.bridgeChainSlugToName,
-		protocolLlamaswapDataset: payload.protocolLlamaswapDataset,
 		narrativeCategories: payload.narrativeCategories,
 		narrativeCategoryIdsSet: new Set(payload.narrativeCategories.ids),
 		oracleRoutes: payload.oracleRoutes,

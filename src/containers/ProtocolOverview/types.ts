@@ -8,7 +8,6 @@ import type { SponsoredResearchReportSummary } from '~/containers/Articles/types
 import type { BridgeVolumePoint } from '~/containers/Bridges/api.types'
 import type { Hack } from '~/containers/Hacks/model'
 import type { Raise } from '~/containers/Raises/model'
-import type { IProtocolLlamaswapChain as BuyOnLlamaswapChain } from '~/utils/metadata/types'
 import type { IncomeStatementMetric, IProtocolMetricsV2 } from './api.types'
 import { protocolCharts, type ProtocolChartsLabels } from './constants'
 
@@ -241,7 +240,6 @@ export interface IProtocolOverviewPageData {
 	entityQuestions?: string[]
 	faqItems?: IProtocolFaqItem[]
 	treasuryMethodologyUrl?: string | null
-	llamaswapChains?: BuyOnLlamaswapChain[] | null
 }
 
 export interface IToggledMetrics extends Record<

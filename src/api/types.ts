@@ -160,25 +160,6 @@ export interface CoinsChartResponse {
 	coins?: Record<string, CoinChartEntry | undefined>
 }
 
-interface LlamaswapChain {
-	chain: string
-	chainId: number
-	address: string
-	priceImpact: number
-	liquidity?: number
-}
-
-interface ProtocolLlamaswapEntry {
-	name: string
-	slug: string
-	symbol: string
-	geckoId: string
-	chains?: Array<LlamaswapChain>
-	updatedAt?: string
-}
-
-export type ProtocolLlamaswapDataset = Record<string, ProtocolLlamaswapEntry>
-
 /** Single pool row for a token from `LIQUIDITY_API` (`/liquidity.json`). */
 interface ProtocolLiquidityTokenPool {
 	chain: string

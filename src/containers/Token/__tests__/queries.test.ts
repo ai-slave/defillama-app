@@ -122,11 +122,7 @@ describe('getTokenRiskData', () => {
 		mockedGetTokenRiskBorrowCapacity.mockResolvedValue(createBorrowCapacityResponse() as never)
 
 		const payload = await getTokenRiskData({
-			geckoId: 'usdc',
 			tokenSymbol: 'USDC',
-			protocolLlamaswapDataset: {
-				usdc: [{ chain: 'ethereum', address: '0xA0b8', displayName: 'Ethereum' }]
-			},
 			displayLookups
 		})
 
@@ -137,24 +133,30 @@ describe('getTokenRiskData', () => {
 				chain: 'ethereum',
 				address: '0xa0b8',
 				displayName: 'Ethereum'
+			},
+			{
+				key: 'base:0x8335',
+				chain: 'base',
+				address: '0x8335',
+				displayName: 'Base'
 			}
 		])
 		expect(payload?.scopeCandidates).toEqual(payload?.candidates)
 		expect(payload?.selectedCandidateKey).toBeNull()
-		expect(payload?.exposures.rows).toHaveLength(2)
+		expect(payload?.exposures.rows).toHaveLength(3)
 		expect(payload?.exposures.rows[0].protocolDisplayName).toBe('Aave V3')
 		expect(payload?.exposures.rows[0].chainDisplayName).toBe('Ethereum')
 		expect(payload?.exposures.rows[0]).not.toHaveProperty('collateralBorrowedDebtUsd')
-		expect(payload?.exposures.summary.totalCurrentMaxBorrowUsd).toBe(1500)
-		expect(payload?.exposures.summary.totalMinBadDebtAtPriceZeroUsd).toBe(400)
-		expect(payload?.exposures.summary.minBadDebtKnownCount).toBe(1)
+		expect(payload?.exposures.summary.totalCurrentMaxBorrowUsd).toBe(1800)
+		expect(payload?.exposures.summary.totalMinBadDebtAtPriceZeroUsd).toBe(425)
+		expect(payload?.exposures.summary.minBadDebtKnownCount).toBe(2)
 		expect(payload?.exposures.summary.minBadDebtUnknownCount).toBe(1)
 		expect(payload?.exposures.protocolSummaries).toEqual([
 			{
 				protocol: 'aave-v3',
 				protocolDisplayName: 'Aave V3',
-				totalCurrentMaxBorrowUsd: 1000,
-				totalMinBadDebtAtPriceZeroUsd: 400,
+				totalCurrentMaxBorrowUsd: 1300,
+				totalMinBadDebtAtPriceZeroUsd: 425,
 				minBadDebtAtPriceZeroCoverage: 'known',
 				chainBreakdowns: [
 					{
@@ -162,6 +164,13 @@ describe('getTokenRiskData', () => {
 						chainDisplayName: 'Ethereum',
 						totalCurrentMaxBorrowUsd: 1000,
 						totalMinBadDebtAtPriceZeroUsd: 400,
+						minBadDebtAtPriceZeroCoverage: 'known'
+					},
+					{
+						chain: 'base',
+						chainDisplayName: 'Base',
+						totalCurrentMaxBorrowUsd: 300,
+						totalMinBadDebtAtPriceZeroUsd: 25,
 						minBadDebtAtPriceZeroCoverage: 'known'
 					}
 				]
@@ -188,34 +197,7 @@ describe('getTokenRiskData', () => {
 		)
 	})
 
-	it('aggregates multiple scoped candidates into one onchain view', async () => {
-		const mockedGetTokenRiskBorrowCapacity = vi.mocked(getTokenRiskBorrowCapacity)
-		mockedGetTokenRiskBorrowCapacity.mockResolvedValue(createBorrowCapacityResponse() as never)
-
-		const payload = await getTokenRiskData({
-			geckoId: 'usdc',
-			tokenSymbol: 'USDC',
-			protocolLlamaswapDataset: {
-				usdc: [
-					{ chain: 'ethereum', address: '0xA0b8', displayName: 'Ethereum' },
-					{ chain: 'base', address: '0x8335', displayName: 'Base' }
-				]
-			},
-			displayLookups
-		})
-
-		expect(payload?.scopeCandidates).toHaveLength(2)
-		expect(payload?.exposures.summary.totalCurrentMaxBorrowUsd).toBe(1800)
-		expect(payload?.exposures.summary.totalMinBadDebtAtPriceZeroUsd).toBe(425)
-		expect(payload?.exposures.summary.protocolCount).toBe(2)
-		expect(payload?.exposures.summary.chainCount).toBe(2)
-		expect(payload?.exposures.protocolSummaries[0].chainBreakdowns.map((chain) => chain.chainDisplayName)).toEqual([
-			'Ethereum',
-			'Base'
-		])
-	})
-
-	it('includes API symbol matches that metadata misses for native token risk rows', async () => {
+	it('groups native and wrapped symbol aliases across chains', async () => {
 		const mockedGetTokenRiskBorrowCapacity = vi.mocked(getTokenRiskBorrowCapacity)
 		mockedGetTokenRiskBorrowCapacity.mockResolvedValue({
 			...createBorrowCapacityResponse(),
@@ -339,17 +321,7 @@ describe('getTokenRiskData', () => {
 		} as never)
 
 		const payload = await getTokenRiskData({
-			geckoId: 'ethereum',
 			tokenSymbol: 'ETH',
-			protocolLlamaswapDataset: {
-				ethereum: [
-					{
-						chain: 'ethereum',
-						address: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-						displayName: 'Ethereum'
-					}
-				]
-			},
 			displayLookups
 		})
 
@@ -379,103 +351,12 @@ describe('getTokenRiskData', () => {
 		expect(payload?.exposures.summary.chainCount).toBe(3)
 	})
 
-	it('supplements wrapped metadata candidates for native token alias pages', async () => {
-		const mockedGetTokenRiskBorrowCapacity = vi.mocked(getTokenRiskBorrowCapacity)
-		mockedGetTokenRiskBorrowCapacity.mockResolvedValue({
-			...createBorrowCapacityResponse(),
-			tokens: [
-				{
-					asset: {
-						symbol: 'ETH',
-						address: '0x0000000000000000000000000000000000000000',
-						priceUsd: 3000
-					},
-					chain: 'ethereum',
-					totals: {
-						collateralMaxBorrowUsdGovernance: null,
-						collateralMaxBorrowUsdLiquidity: 100,
-						collateralBorrowedDebtUsd: null,
-						minBadDebtAtPriceZeroUsd: 10
-					},
-					byProtocol: [
-						{
-							protocol: 'sparklend',
-							collateralMaxBorrowUsdGovernance: null,
-							collateralMaxBorrowUsdLiquidity: 100,
-							collateralBorrowedDebtUsd: null,
-							minBadDebtAtPriceZeroUsd: 10
-						}
-					]
-				},
-				{
-					asset: {
-						symbol: 'WETH',
-						address: '0xWethBsc',
-						priceUsd: 3000
-					},
-					chain: 'bsc',
-					totals: {
-						collateralMaxBorrowUsdGovernance: null,
-						collateralMaxBorrowUsdLiquidity: 200,
-						collateralBorrowedDebtUsd: null,
-						minBadDebtAtPriceZeroUsd: 20
-					},
-					byProtocol: [
-						{
-							protocol: 'venus-core-pool',
-							collateralMaxBorrowUsdGovernance: null,
-							collateralMaxBorrowUsdLiquidity: 200,
-							collateralBorrowedDebtUsd: null,
-							minBadDebtAtPriceZeroUsd: 20
-						}
-					]
-				}
-			]
-		} as never)
-
-		const payload = await getTokenRiskData({
-			geckoId: 'ethereum',
-			tokenSymbol: 'ETH',
-			protocolLlamaswapDataset: {
-				ethereum: [
-					{
-						chain: 'bsc',
-						address: '0xWethBsc',
-						displayName: 'BSC'
-					}
-				]
-			},
-			displayLookups
-		})
-
-		expect(payload?.scopeCandidates).toEqual([
-			{
-				key: 'bsc:0xwethbsc',
-				chain: 'bsc',
-				address: '0xwethbsc',
-				displayName: 'BSC'
-			},
-			{
-				key: 'ethereum:native:eth',
-				chain: 'ethereum',
-				address: '0x0000000000000000000000000000000000000000',
-				displayName: 'Ethereum'
-			}
-		])
-		expect(payload?.exposures.summary.totalCurrentMaxBorrowUsd).toBe(300)
-		expect(payload?.exposures.summary.totalMinBadDebtAtPriceZeroUsd).toBe(30)
-		expect(payload?.exposures.summary.protocolCount).toBe(2)
-		expect(payload?.exposures.summary.chainCount).toBe(2)
-	})
-
-	it('falls back to borrow capacity symbols when protocol llamaswap metadata is missing', async () => {
+	it('infers token candidates from borrow capacity symbols', async () => {
 		const mockedGetTokenRiskBorrowCapacity = vi.mocked(getTokenRiskBorrowCapacity)
 		mockedGetTokenRiskBorrowCapacity.mockResolvedValue(createBorrowCapacityResponse() as never)
 
 		const payload = await getTokenRiskData({
-			geckoId: 'wrapped-steth',
 			tokenSymbol: 'WSTETH',
-			protocolLlamaswapDataset: {},
 			displayLookups
 		})
 
@@ -493,14 +374,12 @@ describe('getTokenRiskData', () => {
 		)
 	})
 
-	it('returns null when the token cannot be resolved from metadata or borrow capacity symbols', async () => {
+	it('returns null when the token symbol has no borrow capacity rows', async () => {
 		const mockedGetTokenRiskBorrowCapacity = vi.mocked(getTokenRiskBorrowCapacity)
 		mockedGetTokenRiskBorrowCapacity.mockResolvedValue(createBorrowCapacityResponse() as never)
 
 		const payload = await getTokenRiskData({
-			geckoId: 'missing',
 			tokenSymbol: 'MISSING',
-			protocolLlamaswapDataset: {},
 			displayLookups
 		})
 

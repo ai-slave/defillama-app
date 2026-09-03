@@ -189,7 +189,7 @@ export function TableControlsOverlay({ editor }: { editor: Editor }) {
 					getSource={getTableImageSource}
 					className="contents"
 					buttonClassName={RAIL_BUTTON_CLASS}
-					triggerContent={<span className="font-jetbrains text-[10px] tracking-wider">PNG ▾</span>}
+					triggerContent={<span className="label-xs tracking-wider">PNG ▾</span>}
 					watermarkMode="preference"
 					hideWatermarkItem
 				/>
@@ -197,11 +197,7 @@ export function TableControlsOverlay({ editor }: { editor: Editor }) {
 					label={watermarkEnabled ? 'Watermark on — click to turn off' : 'Watermark off — click to turn on'}
 					onClick={toggleWatermark}
 				>
-					<span
-						className={`font-jetbrains text-[10px] tracking-wider ${watermarkEnabled ? '' : 'text-tertiary line-through'}`}
-					>
-						WM
-					</span>
+					<span className={`label-xs tracking-wider ${watermarkEnabled ? '' : 'text-tertiary line-through'}`}>WM</span>
 				</TableRailButton>
 				<span aria-hidden className="mx-0.5 h-4 w-px bg-border-medium" />
 				<TableRailButton label="Delete table" onClick={() => editor.chain().focus().deleteTable().run()}>

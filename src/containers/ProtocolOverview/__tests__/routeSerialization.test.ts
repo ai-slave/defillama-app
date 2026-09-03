@@ -106,7 +106,6 @@ vi.mock('~/utils/metadata', () => ({
 		tokenlist: {},
 		cgExchangeIdentifiers: [],
 		emissionsSupplyMetrics: {},
-		protocolLlamaswapDataset: null,
 		protocolMetadata: mocks.protocolMetadata,
 		tokenDirectory: null
 	}
@@ -257,8 +256,7 @@ const createProtocolPageData = (): IProtocolOverviewPageData => ({
 	oracleTvs: null,
 	entityQuestions: [],
 	faqItems: [],
-	treasuryMethodologyUrl: null,
-	llamaswapChains: null
+	treasuryMethodologyUrl: null
 })
 
 describe('protocol static props serialization', () => {

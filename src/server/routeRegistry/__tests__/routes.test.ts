@@ -91,7 +91,6 @@ function metadataFixture(): MetadataCache {
 		bridgeChainSlugs: [],
 		bridgeChainSlugsSet: new Set(),
 		bridgeChainSlugToName: {},
-		protocolLlamaswapDataset: {},
 		narrativeCategories: { ids: [], nameById: {} },
 		narrativeCategoryIdsSet: new Set(),
 		oracleRoutes: { oracleNameBySlug: {}, chainNameBySlug: {}, chainSlugsByOracleSlug: {} },

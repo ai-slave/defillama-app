@@ -79,7 +79,7 @@ export function readColumnWidths(table: HTMLTableElement | null): Array<number |
 }
 
 const DEFAULT_TRIGGER_CLASS =
-	'flex items-center justify-center gap-1 rounded-md border border-medium px-2 py-1.5 text-xs text-secondary hover:bg-ai-link-hover focus-visible:bg-ai-link-hover disabled:opacity-50'
+	'flex items-center justify-center gap-1 rounded-md border border-medium px-2 py-1.5 text-xs text-secondary hover:bg-hover-row focus-visible:bg-hover-row disabled:opacity-50'
 
 export function TableImageButtons({
 	getSource,

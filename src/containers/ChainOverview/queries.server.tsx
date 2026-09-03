@@ -26,12 +26,7 @@ import { feeRevenueMetrics, shouldFetchChainOverviewFeeRevenueMetric } from '~/m
 import { getPercentChange, lastDayOfWeek, slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { tokenIconUrl } from '~/utils/icons'
-import type {
-	ICategoriesAndTags,
-	IChainMetadata,
-	IProtocolMetadata,
-	ProtocolLlamaswapMetadata
-} from '~/utils/metadata/types'
+import type { ICategoriesAndTags, IChainMetadata, IProtocolMetadata } from '~/utils/metadata/types'
 import { roundNumber } from '~/utils/numberFormat'
 import { recordOptionalPageDataFailure } from '~/utils/optionalPageData'
 import type { RoutePhaseTimer } from '~/utils/perf'
@@ -202,7 +197,6 @@ export async function getChainOverviewData({
 	chainMetadata,
 	protocolMetadata,
 	categoriesAndTagsMetadata,
-	protocolLlamaswapDataset = null,
 	rwaChainsForActiveMcap = null,
 	tokenDirectory = null,
 	phaseTimer,
@@ -212,7 +206,6 @@ export async function getChainOverviewData({
 	chainMetadata: Record<string, IChainMetadata>
 	protocolMetadata: Record<string, IProtocolMetadata>
 	categoriesAndTagsMetadata: ICategoriesAndTags
-	protocolLlamaswapDataset?: ProtocolLlamaswapMetadata | null
 	rwaChainsForActiveMcap?: string[] | null
 	tokenDirectory?: TokenDirectory | null
 	phaseTimer?: RoutePhaseTimer
@@ -315,8 +308,7 @@ export async function getChainOverviewData({
 					chain,
 					chainMetadata,
 					protocolMetadata,
-					categoriesAndTagsMetadata,
-					protocolLlamaswapDataset
+					categoriesAndTagsMetadata
 				})
 			),
 			timePhase(
@@ -668,8 +660,7 @@ export async function getChainOverviewData({
 							}),
 							current_price: cgData?.market_data?.current_price?.usd ?? null,
 							market_cap: cgData?.market_data?.market_cap?.usd ?? null,
-							fully_diluted_valuation: cgData?.market_data?.fully_diluted_valuation?.usd ?? null,
-							llamaswapChains: chainGeckoId ? (protocolLlamaswapDataset?.[chainGeckoId] ?? null) : null
+							fully_diluted_valuation: cgData?.market_data?.fully_diluted_valuation?.usd ?? null
 						}
 					: null,
 			stablecoins,

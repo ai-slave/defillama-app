@@ -70,7 +70,6 @@ const overviewFixture: TokenOverviewData = {
 	name: 'Bitcoin',
 	displayName: 'BTC',
 	symbol: 'BTC',
-	llamaswapChains: null,
 	marketData: {
 		currentPrice: 100,
 		percentChange24h: 5,
@@ -470,9 +469,6 @@ vi.mock('~/utils/metadata', () => ({
 		},
 		get protocolMetadata() {
 			return state.protocolMetadata
-		},
-		get protocolLlamaswapDataset() {
-			return {}
 		},
 		get chainMetadata() {
 			return state.chainMetadata

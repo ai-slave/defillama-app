@@ -50,7 +50,6 @@ function createPayload(overrides: Partial<CoreMetadataPayload> = {}): CoreMetada
 		bridgeProtocolSlugs: ['stargate'],
 		bridgeChainSlugs: ['ethereum'],
 		bridgeChainSlugToName: { ethereum: 'Ethereum' },
-		protocolLlamaswapDataset: {},
 		narrativeCategories: { ids: ['ai'], nameById: { ai: 'AI' } },
 		oracleRoutes: {
 			oracleNameBySlug: { chainlink: 'Chainlink' },

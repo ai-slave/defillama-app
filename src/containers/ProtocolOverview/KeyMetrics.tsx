@@ -21,7 +21,6 @@ type KeyMetricsOptionalFields = Partial<
 		IProtocolOverviewPageData,
 		| 'category'
 		| 'hasKeyMetrics'
-		| 'llamaswapChains'
 		| 'currentTvlByChain'
 		| 'openSmolStatsSummaryByDefault'
 		| 'token'

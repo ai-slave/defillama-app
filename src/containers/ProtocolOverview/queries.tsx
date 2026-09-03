@@ -23,12 +23,7 @@ import { capitalizeFirstLetter, slug } from '~/utils'
 import { fetchJson, getFastJsonTimeoutMs } from '~/utils/async'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { buildProtocolOverviewHallmarks } from '~/utils/hallmarks'
-import type {
-	IChainMetadata,
-	IProtocolMetadata,
-	ITokenListEntry,
-	ProtocolLlamaswapMetadata
-} from '~/utils/metadata/types'
+import type { IChainMetadata, IProtocolMetadata, ITokenListEntry } from '~/utils/metadata/types'
 import { optionalPageData } from '~/utils/optionalPageData'
 import { findTokenPageRoute, type TokenDirectory } from '~/utils/tokenDirectory'
 import { fetchProtocolExpenses, fetchProtocolOverviewMetrics, fetchProtocolTvlChart } from './api'
@@ -134,7 +129,6 @@ export const getProtocolOverviewPageData = async ({
 	tokenlist,
 	cgExchangeIdentifiers,
 	emissionsSupplyMetrics,
-	protocolLlamaswapDataset,
 	tokenDirectory = null,
 	yieldsSnapshot,
 	includeFaq = true,
@@ -148,7 +142,6 @@ export const getProtocolOverviewPageData = async ({
 	tokenlist: Record<string, ITokenListEntry>
 	cgExchangeIdentifiers: string[]
 	emissionsSupplyMetrics: ProtocolEmissionSupplyMetricsMap
-	protocolLlamaswapDataset?: ProtocolLlamaswapMetadata
 	tokenDirectory?: TokenDirectory | null
 	yieldsSnapshot: YieldsSnapshot | null
 	includeFaq?: boolean
@@ -695,7 +688,6 @@ export const getProtocolOverviewPageData = async ({
 		}
 	}
 	const tokenGeckoId = protocolData.gecko_id ?? currentProtocolMetadata.gecko_id ?? null
-	const llamaswapChains = !isCEX && tokenGeckoId ? (protocolLlamaswapDataset?.[tokenGeckoId] ?? null) : null
 	const chartDenominations: Array<{ symbol: string; geckoId?: string | null }> = []
 	if (firstChain && !isCEX) {
 		chartDenominations.push({ symbol: 'USD', geckoId: null })
@@ -1014,8 +1006,7 @@ export const getProtocolOverviewPageData = async ({
 		seoDescription,
 		defaultToggledCharts,
 		isOracleProtocol,
-		oracleTvs,
-		llamaswapChains
+		oracleTvs
 	}
 
 	if (isCEX || !includeFaq) return pageData

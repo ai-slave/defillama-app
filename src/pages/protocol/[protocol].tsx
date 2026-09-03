@@ -64,7 +64,6 @@ export const getStaticProps = withPerformanceLogging(
 					tokenlist: metadataCache.tokenlist,
 					cgExchangeIdentifiers: metadataCache.cgExchangeIdentifiers,
 					emissionsSupplyMetrics: metadataCache.emissionsSupplyMetrics,
-					protocolLlamaswapDataset: metadataCache.protocolLlamaswapDataset,
 					tokenDirectory: metadataCache.tokenDirectory,
 					yieldsSnapshot,
 					researchSponsorEntitySlug: protocolRoute.canonicalSlug,

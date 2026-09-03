@@ -99,7 +99,6 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 			chainMetadata: metadataCache.chainMetadata,
 			emissionsProtocolsList: metadataCache.emissionsProtocolsList
 		}) ?? null
-	const llamaswapChains = geckoId ? (metadataCache.protocolLlamaswapDataset?.[geckoId] ?? null) : null
 	const displayName = slug(record.symbol) === normalizedToken ? record.symbol : record.name
 	const chainDefiLlamaId = record.chainId ? `chain#${record.chainId.toLowerCase()}` : null
 	const protocolDefiLlamaId = record.protocolId ?? protocolMetadata?.name ?? null
@@ -161,7 +160,6 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 			tokenEntry,
 			protocolMetadata,
 			cgExchangeIdentifiers: metadataCache.cgExchangeIdentifiers ?? [],
-			llamaswapChains,
 			emissionsSupplyMetrics: metadataCache.emissionsSupplyMetrics,
 			currentMetrics: currentSnapshot?.metrics ?? null,
 			source: {
@@ -211,9 +209,7 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 	const tokenRiskPromise = geckoId
 		? (async () => {
 				return getTokenRiskData({
-					geckoId,
 					tokenSymbol: record.symbol,
-					protocolLlamaswapDataset: metadataCache.protocolLlamaswapDataset,
 					displayLookups: {
 						protocolDisplayNames: metadataCache.protocolDisplayNames,
 						chainDisplayNames: metadataCache.chainDisplayNames

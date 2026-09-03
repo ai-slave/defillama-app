@@ -1,5 +1,4 @@
 import type { ProtocolListAdditiveTvlKey } from '~/containers/ProtocolLists/api.types'
-import type { IProtocolLlamaswapChain as BuyOnLlamaswapChain } from '~/utils/metadata/types'
 
 export type TVL_TYPES = ProtocolListAdditiveTvlKey | 'doublecounted' | 'liquidstaking' | 'default' | 'excludeParent'
 
@@ -38,7 +37,6 @@ export interface IChildProtocol {
 	chains: Array<string>
 	mcap: number | null
 	tokenPrice: number | null
-	llamaswapChains?: BuyOnLlamaswapChain[] | null
 	mcaptvl: number | null
 	strikeTvl: boolean
 	fees?: {

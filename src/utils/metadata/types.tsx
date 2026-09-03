@@ -163,12 +163,3 @@ export interface IEmissionsHistoricalPricePoint {
 }
 
 export type IEmissionsHistoricalPrices = Record<string, { prices: Array<IEmissionsHistoricalPricePoint> }>
-
-export interface IProtocolLlamaswapChain {
-	chain: string
-	address: string
-	displayName: string
-	best?: boolean
-}
-
-export type ProtocolLlamaswapMetadata = Record<string, IProtocolLlamaswapChain[] | null>

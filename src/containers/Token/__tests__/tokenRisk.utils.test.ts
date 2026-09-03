@@ -6,9 +6,7 @@ import {
 	filterTokenRiskCandidatesWithData,
 	indexBorrowCapacityByAssetKey,
 	inferTokenRiskCandidatesFromBorrowCapacity,
-	mergeIndexedBorrowCapacity,
-	mergeTokenRiskCandidates,
-	resolveTokenRiskCandidates
+	mergeIndexedBorrowCapacity
 } from '../tokenRisk.utils'
 
 const methodologies: TokenRiskBorrowCapacityResponse['methodologies'] = {
@@ -51,31 +49,6 @@ function createTokenEntry(
 }
 
 describe('tokenRisk utils', () => {
-	it('resolves token risk candidates from llamaswap metadata and dedupes by chain/address', () => {
-		const candidates = resolveTokenRiskCandidates('usdc', 'USDC', {
-			usdc: [
-				{ chain: 'Ethereum', address: '0xA0b8', displayName: 'Ethereum' },
-				{ chain: 'ethereum', address: '0xa0b8', displayName: 'Ethereum duplicate' },
-				{ chain: 'base', address: '0x8335', displayName: 'Base' }
-			]
-		})
-
-		expect(candidates).toEqual([
-			{
-				key: 'ethereum:0xa0b8',
-				chain: 'Ethereum',
-				address: '0xa0b8',
-				displayName: 'Ethereum'
-			},
-			{
-				key: 'base:0x8335',
-				chain: 'base',
-				address: '0x8335',
-				displayName: 'Base'
-			}
-		])
-	})
-
 	it('indexes borrow capacity by chain-address key and merges rows across candidates', () => {
 		const tokens = [
 			createTokenEntry({
@@ -144,48 +117,6 @@ describe('tokenRisk utils', () => {
 				chain: 'base',
 				address: '0xasset2',
 				displayName: 'Base'
-			}
-		])
-	})
-
-	it('dedupes merged token risk candidates by key while preserving primary metadata order', () => {
-		const candidates = mergeTokenRiskCandidates(
-			[
-				{
-					key: 'ethereum:native:eth',
-					chain: 'ethereum',
-					address: '0x0000000000000000000000000000000000000000',
-					displayName: 'Ethereum'
-				}
-			],
-			[
-				{
-					key: 'ethereum:native:eth',
-					chain: 'ethereum',
-					address: '0x0000000000000000000000000000000000000000',
-					displayName: 'Ethereum duplicate'
-				},
-				{
-					key: 'optimism:native:eth',
-					chain: 'optimism',
-					address: '0x0000000000000000000000000000000000000000',
-					displayName: 'Optimism'
-				}
-			]
-		)
-
-		expect(candidates).toEqual([
-			{
-				key: 'ethereum:native:eth',
-				chain: 'ethereum',
-				address: '0x0000000000000000000000000000000000000000',
-				displayName: 'Ethereum'
-			},
-			{
-				key: 'optimism:native:eth',
-				chain: 'optimism',
-				address: '0x0000000000000000000000000000000000000000',
-				displayName: 'Optimism'
 			}
 		])
 	})

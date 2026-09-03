@@ -59,7 +59,6 @@ const {
 		bridgeChainSlugs: [],
 		bridgeChainSlugsSet: new Set<string>(),
 		bridgeChainSlugToName: {},
-		protocolLlamaswapDataset: {},
 		narrativeCategories: { ids: [], nameById: {} },
 		narrativeCategoryIdsSet: new Set<string>(),
 		oracleRoutes: { oracleNameBySlug: {}, chainNameBySlug: {}, chainSlugsByOracleSlug: {} },

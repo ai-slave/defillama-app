@@ -12,7 +12,7 @@ import type { RawTreasuriesResponse } from '~/containers/Treasuries/api.types'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
 import type { YieldsMeta } from '~/containers/Yields/data/types'
 import { slug } from '~/utils'
-import type { IProtocolLlamaswapChain, IProtocolMetadata, ITokenListEntry } from '~/utils/metadata/types'
+import type { IProtocolMetadata, ITokenListEntry } from '~/utils/metadata/types'
 import { DEFAULT_PRICE_CHART_TIMEFRAME } from '~/utils/priceChartTimeframes'
 import type { TokenDirectoryRecord } from '~/utils/tokenDirectory'
 
@@ -77,7 +77,6 @@ export interface TokenOverviewData {
 	name: string
 	displayName: string
 	symbol: string
-	llamaswapChains: IProtocolLlamaswapChain[] | null
 	marketData: TokenOverviewMarketData
 	treasury: TokenOverviewTreasury | null
 	raises: TokenOverviewRaise[] | null
@@ -499,7 +498,6 @@ export async function getTokenOverviewData({
 	tokenEntry,
 	protocolMetadata,
 	cgExchangeIdentifiers,
-	llamaswapChains,
 	emissionsSupplyMetrics,
 	currentMetrics = null,
 	source,
@@ -511,7 +509,6 @@ export async function getTokenOverviewData({
 	tokenEntry: ITokenListEntry | null
 	protocolMetadata: IProtocolMetadata | null
 	cgExchangeIdentifiers: string[]
-	llamaswapChains: IProtocolLlamaswapChain[] | null
 	emissionsSupplyMetrics: ProtocolEmissionSupplyMetricsMap
 	currentMetrics?: TokenOverviewCurrentMetrics | null
 	source: TokenOverviewDataSource
@@ -594,7 +591,6 @@ export async function getTokenOverviewData({
 		name: record.name,
 		displayName,
 		symbol: record.symbol,
-		llamaswapChains,
 		marketData,
 		treasury,
 		raises: buildRaisesSummary(matchedRaises),

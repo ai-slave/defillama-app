@@ -1,5 +1,5 @@
 import { resolve } from 'node:path'
-import { defineConfig } from 'vitest/config'
+import { configDefaults, defineConfig } from 'vitest/config'
 
 export default defineConfig({
 	css: {
@@ -16,6 +16,7 @@ export default defineConfig({
 	},
 	test: {
 		environment: 'node',
+		exclude: [...configDefaults.exclude, '**/.codex/**'],
 		include: ['**/*.test.ts', '**/*.test.tsx'],
 		setupFiles: ['./vitest.setup.ts']
 	}

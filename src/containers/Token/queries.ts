@@ -1,7 +1,6 @@
 import type { ITokenRightsData } from '~/containers/TokenRights/types'
 import type { RouteTableRow } from '~/containers/Yields/data/types'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
-import type { ProtocolLlamaswapMetadata } from '~/utils/metadata/types'
 import type { TokenDirectoryRecord } from '~/utils/tokenDirectory'
 import { getTokenRiskBorrowCapacity } from './api'
 import type { TokenRiskBorrowCapacityResponse } from './api.types'
@@ -10,14 +9,10 @@ import type { TokenOverviewData } from './tokenOverview'
 import type { TokenRiskResponse } from './tokenRisk.types'
 import {
 	buildExposuresSection,
-	CANONICAL_NATIVE_TOKEN_ADDRESS,
 	filterTokenRiskCandidatesWithData,
-	hasNativeWrappedTokenRiskAlias,
 	indexBorrowCapacityByAssetKey,
 	inferTokenRiskCandidatesFromBorrowCapacity,
 	mergeIndexedBorrowCapacity,
-	mergeTokenRiskCandidates,
-	resolveTokenRiskCandidates,
 	TOKEN_RISK_LIMITATIONS_COMMON,
 	TOKEN_RISK_LIMITATION_MIN_BAD_DEBT_NULLS
 } from './tokenRisk.utils'
@@ -226,9 +221,7 @@ type TokenRiskDisplayLookups = {
 }
 
 type TokenRiskQueryInput = {
-	geckoId: string
 	tokenSymbol: string
-	protocolLlamaswapDataset: ProtocolLlamaswapMetadata
 	displayLookups: TokenRiskDisplayLookups
 	borrowCapacitySnapshot?: IndexedBorrowCapacityCache
 }
@@ -275,28 +268,16 @@ async function getIndexedBorrowCapacityCache(): Promise<IndexedBorrowCapacityCac
 }
 
 export async function getTokenRiskData({
-	geckoId,
 	tokenSymbol,
-	protocolLlamaswapDataset,
 	displayLookups,
 	borrowCapacitySnapshot
 }: TokenRiskQueryInput): Promise<TokenRiskResponse | null> {
 	const resolvedBorrowCapacitySnapshot = borrowCapacitySnapshot ?? (await getIndexedBorrowCapacityCache())
-	const metadataCandidates = resolveTokenRiskCandidates(geckoId, tokenSymbol, protocolLlamaswapDataset)
-	const inferredCandidates = inferTokenRiskCandidatesFromBorrowCapacity({
+	const candidates = inferTokenRiskCandidatesFromBorrowCapacity({
 		tokenSymbol,
 		tokens: resolvedBorrowCapacitySnapshot.data.tokens,
 		chainDisplayNames: displayLookups.chainDisplayNames
 	})
-	const shouldSupplementMetadataCandidates =
-		metadataCandidates.some((candidate) => candidate.address === CANONICAL_NATIVE_TOKEN_ADDRESS) ||
-		hasNativeWrappedTokenRiskAlias(tokenSymbol)
-	const candidates =
-		metadataCandidates.length > 0 && shouldSupplementMetadataCandidates
-			? mergeTokenRiskCandidates(metadataCandidates, inferredCandidates)
-			: metadataCandidates.length > 0
-				? metadataCandidates
-				: inferredCandidates
 	if (candidates.length === 0) return null
 
 	const scopeCandidates = filterTokenRiskCandidatesWithData(candidates, resolvedBorrowCapacitySnapshot.indexedTokens)

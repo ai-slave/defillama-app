@@ -6,6 +6,7 @@ import { METADATA_ARTIFACT_FILES, type CoreMetadataPayload } from '../../../src/
 import { readMetadataArtifactManifest, writeMetadataArtifacts } from '../../../src/utils/metadata/artifactWriter'
 import { getMetadataCacheDir } from '../../../src/utils/metadata/config'
 import { METADATA_MANIFEST_FILE, createMetadataArtifactManifest } from '../../../src/utils/metadata/manifest'
+import { EMPTY_TOKEN_FILTER_METADATA } from '../../../src/utils/metadata/tokenFilters'
 import { runPullMetadataCommand } from '../pullCommand'
 
 const tempDirs: string[] = []
@@ -49,13 +50,13 @@ function createPayload(): CoreMetadataPayload {
 		bridgeProtocolSlugs: [],
 		bridgeChainSlugs: [],
 		bridgeChainSlugToName: {},
-		protocolLlamaswapDataset: {},
 		narrativeCategories: { ids: [], nameById: {} },
 		oracleRoutes: { oracleNameBySlug: {}, chainNameBySlug: {}, chainSlugsByOracleSlug: {} },
 		digitalAssetTreasuryRoutes: { assetSlugs: [], companySlugs: [] },
 		stablecoinPeggedAssetSlugs: [],
 		equitiesCompanyRoutes: [],
-		preIpoCompanyIds: []
+		preIpoCompanyIds: [],
+		tokenFilterMetadata: EMPTY_TOKEN_FILTER_METADATA
 	}
 }
 

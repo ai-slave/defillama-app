@@ -11,7 +11,6 @@ import type {
 	CoinsChartResponse,
 	LlamaConfigResponse,
 	ProtocolLiquidityTokensResponse,
-	ProtocolLlamaswapDataset,
 	ProtocolTokenLiquidityChart,
 	SearchQuery,
 	BlockExplorersResponse
@@ -45,7 +44,6 @@ export async function multiSearchApi<T = Record<string, unknown>>(queries: Searc
 const COINS_CHART_API_URL = `${COINS_SERVER_URL}/chart`
 const TOKEN_LIQUIDITY_API_URL = `${SERVER_URL}/historicalLiquidity`
 const LIQUIDITY_API_URL = `${DATASETS_SERVER_URL}/liquidity.json`
-const PROTOCOL_LLAMASWAP_API_URL = 'https://llamaswap.github.io/protocol-liquidity'
 // DefiLlama Coins API queries
 // ---------------------------------------------------------------------------
 
@@ -96,11 +94,6 @@ export async function fetchLiquidityDatasetEntryByProtocolId(
 
 	const data = await fetchLiquidityTokensDataset()
 	return data.find((entry) => entry.id === protocolId) ?? null
-}
-
-/** Fetch the full GitHub Pages LlamaSwap protocol-liquidity dataset keyed by CoinGecko ID. */
-export async function fetchProtocolLlamaswapDataset(): Promise<ProtocolLlamaswapDataset> {
-	return fetchJson<ProtocolLlamaswapDataset>(PROTOCOL_LLAMASWAP_API_URL)
 }
 
 /** Fetch historical liquidity chart for a specific token. */

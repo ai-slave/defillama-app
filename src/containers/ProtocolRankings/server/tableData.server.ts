@@ -5,12 +5,7 @@ import {
 	isContentHashVersion
 } from '~/server/datasetSnapshots/redisBlobStore.server'
 import { slug } from '~/utils'
-import type {
-	ICategoriesAndTags,
-	IChainMetadata,
-	IProtocolMetadata,
-	ProtocolLlamaswapMetadata
-} from '~/utils/metadata/types'
+import type { ICategoriesAndTags, IChainMetadata, IProtocolMetadata } from '~/utils/metadata/types'
 import { recordRuntimeError } from '~/utils/telemetry'
 import { getProtocolsByChain } from '../queries.server'
 import { assertPublishableSnapshot } from '../snapshot.validation'
@@ -148,14 +143,12 @@ export async function getProtocolRankingsSnapshot({
 	chain,
 	chainMetadata,
 	protocolMetadata,
-	categoriesAndTagsMetadata,
-	protocolLlamaswapDataset = null
+	categoriesAndTagsMetadata
 }: {
 	chain: string
 	chainMetadata: Record<string, IChainMetadata>
 	protocolMetadata: Record<string, IProtocolMetadata>
 	categoriesAndTagsMetadata: ICategoriesAndTags
-	protocolLlamaswapDataset?: ProtocolLlamaswapMetadata | null
 }): Promise<ProtocolRankingsCanonicalSnapshot> {
 	return cachedResult(
 		'protocol-rankings-snapshot',
@@ -174,7 +167,6 @@ export async function getProtocolRankingsSnapshot({
 				chain,
 				chainMetadata,
 				protocolMetadata,
-				protocolLlamaswapDataset,
 				shouldFetchDexs,
 				shouldFetchPerps,
 				includeExtendedMetrics: true

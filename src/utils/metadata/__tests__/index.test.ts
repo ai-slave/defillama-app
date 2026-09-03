@@ -98,7 +98,6 @@ function createMetadataPayload(overrides: Partial<CoreMetadataPayload> = {}): Co
 		bridgeProtocolSlugs: [],
 		bridgeChainSlugs: [],
 		bridgeChainSlugToName: {},
-		protocolLlamaswapDataset: {},
 		narrativeCategories: { ids: [], nameById: {} },
 		oracleRoutes: { oracleNameBySlug: {}, chainNameBySlug: {}, chainSlugsByOracleSlug: {} },
 		digitalAssetTreasuryRoutes: { assetSlugs: [], companySlugs: [] },
