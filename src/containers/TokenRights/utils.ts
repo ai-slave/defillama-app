@@ -119,8 +119,8 @@ export function findProtocolEntry(data: IRawTokenRightsEntry[], defillamaId: str
 	return data.find((entry) => entry['DefiLlama ID'] === defillamaId) ?? null
 }
 
-function parseTokenDisplay(tokens: string[]): ITokenRightsTokenDisplay & { tokens: string[] } {
-	const values = tokens
+function parseTokenDisplay(tokens: string[] | null | undefined): ITokenRightsTokenDisplay & { tokens: string[] } {
+	const values = tokens ?? []
 	const displayTokens: string[] = []
 	let fallbackToken = 'N/A'
 	let hasFallbackToken = false
