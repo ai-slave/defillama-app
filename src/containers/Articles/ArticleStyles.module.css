@@ -239,7 +239,7 @@
 	border-collapse: collapse;
 	margin: 0;
 	width: 100%;
-	table-layout: auto;
+	table-layout: fixed;
 	font-size: 13.5px;
 	line-height: 1.5;
 }
@@ -249,9 +249,9 @@
 	border-bottom: 1px solid var(--border-medium);
 	padding: 10px 14px;
 	vertical-align: top;
-	min-width: 9rem;
 	position: relative;
 	box-sizing: border-box;
+	overflow-wrap: anywhere;
 }
 .root :global(.ProseMirror table tr:last-child td),
 .root :global(.ProseMirror table tr:last-child th) {

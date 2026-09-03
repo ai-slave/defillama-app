@@ -54,6 +54,54 @@ describe('ArticleRenderer', () => {
 		expect(html).toContain('/research/authors/john-doe')
 	})
 
+	it('uses fixed table layout only when a table carries stored column widths', () => {
+		const table = (colwidth: number[] | null) => ({
+			type: 'table',
+			content: [
+				{
+					type: 'tableRow',
+					content: [
+						{
+							type: 'tableHeader',
+							attrs: colwidth ? { colwidth } : {},
+							content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Metric' }] }]
+						},
+						{
+							type: 'tableHeader',
+							attrs: {},
+							content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Aave' }] }]
+						}
+					]
+				}
+			]
+		})
+
+		const render = (node: unknown) => {
+			const normalized = normalizeLocalArticleDocument({
+				title: 'Table widths',
+				status: 'published',
+				author: 'Jane Doe',
+				section: 'report',
+				contentJson: { type: 'doc', content: [node] }
+			})
+			expect(normalized.ok).toBe(true)
+			if (!normalized.ok) throw new Error('normalize failed')
+			const client = new QueryClient()
+			return renderToStaticMarkup(
+				<QueryClientProvider client={client}>
+					<ArticleRenderer article={normalized.value} />
+				</QueryClientProvider>
+			)
+		}
+
+		const resized = render(table([400]))
+		expect(resized).toContain('table-fixed')
+		expect(resized).toContain('width:400px')
+
+		const untouched = render(table(null))
+		expect(untouched).not.toContain('table-fixed')
+	})
+
 	it('links the DefiLlama Research brand byline to the research author page', () => {
 		const normalized = normalizeLocalArticleDocument({
 			title: 'Market structure report',

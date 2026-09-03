@@ -576,7 +576,7 @@ export function createArticleEditorExtensions(imageOptions?: Partial<ArticleImag
 		Highlight.configure({ multicolor: false }),
 		TaskList,
 		TaskItem.configure({ nested: true }),
-		Table.configure({ resizable: true, HTMLAttributes: { 'data-article-table': 'true' } }),
+		Table.configure({ resizable: true, cellMinWidth: 80, HTMLAttributes: { 'data-article-table': 'true' } }),
 		TableRow,
 		TableHeader,
 		TableCell,

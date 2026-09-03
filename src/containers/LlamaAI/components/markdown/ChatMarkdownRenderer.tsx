@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown'
 import type { Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
+import { readTableRows, TableImageButtons } from '~/components/TableImage/TableImageButtons'
 import { EntityPreviewLink } from '~/containers/Articles/renderer/EntityPreviewLink'
 import type { ArticleEntityType } from '~/containers/Articles/types'
 import { CitationPill } from '~/containers/LlamaAI/components/messages/CitationPill'
@@ -26,7 +27,9 @@ import {
 } from '~/containers/LlamaAI/utils/markdownHelpers'
 import { ExternalLinkInterstitial } from '~/containers/ProDashboard/components/ExternalLinkInterstitial'
 import { subscribeToLocalStorage } from '~/contexts/LocalStorage'
+import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { popoverMenuItemStyles } from '~/ui/Popover'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { equityIconUrl } from '~/utils/icons'
 import styles from '../../LlamaAIChat.module.css'
@@ -87,6 +90,10 @@ function HeadingWithId({
 }
 
 /** Match `HBarChart` / `TreemapChart` graphic watermark sizing */
+// Matches the chat chart toolbar so a table and a chart in the same message read alike.
+const TABLE_TOOLBAR_ICON_BUTTON = buttonStyles({ size: 'md', square: true })
+const TABLE_TOOLBAR_BUTTON = buttonStyles({ size: 'md' })
+
 const TABLE_WATERMARK_HEIGHT = 40
 const TABLE_WATERMARK_WIDTH = Math.round((389 / 133) * TABLE_WATERMARK_HEIGHT)
 
@@ -160,6 +167,19 @@ function TableWrapper({
 		return { filename, rows }
 	}
 
+	const getImageSource = () => {
+		const table = tableRef.current?.querySelector('table')
+		const rows = readTableRows(table ?? null)
+		if (rows.length === 0) return null
+		trackUmamiEvent('llamaai-download', {
+			kind: 'table-png',
+			rowCount: Math.max(0, rows.length - 1),
+			columns: (rows[0] ?? []).join('|').slice(0, 480),
+			messageId: messageId ?? ''
+		})
+		return { rows }
+	}
+
 	return (
 		<div className="flex flex-col gap-2 rounded-lg border border-ai-line p-2">
 			<Ariakit.DialogProvider store={fullscreenDialogStore}>
@@ -206,35 +226,32 @@ function TableWrapper({
 			</Ariakit.DialogProvider>
 			<div className="ml-auto flex flex-nowrap items-center justify-end gap-2" id="ai-table-download">
 				{isStreaming ? (
-					<button
-						type="button"
-						className="flex items-center justify-center gap-1 rounded-md border border-medium px-2 py-1.5 text-xs text-secondary disabled:opacity-50"
-						disabled
-						aria-label="View table fullscreen"
-					>
+					<button type="button" className={TABLE_TOOLBAR_ICON_BUTTON} disabled aria-label="View table fullscreen">
 						<Icon name="expand" className="size-3 shrink-0" />
 					</button>
 				) : (
 					<button
 						type="button"
 						onClick={openTableFullscreen}
-						className="flex items-center justify-center gap-1 rounded-md border border-medium px-2 py-1.5 text-xs text-secondary hover:bg-ai-link-hover focus-visible:bg-ai-link-hover"
+						className={TABLE_TOOLBAR_ICON_BUTTON}
 						aria-label="View table fullscreen"
 					>
 						<Icon name="expand" className="size-3 shrink-0" />
 					</button>
 				)}
-				{isStreaming ? (
-					<button
-						className="flex items-center justify-center gap-1 rounded-md border border-medium px-2 py-1.5 text-xs text-secondary hover:bg-ai-link-hover focus-visible:bg-ai-link-hover"
-						disabled
-					>
-						<Icon name="download-paper" className="size-3 shrink-0" />
-						<span>.csv</span>
-					</button>
-				) : (
-					<CSVDownloadButton prepareCsv={prepareCsv} smol />
-				)}
+				<TableImageButtons
+					getSource={getImageSource}
+					disabled={isStreaming}
+					buttonClassName={TABLE_TOOLBAR_BUTTON}
+					triggerLabel="Export"
+					csvSlot={
+						isStreaming ? null : (
+							<CSVDownloadButton prepareCsv={prepareCsv} replaceClassName className={popoverMenuItemStyles}>
+								<span>Download CSV</span>
+							</CSVDownloadButton>
+						)
+					}
+				/>
 			</div>
 			<div ref={tableRef} className="relative overflow-x-auto">
 				<div className="pointer-events-none sticky left-0 z-0 h-0 w-full max-sm:hidden" style={{ top: '50%' }}>

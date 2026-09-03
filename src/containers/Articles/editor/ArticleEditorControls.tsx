@@ -1,5 +1,12 @@
 import { useEditorState, type Editor } from '@tiptap/react'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import {
+	headingAbove,
+	readColumnWidths,
+	readTableRows,
+	TableImageButtons,
+	useTableImageWatermark
+} from '~/components/TableImage/TableImageButtons'
 import { Icon } from './ArticleEditorIcon'
 
 export function RailButton({
@@ -35,6 +42,9 @@ export function RailDivider() {
 	return <span aria-hidden className="mx-1 h-5 w-px bg-border-medium" />
 }
 
+const RAIL_BUTTON_CLASS =
+	'flex h-7 min-w-7 items-center justify-center rounded-md px-1.5 text-secondary transition-colors hover:bg-research-tint-hover hover:text-primary disabled:opacity-50'
+
 function TableRailButton({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
 	return (
 		<button
@@ -56,6 +66,15 @@ export function TableControlsOverlay({ editor }: { editor: Editor }) {
 	const overlayRef = useRef<HTMLDivElement | null>(null)
 	const targetRef = useRef<HTMLElement | null>(null)
 	targetRef.current = target
+
+	const [watermarkEnabled, toggleWatermark] = useTableImageWatermark()
+
+	const getTableImageSource = useCallback(() => {
+		const table = targetRef.current as HTMLTableElement | null
+		const rows = readTableRows(table)
+		if (rows.length === 0) return null
+		return { rows, columnWidths: readColumnWidths(table), title: headingAbove(table) }
+	}, [])
 
 	useEffect(() => {
 		const root = editor.view.dom as HTMLElement
@@ -164,6 +183,25 @@ export function TableControlsOverlay({ editor }: { editor: Editor }) {
 				</TableRailButton>
 				<TableRailButton label="Delete column" onClick={() => editor.chain().focus().deleteColumn().run()}>
 					<span className="font-jetbrains text-[10px] tracking-wider">−C</span>
+				</TableRailButton>
+				<span aria-hidden className="mx-0.5 h-4 w-px bg-border-medium" />
+				<TableImageButtons
+					getSource={getTableImageSource}
+					className="contents"
+					buttonClassName={RAIL_BUTTON_CLASS}
+					triggerContent={<span className="font-jetbrains text-[10px] tracking-wider">PNG ▾</span>}
+					watermarkMode="preference"
+					hideWatermarkItem
+				/>
+				<TableRailButton
+					label={watermarkEnabled ? 'Watermark on — click to turn off' : 'Watermark off — click to turn on'}
+					onClick={toggleWatermark}
+				>
+					<span
+						className={`font-jetbrains text-[10px] tracking-wider ${watermarkEnabled ? '' : 'text-tertiary line-through'}`}
+					>
+						WM
+					</span>
 				</TableRailButton>
 				<span aria-hidden className="mx-0.5 h-4 w-px bg-border-medium" />
 				<TableRailButton label="Delete table" onClick={() => editor.chain().focus().deleteTable().run()}>

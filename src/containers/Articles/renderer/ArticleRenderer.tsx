@@ -39,6 +39,7 @@ import {
 	usePromoBanner
 } from './ArticlePromoBanner'
 import { ArticleQAAnswer, ArticleQABlock, ArticleQAQuestion } from './ArticleQABlock'
+import { ArticleTableFrame } from './ArticleTableFrame'
 import { EntityPreviewLink } from './EntityPreviewLink'
 import { LlamaAIChartBlock } from './LlamaAIChartBlock'
 
@@ -428,15 +429,24 @@ function renderTable(node: TiptapJson, key: string, ctx: RenderContext) {
 			bodyRows.push(row)
 		}
 	}
+	const hasColWidths = rows.some((row) =>
+		(row.content ?? []).some((cell) => {
+			const raw = cell.attrs?.colwidth
+			return Array.isArray(raw) && raw.some((v) => typeof v === 'number' && Number.isFinite(v))
+		})
+	)
+
 	return (
-		<div key={key} className="article-table-wrap not-prose my-6 overflow-x-auto">
-			<table className="article-table w-full border-collapse text-sm">
+		<ArticleTableFrame key={key}>
+			<table
+				className={`article-table relative z-10 w-full border-collapse text-sm ${hasColWidths ? 'table-fixed' : ''}`}
+			>
 				{headerRows.length ? (
 					<thead className="bg-page">{headerRows.map((row, i) => renderNode(row, `${key}-thead-${i}`, ctx))}</thead>
 				) : null}
 				<tbody>{bodyRows.map((row, i) => renderNode(row, `${key}-tbody-${i}`, ctx))}</tbody>
 			</table>
-		</div>
+		</ArticleTableFrame>
 	)
 }
 
