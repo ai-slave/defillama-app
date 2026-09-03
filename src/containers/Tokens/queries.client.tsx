@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchJson } from '~/utils/async'
 import { toQueryString } from '~/utils/routerQuery'
-import { TOKENS_PAGE_RESPONSE_SCHEMA_VERSION, type TokensPageResponse } from './types'
+import { TOKENS_PAGE_RESPONSE_SCHEMA_VERSION, type TokensChartDataset, type TokensPageResponse } from './types'
 import { MAX_TOKENS_TABLE_PAGE_SIZE } from './utils'
 
 export const TOKENS_API = '/api/public/tokens'
+export const TOKENS_MARKET_MAP_API = '/api/public/tokens/market-map'
 
 export function useTokensPaginatedTable(queryString: string | null, initialData: TokensPageResponse) {
 	const hasCurrentInitialData = initialData.schemaVersion === TOKENS_PAGE_RESPONSE_SCHEMA_VERSION
@@ -36,5 +37,18 @@ export function useWatchlistTokensTable(ids: string[]) {
 		refetchOnWindowFocus: false,
 		retry: 1,
 		enabled: !!queryString
+	})
+}
+
+/** Top-300-by-mcap dataset behind the market map and movers views; `queryString` carries only filters. */
+export function useTokensChartDataset(queryString: string | null) {
+	return useQuery<TokensChartDataset>({
+		queryKey: ['tokens-market-map', queryString],
+		queryFn: async ({ signal }) => fetchJson<TokensChartDataset>(`${TOKENS_MARKET_MAP_API}${queryString}`, { signal }),
+		placeholderData: (previousData) => previousData,
+		staleTime: 5 * 60 * 1000,
+		refetchOnWindowFocus: false,
+		retry: 1,
+		enabled: queryString != null
 	})
 }

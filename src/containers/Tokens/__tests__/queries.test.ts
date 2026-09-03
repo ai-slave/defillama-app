@@ -13,6 +13,7 @@ import {
 	fetchTokensSourceRows
 } from '../queries.server'
 import { buildTokenOverviewCurrentMetricsById } from '../readModel'
+import { buildTokensRowFilter } from '../utils'
 
 const sourceMocks = vi.hoisted(() => ({
 	fetchAdapterChainMetrics: vi.fn(() => Promise.resolve({ protocols: [] })),
@@ -211,7 +212,7 @@ describe('buildTokensChartDataset', () => {
 			nowSec: 1_800_000_000
 		})
 
-		expect(buildTokensChartDataset(result.sortIndexes.marketCap, 2)).toEqual({
+		expect(buildTokensChartDataset(result.sortIndexes.marketCap, null, 2)).toEqual({
 			names: ['Alpha', 'Beta'],
 			symbols: ['A', 'B'],
 			logoSources: ['@alpha', '@beta'],
@@ -219,6 +220,24 @@ describe('buildTokensChartDataset', () => {
 			marketCaps: [100, 100],
 			priceChanges: { '24h': [null, 2], '7d': [-3, null], '30d': [null, null] },
 			stablecoins: [false, true]
+		})
+
+		const filter = buildTokensRowFilter(
+			{ categories: 'stablecoins' },
+			[],
+			[
+				{ id: 'stablecoins', label: 'Stablecoins' },
+				{ id: 'governance', label: 'Governance' }
+			]
+		)
+		expect(buildTokensChartDataset(result.sortIndexes.marketCap, filter)).toEqual({
+			names: ['Beta'],
+			symbols: ['B'],
+			logoSources: ['@beta'],
+			hrefs: [null],
+			marketCaps: [100],
+			priceChanges: { '24h': [2], '7d': [null], '30d': [null] },
+			stablecoins: [true]
 		})
 	})
 })

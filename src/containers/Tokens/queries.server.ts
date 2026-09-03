@@ -41,7 +41,13 @@ import type {
 	TokensSourceRow
 } from './types'
 import { TOKENS_CHART_GECKO_LOGO_PREFIX } from './types'
-import { buildTokensSortIndexes, getTokensPageFromRows } from './utils'
+import {
+	buildTokensRowFilter,
+	buildTokensSortIndexes,
+	getTokensPageFromRows,
+	matchesTokensRowFilter,
+	type TokensRowFilter
+} from './utils'
 
 const THIRTY_DAYS_SECONDS = 30 * 24 * 60 * 60
 
@@ -71,8 +77,9 @@ export interface TokensPageSnapshot {
 	data: TokensPageResponse
 }
 
-export interface TokensInitialPageSnapshot extends TokensPageSnapshot {
-	chartData: TokensChartDataset
+export interface TokensChartSnapshot {
+	generatedAt: number
+	data: TokensChartDataset
 }
 
 export const TOKENS_CHART_ROW_LIMIT = 300
@@ -553,6 +560,7 @@ export async function getTokenMarketSummaryByGeckoId(geckoId: string): Promise<T
 
 export function buildTokensChartDataset(
 	marketCapIndex: TokensSortIndexes['marketCap'],
+	filter: TokensRowFilter | null = null,
 	limit = TOKENS_CHART_ROW_LIMIT
 ): TokensChartDataset {
 	const chartData: TokensChartDataset = {
@@ -581,6 +589,7 @@ export function buildTokensChartDataset(
 			const row = marketCapIndex.rows[rowIndex]
 			if (row === undefined) throw new Error(`Missing token sort row at index ${rowIndex}`)
 			if (row.marketCap == null || row.marketCap <= 0) continue
+			if (filter !== null && !matchesTokensRowFilter(row, filter)) continue
 			chartData.names.push(row.name)
 			chartData.symbols.push(row.symbol)
 			chartData.logoSources.push(
@@ -617,12 +626,14 @@ export async function getTokensPageSnapshot(query: ParsedUrlQuery = {}): Promise
 	}
 }
 
-export async function getTokensInitialPageSnapshot(): Promise<TokensInitialPageSnapshot> {
+export async function getTokensChartSnapshot(query: ParsedUrlQuery = {}): Promise<TokensChartSnapshot> {
 	const data = await getTokensSourceData()
 	return {
 		generatedAt: data.generatedAt,
-		data: getTokensPageResponse(data, {}),
-		chartData: buildTokensChartDataset(data.sortIndexes.marketCap)
+		data: buildTokensChartDataset(
+			data.sortIndexes.marketCap,
+			buildTokensRowFilter(query, data.chainOptions, data.categoryOptions)
+		)
 	}
 }
 

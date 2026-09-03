@@ -45,15 +45,16 @@ const EMPTY_TOKENS_PAGE_RESPONSE: TokensPageResponse = {
 	categoryOptions: []
 }
 
-export function useTokensServerTable(initialData: TokensPageResponse) {
+export function useTokensServerTable(initialData: TokensPageResponse, enabled = true) {
 	const router = useRouter()
 	const query = router.query as QueryRecord
 	const requestedPagination = React.useMemo(() => getTokensTablePaginationFromQuery(query), [query])
 	const sorting = React.useMemo(() => getTokensTableSortingFromQuery(query), [query])
 	const pageQuery = React.useMemo(() => getTokensPageQuery(query), [query])
+	// Chart views skip the row fetch; options and stats fall back to the SSR snapshot, which carries them all.
 	const queryString = React.useMemo(
-		() => buildTokensTableQueryString({ query, pagination: requestedPagination, sorting }),
-		[query, requestedPagination, sorting]
+		() => (enabled ? buildTokensTableQueryString({ query, pagination: requestedPagination, sorting }) : null),
+		[enabled, query, requestedPagination, sorting]
 	)
 	const rowsQuery = useTokensPaginatedTable(queryString, initialData)
 	const fallbackData =

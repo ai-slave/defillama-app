@@ -229,14 +229,14 @@ describe('parseTokensChartState', () => {
 	it('returns defaults for empty or invalid queries', () => {
 		expect(parseTokensChartState({})).toEqual(TOKENS_CHART_DEFAULTS)
 		expect(
-			parseTokensChartState({ chartView: 'nope', chartTop: '9000', colorBy: '1y', mapMode: 'x', moversWindow: '1y' })
+			parseTokensChartState({ view: 'nope', chartTop: '9000', colorBy: '1y', mapMode: 'x', moversWindow: '1y' })
 		).toEqual(TOKENS_CHART_DEFAULTS)
 	})
 
 	it('accepts valid values and takes the first array entry', () => {
 		expect(
 			parseTokensChartState({
-				chartView: 'movers',
+				view: 'movers',
 				chartTop: ['300', '100'],
 				colorBy: '7d',
 				mapMode: 'flat',

@@ -7,8 +7,10 @@ import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
 import { EQUITIES_TREEMAP_COLORS } from '~/components/ECharts/TreemapChart/Market/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { buttonStyles } from '~/ui/Button'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import {
 	buildTokensMovers,
@@ -21,16 +23,17 @@ import {
 	getTokensChartQueryValue,
 	parseTokensChartState,
 	TOKENS_CHANGE_WINDOWS,
+	TOKENS_CHART_QUERY_KEYS,
 	TOKENS_MOVERS_WINDOWS,
 	TOKENS_UNIVERSES,
 	TOKENS_UNIVERSE_SIZE,
 	type TokensChangeWindow,
-	type TokensChartView,
+	type TokensChartState,
 	type TokensMapMode,
 	type TokensMoversWindow,
 	type TokensUniverse
 } from './chartState'
-import type { TokensChartDataset } from './types'
+import { useTokensChartDataset } from './queries.client'
 
 const MarketTreemapChart = React.lazy(() => import('~/components/ECharts/TreemapChart/Market'))
 const HBarChart = React.lazy(() => import('~/components/ECharts/HBarChart')) as React.FC<IHBarChartProps>
@@ -41,11 +44,6 @@ const GAINER_COLOR = '#269f3c'
 const LOSER_COLOR = '#942e38'
 const EXPORT_FILENAME = 'tokens-market-map'
 const CHART_ACTION_BUTTON_CLASSNAME = buttonStyles({ size: 'md' })
-
-const VIEW_OPTIONS: Array<{ value: TokensChartView; label: string }> = [
-	{ value: 'map', label: 'Market Map' },
-	{ value: 'movers', label: 'Movers' }
-]
 
 const UNIVERSE_OPTIONS = TOKENS_UNIVERSES.map((universe) => ({ value: universe, label: `Top ${universe}` }))
 
@@ -58,19 +56,30 @@ const MAP_MODE_OPTIONS: Array<{ value: TokensMapMode; label: string }> = [
 	{ value: 'flat', label: 'Hide stables' }
 ]
 
-export function TokensChartsSection({ data }: { data: TokensChartDataset }) {
+export function TokensChartsSection({
+	view,
+	filterQueryString,
+	sharedControls,
+	filterPills
+}: {
+	view: 'map' | 'movers'
+	/** Filter-only query string; the dataset is fetched on demand so the table page load stays small. */
+	filterQueryString: string
+	sharedControls: React.ReactNode
+	filterPills: React.ReactNode
+}) {
 	const router = useRouter()
-	const chartState = parseTokensChartState(router.query)
-	const { view, universe, colorBy, mapMode, moversWindow } = chartState
+	const { universe, colorBy, mapMode, moversWindow } = parseTokensChartState(router.query)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const datasetQuery = useTokensChartDataset(filterQueryString)
+	const data = datasetQuery.data
 
 	const setChartQuery = React.useCallback(
-		(updates: Partial<typeof chartState>) => {
+		(updates: Partial<TokensChartState>) => {
 			const queryUpdates: Record<string, string | undefined> = {}
 			for (const key in updates) {
-				const stateKey = key as keyof typeof chartState
-				const queryKey = stateKey === 'view' ? 'chartView' : stateKey === 'universe' ? 'chartTop' : stateKey
-				queryUpdates[queryKey] = getTokensChartQueryValue(stateKey, updates[stateKey]!)
+				const stateKey = key as keyof TokensChartState
+				queryUpdates[TOKENS_CHART_QUERY_KEYS[stateKey]] = getTokensChartQueryValue(stateKey, updates[stateKey]!)
 			}
 			void pushShallowQuery(router, queryUpdates)
 		},
@@ -79,111 +88,119 @@ export function TokensChartsSection({ data }: { data: TokensChartDataset }) {
 
 	const universeSize = TOKENS_UNIVERSE_SIZE[universe]
 	const treemap = React.useMemo(
-		() => (view === 'map' ? buildTokensTreemap(data, { colorWindow: colorBy, mapMode, universe: universeSize }) : null),
+		() =>
+			view === 'map' && data
+				? buildTokensTreemap(data, { colorWindow: colorBy, mapMode, universe: universeSize })
+				: null,
 		[colorBy, data, mapMode, universeSize, view]
 	)
 	const movers = React.useMemo(
-		() => (view === 'movers' ? buildTokensMovers(data, { window: moversWindow, universe: universeSize }) : null),
+		() =>
+			view === 'movers' && data ? buildTokensMovers(data, { window: moversWindow, universe: universeSize }) : null,
 		[data, moversWindow, universeSize, view]
 	)
+	const hasRows = data != null && data.marketCaps.length > 0
 
 	return (
-		<ChartPanel>
-			<ChartPanelToolbar className="flex-wrap justify-end pb-2">
-				<SegmentedControl
-					value={view}
-					onValueChange={(next: TokensChartView) => setChartQuery({ view: next })}
-					options={VIEW_OPTIONS}
-					label="Chart view"
-					variant="default"
-					size="md"
-					className="mr-auto"
-				/>
-				<SegmentedControl
-					value={universe}
-					onValueChange={(next: TokensUniverse) => setChartQuery({ universe: next })}
-					options={UNIVERSE_OPTIONS}
-					label="Tokens by market cap"
-					variant="default"
-					size="md"
-				/>
-				{view === 'map' && treemap ? (
-					<>
-						<SegmentedControl
-							value={colorBy}
-							onValueChange={(next: TokensChangeWindow) => setChartQuery({ colorBy: next })}
-							options={CHANGE_WINDOW_OPTIONS}
-							label="Price change window"
-							variant="default"
-							size="md"
-						/>
-						<SegmentedControl
-							value={mapMode}
-							onValueChange={(next: TokensMapMode) => setChartQuery({ mapMode: next })}
-							options={MAP_MODE_OPTIONS}
-							label="Stablecoins display"
-							variant="default"
-							size="md"
-						/>
-						{treemap.treeData.length > 0 ? (
-							<>
-								<ChartRestoreButton chartInstance={chartInstance} className={CHART_ACTION_BUTTON_CLASSNAME} />
+		<>
+			<TableToolbar>
+				{sharedControls}
+				<TableToolbarControlGroup className="ml-auto justify-end">
+					<SegmentedControl
+						value={universe}
+						onValueChange={(next: TokensUniverse) => setChartQuery({ universe: next })}
+						options={UNIVERSE_OPTIONS}
+						label="Tokens by market cap"
+						variant="default"
+						size="md"
+					/>
+					{view === 'map' ? (
+						<>
+							<SegmentedControl
+								value={colorBy}
+								onValueChange={(next: TokensChangeWindow) => setChartQuery({ colorBy: next })}
+								options={CHANGE_WINDOW_OPTIONS}
+								label="Price change window"
+								variant="default"
+								size="md"
+							/>
+							<SegmentedControl
+								value={mapMode}
+								onValueChange={(next: TokensMapMode) => setChartQuery({ mapMode: next })}
+								options={MAP_MODE_OPTIONS}
+								label="Stablecoins display"
+								variant="default"
+								size="md"
+							/>
+							{treemap && treemap.treeData.length > 0 ? (
+								<>
+									<ChartRestoreButton chartInstance={chartInstance} className={CHART_ACTION_BUTTON_CLASSNAME} />
+									<ChartExportButtons
+										chartInstance={chartInstance}
+										className={CHART_ACTION_BUTTON_CLASSNAME}
+										filename={EXPORT_FILENAME}
+										title="Tokens Market Map"
+										csvSource={{
+											type: 'prepare-csv',
+											prepare: () =>
+												prepareTokensTreemapCsv({
+													leaves: treemap.leaves,
+													colorWindow: colorBy,
+													filename: EXPORT_FILENAME
+												})
+										}}
+										pngProfile="treemapNormalized"
+										smol
+									/>
+								</>
+							) : null}
+						</>
+					) : (
+						<>
+							<SegmentedControl
+								value={moversWindow}
+								onValueChange={(next: TokensMoversWindow) => setChartQuery({ moversWindow: next })}
+								options={MOVERS_WINDOW_OPTIONS}
+								label="Price change window"
+								variant="default"
+								size="md"
+							/>
+							{movers && (movers.gainers.length > 0 || movers.losers.length > 0) ? (
 								<ChartExportButtons
 									chartInstance={chartInstance}
 									className={CHART_ACTION_BUTTON_CLASSNAME}
-									filename={EXPORT_FILENAME}
-									title="Tokens Market Map"
+									filename={`tokens-movers-${moversWindow}-top-${universe}`}
 									csvSource={{
 										type: 'prepare-csv',
 										prepare: () =>
-											prepareTokensTreemapCsv({
-												leaves: treemap.leaves,
-												colorWindow: colorBy,
-												filename: EXPORT_FILENAME
+											prepareTokensMoversCsv({
+												movers,
+												window: moversWindow,
+												filename: `tokens-movers-${moversWindow}-top-${universe}`
 											})
 									}}
-									pngProfile="treemapNormalized"
+									showPng={false}
 									smol
 								/>
-							</>
-						) : null}
-					</>
-				) : (
-					<>
-						<SegmentedControl
-							value={moversWindow}
-							onValueChange={(next: TokensMoversWindow) => setChartQuery({ moversWindow: next })}
-							options={MOVERS_WINDOW_OPTIONS}
-							label="Price change window"
-							variant="default"
-							size="md"
-						/>
-						{movers && (movers.gainers.length > 0 || movers.losers.length > 0) ? (
-							<ChartExportButtons
-								chartInstance={chartInstance}
-								className={CHART_ACTION_BUTTON_CLASSNAME}
-								filename={`tokens-movers-${moversWindow}-top-${universe}`}
-								csvSource={{
-									type: 'prepare-csv',
-									prepare: () =>
-										prepareTokensMoversCsv({
-											movers,
-											window: moversWindow,
-											filename: `tokens-movers-${moversWindow}-top-${universe}`
-										})
-								}}
-								showPng={false}
-								smol
-							/>
-						) : null}
-					</>
-				)}
-			</ChartPanelToolbar>
-			{data.marketCaps.length === 0 ? (
-				<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
-					Chart unavailable
+							) : null}
+						</>
+					)}
+				</TableToolbarControlGroup>
+			</TableToolbar>
+			{filterPills}
+			{data == null ? (
+				<ChartPanelBodyFallback
+					role={datasetQuery.isError ? 'alert' : 'status'}
+					className={datasetQuery.isError ? 'body-sm text-data-down' : undefined}
+					style={{ height: MAP_HEIGHT }}
+				>
+					{datasetQuery.isError ? 'Chart unavailable' : <LoadingSpinner size={24} />}
 				</ChartPanelBodyFallback>
-			) : view === 'map' && treemap ? (
+			) : !hasRows ? (
+				<ChartPanelBodyFallback className="body-sm text-tertiary" style={{ height: MAP_HEIGHT }}>
+					No tokens match the current filters
+				</ChartPanelBodyFallback>
+			) : treemap ? (
 				<>
 					<React.Suspense fallback={<div style={{ height: MAP_HEIGHT }} />}>
 						<MarketTreemapChart
@@ -236,7 +253,7 @@ export function TokensChartsSection({ data }: { data: TokensChartDataset }) {
 					/>
 				</div>
 			) : null}
-		</ChartPanel>
+		</>
 	)
 }
 

@@ -10,7 +10,7 @@ import type {
 	IEquitiesStatementsResponse,
 	IEquitiesSummaryResponse
 } from '../api.types'
-import { getEquitiesListPageData, getEquitiesTickerPageData } from '../queries'
+import { getEquitiesTickerPageData } from '../queries'
 
 const mocks = vi.hoisted(() => ({
 	fetchEquitiesCompanies: vi.fn<() => Promise<IEquitiesCompanyApiItem[]>>(),
@@ -88,18 +88,6 @@ const emptySummary: IEquitiesSummaryResponse = {
 	employeeCount: null
 }
 
-function company(ticker: string, marketCap: number): IEquitiesCompanyApiItem {
-	return {
-		...emptySummary,
-		ticker,
-		country: 'US',
-		name: ticker,
-		marketCap,
-		sector: 'Technology',
-		industry: 'Semiconductors'
-	}
-}
-
 const pageMetadata = {
 	protocolDisplayNames: new Map<string, string>(),
 	rwaPlatforms: [],
@@ -144,16 +132,6 @@ beforeEach(() => {
 	mocks.fetchEquitiesFilings.mockResolvedValue([])
 	mocks.fetchEquitiesDimensions.mockResolvedValue(emptyDimensions)
 	mocks.fetchEquitiesOnchain.mockResolvedValue({ perps: [], tokens: [] })
-})
-
-describe('getEquitiesListPageData', () => {
-	it('preserves producer company order', async () => {
-		mocks.fetchEquitiesCompanies.mockResolvedValue([company('FIRST', 1), company('SECOND', 2)])
-
-		const result = await getEquitiesListPageData()
-
-		expect(result.companies.map(({ ticker }) => ticker)).toEqual(['FIRST', 'SECOND'])
-	})
 })
 
 describe('getEquitiesTickerPageData', () => {

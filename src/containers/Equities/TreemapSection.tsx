@@ -1,4 +1,5 @@
-import { lazy, Suspense, useMemo, useState } from 'react'
+import { useRouter } from 'next/router'
+import { lazy, Suspense, useCallback, useMemo, type ReactNode } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { EQUITIES_TREEMAP_COLORS } from '~/components/ECharts/TreemapChart/Market/colors'
@@ -6,9 +7,14 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import defs from '~/public/equities-definitions.json'
-import { Button, buttonStyles } from '~/ui/Button'
-import { Panel } from '~/ui/Panel'
+import { buttonStyles } from '~/ui/Button'
+import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { LoadingSpinner } from '~/ui/Loaders'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
+import { pushShallowQuery } from '~/utils/routerQuery'
+import { useEquitiesTreemapDataset } from './queries.client'
+import { buildEquitiesTreemapQueryString } from './tableQuery'
 import { buildEquityTickerCountrySlug } from './tickerCountry'
 import {
 	buildEquitiesTreemapLeaves,
@@ -17,22 +23,29 @@ import {
 	EQUITIES_TREEMAP_SIZE_METRICS,
 	groupEquitiesTreemapLeaves,
 	prepareCompleteEquitiesTreemapCsv,
-	rankEquitiesTreemapRows,
 	type EquitiesTreemapColorMetric,
 	type EquitiesTreemapGroupBy,
-	type EquitiesTreemapSizeMetric
+	type EquitiesTreemapSizeMetric,
+	type IEquitiesTreemapRanking
 } from './treemapData'
-import type { IEquitiesListCompanyRow } from './types'
+import {
+	EQUITIES_TREEMAP_QUERY_KEYS,
+	getEquitiesTreemapQueryValue,
+	parseEquitiesTreemapState,
+	type EquitiesTreemapState
+} from './treemapState'
+import type { EquitiesTreemapRow } from './types'
 
 const MarketTreemapChart = lazy(() => import('~/components/ECharts/TreemapChart/Market'))
 
 const CHART_HEIGHT = '600px'
 const EXPORT_FILENAME = 'equities-market-map'
-const CHART_ACTION_BUTTON_CLASSNAME = buttonStyles({ size: 'sm' })
+const CHART_ACTION_BUTTON_CLASSNAME = buttonStyles({ size: 'md' })
+const NO_ROWS: EquitiesTreemapRow[] = []
 
-const GROUP_OPTIONS: Array<{ key: EquitiesTreemapGroupBy; label: string }> = [
-	{ key: 'sector', label: 'Sector' },
-	{ key: 'none', label: 'Flat' }
+const GROUP_OPTIONS: Array<{ value: EquitiesTreemapGroupBy; label: string }> = [
+	{ value: 'sector', label: 'Sector' },
+	{ value: 'none', label: 'Flat' }
 ]
 
 const COLOR_METRIC_LABELS: Record<EquitiesTreemapColorMetric, string> = {
@@ -41,7 +54,7 @@ const COLOR_METRIC_LABELS: Record<EquitiesTreemapColorMetric, string> = {
 	priceChangePercentage1m: 'Price 1M'
 }
 
-const COLOR_OPTIONS = EQUITIES_TREEMAP_COLOR_METRICS.map((key) => ({ key, label: COLOR_METRIC_LABELS[key] }))
+const COLOR_OPTIONS = EQUITIES_TREEMAP_COLOR_METRICS.map((value) => ({ value, label: COLOR_METRIC_LABELS[value] }))
 
 function getMetricLabel(metric: EquitiesTreemapSizeMetric): string {
 	return (defs as Record<string, { label?: string }>)[metric]?.label ?? metric
@@ -52,80 +65,97 @@ const SIZE_METRIC_OPTIONS = EQUITIES_TREEMAP_SIZE_METRICS.map((metric) => ({
 	name: getMetricLabel(metric)
 }))
 
-export function EquitiesTreemapSection({ companies }: { companies: IEquitiesListCompanyRow[] }) {
-	const [groupBy, setGroupBy] = useState<EquitiesTreemapGroupBy>('sector')
-	const [sizeMetric, setSizeMetric] = useState<EquitiesTreemapSizeMetric>('marketCap')
-	const [colorMetric, setColorMetric] = useState<EquitiesTreemapColorMetric>('priceChangePercentage1d')
+export function EquitiesTreemapSection({
+	sharedControls,
+	filterPills
+}: {
+	sharedControls: ReactNode
+	filterPills: ReactNode
+}) {
+	const router = useRouter()
+	const { groupBy, sizeMetric, colorMetric } = parseEquitiesTreemapState(router.query)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
+	// Static page: router.query is empty until hydration, so wait for it before asking for a filtered map.
+	const queryString = router.isReady
+		? buildEquitiesTreemapQueryString({
+				query: router.query as Record<string, string | string[] | undefined>,
+				sizeMetric
+			})
+		: null
+	const datasetQuery = useEquitiesTreemapDataset(queryString)
+	const data = datasetQuery.data
 
-	const ranking = useMemo(() => rankEquitiesTreemapRows(companies, sizeMetric, 0), [companies, sizeMetric])
+	const setTreemapQuery = useCallback(
+		<K extends keyof EquitiesTreemapState>(key: K, value: EquitiesTreemapState[K]) => {
+			void pushShallowQuery(router, { [EQUITIES_TREEMAP_QUERY_KEYS[key]]: getEquitiesTreemapQueryValue(key, value) })
+		},
+		[router]
+	)
+
+	// Rows arrive ranked by size metric and capped server-side; the picker narrows within that set.
+	const rankedRows = data?.rows ?? NO_ROWS
 	const companyOptions = useMemo(
 		() =>
-			ranking.rows.map((company) => ({
+			rankedRows.map((company) => ({
 				key: buildEquityTickerCountrySlug(company.ticker, company.country),
 				name: `${company.ticker} — ${company.name}`
 			})),
-		[ranking.rows]
+		[rankedRows]
 	)
 	const companyTickers = useMemo(() => companyOptions.map((company) => company.key), [companyOptions])
-	const defaultCompanies = useMemo(() => companyTickers.slice(0, EQUITIES_TREEMAP_DEFAULT_LIMIT), [companyTickers])
 	const {
 		activeSeries: selectedCompanies,
 		selectedCharts: selectedCompanySet,
 		setSelectedSeries: setSelectedCompanies
 	} = useSeriesSelection({
 		availableSeries: companyTickers,
-		defaultSeries: defaultCompanies,
+		defaultSeries: companyTickers,
 		maxSelectedSeries: EQUITIES_TREEMAP_DEFAULT_LIMIT,
 		allowEmptySelection: true,
 		resetToDefaultWhenStale: true,
 		selectionKey: 'equities-market-map'
 	})
-	const visibleRanking = useMemo(
+	const ranking = useMemo<IEquitiesTreemapRanking>(
 		() => ({
-			...ranking,
-			rows: ranking.rows.filter((company) =>
+			rows: rankedRows.filter((company) =>
 				selectedCompanySet.has(buildEquityTickerCountrySlug(company.ticker, company.country))
 			),
-			truncatedCount: ranking.rows.length - selectedCompanies.length
+			sizeMetric,
+			excludedCount: data?.excludedCount ?? 0,
+			truncatedCount: rankedRows.length - selectedCompanies.length
 		}),
-		[ranking, selectedCompanies.length, selectedCompanySet]
+		[data?.excludedCount, rankedRows, selectedCompanies.length, selectedCompanySet, sizeMetric]
 	)
-	const leaves = useMemo(() => buildEquitiesTreemapLeaves(visibleRanking, colorMetric), [colorMetric, visibleRanking])
+	const leaves = useMemo(() => buildEquitiesTreemapLeaves(ranking, colorMetric), [colorMetric, ranking])
 	const treeData = useMemo(() => groupEquitiesTreemapLeaves(leaves, groupBy), [groupBy, leaves])
-	const { excludedCount } = ranking
 
 	const sizeLabel = getMetricLabel(sizeMetric)
 	const colorLabel = COLOR_METRIC_LABELS[colorMetric]
+	const eligibleCount = data ? data.total - data.excludedCount : 0
 	const chartNote = [
-		excludedCount > 0 ? `${excludedCount} companies hidden (zero, negative or missing ${sizeLabel})` : '',
-		ranking.rows.length > leaves.length
-			? `showing ${leaves.length} of ${ranking.rows.length} eligible companies by ${sizeLabel}`
+		ranking.excludedCount > 0
+			? `${ranking.excludedCount} companies hidden (zero, negative or missing ${sizeLabel})`
+			: '',
+		eligibleCount > leaves.length
+			? `showing ${leaves.length} of ${eligibleCount} eligible companies by ${sizeLabel}`
 			: ''
 	]
 		.filter(Boolean)
 		.join(' · ')
 
 	return (
-		<Panel padding="none">
-			<TableToolbar className="justify-between">
-				<h2 className="label-md">Market Map</h2>
+		<>
+			<TableToolbar>
+				{sharedControls}
 				<TableToolbarControlGroup className="ml-auto justify-end">
-					<div className="flex items-center gap-1">
-						<span className="text-sm text-secondary">Group</span>
-						{GROUP_OPTIONS.map((option) => (
-							<Button
-								key={option.key}
-								type="button"
-								data-active={groupBy === option.key}
-								variant="toggle"
-								size="sm"
-								onClick={() => setGroupBy(option.key)}
-							>
-								{option.label}
-							</Button>
-						))}
-					</div>
+					<SegmentedControl
+						value={groupBy}
+						onValueChange={(next) => setTreemapQuery('groupBy', next)}
+						options={GROUP_OPTIONS}
+						label="Group companies"
+						variant="default"
+						size="md"
+					/>
 					{companyOptions.length > 1 ? (
 						<SelectWithCombobox
 							allValues={companyOptions}
@@ -134,38 +164,31 @@ export function EquitiesTreemapSection({ companies }: { companies: IEquitiesList
 							label="Company"
 							labelType="smol"
 							variant="filter-responsive"
-							size="sm"
+							size="md"
 						/>
 					) : null}
 					<SelectWithCombobox
 						allValues={SIZE_METRIC_OPTIONS}
 						selectedValues={[sizeMetric]}
 						setSelectedValues={(values) => {
-							const next = Array.isArray(values) ? values[0] : null
-							if (next) setSizeMetric(next as EquitiesTreemapSizeMetric)
+							const next = values[0] as EquitiesTreemapSizeMetric | undefined
+							if (next) setTreemapQuery('sizeMetric', next)
 						}}
 						label={`Size: ${sizeLabel}`}
 						singleSelect
 						nestedMenu={false}
 						labelType="none"
 						variant="filter-responsive"
-						size="sm"
+						size="md"
 					/>
-					<div className="flex items-center gap-1">
-						<span className="text-sm text-secondary">Color</span>
-						{COLOR_OPTIONS.map((option) => (
-							<Button
-								key={option.key}
-								type="button"
-								data-active={colorMetric === option.key}
-								variant="toggle"
-								size="sm"
-								onClick={() => setColorMetric(option.key)}
-							>
-								{option.label}
-							</Button>
-						))}
-					</div>
+					<SegmentedControl
+						value={colorMetric}
+						onValueChange={(next) => setTreemapQuery('colorMetric', next)}
+						options={COLOR_OPTIONS}
+						label="Color metric"
+						variant="default"
+						size="md"
+					/>
 					{treeData.length > 0 ? (
 						<>
 							<ChartRestoreButton chartInstance={chartInstance} className={CHART_ACTION_BUTTON_CLASSNAME} />
@@ -192,42 +215,57 @@ export function EquitiesTreemapSection({ companies }: { companies: IEquitiesList
 					) : null}
 				</TableToolbarControlGroup>
 			</TableToolbar>
-			<Suspense fallback={<div style={{ height: CHART_HEIGHT }} />}>
-				<MarketTreemapChart
-					treeData={treeData}
-					leaves={leaves}
-					sizeLabel={sizeLabel}
-					colorLabel={colorLabel}
-					valueSymbol={sizeMetric === 'employeeCount' ? '' : '$'}
-					height={CHART_HEIGHT}
-					showMarketCapRow={sizeMetric !== 'marketCap'}
-					onReady={handleChartReady}
-				/>
-			</Suspense>
-			{treeData.length > 0 || chartNote ? (
-				<div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3 pb-2 body-sm text-tertiary">
-					{chartNote ? <p>{chartNote}</p> : null}
-					{treeData.length > 0 ? (
-						<div
-							className="ml-auto w-40 shrink-0 text-xs"
-							role="img"
-							aria-label={`Treemap color scale: loss through zero to gain for ${colorLabel}`}
-						>
+			{filterPills}
+			{data == null ? (
+				<ChartPanelBodyFallback
+					role={datasetQuery.isError ? 'alert' : 'status'}
+					className={datasetQuery.isError ? 'body-sm text-data-down' : undefined}
+					style={{ height: CHART_HEIGHT }}
+				>
+					{datasetQuery.isError ? 'Chart unavailable' : <LoadingSpinner size={24} />}
+				</ChartPanelBodyFallback>
+			) : rankedRows.length === 0 ? (
+				<ChartPanelBodyFallback className="body-sm text-tertiary" style={{ height: CHART_HEIGHT }}>
+					No companies match the current filters
+				</ChartPanelBodyFallback>
+			) : (
+				<>
+					<Suspense fallback={<div style={{ height: CHART_HEIGHT }} />}>
+						<MarketTreemapChart
+							treeData={treeData}
+							leaves={leaves}
+							sizeLabel={sizeLabel}
+							colorLabel={colorLabel}
+							valueSymbol={sizeMetric === 'employeeCount' ? '' : '$'}
+							height={CHART_HEIGHT}
+							showMarketCapRow={sizeMetric !== 'marketCap'}
+							onReady={handleChartReady}
+						/>
+					</Suspense>
+					<div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3 pb-2 body-sm text-tertiary">
+						{chartNote ? <p>{chartNote}</p> : null}
+						{treeData.length > 0 ? (
 							<div
-								className="h-1.5 rounded-full border border-subtle"
-								style={{
-									background: `linear-gradient(to right, ${EQUITIES_TREEMAP_COLORS.negative}, ${EQUITIES_TREEMAP_COLORS.neutral}, ${EQUITIES_TREEMAP_COLORS.positive})`
-								}}
-							/>
-							<div className="flex justify-between pt-0.5">
-								<span>Loss</span>
-								<span>0%</span>
-								<span>Gain</span>
+								className="ml-auto w-40 shrink-0 text-xs"
+								role="img"
+								aria-label={`Treemap color scale: loss through zero to gain for ${colorLabel}`}
+							>
+								<div
+									className="h-1.5 rounded-full border border-subtle"
+									style={{
+										background: `linear-gradient(to right, ${EQUITIES_TREEMAP_COLORS.negative}, ${EQUITIES_TREEMAP_COLORS.neutral}, ${EQUITIES_TREEMAP_COLORS.positive})`
+									}}
+								/>
+								<div className="flex justify-between pt-0.5">
+									<span>Loss</span>
+									<span>0%</span>
+									<span>Gain</span>
+								</div>
 							</div>
-						</div>
-					) : null}
-				</div>
-			) : null}
-		</Panel>
+						) : null}
+					</div>
+				</>
+			)}
+		</>
 	)
 }

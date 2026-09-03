@@ -1,25 +1,21 @@
 import {
 	type ColumnDef,
-	type ColumnFiltersState,
 	createColumnHelper,
 	functionalUpdate,
 	getCoreRowModel,
-	getFilteredRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
-	type PaginationState,
 	type SortingState,
 	type VisibilityState,
 	useReactTable
 } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
-import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { PaginatedTable, usePaginatedTableDisplayRowNumber } from '~/components/Table/PaginatedTable'
-import { prepareTableCsv } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
+import { ViewTabs, viewTabIds, type ViewTab } from '~/components/ViewTabs'
+import { useDebouncedCallback } from '~/hooks/useDebounce'
 import defs from '~/public/equities-definitions.json'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
@@ -29,28 +25,28 @@ import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formatDateTime } from '~/utils/dateFormat'
 import { equityCountryFlagUrl } from '~/utils/icons'
 import { readSingleQueryValue, pushShallowQuery } from '~/utils/routerQuery'
+import { prepareEquitiesCsv, type EquitiesCsvColumn } from './csv'
 import { EquitiesFiltersDialog, EquityActiveFilterPills } from './EquityFiltersDialog'
 import {
 	EQUITY_FILTERS_QUERY_KEY,
-	filterEquityCompanies,
 	parseEquityFiltersQuery,
 	serializeEquityFiltersQuery,
 	type EquityActiveFilter
 } from './filters'
 import { formatEquitiesCompactValue } from './financialsFormatting'
+import { isSortingEqual } from './tableQuery'
 import {
 	applyEquityFilterColumnVisibility,
 	getEquityFilterDefaultSorting,
 	shouldUpdateEquityFilterDefaultSorting
 } from './tableVisibility'
 import { EquitiesTreemapSection } from './TreemapSection'
+import { getEquitiesTreemapQueryValue, parseEquitiesTreemapState, type EquitiesPageView } from './treemapState'
 import type { IEquitiesListCompanyRow, IEquitiesListPageProps } from './types'
+import { useEquitiesServerTable } from './useEquitiesServerTable'
 
-type EquitiesTableCompanyRow = IEquitiesListCompanyRow & { searchPriority?: number }
-
-const columnHelper = createColumnHelper<EquitiesTableCompanyRow>()
+const columnHelper = createColumnHelper<IEquitiesListCompanyRow>()
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const
-const DEFAULT_PAGE_SIZE = 50
 
 function ChangePercent({ value }: { value: number | null }) {
 	return (
@@ -68,7 +64,7 @@ function ChangeValue({ value, symbol }: { value: number | null; symbol?: string 
 	)
 }
 
-function EquityTickerCell({ row }: { row: { id: string; original: EquitiesTableCompanyRow } }) {
+function EquityTickerCell({ row }: { row: { id: string; original: IEquitiesListCompanyRow } }) {
 	const rowIndex = usePaginatedTableDisplayRowNumber(row.id)
 
 	return (
@@ -90,14 +86,7 @@ function EquityTickerCell({ row }: { row: { id: string; original: EquitiesTableC
 	)
 }
 
-const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
-	columnHelper.accessor((row) => row.searchPriority ?? 0, {
-		id: 'searchPriority',
-		header: 'Search Priority',
-		meta: {
-			hidden: true
-		}
-	}),
+const columns: ColumnDef<IEquitiesListCompanyRow>[] = [
 	columnHelper.accessor('ticker', {
 		header: 'Ticker',
 		enableSorting: false,
@@ -705,117 +694,53 @@ function getPresetFromQuery(value?: string): EquitiesPreset {
 
 function buildPresetVisibility(preset: EquitiesPreset): VisibilityState {
 	const visible = new Set(PRESET_VISIBLE_COLUMNS[preset])
-	const visibility: VisibilityState = { name: false, searchPriority: false }
+	const visibility: VisibilityState = { name: false }
 	for (const id of DATA_COLUMN_IDS) {
 		visibility[id] = visible.has(id)
 	}
 	return visibility
 }
 
-type EquitiesTableState = {
-	columnFilters: ColumnFiltersState
-	sorting: SortingState
-	columnVisibility: VisibilityState
-	pagination: PaginationState
-	searchValue: string
-}
-
-function buildInitialTableState(preset: EquitiesPreset): EquitiesTableState {
-	return {
-		columnFilters: [],
-		sorting: PRESET_SORTING[preset],
-		columnVisibility: buildPresetVisibility(preset),
-		pagination: { pageIndex: 0, pageSize: DEFAULT_PAGE_SIZE },
-		searchValue: ''
-	}
-}
+type EquitiesServerTable = ReturnType<typeof useEquitiesServerTable>
 
 function EquitiesRankingsTable({
 	preset,
-	filteredCompanies,
-	allCompanies,
+	serverTable,
 	filters,
-	onFiltersChange
+	sharedControls,
+	filterPills,
+	presetsRow
 }: {
 	preset: EquitiesPreset
-	filteredCompanies: IEquitiesListCompanyRow[]
-	allCompanies: IEquitiesListCompanyRow[]
+	serverTable: EquitiesServerTable
 	filters: EquityActiveFilter[]
-	onFiltersChange: (filters: EquityActiveFilter[]) => void
+	sharedControls: ReactNode
+	filterPills: ReactNode
+	presetsRow: ReactNode
 }) {
-	const [tableState, setTableState] = useState(() => buildInitialTableState(preset))
-	const filtersQuery = useMemo(() => serializeEquityFiltersQuery(filters) ?? '', [filters])
-	const handledFiltersRef = useRef({ filters, filtersQuery })
-	const { columnFilters, sorting, columnVisibility, pagination, searchValue } = tableState
-	const deferredSearchValue = useDeferredValue(searchValue)
-	const searchQuery = deferredSearchValue.trim()
-
-	const searchedCompanies = useMemo(() => {
-		const normalizedSearchQuery = searchQuery.toLowerCase()
-		if (normalizedSearchQuery) {
-			const tickerMatches: EquitiesTableCompanyRow[] = []
-			const companyMatches: EquitiesTableCompanyRow[] = []
-
-			for (const company of filteredCompanies) {
-				if (company.ticker.toLowerCase().includes(normalizedSearchQuery)) {
-					tickerMatches.push({ ...company, searchPriority: 0 })
-				} else if (company.name.toLowerCase().includes(normalizedSearchQuery)) {
-					companyMatches.push({ ...company, searchPriority: 1 })
-				}
-			}
-
-			return tickerMatches.concat(companyMatches)
-		}
-
-		return filteredCompanies
-	}, [filteredCompanies, searchQuery])
-	const tableSorting = searchQuery
-		? [{ id: 'searchPriority', desc: false }, ...sorting.filter((sort) => sort.id !== 'searchPriority')]
-		: sorting
+	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(() => buildPresetVisibility(preset))
 	const tableColumnVisibility = useMemo(
 		() => applyEquityFilterColumnVisibility({ columnVisibility, filters }),
 		[columnVisibility, filters]
 	)
 
 	const table = useReactTable({
-		data: searchedCompanies,
+		data: serverTable.rows,
 		columns,
 		state: {
-			sorting: tableSorting,
-			columnFilters,
+			sorting: serverTable.sorting,
 			columnVisibility: tableColumnVisibility,
-			pagination
-		},
-		defaultColumn: {
-			sortUndefined: 'last'
+			pagination: serverTable.pagination
 		},
 		enableSortingRemoval: false,
-		onSortingChange: (updater) =>
-			startTransition(() =>
-				setTableState((state) => ({ ...state, sorting: functionalUpdate(updater, state.sorting) }))
-			),
-		onColumnFiltersChange: (updater) =>
-			startTransition(() =>
-				setTableState((state) => ({
-					...state,
-					columnFilters: functionalUpdate(updater, state.columnFilters)
-				}))
-			),
+		manualPagination: true,
+		manualSorting: true,
+		rowCount: serverTable.total,
+		onSortingChange: serverTable.onSortingChange,
+		onPaginationChange: serverTable.onPaginationChange,
 		onColumnVisibilityChange: (updater) =>
-			startTransition(() =>
-				setTableState((state) => ({
-					...state,
-					columnVisibility: functionalUpdate(updater, state.columnVisibility)
-				}))
-			),
-		onPaginationChange: (updater) =>
-			startTransition(() =>
-				setTableState((state) => ({ ...state, pagination: functionalUpdate(updater, state.pagination) }))
-			),
-		getCoreRowModel: getCoreRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel()
+			startTransition(() => setColumnVisibility((old) => functionalUpdate(updater, old))),
+		getCoreRowModel: getCoreRowModel()
 	})
 
 	const columnOptions = useMemo(() => {
@@ -826,7 +751,6 @@ function EquitiesRankingsTable({
 
 		const options: Array<{ key: string; name: string; help?: string }> = []
 		for (const column of columns) {
-			if (column.meta?.hidden) continue
 			const key = column.id ?? ('accessorKey' in column ? String(column.accessorKey) : '')
 			if (!key) continue
 			const name = typeof column.header === 'function' ? key : column.header != null ? String(column.header) : key
@@ -847,78 +771,35 @@ function EquitiesRankingsTable({
 	// unchecked even while it is force-shown in the table.
 	const selectedColumns: string[] = []
 	for (const column of table.getAllLeafColumns()) {
-		if (column.id === 'searchPriority') continue
 		if (columnVisibility[column.id] !== false) selectedColumns.push(column.id)
 	}
 
 	const setColumnOptions = (newOptions: string[] | ((prev: string[]) => string[])) => {
 		const resolvedOptions = typeof newOptions === 'function' ? newOptions(selectedColumns) : newOptions
 		startTransition(() =>
-			setTableState((state) => {
+			setColumnVisibility(() => {
 				const nextVisibility: VisibilityState = {}
 				for (const column of table.getAllLeafColumns()) {
 					nextVisibility[column.id] = resolvedOptions.includes(column.id)
 				}
-				return { ...state, columnVisibility: nextVisibility }
+				return nextVisibility
 			})
 		)
 	}
 
-	const setSearchValue = (value: string) => {
-		setTableState((state) => ({ ...state, searchValue: value }))
-	}
-
-	const updateTableStateForFilters = useCallback(
-		(previousFilters: EquityActiveFilter[], nextFilters: EquityActiveFilter[]) => {
-			setTableState((state) => {
-				const fallbackSorting = PRESET_SORTING[preset]
-				const shouldUpdateSorting = shouldUpdateEquityFilterDefaultSorting({
-					currentSorting: state.sorting,
-					previousFilters,
-					fallbackSorting
-				})
-				return {
-					...state,
-					sorting: shouldUpdateSorting
-						? getEquityFilterDefaultSorting({ filters: nextFilters, fallbackSorting })
-						: state.sorting,
-					pagination: { ...state.pagination, pageIndex: 0 }
-				}
-			})
-		},
-		[preset]
-	)
-
-	useEffect(() => {
-		const handledFilters = handledFiltersRef.current
-		if (handledFilters.filtersQuery === filtersQuery) return
-
-		handledFiltersRef.current = { filters, filtersQuery }
-		updateTableStateForFilters(handledFilters.filters, filters)
-	}, [filters, filtersQuery, updateTableStateForFilters])
-
-	const applyFilters = (nextFilters: EquityActiveFilter[]) => {
-		const nextFiltersQuery = serializeEquityFiltersQuery(nextFilters) ?? ''
-		updateTableStateForFilters(filters, nextFilters)
-		handledFiltersRef.current = { filters: nextFilters, filtersQuery: nextFiltersQuery }
-		onFiltersChange(nextFilters)
+	const prepareCsv = () => {
+		const csvColumns: EquitiesCsvColumn[] = table.getVisibleLeafColumns().map((column) => ({
+			id: column.id as keyof IEquitiesListCompanyRow,
+			header: typeof column.columnDef.header === 'string' ? column.columnDef.header : column.id
+		}))
+		return prepareEquitiesCsv({ query: serverTable.query, sorting: serverTable.sorting, columns: csvColumns })
 	}
 
 	return (
-		<Panel padding="none">
-			<TableToolbar className="justify-between">
-				<h2 className="label-md">Company Rankings</h2>
+		<>
+			<TableToolbar>
+				{sharedControls}
 				<TableToolbarControlGroup className="ml-auto justify-end">
-					<label className={searchFieldInlineWrapperStyles}>
-						<span className="sr-only">Search companies or tickers</span>
-						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-						<input
-							onInput={(event) => setSearchValue(event.currentTarget.value)}
-							placeholder="Search companies or tickers"
-							className={searchFieldInputStyles}
-						/>
-					</label>
-					<EquitiesFiltersDialog companies={allCompanies} filters={filters} onFiltersChange={applyFilters} />
 					<SelectWithCombobox
 						allValues={columnOptions}
 						selectedValues={selectedColumns}
@@ -929,47 +810,121 @@ function EquitiesRankingsTable({
 						variant="filter-responsive"
 						size="md"
 					/>
-					<CSVDownloadButton
-						prepareCsv={() => prepareTableCsv({ instance: table, filename: 'equities-rankings' })}
-						smol
-						size="md"
-					/>
+					<CSVDownloadButton prepareCsv={prepareCsv} smol size="md" />
 				</TableToolbarControlGroup>
 			</TableToolbar>
-			{filters.length > 0 ? (
-				<div className="px-2 pb-2">
-					<EquityActiveFilterPills
-						filters={filters}
-						onRemove={(id) => applyFilters(filters.filter((f) => f.id !== id))}
-					/>
-				</div>
-			) : null}
-			<PaginatedTable table={table} pageSizeOptions={PAGE_SIZE_OPTIONS} tableClassName="min-w-max!" shell="none" />
-		</Panel>
+			{filterPills}
+			{presetsRow}
+			<PaginatedTable
+				table={table}
+				pageSizeOptions={PAGE_SIZE_OPTIONS}
+				tableClassName="min-w-max!"
+				shell="none"
+				interactionDisabled={serverTable.rowsQuery.isFetching}
+			/>
+		</>
 	)
 }
 
-export function EquitiesOverview({ companies, updatedAt }: IEquitiesListPageProps) {
+/** Uncontrolled so typing stays instant; the URL (and the fetch) update after a debounce. */
+function EquitiesSearchInput({ search, updateSearch }: { search: string; updateSearch: (search: string) => void }) {
+	const inputRef = useRef<HTMLInputElement>(null)
+	const debouncedUpdateSearch = useDebouncedCallback(updateSearch, 300)
+
+	useEffect(() => {
+		const input = inputRef.current
+		// Sync only on external URL changes (back navigation, a removed pill); the URL holds the trimmed
+		// value, so comparing the raw field would rewrite it and eat a trailing space mid-phrase.
+		if (input && input.value.trim() !== search) input.value = search
+	}, [search])
+
+	return (
+		<form
+			onSubmit={(event) => {
+				event.preventDefault()
+				debouncedUpdateSearch.cancel()
+				updateSearch(inputRef.current?.value.trim() ?? '')
+			}}
+			className={searchFieldInlineWrapperStyles}
+		>
+			<label className="relative block min-w-0">
+				<span className="sr-only">Search companies or tickers</span>
+				<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+				<input
+					ref={inputRef}
+					name="search"
+					defaultValue={search}
+					onInput={(event) => debouncedUpdateSearch(event.currentTarget.value.trim())}
+					placeholder="Search companies or tickers"
+					className={searchFieldInputStyles}
+				/>
+			</label>
+		</form>
+	)
+}
+
+const VIEW_TABS: ReadonlyArray<ViewTab<EquitiesPageView>> = [
+	{ id: 'table', label: 'Table' },
+	{ id: 'map', label: 'Market Map' }
+]
+const VIEW_TABS_ID_PREFIX = 'equities-view'
+
+export function EquitiesOverview({ initialData, initialDataGeneratedAt }: IEquitiesListPageProps) {
 	const router = useRouter()
 	const filtersQueryParam = router.query[EQUITY_FILTERS_QUERY_KEY]
 	const selectedPreset = getPresetFromQuery(readSingleQueryValue(router.query.rankBy))
+	const presetSorting = PRESET_SORTING[selectedPreset]
+	const { view } = parseEquitiesTreemapState(router.query)
+	const serverTable = useEquitiesServerTable({
+		initialData,
+		initialDataGeneratedAt,
+		presetSorting,
+		enabled: view === 'table'
+	})
 	const filters = useMemo(() => parseEquityFiltersQuery(filtersQueryParam), [filtersQueryParam])
-	const filteredCompanies = useMemo(() => filterEquityCompanies(companies, filters), [companies, filters])
 	const [isMorePresetsManuallyOpen, setIsMorePresetsManuallyOpen] = useState(false)
 
+	// A preset change resets any hand-picked sort back to the preset's own, as the remount did before.
 	const selectPreset = useCallback(
 		(preset: EquitiesPreset) => {
 			if (preset === selectedPreset) return
-			void pushShallowQuery(router, { rankBy: PRESET_QUERY_SLUGS[preset] })
+			void pushShallowQuery(router, {
+				rankBy: PRESET_QUERY_SLUGS[preset],
+				sortBy: undefined,
+				sortDesc: undefined,
+				page: undefined
+			})
 		},
 		[router, selectedPreset]
 	)
 
+	const currentSorting = serverTable.sorting
 	const setFilters = useCallback(
 		(nextFilters: EquityActiveFilter[]) => {
-			void pushShallowQuery(router, {
-				[EQUITY_FILTERS_QUERY_KEY]: serializeEquityFiltersQuery(nextFilters)
-			})
+			const update: Record<string, string | undefined> = {
+				[EQUITY_FILTERS_QUERY_KEY]: serializeEquityFiltersQuery(nextFilters),
+				page: undefined
+			}
+			if (
+				shouldUpdateEquityFilterDefaultSorting({
+					currentSorting,
+					previousFilters: filters,
+					fallbackSorting: presetSorting
+				})
+			) {
+				const nextSorting = getEquityFilterDefaultSorting({ filters: nextFilters, fallbackSorting: presetSorting })
+				const isPresetSort = isSortingEqual(nextSorting, presetSorting)
+				update.sortBy = isPresetSort ? undefined : nextSorting[0].id
+				update.sortDesc = isPresetSort || nextSorting[0].desc ? undefined : 'false'
+			}
+			void pushShallowQuery(router, update)
+		},
+		[currentSorting, filters, presetSorting, router]
+	)
+
+	const setView = useCallback(
+		(next: EquitiesPageView) => {
+			void pushShallowQuery(router, { view: getEquitiesTreemapQueryValue('view', next) })
 		},
 		[router]
 	)
@@ -993,10 +948,20 @@ export function EquitiesOverview({ companies, updatedAt }: IEquitiesListPageProp
 		</Button>
 	)
 
-	return (
-		<div className="flex flex-col gap-2">
-			<EquitiesTreemapSection companies={filteredCompanies} />
-
+	const sharedControls = (
+		<TableToolbarControlGroup>
+			<EquitiesSearchInput search={serverTable.search} updateSearch={serverTable.updateSearch} />
+			<EquitiesFiltersDialog categoricalOptions={serverTable.options} filters={filters} onFiltersChange={setFilters} />
+		</TableToolbarControlGroup>
+	)
+	const filterPills =
+		filters.length > 0 ? (
+			<div className="px-2 pb-2">
+				<EquityActiveFilterPills filters={filters} onRemove={(id) => setFilters(filters.filter((f) => f.id !== id))} />
+			</div>
+		) : null
+	const presetsRow = (
+		<div className="px-2 pb-2">
 			{/* Mobile: collapsible drawer toggled purely by the native <details> element */}
 			<details className="group rounded-xl border border-subtle bg-surface sm:hidden">
 				<summary className="flex items-center gap-2 px-3 py-2.5">
@@ -1013,7 +978,7 @@ export function EquitiesOverview({ companies, updatedAt }: IEquitiesListPageProp
 			</details>
 
 			{/* Desktop: inline chips with a +More toggle */}
-			<div className="hidden flex-wrap items-center justify-center gap-2 sm:flex">
+			<div className="hidden flex-wrap items-center gap-2 sm:flex">
 				<span className="text-sm font-medium text-secondary">Rank by</span>
 				{EQUITIES_PRIMARY_PRESETS.map(renderPreset)}
 				{showMorePresets ? (
@@ -1045,15 +1010,37 @@ export function EquitiesOverview({ companies, updatedAt }: IEquitiesListPageProp
 					</Button>
 				)}
 			</div>
+		</div>
+	)
+	const { tabId, panelId } = viewTabIds(VIEW_TABS_ID_PREFIX, view)
+	const updatedAt = serverTable.updatedAt
 
-			<EquitiesRankingsTable
-				key={selectedPreset}
-				preset={selectedPreset}
-				filteredCompanies={filteredCompanies}
-				allCompanies={companies}
-				filters={filters}
-				onFiltersChange={setFilters}
-			/>
+	return (
+		<div className="flex flex-col gap-2">
+			<Panel padding="none">
+				<ViewTabs
+					tabs={VIEW_TABS}
+					activeTab={view}
+					onChange={setView}
+					idPrefix={VIEW_TABS_ID_PREFIX}
+					label="Equities view"
+				/>
+				<div role="tabpanel" id={panelId} aria-labelledby={tabId}>
+					{view === 'table' ? (
+						<EquitiesRankingsTable
+							key={selectedPreset}
+							preset={selectedPreset}
+							serverTable={serverTable}
+							filters={filters}
+							sharedControls={sharedControls}
+							filterPills={filterPills}
+							presetsRow={presetsRow}
+						/>
+					) : (
+						<EquitiesTreemapSection sharedControls={sharedControls} filterPills={filterPills} />
+					)}
+				</div>
+			</Panel>
 
 			<p className="px-1 body-sm text-tertiary">
 				Market and statements data provided by{' '}

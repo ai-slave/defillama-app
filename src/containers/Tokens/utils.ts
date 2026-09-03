@@ -6,6 +6,7 @@ import {
 	TOKENS_NUMERIC_FILTER_FIELDS,
 	TOKENS_PAGE_RESPONSE_SCHEMA_VERSION,
 	TOKENS_SORT_KEYS,
+	type TokensFilterOption,
 	type TokensNumericFilter,
 	type TokensPageQuery,
 	type TokensPageResponse,
@@ -137,6 +138,23 @@ export function getTokensTableSortingFromQuery(query: ParsedUrlQuery): SortingSt
 	return [{ id: pageQuery.sortBy, desc: pageQuery.sortDesc }]
 }
 
+function getTokensFilterQueryParams(pageQuery: TokensPageQuery): Record<string, string | string[] | undefined> {
+	const params: Record<string, string | string[] | undefined> = {
+		search: pageQuery.search || undefined,
+		rankFrom: pageQuery.rankFrom != null ? String(pageQuery.rankFrom) : undefined,
+		rankTo: pageQuery.rankTo != null ? String(pageQuery.rankTo) : undefined,
+		chains: pageQuery.chains ?? undefined,
+		excludeChains: pageQuery.excludeChains.length > 0 ? pageQuery.excludeChains : undefined,
+		categories: pageQuery.categories ?? undefined,
+		excludeCategories: pageQuery.excludeCategories.length > 0 ? pageQuery.excludeCategories : undefined
+	}
+	for (const filter of pageQuery.numericFilters) {
+		if (filter.min != null) params[`min_${filter.field}`] = String(filter.min)
+		if (filter.max != null) params[`max_${filter.field}`] = String(filter.max)
+	}
+	return params
+}
+
 export function buildTokensTableQueryString({
 	query,
 	pagination,
@@ -149,25 +167,18 @@ export function buildTokensTableQueryString({
 	const sort = sorting[0]
 	const pageSize = Math.min(pagination.pageSize, MAX_TOKENS_TABLE_PAGE_SIZE)
 	const pageQuery = getTokensPageQuery(query)
-	const numericFilterParams: Record<string, string | undefined> = {}
-	for (const filter of pageQuery.numericFilters) {
-		if (filter.min != null) numericFilterParams[`min_${filter.field}`] = String(filter.min)
-		if (filter.max != null) numericFilterParams[`max_${filter.field}`] = String(filter.max)
-	}
 	return toQueryString({
 		page: pagination.pageIndex > 0 ? String(pagination.pageIndex + 1) : undefined,
 		pageSize: pageSize === DEFAULT_TOKENS_TABLE_PAGE_SIZE ? undefined : String(pageSize),
 		sortBy: sort?.id === DEFAULT_TOKENS_SORT_BY ? undefined : sort?.id,
 		sortDesc: sort ? (sort.desc ? undefined : 'false') : undefined,
-		search: pageQuery.search || undefined,
-		rankFrom: pageQuery.rankFrom != null ? String(pageQuery.rankFrom) : undefined,
-		rankTo: pageQuery.rankTo != null ? String(pageQuery.rankTo) : undefined,
-		chains: pageQuery.chains ?? undefined,
-		excludeChains: pageQuery.excludeChains.length > 0 ? pageQuery.excludeChains : undefined,
-		categories: pageQuery.categories ?? undefined,
-		excludeCategories: pageQuery.excludeCategories.length > 0 ? pageQuery.excludeCategories : undefined,
-		...numericFilterParams
+		...getTokensFilterQueryParams(pageQuery)
 	})
+}
+
+/** Filter-only query string shared by the market map and movers views; sort and paging do not apply there. */
+export function buildTokensChartQueryString(query: Record<string, string | string[] | undefined>): string {
+	return toQueryString(getTokensFilterQueryParams(getTokensPageQuery(query)))
 }
 
 function compareString(a: string, b: string): number {
@@ -282,7 +293,7 @@ export function getTokensStatsDisplay(stats: TokensPageStats): TokensPageStatsDi
 	}
 }
 
-interface TokensRowFilter {
+export interface TokensRowFilter {
 	search: string
 	requestedIds: Set<string> | null
 	rankFrom: number | null
@@ -292,7 +303,7 @@ interface TokensRowFilter {
 	categories: Set<string> | null
 }
 
-function rowMatches(row: TokensSourceRow, filter: TokensRowFilter): boolean {
+export function matchesTokensRowFilter(row: TokensSourceRow, filter: TokensRowFilter): boolean {
 	if (filter.requestedIds != null && !filter.requestedIds.has(row.id.toLowerCase())) return false
 	if (filter.rankFrom != null || filter.rankTo != null) {
 		if (row.rank == null) return false
@@ -315,7 +326,7 @@ function rowMatches(row: TokensSourceRow, filter: TokensRowFilter): boolean {
 function countMatchingRows(rows: TokensSourceRow[], filter: TokensRowFilter): number {
 	let total = 0
 	for (const row of rows) {
-		if (rowMatches(row, filter)) total++
+		if (matchesTokensRowFilter(row, filter)) total++
 	}
 	return total
 }
@@ -329,7 +340,7 @@ function collectSortedRows(
 ): void {
 	let matched = 0
 	for (const row of sortedRows) {
-		if (!rowMatches(row, filter)) continue
+		if (!matchesTokensRowFilter(row, filter)) continue
 		if (matched >= start) pageRows.push(toTableRow(row, matched + 1))
 		matched++
 		if (matched >= end) return
@@ -358,7 +369,7 @@ function collectDescendingRows(
 
 		for (let j = groupStart; j <= i; j++) {
 			const row = index.rows[j]
-			if (!rowMatches(row, filter)) continue
+			if (!matchesTokensRowFilter(row, filter)) continue
 			if (matched >= start) pageRows.push(toTableRow(row, matched + 1))
 			matched++
 			if (matched >= end) return
@@ -369,7 +380,7 @@ function collectDescendingRows(
 
 	for (let j = index.nullStart; j < index.rows.length; j++) {
 		const row = index.rows[j]
-		if (!rowMatches(row, filter)) continue
+		if (!matchesTokensRowFilter(row, filter)) continue
 		if (matched >= start) pageRows.push(toTableRow(row, matched + 1))
 		matched++
 		if (matched >= end) return
@@ -404,14 +415,13 @@ function parseRequestedIds(value: ParsedUrlQuery[string]): Set<string> | null {
 	return new Set(ids)
 }
 
-export function getTokensPageFromRows(
-	rows: TokensSourceRow[],
-	sortIndexes: TokensSortIndexes,
+export function buildTokensRowFilter(
 	query: ParsedUrlQuery,
-	base: Omit<TokensPageResponse, 'schemaVersion' | 'rows' | 'total' | 'page' | 'pageSize' | 'hasMore' | 'statsDisplay'>
-): TokensPageResponse {
+	chainOptions: TokensFilterOption[],
+	categoryOptions: TokensFilterOption[]
+): TokensRowFilter {
 	const pageQuery = getTokensPageQuery(query)
-	const filter: TokensRowFilter = {
+	return {
 		search: pageQuery.search.toLowerCase(),
 		requestedIds: parseRequestedIds(query.ids),
 		rankFrom: pageQuery.rankFrom,
@@ -420,14 +430,24 @@ export function getTokensPageFromRows(
 		chains: getTokenFilterSelection(
 			pageQuery.chains,
 			pageQuery.excludeChains,
-			base.chainOptions.map((option) => option.id)
+			chainOptions.map((option) => option.id)
 		),
 		categories: getTokenFilterSelection(
 			pageQuery.categories,
 			pageQuery.excludeCategories,
-			base.categoryOptions.map((option) => option.id)
+			categoryOptions.map((option) => option.id)
 		)
 	}
+}
+
+export function getTokensPageFromRows(
+	rows: TokensSourceRow[],
+	sortIndexes: TokensSortIndexes,
+	query: ParsedUrlQuery,
+	base: Omit<TokensPageResponse, 'schemaVersion' | 'rows' | 'total' | 'page' | 'pageSize' | 'hasMore' | 'statsDisplay'>
+): TokensPageResponse {
+	const pageQuery = getTokensPageQuery(query)
+	const filter = buildTokensRowFilter(query, base.chainOptions, base.categoryOptions)
 	const hasFilter =
 		filter.search !== '' ||
 		filter.requestedIds != null ||

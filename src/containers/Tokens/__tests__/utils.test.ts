@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { TOKENS_PAGE_RESPONSE_SCHEMA_VERSION, type TokensSourceRow } from '../types'
-import { buildTokensSortIndexes, getTokensPageFromRows, getTokensPageQuery, resolveTokenFilterValues } from '../utils'
+import {
+	buildTokensChartQueryString,
+	buildTokensSortIndexes,
+	getTokensPageFromRows,
+	getTokensPageQuery,
+	resolveTokenFilterValues
+} from '../utils'
 
 function row(overrides: Partial<TokensSourceRow> & Pick<TokensSourceRow, 'id' | 'name' | 'symbol'>): TokensSourceRow {
 	return {
@@ -343,5 +349,26 @@ describe('getTokensPageFromRows', () => {
 		const matched = getPage(filterRows, { categories: 'stablecoins', pageSize: '20' })
 		expect(matched.rows[0]).not.toHaveProperty('chains')
 		expect(matched.rows[0]).not.toHaveProperty('categories')
+	})
+})
+
+describe('buildTokensChartQueryString', () => {
+	it('keeps only filters so map and movers share one dataset across sort and paging', () => {
+		expect(
+			buildTokensChartQueryString({
+				page: '3',
+				pageSize: '100',
+				sortBy: 'fdv',
+				sortDesc: 'false',
+				view: 'map',
+				chartTop: '300',
+				search: ' Eth ',
+				categories: ['governance', 'dex'],
+				excludeChains: 'solana',
+				rankFrom: '10',
+				min_marketCap: '1000000'
+			})
+		).toBe('?search=Eth&rankFrom=10&excludeChains=solana&categories=governance&categories=dex&min_marketCap=1000000')
+		expect(buildTokensChartQueryString({ page: '2', view: 'movers' })).toBe('')
 	})
 })

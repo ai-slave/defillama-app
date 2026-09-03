@@ -1,7 +1,7 @@
 import { getEquitiesTreemapColor } from '~/components/ECharts/TreemapChart/Market/colors'
 import type { MarketTreemapGroup, MarketTreemapLeaf } from '~/components/ECharts/TreemapChart/Market/types'
 import { equityIconUrl } from '~/utils/icons'
-import type { IEquitiesListCompanyRow } from './types'
+import type { EquitiesTreemapRow } from './types'
 
 export const EQUITIES_TREEMAP_SIZE_METRICS = [
 	'marketCap',
@@ -59,7 +59,7 @@ export interface IEquitiesTreemapResult {
 }
 
 export interface IEquitiesTreemapRanking {
-	rows: IEquitiesListCompanyRow[]
+	rows: EquitiesTreemapRow[]
 	sizeMetric: EquitiesTreemapSizeMetric
 	excludedCount: number
 	truncatedCount: number
@@ -130,11 +130,11 @@ export function prepareCompleteEquitiesTreemapCsv({
 }
 
 export function rankEquitiesTreemapRows(
-	rows: IEquitiesListCompanyRow[],
+	rows: EquitiesTreemapRow[],
 	sizeMetric: EquitiesTreemapSizeMetric,
 	limit = EQUITIES_TREEMAP_DEFAULT_LIMIT
 ): IEquitiesTreemapRanking {
-	const rankedRows: IEquitiesListCompanyRow[] = []
+	const rankedRows: EquitiesTreemapRow[] = []
 	let excludedCount = 0
 
 	for (const row of rows) {
@@ -206,7 +206,7 @@ export function groupEquitiesTreemapLeaves(
 }
 
 export function buildEquitiesTreemap(
-	rows: IEquitiesListCompanyRow[],
+	rows: EquitiesTreemapRow[],
 	{ groupBy, sizeMetric, colorMetric, limit = EQUITIES_TREEMAP_DEFAULT_LIMIT }: IEquitiesTreemapOptions
 ): IEquitiesTreemapResult {
 	const ranking = rankEquitiesTreemapRows(rows, sizeMetric, limit)

@@ -24,6 +24,7 @@ export const DATASET_SNAPSHOT_ROUTE_DOMAINS = {
 	'/tokens': ['markets', 'token-rights'],
 	'/watchlist': ['markets', 'token-rights'],
 	'/api/public/tokens': ['markets', 'token-rights'],
+	'/api/public/tokens/market-map': ['markets', 'token-rights'],
 	'/token/*': ['markets', 'liquidations', 'raises', 'treasuries', 'yields', 'liquidity', 'token-rights', 'risk'],
 	'/token-rights': ['token-rights'],
 	'/protocol/token-rights/*': ['token-rights'],

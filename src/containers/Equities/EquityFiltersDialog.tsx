@@ -41,7 +41,7 @@ import {
 	type EquityNumericFilterConfig,
 	type EquityNumericOperator
 } from './filters'
-import type { IEquitiesListCompanyRow } from './types'
+import type { EquitiesCategoricalOptions } from './types'
 
 const OPERATOR_OPTIONS: Array<{ value: EquityNumericOperator; label: string }> = [
 	{ value: '>=', label: '>=' },
@@ -64,14 +64,6 @@ const CATEGORY_LABELS: Record<EquityFilterCategory, string> = EQUITY_FILTER_CATE
 	},
 	{} as Record<EquityFilterCategory, string>
 )
-
-function getUniqueValues(companies: IEquitiesListCompanyRow[], key: 'country' | 'sector' | 'industry'): string[] {
-	const values = new Set<string>()
-	for (const company of companies) {
-		if (company[key]) values.add(company[key])
-	}
-	return Array.from(values).sort((a, b) => a.localeCompare(b))
-}
 
 function replaceFilter(filters: EquityDraftFilter[], nextFilter: EquityDraftFilter): EquityDraftFilter[] {
 	const next = filters.slice()
@@ -400,7 +392,7 @@ function ActiveFilterEditor({
 	onRemove
 }: {
 	filter: EquityDraftFilter
-	categoricalOptions: Record<string, string[]>
+	categoricalOptions: EquitiesCategoricalOptions
 	onUpdate: (filter: EquityDraftFilter) => void
 	onRemove: () => void
 }) {
@@ -410,7 +402,7 @@ function ActiveFilterEditor({
 			<CategoricalFilterEditor
 				config={config}
 				filter={filter}
-				options={categoricalOptions[config.field] ?? []}
+				options={categoricalOptions[config.field]}
 				onUpdate={onUpdate}
 				onRemove={onRemove}
 			/>
@@ -422,12 +414,12 @@ function ActiveFilterEditor({
 }
 
 interface EquitiesFiltersDialogProps {
-	companies: IEquitiesListCompanyRow[]
+	categoricalOptions: EquitiesCategoricalOptions
 	filters: EquityActiveFilter[]
 	onFiltersChange: (filters: EquityActiveFilter[]) => void
 }
 
-export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: EquitiesFiltersDialogProps) {
+export function EquitiesFiltersDialog({ categoricalOptions, filters, onFiltersChange }: EquitiesFiltersDialogProps) {
 	const [open, setOpen] = useState(false)
 	const [search, setSearch] = useState('')
 	const [draftFilters, setDraftFilters] = useState<EquityDraftFilter[]>(() => activeEquityFiltersToDraft(filters))
@@ -435,15 +427,6 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 
 	const activeCount = countActiveEquityFilters(filters)
 	const draftActiveCount = countDraftEquityFilters(draftFilters)
-
-	const categoricalOptions = useMemo(
-		() => ({
-			country: getUniqueValues(companies, 'country'),
-			sector: getUniqueValues(companies, 'sector'),
-			industry: getUniqueValues(companies, 'industry')
-		}),
-		[companies]
-	)
 
 	const groupedAvailableFilters = useMemo(() => {
 		const activeIds = new Set(draftFilters.map((filter) => filter.id))

@@ -242,5 +242,4 @@ export interface TokensPageQuery {
 
 export interface TokensPageProps {
 	initialData: TokensPageResponse
-	initialChartData: TokensChartDataset
 }

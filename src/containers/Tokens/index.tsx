@@ -14,6 +14,7 @@ import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { TokenLogo } from '~/components/TokenLogo'
+import { ViewTabs, viewTabIds, type ViewTab } from '~/components/ViewTabs'
 import { TokenRightsPieChart } from '~/containers/TokenRights/TokenRightsPieChart'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
@@ -22,8 +23,9 @@ import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
-import { TableToolbar } from '~/ui/Toolbar'
+import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { pushShallowQuery } from '~/utils/routerQuery'
+import { getTokensChartQueryValue, parseTokensChartState, type TokensPageView } from './chartState'
 import { NAME_COLUMN_WIDTH, TOKENS_HIDEABLE_COLUMN_SPECS, TOKENS_HIDEABLE_COLUMNS_WIDTH } from './columnSpecs'
 import { prepareTokensCsv } from './csv'
 import {
@@ -44,7 +46,7 @@ import type {
 	TokensTableRow
 } from './types'
 import { useTokensServerTable } from './useTokensServerTable'
-import { resolveTokenFilterValues } from './utils'
+import { buildTokensChartQueryString, resolveTokenFilterValues } from './utils'
 
 const PAGE_SIZE_OPTIONS = [50, 100, 200] as const
 export const TOKENS_TABLE_WIDTH_EXCLUDING_RANK = NAME_COLUMN_WIDTH + TOKENS_HIDEABLE_COLUMNS_WIDTH
@@ -514,7 +516,15 @@ function TokensStats({ stats }: { stats: TokensPageStatsDisplay }) {
 	return <InlineStatStrip items={items} />
 }
 
-function TokensControls({
+const VIEW_TABS: ReadonlyArray<ViewTab<TokensPageView>> = [
+	{ id: 'table', label: 'Table' },
+	{ id: 'map', label: 'Market Map' },
+	{ id: 'movers', label: 'Movers' }
+]
+const VIEW_TABS_ID_PREFIX = 'tokens-view'
+
+/** Filters that apply to every view: search, chains, categories and the numeric filters dialog. */
+function TokensSharedControls({
 	search,
 	updateSearch,
 	filters,
@@ -522,10 +532,7 @@ function TokensControls({
 	selectedCategories,
 	chainOptions,
 	categoryOptions,
-	onFiltersChange,
-	selectedColumns,
-	setSelectedColumns,
-	prepareCsv
+	onFiltersChange
 }: {
 	search: string
 	updateSearch: (search: string) => void
@@ -535,16 +542,15 @@ function TokensControls({
 	chainOptions: TokensFilterOption[]
 	categoryOptions: TokensFilterOption[]
 	onFiltersChange: (filters: TokensActiveFilter[]) => void
-	selectedColumns: string[]
-	setSelectedColumns: (updater: string[] | ((old: string[]) => string[])) => void
-	prepareCsv: () => Promise<{ filename: string; rows: Array<Array<string | number>> }>
 }) {
 	const searchInputRef = React.useRef<HTMLInputElement>(null)
 	const debouncedUpdateSearch = useDebouncedCallback(updateSearch, 300)
 
 	React.useEffect(() => {
 		const input = searchInputRef.current
-		if (input && input.value !== search) input.value = search
+		// Sync only on external URL changes (back navigation, a removed pill); the URL holds the trimmed
+		// value, so comparing the raw field would rewrite it and eat a trailing space mid-phrase.
+		if (input && input.value.trim() !== search) input.value = search
 	}, [search])
 
 	const handleSearchInput = React.useCallback(
@@ -572,9 +578,8 @@ function TokensControls({
 	)
 
 	return (
-		<TableToolbar>
-			<h2 className="label-md">Token Rankings</h2>
-			<form onSubmit={handleSubmit} className={`${searchFieldInlineWrapperStyles} ml-auto`}>
+		<TableToolbarControlGroup>
+			<form onSubmit={handleSubmit} className={searchFieldInlineWrapperStyles}>
 				<label className="relative block min-w-0">
 					<span className="sr-only">Search tokens</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
@@ -614,18 +619,7 @@ function TokensControls({
 				searchPlaceholder="Search categories..."
 			/>
 			<TokensFiltersDialog filters={filters} onFiltersChange={onFiltersChange} />
-			<SelectWithCombobox
-				allValues={COLUMN_PICKER_OPTIONS}
-				selectedValues={selectedColumns}
-				setSelectedValues={setSelectedColumns}
-				nestedMenu={false}
-				label="Columns"
-				labelType="smol"
-				variant="filter-responsive"
-				size="md"
-			/>
-			<CSVDownloadButton prepareCsv={prepareCsv} smol size="md" />
-		</TableToolbar>
+		</TableToolbarControlGroup>
 	)
 }
 
@@ -658,9 +652,10 @@ function readStoredColumnVisibility(): VisibilityState | null {
 	}
 }
 
-export default function TokensPage({ initialData, initialChartData }: TokensPageProps) {
+export default function TokensPage({ initialData }: TokensPageProps) {
 	const router = useRouter()
-	const serverTable = useTokensServerTable(initialData)
+	const { view } = parseTokensChartState(router.query)
+	const serverTable = useTokensServerTable(initialData, view === 'table')
 	const filters = React.useMemo(() => parseTokensFiltersFromQuery(router.query), [router.query])
 	const chainOptionIds = React.useMemo(
 		() => serverTable.data.chainOptions.map((option) => option.id),
@@ -789,38 +784,82 @@ export default function TokensPage({ initialData, initialChartData }: TokensPage
 		[effectiveColumnVisibility, serverTable.query, serverTable.sorting]
 	)
 
+	const setView = React.useCallback(
+		(next: TokensPageView) => {
+			void pushShallowQuery(router, { view: getTokensChartQueryValue('view', next) })
+		},
+		[router]
+	)
+	const { tabId, panelId } = viewTabIds(VIEW_TABS_ID_PREFIX, view)
+	const sharedControls = (
+		<TokensSharedControls
+			search={serverTable.pageQuery.search}
+			updateSearch={serverTable.updateSearch}
+			filters={filters}
+			selectedChains={selectedChains}
+			selectedCategories={selectedCategories}
+			chainOptions={serverTable.data.chainOptions}
+			categoryOptions={serverTable.data.categoryOptions}
+			onFiltersChange={applyFilters}
+		/>
+	)
+	const filterPills =
+		filters.length > 0 ? (
+			<div className="px-2 pb-2">
+				<TokensActiveFilterPills filters={filters} onRemove={removeFilter} />
+			</div>
+		) : null
+
 	return (
 		<div className="flex flex-col gap-2">
 			<TokensStats stats={serverTable.data.statsDisplay} />
-			<TokensChartsSection data={initialChartData} />
 			<Panel padding="none">
-				<TokensControls
-					search={serverTable.pageQuery.search}
-					updateSearch={serverTable.updateSearch}
-					filters={filters}
-					selectedChains={selectedChains}
-					selectedCategories={selectedCategories}
-					chainOptions={serverTable.data.chainOptions}
-					categoryOptions={serverTable.data.categoryOptions}
-					onFiltersChange={applyFilters}
-					selectedColumns={selectedColumns}
-					setSelectedColumns={setSelectedColumns}
-					prepareCsv={prepareCsv}
+				<ViewTabs
+					tabs={VIEW_TABS}
+					activeTab={view}
+					onChange={setView}
+					idPrefix={VIEW_TABS_ID_PREFIX}
+					label="Tokens view"
 				/>
-				{filters.length > 0 ? (
-					<div className="px-2 pb-2">
-						<TokensActiveFilterPills filters={filters} onRemove={removeFilter} />
-					</div>
-				) : null}
-				<PaginatedTable
-					table={table}
-					pageSizeOptions={PAGE_SIZE_OPTIONS}
-					style={tableStyle}
-					tableClassName="min-w-(--tokens-table-min-width)"
-					stickyHeader
-					interactionDisabled={serverTable.rowsQuery.isFetching}
-					shell="none"
-				/>
+				<div role="tabpanel" id={panelId} aria-labelledby={tabId}>
+					{view === 'table' ? (
+						<>
+							<TableToolbar>
+								{sharedControls}
+								<TableToolbarControlGroup className="ml-auto justify-end">
+									<SelectWithCombobox
+										allValues={COLUMN_PICKER_OPTIONS}
+										selectedValues={selectedColumns}
+										setSelectedValues={setSelectedColumns}
+										nestedMenu={false}
+										label="Columns"
+										labelType="smol"
+										variant="filter-responsive"
+										size="md"
+									/>
+									<CSVDownloadButton prepareCsv={prepareCsv} smol size="md" />
+								</TableToolbarControlGroup>
+							</TableToolbar>
+							{filterPills}
+							<PaginatedTable
+								table={table}
+								pageSizeOptions={PAGE_SIZE_OPTIONS}
+								style={tableStyle}
+								tableClassName="min-w-(--tokens-table-min-width)"
+								stickyHeader
+								interactionDisabled={serverTable.rowsQuery.isFetching}
+								shell="none"
+							/>
+						</>
+					) : (
+						<TokensChartsSection
+							view={view}
+							filterQueryString={buildTokensChartQueryString(serverTable.query)}
+							sharedControls={sharedControls}
+							filterPills={filterPills}
+						/>
+					)}
+				</div>
 			</Panel>
 		</div>
 	)

@@ -1,12 +1,18 @@
 import type { InferGetStaticPropsType } from 'next'
 import { EquitiesOverview } from '~/containers/Equities'
-import { getEquitiesListPageData } from '~/containers/Equities/queries'
+import { getEquitiesSnapshot, getEquitiesTablePage } from '~/containers/Equities/server/tableData.server'
+import type { IEquitiesListPageProps } from '~/containers/Equities/types'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging('equities/index', async () => {
-	const props = await getEquitiesListPageData()
+	// Only the default first page ships with the HTML; every other view fetches from /api/public/equities.
+	const snapshot = await getEquitiesSnapshot()
+	const props: IEquitiesListPageProps = {
+		initialData: await getEquitiesTablePage(snapshot, {}),
+		initialDataGeneratedAt: snapshot.generatedAt
+	}
 
 	return {
 		props,

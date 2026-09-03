@@ -1,7 +1,6 @@
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
 import { DEFAULT_PRICE_CHART_TIMEFRAME } from '~/utils/priceChartTimeframes'
 import {
-	fetchEquitiesCompanies,
 	fetchEquitiesCompaniesList,
 	fetchEquitiesDimensions,
 	fetchEquitiesFilings,
@@ -13,24 +12,7 @@ import {
 } from './api'
 import type { IEquitiesCompanyRoute, IEquitiesOnchainResponse } from './api.types'
 import { buildEquityTickerCountrySlug } from './tickerCountry'
-import type { IEquitiesListPageProps, IEquitiesOnchainPageData, IEquityTickerPageProps } from './types'
-
-export async function getEquitiesListPageData(): Promise<IEquitiesListPageProps> {
-	const companies = await fetchEquitiesCompanies()
-	const rows: IEquitiesListPageProps['companies'] = []
-	let updatedAt: string | undefined
-
-	// The producer already writes this complete population in descending market-cap order.
-	for (const company of companies) {
-		rows.push({
-			...company,
-			href: `/equities/${buildEquityTickerCountrySlug(company.ticker, company.country)}`
-		})
-		updatedAt ??= company.updatedAt
-	}
-
-	return { companies: rows, ...(updatedAt === undefined ? {} : { updatedAt }) }
-}
+import type { IEquitiesOnchainPageData, IEquityTickerPageProps } from './types'
 
 function buildRwaPlatformNameLookup(platforms: string[]): Map<string, string> {
 	const lookup = new Map<string, string>()

@@ -1,16 +1,16 @@
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
 import TokensPage from '~/containers/Tokens'
 import { getTokensCacheControl } from '~/containers/Tokens/cache.server'
-import { getTokensInitialPageSnapshot } from '~/containers/Tokens/queries.server'
+import { getTokensPageSnapshot } from '~/containers/Tokens/queries.server'
 import type { TokensPageProps } from '~/containers/Tokens/types'
 import Layout from '~/layout'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
 const getServerSidePropsHandler: GetServerSideProps<TokensPageProps> = async ({ res }) => {
-	const snapshot = await getTokensInitialPageSnapshot()
+	const snapshot = await getTokensPageSnapshot()
 	res.setHeader('Cache-Control', getTokensCacheControl(snapshot.generatedAt))
 	return {
-		props: { initialData: snapshot.data, initialChartData: snapshot.chartData }
+		props: { initialData: snapshot.data }
 	}
 }
 
