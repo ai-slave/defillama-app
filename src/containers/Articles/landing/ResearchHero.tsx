@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import React from 'react'
 import { ResearchIcon } from '~/components/ResearchIcon'
+import { ResearchSearchDialog } from '~/components/ResearchSearchDialog'
 import { ReportsCarousel } from '~/containers/Articles/landing/ReportsCarousel'
 import { ResearchHeaderWash } from '~/containers/Articles/ResearchHeaderWash'
 import type { ArticleDocument } from '~/containers/Articles/types'
@@ -16,6 +17,9 @@ export const ResearchHero: React.FC<ResearchHeroProps> = ({ title, subtitle, rep
 		<div className="text-on-brand">
 			<div>
 				<div className="relative isolate flex flex-col items-center pt-8 lg:pt-11.25">
+					<div className="absolute inset-x-0 top-2 z-10 mx-auto hidden w-full max-w-7xl justify-end px-8 lg:flex">
+						<ResearchSearchDialog variant="desktop" />
+					</div>
 					<div
 						aria-hidden
 						className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[calc(100%+clamp(160px,18vw,200px))] overflow-hidden select-none"

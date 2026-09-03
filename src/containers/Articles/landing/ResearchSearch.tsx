@@ -120,7 +120,7 @@ function SearchBar({ searchQuery, routePath }: { searchQuery: ResearchSearchQuer
 					ref={queryInputRef}
 					name="q"
 					defaultValue={query}
-					placeholder="Search reports, interviews, authors…"
+					placeholder="Search reports, interviews, spotlights…"
 					className="w-full bg-transparent py-2.5 text-sm text-research-heading placeholder:text-research-heading/40 focus:outline-hidden dark:text-research-ink dark:placeholder:text-on-brand/40"
 				/>
 			</label>

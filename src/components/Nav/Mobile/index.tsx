@@ -1,4 +1,5 @@
 import { BasicLink } from '~/components/Link'
+import { ResearchSearchDialog } from '~/components/ResearchSearchDialog'
 import { MobileSearch } from '~/components/Search'
 import type { TNavLink, TNavLinks, TOldNavLink } from '../types'
 import { Menu } from './Menu'
@@ -38,7 +39,7 @@ export const MobileNav = ({
 				/>
 			</BasicLink>
 
-			<MobileSearch />
+			<MobileSearch searchTrigger={isResearch ? <ResearchSearchDialog variant="mobile" /> : undefined} />
 
 			<Settings tvlOptions={tvlOptions} />
 

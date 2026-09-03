@@ -2,6 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactElement, ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
+import { ResearchSearchDialog } from '~/components/ResearchSearchDialog'
+import { MobileSearch } from '~/components/Search'
 import { ResearchFooter } from '~/containers/Articles/landing/ResearchFooter'
 import { ResearchHero } from '~/containers/Articles/landing/ResearchHero'
 import { ResearchLatest } from '~/containers/Articles/landing/ResearchLatest'
@@ -83,6 +85,26 @@ describe('newsletter and media-kit split', () => {
 		expect(html).toContain('border-research-white')
 		expect(html.match(/href="\/newsletters"/g)).toHaveLength(1)
 		expect(html).not.toContain('newsletter.defillama.com')
+	})
+
+	it('renders the desktop Research search dialog trigger in the hero', () => {
+		const html = renderWithQueryClient(<ResearchHero title="Research" subtitle="Market intelligence" reports={[]} />)
+
+		expect(html).toContain('aria-label="Search DefiLlama Research"')
+		expect(html).toContain('type="button"')
+		expect(html).toContain('>Search</span>')
+		expect(html).toContain('/icons/v43.svg#search')
+		expect(html).not.toContain('href="/research?search=1"')
+	})
+
+	it('keeps the LlamaAI action before the Research search icon on mobile', () => {
+		const html = renderWithQueryClient(<MobileSearch searchTrigger={<ResearchSearchDialog variant="mobile" />} />)
+
+		const llamaAiPosition = html.indexOf('href="/ai"')
+		const researchSearchPosition = html.indexOf('aria-label="Search DefiLlama Research"')
+		expect(llamaAiPosition).toBeGreaterThan(-1)
+		expect(researchSearchPosition).toBeGreaterThan(llamaAiPosition)
+		expect(html).not.toContain('href="/research?search=1"')
 	})
 
 	it('uses a light border for latest article badges over cover images', () => {

@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { startTransition, useEffect, useMemo, useRef, useState } from 'react'
+import { startTransition, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { multiSearchApi, searchApi } from '~/api'
 import { useAuthContext } from '~/auth'
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
@@ -53,7 +53,7 @@ interface ISearchItem {
 	r?: number
 }
 
-export const MobileSearch = () => {
+export const MobileSearch = ({ searchTrigger }: { searchTrigger?: ReactNode } = {}) => {
 	const isClient = useIsClient()
 	const { isAuthenticated, hasActiveSubscription } = useAuthContext()
 	const shouldSkipLanding = isAuthenticated
@@ -82,42 +82,44 @@ export const MobileSearch = () => {
 				</svg>
 				<span className="sr-only">{isClient && shouldSkipLanding ? 'Ask LlamaAI' : 'Try LlamaAI'}</span>
 			</BasicLink>
-			<Ariakit.DialogProvider store={dialogStore}>
-				<Ariakit.DialogDisclosure className="-my-0.5 rounded-md bg-surface/15 p-3 text-on-brand shadow hover:bg-surface/25 focus-visible:bg-surface/25 active:bg-surface/25 lg:hidden">
-					<span className="sr-only">Search</span>
-					<Icon name="search" height={16} width={16} />
-				</Ariakit.DialogDisclosure>
+			{searchTrigger ?? (
+				<Ariakit.DialogProvider store={dialogStore}>
+					<Ariakit.DialogDisclosure className="-my-0.5 rounded-md bg-surface/15 p-3 text-on-brand shadow hover:bg-surface/25 focus-visible:bg-surface/25 active:bg-surface/25 lg:hidden">
+						<span className="sr-only">Search</span>
+						<Icon name="search" height={16} width={16} />
+					</Ariakit.DialogDisclosure>
 
-				<Ariakit.Dialog
-					unmountOnHide={false}
-					className={`${dialogSurfaceStyles} h-[calc(100dvh-80px)] sm:h-[min(720px,calc(100dvh-32px))] sm:[--dialog-width:640px]`}
-					hideOnInteractOutside
-					portal
-				>
-					<Ariakit.ComboboxProvider
-						value={searchValue}
-						setValue={(value) => {
-							startTransition(() => {
-								setSearchValue(value)
-							})
-						}}
+					<Ariakit.Dialog
+						unmountOnHide={false}
+						className={`${dialogSurfaceStyles} h-[calc(100dvh-80px)] sm:h-[min(720px,calc(100dvh-32px))] sm:[--dialog-width:640px]`}
+						hideOnInteractOutside
+						portal
 					>
-						<div className="flex min-h-0 flex-1 flex-col p-2">
-							<span className="relative isolate flex w-full items-center justify-between gap-2">
-								<DialogHeading className="sr-only">Search</DialogHeading>
-								<Ariakit.Combobox placeholder="Search..." className={`ml-2 flex-1 ${inputStyles}`} />
-								<DialogCloseButton className="shrink-0" ariaLabel="Close search" />
-							</span>
+						<Ariakit.ComboboxProvider
+							value={searchValue}
+							setValue={(value) => {
+								startTransition(() => {
+									setSearchValue(value)
+								})
+							}}
+						>
+							<div className="flex min-h-0 flex-1 flex-col p-2">
+								<span className="relative isolate flex w-full items-center justify-between gap-2">
+									<DialogHeading className="sr-only">Search</DialogHeading>
+									<Ariakit.Combobox placeholder="Search..." className={`ml-2 flex-1 ${inputStyles}`} />
+									<DialogCloseButton className="shrink-0" ariaLabel="Close search" />
+								</span>
 
-							<Ariakit.ComboboxList className={`${dialogScrollableBodyStyles} flex flex-col gap-1`} alwaysVisible>
-								{mounted ? (
-									<MobileSearchResults searchValue={searchValue} onSelect={() => dialogStore.setOpen(false)} />
-								) : null}
-							</Ariakit.ComboboxList>
-						</div>
-					</Ariakit.ComboboxProvider>
-				</Ariakit.Dialog>
-			</Ariakit.DialogProvider>
+								<Ariakit.ComboboxList className={`${dialogScrollableBodyStyles} flex flex-col gap-1`} alwaysVisible>
+									{mounted ? (
+										<MobileSearchResults searchValue={searchValue} onSelect={() => dialogStore.setOpen(false)} />
+									) : null}
+								</Ariakit.ComboboxList>
+							</div>
+						</Ariakit.ComboboxProvider>
+					</Ariakit.Dialog>
+				</Ariakit.DialogProvider>
+			)}
 		</>
 	)
 }
