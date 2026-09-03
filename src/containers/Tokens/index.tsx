@@ -37,12 +37,14 @@ import { TokensChartsSection } from './TokensChartsSection'
 import { TokensActiveFilterPills, TokensFiltersDialog } from './TokensFiltersDialog'
 import type {
 	TokensDisplayTone,
+	TokensFilterOption,
 	TokensPageProps,
 	TokensPageStatsDisplay,
 	TokensRightsSummary,
 	TokensTableRow
 } from './types'
 import { useTokensServerTable } from './useTokensServerTable'
+import { resolveTokenFilterValues } from './utils'
 
 const PAGE_SIZE_OPTIONS = [50, 100, 200] as const
 export const TOKENS_TABLE_WIDTH_EXCLUDING_RANK = NAME_COLUMN_WIDTH + TOKENS_HIDEABLE_COLUMNS_WIDTH
@@ -516,6 +518,10 @@ function TokensControls({
 	search,
 	updateSearch,
 	filters,
+	selectedChains,
+	selectedCategories,
+	chainOptions,
+	categoryOptions,
 	onFiltersChange,
 	selectedColumns,
 	setSelectedColumns,
@@ -524,6 +530,10 @@ function TokensControls({
 	search: string
 	updateSearch: (search: string) => void
 	filters: TokensActiveFilter[]
+	selectedChains: string[]
+	selectedCategories: string[]
+	chainOptions: TokensFilterOption[]
+	categoryOptions: TokensFilterOption[]
 	onFiltersChange: (filters: TokensActiveFilter[]) => void
 	selectedColumns: string[]
 	setSelectedColumns: (updater: string[] | ((old: string[]) => string[])) => void
@@ -552,6 +562,14 @@ function TokensControls({
 		},
 		[debouncedUpdateSearch, updateSearch]
 	)
+	const chainSelectOptions = React.useMemo(
+		() => chainOptions.map((option) => ({ key: option.id, name: option.label })),
+		[chainOptions]
+	)
+	const categorySelectOptions = React.useMemo(
+		() => categoryOptions.map((option) => ({ key: option.id, name: option.label })),
+		[categoryOptions]
+	)
 
 	return (
 		<TableToolbar>
@@ -570,6 +588,31 @@ function TokensControls({
 					/>
 				</label>
 			</form>
+			<SelectWithCombobox
+				allValues={chainSelectOptions}
+				selectedValues={selectedChains}
+				includeQueryKey="chains"
+				excludeQueryKey="excludeChains"
+				resetPageOnQueryChange
+				label="Chains"
+				labelType="smol"
+				variant="filter-responsive"
+				size="md"
+				searchPlaceholder="Search chains..."
+			/>
+			<SelectWithCombobox
+				allValues={categorySelectOptions}
+				selectedValues={selectedCategories}
+				includeQueryKey="categories"
+				excludeQueryKey="excludeCategories"
+				resetPageOnQueryChange
+				label="Categories"
+				labelType="smol"
+				variant="filter-responsive"
+				size="md"
+				visibleOptionLimit={null}
+				searchPlaceholder="Search categories..."
+			/>
 			<TokensFiltersDialog filters={filters} onFiltersChange={onFiltersChange} />
 			<SelectWithCombobox
 				allValues={COLUMN_PICKER_OPTIONS}
@@ -619,6 +662,27 @@ export default function TokensPage({ initialData, initialChartData }: TokensPage
 	const router = useRouter()
 	const serverTable = useTokensServerTable(initialData)
 	const filters = React.useMemo(() => parseTokensFiltersFromQuery(router.query), [router.query])
+	const chainOptionIds = React.useMemo(
+		() => serverTable.data.chainOptions.map((option) => option.id),
+		[serverTable.data.chainOptions]
+	)
+	const categoryOptionIds = React.useMemo(
+		() => serverTable.data.categoryOptions.map((option) => option.id),
+		[serverTable.data.categoryOptions]
+	)
+	const selectedChains = React.useMemo(
+		() => resolveTokenFilterValues(serverTable.pageQuery.chains, serverTable.pageQuery.excludeChains, chainOptionIds),
+		[chainOptionIds, serverTable.pageQuery.chains, serverTable.pageQuery.excludeChains]
+	)
+	const selectedCategories = React.useMemo(
+		() =>
+			resolveTokenFilterValues(
+				serverTable.pageQuery.categories,
+				serverTable.pageQuery.excludeCategories,
+				categoryOptionIds
+			),
+		[categoryOptionIds, serverTable.pageQuery.categories, serverTable.pageQuery.excludeCategories]
+	)
 	const pendingFiltersRef = React.useRef<TokensActiveFilter[] | null>(null)
 	React.useEffect(() => {
 		pendingFiltersRef.current = null
@@ -626,8 +690,9 @@ export default function TokensPage({ initialData, initialChartData }: TokensPage
 	const currentSorting = serverTable.sorting[0]
 	const applyFilters = React.useCallback(
 		(nextFilters: TokensActiveFilter[]) => {
+			const previousFilters = pendingFiltersRef.current ?? filters
 			const update = buildTokensFiltersQueryUpdate(nextFilters)
-			if (shouldApplyTokensFilterSorting(currentSorting, pendingFiltersRef.current ?? filters)) {
+			if (shouldApplyTokensFilterSorting(currentSorting, previousFilters)) {
 				const nextSorting = getTokensFiltersDefaultSorting(nextFilters)
 				update.sortBy =
 					nextSorting && !(nextSorting.id === 'marketCap' && nextSorting.desc) ? nextSorting.id : undefined
@@ -733,6 +798,10 @@ export default function TokensPage({ initialData, initialChartData }: TokensPage
 					search={serverTable.pageQuery.search}
 					updateSearch={serverTable.updateSearch}
 					filters={filters}
+					selectedChains={selectedChains}
+					selectedCategories={selectedCategories}
+					chainOptions={serverTable.data.chainOptions}
+					categoryOptions={serverTable.data.categoryOptions}
 					onFiltersChange={applyFilters}
 					selectedColumns={selectedColumns}
 					setSelectedColumns={setSelectedColumns}

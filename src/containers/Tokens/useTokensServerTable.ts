@@ -40,7 +40,9 @@ const EMPTY_TOKENS_PAGE_RESPONSE: TokensPageResponse = {
 		unlock30dUsd: '$0',
 		upcomingUnlockUsd: '$0'
 	},
-	updatedAt: null
+	updatedAt: null,
+	chainOptions: [],
+	categoryOptions: []
 }
 
 export function useTokensServerTable(initialData: TokensPageResponse) {

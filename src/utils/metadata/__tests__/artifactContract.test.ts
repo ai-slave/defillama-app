@@ -61,6 +61,13 @@ function createPayload(overrides: Partial<CoreMetadataPayload> = {}): CoreMetada
 		stablecoinPeggedAssetSlugs: ['tether'],
 		equitiesCompanyRoutes: [{ ticker: 'NVDA', country: 'US' }],
 		preIpoCompanyIds: ['anthropic'],
+		tokenFilterMetadata: {
+			schemaVersion: 1,
+			generatedAt: 1,
+			sources: { coingeckoCatalogGeneratedAt: 1, rankingsUpdatedAt: null },
+			tokens: { aave: { chains: ['ethereum'], categories: ['governance'] } },
+			categories: [{ id: 'governance', label: 'Governance' }]
+		},
 		...overrides
 	}
 }

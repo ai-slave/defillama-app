@@ -124,16 +124,16 @@ Common usage examples:
 - [TVL by Protocol](https://defillama.com/): Protocols ranked by Total Value Locked in their smart contracts Category: Total Value Locked.
 - [TVL by Chain](https://defillama.com/chains): Chains ranked by combined TVL of all protocols on the chain Category: Total Value Locked.
 - [Oracles](https://defillama.com/oracles): Total Value Secured by an oracle, where oracle failure would lead to a loss equal to TVS Category: Total Value Locked.
-- [Top Protocols](https://defillama.com/top-protocols): Overview of top protocols with the highest TVL by chain on each category Category: Total Value Locked.
 - [Bridged TVL by Chain](https://defillama.com/bridged): Value of all tokens held on the chain Category: Total Value Locked.
-- [Forks](https://defillama.com/forks): Sum of TVL across all forks of a protocol Category: Total Value Locked.
-- [Total Staked by Protocol](https://defillama.com/total-staked): Total value of the protocol's own tokens staked on their platform Category: Total Value Locked.
-- [Pool2 TVL by Protocol](https://defillama.com/pool2): Total value locked in pool2 of a protocol Category: Total Value Locked.
 - [Active Loans by Protocol](https://defillama.com/active-loans): Sum of value currently borrowed across all active loans on a lending protocol Category: Total Value Locked.
+- [Forks](https://defillama.com/forks): Sum of TVL across all forks of a protocol Category: Total Value Locked.
+- [Pool2 TVL by Protocol](https://defillama.com/pool2): Total value locked in pool2 of a protocol Category: Total Value Locked.
+- [Top Protocols](https://defillama.com/top-protocols): Overview of top protocols with the highest TVL by chain on each category Category: Total Value Locked.
+- [Total Staked by Protocol](https://defillama.com/total-staked): Total value of the protocol's own tokens staked on their platform Category: Total Value Locked.
 - [TVL Breakdown by Smart Contract Languages](https://defillama.com/languages): TVL breakdown by languages that the smart contracts are written in Category: Total Value Locked.
 - [Yields: Earn](https://defillama.com/yields): Pools by APY, TVL, and other metrics across all chains Category: Yields.
-- [Yields: Borrow](https://defillama.com/yields/borrow): Borrow markets and routes across lending protocols Category: Yields.
 - [Yields: Loop](https://defillama.com/yields/loop): Pools by looping (leveraged lending) strategy APY Category: Yields.
+- [Yields: Borrow](https://defillama.com/yields/borrow): Borrow markets and routes across lending protocols Category: Yields.
 - [Yields: Reference Rates](https://defillama.com/yields/rates): Benchmark stablecoin supply and borrow rates across lending protocols Category: Yields.
 - [Revenue by Protocol](https://defillama.com/revenue): Subset of fees that the protocol collects for itself, usually going to the protocol treasury, the team, or distributed among token holders. This doesn't include any fees distributed to liquidity providers Category: Fees & Revenue.
 - [Fees by Protocol](https://defillama.com/fees): Total fees paid by users when using the protocol Category: Fees & Revenue.
@@ -148,72 +148,72 @@ Common usage examples:
 - [REV by Chain](https://defillama.com/rev/chains): Sum of chain fees and MEV tips Category: Fees & Revenue.
 - [Perp Volume by Protocol](https://defillama.com/perps): Notional volume of all trades in a perp exchange, includes leverage Category: Volume.
 - [DEX Volume by Protocol](https://defillama.com/dexs): Volume of all spot token swaps that go through a DEX Category: Volume.
+- [Bridge Aggregator Volume by Protocol](https://defillama.com/bridge-aggregators): Sum of the value of all assets that were bridged through a bridge aggregator Category: Volume.
 - [DEX Volume by Chain](https://defillama.com/dexs/chains): Sum of all volume of spot token swaps that go through all DEXs on the chain Category: Volume.
 - [DEX Aggregator Volume by Protocol](https://defillama.com/dex-aggregators): Volume of spot token swaps that go through a DEX aggregator Category: Volume.
-- [Bridge Aggregator Volume by Protocol](https://defillama.com/bridge-aggregators): Sum of the value of all assets that were bridged through a bridge aggregator Category: Volume.
 - [Perp Volume by Chain](https://defillama.com/perps/chains): Sum of notional volume of all trades in all perp exchanges on the chain, includes leverage Category: Volume.
 - [Open Interest by Protocol](https://defillama.com/open-interest): Total notional value of all outstanding perpetual futures positions Category: Volume.
 - [Perp Aggregator Volume by Protocol](https://defillama.com/perps-aggregators): Notional volume of all trades in a perp aggregator, includes leverage Category: Volume.
-- [Normalized Volume by Protocol](https://defillama.com/normalized-volume): Volume of genuine trading activity in perp exchanges, adjusted to exclude wash trading and non-economic volume Category: Volume.
 - [Normalized Volume by Chain](https://defillama.com/normalized-volume/chains): Sum of genuine trading activity volume in perp exchanges on the chain, adjusted to exclude wash trading and non-economic volume Category: Volume.
+- [Normalized Volume by Protocol](https://defillama.com/normalized-volume): Volume of genuine trading activity in perp exchanges, adjusted to exclude wash trading and non-economic volume Category: Volume.
 - [Options Premium Volume by Protocol](https://defillama.com/options/premium-volume): Sum of value paid buying and selling options Category: Volume.
 - [Options Notional Volume by Protocol](https://defillama.com/options/notional-volume): Sum of the notional value of all options that have been traded on options exchanges Category: Volume.
 - [Stablecoins by Market Cap](https://defillama.com/stablecoins): Total market cap of stable assets Category: Stablecoins.
 - [Stablecoin Supply by Chain](https://defillama.com/stablecoins/chains): Total market cap of stable assets currently deployed on each chain Category: Stablecoins.
+- [Tokens](https://defillama.com/tokens): Token rankings by market cap, price performance, volume, revenue, unlocks, and token rights Category: Token.
 - [Airdrops](https://defillama.com/airdrops): Tokenless protocols that may airdrop tokens to their users Category: Token.
 - [Protocols by Market Cap](https://defillama.com/mcaps): Token price multiplied by circulating supply of each protocol Category: Token.
 - [Protocols by FDV](https://defillama.com/fdv): Token price multiplied by fully diluted supply of each protocol Category: Token.
 - [Protocols by Outstanding FDV](https://defillama.com/outstanding-fdv): Token price multiplied by outstanding supply of each protocol. Outstanding supply is the total supply minus the supply that is not yet allocated to anything (e.g., coins in treasury or reserve) Category: Token.
-- [Tokens](https://defillama.com/tokens): Token rankings by market cap, price performance, volume, revenue, unlocks, and token rights Category: Token.
-- [CEXs](https://defillama.com/cexs): Assets held in tracked centralized exchange wallets, clean reserves, and net inflows Category: Exchanges.
-- [MiCA Exchanges](https://defillama.com/mica): MiCA-regulated crypto exchanges in the EU: liquidity, trading fees, perps availability, and KYC requirements Category: Exchanges.
 - [RWA: Overview](https://defillama.com/rwa): Overview of all Real World Assets (RWAs) Category: RWA.
 - [RWA by Chain](https://defillama.com/rwa/chains): Overview of all Real World Assets (RWAs) by chain Category: RWA.
 - [RWA by Platform](https://defillama.com/rwa/platforms): Overview of all Real World Assets (RWAs) by platform Category: RWA.
 - [RWA by Category](https://defillama.com/rwa/categories): Overview of all Real World Assets (RWAs) by category Category: RWA.
-- [RWA: Perps](https://defillama.com/rwa/perps): Overview of all Real World Assets (RWAs) perps Category: RWA.
-- [RWA Perps by Asset](https://defillama.com/rwa/perps/assets): Compare RWA perpetual markets grouped by their underlying reference asset Category: RWA.
 - [RWA by Asset Group](https://defillama.com/rwa/asset-groups): Overview of all Real World Assets (RWAs) by asset group Category: RWA.
+- [RWA: Perps](https://defillama.com/rwa/perps): Overview of all Real World Assets (RWAs) perps Category: RWA.
 - [RWA Perps by Venue](https://defillama.com/rwa/perps/venues): Overview of all Real World Assets (RWAs) perps by venue Category: RWA.
+- [RWA Perps by Asset](https://defillama.com/rwa/perps/assets): Compare RWA perpetual markets grouped by their underlying reference asset Category: RWA.
 - [RWA Perps by Asset Group](https://defillama.com/rwa/perps/asset-groups): Overview of all Real World Assets (RWAs) perps by asset group Category: RWA.
-- [Hacks: Overview](https://defillama.com/hacks): Overview of all hacks that have happened in the ecosystem Category: Hacks.
-- [Total Value Lost in Hacks by Protocol](https://defillama.com/hacks/total-value-lost): Net user loss, total value lost in hacks by a protocol Category: Hacks.
-- [Bridges by Volume](https://defillama.com/bridges): Sum of the value of all assets that were bridged through the protocol Category: Bridge.
-- [Bridge Volume by Chain](https://defillama.com/bridges/chains): Sum of the value of all assets that were bridged through the protocol on each chain Category: Bridge.
-- [NFTs: Marketplaces](https://defillama.com/nfts/marketplaces): Overview of all NFT marketplaces Category: NFTs.
-- [NFTs: Collections](https://defillama.com/nfts): Overview of all NFT collections Category: NFTs.
-- [NFTs: Collection Earnings](https://defillama.com/nfts/earnings): Earnings of all NFT collections that are tracked by DefiLlama Category: NFTs.
-- [NFT Volume by Chain](https://defillama.com/nfts/chains): Volume of all NFTs that are tracked by DefiLlama traded on the chain Category: NFTs.
-- [Unlocks: Overview](https://defillama.com/unlocks): Overview of token emissions by protocol Category: Unlocks.
-- [Unlocks: Calendar](https://defillama.com/unlocks/calendar): Upcoming total token emissions by date Category: Unlocks.
+- [MiCA Exchanges](https://defillama.com/mica): MiCA-regulated crypto exchanges in the EU: liquidity, trading fees, perps availability, and KYC requirements Category: Exchanges.
+- [CEXs](https://defillama.com/cexs): Assets held in tracked centralized exchange wallets, clean reserves, and net inflows Category: Exchanges.
+- [Equities](https://defillama.com/equities): Live company rankings by market cap, price, volume, and price change Category: Equities, ETFs & DATs.
 - [Digital Asset Treasuries (DATs)](https://defillama.com/digital-asset-treasuries): Institutions that own cryptocurrencies as part of their corporate treasury Category: Equities, ETFs & DATs.
 - [Exchange Traded Funds (ETFs)](https://defillama.com/etfs): AUM, Flows, Volume metrics of all ETFs Category: Equities, ETFs & DATs.
-- [Equities](https://defillama.com/equities): Live company rankings by market cap, price, volume, and price change Category: Equities, ETFs & DATs.
 - [Pre-IPO](https://defillama.com/pre-ipo): Private-company valuations, funding rounds, and tradable pre-IPO markets Category: Equities, ETFs & DATs.
+- [Hacks: Overview](https://defillama.com/hacks): Overview of all hacks that have happened in the ecosystem Category: Hacks.
+- [Total Value Lost in Hacks by Protocol](https://defillama.com/hacks/total-value-lost): Net user loss, total value lost in hacks by a protocol Category: Hacks.
+- [NFTs: Marketplaces](https://defillama.com/nfts/marketplaces): Overview of all NFT marketplaces Category: NFTs.
+- [NFT Volume by Chain](https://defillama.com/nfts/chains): Volume of all NFTs that are tracked by DefiLlama traded on the chain Category: NFTs.
+- [NFTs: Collections](https://defillama.com/nfts): Overview of all NFT collections Category: NFTs.
+- [NFTs: Collection Earnings](https://defillama.com/nfts/earnings): Earnings of all NFT collections that are tracked by DefiLlama Category: NFTs.
+- [Treasuries](https://defillama.com/treasuries): Value of tokens owned by a protocol, including its own token and breakdown of assets held Category: Treasury.
+- [Treasury: Entities](https://defillama.com/entities): Treasury by entity Category: Treasury.
+- [Net Project Treasury](https://defillama.com/net-project-treasury): Value of tokens owned by a protocol, excluding its own token Category: Treasury.
+- [Bridges by Volume](https://defillama.com/bridges): Sum of the value of all assets that were bridged through the protocol Category: Bridge.
+- [Bridge Volume by Chain](https://defillama.com/bridges/chains): Sum of the value of all assets that were bridged through the protocol on each chain Category: Bridge.
 - [Raises: Overview](https://defillama.com/raises): Total amount of capital raised by a project Category: Raises.
 - [Investors](https://defillama.com/raises/investors): List of investors that have invested in a project Category: Raises.
-- [Treasuries](https://defillama.com/treasuries): Value of tokens owned by a protocol, including its own token and breakdown of assets held Category: Treasury.
-- [Net Project Treasury](https://defillama.com/net-project-treasury): Value of tokens owned by a protocol, excluding its own token Category: Treasury.
-- [Treasury: Entities](https://defillama.com/entities): Treasury by entity Category: Treasury.
+- [Unlocks: Overview](https://defillama.com/unlocks): Overview of token emissions by protocol Category: Unlocks.
+- [Unlocks: Calendar](https://defillama.com/unlocks/calendar): Upcoming total token emissions by date Category: Unlocks.
 - [Recently Listed Protocols](https://defillama.com/recent): List of recently listed protocols Category: Others.
 - [Narrative Tracker](https://defillama.com/narrative-tracker): MCap-Weighted category performance to track narrative changes in the ecosystem Category: Others.
 - [Staked ETH by Protocol](https://defillama.com/lst): Total value of ETH staked on LSTs Category: Others.
-- [Governance](https://defillama.com/governance): Overview of all governance proposals by protocol Category: Others.
 - [Expenses by Protocol](https://defillama.com/expenses): Breakdown of annual operational expenses by protocol Category: Others.
 - [Safe Harbor Agreements](https://defillama.com/safe-harbor-agreements): Overview of protocols with Safe Harbor Agreements Category: Others.
+- [Governance](https://defillama.com/governance): Overview of all governance proposals by protocol Category: Others.
 - [Token Rights](https://defillama.com/token-rights): Compare governance, economic, and ownership rights across DeFi protocols Category: Others.
 
 ## Dashboard catalog - Tools
 
 - [Dashboard Builder](https://defillama.com/pro): Custom no-code dashboards with TVL, Fees, Volume, and other metrics Category: Combined Metrics.
 - [Correlations Matrix by Coin](https://defillama.com/correlation): View correlation relationships between different cryptocurrencies to identify market trends and diversification opportunities
-- [Sheets](https://defillama.com/sheets): Access DeFi data right in your spreadsheets
 - [DeFi Watchlist](https://defillama.com/watchlist): Watchlist of all protocols on DefiLlama
+- [Sheets](https://defillama.com/sheets): Access DeFi data right in your spreadsheets
 - [Token Liquidity](https://defillama.com/liquidity): Check how deep the liquidity is for a given token
 - [Protocols Website Directory](https://defillama.com/directory): Directory of all protocols websites on DefiLlama
+- [Liquidations](https://defillama.com/liquidations): Collateral at risk of liquidation if asset prices reach certain levels Category: Liquidations.
 - [Yields: Watchlist](https://defillama.com/yields/watchlist): Watchlist of all pools that we track in our yields section
 - [Transactions by Bridge](https://defillama.com/bridge-transactions): Download transaction data across different time periods by bridge
-- [Liquidations](https://defillama.com/liquidations): Collateral at risk of liquidation if asset prices reach certain levels Category: Liquidations.
 - [Token Holder Profit and Loss](https://defillama.com/token-pnl): Calculate the percentage change in token price between two dates
 - [Report Error](https://defillama.com/report-error): Report errors in methodology, protocol metrics, or suggest site improvements
 - [Compare Chains](https://defillama.com/compare-chains?chains=OP+Mainnet&chains=Arbitrum): Compare metrics across different chains

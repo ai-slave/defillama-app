@@ -7,6 +7,7 @@ import type { EnrichedProtocolEmission } from '~/containers/Unlocks/queries'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
 import {
 	buildTokenMarketSummary,
+	buildTokenFilterOptions,
 	buildTokensChartDataset,
 	buildTokensSourceRows,
 	fetchTokensSourceRows
@@ -15,7 +16,6 @@ import { buildTokenOverviewCurrentMetricsById } from '../readModel'
 
 const sourceMocks = vi.hoisted(() => ({
 	fetchAdapterChainMetrics: vi.fn(() => Promise.resolve({ protocols: [] })),
-	fetchStablecoinAssetsApi: vi.fn(() => Promise.resolve({ peggedAssets: [] })),
 	fetchTokenRightsEntries: vi.fn(() => Promise.resolve([])),
 	getAllProtocolEmissions: vi.fn(() => Promise.resolve([])),
 	refreshMetadataInBackgroundIfStale: vi.fn()
@@ -23,10 +23,6 @@ const sourceMocks = vi.hoisted(() => ({
 
 vi.mock('~/containers/AdapterMetrics/api', () => ({
 	fetchAdapterChainMetrics: sourceMocks.fetchAdapterChainMetrics
-}))
-
-vi.mock('~/containers/Stablecoins/api', () => ({
-	fetchStablecoinAssetsApi: sourceMocks.fetchStablecoinAssetsApi
 }))
 
 vi.mock('~/containers/TokenRights/server/dataset.server', () => ({
@@ -42,7 +38,14 @@ vi.mock('~/utils/metadata', () => ({
 		tokenlist: {},
 		tokenDirectory: {},
 		protocolMetadata: {},
-		emissionsSupplyMetrics: {}
+		emissionsSupplyMetrics: {},
+		tokenFilterMetadata: {
+			schemaVersion: 1,
+			generatedAt: 0,
+			sources: { coingeckoCatalogGeneratedAt: 0, rankingsUpdatedAt: null },
+			tokens: {},
+			categories: []
+		}
 	},
 	refreshMetadataInBackgroundIfStale: sourceMocks.refreshMetadataInBackgroundIfStale
 }))
@@ -51,6 +54,18 @@ afterEach(() => {
 	vi.useRealTimers()
 	sourceMocks.getAllProtocolEmissions.mockClear()
 })
+
+function tokenFilterMetadata(
+	tokens: MetadataCache['tokenFilterMetadata']['tokens'] = {}
+): MetadataCache['tokenFilterMetadata'] {
+	return {
+		schemaVersion: 1,
+		generatedAt: 0,
+		sources: { coingeckoCatalogGeneratedAt: 0, rankingsUpdatedAt: null },
+		tokens,
+		categories: []
+	}
+}
 
 describe('fetchTokensSourceRows', () => {
 	it('retains future emissions while bounding the historical unlock window', async () => {
@@ -72,6 +87,36 @@ describe('fetchTokensSourceRows', () => {
 			getHistoricalPrices: false,
 			tokenlist: {}
 		})
+	})
+})
+
+describe('buildTokenFilterOptions', () => {
+	it('orders options by aggregate token market cap with deterministic ties', () => {
+		const rows = [
+			{ marketCap: 100, chains: ['ethereum'], categories: ['stablecoins', 'rwa'] },
+			{ marketCap: 80, chains: ['solana'], categories: ['rwa'] },
+			{ marketCap: 30, chains: ['solana'], categories: ['stablecoins'] }
+		]
+		const result = buildTokenFilterOptions(rows, {
+			chainDisplayNames: new Map([
+				['ethereum', 'Ethereum'],
+				['solana', 'Solana']
+			]),
+			tokenFilterMetadata: {
+				schemaVersion: 1,
+				generatedAt: 1,
+				sources: { coingeckoCatalogGeneratedAt: 1, rankingsUpdatedAt: null },
+				tokens: {},
+				categories: [
+					{ id: 'rwa', label: 'RWA' },
+					{ id: 'stablecoins', label: 'Stablecoins' },
+					{ id: 'unused', label: 'Unused' }
+				]
+			}
+		})
+
+		expect(result.chainOptions.map((option) => option.id)).toEqual(['solana', 'ethereum'])
+		expect(result.categoryOptions.map((option) => option.id)).toEqual(['rwa', 'stablecoins', 'unused'])
 	})
 })
 
@@ -151,7 +196,6 @@ describe('buildTokensChartDataset', () => {
 			],
 			markets: { last_updated: '', tokens: [] },
 			tokenRightsEntries: [],
-			stablecoinGeckoIds: new Set(['beta']),
 			fees: [],
 			revenue: [],
 			holdersRevenue: [],
@@ -159,7 +203,10 @@ describe('buildTokensChartDataset', () => {
 			metadata: {
 				tokenDirectory: {},
 				protocolMetadata: {},
-				emissionsSupplyMetrics: {}
+				emissionsSupplyMetrics: {},
+				tokenFilterMetadata: tokenFilterMetadata({
+					beta: { chains: [], categories: ['stablecoins'] }
+				})
 			} as unknown as MetadataCache,
 			nowSec: 1_800_000_000
 		})
@@ -297,7 +344,8 @@ describe('buildTokensSourceRows', () => {
 						nonIncentiveAmount: 600
 					}
 				}
-			}
+			},
+			tokenFilterMetadata: tokenFilterMetadata()
 		} as unknown as MetadataCache
 
 		const result = buildTokensSourceRows({
@@ -491,7 +539,8 @@ describe('buildTokensSourceRows', () => {
 			metadata: {
 				tokenDirectory: {},
 				protocolMetadata: {},
-				emissionsSupplyMetrics: {}
+				emissionsSupplyMetrics: {},
+				tokenFilterMetadata: tokenFilterMetadata()
 			} as unknown as MetadataCache,
 			nowSec: 1_800_000_000
 		})
@@ -505,7 +554,7 @@ describe('buildTokensSourceRows', () => {
 		})
 	})
 
-	it('flags stablecoins by gecko id and defaults to false without the set', () => {
+	it('flags stablecoins from exact CoinGecko metadata membership', () => {
 		const tokens = [
 			{ id: 'Tether', name: 'Tether', symbol: 'usdt', current_price: 1, market_cap: 100 },
 			{ id: 'ethena', name: 'Ethena', symbol: 'ena', current_price: 1, market_cap: 50 }
@@ -520,16 +569,16 @@ describe('buildTokensSourceRows', () => {
 			metadata: {
 				tokenDirectory: {},
 				protocolMetadata: {},
-				emissionsSupplyMetrics: {}
+				emissionsSupplyMetrics: {},
+				tokenFilterMetadata: tokenFilterMetadata({
+					tether: { chains: ['ethereum'], categories: ['stablecoins'] }
+				})
 			} as unknown as MetadataCache,
 			nowSec: 1_800_000_000
 		}
 
-		const flagged = buildTokensSourceRows({ ...base, tokens, stablecoinGeckoIds: new Set(['tether']) })
+		const flagged = buildTokensSourceRows({ ...base, tokens })
 		expect(flagged.rows.map((row) => row.isStablecoin)).toEqual([true, false])
-
-		const unflagged = buildTokensSourceRows({ ...base, tokens })
-		expect(unflagged.rows.map((row) => row.isStablecoin)).toEqual([false, false])
 	})
 
 	it('links rights to the protocol page when no token-directory route exists', () => {
@@ -565,7 +614,8 @@ describe('buildTokensSourceRows', () => {
 						tokenRights: true
 					}
 				},
-				emissionsSupplyMetrics: {}
+				emissionsSupplyMetrics: {},
+				tokenFilterMetadata: tokenFilterMetadata()
 			} as unknown as MetadataCache,
 			nowSec: 1_800_000_000
 		})
@@ -617,7 +667,8 @@ describe('buildTokensSourceRows', () => {
 					}
 				},
 				protocolMetadata: {},
-				emissionsSupplyMetrics: {}
+				emissionsSupplyMetrics: {},
+				tokenFilterMetadata: tokenFilterMetadata()
 			} as unknown as MetadataCache,
 			nowSec: 1_800_000_000
 		})
@@ -667,7 +718,8 @@ describe('buildTokensSourceRows', () => {
 						gecko_id: 'hyperliquid'
 					}
 				},
-				emissionsSupplyMetrics: {}
+				emissionsSupplyMetrics: {},
+				tokenFilterMetadata: tokenFilterMetadata()
 			} as unknown as MetadataCache,
 			nowSec: 1_800_000_000
 		})
@@ -697,7 +749,8 @@ describe('buildTokensSourceRows', () => {
 				}
 			},
 			protocolMetadata: {},
-			emissionsSupplyMetrics: {}
+			emissionsSupplyMetrics: {},
+			tokenFilterMetadata: tokenFilterMetadata()
 		} as unknown as MetadataCache
 
 		const result = buildTokensSourceRows({
@@ -800,7 +853,8 @@ describe('buildTokensSourceRows', () => {
 			metadata: {
 				tokenDirectory: {},
 				protocolMetadata: {},
-				emissionsSupplyMetrics: {}
+				emissionsSupplyMetrics: {},
+				tokenFilterMetadata: tokenFilterMetadata()
 			} as unknown as MetadataCache,
 			nowSec: 1_800_000_000
 		})

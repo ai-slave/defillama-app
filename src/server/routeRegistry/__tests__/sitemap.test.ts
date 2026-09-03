@@ -90,7 +90,14 @@ const metadataCache = vi.hoisted(
 		equitiesCompanyRoutes: [],
 		equitiesCompanySlugsSet: new Set(),
 		preIpoCompanyIds: ['anthropic', 'commonwealth-fusion'],
-		preIpoCompanyIdsSet: new Set(['anthropic', 'commonwealth-fusion'])
+		preIpoCompanyIdsSet: new Set(['anthropic', 'commonwealth-fusion']),
+		tokenFilterMetadata: {
+			schemaVersion: 1,
+			generatedAt: 0,
+			sources: { coingeckoCatalogGeneratedAt: 0, rankingsUpdatedAt: null },
+			tokens: {},
+			categories: []
+		}
 	})
 )
 

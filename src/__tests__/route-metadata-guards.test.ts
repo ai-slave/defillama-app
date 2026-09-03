@@ -71,7 +71,14 @@ const {
 		equitiesCompanyRoutes: [],
 		equitiesCompanySlugsSet: new Set<string>(),
 		preIpoCompanyIds: [],
-		preIpoCompanyIdsSet: new Set<string>()
+		preIpoCompanyIdsSet: new Set<string>(),
+		tokenFilterMetadata: {
+			schemaVersion: 1,
+			generatedAt: 0,
+			sources: { coingeckoCatalogGeneratedAt: 0, rankingsUpdatedAt: null },
+			tokens: {},
+			categories: []
+		}
 	}
 	return {
 		fetchChainMock: vi.fn(),

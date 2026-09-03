@@ -13,6 +13,7 @@ import type {
 	NarrativeCategoriesMetadata,
 	OracleRoutesMetadata
 } from './routeIndexes'
+import { EMPTY_TOKEN_FILTER_METADATA, parseTokenFilterMetadata, type TokenFilterMetadataArtifact } from './tokenFilters'
 import type {
 	ICategoriesAndTags,
 	ICexItem,
@@ -53,6 +54,7 @@ export type CoreMetadataPayload = {
 	stablecoinPeggedAssetSlugs: string[]
 	equitiesCompanyRoutes: IEquitiesCompanyRoute[]
 	preIpoCompanyIds: string[]
+	tokenFilterMetadata: TokenFilterMetadataArtifact
 }
 
 // Serialized artifacts intentionally differ from this runtime shape: the cache
@@ -102,6 +104,7 @@ export type MetadataCache = {
 	equitiesCompanySlugsSet: Set<string>
 	preIpoCompanyIds: string[]
 	preIpoCompanyIdsSet: Set<string>
+	tokenFilterMetadata: TokenFilterMetadataArtifact
 }
 
 export type MetadataArtifactKey = keyof CoreMetadataPayload
@@ -267,6 +270,11 @@ export const METADATA_ARTIFACT_REGISTRY = defineMetadataArtifactRegistry({
 		file: 'preIpoCompanyIds.json',
 		stub: [],
 		parse: parseArtifact<string[]>
+	},
+	tokenFilterMetadata: {
+		file: 'tokenFilters.json',
+		stub: EMPTY_TOKEN_FILTER_METADATA,
+		parse: parseTokenFilterMetadata
 	}
 })
 
@@ -352,7 +360,8 @@ export function hydrateMetadataCache(payload: CoreMetadataPayload): MetadataCach
 		equitiesCompanyRoutes: payload.equitiesCompanyRoutes,
 		equitiesCompanySlugsSet: new Set(payload.equitiesCompanyRoutes.map(getEquityCompanySlug)),
 		preIpoCompanyIds: payload.preIpoCompanyIds,
-		preIpoCompanyIdsSet: new Set(payload.preIpoCompanyIds)
+		preIpoCompanyIdsSet: new Set(payload.preIpoCompanyIds),
+		tokenFilterMetadata: payload.tokenFilterMetadata
 	}
 }
 

@@ -97,6 +97,13 @@ function createCoreMetadataSources(overrides: Record<string, unknown> = {}) {
 		emissions: [],
 		equitiesCompanyRoutes: [{ ticker: 'NVDA', country: 'US' }],
 		preIpoCompanyIds: ['anthropic'],
+		tokenFilterMetadata: {
+			schemaVersion: 1,
+			generatedAt: 1,
+			sources: { coingeckoCatalogGeneratedAt: 1, rankingsUpdatedAt: null },
+			tokens: { aave: { chains: ['ethereum'], categories: ['governance'] } },
+			categories: [{ id: 'governance', label: 'Governance' }]
+		},
 		...overrides
 	}
 }
@@ -137,6 +144,7 @@ describe('fetchCoreMetadata', () => {
 		expect(payload.stablecoinPeggedAssetSlugs).toEqual(['tether'])
 		expect(payload.equitiesCompanyRoutes).toEqual([{ ticker: 'NVDA', country: 'US' }])
 		expect(payload.preIpoCompanyIds).toEqual(['anthropic'])
+		expect(payload.tokenFilterMetadata.tokens.aave).toEqual({ chains: ['ethereum'], categories: ['governance'] })
 		expect(payload.rwaPlatformsIndex).toEqual({ generatedAt: 0, byPid: {}, platforms: {} })
 		expect(fetchMetadataJsonMock).not.toHaveBeenCalled()
 	})

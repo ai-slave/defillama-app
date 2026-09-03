@@ -60,7 +60,14 @@ function createPayload(): CoreMetadataPayload {
 		digitalAssetTreasuryRoutes: { assetSlugs: [], companySlugs: [] },
 		stablecoinPeggedAssetSlugs: [],
 		equitiesCompanyRoutes: [],
-		preIpoCompanyIds: []
+		preIpoCompanyIds: [],
+		tokenFilterMetadata: {
+			schemaVersion: 1,
+			generatedAt: 0,
+			sources: { coingeckoCatalogGeneratedAt: 0, rankingsUpdatedAt: null },
+			tokens: {},
+			categories: []
+		}
 	}
 }
 

@@ -4,7 +4,6 @@ import { fetchAdapterChainMetrics } from '~/containers/AdapterMetrics/api'
 import type { IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import type { TokenMarketsListResponse } from '~/containers/Markets/api.types'
-import { fetchStablecoinAssetsApi } from '~/containers/Stablecoins/api'
 import type { TokenOverviewCurrentMetrics } from '~/containers/Token/tokenOverview'
 import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
 import { fetchTokenRightsEntries } from '~/containers/TokenRights/server/dataset.server'
@@ -36,6 +35,7 @@ import type {
 	TokensChartDataset,
 	TokensPageResponse,
 	TokensPageStats,
+	TokensFilterOption,
 	TokensRightsSummary,
 	TokensSortIndexes,
 	TokensSourceRow
@@ -52,6 +52,8 @@ interface TokensSourceRows {
 	sortIndexes: TokensSortIndexes
 	stats: TokensPageStats
 	updatedAt: string | null
+	chainOptions: TokensFilterOption[]
+	categoryOptions: TokensFilterOption[]
 }
 
 interface TokensSourceData extends TokensSourceRows {
@@ -280,23 +282,20 @@ export function buildTokenMarketSummary(
 	}
 }
 
-export async function fetchTokensSourceRows(marketSnapshot: TokensMarketSnapshot): Promise<TokensSourceData> {
+export async function fetchTokensSourceRows(
+	marketSnapshot: TokensMarketSnapshot,
+	metadataOverride?: MetadataCache
+): Promise<TokensSourceData> {
 	const nowSec = Math.floor(Date.now() / 1000)
-	const metadataModule = await import('~/utils/metadata')
-	metadataModule.refreshMetadataInBackgroundIfStale('tokens')
-	const metadata = metadataModule.default
+	let metadata = metadataOverride
+	if (!metadata) {
+		const metadataModule = await import('~/utils/metadata')
+		metadataModule.refreshMetadataInBackgroundIfStale('tokens')
+		metadata = metadataModule.default
+	}
 
-	const [tokenRightsEntries, stablecoinGeckoIds, fees, revenue, holdersRevenue, unlocks] = await Promise.all([
+	const [tokenRightsEntries, fees, revenue, holdersRevenue, unlocks] = await Promise.all([
 		fetchTokenRightsEntries().catch(() => []),
-		fetchStablecoinAssetsApi()
-			.then((data) => {
-				const geckoIds = new Set<string>()
-				for (const asset of data.peggedAssets) {
-					if (asset.gecko_id) geckoIds.add(asset.gecko_id.toLowerCase())
-				}
-				return geckoIds
-			})
-			.catch(() => new Set<string>()),
 		fetchAdapterChainMetrics({ adapterType: ADAPTER_TYPES.FEES, chain: 'All' })
 			.then((data) => data.protocols)
 			.catch(() => []),
@@ -327,7 +326,6 @@ export async function fetchTokensSourceRows(marketSnapshot: TokensMarketSnapshot
 			markets: marketSnapshot.markets,
 			currentMetricsById: marketSnapshot.currentMetricsById,
 			tokenRightsEntries,
-			stablecoinGeckoIds,
 			fees,
 			revenue,
 			holdersRevenue,
@@ -345,7 +343,6 @@ export function buildTokensSourceRows({
 	markets,
 	currentMetricsById,
 	tokenRightsEntries,
-	stablecoinGeckoIds,
 	fees,
 	revenue,
 	holdersRevenue,
@@ -357,7 +354,6 @@ export function buildTokensSourceRows({
 	markets: TokenMarketsListResponse
 	currentMetricsById?: Record<string, TokenOverviewCurrentMetrics>
 	tokenRightsEntries: IRawTokenRightsEntry[]
-	stablecoinGeckoIds?: Set<string>
 	fees: AdapterProtocolMetric[]
 	revenue: AdapterProtocolMetric[]
 	holdersRevenue: AdapterProtocolMetric[]
@@ -409,6 +405,9 @@ export function buildTokensSourceRows({
 			protocolId && protocolMetadata?.tokenRights
 				? slug(protocolMetadata.displayName || protocolMetadata.name || protocolId)
 				: null
+		const filterMembership = metadata.tokenFilterMetadata.tokens[geckoId]
+		const chains = filterMembership?.chains ?? []
+		const categories = filterMembership?.categories ?? []
 		const row: TokensSourceRow = {
 			id: token.id,
 			rank: token.market_cap_rank_with_rehypothecated ?? token.market_cap_rank ?? index + 1,
@@ -455,8 +454,10 @@ export function buildTokensSourceRows({
 			rights,
 			unlock30dUsd: unlockMetrics?.unlock30dUsd ?? null,
 			upcomingUnlockUsd: unlockMetrics?.upcomingUnlockUsd ?? null,
-			isStablecoin: stablecoinGeckoIds?.has(geckoId) ?? false,
-			searchKey: getSearchKey(token, record)
+			isStablecoin: categories.includes('stablecoins'),
+			searchKey: getSearchKey(token, record),
+			chains,
+			categories
 		}
 		addStats(stats, row)
 		if (row.marketCap != null && row.priceChange24h != null) {
@@ -469,21 +470,63 @@ export function buildTokensSourceRows({
 
 	if (weightedChangeMarketCap > 0) stats.marketCapWeightedChange24h = weightedChangeNumerator / weightedChangeMarketCap
 
+	const { chainOptions, categoryOptions } = buildTokenFilterOptions(rows, metadata)
 	return {
 		rows,
 		sortIndexes: buildTokensSortIndexes(rows),
 		stats,
-		updatedAt: firstUpdatedAt(tokens, markets)
+		updatedAt: firstUpdatedAt(tokens, markets),
+		chainOptions,
+		categoryOptions
+	}
+}
+
+export function buildTokenFilterOptions(
+	rows: Array<Pick<TokensSourceRow, 'marketCap' | 'chains' | 'categories'>>,
+	metadata: Partial<Pick<MetadataCache, 'chainDisplayNames' | 'tokenFilterMetadata'>>
+): { chainOptions: TokensFilterOption[]; categoryOptions: TokensFilterOption[] } {
+	const chainMarketCaps = new Map<string, number>()
+	const categoryMarketCaps = new Map<string, number>()
+	for (const row of rows) {
+		const marketCap = row.marketCap ?? 0
+		for (const chain of row.chains) chainMarketCaps.set(chain, (chainMarketCaps.get(chain) ?? 0) + marketCap)
+		for (const category of row.categories) {
+			categoryMarketCaps.set(category, (categoryMarketCaps.get(category) ?? 0) + marketCap)
+		}
+	}
+
+	type RankedOption = TokensFilterOption & { marketCap: number }
+	const compareOptions = (a: RankedOption, b: RankedOption): number => {
+		const marketCapDiff = b.marketCap - a.marketCap
+		return marketCapDiff || a.label.localeCompare(b.label) || a.id.localeCompare(b.id)
+	}
+	const chainOptions: RankedOption[] = []
+	for (const [id, marketCap] of chainMarketCaps) {
+		chainOptions.push({ id, label: metadata.chainDisplayNames?.get(id) ?? id, marketCap })
+	}
+	const categoryOptions: RankedOption[] = (metadata.tokenFilterMetadata?.categories ?? []).map((category) => ({
+		...category,
+		marketCap: categoryMarketCaps.get(category.id) ?? 0
+	}))
+	chainOptions.sort(compareOptions)
+	categoryOptions.sort(compareOptions)
+	return {
+		chainOptions: chainOptions.map(({ id, label }) => ({ id, label })),
+		categoryOptions: categoryOptions.map(({ id, label }) => ({ id, label }))
 	}
 }
 
 export async function getTokensSourceData(): Promise<TokensSourceData> {
 	const marketSnapshot = await getTokensMarketSnapshot()
+	const metadataModule = await import('~/utils/metadata')
+	metadataModule.refreshMetadataInBackgroundIfStale('tokens')
+	const metadata = metadataModule.default
+	const filterGeneration = metadata.tokenFilterMetadata.generatedAt
 	return cachedResult(
 		'tokens-source-rows',
-		`v10:${marketSnapshot.version}`,
+		`v11:${marketSnapshot.version}:${filterGeneration}`,
 		{ ttlMs: TOKENS_SOURCE_CACHE_TTL_MS, maxEntries: 2 },
-		() => fetchTokensSourceRows(marketSnapshot)
+		() => fetchTokensSourceRows(marketSnapshot, metadata)
 	)
 }
 
@@ -560,7 +603,9 @@ export function buildTokensChartDataset(
 function getTokensPageResponse(data: TokensSourceData, query: ParsedUrlQuery): TokensPageResponse {
 	return getTokensPageFromRows(data.rows, data.sortIndexes, query, {
 		stats: data.stats,
-		updatedAt: data.updatedAt
+		updatedAt: data.updatedAt,
+		chainOptions: data.chainOptions,
+		categoryOptions: data.categoryOptions
 	})
 }
 

@@ -79,14 +79,29 @@ describe('prepareTokensCsv', () => {
 		fetchJson.mockResolvedValueOnce(pageResponse([], false))
 
 		await prepareTokensCsv({
-			query: { search: 'uni', rankFrom: '100', rankTo: '500' },
+			query: {
+				search: 'uni',
+				rankFrom: '100',
+				rankTo: '500',
+				chains: ['solana', 'ethereum'],
+				excludeCategories: 'meme-token'
+			},
 			sorting: [{ id: 'priceChange7d', desc: false }],
 			hiddenColumnIds: new Set()
 		})
 
-		expect(fetchJson.mock.calls[0][0]).toBe(
-			'/api/public/tokens?pageSize=500&sortBy=priceChange7d&sortDesc=false&search=uni&rankFrom=100&rankTo=500'
-		)
+		const requestUrl = new URL(fetchJson.mock.calls[0][0], 'https://defillama.com')
+		expect(requestUrl.pathname).toBe('/api/public/tokens')
+		expect(requestUrl.searchParams.getAll('chains')).toEqual(['solana', 'ethereum'])
+		expect(Object.fromEntries(requestUrl.searchParams)).toMatchObject({
+			pageSize: '500',
+			sortBy: 'priceChange7d',
+			sortDesc: 'false',
+			search: 'uni',
+			rankFrom: '100',
+			rankTo: '500',
+			excludeCategories: 'meme-token'
+		})
 	})
 
 	it('throws instead of silently returning a partial csv', async () => {

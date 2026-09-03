@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { TOKENS_PAGE_RESPONSE_SCHEMA_VERSION, type TokensSourceRow } from '../types'
-import { buildTokensSortIndexes, getTokensPageFromRows, getTokensPageQuery } from '../utils'
+import { buildTokensSortIndexes, getTokensPageFromRows, getTokensPageQuery, resolveTokenFilterValues } from '../utils'
 
 function row(overrides: Partial<TokensSourceRow> & Pick<TokensSourceRow, 'id' | 'name' | 'symbol'>): TokensSourceRow {
 	return {
@@ -29,6 +29,8 @@ function row(overrides: Partial<TokensSourceRow> & Pick<TokensSourceRow, 'id' | 
 		upcomingUnlockUsd: null,
 		isStablecoin: false,
 		searchKey: `${overrides.name} ${overrides.symbol}`.toLowerCase(),
+		chains: [],
+		categories: [],
 		...overrides
 	}
 }
@@ -44,12 +46,35 @@ const basePage = {
 		unlock30dUsd: 0,
 		upcomingUnlockUsd: 0
 	},
-	updatedAt: null
+	updatedAt: null,
+	chainOptions: [],
+	categoryOptions: []
 }
 
-function getPage(rows: TokensSourceRow[], query: Record<string, string>) {
-	return getTokensPageFromRows(rows, buildTokensSortIndexes(rows), query, basePage)
+function getPage(rows: TokensSourceRow[], query: Record<string, string | string[]>) {
+	const chains = new Set<string>()
+	const categories = new Set<string>()
+	for (const item of rows) {
+		for (const chain of item.chains) chains.add(chain)
+		for (const category of item.categories) categories.add(category)
+	}
+	return getTokensPageFromRows(rows, buildTokensSortIndexes(rows), query, {
+		...basePage,
+		chainOptions: [...chains].map((id) => ({ id, label: id })),
+		categoryOptions: [...categories].map((id) => ({ id, label: id }))
+	})
 }
+
+describe('token filter query values', () => {
+	it('preserves canonical IDs and resolves include and exclude selections', () => {
+		const allValues = ['ethereum', 'solana', 'bsc']
+		expect(resolveTokenFilterValues(null, [], allValues)).toEqual(allValues)
+		expect(resolveTokenFilterValues(['solana'], [], allValues)).toEqual(['solana'])
+		expect(resolveTokenFilterValues(null, ['solana'], allValues)).toEqual(['ethereum', 'bsc'])
+		expect(resolveTokenFilterValues(['None'], [], allValues)).toEqual([])
+		expect(resolveTokenFilterValues(['Solana'], [], allValues)).toEqual([])
+	})
+})
 
 describe('getTokensPageQuery', () => {
 	it('normalizes invalid query params to defaults', () => {
@@ -70,7 +95,11 @@ describe('getTokensPageQuery', () => {
 			search: 'ethena',
 			rankFrom: null,
 			rankTo: null,
-			numericFilters: []
+			numericFilters: [],
+			chains: null,
+			excludeChains: [],
+			categories: null,
+			excludeCategories: []
 		})
 	})
 
@@ -91,7 +120,11 @@ describe('getTokensPageQuery', () => {
 			search: '',
 			rankFrom: null,
 			rankTo: null,
-			numericFilters: []
+			numericFilters: [],
+			chains: null,
+			excludeChains: [],
+			categories: null,
+			excludeCategories: []
 		})
 	})
 
@@ -250,5 +283,65 @@ describe('getTokensPageFromRows', () => {
 	it('ignores unknown filter fields', () => {
 		const result = getPage(rows, { min_notAField: '5', pageSize: '20' })
 		expect(result.total).toBe(4)
+	})
+
+	it('uses OR within filter families and AND between chains and categories', () => {
+		const filterRows = [
+			row({
+				id: 'ethereum-rwa',
+				name: 'Ethereum RWA',
+				symbol: 'ERWA',
+				marketCap: 300,
+				chains: ['ethereum'],
+				categories: ['real-world-assets-rwa']
+			}),
+			row({
+				id: 'ethereum-stable',
+				name: 'Ethereum Stable',
+				symbol: 'EST',
+				marketCap: 200,
+				chains: ['ethereum'],
+				categories: ['stablecoins']
+			}),
+			row({
+				id: 'solana-rwa',
+				name: 'Solana RWA',
+				symbol: 'SRWA',
+				marketCap: 100,
+				chains: ['solana'],
+				categories: ['real-world-assets-rwa']
+			})
+		]
+
+		const result = getPage(filterRows, {
+			chains: 'ethereum',
+			categories: ['stablecoins', 'real-world-assets-rwa'],
+			pageSize: '20'
+		})
+		expect(result.rows.map((item) => item.id)).toEqual(['ethereum-rwa', 'ethereum-stable'])
+
+		const excluded = getPage(filterRows, { excludeChains: 'solana', pageSize: '20' })
+		expect(excluded.rows.map((item) => item.id)).toEqual(['ethereum-rwa', 'ethereum-stable'])
+
+		const deselected = getPage(filterRows, { categories: 'None', pageSize: '20' })
+		expect(deselected.total).toBe(0)
+	})
+
+	it('returns no rows for a present unknown-only category and keeps memberships internal', () => {
+		const filterRows = [
+			row({
+				id: 'rwa-stable',
+				name: 'RWA Stable',
+				symbol: 'RWAS',
+				chains: ['ethereum'],
+				categories: ['real-world-assets-rwa', 'stablecoins']
+			})
+		]
+		const unknown = getPage(filterRows, { categories: 'not-a-category', pageSize: '20' })
+		expect(unknown.total).toBe(0)
+
+		const matched = getPage(filterRows, { categories: 'stablecoins', pageSize: '20' })
+		expect(matched.rows[0]).not.toHaveProperty('chains')
+		expect(matched.rows[0]).not.toHaveProperty('categories')
 	})
 })

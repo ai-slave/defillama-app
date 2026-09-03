@@ -1,7 +1,7 @@
 import type { ParsedUrlQuery } from 'querystring'
 import type { PaginationState, SortingState } from '@tanstack/react-table'
 import { formatPercent, formatPercentChange, formatUsd } from '~/utils/numberFormat'
-import { parseNumberQueryParam, readSingleQueryValue, toQueryString } from '~/utils/routerQuery'
+import { parseNumberQueryParam, readSingleQueryValue, toNonEmptyArrayParam, toQueryString } from '~/utils/routerQuery'
 import {
 	TOKENS_NUMERIC_FILTER_FIELDS,
 	TOKENS_PAGE_RESPONSE_SCHEMA_VERSION,
@@ -33,6 +33,49 @@ function parsePositiveIntegerQueryParam(value: ParsedUrlQuery[string], fallback:
 function parseOptionalRankQueryParam(value: ParsedUrlQuery[string]): number | null {
 	const parsed = parseNumberQueryParam(value)
 	return parsed != null && parsed > 0 ? Math.floor(parsed) : null
+}
+
+export function parseTokenFilterValues(value: ParsedUrlQuery[string]): string[] | null {
+	if (value == null) return null
+	return toNonEmptyArrayParam(value)
+}
+
+export function resolveTokenFilterValues(
+	includeValues: string[] | null,
+	excludeValues: string[],
+	allValues: string[]
+): string[] {
+	const validValues = new Set(allValues)
+	let selectedValues: string[]
+	if (includeValues == null || includeValues.includes('All')) {
+		selectedValues = allValues
+	} else if (includeValues.includes('None')) {
+		selectedValues = []
+	} else {
+		selectedValues = []
+		const selected = new Set<string>()
+		for (const value of includeValues) {
+			if (validValues.has(value) && !selected.has(value)) {
+				selected.add(value)
+				selectedValues.push(value)
+			}
+		}
+	}
+
+	if (excludeValues.length === 0) return selectedValues
+	const excluded = new Set(excludeValues)
+	return selectedValues.filter((value) => !excluded.has(value))
+}
+
+function getTokenFilterSelection(
+	includeValues: string[] | null,
+	excludeValues: string[],
+	allValues: string[]
+): Set<string> | null {
+	const hasExplicitInclude = includeValues != null && !includeValues.includes('All')
+	const selectedValues = resolveTokenFilterValues(includeValues, excludeValues, allValues)
+	if ((!hasExplicitInclude || allValues.length > 0) && selectedValues.length === allValues.length) return null
+	return new Set(selectedValues)
 }
 
 export function parseRankRangeQueryParams(query: ParsedUrlQuery): { rankFrom: number | null; rankTo: number | null } {
@@ -73,7 +116,11 @@ export function getTokensPageQuery(query: ParsedUrlQuery): TokensPageQuery {
 		search: readSingleQueryValue(query.search)?.trim() ?? '',
 		rankFrom,
 		rankTo,
-		numericFilters: parseNumericFiltersQueryParams(query)
+		numericFilters: parseNumericFiltersQueryParams(query),
+		chains: parseTokenFilterValues(query.chains),
+		excludeChains: parseTokenFilterValues(query.excludeChains) ?? [],
+		categories: parseTokenFilterValues(query.categories),
+		excludeCategories: parseTokenFilterValues(query.excludeCategories) ?? []
 	}
 }
 
@@ -115,6 +162,10 @@ export function buildTokensTableQueryString({
 		search: pageQuery.search || undefined,
 		rankFrom: pageQuery.rankFrom != null ? String(pageQuery.rankFrom) : undefined,
 		rankTo: pageQuery.rankTo != null ? String(pageQuery.rankTo) : undefined,
+		chains: pageQuery.chains ?? undefined,
+		excludeChains: pageQuery.excludeChains.length > 0 ? pageQuery.excludeChains : undefined,
+		categories: pageQuery.categories ?? undefined,
+		excludeCategories: pageQuery.excludeCategories.length > 0 ? pageQuery.excludeCategories : undefined,
 		...numericFilterParams
 	})
 }
@@ -214,7 +265,7 @@ function getRowDisplay(row: TokensSourceRow): TokensTableRowDisplay {
 }
 
 function toTableRow(row: TokensSourceRow, rowNumber: number): TokensTableRow {
-	const { searchKey: _searchKey, ...tableRow } = row
+	const { searchKey: _searchKey, chains: _chains, categories: _categories, ...tableRow } = row
 	return { ...tableRow, rowNumber, display: getRowDisplay(row) }
 }
 
@@ -237,6 +288,8 @@ interface TokensRowFilter {
 	rankFrom: number | null
 	rankTo: number | null
 	numericFilters: TokensNumericFilter[]
+	chains: Set<string> | null
+	categories: Set<string> | null
 }
 
 function rowMatches(row: TokensSourceRow, filter: TokensRowFilter): boolean {
@@ -252,6 +305,10 @@ function rowMatches(row: TokensSourceRow, filter: TokensRowFilter): boolean {
 		if (numericFilter.min != null && value < numericFilter.min) return false
 		if (numericFilter.max != null && value > numericFilter.max) return false
 	}
+	const chains = filter.chains
+	if (chains != null && !row.chains.some((chain) => chains.has(chain))) return false
+	const categories = filter.categories
+	if (categories != null && !row.categories.some((category) => categories.has(category))) return false
 	return filter.search === '' || row.searchKey.includes(filter.search)
 }
 
@@ -359,14 +416,26 @@ export function getTokensPageFromRows(
 		requestedIds: parseRequestedIds(query.ids),
 		rankFrom: pageQuery.rankFrom,
 		rankTo: pageQuery.rankTo,
-		numericFilters: pageQuery.numericFilters
+		numericFilters: pageQuery.numericFilters,
+		chains: getTokenFilterSelection(
+			pageQuery.chains,
+			pageQuery.excludeChains,
+			base.chainOptions.map((option) => option.id)
+		),
+		categories: getTokenFilterSelection(
+			pageQuery.categories,
+			pageQuery.excludeCategories,
+			base.categoryOptions.map((option) => option.id)
+		)
 	}
 	const hasFilter =
 		filter.search !== '' ||
 		filter.requestedIds != null ||
 		filter.rankFrom != null ||
 		filter.rankTo != null ||
-		filter.numericFilters.length > 0
+		filter.numericFilters.length > 0 ||
+		filter.chains != null ||
+		filter.categories != null
 	const total = hasFilter ? countMatchingRows(rows, filter) : rows.length
 	const pageCount = Math.max(1, Math.ceil(total / pageQuery.pageSize))
 	const page = Math.min(pageQuery.page, pageCount)

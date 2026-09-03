@@ -1,20 +1,5 @@
 [
   {
-    "name": "MiCA",
-    "route": "/mica",
-    "category": "Trending",
-    "description": "MiCA-regulated crypto exchanges in the EU: liquidity, trading fees, perps availability, and KYC requirements",
-    "tags": [
-      "New"
-    ]
-  },
-  {
-    "name": "Tokens",
-    "route": "/tokens",
-    "category": "Trending",
-    "description": "Token rankings by market cap, price performance, volume, revenue, unlocks, and token rights"
-  },
-  {
     "name": "Overview",
     "route": "/",
     "category": "Trending",
@@ -30,10 +15,10 @@
     "tab": "Chains"
   },
   {
-    "name": "Yields: All Pools",
+    "name": "Yields: Earn",
     "route": "/yields",
     "category": "Trending",
-    "description": "Pools by APY, TVL, and other metrics on all chains",
+    "description": "Pools by APY, TVL, and other metrics across all chains",
     "totalTrackedKey": "yields.pools"
   },
   {

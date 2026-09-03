@@ -79,7 +79,8 @@ export async function fetchCoreMetadata(): Promise<CoreMetadataPayload> {
 			emissionsSupplyMetrics,
 			emissions,
 			equitiesCompanyRoutes,
-			preIpoCompanyIds
+			preIpoCompanyIds,
+			tokenFilterMetadata
 		},
 		routeIndexes
 	] = await Promise.all([fetchCoreMetadataSources(), fetchMetadataRouteIndexes()])
@@ -175,6 +176,7 @@ export async function fetchCoreMetadata(): Promise<CoreMetadataPayload> {
 		digitalAssetTreasuryRoutes: routeIndexes.digitalAssetTreasuryRoutes,
 		stablecoinPeggedAssetSlugs: routeIndexes.stablecoinPeggedAssetSlugs,
 		equitiesCompanyRoutes,
-		preIpoCompanyIds
+		preIpoCompanyIds,
+		tokenFilterMetadata
 	}
 }

@@ -16,6 +16,7 @@ import { getErrorMessage } from '~/utils/error'
 import type { TokenDirectory } from '~/utils/tokenDirectory'
 import { getMetadataFetchTimeoutMs } from './config'
 import { fetchMetadataJson } from './http'
+import type { TokenFilterMetadataArtifact } from './tokenFilters'
 import type {
 	ICategoriesAndTags,
 	IChainMetadata,
@@ -46,6 +47,7 @@ export type CoreMetadataSources = {
 	emissions: ProtocolEmission[]
 	equitiesCompanyRoutes: IEquitiesCompanyRoute[]
 	preIpoCompanyIds: string[]
+	tokenFilterMetadata: TokenFilterMetadataArtifact
 }
 
 async function fetchNamedMetadataSource<T>(name: string, promise: Promise<T>): Promise<T> {
@@ -79,7 +81,8 @@ export async function fetchCoreMetadataSources(): Promise<CoreMetadataSources> {
 		emissionsSupplyMetrics,
 		emissions,
 		equitiesCompanyRoutes,
-		preIpoCompanyIds
+		preIpoCompanyIds,
+		tokenFilterMetadata
 	] = await Promise.all([
 		fetchNamedMetadataSource(
 			'protocols API',
@@ -138,7 +141,11 @@ export async function fetchCoreMetadataSources(): Promise<CoreMetadataSources> {
 			fetchMetadataJson<RawProtocolEmission[]>(`${coreApiBase}/emissions`).then(normalizeProtocolEmissions)
 		),
 		fetchNamedMetadataSource('equities company routes API', fetchEquitiesCompanyRouteMetadata()),
-		fetchNamedMetadataSource('pre-IPO company routes API', fetchPreIpoCompanyIds())
+		fetchNamedMetadataSource('pre-IPO company routes API', fetchPreIpoCompanyIds()),
+		fetchNamedMetadataSource(
+			'token filter metadata',
+			fetchMetadataJson<TokenFilterMetadataArtifact>(`${datasetsBase}/tokenlist/filters.json?zz=18`)
+		)
 	])
 
 	return {
@@ -158,6 +165,7 @@ export async function fetchCoreMetadataSources(): Promise<CoreMetadataSources> {
 		emissionsSupplyMetrics,
 		emissions,
 		equitiesCompanyRoutes,
-		preIpoCompanyIds
+		preIpoCompanyIds,
+		tokenFilterMetadata
 	}
 }

@@ -82,6 +82,15 @@ function responseForUrl(url: string): unknown {
 		}
 	}
 	if (url.includes('/tokenlist/rankings.json')) return []
+	if (url.includes('/tokenlist/filters.json')) {
+		return {
+			schemaVersion: 1,
+			generatedAt: 1,
+			sources: { coingeckoCatalogGeneratedAt: 1, rankingsUpdatedAt: null },
+			tokens: {},
+			categories: []
+		}
+	}
 	if (url.includes('/config/smol/token.json')) return {}
 	if (url.includes('/liquidations/all') || url === 'https://liquidations.example.com/all') {
 		return { data: {}, tokens: {}, validThresholds: [], timestamp: 0 }
@@ -134,6 +143,7 @@ describe('metadata source adapters', () => {
 		expectMetadataRequest('https://api.llama.fi/rwa/list')
 		expectMetadataRequest('https://api.llama.fi/rwa/rwa/platforms')
 		expectMetadataRequest('https://defillama-datasets.llama.fi/tokenlist/rankings.json')
+		expectMetadataRequest('https://defillama-datasets.llama.fi/tokenlist/filters.json')
 		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://api.llama.fi/config/smol/token.json', {
 			timeout: 180_000
 		})
@@ -192,6 +202,7 @@ describe('metadata source adapters', () => {
 		expectMetadataRequest('https://rwa.example.com/rwa/platforms')
 		expectMetadataRequest('https://rwa-perps.example.com/list?includeCex=true')
 		expectMetadataRequest('https://datasets.example.com/tokenlist/rankings.json')
+		expectMetadataRequest('https://datasets.example.com/tokenlist/filters.json')
 		expectMetadataRequest('https://liquidations.example.com/all')
 		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith(
 			'https://bridges.example.com/bridges?includeChains=true',
