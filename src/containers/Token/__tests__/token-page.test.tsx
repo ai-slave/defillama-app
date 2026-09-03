@@ -90,7 +90,6 @@ const overviewFixture: TokenOverviewData = {
 	},
 	treasury: null,
 	raises: null,
-	tokenLiquidity: null,
 	outstandingFDV: null,
 	rawChartData: {
 		'Token Price': [
@@ -531,10 +530,6 @@ vi.mock('~/containers/Raises/server/dataset.server', () => ({
 
 vi.mock('~/containers/Treasuries/server/dataset.server', () => ({
 	fetchTreasuryById: vi.fn().mockResolvedValue(null)
-}))
-
-vi.mock('~/containers/Token/server/dataset.liquidity.server', () => ({
-	fetchLiquidityEntryByProtocolId: vi.fn().mockResolvedValue(null)
 }))
 
 vi.mock('~/containers/Token/server/dataset.risk.server', () => ({

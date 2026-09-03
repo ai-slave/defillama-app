@@ -36,11 +36,6 @@ export const DATASET_SNAPSHOT_REGISTRY: Record<DatasetSnapshotDomain, DatasetSna
 			(await import('~/containers/Treasuries/server/dataset.builder.server')).buildTreasuriesDomain(writer),
 		maxAgeMs: HOURLY_SNAPSHOT_MAX_AGE_MS
 	},
-	liquidity: {
-		builder: async (writer) =>
-			(await import('~/containers/Token/server/dataset.liquidity.builder.server')).buildLiquidityDomain(writer),
-		maxAgeMs: HOURLY_SNAPSHOT_MAX_AGE_MS
-	},
 	liquidations: {
 		builder: async (writer) =>
 			(await import('~/containers/LiquidationsV2/server/dataset.builder.server')).buildLiquidationsDomain(writer),

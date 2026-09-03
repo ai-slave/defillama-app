@@ -27,7 +27,6 @@ const metrics = {
 	nfts: false,
 	dev: false,
 	inflows: true,
-	liquidity: false,
 	activeUsers: false,
 	newUsers: false,
 	txCount: false,

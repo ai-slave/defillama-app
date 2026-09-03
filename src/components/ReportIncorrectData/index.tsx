@@ -18,7 +18,6 @@ const PROTOCOL_DATA_TYPES = [
 	'Mcap',
 	'Token Price',
 	'Token Volume',
-	'Token Liquidity',
 	'FDV',
 	'Volume',
 	'Fees',

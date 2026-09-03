@@ -23,19 +23,19 @@ const catalog: ProDashboardProtocolCatalog = {
 describe('Pro dashboard chart source planning', () => {
 	it('deduplicates equivalent chart and metric cards and carries catalog metadata', () => {
 		const items: DashboardItemConfig[] = [
-			{ id: 'daily', kind: 'chart', subjectType: 'protocol', type: 'liquidity', protocol: 'aave', grouping: 'day' },
+			{ id: 'daily', kind: 'chart', subjectType: 'protocol', type: 'fees', protocol: 'aave', grouping: 'day' },
 			{
 				id: 'monthly',
 				kind: 'chart',
 				subjectType: 'protocol',
-				type: 'liquidity',
+				type: 'fees',
 				protocol: 'aave',
 				grouping: 'month'
 			},
 			{
 				id: 'metric',
 				kind: 'metric',
-				type: 'liquidity',
+				type: 'fees',
 				subject: { itemType: 'protocol', protocol: 'aave' },
 				window: 'all',
 				aggregator: 'latest',
@@ -47,10 +47,9 @@ describe('Pro dashboard chart source planning', () => {
 
 		expect(plan).toHaveLength(1)
 		expect(plan[0]?.request).toEqual({
-			type: 'liquidity',
+			type: 'fees',
 			subjectType: 'protocol',
-			protocol: 'aave',
-			protocolSymbol: 'AAVE'
+			protocol: 'aave'
 		})
 	})
 
@@ -79,7 +78,7 @@ describe('Pro dashboard chart source planning', () => {
 
 	it('leaves metadata-dependent sources unseeded when the catalog is unavailable', () => {
 		const items: DashboardItemConfig[] = [
-			{ id: 'liquidity', kind: 'chart', subjectType: 'protocol', type: 'liquidity', protocol: 'aave' }
+			{ id: 'mcap', kind: 'chart', subjectType: 'protocol', type: 'tokenMcap', protocol: 'aave' }
 		]
 
 		expect(buildProDashboardChartSourcePlan(items, null)).toEqual([])
@@ -91,18 +90,6 @@ describe('Pro dashboard chart source planning', () => {
 		]
 
 		expect(buildProDashboardChartSourcePlan(items, catalog)[0]?.skipReason).toBeDefined()
-	})
-
-	it('includes synthetic parent liquidity when the catalog carries its token symbol', () => {
-		const items: DashboardItemConfig[] = [
-			{ id: 'parent-liquidity', kind: 'chart', subjectType: 'protocol', type: 'liquidity', protocol: 'aave' }
-		]
-
-		expect(buildProDashboardChartSourcePlan(items, catalog)).toEqual([
-			expect.objectContaining({
-				request: expect.objectContaining({ protocol: 'aave', protocolSymbol: 'AAVE' })
-			})
-		])
 	})
 
 	it('seeds unsupported persisted chain sources as empty instead of retrying a known-invalid API', () => {
@@ -212,29 +199,6 @@ describe('Pro dashboard chart source planning', () => {
 		}
 
 		const plan = buildProDashboardChartSourcePlan(items, catalog, appMetadata)
-
-		expect(plan[0]?.skipReason).toBeUndefined()
-	})
-
-	it('keeps symbol-backed parent liquidity fetchable without a metadata flag', () => {
-		const items: DashboardItemConfig[] = [
-			{ id: 'liquidity', kind: 'chart', subjectType: 'protocol', type: 'liquidity', protocol: 'aave' }
-		]
-		const parentProtocol = catalog.protocols[1]
-		if (!parentProtocol) throw new Error('Missing parent protocol fixture')
-		const parentOnlyCatalog: ProDashboardProtocolCatalog = {
-			protocols: [parentProtocol],
-			chains: []
-		}
-		const appMetadata = {
-			protocols: {
-				parent: { name: 'aave', displayName: 'Aave' }
-			},
-			pfPs: { pf: [], ps: [] },
-			chains: {}
-		}
-
-		const plan = buildProDashboardChartSourcePlan(items, parentOnlyCatalog, appMetadata)
 
 		expect(plan[0]?.skipReason).toBeUndefined()
 	})

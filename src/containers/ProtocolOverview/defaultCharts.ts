@@ -8,7 +8,6 @@ interface IBuildAvailableChartsParams {
 	hasTvlChart: boolean
 	hasTvsChart: boolean
 	hasGeckoId: boolean
-	hasLiquidity: boolean
 	hasFees: boolean
 	hasRevenue: boolean
 	hasHoldersRevenue: boolean
@@ -45,7 +44,6 @@ export function buildAvailableCharts(params: IBuildAvailableChartsParams): Proto
 	if (params.hasTvsChart) charts.push('TVS')
 	if (params.hasGeckoId) {
 		charts.push('Mcap', 'Token Price', 'Token Volume')
-		if (params.hasLiquidity) charts.push('Token Liquidity')
 		charts.push('FDV')
 	}
 	if (params.hasFees) charts.push('Fees')
@@ -141,7 +139,6 @@ export function buildDefaultToggledCharts({
 			'Mcap',
 			'Token Price',
 			'Token Volume',
-			'Token Liquidity',
 			'FDV',
 			'Total Proposals',
 			'Successful Proposals',

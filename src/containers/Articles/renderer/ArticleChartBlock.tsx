@@ -5,7 +5,7 @@ import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/Mult
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { getProDashboardChartSourceQueryKey } from '~/containers/ProDashboard/chartSource'
 import type { TimePeriod } from '~/containers/ProDashboard/dashboardTypes'
-import { buildProDashboardParentMapping, buildProtocolSymbolMap } from '~/containers/ProDashboard/protocolCatalog'
+import { buildProDashboardParentMapping } from '~/containers/ProDashboard/protocolCatalog'
 import {
 	filterDataByTimePeriod,
 	getChartQueryFn,
@@ -77,7 +77,6 @@ export function ArticleChartBlock({
 
 	const authToken = useContext(ProxyAuthTokenContext)
 	const { data: catalog } = useProtocolsAndChains()
-	const protocolSymbols = useMemo(() => buildProtocolSymbolMap(catalog?.protocols ?? []), [catalog])
 	const parentMapping = useMemo(() => buildProDashboardParentMapping(catalog?.protocols ?? []), [catalog])
 
 	const queries = useQueries({
@@ -98,8 +97,7 @@ export function ArticleChartBlock({
 				parentMapping,
 				undefined,
 				undefined,
-				authToken,
-				s.entityType === 'protocol' ? protocolSymbols : undefined
+				authToken
 			),
 			select: (data: [number, number][]) => filterDataByTimePeriod(data, timePeriod),
 			staleTime: 1000 * 60 * 5,

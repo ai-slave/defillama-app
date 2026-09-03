@@ -25,7 +25,6 @@ type KeyMetricsOptionalFields = Partial<
 		| 'openSmolStatsSummaryByDefault'
 		| 'token'
 		| 'tokenCGData'
-		| 'tokenLiquidity'
 		| 'outstandingFDV'
 		| 'dexVolume'
 		| 'dexNotionalVolume'
@@ -333,7 +332,6 @@ export const KeyMetrics = (props: IKeyMetricsProps) => {
 				{props.currentTvlByChain?.borrowed != null ? (
 					<MetricRow label="Active Loans" value={props.formatPrice(props.currentTvlByChain.borrowed)} />
 				) : null}
-				<TokenLiquidity {...props} />
 				<Treasury {...props} />
 				<Raises {...props} />
 				<Expenses {...props} />
@@ -897,31 +895,6 @@ const Expenses = (props: IKeyMetricsProps) => {
 					<span>{formatDate(props.expenses.lastUpdate)}</span>
 				</p>
 			) : null}
-		</MetricSection>
-	)
-}
-
-const TokenLiquidity = (props: IKeyMetricsProps) => {
-	if (!props.tokenLiquidity) return null
-	return (
-		<MetricSection
-			label={`${props.token?.symbol ? `$${props.token.symbol}` : 'Token'} Liquidity`}
-			tooltip="Sum of value locked in DEX pools that include that token across all DEXs for which DefiLlama tracks pool data."
-			value={formatUsd(props.tokenLiquidity.total, {
-				compact: true,
-				minimumCompactValue: 1_000_000,
-				compactSuffix: 'lowercase'
-			})}
-		>
-			{props.tokenLiquidity.pools.map((pool) => (
-				<p
-					key={`${pool[0]}-${pool[1]}-${pool[2]}`}
-					className="flex items-center justify-between gap-1 border-b border-dashed border-subtle py-1 group-last:border-none"
-				>
-					<span className="text-secondary">{pool[0]}</span>
-					<span className="font-jetbrains">{props.formatPrice(pool[2])}</span>
-				</p>
-			))}
 		</MetricSection>
 	)
 }

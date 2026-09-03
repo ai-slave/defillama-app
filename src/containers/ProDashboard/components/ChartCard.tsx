@@ -143,8 +143,7 @@ function ChartRenderer({
 const groupingOptions: DashboardGrouping[] = ['day', 'week', 'month', 'quarter', 'year']
 
 export function ChartCard({ chart }: ChartCardProps) {
-	const { getChainInfo, getProtocolInfo, parentMapping, protocolBySlug, protocolCatalog, protocolSymbols } =
-		useProDashboardCatalog()
+	const { getChainInfo, getProtocolInfo, parentMapping, protocolBySlug, protocolCatalog } = useProDashboardCatalog()
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { handleGroupingChange, handleCumulativeChange } = useProDashboardEditorActions()
 	const { isReadOnly } = useProDashboardPermissions()
@@ -158,8 +157,7 @@ export function ChartCard({ chart }: ChartCardProps) {
 		timePeriod,
 		customTimePeriod,
 		authToken,
-		parentMapping,
-		protocolSymbols
+		parentMapping
 	)
 	const chartState = toChartRuntimeState(
 		chartQuery,

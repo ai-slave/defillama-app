@@ -7,7 +7,6 @@ const PROTOCOL_TO_DASHBOARD_CHART_TYPE: Record<ProtocolChartsLabels, ProtocolCha
 	Mcap: 'tokenMcap',
 	'Token Price': 'tokenPrice',
 	'Token Volume': 'tokenVolume',
-	'Token Liquidity': 'liquidity',
 	FDV: null,
 	Fees: 'fees',
 	Revenue: 'revenue',

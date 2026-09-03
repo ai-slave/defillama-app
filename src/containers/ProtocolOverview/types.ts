@@ -35,7 +35,6 @@ export interface IProtocolPageMetrics {
 	nfts: boolean
 	dev: boolean
 	inflows: boolean
-	liquidity: boolean
 	activeUsers: boolean
 	newUsers: boolean
 	txCount: boolean
@@ -169,10 +168,6 @@ export interface IProtocolOverviewPageData {
 		notes?: Array<string> | null
 		lastUpdate?: string | null
 	} | null
-	tokenLiquidity: {
-		pools: Array<[string, string, number]>
-		total: number
-	} | null
 	tokenCGData?: {
 		price: {
 			current: number | null
@@ -257,7 +252,6 @@ export const createDisabledProtocolToggledMetrics = (): IToggledMetrics => ({
 	mcap: 'false',
 	tokenPrice: 'false',
 	tokenVolume: 'false',
-	tokenLiquidity: 'false',
 	fdv: 'false',
 	fees: 'false',
 	revenue: 'false',

@@ -1,4 +1,3 @@
-import { fetchProtocolTokenLiquidityChart } from '~/api'
 import { YIELDS_V2_SERVER_URL } from '~/constants'
 import {
 	fetchAdapterProtocolChartData,
@@ -300,16 +299,6 @@ export const protocolCharts = defineApiRoute({
 					: breakdownType === 'chain-breakdown'
 						? fetchProtocolTreasuryChart({ ...params, breakdownType })
 						: fetchProtocolTreasuryChart(params))
-				return ok(data)
-			}
-
-			if (kind === 'token-liquidity') {
-				const protocolId = queryString(req.query, 'protocolId')
-				if (!protocolId) {
-					return badRequest('protocolId parameter is required')
-				}
-
-				const data = await fetchProtocolTokenLiquidityChart(protocolId)
 				return ok(data)
 			}
 

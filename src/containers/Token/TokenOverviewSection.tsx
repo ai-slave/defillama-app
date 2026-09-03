@@ -65,8 +65,6 @@ const FDV_TOOLTIP =
 	"Fully Diluted Valuation, this is calculated by taking the expected maximum supply of the token and multiplying it by the price. It's mainly used to calculate the hypothetical marketcap of the token if all the tokens were unlocked and circulating."
 const OUTSTANDING_FDV_TOOLTIP =
 	'Outstanding FDV is calculated by taking the outstanding supply of the token and multiplying it by the price.\n\nOutstanding supply is the total supply minus the supply that is not yet allocated to anything (eg coins in treasury or reserve).'
-const LIQUIDITY_TOOLTIP =
-	'Sum of value locked in DEX pools that include that token across all DEXs for which DefiLlama tracks pool data.'
 const CIRCULATING_SUPPLY_TOOLTIP =
 	'Circulating supply is the number of tokens currently available and circulating in the market.'
 const MAX_SUPPLY_TOOLTIP = 'Max supply is the maximum number of tokens that can ever exist for this asset.'
@@ -463,21 +461,6 @@ function TokenMetrics({ overview, geckoId }: { overview: TokenOverviewData; geck
 						markets={markets}
 						metric="oi"
 					/>
-				) : null}
-				{overview.tokenLiquidity ? (
-					<MetricSection
-						label="Token Liquidity"
-						tooltip={LIQUIDITY_TOOLTIP}
-						value={formatTokenCurrency(overview.tokenLiquidity.total)}
-					>
-						{overview.tokenLiquidity.pools.slice(0, 6).map(([protocol, chain, value]) => (
-							<SubMetricRow
-								key={`${protocol}-${chain}`}
-								label={`${protocol} · ${chain}`}
-								value={formatTokenCurrency(value)}
-							/>
-						))}
-					</MetricSection>
 				) : null}
 				{overview.treasury ? (
 					<MetricSection

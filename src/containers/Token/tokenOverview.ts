@@ -1,16 +1,12 @@
-import { fetchLiquidityDatasetEntryByProtocolId } from '~/api'
 import { fetchCoinGeckoChartByIdWithCacheFallback, fetchCoinGeckoCoinById } from '~/api/coingecko'
 import type { CgChartResponse, CoinGeckoCoinDetailResultForOptions } from '~/api/coingecko.types'
 import { fetchCoinPriceByCoinGeckoIdViaLlamaPrices } from '~/api/pricing'
-import type { ProtocolLiquidityTokensResponse } from '~/api/types'
-import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import { normalizeChartPointsToMs } from '~/containers/ProtocolOverview/chartSeries.utils'
 import { fetchRaisesByDefillamaId } from '~/containers/Raises/api'
 import type { Raise } from '~/containers/Raises/model'
 import { fetchTreasuryById } from '~/containers/Treasuries/api'
 import type { RawTreasuriesResponse } from '~/containers/Treasuries/api.types'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
-import type { YieldsMeta } from '~/containers/Yields/data/types'
 import { slug } from '~/utils'
 import type { IProtocolMetadata, ITokenListEntry } from '~/utils/metadata/types'
 import { DEFAULT_PRICE_CHART_TIMEFRAME } from '~/utils/priceChartTimeframes'
@@ -32,11 +28,6 @@ export interface TokenOverviewRaise {
 	amountUsd: number | null
 	source?: string
 	investors: string[]
-}
-
-export interface TokenOverviewTokenLiquidity {
-	pools: Array<[string, string, number]>
-	total: number
 }
 
 export interface TokenOverviewMarketData {
@@ -80,7 +71,6 @@ export interface TokenOverviewData {
 	marketData: TokenOverviewMarketData
 	treasury: TokenOverviewTreasury | null
 	raises: TokenOverviewRaise[] | null
-	tokenLiquidity: TokenOverviewTokenLiquidity | null
 	outstandingFDV: number | null
 	rawChartData: TokenOverviewRawChartData
 }
@@ -93,8 +83,6 @@ type TokenOverviewDataSource =
 			kind: 'prefetched'
 			raises: Raise[] | null
 			treasury: RawTreasuriesResponse[number] | null
-			yieldsMeta: YieldsMeta | null
-			liquidityInfo: ProtocolLiquidityTokensResponse[number] | null
 	  }
 
 export const TOKEN_OVERVIEW_DEFAULT_CHARTS: TokenOverviewChartLabel[] = ['Token Price']
@@ -424,46 +412,6 @@ function buildRaisesSummary(raises: Raise[] | null): TokenOverviewRaise[] | null
 		}))
 }
 
-function buildTokenLiquiditySummary({
-	protocolDataId,
-	yieldsMeta,
-	liquidityInfo
-}: {
-	protocolDataId: string | null
-	yieldsMeta: YieldsMeta | null
-	liquidityInfo: ProtocolLiquidityTokensResponse[number] | null
-}): TokenOverviewTokenLiquidity | null {
-	if (!protocolDataId || !liquidityInfo) return null
-
-	const tokenPools = liquidityInfo.id === protocolDataId ? (liquidityInfo.tokenPools ?? []) : []
-
-	if (tokenPools.length === 0) return null
-
-	const liquidityAggregated: Record<string, Record<string, number>> = {}
-	for (const pool of tokenPools) {
-		const projectLiquidity = liquidityAggregated[pool.project] ?? {}
-		projectLiquidity[pool.chain] = (projectLiquidity[pool.chain] ?? 0) + pool.tvlUsd
-		liquidityAggregated[pool.project] = projectLiquidity
-	}
-
-	const rows: Array<[string, string, number]> = []
-	const protocolNameBySlug = new Map((yieldsMeta?.protocols ?? []).map((protocol) => [protocol.slug, protocol.name]))
-	let total = 0
-	for (const protocolSlug in liquidityAggregated) {
-		const protocolName = protocolNameBySlug.get(protocolSlug) ?? protocolSlug
-
-		const chainValues = liquidityAggregated[protocolSlug]
-		for (const chainName in chainValues) {
-			const liquidityValue = Number(chainValues[chainName])
-			rows.push([protocolName, chainName, liquidityValue])
-			total += liquidityValue
-		}
-	}
-
-	rows.sort((a, b) => b[2] - a[2])
-	return rows.length > 0 ? { pools: rows, total } : null
-}
-
 export function buildTokenOverviewRawChartData({
 	chart,
 	totalSupply,
@@ -529,12 +477,11 @@ export async function getTokenOverviewData({
 
 	const shouldFetchTreasury = Boolean(!record.chainId && protocolDefiLlamaId)
 	const raisesDefiLlamaId = chainDefiLlamaId ?? protocolDefiLlamaId
-	const shouldFetchLiquidity = Boolean(protocolSlug && protocolMetadata?.liquidity)
 	const totalSupply = currentMetrics
 		? (currentMetrics.maxSupply ?? currentMetrics.totalSupply)
 		: (tokenEntry?.max_supply ?? tokenEntry?.total_supply ?? null)
 
-	const [cgChart, coinDetail, currentPriceViaLlama, protocolData, raisesData, treasuries] = await Promise.all([
+	const [cgChart, coinDetail, currentPriceViaLlama, raisesData, treasuries] = await Promise.all([
 		geckoId
 			? fetchCoinGeckoChartByIdWithCacheFallback(geckoId, {
 					timeframe: DEFAULT_PRICE_CHART_TIMEFRAME,
@@ -547,7 +494,6 @@ export async function getTokenOverviewData({
 		geckoId && currentMetrics == null
 			? fetchCoinPriceByCoinGeckoIdViaLlamaPrices(geckoId).catch(() => null)
 			: Promise.resolve(null),
-		protocolSlug ? fetchProtocolOverviewMetrics(protocolSlug).catch(() => null) : Promise.resolve(null),
 		source.kind === 'prefetched'
 			? Promise.resolve(source.raises)
 			: raisesDefiLlamaId
@@ -559,13 +505,6 @@ export async function getTokenOverviewData({
 				? fetchTreasuryById(`${protocolDefiLlamaId}-treasury`).catch(() => null)
 				: Promise.resolve(null)
 	])
-
-	const [yieldsMeta, liquidityInfo] =
-		source.kind === 'prefetched'
-			? [source.yieldsMeta, source.liquidityInfo]
-			: shouldFetchLiquidity && protocolData?.id
-				? [null, await fetchLiquidityDatasetEntryByProtocolId(protocolData.id).catch(() => null)]
-				: [null, null]
 
 	const marketDataFallback = buildTokenMarketDataFallback(coinDetail, currentPriceViaLlama, geckoId)
 	const marketData = buildTokenMarketData(
@@ -581,12 +520,6 @@ export async function getTokenOverviewData({
 
 	const matchedRaises = raisesData ?? []
 
-	const tokenLiquidity = buildTokenLiquiditySummary({
-		protocolDataId: protocolData?.id ?? null,
-		yieldsMeta,
-		liquidityInfo
-	})
-
 	return {
 		name: record.name,
 		displayName,
@@ -594,7 +527,6 @@ export async function getTokenOverviewData({
 		marketData,
 		treasury,
 		raises: buildRaisesSummary(matchedRaises),
-		tokenLiquidity,
 		outstandingFDV: currentMetrics
 			? currentMetrics.outstandingFDV
 			: adjustedSupply != null && marketData.currentPrice != null

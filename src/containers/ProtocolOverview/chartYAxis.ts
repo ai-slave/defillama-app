@@ -50,9 +50,6 @@ const AXIS_CONFIG_BY_TYPE: Partial<Record<ProtocolChartsLabels, AxisConfig>> = {
 	'Token Volume': {
 		resolveColor: ({ chartColors }) => chartColors['Token Volume']
 	},
-	'Token Liquidity': {
-		resolveColor: ({ chartColors }) => chartColors['Token Liquidity']
-	},
 	'Bridge Deposits': {
 		resolveColor: ({ chartColors }) => chartColors['Bridge Deposits']
 	},

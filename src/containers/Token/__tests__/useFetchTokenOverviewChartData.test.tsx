@@ -30,7 +30,6 @@ const overview: TokenOverviewData = {
 	},
 	treasury: null,
 	raises: null,
-	tokenLiquidity: null,
 	outstandingFDV: null,
 	rawChartData: { 'Token Price': [[1_000, 100]] }
 }

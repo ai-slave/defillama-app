@@ -52,12 +52,6 @@ export const DATASET_SNAPSHOT_CONTRACT = {
 			full: 'full.json'
 		}
 	},
-	liquidity: {
-		schemaVersion: 1,
-		files: {
-			full: 'full.json'
-		}
-	},
 	liquidations: {
 		schemaVersion: 1,
 		files: {

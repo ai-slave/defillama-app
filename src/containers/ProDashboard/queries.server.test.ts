@@ -62,30 +62,6 @@ describe('fetchSingleChartData parent fallback', () => {
 		])
 	})
 
-	it('uses each child symbol for parent liquidity fallback', async () => {
-		getProtocolDataMock.mockImplementation(async (_type: string, protocol: string) =>
-			protocol === 'aave' ? [] : [[1, protocol === 'aave-v2' ? 10 : 20]]
-		)
-
-		await fetchSingleChartData(
-			{ type: 'liquidity', subjectType: 'protocol', protocol: 'aave' },
-			'all',
-			null,
-			protocolRelations
-		)
-
-		expect(getProtocolDataMock).toHaveBeenCalledWith(
-			'liquidity',
-			'aave-v2',
-			expect.objectContaining({ protocolSymbol: 'AAVE' })
-		)
-		expect(getProtocolDataMock).toHaveBeenCalledWith(
-			'liquidity',
-			'aave-v3',
-			expect.objectContaining({ protocolSymbol: 'AAVE' })
-		)
-	})
-
 	it('rejects a partial child set instead of caching an understated parent total', async () => {
 		getProtocolDataMock.mockImplementation(async (_type: string, protocol: string) => {
 			if (protocol === 'aave') return []

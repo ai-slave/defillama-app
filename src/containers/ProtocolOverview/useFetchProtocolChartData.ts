@@ -2,7 +2,6 @@ import { skipToken, useQueries, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 import type { CgChartResponse } from '~/api/coingecko.types'
-import type { ProtocolTokenLiquidityChart } from '~/api/types'
 import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
 import { formatBarChart, formatLineChart, formatNullableBarChart } from '~/components/ECharts/shared/timeSeries'
 import { useFetchProtocolGovernanceData } from '~/containers/Governance/queries.client'
@@ -208,19 +207,6 @@ export const useFetchProtocolChartData = ({
 		retry: 0,
 		enabled: !!(geckoId && toggledMetrics.fdv === 'true' && canFetchClientCharts)
 	})
-	const { data: tokenLiquidityData = null, isLoading: fetchingTokenLiquidity } =
-		useQuery<ProtocolTokenLiquidityChart | null>({
-			queryKey: ['protocol-overview', protocolSlug, 'token-liquidity', protocolId],
-			queryFn: () =>
-				fetchJson<ProtocolTokenLiquidityChart | null>(
-					buildProtocolChartApiUrl({ kind: 'token-liquidity', protocolId })
-				),
-			staleTime: 60 * 60 * 1000,
-			refetchOnWindowFocus: false,
-			retry: 0,
-			enabled: !!(canFetchClientCharts && metrics.liquidity && toggledMetrics.tokenLiquidity === 'true')
-		})
-
 	const isTvlToggled = toggledMetrics.tvl === 'true'
 	const isTotalAssetsToggled = toggledMetrics.totalAssets === 'true'
 	const isTvsToggled = toggledMetrics.tvs === 'true'
@@ -598,7 +584,6 @@ export const useFetchProtocolChartData = ({
 			{ isLoading: isTokenPriceToggled && fetchingProtocolTokenData, label: 'Token Price' },
 			{ isLoading: isTokenVolumeToggled && fetchingProtocolTokenData, label: 'Token Volume' },
 			{ isLoading: isFdvToggled && (fetchingProtocolTokenData || fetchingTokenTotalSupply), label: 'FDV' },
-			{ isLoading: toggledMetrics.tokenLiquidity === 'true' && fetchingTokenLiquidity, label: 'Token Liquidity' },
 			{ isLoading: isPrimaryTvlToggled && isCompositeTvlLoading, label: primaryTvlChartLabel },
 			{ isLoading: isStakingTvlToggled && shouldFetchStakingTvl && fetchingStakingTvlChart, label: 'Staking' },
 			{
@@ -680,9 +665,6 @@ export const useFetchProtocolChartData = ({
 				})
 			}
 		}
-		if (tokenLiquidityData)
-			charts['Token Liquidity'] = formatLineChart({ data: tokenLiquidityData, groupBy, denominationPriceHistory })
-
 		for (const descriptor of ADAPTER_CHART_DESCRIPTORS) {
 			const chart = adapterChartStates.get(descriptor.label)?.data
 			if (!chart) continue
@@ -860,8 +842,6 @@ export const useFetchProtocolChartData = ({
 		protocolTokenData,
 		fetchingTokenTotalSupply,
 		tokenTotalSupply,
-		fetchingTokenLiquidity,
-		tokenLiquidityData,
 		isCompositeTvlLoading,
 		fetchingStakingTvlChart,
 		shouldFetchStakingTvl,

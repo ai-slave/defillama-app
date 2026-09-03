@@ -510,12 +510,6 @@ export const CHART_TYPES = {
 		chartType: 'line',
 		color: '#3e6dcc'
 	},
-	liquidity: {
-		id: 'liquidity',
-		title: 'Liquidity',
-		chartType: 'area',
-		color: '#3394c1'
-	},
 	treasury: {
 		id: 'treasury',
 		title: 'Treasury',
@@ -706,7 +700,6 @@ export const PROTOCOL_CHART_TYPES = [
 	'revenue',
 	'unlocks',
 	'incentives',
-	'liquidity',
 	'treasury',
 	'holdersRevenue',
 	'perps',

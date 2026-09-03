@@ -1,7 +1,7 @@
-import { fetchBlockExplorers, fetchLiquidityTokensDataset } from '~/api'
+import { fetchBlockExplorers } from '~/api'
 import { fetchCoinGeckoChartByIdWithCacheFallback } from '~/api/coingecko'
 import type { CgChartResponse } from '~/api/coingecko.types'
-import type { BlockExplorersResponse, ProtocolLiquidityTokensResponse } from '~/api/types'
+import type { BlockExplorersResponse } from '~/api/types'
 import { V2_SERVER_URL } from '~/constants'
 import { chainCoingeckoIdsForGasNotMcap } from '~/constants/chainTokens'
 import { CHART_COLORS } from '~/constants/colors'
@@ -16,8 +16,7 @@ import type { ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
 import type { TokenMarketSummary } from '~/containers/Tokens/types'
 import { fetchTreasuries } from '~/containers/Treasuries/api'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
-import { readYieldsMeta, type YieldsSnapshot } from '~/containers/Yields/data/snapshot'
-import type { YieldsMeta } from '~/containers/Yields/data/types'
+import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'
 import { TVL_SETTINGS_KEYS_SET } from '~/contexts/LocalStorage'
 import { capitalizeFirstLetter, slug } from '~/utils'
 import { fetchJson, getFastJsonTimeoutMs } from '~/utils/async'
@@ -104,7 +103,6 @@ export const getProtocolMetricFlags = ({
 		nfts: !!metadata.nfts,
 		dev: !!protocolData.github,
 		inflows: !!metadata.inflows,
-		liquidity: !!metadata.liquidity,
 		activeUsers: !!metadata.activeUsers,
 		newUsers: !!metadata.newUsers,
 		txCount: !!metadata.txCount,
@@ -220,8 +218,6 @@ export const getProtocolOverviewPageData = async ({
 		gasUsed,
 		gasUsedUsd,
 		expenses,
-		yieldsConfig,
-		liquidityInfo,
 		liteProtocolsData,
 		bridgeVolumeData,
 		incomeStatement,
@@ -465,12 +461,6 @@ export const getProtocolOverviewPageData = async ({
 					null
 				)
 			: Promise.resolve(null),
-		currentProtocolMetadata.liquidity && yieldsSnapshot
-			? optionalProtocolData<YieldsMeta | null>('liquidity_yields_config', () => readYieldsMeta(yieldsSnapshot), null)
-			: Promise.resolve(null),
-		currentProtocolMetadata?.liquidity
-			? optionalProtocolData('liquidity_tokens', () => fetchLiquidityTokensDataset(), [])
-			: Promise.resolve([]),
 		fetchProtocols().catch(
 			(): ProtocolsResponse => ({
 				protocols: [],
@@ -559,40 +549,6 @@ export const getProtocolOverviewPageData = async ({
 			}
 		: null
 
-	const tokenPools = yieldsConfig
-		? (liquidityInfo?.find((p: ProtocolLiquidityTokensResponse[number]) => p.id === protocolData.id)?.tokenPools ?? [])
-		: []
-
-	const liquidityAggregated = tokenPools.reduce(
-		(agg: Record<string, Record<string, number>>, pool: { project: string; chain: string; tvlUsd: number }) => {
-			const project = agg[pool.project] ?? (agg[pool.project] = {})
-			project[pool.chain] = pool.tvlUsd + (project[pool.chain] ?? 0)
-			return agg
-		},
-		{} as Record<string, Record<string, number>>
-	)
-
-	const protocolNameBySlug = new Map<string, string>()
-	if (yieldsConfig) {
-		for (const protocol of yieldsConfig.protocols) protocolNameBySlug.set(protocol.slug, protocol.name)
-	}
-	const tokenLiquidity = yieldsConfig
-		? (() => {
-				const rows: Array<[string, string, number]> = []
-				for (const protocolSlug in liquidityAggregated) {
-					const protocolName = protocolNameBySlug.get(protocolSlug) ?? protocolSlug
-					const chainValues = liquidityAggregated[protocolSlug]
-					if (!chainValues) continue
-					for (const chainName in chainValues) {
-						const value = chainValues[chainName]
-						if (value !== undefined) rows.push([protocolName, chainName, value])
-					}
-				}
-				rows.sort((a: [string, string, number], b: [string, string, number]) => b[2] - a[2])
-				return rows
-			})()
-		: ([] as Array<[string, string, number]>)
-
 	const raises = protocolData.raises
 		.slice()
 		.sort((a, b) => a.date - b.date)
@@ -625,7 +581,6 @@ export const getProtocolOverviewPageData = async ({
 		raises.length ||
 		expenses ||
 		treasury ||
-		tokenLiquidity?.length ||
 		hasFeeFamilyMetrics(feesData) ||
 		hasFeeFamilyMetrics(revenueData) ||
 		hasFeeFamilyMetrics(holdersRevenueData) ||
@@ -719,7 +674,6 @@ export const getProtocolOverviewPageData = async ({
 		hasTvlChart: Boolean(currentProtocolMetadata.tvl && !isOracleProtocol),
 		hasTvsChart: isOracleProtocol,
 		hasGeckoId: Boolean(tokenGeckoId),
-		hasLiquidity: Boolean(currentProtocolMetadata.liquidity),
 		hasFees: Boolean(feesData),
 		hasRevenue: Boolean(revenueData),
 		hasHoldersRevenue: Boolean(holdersRevenueData),
@@ -949,13 +903,6 @@ export const getProtocolOverviewPageData = async ({
 				: null,
 		raises: raises.length ? raises : null,
 		expenses: formattedExpenses,
-		tokenLiquidity:
-			tokenLiquidity?.length > 0
-				? {
-						pools: tokenLiquidity,
-						total: tokenLiquidity.reduce((acc, curr) => acc + curr[2], 0)
-					}
-				: null,
 		tokenCGData: protocolData.tokenCGData ?? null,
 		outstandingFDV:
 			adjustedSupply != null && protocolData.tokenCGData?.price?.current != null

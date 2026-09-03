@@ -13,8 +13,6 @@ interface ProDashboardChartRequestBase {
 	chainAssetId?: string
 	geckoId?: string | null
 	dataType?: string
-	/** Resolved from the shared lite catalog; used only by protocol liquidity charts. */
-	protocolSymbol?: string | null
 }
 
 /** Fields actually consumed when a chart source is fetched. */

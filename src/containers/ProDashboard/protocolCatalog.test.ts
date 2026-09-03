@@ -1,11 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { ChainListItem } from '~/containers/Chains/api.types'
 import type { ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
-import {
-	buildProDashboardParentMapping,
-	buildProDashboardProtocolCatalog,
-	buildProtocolSymbolMap
-} from './protocolCatalog'
+import { buildProDashboardParentMapping, buildProDashboardProtocolCatalog } from './protocolCatalog'
 
 const protocol = (
 	overrides: Partial<ProtocolsResponse['protocols'][number]> = {}
@@ -138,7 +134,7 @@ describe('buildProDashboardProtocolCatalog', () => {
 		])
 	})
 
-	it('builds reusable parent and symbol indexes regardless of catalog order', () => {
+	it('builds reusable parent indexes regardless of catalog order', () => {
 		const protocols = [
 			{
 				id: 'child',
@@ -161,12 +157,6 @@ describe('buildProDashboardProtocolCatalog', () => {
 		]
 
 		expect(buildProDashboardParentMapping(protocols)).toEqual(new Map([['parent', ['child']]]))
-		expect(buildProtocolSymbolMap(protocols)).toEqual(
-			new Map([
-				['child', 'CHILD'],
-				['parent', 'PARENT']
-			])
-		)
 	})
 
 	it('keeps the canonical Lens protocol when its slug matches Lite parent metadata', () => {

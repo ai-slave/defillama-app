@@ -161,12 +161,6 @@ export default function DataDefinitions() {
 				<p>Data for this metric is imported directly from CoinGecko.</p>
 			</Definition>
 
-			<Definition header="Token Liquidity" id="token-liquidity">
-				<p>
-					Sum of value locked in DEX pools that include that token across all DEXs for which DefiLlama tracks pool data.
-				</p>
-			</Definition>
-
 			<Definition header="Fully Diluted Valuation (FDV)" id="fully-diluted-valuation">
 				<p>
 					<BasicLink className="text-link hover:underline" href="/fdv">

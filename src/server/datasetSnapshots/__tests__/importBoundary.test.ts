@@ -29,7 +29,7 @@ function isScannedFile(filePath: string): boolean {
 function isServerSnapshotImport(specifier: string): boolean {
 	return (
 		SERVER_SNAPSHOT_IMPORT_PREFIXES.some((prefix) => specifier === prefix || specifier.startsWith(`${prefix}/`)) ||
-		/(?:^|\/)server\/dataset(?:\.(?:liquidity|risk))?\.server$/.test(specifier)
+		/(?:^|\/)server\/dataset(?:\.risk)?\.server$/.test(specifier)
 	)
 }
 

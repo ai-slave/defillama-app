@@ -106,18 +106,16 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 	const [
 		{ isDatasetSnapshotIntegrityError },
 		{ hasTokenLiquidationsData },
-		{ fetchLiquidityEntryByProtocolId },
 		{ hasTokenMarkets },
 		{ fetchRaisesByDefillamaId },
 		{ getIndexedTokenRiskBorrowCapacity },
 		{ fetchTokenRightsEntryByDefillamaId, fetchTokenRightsEntryByName },
 		{ fetchTreasuryById },
-		{ acquireOptionalYieldsSnapshot, readYieldsMeta },
+		{ acquireOptionalYieldsSnapshot },
 		{ getTokenBorrowRoutes, getTokenEarnRows }
 	] = await Promise.all([
 		import('~/server/datasetSnapshots/errors'),
 		import('~/containers/LiquidationsV2/server/dataset.server'),
-		import('~/containers/Token/server/dataset.liquidity.server'),
 		import('~/containers/Markets/server/dataset.server'),
 		import('~/containers/Raises/server/dataset.server'),
 		import('~/containers/Token/server/dataset.risk.server'),
@@ -143,13 +141,10 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 	const overviewPromise = (async () => {
 		const shouldFetchRaises = Boolean(chainDefiLlamaId || protocolDefiLlamaId)
 		const shouldFetchTreasury = Boolean(!record.chainId && protocolDefiLlamaId)
-		const shouldFetchLiquidity = Boolean(protocolMetadata?.liquidity && protocolDefiLlamaId)
-		const [raises, treasury, yieldsMeta, liquidityInfo, currentSnapshot] = await Promise.all([
+		const [raises, treasury, currentSnapshot] = await Promise.all([
 			shouldFetchRaises ? fetchRaisesByDefillamaId(chainDefiLlamaId ?? protocolDefiLlamaId!) : Promise.resolve(null),
 			// Treasury shards are keyed by the upstream `${defillamaId}-treasury` convention.
 			shouldFetchTreasury ? fetchTreasuryById(`${protocolDefiLlamaId}-treasury`) : Promise.resolve(null),
-			shouldFetchLiquidity && yieldsDatasetSnapshot ? readYieldsMeta(yieldsDatasetSnapshot) : Promise.resolve(null),
-			shouldFetchLiquidity ? fetchLiquidityEntryByProtocolId(protocolDefiLlamaId!) : Promise.resolve(null),
 			currentSnapshotPromise
 		])
 
@@ -165,9 +160,7 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 			source: {
 				kind: 'prefetched',
 				raises,
-				treasury,
-				yieldsMeta,
-				liquidityInfo
+				treasury
 			},
 			prefetchedCharts: TOKEN_OVERVIEW_DEFAULT_CHARTS
 		})

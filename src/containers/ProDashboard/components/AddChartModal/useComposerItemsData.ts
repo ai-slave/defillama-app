@@ -8,7 +8,7 @@ import type { ChartConfig } from '../../types'
 export function useComposerItemsData(composerItems: ChartConfig[], timePeriod: TimePeriod) {
 	const streamDone = useContext(StreamDoneContext)
 	const authToken = useContext(ProxyAuthTokenContext)
-	const { parentMapping, protocolBySlug, protocolCatalog, protocolSymbols } = useProDashboardCatalog()
+	const { parentMapping, protocolBySlug, protocolCatalog } = useProDashboardCatalog()
 	const queries = useChartsData(
 		composerItems,
 		protocolCatalog,
@@ -16,8 +16,7 @@ export function useComposerItemsData(composerItems: ChartConfig[], timePeriod: T
 		timePeriod,
 		null,
 		authToken,
-		parentMapping,
-		protocolSymbols
+		parentMapping
 	)
 
 	const itemsWithData = useMemo<ChartRuntimeView[]>(() => {

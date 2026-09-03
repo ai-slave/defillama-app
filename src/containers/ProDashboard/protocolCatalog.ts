@@ -44,14 +44,6 @@ export function buildProDashboardParentMapping(protocols: readonly Protocol[]): 
 	return childrenByParentSlug
 }
 
-export function buildProtocolSymbolMap(protocols: readonly Protocol[]): Map<string, string> {
-	const symbols = new Map<string, string>()
-	for (const protocol of protocols) {
-		if (protocol.symbol) symbols.set(protocol.slug, protocol.symbol)
-	}
-	return symbols
-}
-
 export function buildProDashboardProtocolRelations(
 	catalog: ProDashboardProtocolCatalog | null
 ): ProDashboardProtocolRelations {

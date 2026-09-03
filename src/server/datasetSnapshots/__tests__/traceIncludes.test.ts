@@ -19,7 +19,6 @@ const SNAPSHOT_ENTRY_IMPORTS: Array<{ importPath: string; domains: DatasetSnapsh
 	{ importPath: '~/containers/Raises/server/dataset.server', domains: ['raises'] },
 	{ importPath: '~/containers/Treasuries/server/dataset.server', domains: ['treasuries'] },
 	{ importPath: '~/containers/TokenRights/server/dataset.server', domains: ['token-rights'] },
-	{ importPath: '~/containers/Token/server/dataset.liquidity.server', domains: ['liquidity'] },
 	{ importPath: '~/containers/Token/server/dataset.risk.server', domains: ['risk'] },
 	{ importPath: '~/containers/Tokens/queries.server', domains: ['markets', 'token-rights'] },
 	{ importPath: '~/containers/Tokens/server/api', domains: ['markets', 'token-rights'] },
@@ -90,7 +89,6 @@ describe('dataset snapshot output tracing', () => {
 			'raises',
 			'treasuries',
 			'yields',
-			'liquidity',
 			'token-rights',
 			'risk'
 		])

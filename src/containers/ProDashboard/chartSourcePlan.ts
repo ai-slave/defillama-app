@@ -33,7 +33,6 @@ const PROTOCOL_SOURCE_FLAGS: Partial<Record<ProDashboardChartType, readonly (key
 	revenue: ['revenue'],
 	incentives: ['emissions', 'incentives'],
 	unlocks: ['emissions', 'incentives'],
-	liquidity: ['liquidity'],
 	treasury: ['treasury'],
 	holdersRevenue: ['holdersRevenue'],
 	perps: ['perps'],
@@ -79,9 +78,6 @@ function getUnsupportedProtocolSourceReason(
 	if (!isProDashboardChartType(request.type)) return undefined
 	const requiredFlags = PROTOCOL_SOURCE_FLAGS[request.type]
 	if (!requiredFlags) return undefined
-	// Liquidity is resolved by the catalog symbol rather than an adapter capability.
-	if (request.type === 'liquidity' && request.protocolSymbol) return undefined
-
 	for (const protocol of metadata) {
 		for (const flag of requiredFlags) {
 			if (protocol[flag]) return undefined
@@ -133,15 +129,14 @@ function getUnsupportedChainSourceReason(
 	}
 }
 
-function toChartRequest(chart: ChartConfig, protocolSymbol?: string): ProDashboardChartRequest {
+function toChartRequest(chart: ChartConfig): ProDashboardChartRequest {
 	return {
 		type: chart.type,
 		...(chart.subjectType === 'protocol'
 			? { subjectType: 'protocol', protocol: chart.protocol }
 			: { subjectType: 'chain', chain: chart.chain }),
 		...(chart.geckoId !== undefined ? { geckoId: chart.geckoId } : {}),
-		...(chart.dataType !== undefined ? { dataType: chart.dataType } : {}),
-		...(protocolSymbol !== undefined ? { protocolSymbol } : {})
+		...(chart.dataType !== undefined ? { dataType: chart.dataType } : {})
 	}
 }
 
@@ -158,8 +153,7 @@ function toMetricRequest(
 	return {
 		type: metric.type,
 		...(itemType === 'protocol' ? { subjectType: 'protocol', protocol: item } : { subjectType: 'chain', chain: item }),
-		geckoId: metric.subject.geckoId ?? protocol?.geckoId ?? chain?.gecko_id ?? null,
-		...(protocol?.symbol !== undefined ? { protocolSymbol: protocol.symbol } : {})
+		geckoId: metric.subject.geckoId ?? protocol?.geckoId ?? chain?.gecko_id ?? null
 	}
 }
 
@@ -190,7 +184,6 @@ export function buildProDashboardChartSourcePlan(
 		const itemType = request.subjectType
 		// Missing catalog metadata must remain an unseeded query so the client can retry it.
 		if (chartNeedsGeckoId(request.type, itemType) && !request.geckoId) return
-		if (itemType === 'protocol' && request.type === 'liquidity' && !request.protocolSymbol) return
 		const queryKey = getProDashboardChartSourceQueryKey(request)
 		const serializedKey = JSON.stringify(queryKey)
 		if (!plan.has(serializedKey)) {
@@ -210,19 +203,12 @@ export function buildProDashboardChartSourcePlan(
 
 	for (const item of items) {
 		if (item.kind === 'chart') {
-			addRequest(
-				toChartRequest(item, item.subjectType === 'protocol' ? protocolsBySlug.get(item.protocol)?.symbol : undefined)
-			)
+			addRequest(toChartRequest(item))
 			continue
 		}
 		if (item.kind === 'multi') {
 			for (const chart of limitMultiChartItems(item.items)) {
-				addRequest(
-					toChartRequest(
-						chart,
-						chart.subjectType === 'protocol' ? protocolsBySlug.get(chart.protocol)?.symbol : undefined
-					)
-				)
+				addRequest(toChartRequest(chart))
 			}
 			continue
 		}

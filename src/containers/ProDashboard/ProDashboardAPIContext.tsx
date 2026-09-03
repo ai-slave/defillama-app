@@ -37,7 +37,7 @@ import { useDashboardPermissions } from './hooks/useDashboardPermissions'
 import { useDashboardStream } from './hooks/useDashboardStream'
 import { useFreeTierStatus } from './hooks/useFreeTierStatus'
 import { isDashboardInitialRenderHydration } from './initialDashboard'
-import { buildProDashboardParentMapping, buildProtocolSymbolMap } from './protocolCatalog'
+import { buildProDashboardParentMapping } from './protocolCatalog'
 import { ProxyAuthTokenContext, StreamDoneContext, useProtocolsAndChains } from './queries'
 import { DashboardError, matchesDashboardKey } from './services/DashboardAPI'
 import type { Chain, Protocol } from './types'
@@ -111,7 +111,6 @@ interface ProDashboardCatalogContextType {
 	getProtocolInfo: (protocolId: string) => Protocol | undefined
 	parentMapping: ReadonlyMap<string, readonly string[]>
 	protocolBySlug: ReadonlyMap<string, Protocol>
-	protocolSymbols: ReadonlyMap<string, string>
 }
 
 interface ProDashboardPermissionsContextType {
@@ -380,7 +379,6 @@ function ProDashboardAPIProviderInner({
 		for (const protocol of protocols) map.set(protocol.slug, protocol)
 		return map
 	}, [protocols])
-	const protocolSymbols = useMemo(() => buildProtocolSymbolMap(protocols), [protocols])
 
 	const applyDashboard = useCallback((dashboard: Dashboard) => {
 		dispatch({ type: 'APPLY_DASHBOARD', payload: dashboard })
@@ -994,20 +992,9 @@ function ProDashboardAPIProviderInner({
 			getChainInfo,
 			getProtocolInfo,
 			parentMapping,
-			protocolBySlug,
-			protocolSymbols
+			protocolBySlug
 		}),
-		[
-			protocols,
-			chains,
-			protocolsLoading,
-			protocolCatalog,
-			getChainInfo,
-			getProtocolInfo,
-			parentMapping,
-			protocolBySlug,
-			protocolSymbols
-		]
+		[protocols, chains, protocolsLoading, protocolCatalog, getChainInfo, getProtocolInfo, parentMapping, protocolBySlug]
 	)
 
 	const permissionsContextValue = useMemo(

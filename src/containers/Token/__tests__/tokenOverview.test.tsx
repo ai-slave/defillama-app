@@ -42,11 +42,8 @@ const mocks = vi.hoisted(() => ({
 	fetchCoinGeckoChartByIdWithCacheFallback: vi.fn(),
 	fetchCoinGeckoCoinById: vi.fn(),
 	fetchCoinPriceByCoinGeckoIdViaLlamaPrices: vi.fn(),
-	fetchProtocolOverviewMetrics: vi.fn(),
 	fetchRaisesByDefillamaId: vi.fn(),
 	fetchTreasuryById: vi.fn(),
-	fetchLiquidityDatasetEntryByProtocolId: vi.fn(),
-	fetchJson: vi.fn(),
 	useFetchTokenOverviewChartData: vi.fn()
 }))
 
@@ -81,24 +78,12 @@ vi.mock('~/api/pricing', () => ({
 	fetchCoinPriceByCoinGeckoIdViaLlamaPrices: mocks.fetchCoinPriceByCoinGeckoIdViaLlamaPrices
 }))
 
-vi.mock('~/containers/ProtocolOverview/api', () => ({
-	fetchProtocolOverviewMetrics: mocks.fetchProtocolOverviewMetrics
-}))
-
 vi.mock('~/containers/Raises/api', () => ({
 	fetchRaisesByDefillamaId: mocks.fetchRaisesByDefillamaId
 }))
 
 vi.mock('~/containers/Treasuries/api', () => ({
 	fetchTreasuryById: mocks.fetchTreasuryById
-}))
-
-vi.mock('~/api', () => ({
-	fetchLiquidityDatasetEntryByProtocolId: mocks.fetchLiquidityDatasetEntryByProtocolId
-}))
-
-vi.mock('~/utils/async', () => ({
-	fetchJson: mocks.fetchJson
 }))
 
 vi.mock('../useFetchTokenOverviewChartData', () => ({
@@ -145,7 +130,6 @@ const tokenEntryFixture: ITokenListEntry = {
 const protocolMetadataFixture = {
 	name: 'test-protocol',
 	displayName: 'Test Protocol',
-	liquidity: true,
 	emissions: true
 } as IProtocolMetadata
 
@@ -272,10 +256,6 @@ const overviewFixture: TokenOverviewData = {
 			investors: ['Investor A']
 		}
 	],
-	tokenLiquidity: {
-		total: 75,
-		pools: [['Pool One', 'Ethereum', 75]]
-	},
 	outstandingFDV: 900,
 	rawChartData: {
 		'Token Price': [
@@ -301,7 +281,6 @@ beforeEach(() => {
 		confidence: 0.99,
 		timestamp: 1712016000
 	})
-	mocks.fetchProtocolOverviewMetrics.mockResolvedValue({ id: 'proto-data' })
 	mocks.fetchRaisesByDefillamaId.mockImplementation(
 		async (defillamaId: string) =>
 			[
@@ -367,19 +346,6 @@ beforeEach(() => {
 		},
 		mcap: null
 	} satisfies RawTreasuriesResponse[number])
-	mocks.fetchLiquidityDatasetEntryByProtocolId.mockResolvedValue({
-		id: 'proto-data',
-		tokenPools: [
-			{ project: 'pool-one', chain: 'Ethereum', symbol: 'TEST', tvlUsd: 50 },
-			{ project: 'pool-two', chain: 'Base', symbol: 'TEST', tvlUsd: 25 }
-		]
-	})
-	mocks.fetchJson.mockResolvedValue({
-		protocols: {
-			'pool-one': { name: 'Pool One' },
-			'pool-two': { name: 'Pool Two' }
-		}
-	})
 	mocks.useFetchTokenOverviewChartData.mockImplementation(({ overview }: { overview: TokenOverviewData }) => ({
 		rawChartData: overview.rawChartData,
 		isLoading: false
@@ -453,7 +419,7 @@ describe('tokenOverview helpers', () => {
 		expect(mocks.fetchTreasuryById).toHaveBeenCalledOnce()
 	})
 
-	it('uses prefetched raises, treasury, yield config, and liquidity info without fetching them again', async () => {
+	it('uses prefetched raises and treasury without fetching them again', async () => {
 		const result = await getTokenOverviewData({
 			record: {
 				name: 'Test Protocol',
@@ -514,40 +480,14 @@ describe('tokenOverview helpers', () => {
 						others: 40
 					},
 					mcap: null
-				},
-				yieldsMeta: {
-					protocols: [
-						{ slug: 'pool-one', name: 'Pool One', category: null, has_audit: false, has_token: false },
-						{ slug: 'pool-two', name: 'Pool Two', category: null, has_audit: false, has_token: false }
-					],
-					chains: [],
-					categories: [],
-					tokens: { families: [], assets: [] },
-					halal: [],
-					meme_pool_ids: []
-				},
-				liquidityInfo: {
-					id: 'proto-data',
-					tokenPools: [
-						{ project: 'pool-one', chain: 'Ethereum', symbol: 'TEST', tvlUsd: 50 },
-						{ project: 'pool-two', chain: 'Base', symbol: 'TEST', tvlUsd: 25 }
-					]
 				}
 			}
 		})
 
 		expect(result.treasury?.total).toBe(100)
 		expect(result.raises?.[0]?.round).toBe('Series A')
-		expect(result.tokenLiquidity).toEqual({
-			total: 75,
-			pools: [
-				['Pool One', 'Ethereum', 50],
-				['Pool Two', 'Base', 25]
-			]
-		})
 		expect(mocks.fetchRaisesByDefillamaId).not.toHaveBeenCalled()
 		expect(mocks.fetchTreasuryById).not.toHaveBeenCalled()
-		expect(mocks.fetchLiquidityDatasetEntryByProtocolId).not.toHaveBeenCalled()
 	})
 
 	it('prefers the protocol slug metadata and max supply when building overview data', async () => {
@@ -574,7 +514,6 @@ describe('tokenOverview helpers', () => {
 			source: { kind: 'network' }
 		})
 
-		expect(mocks.fetchProtocolOverviewMetrics).toHaveBeenCalledWith('uniswap')
 		expect(result.rawChartData.FDV).toEqual([
 			[1711929600000, 2100000],
 			[1712016000000, 2310000]
@@ -600,7 +539,6 @@ describe('tokenOverview helpers', () => {
 			source: { kind: 'network' }
 		})
 
-		expect(mocks.fetchProtocolOverviewMetrics).toHaveBeenCalledWith('pudgy-penguins')
 		expect(result.outstandingFDV).toBe(99900)
 	})
 
@@ -623,11 +561,10 @@ describe('tokenOverview helpers', () => {
 			source: { kind: 'network' }
 		})
 
-		expect(mocks.fetchProtocolOverviewMetrics).toHaveBeenCalledWith('missing-protocol')
 		expect(result.outstandingFDV).toBeNull()
 	})
 
-	it('does not call protocol metrics with a numeric protocol ID when metadata is missing', async () => {
+	it('does not resolve numeric protocol IDs without metadata', async () => {
 		const result = await getTokenOverviewData({
 			record: {
 				name: 'Unknown Protocol',
@@ -643,7 +580,6 @@ describe('tokenOverview helpers', () => {
 			source: { kind: 'network' }
 		})
 
-		expect(mocks.fetchProtocolOverviewMetrics).not.toHaveBeenCalled()
 		expect(result.outstandingFDV).toBeNull()
 	})
 
@@ -675,37 +611,6 @@ describe('tokenOverview helpers', () => {
 		})
 	})
 
-	it('keeps liquidity rows when yields metadata is missing a protocol display name', async () => {
-		mocks.fetchJson.mockResolvedValue({
-			protocols: {
-				'pool-one': {}
-			}
-		})
-
-		const result = await getTokenOverviewData({
-			record: {
-				name: 'Test Protocol',
-				symbol: 'TEST',
-				protocolId: 'parent#test-protocol'
-			} satisfies TokenDirectoryRecord,
-			displayName: 'TEST',
-			geckoId: 'bitcoin',
-			tokenEntry: tokenEntryFixture,
-			protocolMetadata: protocolMetadataFixture,
-			cgExchangeIdentifiers: ['binance'],
-			emissionsSupplyMetrics: emissionsSupplyMetricsFixture,
-			source: { kind: 'network' }
-		})
-
-		expect(result.tokenLiquidity).toEqual({
-			total: 75,
-			pools: [
-				['pool-one', 'Ethereum', 50],
-				['pool-two', 'Base', 25]
-			]
-		})
-	})
-
 	it('returns token-only data when no protocol mapping is available', async () => {
 		const result = await getTokenOverviewData({
 			record: {
@@ -727,7 +632,6 @@ describe('tokenOverview helpers', () => {
 		expect(result.marketData.fdv).toBe(2331000)
 		expect(result.treasury).toBeNull()
 		expect(result.raises).toBeNull()
-		expect(result.tokenLiquidity).toBeNull()
 		expect(result.outstandingFDV).toBeNull()
 		expect(mocks.fetchCoinGeckoCoinById).not.toHaveBeenCalled()
 		expect(mocks.fetchCoinPriceByCoinGeckoIdViaLlamaPrices).toHaveBeenCalledWith('bitcoin')

@@ -1,5 +1,4 @@
 import dayjs from 'dayjs'
-import { fetchLiquidityTokensDataset, fetchProtocolTokenLiquidityChart } from '~/api'
 import { fetchCoinGeckoChartByIdWithCacheFallback } from '~/api/coingecko'
 import { fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
@@ -18,7 +17,6 @@ import { convertToNumberFormat, normalizeHourlyToDaily } from '../utils'
 export interface ProtocolChartDataOptions {
 	geckoId?: string | null
 	dataType?: string
-	protocolSymbol?: string | null
 	fetchRatio?: (protocol: string, type: 'pf' | 'ps') => Promise<[number, number][]>
 }
 
@@ -30,28 +28,6 @@ function toProChartSeconds(data: IProtocolValueChart | null): [number, number][]
 		points.push([Math.floor(timestampMs / 1e3), value])
 	}
 	return points
-}
-
-const LIQUIDITY_TOKENS_TTL_MS = 10 * 60 * 1000
-let liquidityTokensCache: { data: Awaited<ReturnType<typeof fetchLiquidityTokensDataset>>; ts: number } | null = null
-let liquidityTokensPromise: Promise<Awaited<ReturnType<typeof fetchLiquidityTokensDataset>>> | null = null
-
-async function getCachedLiquidityTokens() {
-	if (liquidityTokensCache && Date.now() - liquidityTokensCache.ts < LIQUIDITY_TOKENS_TTL_MS) {
-		return liquidityTokensCache.data
-	}
-	if (liquidityTokensPromise != null) {
-		return liquidityTokensPromise
-	}
-	liquidityTokensPromise = fetchLiquidityTokensDataset()
-		.then((data) => {
-			liquidityTokensCache = { data, ts: Date.now() }
-			return data
-		})
-		.finally(() => {
-			liquidityTokensPromise = null
-		})
-	return liquidityTokensPromise
 }
 
 async function fetchProtocolTvlData(protocolId: string): Promise<[number, number][]> {
@@ -145,28 +121,6 @@ async function fetchProtocolTokenVolumeData(geckoId: string): Promise<[number, n
 	const data = await fetchProtocolTokenData(geckoId)
 	const converted = convertToNumberFormat(data.volumes ?? [], true)
 	return normalizeHourlyToDaily(converted, 'sum')
-}
-
-async function fetchProtocolLiquidityData(protocol: string, symbol?: string | null): Promise<[number, number][]> {
-	if (!protocol || !symbol) return []
-	try {
-		const tokens = await getCachedLiquidityTokens()
-		const normalizedSymbol = symbol.toUpperCase()
-		const entry = tokens.find((token) => token.symbol?.toUpperCase() === normalizedSymbol)
-		const tokenId = entry?.id
-		if (!tokenId) return []
-
-		const hist = await fetchProtocolTokenLiquidityChart(String(tokenId))
-		if (!hist) return []
-		const points: [number, number][] = []
-		for (const [timestamp, value] of hist) {
-			points.push([Number(timestamp), value])
-		}
-		return points
-	} catch (e) {
-		recordRuntimeError(e, 'pageBuild')
-		return []
-	}
 }
 
 async function fetchProtocolTreasuryData(protocol: string): Promise<[number, number][]> {
@@ -266,8 +220,6 @@ export async function fetchProProtocolChartData(
 			return fetchProtocolAdapterData(protocol, ADAPTER_TYPES.ACTIVE_USERS, ADAPTER_DATA_TYPES.DAILY_TRANSACTIONS_COUNT)
 		case 'gasUsed':
 			return fetchProtocolAdapterData(protocol, ADAPTER_TYPES.ACTIVE_USERS, ADAPTER_DATA_TYPES.DAILY_GAS_USED)
-		case 'liquidity':
-			return fetchProtocolLiquidityData(protocol, options.protocolSymbol)
 		case 'treasury':
 			return fetchProtocolTreasuryData(protocol)
 		case 'incentives':

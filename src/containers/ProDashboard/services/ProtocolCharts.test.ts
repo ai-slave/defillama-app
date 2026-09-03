@@ -1,18 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const {
-	fetchAdapterProtocolChartData,
-	fetchLiquidityTokensDataset,
-	fetchProtocolTokenLiquidityChart,
-	fetchProtocolTvlChart
-} = vi.hoisted(() => ({
+const { fetchAdapterProtocolChartData, fetchProtocolTvlChart } = vi.hoisted(() => ({
 	fetchAdapterProtocolChartData: vi.fn(),
-	fetchLiquidityTokensDataset: vi.fn(),
-	fetchProtocolTokenLiquidityChart: vi.fn(),
 	fetchProtocolTvlChart: vi.fn()
 }))
-
-vi.mock('~/api', () => ({ fetchLiquidityTokensDataset, fetchProtocolTokenLiquidityChart }))
 
 vi.mock('~/containers/AdapterMetrics/api', () => ({ fetchAdapterProtocolChartData }))
 
@@ -27,8 +18,6 @@ describe('fetchProProtocolChartData focused TVL sources', () => {
 	beforeEach(() => {
 		fetchProtocolTvlChart.mockReset()
 		fetchAdapterProtocolChartData.mockReset()
-		fetchLiquidityTokensDataset.mockReset()
-		fetchProtocolTokenLiquidityChart.mockReset()
 	})
 
 	it('uses typed adapter contracts for protocol activity charts', async () => {
@@ -85,19 +74,5 @@ describe('fetchProProtocolChartData focused TVL sources', () => {
 		fetchProtocolTvlChart.mockResolvedValue(null)
 
 		await expect(fetchProProtocolChartData('tvl', 'missing')).resolves.toEqual([])
-	})
-
-	it('resolves liquidity from the lite-catalog symbol without fetching full protocol data', async () => {
-		fetchLiquidityTokensDataset.mockResolvedValue([{ id: '6621', symbol: 'AAVE' }])
-		fetchProtocolTokenLiquidityChart.mockResolvedValue([
-			['1', 10],
-			['2', 20]
-		])
-
-		await expect(fetchProProtocolChartData('liquidity', 'aave-v3', { protocolSymbol: 'AAVE' })).resolves.toEqual([
-			[1, 10],
-			[2, 20]
-		])
-		expect(fetchProtocolTokenLiquidityChart).toHaveBeenCalledWith('6621')
 	})
 })

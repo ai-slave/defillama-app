@@ -50,12 +50,11 @@ export const getStaticProps = withPerformanceLogging(
 				return canonicalRouteRedirect(`/protocol/${protocolRoute.canonicalSlug}`)
 			}
 
-			const yieldsSnapshot =
-				protocolRoute.metadata.yields || protocolRoute.metadata.liquidity
-					? await import('~/containers/Yields/server/dataset.server').then(({ acquireOptionalYieldsSnapshot }) =>
-							acquireOptionalYieldsSnapshot()
-						)
-					: null
+			const yieldsSnapshot = protocolRoute.metadata.yields
+				? await import('~/containers/Yields/server/dataset.server').then(({ acquireOptionalYieldsSnapshot }) =>
+						acquireOptionalYieldsSnapshot()
+					)
+				: null
 			const data = await phaseTimer.time('protocol_overview_data', () =>
 				getProtocolOverviewPageData({
 					protocolId: protocolRoute.id,

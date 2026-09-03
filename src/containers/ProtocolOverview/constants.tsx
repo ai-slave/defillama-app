@@ -6,7 +6,6 @@ export const protocolCharts = {
 	Mcap: 'mcap',
 	'Token Price': 'tokenPrice',
 	'Token Volume': 'tokenVolume',
-	'Token Liquidity': 'tokenLiquidity',
 	FDV: 'fdv',
 	Fees: 'fees',
 	Revenue: 'revenue',
@@ -59,7 +58,6 @@ export const yAxisByChart: {
 	Staking: 'TVL',
 	'Token Price': 'Token Price',
 	'Token Volume': 'Token Volume',
-	'Token Liquidity': 'Token Liquidity',
 	'Bridge Deposits': 'Bridge Deposits',
 	'Bridge Withdrawals': 'Bridge Deposits',
 	Fees: 'Fees',
@@ -95,7 +93,7 @@ export const yAxisByChart: {
 
 export const protocolChartCategories = {
 	Core: ['TVL', 'Total Assets', 'TVS', 'Treasury', 'Staking', 'Active Loans', 'USD Inflows', 'Median APY'],
-	Token: ['Mcap', 'FDV', 'Token Price', 'Token Volume', 'Token Liquidity', 'Unlocks', 'Incentives'],
+	Token: ['Mcap', 'FDV', 'Token Price', 'Token Volume', 'Unlocks', 'Incentives'],
 	Revenue: ['Fees', 'Revenue', 'Holders Revenue'],
 	Volume: [
 		'DEX Volume',

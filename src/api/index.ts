@@ -1,20 +1,6 @@
-import {
-	COINS_SERVER_URL,
-	CONFIG_API,
-	DATASETS_SERVER_URL,
-	SEARCH_API_TOKEN,
-	SEARCH_API_URL,
-	SERVER_URL
-} from '~/constants'
+import { COINS_SERVER_URL, CONFIG_API, DATASETS_SERVER_URL, SEARCH_API_TOKEN, SEARCH_API_URL } from '~/constants'
 import { fetchJson, getFastJsonTimeoutMs } from '~/utils/async'
-import type {
-	CoinsChartResponse,
-	LlamaConfigResponse,
-	ProtocolLiquidityTokensResponse,
-	ProtocolTokenLiquidityChart,
-	SearchQuery,
-	BlockExplorersResponse
-} from './types'
+import type { CoinsChartResponse, LlamaConfigResponse, SearchQuery, BlockExplorersResponse } from './types'
 
 // ---------------------------------------------------------------------------
 // DefiLlama multi-search API
@@ -42,8 +28,6 @@ export async function multiSearchApi<T = Record<string, unknown>>(queries: Searc
 // ---------------------------------------------------------------------------
 
 const COINS_CHART_API_URL = `${COINS_SERVER_URL}/chart`
-const TOKEN_LIQUIDITY_API_URL = `${SERVER_URL}/historicalLiquidity`
-const LIQUIDITY_API_URL = `${DATASETS_SERVER_URL}/liquidity.json`
 // DefiLlama Coins API queries
 // ---------------------------------------------------------------------------
 
@@ -69,38 +53,6 @@ export async function fetchCoinsChart(params: {
 	if (searchWidth) searchParams.set('searchWidth', searchWidth)
 
 	return fetchJson<CoinsChartResponse>(`${COINS_CHART_API_URL}/${encodeURIComponent(coin)}?${searchParams.toString()}`)
-}
-
-// ---------------------------------------------------------------------------
-// Protocol queries
-// ---------------------------------------------------------------------------
-
-/** Fetch the list of all protocols that have liquidity data available. */
-export async function fetchLiquidityTokensDatasetFromNetwork(): Promise<ProtocolLiquidityTokensResponse> {
-	return fetchJson<ProtocolLiquidityTokensResponse>(LIQUIDITY_API_URL)
-}
-
-/** Fetch the list of all protocols that have liquidity data available. */
-export async function fetchLiquidityTokensDataset(): Promise<ProtocolLiquidityTokensResponse> {
-	return fetchLiquidityTokensDatasetFromNetwork()
-}
-
-export async function fetchLiquidityDatasetEntryByProtocolId(
-	protocolId: string
-): Promise<ProtocolLiquidityTokensResponse[number] | null> {
-	if (!protocolId) {
-		return null
-	}
-
-	const data = await fetchLiquidityTokensDataset()
-	return data.find((entry) => entry.id === protocolId) ?? null
-}
-
-/** Fetch historical liquidity chart for a specific token. */
-export async function fetchProtocolTokenLiquidityChart(tokenId: string): Promise<ProtocolTokenLiquidityChart | null> {
-	if (!tokenId) return null
-	const encodedTokenId = encodeURIComponent(tokenId.replaceAll('#', '$'))
-	return fetchJson<ProtocolTokenLiquidityChart>(`${TOKEN_LIQUIDITY_API_URL}/${encodedTokenId}`).catch(() => null)
 }
 
 // ---------------------------------------------------------------------------

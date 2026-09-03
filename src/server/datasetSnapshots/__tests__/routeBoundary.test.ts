@@ -24,9 +24,7 @@ function relativePath(filePath: string): string {
 }
 
 function isDomainDatasetModule(filePath: string): boolean {
-	return /^src\/containers\/[^/]+\/server\/dataset(?:\.(?:liquidity|risk))?\.server\.(ts|tsx)$/.test(
-		relativePath(filePath)
-	)
+	return /^src\/containers\/[^/]+\/server\/dataset(?:\.risk)?\.server\.(ts|tsx)$/.test(relativePath(filePath))
 }
 
 describe('dataset snapshot reader boundary', () => {

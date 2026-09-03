@@ -121,16 +121,15 @@ export async function fetchSingleChartData(
 	if (!isProDashboardChartType(chart.type)) return []
 	const itemType = chart.subjectType
 	const item = chart.subjectType === 'protocol' ? chart.protocol : chart.chain
-	const fetchProtocol = (protocol: string, geckoId?: string | null, protocolSymbol?: string | null) =>
+	const fetchProtocol = (protocol: string, geckoId?: string | null) =>
 		fetchProProtocolChartData(chart.type, protocol, {
 			...(geckoId !== undefined ? { geckoId } : {}),
 			...(chart.dataType !== undefined ? { dataType: chart.dataType } : {}),
-			...(protocolSymbol !== undefined ? { protocolSymbol } : {}),
 			fetchRatio: fetchPfPsChartData
 		})
 
 	if (isProtocolTokenChartType(chart.type) && chart.geckoId) {
-		const data = await fetchProtocol(item, chart.geckoId, chart.protocolSymbol)
+		const data = await fetchProtocol(item, chart.geckoId)
 		return filterDataByTimePeriod(data, timePeriod || 'all', customTimePeriod)
 	}
 
@@ -146,7 +145,7 @@ export async function fetchSingleChartData(
 
 	let data: [number, number][]
 	try {
-		data = await fetchProtocol(item, chart.geckoId, chart.protocolSymbol ?? parent?.symbol)
+		data = await fetchProtocol(item, chart.geckoId)
 	} catch (error) {
 		if (children.length === 0) throw error
 		data = []
@@ -155,9 +154,7 @@ export async function fetchSingleChartData(
 	if (data.length === 0 && children.length > 0) {
 		// Parent totals are only valid when every canonical child resolves. Streaming a
 		// partial sum would seed React Query with an understated value as if it were complete.
-		const childSeries = await Promise.all(
-			children.map((child) => fetchProtocol(child.slug, child.geckoId, child.symbol))
-		)
+		const childSeries = await Promise.all(children.map((child) => fetchProtocol(child.slug, child.geckoId)))
 		data = Array.from(sumSeriesByTimestamp(childSeries).entries()).sort((a, b) => a[0] - b[0])
 	}
 

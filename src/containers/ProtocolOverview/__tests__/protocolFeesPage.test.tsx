@@ -55,7 +55,6 @@ const metrics: IProtocolPageMetrics = {
 	nfts: false,
 	dev: false,
 	inflows: false,
-	liquidity: false,
 	activeUsers: false,
 	newUsers: false,
 	txCount: false,

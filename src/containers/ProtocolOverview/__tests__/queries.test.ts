@@ -54,8 +54,7 @@ const yieldsSnapshot = {
 }
 
 vi.mock('~/api', () => ({
-	fetchBlockExplorers: vi.fn().mockResolvedValue([]),
-	fetchLiquidityTokensDataset: vi.fn().mockResolvedValue([])
+	fetchBlockExplorers: vi.fn().mockResolvedValue([])
 }))
 
 vi.mock('~/api/coingecko', () => ({
@@ -836,8 +835,7 @@ describe('getProtocolOverviewPageData', () => {
 			protocolId: 'test-protocol',
 			currentProtocolMetadata: {
 				displayName: 'Test Protocol',
-				yields: true,
-				liquidity: true
+				yields: true
 			} satisfies IProtocolMetadata,
 			chainMetadata: {},
 			tokenlist: {},
@@ -847,14 +845,8 @@ describe('getProtocolOverviewPageData', () => {
 		})
 
 		expect(data.yields).toBeNull()
-		expect(data.tokenLiquidity).toBeNull()
 		expect(JSON.parse(JSON.stringify(data))).toEqual(data)
 		expect(optionalPageData).not.toHaveBeenCalledWith('protocol:test-protocol:yields', expect.any(Function), null)
-		expect(optionalPageData).not.toHaveBeenCalledWith(
-			'protocol:test-protocol:liquidity_yields_config',
-			expect.any(Function),
-			null
-		)
 	})
 
 	it('fetches token income statements from the token endpoint', async () => {

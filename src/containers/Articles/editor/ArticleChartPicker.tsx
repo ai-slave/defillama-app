@@ -8,7 +8,7 @@ import { useAppMetadata } from '~/containers/ProDashboard/AppMetadataContext'
 import { getProDashboardChartSourceQueryKey } from '~/containers/ProDashboard/chartSource'
 import { ChartTypePills } from '~/containers/ProDashboard/components/AddChartModal/ChartTypePills'
 import type { TimePeriod } from '~/containers/ProDashboard/dashboardTypes'
-import { buildProDashboardParentMapping, buildProtocolSymbolMap } from '~/containers/ProDashboard/protocolCatalog'
+import { buildProDashboardParentMapping } from '~/containers/ProDashboard/protocolCatalog'
 import {
 	filterDataByTimePeriod,
 	getChartQueryFn,
@@ -120,7 +120,6 @@ function MultiPreview({
 }) {
 	const authToken = useContext(ProxyAuthTokenContext)
 	const { data: catalog } = useProtocolsAndChains()
-	const protocolSymbols = useMemo(() => buildProtocolSymbolMap(catalog?.protocols ?? []), [catalog])
 	const parentMapping = useMemo(() => buildProDashboardParentMapping(catalog?.protocols ?? []), [catalog])
 	const queries = useQueries({
 		queries: series.map((s) => ({
@@ -140,8 +139,7 @@ function MultiPreview({
 				parentMapping,
 				undefined,
 				undefined,
-				authToken,
-				s.entityType === 'protocol' ? protocolSymbols : undefined
+				authToken
 			),
 			select: (data: [number, number][]) => filterDataByTimePeriod(data, range as TimePeriod),
 			staleTime: 1000 * 60 * 5,

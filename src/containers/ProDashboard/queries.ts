@@ -48,16 +48,14 @@ function fetchChartDirect(
 	geckoId?: string | null,
 	timePeriod?: TimePeriod,
 	customPeriod?: CustomTimePeriod | null,
-	dataType?: string,
-	protocolSymbol?: string | null
+	dataType?: string
 ): () => Promise<[number, number][]> {
 	return async () => {
 		const data =
 			itemType === 'protocol'
 				? await fetchProProtocolChartData(type, item, {
 						...(geckoId !== undefined ? { geckoId } : {}),
-						...(dataType !== undefined ? { dataType } : {}),
-						...(protocolSymbol !== undefined ? { protocolSymbol } : {})
+						...(dataType !== undefined ? { dataType } : {})
 					})
 				: type === 'bridgedTvl'
 					? await fetchProDashboardBridgedTvl(item)
@@ -72,8 +70,7 @@ function fetchChartProxied(
 	item: string,
 	authToken: string,
 	geckoId?: string | null,
-	dataType?: string,
-	protocolSymbol?: string | null
+	dataType?: string
 ): () => Promise<[number, number][]> {
 	return () =>
 		fetchProDashboardProxy(
@@ -85,8 +82,7 @@ function fetchChartProxied(
 						? { subjectType: 'protocol', protocol: item }
 						: { subjectType: 'chain', chain: item }),
 					...(geckoId !== undefined ? { geckoId } : {}),
-					...(dataType !== undefined ? { dataType } : {}),
-					...(protocolSymbol !== undefined ? { protocolSymbol } : {})
+					...(dataType !== undefined ? { dataType } : {})
 				}
 			},
 			authToken
@@ -102,14 +98,12 @@ export function getChartQueryFn(
 	parentMapping?: ReadonlyMap<string, readonly string[]>,
 	customPeriod?: CustomTimePeriod | null,
 	dataType?: string,
-	authToken?: string | null,
-	protocolSymbols?: ReadonlyMap<string, string>
+	authToken?: string | null
 ) {
 	if (!isProDashboardChartType(type)) return async () => []
-	const protocolSymbol = protocolSymbols?.get(item)
 	const fetcher = authToken
-		? fetchChartProxied(type, itemType, item, authToken, geckoId, dataType, protocolSymbol)
-		: fetchChartDirect(type, itemType, item, geckoId, timePeriod, customPeriod, dataType, protocolSymbol)
+		? fetchChartProxied(type, itemType, item, authToken, geckoId, dataType)
+		: fetchChartDirect(type, itemType, item, geckoId, timePeriod, customPeriod, dataType)
 
 	if (itemType === 'protocol') {
 		return async () => {
@@ -138,25 +132,8 @@ export function getChartQueryFn(
 
 			const childFetchers = children.map((childSlug) =>
 				authToken
-					? fetchChartProxied(
-							type,
-							'protocol',
-							childSlug,
-							authToken,
-							undefined,
-							dataType,
-							protocolSymbols?.get(childSlug)
-						)
-					: fetchChartDirect(
-							type,
-							'protocol',
-							childSlug,
-							undefined,
-							timePeriod,
-							customPeriod,
-							dataType,
-							protocolSymbols?.get(childSlug)
-						)
+					? fetchChartProxied(type, 'protocol', childSlug, authToken, undefined, dataType)
+					: fetchChartDirect(type, 'protocol', childSlug, undefined, timePeriod, customPeriod, dataType)
 			)
 
 			// A parent total must never be assembled from a partial child set. If one
@@ -243,8 +220,7 @@ function getChartSourceQueryOptions(
 	streamDone: boolean,
 	prerequisite: ChartDataPrerequisite,
 	authToken: string | null | undefined,
-	parentMapping: ReadonlyMap<string, readonly string[]> | undefined,
-	protocolSymbols: ReadonlyMap<string, string> | undefined
+	parentMapping: ReadonlyMap<string, readonly string[]> | undefined
 ) {
 	const itemType = chart.subjectType
 	const item = chart.subjectType === 'protocol' ? chart.protocol : chart.chain
@@ -260,8 +236,7 @@ function getChartSourceQueryOptions(
 			parentMapping,
 			undefined,
 			chart.dataType,
-			authToken,
-			itemType === 'protocol' ? protocolSymbols : undefined
+			authToken
 		),
 		staleTime: 1000 * 60 * 5,
 		gcTime: 1000 * 60 * 30,
@@ -283,14 +258,13 @@ export function useChartData(
 	timePeriod?: TimePeriod,
 	customPeriod?: CustomTimePeriod | null,
 	authToken?: string | null,
-	parentMapping?: ReadonlyMap<string, readonly string[]>,
-	protocolSymbols?: ReadonlyMap<string, string>
+	parentMapping?: ReadonlyMap<string, readonly string[]>
 ) {
 	const streamDone = useContext(StreamDoneContext)
 	const prerequisite = getChartDataPrerequisite(chart, protocolCatalog, protocolBySlug)
 	const sourceQueryOptions = useMemo(
-		() => getChartSourceQueryOptions(chart, streamDone, prerequisite, authToken, parentMapping, protocolSymbols),
-		[authToken, chart, parentMapping, prerequisite, protocolSymbols, streamDone]
+		() => getChartSourceQueryOptions(chart, streamDone, prerequisite, authToken, parentMapping),
+		[authToken, chart, parentMapping, prerequisite, streamDone]
 	)
 	const projectionTimePeriod = timePeriod ?? 'all'
 	const relativeBoundaryDay =
@@ -320,8 +294,7 @@ export function useChartsData(
 	timePeriod?: TimePeriod,
 	customPeriod?: CustomTimePeriod | null,
 	authToken?: string | null,
-	parentMapping?: ReadonlyMap<string, readonly string[]>,
-	protocolSymbols?: ReadonlyMap<string, string>
+	parentMapping?: ReadonlyMap<string, readonly string[]>
 ) {
 	const streamDone = useContext(StreamDoneContext)
 	const observerPlan = useMemo(() => buildProDashboardChartObserverPlan(charts), [charts])
@@ -333,11 +306,10 @@ export function useChartsData(
 					streamDone,
 					getChartDataPrerequisite(chart, protocolCatalog, protocolBySlug),
 					authToken,
-					parentMapping,
-					protocolSymbols
+					parentMapping
 				)
 			),
-		[authToken, observerPlan.sources, parentMapping, protocolBySlug, protocolCatalog, protocolSymbols, streamDone]
+		[authToken, observerPlan.sources, parentMapping, protocolBySlug, protocolCatalog, streamDone]
 	)
 	const projectionTimePeriod = timePeriod ?? 'all'
 	const relativeBoundaryDay =

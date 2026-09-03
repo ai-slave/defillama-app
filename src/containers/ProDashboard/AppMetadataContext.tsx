@@ -30,7 +30,6 @@ const PROTOCOL_FLAG_KEYS = [
 	'stablecoins',
 	'emissions',
 	'incentives',
-	'liquidity',
 	'treasury',
 	'yields',
 	'borrowed',
@@ -234,7 +233,6 @@ export function AppMetadataProvider({ children }: { children: React.ReactNode })
 				types.add('incentives')
 				types.add('unlocks')
 			}
-			if (flags.liquidity) types.add('liquidity')
 			if (flags.treasury) types.add('treasury')
 			if (flags.holdersRevenue) types.add('holdersRevenue')
 			if (flags.perps) types.add('perps')

@@ -32,12 +32,11 @@ export const getStaticProps = withPerformanceLogging(
 			return canonicalRouteRedirect(`/cex/${cexRoute.canonicalSlug}`, true)
 		}
 
-		const yieldsSnapshot =
-			protocolMetadata.yields || protocolMetadata.liquidity
-				? await import('~/containers/Yields/server/dataset.server').then(({ acquireOptionalYieldsSnapshot }) =>
-						acquireOptionalYieldsSnapshot()
-					)
-				: null
+		const yieldsSnapshot = protocolMetadata.yields
+			? await import('~/containers/Yields/server/dataset.server').then(({ acquireOptionalYieldsSnapshot }) =>
+					acquireOptionalYieldsSnapshot()
+				)
+			: null
 		const data = await getProtocolOverviewPageData({
 			protocolId: cexRoute.id,
 			currentProtocolMetadata: protocolMetadata,

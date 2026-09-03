@@ -10,7 +10,6 @@ const {
 	resolveBridgeProtocolParamMock,
 	fetchAdapterProtocolChartDataMock,
 	fetchAdapterProtocolChartDataByBreakdownTypeMock,
-	fetchProtocolTokenLiquidityChartMock,
 	getCachedCgChartDataMock,
 	fetchBridgeVolumeBySlugMock,
 	fetchAndFormatGovernanceDataMock,
@@ -26,7 +25,6 @@ const {
 	resolveBridgeProtocolParamMock: vi.fn(),
 	fetchAdapterProtocolChartDataMock: vi.fn(),
 	fetchAdapterProtocolChartDataByBreakdownTypeMock: vi.fn(),
-	fetchProtocolTokenLiquidityChartMock: vi.fn(),
 	getCachedCgChartDataMock: vi.fn(),
 	fetchBridgeVolumeBySlugMock: vi.fn(),
 	fetchAndFormatGovernanceDataMock: vi.fn(),
@@ -34,10 +32,6 @@ const {
 	fetchOracleProtocolChartMock: vi.fn(),
 	getProtocolEmissionsChartsMock: vi.fn(),
 	fetchJsonMock: vi.fn()
-}))
-
-vi.mock('~/api', () => ({
-	fetchProtocolTokenLiquidityChart: fetchProtocolTokenLiquidityChartMock
 }))
 
 vi.mock('~/api/coingecko', () => ({

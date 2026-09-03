@@ -67,7 +67,7 @@ const normalizeBaseType = (chartType: string | undefined): MultiChartInputSeries
 }
 
 const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardProps) {
-	const { getProtocolInfo, parentMapping, protocolBySlug, protocolCatalog, protocolSymbols } = useProDashboardCatalog()
+	const { getProtocolInfo, parentMapping, protocolBySlug, protocolCatalog } = useProDashboardCatalog()
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const {
 		handleGroupingChange,
@@ -94,8 +94,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 		timePeriod,
 		customTimePeriod,
 		authToken,
-		parentMapping,
-		protocolSymbols
+		parentMapping
 	)
 	const runtimeItems = useMemo<ChartRuntimeView[]>(
 		() =>

@@ -336,11 +336,11 @@ describe('Pro dashboard config migration', () => {
 	it('drops unsupported classic chart and metric types at the persisted-config boundary', () => {
 		expect(
 			migrateDashboardItemConfig({
-				id: 'invalid-chart',
+				id: 'retired-liquidity-chart',
 				kind: 'chart',
 				subjectType: 'protocol',
 				protocol: 'aave',
-				type: 'legacy-adapter-metric'
+				type: 'liquidity'
 			})
 		).toBeNull()
 		expect(
