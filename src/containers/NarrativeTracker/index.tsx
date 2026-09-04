@@ -234,8 +234,8 @@ export const CategoryPerformanceContainer = ({
 		[groupBy, sortedPctChanges, tab]
 	)
 	const treemapTreeData = React.useMemo(
-		() => filterNarrativeTreemapTreeData(canonicalTreemapTreeData, displayedSelectedCharts, isCoinPage),
-		[canonicalTreemapTreeData, displayedSelectedCharts, isCoinPage]
+		() => filterNarrativeTreemapTreeData(canonicalTreemapTreeData, displayedSelectedCharts),
+		[canonicalTreemapTreeData, displayedSelectedCharts]
 	)
 
 	const { chartInstance: exportChartInstance, handleChartReady: onChartReady } = useGetChartInstance()

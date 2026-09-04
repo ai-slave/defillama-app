@@ -103,7 +103,7 @@ describe('buildNarrativeTreemapTreeData', () => {
 			row({ name: 'High', categoryName: 'Lending', mcap: 7, returnField: 20 })
 		])
 
-		expect(filterNarrativeTreemapTreeData(tree, new Set(['Low']), true)).toEqual([
+		expect(filterNarrativeTreemapTreeData(tree, new Set(['Low']))).toEqual([
 			{
 				...tree[0],
 				value: [3, null, null, 0],
@@ -119,7 +119,22 @@ describe('buildNarrativeTreemapTreeData', () => {
 			row({ name: 'DEX', categoryName: 'DEX', mcap: 7 })
 		])
 
-		expect(filterNarrativeTreemapTreeData(tree, new Set(['DEX']), false)).toEqual([tree[1]])
+		expect(filterNarrativeTreemapTreeData(tree, new Set(['DEX']))).toEqual([tree[1]])
+	})
+
+	it('filters overview rows by name when their category name is missing', () => {
+		const tree = buildNarrativeTreemapTreeData(
+			[row({ name: 'Lending', mcap: 3, change1M: 10 }), row({ name: 'DEX', mcap: 7, change1M: 20 })],
+			'change1M'
+		)
+
+		expect(filterNarrativeTreemapTreeData(tree, new Set(['Lending', 'DEX']))).toEqual(tree)
+		expect(filterNarrativeTreemapTreeData(tree, new Set(['Lending']))).toEqual([
+			{ ...tree[0], value: [3, null, null, 0], children: [tree[0].children[0]] }
+		])
+		expect(filterNarrativeTreemapTreeData(tree, new Set())).toEqual([])
+		expect(tree[0].children).toHaveLength(2)
+		expect(tree[0].children[0].value[3]).toBe(70)
 	})
 })
 

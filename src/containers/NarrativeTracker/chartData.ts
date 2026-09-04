@@ -111,11 +111,9 @@ export function buildNarrativeTreemapTreeData(
 
 export function filterNarrativeTreemapTreeData(
 	treeData: NarrativeTreemapTreeData,
-	selectedSeries: ReadonlySet<string>,
-	selectCoins: boolean
+	selectedSeries: ReadonlySet<string>
 ): NarrativeTreemapTreeData {
-	if (!selectCoins) return treeData.filter((category) => selectedSeries.has(category.name))
-
+	// Both overview categories and individual coins are stored as leaf rows.
 	const filtered: NarrativeTreemapTreeData = []
 	for (const category of treeData) {
 		const children = category.children.filter((coin) => selectedSeries.has(coin.name))
