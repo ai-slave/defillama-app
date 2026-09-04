@@ -36,6 +36,7 @@ function row(overrides: Partial<TokensSourceRow> & Pick<TokensSourceRow, 'id' | 
 		isStablecoin: false,
 		searchKey: `${overrides.name} ${overrides.symbol}`.toLowerCase(),
 		chains: [],
+		nativeChains: [],
 		categories: [],
 		...overrides
 	}
@@ -90,6 +91,7 @@ describe('getTokensPageQuery', () => {
 				pageSize: 'bad',
 				sortBy: 'bad',
 				sortDesc: 'maybe',
+				nativeOnly: 'yes',
 				category: 'not-real',
 				search: '  ethena  '
 			})
@@ -104,6 +106,7 @@ describe('getTokensPageQuery', () => {
 			numericFilters: [],
 			chains: null,
 			excludeChains: [],
+			nativeOnly: false,
 			categories: null,
 			excludeCategories: []
 		})
@@ -116,6 +119,8 @@ describe('getTokensPageQuery', () => {
 				pageSize: '9999',
 				sortBy: 'priceChange7d',
 				sortDesc: 'false',
+				chains: 'ethereum',
+				nativeOnly: 'true',
 				category: 'dexs'
 			})
 		).toEqual({
@@ -127,8 +132,9 @@ describe('getTokensPageQuery', () => {
 			rankFrom: null,
 			rankTo: null,
 			numericFilters: [],
-			chains: null,
+			chains: ['ethereum'],
 			excludeChains: [],
+			nativeOnly: true,
 			categories: null,
 			excludeCategories: []
 		})
@@ -333,6 +339,48 @@ describe('getTokensPageFromRows', () => {
 		expect(deselected.total).toBe(0)
 	})
 
+	it('matches selected chains against primary chains only when requested', () => {
+		const filterRows = [
+			row({
+				id: 'chainlink',
+				name: 'Chainlink',
+				symbol: 'LINK',
+				chains: ['ethereum', 'robinhood'],
+				nativeChains: ['ethereum']
+			}),
+			row({
+				id: 'robinhood-native',
+				name: 'Robinhood Native',
+				symbol: 'RHN',
+				chains: ['robinhood'],
+				nativeChains: ['robinhood']
+			}),
+			row({
+				id: 'unknown-primary',
+				name: 'Unknown Primary',
+				symbol: 'UNKNOWN',
+				chains: ['robinhood']
+			})
+		]
+
+		expect(getPage(filterRows, { chains: 'robinhood' }).rows.map((item) => item.id)).toEqual([
+			'chainlink',
+			'robinhood-native',
+			'unknown-primary'
+		])
+		expect(getPage(filterRows, { chains: 'robinhood', nativeOnly: 'true' }).rows.map((item) => item.id)).toEqual([
+			'robinhood-native'
+		])
+		expect(getPage(filterRows, { chains: 'ethereum', nativeOnly: 'true' }).rows.map((item) => item.id)).toEqual([
+			'chainlink'
+		])
+		expect(getPage(filterRows, { nativeOnly: 'true' }).rows.map((item) => item.id)).toEqual([
+			'chainlink',
+			'robinhood-native',
+			'unknown-primary'
+		])
+	})
+
 	it('returns no rows for a present unknown-only category and keeps memberships internal', () => {
 		const filterRows = [
 			row({
@@ -348,6 +396,7 @@ describe('getTokensPageFromRows', () => {
 
 		const matched = getPage(filterRows, { categories: 'stablecoins', pageSize: '20' })
 		expect(matched.rows[0]).not.toHaveProperty('chains')
+		expect(matched.rows[0]).not.toHaveProperty('nativeChains')
 		expect(matched.rows[0]).not.toHaveProperty('categories')
 	})
 })
@@ -365,10 +414,13 @@ describe('buildTokensChartQueryString', () => {
 				search: ' Eth ',
 				categories: ['governance', 'dex'],
 				excludeChains: 'solana',
+				nativeOnly: 'true',
 				rankFrom: '10',
 				min_marketCap: '1000000'
 			})
-		).toBe('?search=Eth&rankFrom=10&excludeChains=solana&categories=governance&categories=dex&min_marketCap=1000000')
+		).toBe(
+			'?search=Eth&rankFrom=10&excludeChains=solana&nativeOnly=true&categories=governance&categories=dex&min_marketCap=1000000'
+		)
 		expect(buildTokensChartQueryString({ page: '2', view: 'movers' })).toBe('')
 	})
 })

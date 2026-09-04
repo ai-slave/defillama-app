@@ -573,7 +573,7 @@ describe('buildTokensSourceRows', () => {
 		})
 	})
 
-	it('flags stablecoins from exact CoinGecko metadata membership', () => {
+	it('reads exact CoinGecko filter memberships and flags stablecoins', () => {
 		const tokens = [
 			{ id: 'Tether', name: 'Tether', symbol: 'usdt', current_price: 1, market_cap: 100 },
 			{ id: 'ethena', name: 'Ethena', symbol: 'ena', current_price: 1, market_cap: 50 }
@@ -590,7 +590,7 @@ describe('buildTokensSourceRows', () => {
 				protocolMetadata: {},
 				emissionsSupplyMetrics: {},
 				tokenFilterMetadata: tokenFilterMetadata({
-					tether: { chains: ['ethereum'], categories: ['stablecoins'] }
+					tether: { chains: ['ethereum'], nativeChains: ['ethereum'], categories: ['stablecoins'] }
 				})
 			} as unknown as MetadataCache,
 			nowSec: 1_800_000_000
@@ -598,6 +598,7 @@ describe('buildTokensSourceRows', () => {
 
 		const flagged = buildTokensSourceRows({ ...base, tokens })
 		expect(flagged.rows.map((row) => row.isStablecoin)).toEqual([true, false])
+		expect(flagged.rows.map((row) => row.nativeChains)).toEqual([['ethereum'], []])
 	})
 
 	it('links rights to the protocol page when no token-directory route exists', () => {

@@ -7,7 +7,7 @@ export interface TokenFilterMetadataArtifact {
 		coingeckoCatalogGeneratedAt: number
 		rankingsUpdatedAt: string | null
 	}
-	tokens: Record<string, { chains: string[]; categories: string[] }>
+	tokens: Record<string, { chains: string[]; nativeChains?: string[]; categories: string[] }>
 	categories: Array<{ id: string; label: string }>
 }
 

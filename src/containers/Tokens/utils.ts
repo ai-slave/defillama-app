@@ -1,7 +1,13 @@
 import type { ParsedUrlQuery } from 'querystring'
 import type { PaginationState, SortingState } from '@tanstack/react-table'
 import { formatPercent, formatPercentChange, formatUsd } from '~/utils/numberFormat'
-import { parseNumberQueryParam, readSingleQueryValue, toNonEmptyArrayParam, toQueryString } from '~/utils/routerQuery'
+import {
+	isTrueQueryParam,
+	parseNumberQueryParam,
+	readSingleQueryValue,
+	toNonEmptyArrayParam,
+	toQueryString
+} from '~/utils/routerQuery'
 import {
 	TOKENS_NUMERIC_FILTER_FIELDS,
 	TOKENS_PAGE_RESPONSE_SCHEMA_VERSION,
@@ -105,7 +111,6 @@ export function getTokensPageQuery(query: ParsedUrlQuery): TokensPageQuery {
 		MAX_TOKENS_TABLE_PAGE_SIZE
 	)
 	const { rankFrom, rankTo } = parseRankRangeQueryParams(query)
-
 	return {
 		page: parsePositiveIntegerQueryParam(query.page, 1),
 		pageSize,
@@ -120,6 +125,7 @@ export function getTokensPageQuery(query: ParsedUrlQuery): TokensPageQuery {
 		numericFilters: parseNumericFiltersQueryParams(query),
 		chains: parseTokenFilterValues(query.chains),
 		excludeChains: parseTokenFilterValues(query.excludeChains) ?? [],
+		nativeOnly: isTrueQueryParam(query.nativeOnly),
 		categories: parseTokenFilterValues(query.categories),
 		excludeCategories: parseTokenFilterValues(query.excludeCategories) ?? []
 	}
@@ -145,6 +151,7 @@ function getTokensFilterQueryParams(pageQuery: TokensPageQuery): Record<string, 
 		rankTo: pageQuery.rankTo != null ? String(pageQuery.rankTo) : undefined,
 		chains: pageQuery.chains ?? undefined,
 		excludeChains: pageQuery.excludeChains.length > 0 ? pageQuery.excludeChains : undefined,
+		nativeOnly: pageQuery.nativeOnly ? 'true' : undefined,
 		categories: pageQuery.categories ?? undefined,
 		excludeCategories: pageQuery.excludeCategories.length > 0 ? pageQuery.excludeCategories : undefined
 	}
@@ -276,7 +283,13 @@ function getRowDisplay(row: TokensSourceRow): TokensTableRowDisplay {
 }
 
 function toTableRow(row: TokensSourceRow, rowNumber: number): TokensTableRow {
-	const { searchKey: _searchKey, chains: _chains, categories: _categories, ...tableRow } = row
+	const {
+		searchKey: _searchKey,
+		chains: _chains,
+		nativeChains: _nativeChains,
+		categories: _categories,
+		...tableRow
+	} = row
 	return { ...tableRow, rowNumber, display: getRowDisplay(row) }
 }
 
@@ -300,6 +313,7 @@ export interface TokensRowFilter {
 	rankTo: number | null
 	numericFilters: TokensNumericFilter[]
 	chains: Set<string> | null
+	nativeOnly: boolean
 	categories: Set<string> | null
 }
 
@@ -317,7 +331,8 @@ export function matchesTokensRowFilter(row: TokensSourceRow, filter: TokensRowFi
 		if (numericFilter.max != null && value > numericFilter.max) return false
 	}
 	const chains = filter.chains
-	if (chains != null && !row.chains.some((chain) => chains.has(chain))) return false
+	const rowChains = filter.nativeOnly ? row.nativeChains : row.chains
+	if (chains != null && !rowChains.some((chain) => chains.has(chain))) return false
 	const categories = filter.categories
 	if (categories != null && !row.categories.some((category) => categories.has(category))) return false
 	return filter.search === '' || row.searchKey.includes(filter.search)
@@ -421,17 +436,19 @@ export function buildTokensRowFilter(
 	categoryOptions: TokensFilterOption[]
 ): TokensRowFilter {
 	const pageQuery = getTokensPageQuery(query)
+	const chains = getTokenFilterSelection(
+		pageQuery.chains,
+		pageQuery.excludeChains,
+		chainOptions.map((option) => option.id)
+	)
 	return {
 		search: pageQuery.search.toLowerCase(),
 		requestedIds: parseRequestedIds(query.ids),
 		rankFrom: pageQuery.rankFrom,
 		rankTo: pageQuery.rankTo,
 		numericFilters: pageQuery.numericFilters,
-		chains: getTokenFilterSelection(
-			pageQuery.chains,
-			pageQuery.excludeChains,
-			chainOptions.map((option) => option.id)
-		),
+		chains,
+		nativeOnly: pageQuery.nativeOnly && chains != null,
 		categories: getTokenFilterSelection(
 			pageQuery.categories,
 			pageQuery.excludeCategories,

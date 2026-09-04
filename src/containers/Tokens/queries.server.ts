@@ -414,6 +414,7 @@ export function buildTokensSourceRows({
 				: null
 		const filterMembership = metadata.tokenFilterMetadata.tokens[geckoId]
 		const chains = filterMembership?.chains ?? []
+		const nativeChains = filterMembership?.nativeChains ?? []
 		const categories = filterMembership?.categories ?? []
 		const row: TokensSourceRow = {
 			id: token.id,
@@ -464,6 +465,7 @@ export function buildTokensSourceRows({
 			isStablecoin: categories.includes('stablecoins'),
 			searchKey: getSearchKey(token, record),
 			chains,
+			nativeChains,
 			categories
 		}
 		addStats(stats, row)
@@ -531,7 +533,7 @@ export async function getTokensSourceData(): Promise<TokensSourceData> {
 	const filterGeneration = metadata.tokenFilterMetadata.generatedAt
 	return cachedResult(
 		'tokens-source-rows',
-		`v11:${marketSnapshot.version}:${filterGeneration}`,
+		`v12:${marketSnapshot.version}:${filterGeneration}`,
 		{ ttlMs: TOKENS_SOURCE_CACHE_TTL_MS, maxEntries: 2 },
 		() => fetchTokensSourceRows(marketSnapshot, metadata)
 	)

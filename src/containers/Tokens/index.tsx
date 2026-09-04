@@ -17,10 +17,12 @@ import { ViewTabs, viewTabIds, type ViewTab } from '~/components/ViewTabs'
 import { TokenRightsPieChart } from '~/containers/TokenRights/TokenRightsPieChart'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
+import { Checkbox } from '~/ui/Checkbox'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
+import { QuestionHelper } from '~/ui/QuestionHelper'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -527,19 +529,27 @@ function TokensSharedControls({
 	updateSearch,
 	filters,
 	selectedChains,
+	hasChainQuery,
+	nativeOnly,
 	selectedCategories,
 	chainOptions,
 	categoryOptions,
-	onFiltersChange
+	onFiltersChange,
+	onChainQueryChange,
+	onNativeOnlyChange
 }: {
 	search: string
 	updateSearch: (search: string) => void
 	filters: TokensActiveFilter[]
 	selectedChains: string[]
+	hasChainQuery: boolean
+	nativeOnly: boolean
 	selectedCategories: string[]
 	chainOptions: TokensFilterOption[]
 	categoryOptions: TokensFilterOption[]
 	onFiltersChange: (filters: TokensActiveFilter[]) => void
+	onChainQueryChange: (updates: Record<string, string | string[] | undefined>) => void
+	onNativeOnlyChange: (nativeOnly: boolean) => void
 }) {
 	const searchInputRef = React.useRef<HTMLInputElement>(null)
 	const debouncedUpdateSearch = useDebouncedCallback(updateSearch, 300)
@@ -602,7 +612,16 @@ function TokensSharedControls({
 				variant="filter-responsive"
 				size="md"
 				searchPlaceholder="Search chains..."
+				pushQueryUpdates={onChainQueryChange}
 			/>
+			{hasChainQuery ? (
+				<Checkbox variant="filter" checked={nativeOnly} onChange={(event) => onNativeOnlyChange(event.target.checked)}>
+					<span className="flex items-center gap-1">
+						Primary chain only
+						<QuestionHelper text="Only show tokens whose primary chain matches the selected chain filter." />
+					</span>
+				</Checkbox>
+			) : null}
 			<SelectWithCombobox
 				allValues={categorySelectOptions}
 				selectedValues={selectedCategories}
@@ -676,6 +695,7 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 			),
 		[categoryOptionIds, serverTable.pageQuery.categories, serverTable.pageQuery.excludeCategories]
 	)
+	const hasChainQuery = serverTable.pageQuery.chains !== null || serverTable.pageQuery.excludeChains.length > 0
 	const pendingFiltersRef = React.useRef<TokensActiveFilter[] | null>(null)
 	React.useEffect(() => {
 		pendingFiltersRef.current = null
@@ -702,6 +722,19 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 			applyFilters(baseFilters.filter((filter) => filter.id !== id))
 		},
 		[applyFilters, filters]
+	)
+	const updateNativeOnly = React.useCallback(
+		(nativeOnly: boolean) => {
+			void pushShallowQuery(router, { nativeOnly: nativeOnly ? 'true' : undefined, page: undefined })
+		},
+		[router]
+	)
+	const updateChainQuery = React.useCallback(
+		(updates: Record<string, string | string[] | undefined>) => {
+			const hasNextChainFilter = updates.chains !== undefined || updates.excludeChains !== undefined
+			void pushShallowQuery(router, hasNextChainFilter ? updates : { ...updates, nativeOnly: undefined })
+		},
+		[router]
 	)
 	const rankColumnWidth = getRankColumnWidth(serverTable.rows)
 	const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(DEFAULT_COLUMN_VISIBILITY)
@@ -795,10 +828,14 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 			updateSearch={serverTable.updateSearch}
 			filters={filters}
 			selectedChains={selectedChains}
+			hasChainQuery={hasChainQuery}
+			nativeOnly={serverTable.pageQuery.nativeOnly}
 			selectedCategories={selectedCategories}
 			chainOptions={serverTable.data.chainOptions}
 			categoryOptions={serverTable.data.categoryOptions}
 			onFiltersChange={applyFilters}
+			onChainQueryChange={updateChainQuery}
+			onNativeOnlyChange={updateNativeOnly}
 		/>
 	)
 	const filterPills =
