@@ -57,7 +57,7 @@ export function ChainsByAdapter(props: IProps) {
 
 	const instance = useReactTable({
 		data: props.chains,
-		columns: columnsByType[props.type] as any,
+		columns: columnsByType[props.type],
 		state: {
 			sorting,
 			columnFilters,
@@ -182,7 +182,7 @@ const getMetricColumnWidthClass = (size: number) => metricColumnWidthClassBySize
 
 const metricColumn = (
 	id: string,
-	header: any,
+	header: string,
 	accessor: (protocol: ChainRow) => number | null | undefined,
 	headerHelperText: string,
 	size: number,

@@ -1,4 +1,4 @@
-import { type ColumnDef, createColumnHelper, type SortingState, type VisibilityState } from '@tanstack/react-table'
+import { createColumnHelper, type SortingState, type VisibilityState } from '@tanstack/react-table'
 import * as React from 'react'
 import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
@@ -75,10 +75,10 @@ export function buildPairColumns(
 	segment: ExchangeSegment,
 	capabilities: { openInterest: boolean; funding: boolean; depth: boolean },
 	showVenue: boolean
-): ColumnDef<PairTableRow, any>[] {
+) {
 	const isPerp = segment !== 'spot'
 	const definitions = exchangeDefinitions.markets
-	const columns: ColumnDef<PairTableRow, any>[] = [
+	const baseColumns = [
 		columnHelper.accessor('base', {
 			id: 'token',
 			header: definitions.token.label,
@@ -255,103 +255,103 @@ export function buildPairColumns(
 		})
 	]
 
-	if (isPerp) {
-		columns.push(
-			columnHelper.accessor((row) => row.markPrice ?? undefined, {
-				id: 'markPrice',
-				header: definitions.markPrice.label,
-				cell: ({ row, getValue }) => formatPairPrice(getValue(), row.original.quote),
-				meta: { headerClassName: 'w-[115px]', align: 'end', headerHelperText: definitions.markPrice.description }
-			}),
-			columnHelper.accessor((row) => row.indexPrice ?? undefined, {
-				id: 'indexPrice',
-				header: definitions.indexPrice.label,
-				cell: ({ row, getValue }) => formatPairPrice(getValue(), row.original.quote),
-				meta: { headerClassName: 'w-[115px]', align: 'end', headerHelperText: definitions.indexPrice.description }
-			}),
-			columnHelper.accessor((row) => row.basis ?? undefined, {
-				id: 'basis',
-				header: definitions.basis.label,
-				cell: ({ getValue }) => percentage(getValue(), 3),
-				meta: { headerClassName: 'w-[90px]', align: 'end', headerHelperText: definitions.basis.description }
-			}),
-			columnHelper.accessor((row) => row.openInterestUsd ?? undefined, {
-				id: 'openInterestUsd',
-				header: definitions.openInterestUsd.label,
-				cell: ({ getValue }) => (capabilities.openInterest ? money(getValue()) : <UnsupportedMetric />),
-				meta: {
-					headerClassName: 'w-[125px]',
-					align: 'end',
-					headerHelperText: definitions.openInterestUsd.description
-				}
-			}),
-			columnHelper.accessor((row) => row.openInterestChange24h ?? undefined, {
-				id: 'openInterestChange24h',
-				header: definitions.openInterestChange24h.label,
-				cell: ({ getValue }) => (capabilities.openInterest ? <Change value={getValue()} /> : <UnsupportedMetric />),
-				meta: {
-					headerClassName: 'w-[90px]',
-					align: 'end',
-					headerHelperText: definitions.openInterestChange24h.description
-				}
-			}),
-			columnHelper.accessor((row) => row.fundingRate8h ?? undefined, {
-				id: 'fundingRate8h',
-				header: definitions.fundingRate8h.label,
-				cell: ({ row, getValue }) => {
-					if (!capabilities.funding) return <UnsupportedMetric />
-					if (getValue() == null) return <span className="text-tertiary">–</span>
-					return (
-						<Tooltip
-							content={`Raw venue period: ${row.original.fundingPeriodHours ?? 'unknown'}h; normalized to 8h`}
-							className="ms-auto w-fit"
-						>
-							<span className="underline decoration-dotted">{percentage(getValue(), 4)}</span>
-						</Tooltip>
-					)
-				},
-				meta: {
-					headerClassName: 'w-[105px]',
-					align: 'end',
-					headerHelperText: definitions.fundingRate8h.description
-				}
-			}),
-			columnHelper.accessor((row) => row.nextFundingAt ?? undefined, {
-				id: 'nextFundingAt',
-				header: definitions.nextFundingAt.label,
-				cell: ({ getValue }) =>
-					capabilities.funding ? (
-						getValue() == null ? (
-							'–'
-						) : (
-							<span className="whitespace-nowrap">
-								{formatDateTime(getValue(), { input: 'seconds', timeZone: 'UTC' }) ?? '–'}
-							</span>
+	const perpColumns = isPerp
+		? [
+				columnHelper.accessor((row) => row.markPrice ?? undefined, {
+					id: 'markPrice',
+					header: definitions.markPrice.label,
+					cell: ({ row, getValue }) => formatPairPrice(getValue(), row.original.quote),
+					meta: { headerClassName: 'w-[115px]', align: 'end', headerHelperText: definitions.markPrice.description }
+				}),
+				columnHelper.accessor((row) => row.indexPrice ?? undefined, {
+					id: 'indexPrice',
+					header: definitions.indexPrice.label,
+					cell: ({ row, getValue }) => formatPairPrice(getValue(), row.original.quote),
+					meta: { headerClassName: 'w-[115px]', align: 'end', headerHelperText: definitions.indexPrice.description }
+				}),
+				columnHelper.accessor((row) => row.basis ?? undefined, {
+					id: 'basis',
+					header: definitions.basis.label,
+					cell: ({ getValue }) => percentage(getValue(), 3),
+					meta: { headerClassName: 'w-[90px]', align: 'end', headerHelperText: definitions.basis.description }
+				}),
+				columnHelper.accessor((row) => row.openInterestUsd ?? undefined, {
+					id: 'openInterestUsd',
+					header: definitions.openInterestUsd.label,
+					cell: ({ getValue }) => (capabilities.openInterest ? money(getValue()) : <UnsupportedMetric />),
+					meta: {
+						headerClassName: 'w-[125px]',
+						align: 'end',
+						headerHelperText: definitions.openInterestUsd.description
+					}
+				}),
+				columnHelper.accessor((row) => row.openInterestChange24h ?? undefined, {
+					id: 'openInterestChange24h',
+					header: definitions.openInterestChange24h.label,
+					cell: ({ getValue }) => (capabilities.openInterest ? <Change value={getValue()} /> : <UnsupportedMetric />),
+					meta: {
+						headerClassName: 'w-[90px]',
+						align: 'end',
+						headerHelperText: definitions.openInterestChange24h.description
+					}
+				}),
+				columnHelper.accessor((row) => row.fundingRate8h ?? undefined, {
+					id: 'fundingRate8h',
+					header: definitions.fundingRate8h.label,
+					cell: ({ row, getValue }) => {
+						if (!capabilities.funding) return <UnsupportedMetric />
+						if (getValue() == null) return <span className="text-tertiary">–</span>
+						return (
+							<Tooltip
+								content={`Raw venue period: ${row.original.fundingPeriodHours ?? 'unknown'}h; normalized to 8h`}
+								className="ms-auto w-fit"
+							>
+								<span className="underline decoration-dotted">{percentage(getValue(), 4)}</span>
+							</Tooltip>
 						)
-					) : (
-						<UnsupportedMetric />
-					),
-				meta: {
-					headerClassName: 'w-[220px]',
-					align: 'end',
-					headerHelperText: definitions.nextFundingAt.description
-				}
-			}),
-			columnHelper.accessor((row) => row.maxLeverage ?? undefined, {
-				id: 'maxLeverage',
-				header: definitions.maxLeverage.label,
-				cell: ({ getValue }) => (getValue() == null ? '–' : `${getValue()}×`),
-				meta: {
-					hidden: true,
-					csvOnly: true,
-					align: 'end',
-					headerHelperText: definitions.maxLeverage.description
-				}
-			})
-		)
-	}
+					},
+					meta: {
+						headerClassName: 'w-[105px]',
+						align: 'end',
+						headerHelperText: definitions.fundingRate8h.description
+					}
+				}),
+				columnHelper.accessor((row) => row.nextFundingAt ?? undefined, {
+					id: 'nextFundingAt',
+					header: definitions.nextFundingAt.label,
+					cell: ({ getValue }) =>
+						capabilities.funding ? (
+							getValue() == null ? (
+								'–'
+							) : (
+								<span className="whitespace-nowrap">
+									{formatDateTime(getValue(), { input: 'seconds', timeZone: 'UTC' }) ?? '–'}
+								</span>
+							)
+						) : (
+							<UnsupportedMetric />
+						),
+					meta: {
+						headerClassName: 'w-[220px]',
+						align: 'end',
+						headerHelperText: definitions.nextFundingAt.description
+					}
+				}),
+				columnHelper.accessor((row) => row.maxLeverage ?? undefined, {
+					id: 'maxLeverage',
+					header: definitions.maxLeverage.label,
+					cell: ({ getValue }) => (getValue() == null ? '–' : `${getValue()}×`),
+					meta: {
+						hidden: true,
+						csvOnly: true,
+						align: 'end',
+						headerHelperText: definitions.maxLeverage.description
+					}
+				})
+			]
+		: []
 
-	columns.push(
+	const trailingColumns = [
 		columnHelper.accessor('volumeUpdatedAt', {
 			id: 'volumeFreshness',
 			header: definitions.volumeFreshness.label,
@@ -380,43 +380,49 @@ export function buildPairColumns(
 			cell: ({ getValue }) => (getValue() == null ? '–' : (formatDate(getValue(), { input: 'seconds' }) ?? '–')),
 			meta: { headerClassName: 'w-[110px]', align: 'end', headerHelperText: definitions.listedAt.description }
 		})
-	)
+	]
 
-	if (showVenue) {
-		columns.unshift(
-			columnHelper.accessor((row) => row.venue ?? '', {
-				id: 'venue',
-				header: definitions.venue.label,
-				enableSorting: false,
-				cell: ({ getValue, row }) => {
-					const venue = getValue()
-					if (!venue) return <span className="text-tertiary">–</span>
-					const venueSlug = row.original.venueSlug ?? venue
+	const venueColumns = showVenue
+		? [
+				columnHelper.accessor((row) => row.venue ?? '', {
+					id: 'venue',
+					header: definitions.venue.label,
+					enableSorting: false,
+					cell: ({ getValue, row }) => {
+						const venue = getValue()
+						if (!venue) return <span className="text-tertiary">–</span>
+						const venueSlug = row.original.venueSlug ?? venue
 
-					const content = (
-						<>
-							<TokenLogo name={venueSlug} kind="exchange" size={20} fallbackSrc={letterLogoDataUri(venueSlug)} alt="" />
-							<span className="truncate label-md">{venue}</span>
-						</>
-					)
+						const content = (
+							<>
+								<TokenLogo
+									name={venueSlug}
+									kind="exchange"
+									size={20}
+									fallbackSrc={letterLogoDataUri(venueSlug)}
+									alt=""
+								/>
+								<span className="truncate label-md">{venue}</span>
+							</>
+						)
 
-					return row.original.venueUrl ? (
-						<BasicLink
-							href={row.original.venueUrl}
-							className="flex min-w-0 items-center gap-2 text-link hover:underline"
-						>
-							{content}
-						</BasicLink>
-					) : (
-						<span className="flex min-w-0 items-center gap-2">{content}</span>
-					)
-				},
-				meta: { headerClassName: 'w-[160px]', headerHelperText: definitions.venue.description }
-			})
-		)
-	}
+						return row.original.venueUrl ? (
+							<BasicLink
+								href={row.original.venueUrl}
+								className="flex min-w-0 items-center gap-2 text-link hover:underline"
+							>
+								{content}
+							</BasicLink>
+						) : (
+							<span className="flex min-w-0 items-center gap-2">{content}</span>
+						)
+					},
+					meta: { headerClassName: 'w-[160px]', headerHelperText: definitions.venue.description }
+				})
+			]
+		: []
 
-	return columns
+	return [...venueColumns, ...baseColumns, ...perpColumns, ...trailingColumns]
 }
 
 export function resolvePairColumns({
@@ -431,24 +437,30 @@ export function resolvePairColumns({
 	showVenue: boolean
 	omitColumns?: readonly string[]
 	columnOrder?: readonly string[]
-}): ColumnDef<PairTableRow, any>[] {
+}) {
 	const omit = new Set(omitColumns ?? [])
-	const columns = buildPairColumns(segment, capabilities, showVenue).filter((column) => !omit.has(column.id as string))
+	const columns = buildPairColumns(segment, capabilities, showVenue).filter(
+		(column) => column.id === undefined || !omit.has(column.id)
+	)
 	if (!columnOrder) return columns
 
 	const position = new Map(columnOrder.map((id, index) => [id, index]))
 	return columns.sort(
-		(a, b) => (position.get(a.id as string) ?? position.size) - (position.get(b.id as string) ?? position.size)
+		(a, b) => (position.get(a.id ?? '') ?? position.size) - (position.get(b.id ?? '') ?? position.size)
 	)
 }
 
 export function resolvePairColumnVisibility(
-	columns: ColumnDef<PairTableRow, any>[],
+	columns: ReturnType<typeof buildPairColumns>,
 	initialVisibleColumns?: readonly string[]
 ): VisibilityState {
 	if (!initialVisibleColumns) return pairColumnVisibility()
 	const visible = new Set(initialVisibleColumns)
-	return Object.fromEntries(columns.map((column) => [column.id as string, visible.has(column.id as string)]))
+	const visibility: VisibilityState = {}
+	for (const column of columns) {
+		if (column.id !== undefined) visibility[column.id] = visible.has(column.id)
+	}
+	return visibility
 }
 
 const DEFAULT_PAIR_SORTING: SortingState = [{ id: 'volume24h', desc: true }]

@@ -744,6 +744,10 @@ export interface MicaVenueModel {
 	} | null
 }
 
+export interface MicaVenueRowModel extends MicaVenueModel {
+	activePromotion: ExchangePromotionModel | null
+}
+
 // --- /ramp: fiat on/off-ramp cost -------------------------------------------
 // Country resolution stays client-side (the country is URL state), so a venue
 // carries every region variant the producer published and the table picks one.

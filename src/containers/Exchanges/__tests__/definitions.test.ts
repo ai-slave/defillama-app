@@ -1,10 +1,8 @@
-import type { ColumnDef } from '@tanstack/react-table'
 import { describe, expect, it } from 'vitest'
 import { exchangeDefinitions } from '../definitions'
 import { buildDirectoryColumns, EXECUTION_COLUMN_IDS } from '../directoryColumns'
-import type { ExchangeDirectoryRowModel } from '../models'
 
-function columnsById(columns: ColumnDef<ExchangeDirectoryRowModel, any>[]) {
+function columnsById(columns: ReturnType<typeof buildDirectoryColumns>) {
 	return Object.fromEntries(columns.map((column) => [column.id, column]))
 }
 
@@ -12,9 +10,10 @@ describe('Exchanges definitions', () => {
 	it('keeps every directory column label and header helper tied to its definition', () => {
 		const columns = buildDirectoryColumns('spot', true)
 		const byId = columnsById(columns)
+		const definitions: Record<string, { label: string; description: string }> = exchangeDefinitions.directory
 
-		expect(Object.keys(byId).sort()).toEqual(Object.keys(exchangeDefinitions.directory).sort())
-		for (const [id, definition] of Object.entries(exchangeDefinitions.directory)) {
+		expect(Object.keys(byId).sort()).toEqual(Object.keys(definitions).sort())
+		for (const [id, definition] of Object.entries(definitions)) {
 			// Execution headers append the measured basket, which is data and cannot live
 			// in a static definition; everything else must match its definition exactly.
 			if (EXECUTION_COLUMN_IDS.includes(id)) {
@@ -32,8 +31,9 @@ describe('Exchanges definitions', () => {
 	// has to name its own scope or a reader has no way to know that.
 	it('each execution column states the basket it is measured on', () => {
 		const byId = columnsById(buildDirectoryColumns('linear_perp', true, ['BTC', 'ETH'], ['BTC', 'ETH', 'SOL']))
+		const definitions: Record<string, { label: string; description: string }> = exchangeDefinitions.directory
 		const helper = (id: string) =>
-			String(byId[id]?.meta?.headerHelperText).replace(exchangeDefinitions.directory[id].description, '')
+			String(byId[id]?.meta?.headerHelperText).replace(definitions[id]?.description ?? '', '')
 
 		expect(helper('execCostToTrade')).toContain('BTC, ETH perps')
 		expect(helper('execSlippage10k')).toContain('BTC, ETH, SOL perps')

@@ -1,5 +1,5 @@
 import { MicaTable } from '~/containers/Exchanges/MicaTable'
-import type { MicaVenueModel } from '~/containers/Exchanges/models'
+import type { MicaVenueRowModel } from '~/containers/Exchanges/models'
 import { selectActivePromotion } from '~/containers/Exchanges/promotions'
 import { loadMasterMicaVenues } from '~/containers/Exchanges/server/master.loaders'
 import Layout from '~/layout'
@@ -9,14 +9,17 @@ import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
 interface MicaPageProps {
-	exchanges: MicaVenueModel[]
-	asOfDate: string
+	exchanges: MicaVenueRowModel[]
 }
 
 export const getStaticProps = withPerformanceLogging<MicaPageProps>('mica', async () => {
-	const exchanges = await loadMasterMicaVenues()
+	const asOfDate = new Date().toISOString().slice(0, 10)
+	const exchanges = (await loadMasterMicaVenues()).map((exchange) => ({
+		...exchange,
+		activePromotion: selectActivePromotion(exchange.promotions, asOfDate)
+	}))
 	return {
-		props: { exchanges, asOfDate: new Date().toISOString().slice(0, 10) },
+		props: { exchanges },
 		revalidate: maxAgeForNext([22])
 	}
 })
@@ -29,8 +32,8 @@ export const MICA_PAGE_METADATA = {
 	pageName: ['Exchanges']
 }
 
-export default function MicaPage({ exchanges, asOfDate }: MicaPageProps) {
-	const promotionCount = exchanges.filter((exchange) => selectActivePromotion(exchange.promotions, asOfDate)).length
+export default function MicaPage({ exchanges }: MicaPageProps) {
+	const promotionCount = exchanges.filter((exchange) => exchange.activePromotion !== null).length
 	return (
 		<Layout {...MICA_PAGE_METADATA}>
 			<header className="flex flex-col gap-1 px-1 pb-2">
@@ -50,7 +53,7 @@ export default function MicaPage({ exchanges, asOfDate }: MicaPageProps) {
 			) : null}
 
 			{exchanges.length ? (
-				<MicaTable venues={exchanges} asOfDate={asOfDate} />
+				<MicaTable venues={exchanges} />
 			) : (
 				<Card padding="md" className="text-center body-sm text-secondary">
 					<p>No MiCA-licensed exchanges are present in the current catalog.</p>

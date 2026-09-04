@@ -1,3 +1,4 @@
+import { createTable, flexRender, getCoreRowModel } from '@tanstack/react-table'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { buildDirectoryColumns } from '../directoryColumns'
@@ -55,9 +56,21 @@ function row(patch: Partial<ExchangeDirectoryRowModel> = {}): ExchangeDirectoryR
 	}
 }
 
-function volumeAccessor(scope: 'spot' | 'linear_perp' | 'inverse_perp') {
-	const column = buildDirectoryColumns(scope, true).find((item) => item.id === 'volume24h')!
-	return (venue: ExchangeDirectoryRowModel) => (column as any).accessorFn(venue, 0)
+function directoryCell(scope: 'spot' | 'linear_perp' | 'inverse_perp', venue: ExchangeDirectoryRowModel, id: string) {
+	const table = createTable({
+		data: [venue],
+		columns: buildDirectoryColumns(scope, true),
+		getCoreRowModel: getCoreRowModel(),
+		state: {},
+		onStateChange: () => {},
+		renderFallbackValue: null
+	})
+	const cell = table
+		.getRowModel()
+		.rows[0]?.getAllCells()
+		.find((item) => item.column.id === id)
+	if (!cell) throw new Error(`Expected ${id} cell`)
+	return cell
 }
 
 describe('exact segment scopes in directory columns', () => {
@@ -78,18 +91,8 @@ describe('exact segment scopes in directory columns', () => {
 
 	it('keeps selected-country status out of the exchange name cell', () => {
 		const venue = row({ selectedCountry: 'DE', selectedCountryStatus: 'restricted' })
-		const nameColumn = buildDirectoryColumns('spot', true).find((item) => item.id === 'name')!
-		const html = renderToStaticMarkup(
-			(nameColumn as any).cell({
-				row: {
-					original: venue,
-					depth: 0,
-					subRows: [],
-					getIsExpanded: () => false,
-					getToggleExpandedHandler: () => undefined
-				}
-			})
-		)
+		const cell = directoryCell('spot', venue, 'name')
+		const html = renderToStaticMarkup(flexRender(cell.column.columnDef.cell, cell.getContext()))
 
 		expect(venue.selectedCountryStatus).toBe('restricted')
 		expect(html).not.toContain('Restricted')
@@ -103,12 +106,12 @@ describe('exact segment scopes in directory columns', () => {
 			}
 		})
 
-		expect(volumeAccessor('linear_perp')(venue)).toBe(600)
-		expect(volumeAccessor('inverse_perp')(venue)).toBe(25)
-		expect(volumeAccessor('spot')(venue)).toBeUndefined()
+		expect(directoryCell('linear_perp', venue, 'volume24h').getValue()).toBe(600)
+		expect(directoryCell('inverse_perp', venue, 'volume24h').getValue()).toBe(25)
+		expect(directoryCell('spot', venue, 'volume24h').getValue()).toBeUndefined()
 		// 625 (600 + 25) must not be produced by any scope.
 		for (const scope of ['spot', 'linear_perp', 'inverse_perp'] as const) {
-			expect(volumeAccessor(scope)(venue)).not.toBe(625)
+			expect(directoryCell(scope, venue, 'volume24h').getValue()).not.toBe(625)
 		}
 	})
 })

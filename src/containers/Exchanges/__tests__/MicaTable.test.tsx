@@ -1,12 +1,12 @@
-import { flexRender } from '@tanstack/react-table'
+import { createTable, flexRender, getCoreRowModel } from '@tanstack/react-table'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { RampCostValue } from '../MicaCells'
-import { buildMicaColumns } from '../micaColumns'
-import { micaColumnVisibility, orderMicaVenues } from '../MicaTable'
-import type { ExchangePromotionModel, MicaVenueModel } from '../models'
+import { MICA_COLUMNS } from '../micaColumns'
+import { micaColumnVisibility, prepareMicaVenues } from '../MicaTable'
+import type { ExchangePromotionModel, MicaVenueRowModel } from '../models'
 
-function micaVenue(patch: Partial<MicaVenueModel> = {}): MicaVenueModel {
+function micaVenue(patch: Partial<MicaVenueRowModel> = {}): MicaVenueRowModel {
 	return {
 		exchange: 'venue',
 		name: 'Venue',
@@ -14,6 +14,7 @@ function micaVenue(patch: Partial<MicaVenueModel> = {}): MicaVenueModel {
 		website: 'https://example.com',
 		referralUrl: null,
 		promotions: [],
+		activePromotion: null,
 		micaStatus: 'active',
 		micaLicensed: true,
 		micaMemberState: null,
@@ -42,7 +43,7 @@ function micaVenue(patch: Partial<MicaVenueModel> = {}): MicaVenueModel {
 	}
 }
 
-const RAMP_COST: NonNullable<MicaVenueModel['rampCost']> = {
+const RAMP_COST: NonNullable<MicaVenueRowModel['rampCost']> = {
 	notionalUsd: 1000,
 	pair: 'BTC/EUR',
 	onRamp: {
@@ -83,6 +84,28 @@ const PROMOTION: ExchangePromotionModel = {
 	sourceUrl: 'https://example.com/promo'
 }
 
+function micaCell(venue: MicaVenueRowModel, id: string) {
+	const table = createTable({
+		data: [venue],
+		columns: MICA_COLUMNS,
+		getCoreRowModel: getCoreRowModel(),
+		state: {},
+		onStateChange: () => {},
+		renderFallbackValue: null
+	})
+	const cell = table
+		.getRowModel()
+		.rows[0]?.getAllCells()
+		.find((item) => item.column.id === id)
+	if (!cell) throw new Error(`Expected ${id} cell`)
+	return cell
+}
+
+function renderMicaCell(venue: MicaVenueRowModel, id: string) {
+	const cell = micaCell(venue, id)
+	return renderToStaticMarkup(flexRender(cell.column.columnDef.cell, cell.getContext()))
+}
+
 describe('contractual Bybit EU placement', () => {
 	it('pins bybit-eu to the first row while keeping the curated backend order otherwise', () => {
 		const rows = [
@@ -92,13 +115,21 @@ describe('contractual Bybit EU placement', () => {
 			micaVenue({ exchange: 'kraken', name: 'Kraken' })
 		]
 
-		expect(orderMicaVenues(rows).map((row) => row.exchange)).toEqual(['bybit-eu', 'coinbase', 'okx-eu', 'kraken'])
+		expect(prepareMicaVenues(rows, 'all').map((row) => row.exchange)).toEqual([
+			'bybit-eu',
+			'coinbase',
+			'okx-eu',
+			'kraken'
+		])
 	})
 })
 
 describe('product column presets', () => {
 	it('hides unrelated product columns while leaving them available for user overrides', () => {
-		expect(micaColumnVisibility('all')).toEqual({ micaStatus: false, fiatOnramp: false })
+		expect(micaColumnVisibility('all')).toEqual({
+			micaStatus: false,
+			fiatOnramp: false
+		})
 		expect(micaColumnVisibility('spot')).toMatchObject({
 			perpDepth2: false,
 			perpDepth05: false,
@@ -127,8 +158,8 @@ describe('product column presets', () => {
 
 describe('mica table columns', () => {
 	it('presents only the curated column set, in the legacy /mica order', () => {
-		const columns = buildMicaColumns('2026-07-15')
-		expect(columns.map((column) => column.id ?? (column as any).accessorKey)).toEqual([
+		const columns = MICA_COLUMNS
+		expect(columns.map((column) => column.id)).toEqual([
 			'name',
 			'venueActions',
 			'spotDepth2',
@@ -144,18 +175,16 @@ describe('mica table columns', () => {
 		])
 
 		const venue = micaVenue({ rampCost: RAMP_COST })
-		expect((columns.find((column) => column.id === 'onRampCost') as any).accessorFn(venue, 0)).toBe(3.9)
-		expect((columns.find((column) => column.id === 'offRampCost') as any).accessorFn(venue, 0)).toBe(4.9)
+		expect(micaCell(venue, 'onRampCost').getValue()).toBe(3.9)
+		expect(micaCell(venue, 'offRampCost').getValue()).toBe(4.9)
 	})
 
 	it('right-aligns the trade cell so the CTA lines up with or without a promo gift', () => {
-		const tradeColumn = buildMicaColumns('2026-07-15').find((column) => column.id === 'venueActions')!
-		expect((tradeColumn.meta as any).align).toBe('end')
+		const tradeColumn = MICA_COLUMNS.find((column) => column.id === 'venueActions')!
+		expect(tradeColumn.meta?.align).toBe('end')
 
-		const plain = renderToStaticMarkup(flexRender(tradeColumn.cell, { row: { original: micaVenue() } } as never))
-		const promoted = renderToStaticMarkup(
-			flexRender(tradeColumn.cell, { row: { original: micaVenue({ promotions: [PROMOTION] }) } } as never)
-		)
+		const plain = renderMicaCell(micaVenue(), 'venueActions')
+		const promoted = renderMicaCell(micaVenue({ promotions: [PROMOTION], activePromotion: PROMOTION }), 'venueActions')
 
 		expect(plain).toContain('justify-end')
 		expect(promoted).toContain('justify-end')
@@ -164,9 +193,8 @@ describe('mica table columns', () => {
 	})
 
 	it('does not link exchange names to gated profile pages', () => {
-		const nameColumn = buildMicaColumns('2026-07-15').find((column) => column.id === 'name')!
 		const venue = micaVenue({ website: null, profileHref: '/exchange/venue' })
-		const html = renderToStaticMarkup(flexRender(nameColumn.cell, { row: { original: venue } } as never))
+		const html = renderMicaCell(venue, 'name')
 
 		expect(html).toContain('Venue')
 		expect(html).not.toContain('/exchange/venue')
@@ -174,9 +202,11 @@ describe('mica table columns', () => {
 	})
 
 	it('keeps authored external exchange destinations', () => {
-		const nameColumn = buildMicaColumns('2026-07-15').find((column) => column.id === 'name')!
-		const venue = micaVenue({ website: 'https://example.com', profileHref: '/exchange/venue' })
-		const html = renderToStaticMarkup(flexRender(nameColumn.cell, { row: { original: venue } } as never))
+		const venue = micaVenue({
+			website: 'https://example.com',
+			profileHref: '/exchange/venue'
+		})
+		const html = renderMicaCell(venue, 'name')
 
 		expect(html).toContain('href="https://example.com"')
 		expect(html).not.toContain('/exchange/venue')
@@ -190,7 +220,11 @@ describe('€1k ramp cost cells', () => {
 	})
 
 	it('renders the euro total badge with an accessible breakdown trigger when populated', () => {
-		const venue = micaVenue({ exchange: 'bybit-eu', name: 'Bybit EU', rampCost: RAMP_COST })
+		const venue = micaVenue({
+			exchange: 'bybit-eu',
+			name: 'Bybit EU',
+			rampCost: RAMP_COST
+		})
 
 		const onRamp = renderToStaticMarkup(<RampCostValue row={venue} direction="onRamp" />)
 		expect(onRamp).toContain('€3.90')

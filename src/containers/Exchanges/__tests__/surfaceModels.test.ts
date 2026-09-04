@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { DirectoryHeader } from '../DirectoryHeader'
 import { micaDepthDetail, micaProductLabel } from '../MicaCells'
-import { filterMicaVenues } from '../MicaTable'
+import { prepareMicaVenues } from '../MicaTable'
 import type { MicaVenueModel } from '../models'
 import { selectActivePromotion } from '../promotions'
 import {
@@ -57,14 +57,30 @@ describe('surface model selection', () => {
 	] as const)('filters MiCA rows by %s capability', (filter, expected) => {
 		const rows = [
 			micaVenue(),
-			micaVenue({ exchange: 'inverse', name: 'Inverse Venue', products: ['inverse_perp'] }),
-			micaVenue({ exchange: 'futures', name: 'Futures Venue', products: ['futures'] }),
-			micaVenue({ exchange: 'linear', name: 'Linear Venue', products: ['linear_perp'] }),
-			micaVenue({ exchange: 'both', name: 'Both Venue', products: ['linear_perp', 'inverse_perp'] }),
+			micaVenue({
+				exchange: 'inverse',
+				name: 'Inverse Venue',
+				products: ['inverse_perp']
+			}),
+			micaVenue({
+				exchange: 'futures',
+				name: 'Futures Venue',
+				products: ['futures']
+			}),
+			micaVenue({
+				exchange: 'linear',
+				name: 'Linear Venue',
+				products: ['linear_perp']
+			}),
+			micaVenue({
+				exchange: 'both',
+				name: 'Both Venue',
+				products: ['linear_perp', 'inverse_perp']
+			}),
 			micaVenue({ exchange: 'fiat', name: 'Fiat Venue', fiatOnramp: true })
 		]
 
-		expect(filterMicaVenues(rows, filter).map((row) => row.exchange)).toEqual(expected)
+		expect(prepareMicaVenues(rows, filter).map((row) => row.exchange)).toEqual(expected)
 	})
 
 	it('labels inverse perpetual support without claiming linear perps', () => {

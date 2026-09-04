@@ -1,4 +1,4 @@
-import { type ColumnDef, createColumnHelper } from '@tanstack/react-table'
+import { createColumnHelper } from '@tanstack/react-table'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
 import { letterLogoDataUri } from '~/utils/icons'
@@ -23,11 +23,7 @@ const TRADE_COST_HELP =
  *  still in the CSV. Regulator is parked until the licence data is filled in. */
 export const RAMP_HIDDEN_COLUMNS = { regulator: false }
 
-export function buildRampColumns(options: {
-	size: number
-	currency: string | null
-	country: string | null
-}): ColumnDef<RampRowModel, any>[] {
+export function buildRampColumns(options: { size: number; currency: string | null; country: string | null }) {
 	const { size, currency, country } = options
 	return [
 		columnHelper.accessor((row) => `${row.name} ${row.exchange} ${row.variant.regulator ?? ''}`, {

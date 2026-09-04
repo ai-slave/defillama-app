@@ -5,8 +5,8 @@ import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { supportsMicaProduct } from './MicaCells'
-import { buildMicaColumns, PINNED_MICA_EXCHANGE } from './micaColumns'
-import type { MicaVenueModel } from './models'
+import { MICA_COLUMNS, PINNED_MICA_EXCHANGE } from './micaColumns'
+import type { MicaVenueModel, MicaVenueRowModel } from './models'
 import { DEFAULT_MICA_FILTER, EXCHANGES_QUERY_KEYS, getMicaFilter, type MicaFilter } from './queryState'
 
 const FILTER_OPTIONS = [
@@ -53,33 +53,36 @@ export function micaColumnVisibility(filter: MicaFilter): VisibilityState {
 	return MICA_COLUMN_VISIBILITY[filter]
 }
 
-export function filterMicaVenues(rows: MicaVenueModel[], filter: MicaFilter): MicaVenueModel[] {
-	if (filter === 'all') return rows
-	if (filter === 'fiat') return rows.filter((row) => row.fiatOnramp)
-	return rows.filter((row) => supportsMicaProduct(row, filter))
-}
-
 /** Contractual placement: Bybit EU leads the table; every other row keeps the
- *  backend's curated registry order. Pure — returns a new array. */
-export function orderMicaVenues(rows: MicaVenueModel[]): MicaVenueModel[] {
-	return [...rows].sort(
-		(a, b) => (a.exchange === PINNED_MICA_EXCHANGE ? 0 : 1) - (b.exchange === PINNED_MICA_EXCHANGE ? 0 : 1)
-	)
+ *  backend's curated registry order. Filtering and placement share one pass. */
+export function prepareMicaVenues<T extends MicaVenueModel>(rows: T[], filter: MicaFilter): T[] {
+	let pinned: T | null = null
+	const visible: T[] = []
+
+	for (const row of rows) {
+		if (filter === 'fiat' && !row.fiatOnramp) continue
+		if (filter !== 'all' && filter !== 'fiat' && !supportsMicaProduct(row, filter)) continue
+
+		if (row.exchange === PINNED_MICA_EXCHANGE) pinned = row
+		else visible.push(row)
+	}
+
+	if (pinned) visible.unshift(pinned)
+	return visible
 }
 
-export function MicaTable({ venues, asOfDate }: { venues: MicaVenueModel[]; asOfDate: string }) {
+export function MicaTable({ venues }: { venues: MicaVenueRowModel[] }) {
 	const router = useRouter()
 	const filter = getMicaFilter(router.query)
 
 	// TanStack derives table models from reference identity, so keep both inputs stable across unrelated control renders.
-	const rows = React.useMemo(() => orderMicaVenues(filterMicaVenues(venues, filter)), [filter, venues])
-	const columns = React.useMemo(() => buildMicaColumns(asOfDate), [asOfDate])
+	const rows = React.useMemo(() => prepareMicaVenues(venues, filter), [filter, venues])
 
 	return (
 		<TableWithSearch
 			key={filter}
 			data={rows}
-			columns={columns}
+			columns={MICA_COLUMNS}
 			columnToSearch="name"
 			placeholder="Search exchanges..."
 			header={null}

@@ -18,7 +18,11 @@ const columns = [
 		header: 'Name',
 		enableSorting: false,
 		cell: (info) => info.getValue(),
-		meta: { headerClassName: 'w-[180px]', headerHelperText: 'Venue identity help' }
+		meta: {
+			headerClassName: 'w-[180px]',
+			headerHelperText: 'Venue identity help',
+			cellStyle: (row) => (row.name === 'Asset 1' ? { backgroundColor: 'red' } : undefined)
+		}
 	}),
 	columnHelper.accessor('mcap', {
 		header: 'Market Cap',
@@ -79,5 +83,11 @@ describe('VirtualTable SSR', () => {
 		const html = renderToStaticMarkup(<TestVirtualTable />)
 
 		expect(html).toMatch(/<button[^>]*type="button"[^>]*>Name<\/button>/)
+	})
+
+	it('applies row-derived cell styles', () => {
+		const html = renderToStaticMarkup(<TestVirtualTable />)
+
+		expect(html).toContain('background-color:red')
 	})
 })

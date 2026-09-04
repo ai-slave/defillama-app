@@ -6,10 +6,11 @@ import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { RouteTableRow } from '~/containers/Yields/data/types'
+import type { TokenBorrowRoutesData } from '../types'
 
 const strategiesState: {
-	data?: any
-	error?: Error | null
+	data: TokenBorrowRoutesData | undefined
+	error: Error | null
 	isLoading: boolean
 } = {
 	data: {
@@ -67,7 +68,12 @@ vi.mock('../deferred/DeferredPaginatedBorrowRoutesTable', () => ({
 		initialPageIndex?: number
 		onSortingChange?: (sorting: SortingState) => void
 	}) => {
-		routesTableCalls.push({ appearance, dataLength: data.length, initialPageIndex, initialPageSize })
+		routesTableCalls.push({
+			dataLength: data.length,
+			...(appearance !== undefined ? { appearance } : {}),
+			...(initialPageIndex !== undefined ? { initialPageIndex } : {}),
+			...(initialPageSize !== undefined ? { initialPageSize } : {})
+		})
 		return (
 			<button
 				type="button"
@@ -265,24 +271,24 @@ describe('TokenBorrowSection', () => {
 	it('filters routes by exact chain and available liquidity bounds', () => {
 		const filtered = filterBorrowRoutes({
 			rows: [
-				{ borrowSymbol: 'USDC', availableBorrowUsd: 500_000, chains: ['Ethereum'] },
-				{ borrowSymbol: 'DAI', availableBorrowUsd: 5_000, chains: ['Arbitrum'] }
-			] as any,
+				makeRouteRow({ borrowSymbol: 'USDC', availableBorrowUsd: 500_000, chains: ['Ethereum'] }),
+				makeRouteRow({ borrowSymbol: 'DAI', availableBorrowUsd: 5_000, chains: ['Arbitrum'] })
+			],
 			selectedChains: ['Ethereum'],
 			minAvailable: '10000',
 			maxAvailable: ''
 		})
 
 		expect(filtered).toHaveLength(1)
-		expect(filtered[0].borrowSymbol).toBe('USDC')
+		expect(filtered.map((row) => row.borrowSymbol)).toEqual(['USDC'])
 	})
 
 	it('ignores non-numeric available liquidity bounds', () => {
 		const filtered = filterBorrowRoutes({
 			rows: [
-				{ borrowSymbol: 'USDC', availableBorrowUsd: null, chains: ['Ethereum'] },
-				{ borrowSymbol: 'DAI', availableBorrowUsd: 5_000, chains: ['Ethereum'] }
-			] as any,
+				makeRouteRow({ borrowSymbol: 'USDC', availableBorrowUsd: null, chains: ['Ethereum'] }),
+				makeRouteRow({ borrowSymbol: 'DAI', availableBorrowUsd: 5_000, chains: ['Ethereum'] })
+			],
 			selectedChains: ['Ethereum'],
 			minAvailable: 'not-a-number',
 			maxAvailable: 'also-not-a-number'
@@ -293,7 +299,7 @@ describe('TokenBorrowSection', () => {
 
 	it('returns no rows when no chains are selected explicitly', () => {
 		const filtered = filterBorrowRoutes({
-			rows: [{ borrowSymbol: 'USDC', availableBorrowUsd: 500_000, chains: ['Ethereum'] }] as any,
+			rows: [makeRouteRow({ borrowSymbol: 'USDC', availableBorrowUsd: 500_000, chains: ['Ethereum'] })],
 			selectedChains: [],
 			minAvailable: '',
 			maxAvailable: ''

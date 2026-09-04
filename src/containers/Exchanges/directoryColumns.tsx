@@ -1,4 +1,4 @@
-import { type ColumnDef, createColumnHelper } from '@tanstack/react-table'
+import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -215,7 +215,7 @@ function segmentColumn(spec: {
 	suffix?: (row: ExchangeDirectoryRowModel) => string
 	/** For labels wider than the default 112px column (see COLUMN_WIDTHS.md). */
 	headerClassName?: string
-}): ColumnDef<ExchangeDirectoryRowModel, any> {
+}) {
 	return columnHelper.accessor(spec.value, {
 		id: spec.id,
 		header: spec.definition.label,
@@ -261,7 +261,7 @@ function perpColumn(spec: {
 	suffix?: (row: ExchangeDirectoryRowModel) => string
 	/** For labels wider than the default 112px column (see COLUMN_WIDTHS.md). */
 	headerClassName?: string
-}): ColumnDef<ExchangeDirectoryRowModel, any> {
+}) {
 	const parts = (row: ExchangeDirectoryRowModel) =>
 		ALL_PERP_SEGMENTS.filter((segment) => row.segments[segment]).map((segment) => ({
 			segment,
@@ -317,7 +317,7 @@ export function buildDirectoryColumns(
 	executionAvailable: boolean,
 	executionCostBasket: string[] = [],
 	executionFillBasket: string[] = []
-): ColumnDef<ExchangeDirectoryRowModel, any>[] {
+) {
 	const definitions = exchangeDefinitions.directory
 	// Every exact-segment column reads through these. The merged `all` view has no
 	// single segment to read, so they resolve to nothing rather than silently picking
@@ -331,7 +331,7 @@ export function buildDirectoryColumns(
 	const execLabel = (label: string) => (scope === 'all' ? usdPerpLabel(label) : label)
 	const costNote = executionScopeNote(executionCostBasket)
 	const fillNote = executionScopeNote(executionFillBasket)
-	const columns: ColumnDef<ExchangeDirectoryRowModel, any>[] = [
+	const columns = [
 		columnHelper.accessor((row) => `${row.name} ${row.slug} ${row.profile?.nativeToken ?? ''}`, {
 			id: 'name',
 			header: definitions.name.label,
@@ -842,7 +842,7 @@ export function buildDirectoryColumns(
 				headerHelperText: definitions.freshness.description
 			}
 		}),
-		columnHelper.accessor((row) => row.warnings.length ?? undefined, {
+		columnHelper.accessor((row) => row.warnings.length, {
 			id: 'warnings',
 			header: definitions.warnings.label,
 			cell: ({ row, getValue }) =>

@@ -112,6 +112,7 @@ function TableRow<T extends RowData>({
 				.map((cell) => {
 					const textAlign = cell.column.columnDef.meta?.align ?? 'start'
 					const isSticky = cell.column.id === firstColumnId
+					const cellStyle = cell.column.columnDef.meta?.cellStyle?.(cell.row.original)
 					return (
 						<td
 							key={cell.id}
@@ -128,7 +129,8 @@ function TableRow<T extends RowData>({
 								zIndex: isSticky ? 1 : undefined,
 								background: isSticky ? 'var(--bg-surface)' : undefined,
 								borderRightColor: isSticky ? 'transparent' : undefined,
-								boxShadow: isSticky && !compact ? '-1px 0 0 var(--border-subtle) inset' : undefined
+								boxShadow: isSticky && !compact ? '-1px 0 0 var(--border-subtle) inset' : undefined,
+								...cellStyle
 							}}
 						>
 							{flexRender(cell.column.columnDef.cell, cell.getContext())}

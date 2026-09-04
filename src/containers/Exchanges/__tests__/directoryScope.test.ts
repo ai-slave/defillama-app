@@ -1,3 +1,4 @@
+import { createTable, getCoreRowModel } from '@tanstack/react-table'
 import { describe, expect, it } from 'vitest'
 import { buildDirectoryColumns, EXECUTION_COLUMN_IDS } from '../directoryColumns'
 import { directoryColumnVisibility } from '../DirectoryTable'
@@ -34,8 +35,22 @@ describe('merged directory scope', () => {
 				inverse_perp: null
 			}
 		} as unknown as ExchangeDirectoryRowModel
-		const columns = buildDirectoryColumns('all', false)
-		const value = (id: string) => (columns.find((column) => column.id === id) as any).accessorFn(row, 0)
+		const table = createTable({
+			data: [row],
+			columns: buildDirectoryColumns('all', false),
+			getCoreRowModel: getCoreRowModel(),
+			state: {},
+			onStateChange: () => {},
+			renderFallbackValue: null
+		})
+		const value = (id: string) => {
+			const cell = table
+				.getRowModel()
+				.rows[0]?.getAllCells()
+				.find((item) => item.column.id === id)
+			if (!cell) throw new Error(`Expected ${id} cell`)
+			return cell.getValue()
+		}
 
 		expect(value('perpActiveLiquidity')).toBe(40)
 		expect(value('perpOpenInterest')).toBe(100)
