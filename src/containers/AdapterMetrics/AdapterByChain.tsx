@@ -111,9 +111,13 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 	const categoryParam = router.query.category
 	const excludeCategoryParam = router.query.excludeCategory
 	const hasCategoryParam = Object.prototype.hasOwnProperty.call(router.query, 'category')
-	const columnsByType = useMemo(() => getColumnsByType(isChain), [isChain])
-	const tableColumns = columnsByType[props.type]
-	const columnsOptions = useMemo(() => getColumnsOptions(props.type, columnsByType), [props.type, columnsByType])
+	const tableColumns =
+		props.type === 'Earnings'
+			? isChain
+				? CHAIN_EARNINGS_COLUMNS
+				: PROTOCOL_EARNINGS_COLUMNS
+			: COLUMNS_BY_TYPE[props.type]
+	const columnsOptions = useMemo(() => getColumnsOptions(props.type, tableColumns), [props.type, tableColumns])
 
 	const { selectedCategories, protocols } = useMemo(() => {
 		const excludeSet = parseExcludeParam(excludeCategoryParam)
@@ -428,11 +432,11 @@ const chainChartsKeys: Partial<Record<IProps['type'], (typeof chainCharts)[keyof
 	'Perp Volume': 'perpsVolume'
 }
 
-const getColumnsOptions = (type: IProps['type'], columnsByType: ReturnType<typeof getColumnsByType>) =>
-	columnsByType[type].map((c) => {
+const getColumnsOptions = <T extends { id?: string; header?: unknown }>(type: IProps['type'], columns: T[]) =>
+	columns.map((column) => {
 		let headerName: string
-		if (typeof c.header === 'function') {
-			switch (c.id) {
+		if (typeof column.header === 'function') {
+			switch (column.id) {
 				case 'total24h':
 					if (type === 'Perp Aggregator Volume') {
 						headerName = 'Perp Aggregator Volume 24h'
@@ -441,7 +445,7 @@ const getColumnsOptions = (type: IProps['type'], columnsByType: ReturnType<typeo
 					} else if (type === 'DEX Aggregator Volume') {
 						headerName = 'DEX Aggregator Volume 24h'
 					} else {
-						headerName = c.id
+						headerName = column.id
 					}
 					break
 				case 'total7d':
@@ -452,7 +456,7 @@ const getColumnsOptions = (type: IProps['type'], columnsByType: ReturnType<typeo
 					} else if (type === 'DEX Aggregator Volume') {
 						headerName = 'DEX Aggregator Volume 7d'
 					} else {
-						headerName = c.id
+						headerName = column.id
 					}
 					break
 				case 'total30d':
@@ -463,17 +467,17 @@ const getColumnsOptions = (type: IProps['type'], columnsByType: ReturnType<typeo
 					} else if (type === 'DEX Aggregator Volume') {
 						headerName = 'DEX Aggregator Volume 30d'
 					} else {
-						headerName = c.id
+						headerName = column.id
 					}
 					break
 				default:
-					headerName = c.id ?? ''
+					headerName = column.id ?? ''
 			}
 		} else {
-			headerName = c.header as string
+			headerName = typeof column.header === 'string' ? column.header : ''
 		}
 
-		return { name: headerName, key: c.id ?? ('accessorKey' in c ? (c.accessorKey as string) : '') }
+		return { name: headerName, key: column.id ?? '' }
 	})
 
 type AdapterProtocolRow = IAdapterByChainPageData['protocols'][0]
@@ -555,6 +559,7 @@ const NameColumn = (type: IProps['type']) =>
 
 const categoryColumn = (align?: 'center') =>
 	columnHelper.accessor('category', {
+		id: 'category',
 		header: 'Category',
 		enableSorting: false,
 		cell: ({ getValue }) =>
@@ -599,12 +604,13 @@ const metricColumnWidthClassBySize: Record<MetricColumnSize, string> = {
 
 const getMetricColumnWidthClass = (size: MetricColumnSize) => metricColumnWidthClassBySize[size]
 
-const centeredMetricColumn = (
+const metricColumn = (
 	id: string,
-	header: string | (() => ReactNode),
+	header: string,
 	accessor: (protocol: AdapterProtocolRow) => number | null | undefined,
 	headerHelperText: string,
 	size: MetricColumnSize,
+	align: 'center' | 'end' = 'center',
 	csvHeader?: string
 ) =>
 	columnHelper.accessor((row) => accessor(row) ?? undefined, {
@@ -616,30 +622,9 @@ const centeredMetricColumn = (
 				: null,
 		meta: {
 			headerClassName: getMetricColumnWidthClass(size),
-			align: 'center',
+			align,
 			headerHelperText,
 			...(csvHeader ? { csvHeader } : {})
-		}
-	})
-
-const endMetricColumn = (
-	id: string,
-	header: string | (() => ReactNode),
-	accessor: (protocol: AdapterProtocolRow) => number | null | undefined,
-	headerHelperText: string,
-	size: MetricColumnSize
-) =>
-	columnHelper.accessor((row) => accessor(row) ?? undefined, {
-		id,
-		header,
-		cell: (info) =>
-			info.getValue() != null
-				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-				: null,
-		meta: {
-			headerClassName: getMetricColumnWidthClass(size),
-			align: 'end',
-			headerHelperText
 		}
 	})
 
@@ -780,338 +765,302 @@ const pfOrPsColumn = (label: 'P/F' | 'P/S', headerHelperText: string) =>
 		}
 	})
 
-const getColumnsByType = (isChain: boolean = false) => {
-	return {
-		Fees: [
-			NameColumn('Fees'),
-			categoryColumn(),
-			definitionColumn,
-			centeredMetricColumn(
-				'total24h',
-				'Fees 24h',
-				(protocol) => protocol.total24h,
-				definitions.fees.protocol['24h'],
-				128
-			),
-			centeredMetricColumn('total7d', 'Fees 7d', (protocol) => protocol.total7d, definitions.fees.protocol['7d'], 128),
-			centeredMetricColumn(
-				'total30d',
-				'Fees 30d',
-				(protocol) => protocol.total30d,
-				definitions.fees.protocol['30d'],
-				128
-			)
-		],
-		Revenue: [
-			NameColumn('Revenue'),
-			categoryColumn(),
-			definitionColumn,
-			centeredMetricColumn(
-				'total24h',
-				'Revenue 24h',
-				(protocol) => protocol.total24h,
-				definitions.revenue.protocol['24h'],
-				128
-			),
-			centeredMetricColumn(
-				'total7d',
-				'Revenue 7d',
-				(protocol) => protocol.total7d,
-				definitions.revenue.protocol['7d'],
-				128
-			),
-			centeredMetricColumn(
-				'total30d',
-				'Revenue 30d',
-				(protocol) => protocol.total30d,
-				definitions.revenue.protocol['30d'],
-				128
-			)
-		],
-		'Holders Revenue': [
-			NameColumn('Holders Revenue'),
-			categoryColumn(),
-			definitionColumn,
-			centeredMetricColumn(
-				'total24h',
-				'Holders Revenue 24h',
-				(protocol) => protocol.total24h,
-				definitions.holdersRevenue.protocol['24h'],
-				180
-			),
-			centeredMetricColumn(
-				'total7d',
-				'Holders Revenue 7d',
-				(protocol) => protocol.total7d,
-				definitions.holdersRevenue.protocol['7d'],
-				180
-			),
-			centeredMetricColumn(
-				'total30d',
-				'Holders Revenue 30d',
-				(protocol) => protocol.total30d,
-				definitions.holdersRevenue.protocol['30d'],
-				180
-			)
-		],
-		'Options Premium Volume': [
-			NameColumn('Options Premium Volume'),
-			centeredMetricColumn(
-				'total24h',
-				'Premium Volume 24h',
-				(protocol) => protocol.total24h,
-				definitions.optionsPremium.protocol['24h'],
-				180
-			),
-			centeredMetricColumn(
-				'total7d',
-				'Premium Volume 7d',
-				(protocol) => protocol.total7d,
-				definitions.optionsPremium.protocol['7d'],
-				180
-			),
-			centeredMetricColumn(
-				'total30d',
-				'Premium Volume 30d',
-				(protocol) => protocol.total30d,
-				definitions.optionsPremium.protocol['30d'],
-				180
-			)
-		],
-		'Options Notional Volume': [
-			NameColumn('Options Notional Volume'),
-			centeredMetricColumn(
-				'total24h',
-				'Notional Volume 24h',
-				(protocol) => protocol.total24h,
-				definitions.optionsNotional.protocol['24h'],
-				180
-			),
-			centeredMetricColumn(
-				'total7d',
-				'Notional Volume 7d',
-				(protocol) => protocol.total7d,
-				definitions.optionsNotional.protocol['7d'],
-				180
-			),
-			centeredMetricColumn(
-				'total30d',
-				'Notional Volume 30d',
-				(protocol) => protocol.total30d,
-				definitions.optionsNotional.protocol['30d'],
-				180
-			)
-		],
-		'DEX Volume': [
-			NameColumn('DEX Volume'),
-			doubleCountedMetricColumn(
-				'total24h',
-				'DEX Volume 24h',
-				(protocol) => protocol.total24h,
-				definitions.dexs.protocol['24h'],
-				152
-			),
-			doubleCountedMetricColumn(
-				'total7d',
-				'DEX Volume 7d',
-				(protocol) => protocol.total7d,
-				definitions.dexs.protocol['7d'],
-				152
-			),
-			doubleCountedMetricColumn(
-				'total30d',
-				'DEX Volume 30d',
-				(protocol) => protocol.total30d,
-				definitions.dexs.protocol['30d'],
-				152
-			)
-		],
-		'Perp Volume': [
-			NameColumn('Perp Volume'),
-			doubleCountedMetricColumn(
-				'normalizedVolume24h',
-				'Normalized Volume 24h',
-				(protocol) => protocol.normalizedVolume24h,
-				definitions.normalizedVolume.protocol['24h'],
-				180
-			),
-			reportedPerpVolumeColumn(
-				'total24h',
-				'Reported Volume 24h',
-				(protocol) => protocol.total24h,
-				definitions.perps.protocol['24h'],
-				160
-			),
-			openInterestMetricColumn(
-				'openInterest',
-				'Open Interest',
-				(protocol) => protocol.openInterest,
-				definitions.openInterest.protocol,
-				160
-			),
-			reportedPerpVolumeColumn(
-				'total7d',
-				'Reported Volume 7d',
-				(protocol) => protocol.total7d,
-				definitions.perps.protocol['7d'],
-				160
-			),
-			reportedPerpVolumeColumn(
-				'total30d',
-				'Reported Volume 30d',
-				(protocol) => protocol.total30d,
-				definitions.perps.protocol['30d'],
-				160
-			)
-		],
-		'Open Interest': [
-			NameColumn('Open Interest'),
-			endMetricColumn(
-				'total24h',
-				'Open Interest',
-				(protocol) => protocol.total24h,
-				definitions.openInterest.protocol,
-				160
-			)
-		],
-		'Normalized Volume': [
-			NameColumn('Normalized Volume'),
-			reportedPerpVolumeColumn(
-				'total24h',
-				'Normalized Volume 24h',
-				(protocol) => protocol.total24h,
-				definitions.normalizedVolume.protocol['24h'],
-				180
-			),
-			doubleCountedMetricColumn(
-				'activeLiquidity',
-				'Active Liquidity',
-				(protocol) => protocol.activeLiquidity,
-				definitions.activeLiquidity.protocol,
-				180
-			),
-			reportedPerpVolumeColumn(
-				'total7d',
-				'Normalized Volume 7d',
-				(protocol) => protocol.total7d,
-				definitions.normalizedVolume.protocol['7d'],
-				180
-			),
-			reportedPerpVolumeColumn(
-				'total30d',
-				'Normalized Volume 30d',
-				(protocol) => protocol.total30d,
-				definitions.normalizedVolume.protocol['30d'],
-				180
-			)
-		],
-		'Perp Aggregator Volume': [
-			NameColumn('Perp Aggregator Volume'),
-			centeredMetricColumn(
-				'total24h',
-				'Perp Agg Vol 24h',
-				(protocol) => protocol.total24h,
-				definitions.perpsAggregators.protocol['24h'],
-				172,
-				'Perp Aggregator Volume 24h'
-			),
-			centeredMetricColumn(
-				'total7d',
-				'Perp Agg Vol 7d',
-				(protocol) => protocol.total7d,
-				definitions.perpsAggregators.protocol['7d'],
-				172,
-				'Perp Aggregator Volume 7d'
-			),
-			centeredMetricColumn(
-				'total30d',
-				'Perp Agg Vol 30d',
-				(protocol) => protocol.total30d,
-				definitions.perpsAggregators.protocol['30d'],
-				172,
-				'Perp Aggregator Volume 30d'
-			)
-		],
-		'Bridge Aggregator Volume': [
-			NameColumn('Bridge Aggregator Volume'),
-			centeredMetricColumn(
-				'total24h',
-				'Bridge Agg Vol 24h',
-				(protocol) => protocol.total24h,
-				definitions.bridgeAggregators.chain['24h'],
-				184,
-				'Bridge Aggregator Volume 24h'
-			),
-			centeredMetricColumn(
-				'total7d',
-				'Bridge Agg Vol 7d',
-				(protocol) => protocol.total7d,
-				definitions.bridgeAggregators.chain['7d'],
-				184,
-				'Bridge Aggregator Volume 7d'
-			),
-			centeredMetricColumn(
-				'total30d',
-				'Bridge Agg Vol 30d',
-				(protocol) => protocol.total30d,
-				definitions.bridgeAggregators.chain['30d'],
-				184,
-				'Bridge Aggregator Volume 30d'
-			)
-		],
-		'DEX Aggregator Volume': [
-			NameColumn('DEX Aggregator Volume'),
-			centeredMetricColumn(
-				'total24h',
-				'DEX Agg Vol 24h',
-				(protocol) => protocol.total24h,
-				definitions.dexAggregators.protocol['24h'],
-				169,
-				'DEX Aggregator Volume 24h'
-			),
-			centeredMetricColumn(
-				'total7d',
-				'DEX Agg Vol 7d',
-				(protocol) => protocol.total7d,
-				definitions.dexAggregators.protocol['7d'],
-				169,
-				'DEX Aggregator Volume 7d'
-			),
-			centeredMetricColumn(
-				'total30d',
-				'DEX Agg Vol 30d',
-				(protocol) => protocol.total30d,
-				definitions.dexAggregators.protocol['30d'],
-				169,
-				'DEX Aggregator Volume 30d'
-			)
-		],
-		Earnings: [
-			NameColumn('Earnings'),
-			categoryColumn(),
-			centeredMetricColumn(
-				'total24h',
-				'Earnings 24h',
-				(protocol) => protocol.total24h,
-				isChain ? definitions.earnings.chain['24h'] : definitions.earnings.protocol['24h'],
-				160
-			),
-			centeredMetricColumn(
-				'total7d',
-				'Earnings 7d',
-				(protocol) => protocol.total7d,
-				isChain ? definitions.earnings.chain['7d'] : definitions.earnings.protocol['7d'],
-				160
-			),
-			centeredMetricColumn(
-				'total30d',
-				'Earnings 30d',
-				(protocol) => protocol.total30d,
-				isChain ? definitions.earnings.chain['30d'] : definitions.earnings.protocol['30d'],
-				160
-			)
-		],
-		'P/F': [NameColumn('Fees'), categoryColumn('center'), pfOrPsColumn('P/F', definitions.fees.protocol['pf'])],
-		'P/S': [NameColumn('Revenue'), categoryColumn('center'), pfOrPsColumn('P/S', definitions.revenue.protocol['ps'])]
-	}
+const createEarningsColumns = (metricDefinitions: Record<'24h' | '7d' | '30d', string>) => [
+	NameColumn('Earnings'),
+	categoryColumn(),
+	metricColumn('total24h', 'Earnings 24h', (protocol) => protocol.total24h, metricDefinitions['24h'], 160),
+	metricColumn('total7d', 'Earnings 7d', (protocol) => protocol.total7d, metricDefinitions['7d'], 160),
+	metricColumn('total30d', 'Earnings 30d', (protocol) => protocol.total30d, metricDefinitions['30d'], 160)
+]
+
+const PROTOCOL_EARNINGS_COLUMNS = createEarningsColumns(definitions.earnings.protocol)
+const CHAIN_EARNINGS_COLUMNS = createEarningsColumns(definitions.earnings.chain)
+
+const COLUMNS_BY_TYPE = {
+	Fees: [
+		NameColumn('Fees'),
+		categoryColumn(),
+		definitionColumn,
+		metricColumn('total24h', 'Fees 24h', (protocol) => protocol.total24h, definitions.fees.protocol['24h'], 128),
+		metricColumn('total7d', 'Fees 7d', (protocol) => protocol.total7d, definitions.fees.protocol['7d'], 128),
+		metricColumn('total30d', 'Fees 30d', (protocol) => protocol.total30d, definitions.fees.protocol['30d'], 128)
+	],
+	Revenue: [
+		NameColumn('Revenue'),
+		categoryColumn(),
+		definitionColumn,
+		metricColumn('total24h', 'Revenue 24h', (protocol) => protocol.total24h, definitions.revenue.protocol['24h'], 128),
+		metricColumn('total7d', 'Revenue 7d', (protocol) => protocol.total7d, definitions.revenue.protocol['7d'], 128),
+		metricColumn('total30d', 'Revenue 30d', (protocol) => protocol.total30d, definitions.revenue.protocol['30d'], 128)
+	],
+	'Holders Revenue': [
+		NameColumn('Holders Revenue'),
+		categoryColumn(),
+		definitionColumn,
+		metricColumn(
+			'total24h',
+			'Holders Revenue 24h',
+			(protocol) => protocol.total24h,
+			definitions.holdersRevenue.protocol['24h'],
+			180
+		),
+		metricColumn(
+			'total7d',
+			'Holders Revenue 7d',
+			(protocol) => protocol.total7d,
+			definitions.holdersRevenue.protocol['7d'],
+			180
+		),
+		metricColumn(
+			'total30d',
+			'Holders Revenue 30d',
+			(protocol) => protocol.total30d,
+			definitions.holdersRevenue.protocol['30d'],
+			180
+		)
+	],
+	'Options Premium Volume': [
+		NameColumn('Options Premium Volume'),
+		metricColumn(
+			'total24h',
+			'Premium Volume 24h',
+			(protocol) => protocol.total24h,
+			definitions.optionsPremium.protocol['24h'],
+			180
+		),
+		metricColumn(
+			'total7d',
+			'Premium Volume 7d',
+			(protocol) => protocol.total7d,
+			definitions.optionsPremium.protocol['7d'],
+			180
+		),
+		metricColumn(
+			'total30d',
+			'Premium Volume 30d',
+			(protocol) => protocol.total30d,
+			definitions.optionsPremium.protocol['30d'],
+			180
+		)
+	],
+	'Options Notional Volume': [
+		NameColumn('Options Notional Volume'),
+		metricColumn(
+			'total24h',
+			'Notional Volume 24h',
+			(protocol) => protocol.total24h,
+			definitions.optionsNotional.protocol['24h'],
+			180
+		),
+		metricColumn(
+			'total7d',
+			'Notional Volume 7d',
+			(protocol) => protocol.total7d,
+			definitions.optionsNotional.protocol['7d'],
+			180
+		),
+		metricColumn(
+			'total30d',
+			'Notional Volume 30d',
+			(protocol) => protocol.total30d,
+			definitions.optionsNotional.protocol['30d'],
+			180
+		)
+	],
+	'DEX Volume': [
+		NameColumn('DEX Volume'),
+		doubleCountedMetricColumn(
+			'total24h',
+			'DEX Volume 24h',
+			(protocol) => protocol.total24h,
+			definitions.dexs.protocol['24h'],
+			152
+		),
+		doubleCountedMetricColumn(
+			'total7d',
+			'DEX Volume 7d',
+			(protocol) => protocol.total7d,
+			definitions.dexs.protocol['7d'],
+			152
+		),
+		doubleCountedMetricColumn(
+			'total30d',
+			'DEX Volume 30d',
+			(protocol) => protocol.total30d,
+			definitions.dexs.protocol['30d'],
+			152
+		)
+	],
+	'Perp Volume': [
+		NameColumn('Perp Volume'),
+		doubleCountedMetricColumn(
+			'normalizedVolume24h',
+			'Normalized Volume 24h',
+			(protocol) => protocol.normalizedVolume24h,
+			definitions.normalizedVolume.protocol['24h'],
+			180
+		),
+		reportedPerpVolumeColumn(
+			'total24h',
+			'Reported Volume 24h',
+			(protocol) => protocol.total24h,
+			definitions.perps.protocol['24h'],
+			160
+		),
+		openInterestMetricColumn(
+			'openInterest',
+			'Open Interest',
+			(protocol) => protocol.openInterest,
+			definitions.openInterest.protocol,
+			160
+		),
+		reportedPerpVolumeColumn(
+			'total7d',
+			'Reported Volume 7d',
+			(protocol) => protocol.total7d,
+			definitions.perps.protocol['7d'],
+			160
+		),
+		reportedPerpVolumeColumn(
+			'total30d',
+			'Reported Volume 30d',
+			(protocol) => protocol.total30d,
+			definitions.perps.protocol['30d'],
+			160
+		)
+	],
+	'Open Interest': [
+		NameColumn('Open Interest'),
+		metricColumn(
+			'total24h',
+			'Open Interest',
+			(protocol) => protocol.total24h,
+			definitions.openInterest.protocol,
+			160,
+			'end'
+		)
+	],
+	'Normalized Volume': [
+		NameColumn('Normalized Volume'),
+		reportedPerpVolumeColumn(
+			'total24h',
+			'Normalized Volume 24h',
+			(protocol) => protocol.total24h,
+			definitions.normalizedVolume.protocol['24h'],
+			180
+		),
+		doubleCountedMetricColumn(
+			'activeLiquidity',
+			'Active Liquidity',
+			(protocol) => protocol.activeLiquidity,
+			definitions.activeLiquidity.protocol,
+			180
+		),
+		reportedPerpVolumeColumn(
+			'total7d',
+			'Normalized Volume 7d',
+			(protocol) => protocol.total7d,
+			definitions.normalizedVolume.protocol['7d'],
+			180
+		),
+		reportedPerpVolumeColumn(
+			'total30d',
+			'Normalized Volume 30d',
+			(protocol) => protocol.total30d,
+			definitions.normalizedVolume.protocol['30d'],
+			180
+		)
+	],
+	'Perp Aggregator Volume': [
+		NameColumn('Perp Aggregator Volume'),
+		metricColumn(
+			'total24h',
+			'Perp Agg Vol 24h',
+			(protocol) => protocol.total24h,
+			definitions.perpsAggregators.protocol['24h'],
+			172,
+			'center',
+			'Perp Aggregator Volume 24h'
+		),
+		metricColumn(
+			'total7d',
+			'Perp Agg Vol 7d',
+			(protocol) => protocol.total7d,
+			definitions.perpsAggregators.protocol['7d'],
+			172,
+			'center',
+			'Perp Aggregator Volume 7d'
+		),
+		metricColumn(
+			'total30d',
+			'Perp Agg Vol 30d',
+			(protocol) => protocol.total30d,
+			definitions.perpsAggregators.protocol['30d'],
+			172,
+			'center',
+			'Perp Aggregator Volume 30d'
+		)
+	],
+	'Bridge Aggregator Volume': [
+		NameColumn('Bridge Aggregator Volume'),
+		metricColumn(
+			'total24h',
+			'Bridge Agg Vol 24h',
+			(protocol) => protocol.total24h,
+			definitions.bridgeAggregators.chain['24h'],
+			184,
+			'center',
+			'Bridge Aggregator Volume 24h'
+		),
+		metricColumn(
+			'total7d',
+			'Bridge Agg Vol 7d',
+			(protocol) => protocol.total7d,
+			definitions.bridgeAggregators.chain['7d'],
+			184,
+			'center',
+			'Bridge Aggregator Volume 7d'
+		),
+		metricColumn(
+			'total30d',
+			'Bridge Agg Vol 30d',
+			(protocol) => protocol.total30d,
+			definitions.bridgeAggregators.chain['30d'],
+			184,
+			'center',
+			'Bridge Aggregator Volume 30d'
+		)
+	],
+	'DEX Aggregator Volume': [
+		NameColumn('DEX Aggregator Volume'),
+		metricColumn(
+			'total24h',
+			'DEX Agg Vol 24h',
+			(protocol) => protocol.total24h,
+			definitions.dexAggregators.protocol['24h'],
+			169,
+			'center',
+			'DEX Aggregator Volume 24h'
+		),
+		metricColumn(
+			'total7d',
+			'DEX Agg Vol 7d',
+			(protocol) => protocol.total7d,
+			definitions.dexAggregators.protocol['7d'],
+			169,
+			'center',
+			'DEX Aggregator Volume 7d'
+		),
+		metricColumn(
+			'total30d',
+			'DEX Agg Vol 30d',
+			(protocol) => protocol.total30d,
+			definitions.dexAggregators.protocol['30d'],
+			169,
+			'center',
+			'DEX Aggregator Volume 30d'
+		)
+	],
+	'P/F': [NameColumn('Fees'), categoryColumn('center'), pfOrPsColumn('P/F', definitions.fees.protocol['pf'])],
+	'P/S': [NameColumn('Revenue'), categoryColumn('center'), pfOrPsColumn('P/S', definitions.revenue.protocol['ps'])]
 }

@@ -92,7 +92,7 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 			<TableWithSearch
 				data={props.protocols}
 				getSubRows={(row) => row.subRows}
-				columns={buildColumns(props.metric)}
+				columns={EXTRA_TVL_COLUMNS_BY_METRIC[props.metric]}
 				placeholder={'Search protocols...'}
 				columnToSearch={'name'}
 				compact
@@ -111,7 +111,7 @@ const METRIC_CHART_PARAMS: Record<ExtraTvlMetric, string> = {
 
 const columnHelper = createColumnHelper<IExtraTvlProtocolRow>()
 
-function buildColumns(metric: ExtraTvlMetric) {
+function createColumns(metric: ExtraTvlMetric) {
 	const metricInfo = METRIC_LABELS[metric]
 	const chartParam = METRIC_CHART_PARAMS[metric]
 
@@ -211,3 +211,9 @@ function buildColumns(metric: ExtraTvlMetric) {
 		})
 	]
 }
+
+const EXTRA_TVL_COLUMNS_BY_METRIC = {
+	borrowed: createColumns('borrowed'),
+	staking: createColumns('staking'),
+	pool2: createColumns('pool2')
+} satisfies Record<ExtraTvlMetric, ReturnType<typeof createColumns>>

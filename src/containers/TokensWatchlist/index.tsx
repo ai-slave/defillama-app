@@ -20,7 +20,7 @@ import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import type { TokenMarketsListResponse } from '~/containers/Markets/api.types'
 import { TokenMarketsSection } from '~/containers/Token/TokenMarketsSection'
 import {
-	buildTokensColumns,
+	EXPANDABLE_TOKENS_COLUMNS,
 	getRankColumnWidth,
 	TOKENS_MARKETS_EXPANDER_COLUMN_WIDTH,
 	TOKENS_TABLE_WIDTH_EXCLUDING_RANK
@@ -39,8 +39,6 @@ import { mergeMarketsSummary } from './marketsMerge'
 
 const PAGE_SIZE_OPTIONS = [20, 50, 100] as const
 const DEFAULT_SORTING: SortingState = [{ id: 'marketCap', desc: true }]
-const TOKENS_TABLE_COLUMNS = buildTokensColumns({ expandable: true })
-
 export interface TokenUniverseEntry {
 	id: string
 	name: string
@@ -103,7 +101,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 		return mergeMarketsSummary(base, marketsList)
 	}, [data?.rows, savedTokenIds.length, marketsList])
 
-	const columns = TOKENS_TABLE_COLUMNS
+	const columns = EXPANDABLE_TOKENS_COLUMNS
 	const [sorting, setSorting] = useState<SortingState>(DEFAULT_SORTING)
 	const [expanded, setExpanded] = useState<ExpandedState>({})
 

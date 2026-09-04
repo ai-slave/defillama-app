@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { NAME_COLUMN_WIDTH, TOKENS_HIDEABLE_COLUMN_SPECS } from '../columnSpecs'
 import { TOKENS_FILTER_CONFIGS } from '../filters'
-import { buildTokensColumns } from '../index'
+import { EXPANDABLE_TOKENS_COLUMNS, TOKENS_COLUMNS } from '../index'
 import { TOKENS_NUMERIC_FILTER_FIELDS } from '../types'
 
 describe('token column specs stay in sync with the table columns', () => {
-	const columns = buildTokensColumns()
+	const columns = TOKENS_COLUMNS
 	const columnById = new Map(columns.map((column) => [column.id, column]))
 
 	it('every spec has a matching column with the same header and width class', () => {
@@ -28,6 +28,14 @@ describe('token column specs stay in sync with the table columns', () => {
 	it('name column width matches the spec constant', () => {
 		const headerClassName = (columnById.get('name')!.meta as { headerClassName?: string }).headerClassName ?? ''
 		expect(headerClassName).toContain(`w-[${NAME_COLUMN_WIDTH}px]`)
+	})
+
+	it('adds only the Markets expander after the token name', () => {
+		const baseIds = TOKENS_COLUMNS.map((column) => column.id)
+		const expandedIds = EXPANDABLE_TOKENS_COLUMNS.map((column) => column.id)
+		const nameIndex = baseIds.indexOf('name')
+
+		expect(expandedIds).toEqual([...baseIds.slice(0, nameIndex + 1), 'expander', ...baseIds.slice(nameIndex + 1)])
 	})
 
 	it('filterable spec fields are allowed by the server filter allowlist', () => {

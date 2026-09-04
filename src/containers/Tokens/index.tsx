@@ -237,7 +237,7 @@ function RightsPie({ rights, fullRightsHref }: { rights: TokensRightsSummary | n
 	)
 }
 
-const baseColumns = [
+export const TOKENS_COLUMNS = [
 	columnHelper.accessor((row) => row.rank ?? undefined, {
 		id: 'rank',
 		header: '#',
@@ -488,12 +488,13 @@ const expanderColumn = columnHelper.display({
 	}
 })
 
-export function buildTokensColumns({ expandable = false }: { expandable?: boolean } = {}) {
-	if (!expandable) return baseColumns
-	const nameIndex = baseColumns.findIndex((column) => column.id === 'name')
-	const insertAt = nameIndex >= 0 ? nameIndex + 1 : baseColumns.length
-	return [...baseColumns.slice(0, insertAt), expanderColumn, ...baseColumns.slice(insertAt)]
-}
+const nameColumnIndex = TOKENS_COLUMNS.findIndex((column) => column.id === 'name')
+const expanderInsertIndex = nameColumnIndex >= 0 ? nameColumnIndex + 1 : TOKENS_COLUMNS.length
+export const EXPANDABLE_TOKENS_COLUMNS = [
+	...TOKENS_COLUMNS.slice(0, expanderInsertIndex),
+	expanderColumn,
+	...TOKENS_COLUMNS.slice(expanderInsertIndex)
+]
 
 function TokensStats({ stats }: { stats: TokensPageStatsDisplay }) {
 	const items: InlineStatStripItem[] = [
@@ -737,7 +738,7 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 	)
 	const table = useReactTable({
 		data: serverTable.rows,
-		columns: buildTokensColumns(),
+		columns: TOKENS_COLUMNS,
 		state: {
 			pagination: serverTable.pagination,
 			sorting: serverTable.sorting,
