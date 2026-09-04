@@ -76,7 +76,7 @@ export function DepegWarningIcon({
 	const content = `${token} is ${formatPercent(abs, { input: 'fraction', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })} off peg — ${consequence}.`
 	return (
 		<Tooltip content={content}>
-			<Icon name="alert-triangle" height={14} width={14} className={`shrink-0 ${colorClass}`} />
+			<Icon name="alert-triangle-filled" height={20} width={20} className={`shrink-0 ${colorClass}`} />
 		</Tooltip>
 	)
 }

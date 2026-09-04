@@ -18,7 +18,7 @@ export default function Document() {
 				<meta name="apple-itunes-app" content="app-id=6761379469" />
 				<link href="/fonts/inter.woff2" rel="preload" as="font" type="font/woff2" crossOrigin="anonymous" />
 				<link href="/fonts/jetbrains.ttf" rel="preload" as="font" type="font/ttf" crossOrigin="anonymous" />
-				<link href="/icons/v43.svg" rel="prefetch" as="image" type="image/svg+xml" />
+				<link href="/icons/v44.svg" rel="prefetch" as="image" type="image/svg+xml" />
 				<link href="/assets/defillama.webp" rel="preload" as="image" type="image/webp" />
 				<script
 					dangerouslySetInnerHTML={{

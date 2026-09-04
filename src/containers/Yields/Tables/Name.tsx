@@ -104,7 +104,7 @@ export function PoolNameLockup({
 			<DepegWarningIcon deviation={pegDeviation} symbol={pegTokenSymbol} consequence={pegConsequence} />
 			{exploited ? (
 				<Tooltip content="This pool involves a protocol or token affected by an exploit or an ongoing incident. Proceed with extreme caution.">
-					<Icon name="alert-triangle" height={14} width={14} className="shrink-0 text-data-down" />
+					<Icon name="alert-triangle-filled" height={20} width={20} className="shrink-0 text-data-down" />
 				</Tooltip>
 			) : null}
 		</span>

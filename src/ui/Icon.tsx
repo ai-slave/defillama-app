@@ -24,6 +24,7 @@ const ICON_NAMES = [
 	'check-circle',
 	'help-circle',
 	'alert-triangle',
+	'alert-triangle-filled',
 	'x',
 	'bookmark',
 	'settings',
@@ -141,7 +142,7 @@ export interface IIcon extends SVGProps<SVGSVGElement> {
 export function Icon({ name, ...props }: IIcon) {
 	return (
 		<svg {...props}>
-			<use href={`/icons/v43.svg#${name}`} />
+			<use href={`/icons/v44.svg#${name}`} />
 		</svg>
 	)
 }

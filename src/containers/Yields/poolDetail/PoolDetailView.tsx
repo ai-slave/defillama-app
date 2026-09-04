@@ -204,11 +204,16 @@ export function PoolDetailView({
 			{exploited ? (
 				<p
 					role="alert"
-					className="flex items-center gap-2.5 rounded-lg border border-error/30 bg-error/10 px-3 py-2.5 body-sm text-error-on-tint"
+					className="flex items-start gap-3 rounded-lg border border-l-4 border-error/30 border-l-error bg-error/10 p-3 body-md"
 				>
-					<Icon name="alert-triangle" height={16} width={16} className="shrink-0" />
-					This pool involves a protocol or token affected by an exploit or an ongoing incident. Proceed with extreme
-					caution.
+					<Icon name="alert-triangle-filled" height={20} width={20} className="mt-px shrink-0 text-error" />
+					<span className="flex flex-col">
+						<span className="font-semibold text-error-on-tint">Exploit or ongoing incident</span>
+						<span>
+							This pool involves a protocol or token affected by an exploit or an ongoing incident. Proceed with extreme
+							caution.
+						</span>
+					</span>
 				</p>
 			) : null}
 			<div className="grid grid-cols-1 gap-2 @min-[90rem]:grid-cols-[minmax(320px,360px)_minmax(0,1fr)]">
