@@ -177,6 +177,7 @@ export const allApiRoutePaths = [
 	'research/articles/[id]/unpublish',
 	'research/entities/preview',
 	'research/entities/search',
+	'research/newsletters',
 	'research/page-assets',
 	'research/page-assets/search',
 	'research/revalidate-landing',

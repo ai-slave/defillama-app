@@ -90,13 +90,6 @@
       "oldName": "Forks"
     },
     {
-      "name": "Pool2 TVL by Protocol",
-      "route": "/pool2",
-      "category": "Total Value Locked",
-      "description": "Total value locked in pool2 of a protocol",
-      "tab": "Protocols"
-    },
-    {
       "name": "Top Protocols",
       "route": "/top-protocols",
       "category": "Total Value Locked",
@@ -104,6 +97,13 @@
       "tab": "Protocols",
       "oldCategory": "Market Overview",
       "oldName": "Top Protocols"
+    },
+    {
+      "name": "Pool2 TVL by Protocol",
+      "route": "/pool2",
+      "category": "Total Value Locked",
+      "description": "Total value locked in pool2 of a protocol",
+      "tab": "Protocols"
     },
     {
       "name": "Total Staked by Protocol",
