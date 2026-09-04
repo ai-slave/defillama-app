@@ -375,9 +375,9 @@ export async function getChainOverviewData({
 			timePhase(
 				'chain_assets',
 				() =>
-					fetchChainsAssetTotals().then((assets) =>
-						chain !== 'All' ? (assets[currentChainMetadata.name] ?? null) : null
-					),
+					chain === 'All'
+						? Promise.resolve(null)
+						: fetchChainsAssetTotals().then((assets) => assets[currentChainMetadata.name] ?? null),
 				{ fallback: null }
 			),
 			timePhase(appRevenueMetric.chainOverview.phase, () =>

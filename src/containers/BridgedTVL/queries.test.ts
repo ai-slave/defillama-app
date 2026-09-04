@@ -1,14 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
-	fetchChainsAssets: vi.fn(),
+	fetchChainAssetsDetail: vi.fn(),
+	fetchChainsAssetTotals: vi.fn(),
 	fetchChainAssetsFlows1d: vi.fn()
 }))
 
 vi.mock('./api', () => mocks)
 
 import { reconcileChainAssetFlowKeys } from './flowKeys'
-import { getBridgedTVLByChain } from './queries'
+import { getBridgedTVLByChain, getBridgedTVLChains } from './queries'
 
 const asset = (total: number) => ({
 	total: { total, breakdown: {} },
@@ -21,9 +22,11 @@ describe('getBridgedTVLByChain', () => {
 		vi.clearAllMocks()
 	})
 
-	it('preserves integer presentation ordering ties and normalized chain data', async () => {
-		mocks.fetchChainsAssets.mockResolvedValue({ Alpha: asset(10.2), Beta: asset(10.9) })
-		mocks.fetchChainAssetsFlows1d.mockResolvedValue({ Alpha: { total: { perc: 0, raw: 0 } } })
+	it('preserves integer presentation ordering ties without loading list-only flows', async () => {
+		mocks.fetchChainAssetsDetail.mockResolvedValue({
+			chainData: asset(10.2),
+			totals: { Alpha: asset(10.2), Beta: asset(10.9) }
+		})
 
 		const result = await getBridgedTVLByChain({
 			chain: 'Alpha',
@@ -39,20 +42,21 @@ describe('getBridgedTVLByChain', () => {
 			{ label: 'Beta', to: '/bridged/beta' }
 		])
 		expect(result.chainData?.total.total).toBe(10.2)
-		expect(result.flows1d?.Alpha?.total).toEqual({ perc: 0, raw: 0 })
+		expect(mocks.fetchChainAssetsFlows1d).not.toHaveBeenCalled()
+		expect(result).not.toHaveProperty('assets')
 	})
 
-	it('keeps required asset data when the optional flow request fails', async () => {
-		mocks.fetchChainsAssets.mockResolvedValue({ Alpha: asset(10) })
+	it('keeps required list data when the optional flow request fails', async () => {
+		mocks.fetchChainsAssetTotals.mockResolvedValue({ Alpha: asset(10) })
 		mocks.fetchChainAssetsFlows1d.mockRejectedValue(new Error('invalid 24-hour flow payload'))
 
-		const result = await getBridgedTVLByChain({
-			chain: 'Alpha',
+		const result = await getBridgedTVLChains({
 			chainMetadata: { alpha: { id: 'alpha', name: 'Alpha', chainAssets: true } }
 		})
 
 		expect(result.assets.Alpha?.total.total).toBe(10)
 		expect(result.flows1d).toBeNull()
+		expect(mocks.fetchChainAssetsDetail).not.toHaveBeenCalled()
 	})
 })
 

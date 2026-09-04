@@ -1,7 +1,7 @@
-import type { ChainAsset } from './api.types'
+import type { ChainAssetTotals } from './api.types'
 
-export interface IBridgedRow extends ChainAsset {
+export interface IBridgedRow extends ChainAssetTotals {
 	name: string
-	deprecated?: boolean
+	deprecated: boolean
 	change_24h?: number
 }

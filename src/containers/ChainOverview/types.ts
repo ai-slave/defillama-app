@@ -1,4 +1,5 @@
 import type { SponsoredResearchReportSummary } from '~/containers/Articles/types'
+import type { ChainAssetOptionalCategory } from '~/containers/BridgedTVL/api.types'
 import type { ProtocolRankingInitialPage } from '~/containers/ProtocolRankings/tableQuery'
 import type { IProtocol } from '~/containers/ProtocolRankings/types'
 import type { Raise } from '~/containers/Raises/model'
@@ -130,10 +131,8 @@ interface IChainWarningBanner {
 	level: 'low' | 'alert' | 'rug'
 }
 
-export interface IFormattedChainAsset {
+export type IFormattedChainAsset = {
 	canonical: { total: number }
-	ownTokens?: { total: number }
-	native?: { total: number }
 	thirdParty: { total: number }
 	total: { total: number }
-}
+} & Partial<Record<ChainAssetOptionalCategory, { total: number }>>

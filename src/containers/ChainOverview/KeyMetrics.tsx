@@ -411,6 +411,33 @@ function RaisesSection({ chainRaises }: { chainRaises: IChainOverviewData['chain
 	)
 }
 
+/**
+ * Sub-metrics in display order. The producer may report five sections or eight - it carves
+ * stablecoins/rwa/lst back out of canonical/thirdParty/native - and `total` already includes
+ * whichever are present, so every section has to be rendered or the total stops adding up.
+ */
+const BRIDGED_TVL_SUB_METRICS = [
+	{
+		key: 'native',
+		label: 'Native',
+		tooltip: "Sum of marketcaps of all tokens that were issued on the chain (excluding the chain's own token)"
+	},
+	{ key: 'ownTokens', label: 'Own Tokens', tooltip: 'Marketcap of the governance token of the chain' },
+	{
+		key: 'canonical',
+		label: 'Canonical',
+		tooltip: 'Tokens that were bridged to the chain through the canonical bridge'
+	},
+	{
+		key: 'thirdParty',
+		label: 'Third Party',
+		tooltip: 'Tokens that were bridged to the chain through third party bridges'
+	},
+	{ key: 'stablecoins', label: 'Stablecoins', tooltip: 'Stablecoins held on the chain' },
+	{ key: 'rwa', label: 'RWAs', tooltip: 'Tokenized real world assets held on the chain' },
+	{ key: 'lst', label: 'Liquid Staking', tooltip: 'Liquid staking tokens held on the chain' }
+] as const
+
 function BridgedTvlSection({
 	chainAssets,
 	tvlSettingsGovtokens
@@ -430,50 +457,21 @@ function BridgedTvlSection({
 				compactSuffix: 'lowercase'
 			})}
 		>
-			{chainAssets.native?.total ? (
-				<ChainSubMetricRow
-					label="Native"
-					tooltip="Sum of marketcaps of all tokens that were issued on the chain (excluding the chain's own token)"
-					value={formatUsd(chainAssets.native.total, {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					})}
-				/>
-			) : null}
-			{chainAssets.ownTokens?.total ? (
-				<ChainSubMetricRow
-					label="Own Tokens"
-					tooltip="Marketcap of the governance token of the chain"
-					value={formatUsd(chainAssets.ownTokens.total, {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					})}
-				/>
-			) : null}
-			{chainAssets.canonical.total ? (
-				<ChainSubMetricRow
-					label="Canonical"
-					tooltip="Tokens that were bridged to the chain through the canonical bridge"
-					value={formatUsd(chainAssets.canonical.total, {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					})}
-				/>
-			) : null}
-			{chainAssets.thirdParty.total ? (
-				<ChainSubMetricRow
-					label="Third Party"
-					tooltip="Tokens that were bridged to the chain through third party bridges"
-					value={formatUsd(chainAssets.thirdParty.total, {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					})}
-				/>
-			) : null}
+			{BRIDGED_TVL_SUB_METRICS.map(({ key, label, tooltip }) => {
+				const total = chainAssets[key]?.total
+				return total ? (
+					<ChainSubMetricRow
+						key={key}
+						label={label}
+						tooltip={tooltip}
+						value={formatUsd(total, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
+					/>
+				) : null
+			})}
 		</ChainMetricSection>
 	)
 }

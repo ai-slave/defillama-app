@@ -1,16 +1,21 @@
 import type { ChainAssetTotals } from '~/containers/BridgedTVL/api.types'
+import { CHAIN_ASSET_OPTIONAL_CATEGORIES } from '~/containers/BridgedTVL/api.types'
 import type { IChainOverviewData, IFormattedChainAsset } from './types'
 
 export function formatChainAssets(chainAsset: ChainAssetTotals | null): IFormattedChainAsset | null {
 	if (!chainAsset) return null
 
-	return {
+	const formatted: IFormattedChainAsset = {
 		canonical: { total: Math.trunc(chainAsset.canonical.total) },
 		thirdParty: { total: Math.trunc(chainAsset.thirdParty.total) },
-		...(chainAsset.ownTokens ? { ownTokens: { total: Math.trunc(chainAsset.ownTokens.total) } } : {}),
-		...(chainAsset.native ? { native: { total: Math.trunc(chainAsset.native.total) } } : {}),
 		total: { total: Math.trunc(chainAsset.total.total) }
 	}
+	// driven off the category list so a section the producer adds reaches the page instead of being projected away
+	for (const category of CHAIN_ASSET_OPTIONAL_CATEGORIES) {
+		const section = chainAsset[category]
+		if (section !== undefined) formatted[category] = { total: Math.trunc(section.total) }
+	}
+	return formatted
 }
 
 export function getChainWarningBanners(warningBanners: IChainOverviewData['warningBanners']) {

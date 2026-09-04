@@ -1,6 +1,6 @@
 import type { InferGetStaticPropsType } from 'next'
 import { BridgedTVLChainsList } from '~/containers/BridgedTVL/BridgedTVLChainsList'
-import { getBridgedTVLByChain } from '~/containers/BridgedTVL/queries'
+import { getBridgedTVLChains } from '~/containers/BridgedTVL/queries'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -8,7 +8,7 @@ import { withPerformanceLogging } from '~/utils/perf'
 export const getStaticProps = withPerformanceLogging('bridged', async () => {
 	const metadataCache = await import('~/utils/metadata').then((m) => m.default)
 
-	const data = await getBridgedTVLByChain({ chainMetadata: metadataCache.chainMetadata })
+	const data = await getBridgedTVLChains({ chainMetadata: metadataCache.chainMetadata })
 
 	return {
 		props: data,

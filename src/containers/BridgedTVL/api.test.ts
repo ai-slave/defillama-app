@@ -5,7 +5,7 @@ const fetchJsonMock = vi.hoisted(() => vi.fn())
 vi.mock('~/constants', () => ({ SERVER_URL: 'https://pro-api.llama.fi/test-key/api' }))
 vi.mock('~/utils/async', () => ({ fetchJson: fetchJsonMock }))
 
-import { fetchChainAssetsChart, fetchChainAssetsFlows1d, fetchChainsAssets } from './api'
+import { fetchChainAssetsChart, fetchChainAssetsDetail, fetchChainAssetsFlows1d } from './api'
 import { normalizeChainsAssetTotalsResponse } from './normalizers'
 
 const rawCategory = (total: string, breakdown: Record<string, string> = {}) => ({ total, breakdown })
@@ -31,12 +31,43 @@ describe('chain asset totals projection', () => {
 	})
 })
 
-describe('fetchChainsAssets', () => {
+describe('eight-section producer payloads', () => {
+	it('normalizes stablecoins, rwa and lst alongside the original five', () => {
+		const response = {
+			timestamp: 1_800_000_000,
+			Ethereum: {
+				total: rawCategory('100', { USDC: '60', ONDO: '40' }),
+				canonical: rawCategory('10', { WETH: '10' }),
+				thirdParty: rawCategory('20', { WBTC: '20' }),
+				native: rawCategory('30', { LDO: '30' }),
+				ownTokens: rawCategory('500', { ETH: '500' }),
+				stablecoins: rawCategory('35', { USDC: '35' }),
+				rwa: rawCategory('3', { ONDO: '3' }),
+				lst: rawCategory('2', { STETH: '2' })
+			}
+		}
+
+		expect(normalizeChainsAssetTotalsResponse(response)).toEqual({
+			Ethereum: {
+				total: { total: 100 },
+				canonical: { total: 10 },
+				thirdParty: { total: 20 },
+				native: { total: 30 },
+				ownTokens: { total: 500 },
+				stablecoins: { total: 35 },
+				rwa: { total: 3 },
+				lst: { total: 2 }
+			}
+		})
+	})
+})
+
+describe('fetchChainAssetsDetail', () => {
 	beforeEach(() => {
 		fetchJsonMock.mockReset()
 	})
 
-	it('normalizes numeric strings once and excludes the transport timestamp', async () => {
+	it('normalizes the selected breakdown and projects navigation totals', async () => {
 		const response = {
 			timestamp: 1_800_000_000,
 			Ethereum: {
@@ -53,14 +84,14 @@ describe('fetchChainsAssets', () => {
 		}
 		fetchJsonMock.mockResolvedValue(response)
 
-		const assets = await fetchChainsAssets()
+		const { chainData, totals } = await fetchChainAssetsDetail('ethereum')
 
-		expect(assets).not.toHaveProperty('timestamp')
-		expect(assets.Ethereum?.total.total).toBe(12.5)
-		expect(assets.Ethereum?.total.breakdown.USDC).toBe(0)
-		expect(assets.Ethereum?.total.breakdown.USDT).toBe(2.5)
-		expect(assets.Ethereum?.native).toBeUndefined()
-		expect(assets.Base?.total.total).toBe(0)
+		expect(totals).not.toHaveProperty('timestamp')
+		expect(totals.Ethereum?.total).toEqual({ total: 12.5 })
+		expect(totals.Base?.total.total).toBe(0)
+		expect(chainData?.total.breakdown.USDC).toBe(0)
+		expect(chainData?.total.breakdown.USDT).toBe(2.5)
+		expect(chainData?.native).toBeUndefined()
 	})
 })
 

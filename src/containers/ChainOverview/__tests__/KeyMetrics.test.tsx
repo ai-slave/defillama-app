@@ -109,4 +109,43 @@ describe('ChainOverview KeyMetrics', () => {
 		expect(text).toContain('App Revenue (24h)$1,200')
 		expect(text).toContain('App Fees (24h)$2,000')
 	})
+
+	it('renders only the bridged asset sections reported by the producer', () => {
+		const v2Markup = renderToStaticMarkup(
+			<KeyMetrics
+				{...baseProps}
+				chainAssets={{
+					total: { total: 100 },
+					canonical: { total: 10 },
+					thirdParty: { total: 20 },
+					native: { total: 30 },
+					stablecoins: { total: 35 },
+					rwa: { total: 3 },
+					lst: { total: 2 }
+				}}
+			/>
+		)
+		const v2Text = textFromMarkup(v2Markup)
+
+		expect(v2Text).toContain('Bridged TVL$100')
+		expect(v2Text).toContain('Native$30')
+		expect(v2Text).toContain('Canonical$10')
+		expect(v2Text).toContain('Third Party$20')
+		expect(v2Text).toContain('Stablecoins$35')
+		expect(v2Text).toContain('RWAs$3')
+		expect(v2Text).toContain('Liquid Staking$2')
+
+		const legacyText = textFromMarkup(
+			renderToStaticMarkup(
+				<KeyMetrics
+					{...baseProps}
+					chainAssets={{ total: { total: 30 }, canonical: { total: 10 }, thirdParty: { total: 20 } }}
+				/>
+			)
+		)
+
+		expect(legacyText).not.toContain('Stablecoins')
+		expect(legacyText).not.toContain('RWAs')
+		expect(legacyText).not.toContain('Liquid Staking')
+	})
 })

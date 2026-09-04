@@ -94,6 +94,30 @@ describe('chains by category grouping', () => {
 		})
 	})
 
+	it('carries the v2-only sections through a merge with a chain that reports only five', () => {
+		const eightSection = {
+			total: { total: 100 },
+			canonical: { total: 10 },
+			thirdParty: { total: 20 },
+			native: { total: 30 },
+			stablecoins: { total: 35 },
+			rwa: { total: 3 },
+			lst: { total: 2 }
+		}
+		const fiveSection = { total: { total: 40 }, canonical: { total: 25 }, thirdParty: { total: 15 } }
+
+		// a section present on only one side must survive rather than being dropped
+		expect(mergeChainAssetTotals(eightSection, fiveSection)).toEqual({
+			total: { total: 140 },
+			canonical: { total: 35 },
+			thirdParty: { total: 35 },
+			native: { total: 30 },
+			stablecoins: { total: 35 },
+			rwa: { total: 3 },
+			lst: { total: 2 }
+		})
+	})
+
 	it.each([
 		'mcap',
 		'stablesMcap',

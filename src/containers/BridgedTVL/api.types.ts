@@ -3,13 +3,24 @@ export interface RawChainAssetCategory {
 	breakdown: Record<string, string>
 }
 
-export interface RawChainAsset {
+/**
+ * Sections the producer may omit. `native`/`ownTokens` predate the eight-section split; the v2
+ * producer carves `stablecoins`/`rwa`/`lst` back out of canonical/thirdParty/native, so a payload
+ * carries either five sections or eight and both have to normalize.
+ */
+export const CHAIN_ASSET_OPTIONAL_CATEGORIES = ['native', 'ownTokens', 'stablecoins', 'rwa', 'lst'] as const
+
+export type ChainAssetOptionalCategory = (typeof CHAIN_ASSET_OPTIONAL_CATEGORIES)[number]
+
+export const CHAIN_ASSET_CATEGORIES = ['total', 'canonical', 'thirdParty', ...CHAIN_ASSET_OPTIONAL_CATEGORIES] as const
+
+export type ChainAssetCategoryKey = (typeof CHAIN_ASSET_CATEGORIES)[number]
+
+export type RawChainAsset = {
 	canonical: RawChainAssetCategory
-	ownTokens?: RawChainAssetCategory
-	native?: RawChainAssetCategory
 	thirdParty: RawChainAssetCategory
 	total: RawChainAssetCategory
-}
+} & Partial<Record<ChainAssetOptionalCategory, RawChainAssetCategory>>
 
 export type RawChainsAssetsResponse = Record<string, RawChainAsset | number> & { timestamp: number }
 
@@ -18,38 +29,28 @@ export interface ChainAssetCategory {
 	breakdown: Record<string, number>
 }
 
-export interface ChainAsset {
+export type ChainAsset = {
 	canonical: ChainAssetCategory
-	ownTokens?: ChainAssetCategory
-	native?: ChainAssetCategory
 	thirdParty: ChainAssetCategory
 	total: ChainAssetCategory
-}
+} & Partial<Record<ChainAssetOptionalCategory, ChainAssetCategory>>
 
-export type ChainsAssetsResponse = Record<string, ChainAsset>
-
-export interface ChainAssetTotals {
+export type ChainAssetTotals = {
 	total: { total: number }
 	canonical: { total: number }
 	thirdParty: { total: number }
-	native?: { total: number }
-	ownTokens?: { total: number }
-}
+} & Partial<Record<ChainAssetOptionalCategory, { total: number }>>
 
 export type ChainsAssetTotalsResponse = Record<string, ChainAssetTotals>
 
-export const CHAIN_ASSET_FLOW_CATEGORIES = [
-	'total',
-	'canonical',
-	'native',
-	'ownTokens',
-	'thirdParty',
-	'stablecoins',
-	'rwa',
-	'lst'
-] as const
+export interface ChainAssetsDetailResponse {
+	chainData: ChainAsset | null
+	totals: ChainsAssetTotalsResponse
+}
 
-export type ChainAssetFlowCategory = (typeof CHAIN_ASSET_FLOW_CATEGORIES)[number]
+export const CHAIN_ASSET_FLOW_CATEGORIES = CHAIN_ASSET_CATEGORIES
+
+export type ChainAssetFlowCategory = ChainAssetCategoryKey
 
 export interface RawChainAssetFlowValue {
 	perc: string
@@ -70,20 +71,14 @@ export type ChainsAssetsFlows1dResponse = Record<string, ChainAssetsFlowEntry>
 /** Precomputed `/chain-assets/chart/:chain` wire contract. Timestamps remain Unix seconds. */
 export interface RawChainAssetsChartDataPoint {
 	timestamp: number
-	data: Record<string, string> & {
-		total: string
-		ownTokens?: string
-	}
+	data: { total: string } & Partial<Record<Exclude<ChainAssetCategoryKey, 'total'>, string>>
 }
 
 export type RawChainAssetsChartResponse = RawChainAssetsChartDataPoint[]
 
 export interface ChainAssetsChartDataPoint {
 	timestamp: number
-	data: Record<string, number> & {
-		total: number
-		ownTokens?: number
-	}
+	data: { total: number } & Partial<Record<Exclude<ChainAssetCategoryKey, 'total'>, number>>
 }
 
 export type ChainAssetsChartResponse = ChainAssetsChartDataPoint[]

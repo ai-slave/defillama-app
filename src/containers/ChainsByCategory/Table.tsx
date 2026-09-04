@@ -20,7 +20,6 @@ import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
-import type { ChainAssetTotals } from '~/containers/BridgedTVL/api.types'
 import { CHAINS_CATEGORY_GROUP_SETTINGS, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { definitions } from '~/public/definitions'
@@ -34,18 +33,18 @@ import { slug } from '~/utils'
 import { formatRatio, formatUsd, formatCompactNumber, roundNumber } from '~/utils/numberFormat'
 import type { IFormattedDataWithExtraTvl } from './types'
 
-export function getChainAssetTableValues(chainAssets: ChainAssetTotals | null | undefined) {
-	if (!chainAssets) return null
-	return {
-		total: chainAssets.total.total,
-		canonical: chainAssets.canonical.total,
-		native: chainAssets.native?.total,
-		ownTokens: chainAssets.ownTokens?.total,
-		thirdParty: chainAssets.thirdParty.total
-	}
-}
+/** Tooltip rows in display order; the v2-only sections stay hidden until the producer reports them. */
+const CHAIN_ASSET_TOOLTIP_ROWS = [
+	{ key: 'native', label: 'Native' },
+	{ key: 'canonical', label: 'Canonical' },
+	{ key: 'ownTokens', label: 'Own Tokens' },
+	{ key: 'thirdParty', label: 'Third Party' },
+	{ key: 'stablecoins', label: 'Stablecoins' },
+	{ key: 'rwa', label: 'RWAs' },
+	{ key: 'lst', label: 'Liquid Staking' }
+] as const
 
-export function hasChainAssetTableValue(value: number | undefined): value is number {
+function hasChainAssetTableValue(value: number | undefined): value is number {
 	return value != null
 }
 
@@ -359,72 +358,39 @@ const columns = [
 	}),
 	columnHelper.accessor(
 		(row) => {
-			const total = getChainAssetTableValues(row.chainAssets)?.total
+			const total = row.chainAssets?.total.total
 			return hasChainAssetTableValue(total) ? roundNumber(total, 2) : undefined
 		},
 		{
 			id: 'chainAssets',
 			header: 'Bridged TVL',
 			cell: ({ row }) => {
-				const chainAssets = getChainAssetTableValues(row.original.chainAssets)
+				const chainAssets = row.original.chainAssets
 				if (!chainAssets) return null
 
 				const chainAssetsBreakdown = (
 					<div className="flex w-52 flex-col gap-1">
-						{hasChainAssetTableValue(chainAssets.native) ? (
-							<div className="flex items-center justify-between gap-1">
-								<span>Native:</span>
-								<span>
-									{formatUsd(chainAssets.native, {
-										compact: true,
-										minimumCompactValue: 1_000_000,
-										compactSuffix: 'lowercase'
-									})}
-								</span>
-							</div>
-						) : null}
-						{hasChainAssetTableValue(chainAssets.canonical) ? (
-							<div className="flex items-center justify-between gap-1">
-								<span>Canonical:</span>
-								<span>
-									{formatUsd(chainAssets.canonical, {
-										compact: true,
-										minimumCompactValue: 1_000_000,
-										compactSuffix: 'lowercase'
-									})}
-								</span>
-							</div>
-						) : null}
-						{hasChainAssetTableValue(chainAssets.ownTokens) ? (
-							<div className="flex items-center justify-between gap-1">
-								<span>Own Tokens:</span>
-								<span>
-									{formatUsd(chainAssets.ownTokens, {
-										compact: true,
-										minimumCompactValue: 1_000_000,
-										compactSuffix: 'lowercase'
-									})}
-								</span>
-							</div>
-						) : null}
-						{hasChainAssetTableValue(chainAssets.thirdParty) ? (
-							<div className="flex items-center justify-between gap-1">
-								<span>Third Party:</span>
-								<span>
-									{formatUsd(chainAssets.thirdParty, {
-										compact: true,
-										minimumCompactValue: 1_000_000,
-										compactSuffix: 'lowercase'
-									})}
-								</span>
-							</div>
-						) : null}
+						{CHAIN_ASSET_TOOLTIP_ROWS.map(({ key, label }) => {
+							const total = chainAssets[key]?.total
+							return hasChainAssetTableValue(total) ? (
+								<div key={key} className="flex items-center justify-between gap-1">
+									<span>{label}:</span>
+									<span>
+										{formatUsd(total, {
+											compact: true,
+											minimumCompactValue: 1_000_000,
+											compactSuffix: 'lowercase'
+										})}
+									</span>
+								</div>
+							) : null
+						})}
 					</div>
 				)
 
 				return (
 					<Tooltip content={chainAssetsBreakdown} className="justify-end">
-						{formatUsd(chainAssets.total, {
+						{formatUsd(chainAssets.total.total, {
 							compact: true,
 							minimumCompactValue: 1_000_000,
 							compactSuffix: 'lowercase'

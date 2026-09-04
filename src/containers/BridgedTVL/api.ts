@@ -1,27 +1,25 @@
 import { SERVER_URL } from '~/constants'
 import { fetchJson } from '~/utils/async'
 import type {
+	ChainAssetsDetailResponse,
 	ChainAssetsChartResponse,
 	ChainsAssetTotalsResponse,
 	ChainsAssetsFlows1dResponse,
-	ChainsAssetsResponse,
 	RawChainAssetsChartResponse,
 	RawChainAssetsFlows1dResponse,
 	RawChainsAssetsResponse
 } from './api.types'
 import {
 	normalizeChainAssetsChartResponse,
+	normalizeChainAssetsDetailResponse,
 	normalizeChainAssetsFlows1dResponse,
-	normalizeChainsAssetTotalsResponse,
-	normalizeChainsAssetsResponse
+	normalizeChainsAssetTotalsResponse
 } from './normalizers'
 
-/**
- * Fetch chain-level bridged asset totals.
- */
-export async function fetchChainsAssets(): Promise<ChainsAssetsResponse> {
+/** Normalize full token breakdowns only for the selected chain; navigation needs totals for the rest. */
+export async function fetchChainAssetsDetail(chain: string): Promise<ChainAssetsDetailResponse> {
 	const response = await fetchJson<RawChainsAssetsResponse>(`${SERVER_URL}/chain-assets/chains`)
-	return normalizeChainsAssetsResponse(response)
+	return normalizeChainAssetsDetailResponse(response, chain)
 }
 
 export async function fetchChainsAssetTotals(): Promise<ChainsAssetTotalsResponse> {

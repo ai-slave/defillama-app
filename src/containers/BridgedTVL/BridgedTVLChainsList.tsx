@@ -7,13 +7,13 @@ import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
-import type { ChainAssetsFlowEntry, ChainsAssetsResponse } from './api.types'
+import type { ChainAssetCategoryKey, ChainsAssetsFlows1dResponse, ChainsAssetTotalsResponse } from './api.types'
 import type { IBridgedRow } from './types'
 
 interface BridgedTVLChainsListProps {
-	assets: ChainsAssetsResponse
+	assets: ChainsAssetTotalsResponse
 	chains: Array<{ label: string; to: string }>
-	flows1d: Record<string, ChainAssetsFlowEntry> | null
+	flows1d: ChainsAssetsFlows1dResponse | null
 	deprecatedChains: Record<string, true>
 }
 
@@ -37,16 +37,17 @@ export function BridgedTVLChainsList({ assets, chains, flows1d, deprecatedChains
 			if (change24h != null) row.change_24h = change24h
 			rows.push(row)
 		}
-		rows.sort((a, b) => b.total.total - a.total.total)
 		return rows
 	}, [assets, flows1d, deprecatedChains])
+
+	const columns = useMemo(() => buildBridgedColumns(data), [data])
 
 	return (
 		<>
 			<RowLinksWithDropdown links={chains} activeLink="All" />
 			<TableWithSearch
 				data={data}
-				columns={bridgedColumns}
+				columns={columns}
 				placeholder={'Search chains...'}
 				columnToSearch={'name'}
 				csvFileName="bridged-chains"
@@ -56,93 +57,87 @@ export function BridgedTVLChainsList({ assets, chains, flows1d, deprecatedChains
 	)
 }
 
-const bridgedColumns = [
-	columnHelper.accessor('name', {
-		header: 'Name',
-		enableSorting: false,
-		cell: ({ getValue, row }) => {
-			const value = getValue()
-			return (
-				<span className="relative flex items-center gap-2">
-					<span className="vf-row-index shrink-0" aria-hidden="true" />
-					<TokenLogo name={value} kind="chain" alt={`Logo of ${value}`} />
-					<BasicLink
-						href={`/bridged/${slug(value)}`}
-						className="truncate text-sm font-medium text-link hover:underline"
-					>
-						{value}
-					</BasicLink>
-					{row.original.deprecated ? <DeprecatedEntityMarker content="Deprecated chain" /> : null}
-				</span>
-			)
-		},
-		meta: {
-			headerClassName: 'w-[min(200px,40vw)]'
-		}
-	}),
-	columnHelper.accessor((row) => row.total.total ?? undefined, {
+const BRIDGED_SECTION_COLUMNS = [
+	{
 		id: 'total',
 		header: 'Total Bridged',
-		cell: (info) =>
-			info.getValue() != null
-				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-				: null,
-		meta: {
-			headerClassName: 'w-[120px]',
-			align: 'end',
-			headerHelperText: 'Total value of assets on the chain, excluding own tokens'
-		}
-	}),
-	columnHelper.accessor((row) => row.native?.total ?? undefined, {
-		id: 'native',
-		header: 'Native',
-		cell: (info) =>
-			info.getValue() != null
-				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-				: null,
-		meta: {
-			headerClassName: 'w-[110px]',
-			align: 'end',
-			headerHelperText: 'Assets minted natively on the chain'
-		}
-	}),
-	columnHelper.accessor((row) => row.canonical?.total ?? undefined, {
+		width: 'w-[120px]',
+		helperText: 'Total value of assets on the chain, excluding own tokens'
+	},
+	{ id: 'native', header: 'Native', width: 'w-[110px]', helperText: 'Assets minted natively on the chain' },
+	{
 		id: 'canonical',
 		header: 'Canonical',
-		cell: (info) =>
-			info.getValue() != null
-				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-				: null,
-		meta: {
-			headerClassName: 'w-[120px]',
-			align: 'end',
-			headerHelperText: 'Assets bridged through the official canonical bridge'
-		}
-	}),
-	columnHelper.accessor((row) => row.ownTokens?.total ?? undefined, {
+		width: 'w-[120px]',
+		helperText: 'Assets bridged through the official canonical bridge'
+	},
+	{
 		id: 'ownTokens',
 		header: 'Own Tokens',
-		cell: (info) =>
-			info.getValue() != null
-				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-				: null,
-		meta: {
-			headerClassName: 'w-[120px]',
-			align: 'end',
-			headerHelperText: 'The chains own token, either for gas or for governance '
-		}
-	}),
-	columnHelper.accessor((row) => row.thirdParty?.total ?? undefined, {
+		width: 'w-[120px]',
+		helperText: 'The chains own token, either for gas or for governance '
+	},
+	{
 		id: 'thirdParty',
 		header: 'Third Party',
-		cell: (info) =>
-			info.getValue() != null
-				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-				: null,
-		meta: {
-			headerClassName: 'w-[120px]',
-			align: 'end',
-			headerHelperText: 'Assets bridged through bridges that aren’t the canonical bridge'
+		width: 'w-[120px]',
+		helperText: 'Assets bridged through bridges that aren’t the canonical bridge'
+	},
+	{ id: 'stablecoins', header: 'Stablecoins', width: 'w-[120px]', helperText: 'Stablecoins held on the chain' },
+	{ id: 'rwa', header: 'RWAs', width: 'w-[110px]', helperText: 'Tokenized real world assets held on the chain' },
+	{ id: 'lst', header: 'Liquid Staking', width: 'w-[130px]', helperText: 'Liquid staking tokens held on the chain' }
+] as const
+
+const bridgedNameColumn = columnHelper.accessor('name', {
+	id: 'name',
+	header: 'Name',
+	enableSorting: false,
+	cell: ({ getValue, row }) => {
+		const value = getValue()
+		return (
+			<span className="relative flex items-center gap-2">
+				<span className="vf-row-index shrink-0" aria-hidden="true" />
+				<TokenLogo name={value} kind="chain" alt={`Logo of ${value}`} />
+				<BasicLink href={`/bridged/${slug(value)}`} className="truncate text-sm font-medium text-link hover:underline">
+					{value}
+				</BasicLink>
+				{row.original.deprecated ? <DeprecatedEntityMarker content="Deprecated chain" /> : null}
+			</span>
+		)
+	},
+	meta: {
+		headerClassName: 'w-[min(200px,40vw)]'
+	}
+})
+
+/**
+ * Columns follow the producer: a section it never reports gets no column at all, so switching the
+ * producer from five sections to eight adds the new columns without leaving empty ones behind first.
+ */
+export function buildBridgedColumns(rows: IBridgedRow[]) {
+	const reported = new Set<ChainAssetCategoryKey>()
+	for (const row of rows) {
+		for (const { id } of BRIDGED_SECTION_COLUMNS) {
+			if (row[id] !== undefined) reported.add(id)
 		}
-	})
-]
+	}
+
+	return [
+		bridgedNameColumn,
+		...BRIDGED_SECTION_COLUMNS.filter(({ id }) => reported.has(id)).map(({ id, header, width, helperText }) =>
+			columnHelper.accessor((row) => row[id]?.total ?? undefined, {
+				id,
+				header,
+				cell: (info) =>
+					info.getValue() != null
+						? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+						: null,
+				meta: {
+					headerClassName: width,
+					align: 'end',
+					headerHelperText: helperText
+				}
+			})
+		)
+	]
+}

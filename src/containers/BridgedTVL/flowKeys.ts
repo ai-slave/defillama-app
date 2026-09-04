@@ -1,5 +1,5 @@
 import type { IChainMetadata } from '~/utils/metadata/types'
-import type { ChainsAssetsFlows1dResponse, ChainsAssetsResponse } from './api.types'
+import type { ChainsAssetsFlows1dResponse, ChainsAssetTotalsResponse } from './api.types'
 
 /** Reconcile producer-internal flow keys to the display names used by the asset totals response. */
 export function reconcileChainAssetFlowKeys({
@@ -7,7 +7,7 @@ export function reconcileChainAssetFlowKeys({
 	flows,
 	chainMetadata
 }: {
-	assets: ChainsAssetsResponse
+	assets: ChainsAssetTotalsResponse
 	flows: ChainsAssetsFlows1dResponse
 	chainMetadata: Record<string, IChainMetadata>
 }): ChainsAssetsFlows1dResponse {

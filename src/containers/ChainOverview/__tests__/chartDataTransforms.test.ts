@@ -116,6 +116,30 @@ describe('ChainOverview chart data transforms', () => {
 		expect(formatted?.total).not.toHaveProperty('breakdown')
 	})
 
+	it('carries the v2-only sections through to the page instead of projecting them away', () => {
+		const chainAsset: ChainAssetTotals = {
+			canonical: { total: 10 },
+			thirdParty: { total: 20 },
+			total: { total: 100 },
+			native: { total: 30 },
+			ownTokens: { total: 500 },
+			stablecoins: { total: 35.9 },
+			rwa: { total: 3 },
+			lst: { total: 2 }
+		}
+
+		expect(formatChainAssets(chainAsset)).toEqual({
+			canonical: { total: 10 },
+			thirdParty: { total: 20 },
+			total: { total: 100 },
+			native: { total: 30 },
+			ownTokens: { total: 500 },
+			stablecoins: { total: 35 },
+			rwa: { total: 3 },
+			lst: { total: 2 }
+		})
+	})
+
 	it('builds bridged TVL chart timestamps from UTC day arithmetic', () => {
 		const timestampSec = Date.UTC(2026, 0, 3, 12) / 1e3
 		const dayStartSec = Date.UTC(2026, 0, 3) / 1e3

@@ -1,11 +1,12 @@
+import { slug } from '~/utils'
 import type {
 	ChainAsset,
 	ChainAssetCategory,
+	ChainAssetsDetailResponse,
 	ChainAssetTotals,
 	ChainAssetsChartResponse,
 	ChainAssetsFlowEntry,
 	ChainsAssetsFlows1dResponse,
-	ChainsAssetsResponse,
 	ChainsAssetTotalsResponse,
 	RawChainAsset,
 	RawChainAssetCategory,
@@ -13,7 +14,7 @@ import type {
 	RawChainAssetsFlows1dResponse,
 	RawChainsAssetsResponse
 } from './api.types'
-import { CHAIN_ASSET_FLOW_CATEGORIES } from './api.types'
+import { CHAIN_ASSET_CATEGORIES, CHAIN_ASSET_FLOW_CATEGORIES, CHAIN_ASSET_OPTIONAL_CATEGORIES } from './api.types'
 
 function parseChainAssetNumber(value: string): number {
 	return Number(value)
@@ -34,33 +35,46 @@ function normalizeChainAssetCategory(category: RawChainAssetCategory): ChainAsse
 }
 
 function normalizeChainAsset(asset: RawChainAsset): ChainAsset {
-	return {
+	const normalized: ChainAsset = {
 		total: normalizeChainAssetCategory(asset.total),
 		canonical: normalizeChainAssetCategory(asset.canonical),
-		thirdParty: normalizeChainAssetCategory(asset.thirdParty),
-		...(asset.native !== undefined ? { native: normalizeChainAssetCategory(asset.native) } : {}),
-		...(asset.ownTokens !== undefined ? { ownTokens: normalizeChainAssetCategory(asset.ownTokens) } : {})
+		thirdParty: normalizeChainAssetCategory(asset.thirdParty)
 	}
-}
-
-export function normalizeChainsAssetsResponse(response: RawChainsAssetsResponse): ChainsAssetsResponse {
-	const assets: ChainsAssetsResponse = {}
-	for (const chain in response) {
-		const asset = response[chain]
-		if (asset === undefined || chain === 'timestamp' || typeof asset === 'number') continue
-		assets[chain] = normalizeChainAsset(asset)
+	// driven off the category list so a producer adding a section needs no change here
+	for (const category of CHAIN_ASSET_OPTIONAL_CATEGORIES) {
+		const raw = asset[category]
+		if (raw !== undefined) normalized[category] = normalizeChainAssetCategory(raw)
 	}
-	return assets
+	return normalized
 }
 
 function normalizeChainAssetTotals(asset: RawChainAsset): ChainAssetTotals {
-	return {
+	const totals: ChainAssetTotals = {
 		total: { total: parseChainAssetNumber(asset.total.total) },
 		canonical: { total: parseChainAssetNumber(asset.canonical.total) },
-		thirdParty: { total: parseChainAssetNumber(asset.thirdParty.total) },
-		...(asset.native !== undefined ? { native: { total: parseChainAssetNumber(asset.native.total) } } : {}),
-		...(asset.ownTokens !== undefined ? { ownTokens: { total: parseChainAssetNumber(asset.ownTokens.total) } } : {})
+		thirdParty: { total: parseChainAssetNumber(asset.thirdParty.total) }
 	}
+	for (const category of CHAIN_ASSET_OPTIONAL_CATEGORIES) {
+		const raw = asset[category]
+		if (raw !== undefined) totals[category] = { total: parseChainAssetNumber(raw.total) }
+	}
+	return totals
+}
+
+export function normalizeChainAssetsDetailResponse(
+	response: RawChainsAssetsResponse,
+	selectedChain: string
+): ChainAssetsDetailResponse {
+	const targetSlug = slug(selectedChain)
+	const totals: ChainsAssetTotalsResponse = {}
+	let chainData: ChainAsset | null = null
+	for (const chain in response) {
+		const asset = response[chain]
+		if (asset === undefined || chain === 'timestamp' || typeof asset === 'number') continue
+		totals[chain] = normalizeChainAssetTotals(asset)
+		if (slug(chain) === targetSlug) chainData = normalizeChainAsset(asset)
+	}
+	return { chainData, totals }
 }
 
 /** Project only category totals for list/page payloads that never consume token breakdowns. */
@@ -101,7 +115,7 @@ export function normalizeChainAssetsChartResponse(response: RawChainAssetsChartR
 		const data: ChainAssetsChartResponse[number]['data'] = {
 			total: parseChainAssetNumber(point.data.total)
 		}
-		for (const section in point.data) {
+		for (const section of CHAIN_ASSET_CATEGORIES) {
 			if (section === 'total') continue
 			const value = point.data[section]
 			if (value === undefined) continue

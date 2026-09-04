@@ -5,6 +5,7 @@ import {
 	type SortingState,
 	useReactTable
 } from '@tanstack/react-table'
+import { useRouter } from 'next/router'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedEntityText } from '~/components/DeprecatedEntityMarker'
@@ -13,9 +14,9 @@ import {
 	buildRuntimePieChartPresentation,
 	prepareRuntimePieChartData
 } from '~/components/ECharts/PieChart/data'
-import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { FormattedName } from '~/components/FormattedName'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { LinkPreviewCard } from '~/components/SEO'
 import { VirtualTable } from '~/components/Table/Table'
@@ -24,21 +25,18 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { MetricRow } from '~/ui/MetricPrimitives'
-import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
-import type { ChainAsset } from './api.types'
+import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
+import type { ChainAsset, ChainAssetCategoryKey } from './api.types'
 import { hasVisibleChainAssetTotal } from './presentation'
 
 interface BridgedChainRow {
 	name: string
 	value: number
 }
-
-type ChainAssetKey = keyof ChainAsset
-const CHAIN_ASSET_KEYS: readonly ChainAssetKey[] = ['total', 'canonical', 'thirdParty', 'native', 'ownTokens']
 
 interface BridgedTVLByChainProps {
 	chainData: ChainAsset | null
@@ -48,7 +46,7 @@ interface BridgedTVLByChainProps {
 	deprecated?: boolean
 }
 
-const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
+const PieChart = React.lazy(() => import('~/components/ECharts/PieChart'))
 const EMPTY_CHAIN_ASSET_BREAKDOWN: Record<string, number> = {}
 
 const columnHelper = createColumnHelper<BridgedChainRow>()
@@ -61,7 +59,7 @@ const bridgedChainColumns = [
 			headerClassName: 'w-[min(220px,40vw)]'
 		}
 	}),
-	columnHelper.accessor((row) => row.value ?? undefined, {
+	columnHelper.accessor((row) => row.value, {
 		id: 'value',
 		header: 'Total Bridged',
 		cell: (info) =>
@@ -79,7 +77,16 @@ export function BridgedTVLByChain({
 	chainName = 'All Chains',
 	deprecated
 }: BridgedTVLByChainProps) {
-	const [chartType, setChartType] = React.useState<ChainAssetKey>('total')
+	const router = useRouter()
+	const chartTypeOptions = React.useMemo(
+		() =>
+			CHART_TYPES.filter(({ key }) => key === 'total' || hasVisibleChainAssetTotal(chainData?.[key]?.total)).map(
+				({ key, name }) => ({ key, name })
+			),
+		[chainData]
+	)
+	const chartTypeQuery = readSingleQueryValue(router.query.chartType)
+	const chartType = chartTypeOptions.find(({ key }) => key === chartTypeQuery)?.key ?? 'total'
 	const { chartInstance: exportChartInstance, handleChartReady: onChartReady } = useGetChartInstance()
 
 	const { pieSeries, tableData } = React.useMemo(() => {
@@ -102,7 +109,7 @@ export function BridgedTVLByChain({
 	const pieColorIndex = React.useMemo(() => {
 		const indexByToken = new Map<string, number>()
 		if (!chainData) return indexByToken
-		for (const categoryName of CHAIN_ASSET_KEYS) {
+		for (const { key: categoryName } of CHART_TYPES) {
 			const category = chainData[categoryName]
 			if (!category) continue
 			for (const name in category.breakdown) {
@@ -129,8 +136,7 @@ export function BridgedTVLByChain({
 	)
 
 	const deferredPiePresentation = React.useDeferredValue(piePresentation)
-	const chartTypeName =
-		chartType === 'ownTokens' ? 'Own Tokens' : (chartTypes.find((item) => item.type === chartType)?.name ?? 'Total')
+	const chartTypeName = chartTypeOptions.find(({ key }) => key === chartType)?.name ?? 'Total'
 	const exportTitle = chartType === 'total' ? `${chainName} Bridged TVL` : `${chainName} ${chartTypeName} Bridged TVL`
 	const totalBridged = chainData ? chainData.total.total + (chainData.ownTokens?.total ?? 0) : null
 
@@ -198,39 +204,40 @@ export function BridgedTVLByChain({
 							})}
 						/>
 
-						{hasVisibleChainAssetTotal(chainData?.ownTokens?.total) ? (
-							<MetricRow
-								label="Own Tokens"
-								value={formatUsd(chainData?.ownTokens?.total ?? null, {
-									compact: true,
-									minimumCompactValue: 1_000_000,
-									compactSuffix: 'lowercase'
-								})}
-							/>
-						) : null}
+						{BRIDGED_OPTIONAL_METRICS.map(({ key, label }) =>
+							hasVisibleChainAssetTotal(chainData?.[key]?.total) ? (
+								<MetricRow
+									key={key}
+									label={label}
+									value={formatUsd(chainData?.[key]?.total ?? null, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
+								/>
+							) : null
+						)}
 					</div>
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
 					<ChartPanelToolbar className="justify-end">
-						<SegmentedControl
-							value={chartType}
-							onValueChange={(value) => setChartType(value as typeof chartType)}
-							options={[
-								...chartTypes
-									.filter(({ type }) => {
-										const total = chainData?.[type]?.total
-										return hasVisibleChainAssetTotal(total)
+						<div className="mr-auto">
+							<Select
+								allValues={chartTypeOptions}
+								selectedValues={chartType}
+								setSelectedValues={(value: string) => {
+									const nextChartType = chartTypeOptions.find((option) => option.key === value)?.key
+									if (!nextChartType) throw new Error(`Unknown bridged TVL chart type: ${value}`)
+									void pushShallowQuery(router, {
+										chartType: nextChartType === 'total' ? undefined : nextChartType
 									})
-									.map(({ type, name }) => ({ value: type, label: name })),
-								...(hasVisibleChainAssetTotal(chainData?.ownTokens?.total)
-									? [{ value: 'ownTokens' as const, label: 'Own Tokens' }]
-									: [])
-							]}
-							label="Chart type"
-							variant="default"
-							size="md"
-							className="mr-auto"
-						/>
+								}}
+								label={chartTypeName}
+								labelType="none"
+								variant="filter"
+								size="md"
+							/>
+						</div>
 						{pieSelectableSeries.length > 1 ? (
 							<SelectWithCombobox
 								allValues={pieSelectableSeries}
@@ -266,9 +273,20 @@ export function BridgedTVLByChain({
 	)
 }
 
-const chartTypes: Array<{ type: ChainAssetKey; name: string }> = [
-	{ type: 'total', name: 'Total' },
-	{ type: 'canonical', name: 'Canonical' },
-	{ type: 'native', name: 'Native' },
-	{ type: 'thirdParty', name: 'Third Party' }
-]
+const CHART_TYPES = [
+	{ key: 'total', name: 'Total' },
+	{ key: 'canonical', name: 'Canonical' },
+	{ key: 'native', name: 'Native' },
+	{ key: 'thirdParty', name: 'Third Party' },
+	{ key: 'ownTokens', name: 'Own Tokens' },
+	{ key: 'stablecoins', name: 'Stablecoins' },
+	{ key: 'rwa', name: 'RWAs' },
+	{ key: 'lst', name: 'Liquid Staking' }
+] as const satisfies ReadonlyArray<{ key: ChainAssetCategoryKey; name: string }>
+
+const BRIDGED_OPTIONAL_METRICS = [
+	{ key: 'ownTokens', label: 'Own Tokens' },
+	{ key: 'stablecoins', label: 'Stablecoins' },
+	{ key: 'rwa', label: 'RWAs' },
+	{ key: 'lst', label: 'Liquid Staking' }
+] as const
