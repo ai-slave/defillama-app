@@ -219,7 +219,7 @@ export async function fetchProProtocolChartData(
 		case 'txs':
 			return fetchProtocolAdapterData(protocol, ADAPTER_TYPES.ACTIVE_USERS, ADAPTER_DATA_TYPES.DAILY_TRANSACTIONS_COUNT)
 		case 'gasUsed':
-			return fetchProtocolAdapterData(protocol, ADAPTER_TYPES.ACTIVE_USERS, ADAPTER_DATA_TYPES.DAILY_GAS_USED)
+			return fetchProtocolAdapterData(protocol, ADAPTER_TYPES.ACTIVE_USERS, ADAPTER_DATA_TYPES.DAILY_GAS_USED_USD)
 		case 'treasury':
 			return fetchProtocolTreasuryData(protocol)
 		case 'incentives':

@@ -114,7 +114,7 @@ export function MetricCard({ metric }: MetricCardProps) {
 
 		let auto: 'currency' | 'number' | 'percent' = ['medianApy'].includes(metric.type)
 			? 'percent'
-			: ['activeUsers', 'newUsers', 'txs', 'gasUsed'].includes(metric.type)
+			: ['activeUsers', 'newUsers', 'txs'].includes(metric.type)
 				? 'number'
 				: 'currency'
 

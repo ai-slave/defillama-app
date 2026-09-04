@@ -46,7 +46,7 @@ describe('fetchProProtocolChartData focused TVL sources', () => {
 		expect(fetchAdapterProtocolChartData).toHaveBeenNthCalledWith(4, {
 			adapterType: 'active-users',
 			protocol: 'compound-v2',
-			dataType: 'dailyGasUsed'
+			dataType: 'dailyGasUsedUsd'
 		})
 	})
 

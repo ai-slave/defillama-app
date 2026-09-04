@@ -7,6 +7,7 @@ describe('getMetricUnitGroup', () => {
 		expect(getMetricUnitGroup('holdersRevenue')).toBe('usd')
 		expect(getMetricUnitGroup('revenue')).toBe('usd')
 		expect(getMetricUnitGroup('tvl')).toBe('usd')
+		expect(getMetricUnitGroup('gasUsed')).toBe('usd')
 	})
 
 	it('classifies percent, count and ratio metrics', () => {

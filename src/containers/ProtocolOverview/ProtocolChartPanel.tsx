@@ -115,9 +115,9 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 		() => ({
 			chartData: finalCharts,
 			valueSymbol,
-			gasUsedValueSymbol: props.chartDenominations[1]?.symbol ?? valueSymbol
+			gasUsedValueSymbol: valueSymbol
 		}),
-		[finalCharts, props.chartDenominations, valueSymbol]
+		[finalCharts, valueSymbol]
 	)
 	const deferredChartRenderModel = useDeferredValue(chartRenderModel)
 	const loadingChartSet = useMemo(() => new Set(loadingCharts), [loadingCharts])

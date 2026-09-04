@@ -6,6 +6,7 @@ describe('shared ECharts value formatters', () => {
 		expect(formatChartValue(12_345, '$')).toBe('$12.35K')
 		expect(formatChartValue(-0.000123, '%')).toBe('-0.000123%')
 		expect(formatTooltipValue(12.345, '%')).toBe('12.35 %')
+		expect(formatTooltipValue(0.01, '$')).toBe('$0.01')
 	})
 
 	it('formats month and quarter boundaries entirely in UTC', () => {

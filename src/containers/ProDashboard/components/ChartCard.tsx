@@ -47,7 +47,7 @@ interface ChartRendererProps {
 	onChartReady: (instance: echarts.ECharts | null) => void
 }
 
-const userMetricTypes = ['activeUsers', 'newUsers', 'txs', 'gasUsed']
+const userMetricTypes = ['activeUsers', 'newUsers', 'txs']
 const percentMetricTypes = ['medianApy']
 const ratioMetricTypes = ['pfRatio', 'psRatio']
 const CUMULATIVE_DISPLAY_OPTIONS = [

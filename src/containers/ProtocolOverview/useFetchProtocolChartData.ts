@@ -541,10 +541,10 @@ export const useFetchProtocolChartData = ({
 		dataType: 'dailyTransactionsCount'
 	})
 	const { data: gasUsedData = null, isLoading: fetchingGasUsed } = useFetchProtocolActivityChart({
-		queryKey: 'gas-used',
+		queryKey: 'gas-used-usd',
 		protocol: canFetchClientCharts && toggledMetrics.gasUsed === 'true' && metrics.gasUsed ? name : null,
 		adapterType: 'active-users',
-		dataType: 'dailyGasUsed'
+		dataType: 'dailyGasUsedUsd'
 	})
 
 	const isGovernanceEnabled = !!(
@@ -802,7 +802,7 @@ export const useFetchProtocolChartData = ({
 			charts['Gas Used'] = formatBarChart({
 				data: gasUsedData,
 				groupBy,
-				denominationPriceHistory: null,
+				denominationPriceHistory,
 				dateInMs: true
 			})
 		if (treasuryData && isTreasuryToggled)

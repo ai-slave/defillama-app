@@ -170,13 +170,13 @@ describe('fetchProChainChartData adapter metrics', () => {
 		})
 	})
 
-	it('uses the chain aggregate endpoint for gas used', async () => {
+	it('uses the chain aggregate endpoint for gas used in USD', async () => {
 		await expect(fetchProChainChartData('gasUsed', 'Avalanche')).resolves.toEqual([[1_700_000_000, 42]])
 
 		expect(fetchAdapterChainChartDataMock).toHaveBeenCalledWith({
 			adapterType: 'active-users',
 			chain: 'Avalanche',
-			dataType: 'dailyGasUsed'
+			dataType: 'dailyGasUsedUsd'
 		})
 		expect(fetchAdapterProtocolChartDataMock).not.toHaveBeenCalled()
 	})

@@ -70,7 +70,7 @@ export const useFetchProtocolActivityChart = ({
 	queryKey: string
 	protocol: string | null
 	adapterType: 'active-users' | 'new-users'
-	dataType?: 'dailyTransactionsCount' | 'dailyGasUsed'
+	dataType?: 'dailyTransactionsCount' | 'dailyGasUsedUsd'
 }) =>
 	useQuery({
 		queryKey: ['protocol-overview', queryKey, protocol],

@@ -72,7 +72,7 @@ const CHART_METADATA = {
 	gasUsed: {
 		type: 'dimensions',
 		adapterType: ADAPTER_TYPES.ACTIVE_USERS,
-		dataType: ADAPTER_DATA_TYPES.DAILY_GAS_USED
+		dataType: ADAPTER_DATA_TYPES.DAILY_GAS_USED_USD
 	},
 
 	stablecoins: { type: 'stablecoins' },

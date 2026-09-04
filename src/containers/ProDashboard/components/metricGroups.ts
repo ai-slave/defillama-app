@@ -1,7 +1,7 @@
 export type MetricUnitGroup = 'usd' | 'percent' | 'count' | 'ratio'
 
 const PERCENT_METRIC_TYPES = new Set(['medianApy'])
-const COUNT_METRIC_TYPES = new Set(['txs', 'activeUsers', 'newUsers', 'gasUsed'])
+const COUNT_METRIC_TYPES = new Set(['txs', 'activeUsers', 'newUsers'])
 const RATIO_METRIC_TYPES = new Set(['pfRatio', 'psRatio'])
 
 export function getMetricUnitGroup(metricType?: string): MetricUnitGroup {

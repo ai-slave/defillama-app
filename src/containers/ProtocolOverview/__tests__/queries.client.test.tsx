@@ -79,11 +79,20 @@ function ChartBatchProbe(props: IFetchProtocolChartsByKeysParams) {
 	return null
 }
 
-function ActivityChartProbe({ protocol }: { protocol: string | null }) {
+function ActivityChartProbe({
+	protocol,
+	queryKey = 'active-users',
+	dataType
+}: {
+	protocol: string | null
+	queryKey?: string
+	dataType?: 'dailyGasUsedUsd'
+}) {
 	useFetchProtocolActivityChart({
-		queryKey: 'active-users',
+		queryKey,
 		protocol,
-		adapterType: 'active-users'
+		adapterType: 'active-users',
+		...(dataType ? { dataType } : {})
 	})
 
 	return null
@@ -233,6 +242,20 @@ describe('ProtocolOverview client chart queries', () => {
 			[1_700_000_000_000, 1],
 			[1_700_000_100_000, 2]
 		])
+	})
+
+	it('requests the USD gas series without dropping sub-dollar values', async () => {
+		mocks.fetchJson.mockResolvedValue([[1_700_000_000, 0.01]])
+
+		renderToStaticMarkup(
+			<ActivityChartProbe protocol="pangolin-v2" queryKey="gas-used-usd" dataType="dailyGasUsedUsd" />
+		)
+
+		expect(getOnlyQueryOption().queryKey).toEqual(['protocol-overview', 'gas-used-usd', 'pangolin-v2'])
+		expect(mocks.fetchJson).toHaveBeenCalledWith(
+			'/api/public/protocols/charts?kind=adapter&adapterType=active-users&protocol=pangolin-v2&dataType=dailyGasUsedUsd'
+		)
+		await expect(getOnlyQueryOption().queryFn()).resolves.toEqual([[1_700_000_000_000, 0.01]])
 	})
 
 	it('keeps successful empty activity and median responses distinct from failures', async () => {
