@@ -1,6 +1,6 @@
 import type { TokenRightsPieTone } from '~/containers/TokenRights/utils'
 
-export const TOKENS_PAGE_RESPONSE_SCHEMA_VERSION = 12
+export const TOKENS_PAGE_RESPONSE_SCHEMA_VERSION = 13
 export const TOKENS_CHART_GECKO_LOGO_PREFIX = '@'
 
 export interface TokenMarketSummary {
@@ -181,6 +181,7 @@ export interface TokensSourceRow extends TokensRowCore {
 export interface TokensFilterOption {
 	id: string
 	label: string
+	description?: string
 }
 
 export interface TokensSortIndex {

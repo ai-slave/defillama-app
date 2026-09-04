@@ -109,7 +109,7 @@ describe('buildTokenFilterOptions', () => {
 				sources: { coingeckoCatalogGeneratedAt: 1, rankingsUpdatedAt: null },
 				tokens: {},
 				categories: [
-					{ id: 'rwa', label: 'RWA' },
+					{ id: 'rwa', label: 'RWA', description: 'Tokens backed by real-world assets.' },
 					{ id: 'stablecoins', label: 'Stablecoins' },
 					{ id: 'unused', label: 'Unused' }
 				]
@@ -118,6 +118,7 @@ describe('buildTokenFilterOptions', () => {
 
 		expect(result.chainOptions.map((option) => option.id)).toEqual(['solana', 'ethereum'])
 		expect(result.categoryOptions.map((option) => option.id)).toEqual(['rwa', 'stablecoins', 'unused'])
+		expect(result.categoryOptions[0].description).toBe('Tokens backed by real-world assets.')
 	})
 })
 

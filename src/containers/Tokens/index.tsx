@@ -581,7 +581,7 @@ function TokensSharedControls({
 		[chainOptions]
 	)
 	const categorySelectOptions = React.useMemo(
-		() => categoryOptions.map((option) => ({ key: option.id, name: option.label })),
+		() => categoryOptions.map((option) => ({ key: option.id, name: option.label, help: option.description })),
 		[categoryOptions]
 	)
 

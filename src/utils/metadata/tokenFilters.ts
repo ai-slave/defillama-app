@@ -8,7 +8,7 @@ export interface TokenFilterMetadataArtifact {
 		rankingsUpdatedAt: string | null
 	}
 	tokens: Record<string, { chains: string[]; nativeChains?: string[]; categories: string[] }>
-	categories: Array<{ id: string; label: string }>
+	categories: Array<{ id: string; label: string; description?: string }>
 }
 
 export const EMPTY_TOKEN_FILTER_METADATA: TokenFilterMetadataArtifact = {

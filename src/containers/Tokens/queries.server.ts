@@ -521,7 +521,7 @@ export function buildTokenFilterOptions(
 	categoryOptions.sort(compareOptions)
 	return {
 		chainOptions: chainOptions.map(({ id, label }) => ({ id, label })),
-		categoryOptions: categoryOptions.map(({ id, label }) => ({ id, label }))
+		categoryOptions: categoryOptions.map(({ id, label, description }) => ({ id, label, description }))
 	}
 }
 
