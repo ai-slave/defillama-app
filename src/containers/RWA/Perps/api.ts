@@ -69,7 +69,7 @@ function createRWAPerpsFundingHistoryUrl(id: string, params?: IRWAPerpsFundingHi
 
 	const qs = searchParams.toString()
 
-	return `${RWA_PERPS_SERVER_URL}/funding/${encodedId}${qs ? `?${qs}&zz=18` : '?zz=18'}`
+	return `${RWA_PERPS_SERVER_URL}/funding/${encodedId}${qs ? `?${qs}&zz=19` : '?zz=19'}`
 }
 
 /**
@@ -97,7 +97,7 @@ export async function fetchRWAPerpsStats(includeCex: boolean): Promise<IRWAPerps
  */
 export async function fetchRWAPerpsMarketById(id: string): Promise<IRWAPerpsMarket> {
 	const encodedId = encodeRWAPerpsPathSegment(id)
-	return fetchJson<IRWAPerpsMarket>(`${RWA_PERPS_SERVER_URL}/market/${encodedId}?zz=18`)
+	return fetchJson<IRWAPerpsMarket>(`${RWA_PERPS_SERVER_URL}/market/${encodedId}?zz=19`)
 }
 
 /**
@@ -105,7 +105,7 @@ export async function fetchRWAPerpsMarketById(id: string): Promise<IRWAPerpsMark
  */
 export async function fetchRWAPerpsMarketsByContract(contract: string): Promise<IRWAPerpsMarket[]> {
 	const encodedContract = encodeRWAPerpsPathSegment(contract)
-	return fetchJson<IRWAPerpsMarket[]>(`${RWA_PERPS_SERVER_URL}/contract/${encodedContract}?zz=18`)
+	return fetchJson<IRWAPerpsMarket[]>(`${RWA_PERPS_SERVER_URL}/contract/${encodedContract}?zz=19`)
 }
 
 /**
@@ -113,7 +113,7 @@ export async function fetchRWAPerpsMarketsByContract(contract: string): Promise<
  */
 export async function fetchRWAPerpsMarketsByVenue(venue: string): Promise<IRWAPerpsMarket[]> {
 	const encodedVenue = encodeRWAPerpsPathSegment(venue)
-	return fetchJson<IRWAPerpsMarket[]>(`${RWA_PERPS_SERVER_URL}/venue/${encodedVenue}?zz=18`)
+	return fetchJson<IRWAPerpsMarket[]>(`${RWA_PERPS_SERVER_URL}/venue/${encodedVenue}?zz=19`)
 }
 
 /**
@@ -140,7 +140,7 @@ export async function fetchRWAPerpsMarketsByAsset(asset: string, includeCex: boo
  */
 export async function fetchRWAPerpsMarketChart(id: string): Promise<IRWAPerpsMarketChartPoint[]> {
 	const encodedId = encodeRWAPerpsPathSegment(id)
-	return fetchJson<IRWAPerpsMarketChartPoint[]>(`${RWA_PERPS_SERVER_URL}/chart/${encodedId}?zz=18`)
+	return fetchJson<IRWAPerpsMarketChartPoint[]>(`${RWA_PERPS_SERVER_URL}/chart/${encodedId}?zz=19`)
 }
 
 /**
@@ -148,7 +148,7 @@ export async function fetchRWAPerpsMarketChart(id: string): Promise<IRWAPerpsMar
  */
 export async function fetchRWAPerpsVenueChart(venue: string): Promise<IRWAPerpsAggregateHistoricalPoint[]> {
 	const encodedVenue = encodeRWAPerpsPathSegment(venue)
-	return fetchJson<IRWAPerpsAggregateHistoricalPoint[]>(`${RWA_PERPS_SERVER_URL}/chart/venue/${encodedVenue}?zz=18`)
+	return fetchJson<IRWAPerpsAggregateHistoricalPoint[]>(`${RWA_PERPS_SERVER_URL}/chart/venue/${encodedVenue}?zz=19`)
 }
 
 export async function fetchRWAPerpsOverviewBreakdownChartData(

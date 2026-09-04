@@ -87,25 +87,25 @@ export async function fetchCoreMetadataSources(): Promise<CoreMetadataSources> {
 		fetchNamedMetadataSource(
 			'protocols API',
 			fetchMetadataJson<Record<string, IProtocolMetadata>>(
-				`${coreApiBase}/config/smol/appMetadata-protocols.json?zz=18`
+				`${coreApiBase}/config/smol/appMetadata-protocols.json?zz=19`
 			)
 		),
 		fetchNamedMetadataSource(
 			'chains API',
-			fetchMetadataJson<Record<string, IChainMetadata>>(`${coreApiBase}/config/smol/appMetadata-chains.json?zz=18`)
+			fetchMetadataJson<Record<string, IChainMetadata>>(`${coreApiBase}/config/smol/appMetadata-chains.json?zz=19`)
 		),
 		fetchNamedMetadataSource(
 			'categories and tags API',
-			fetchMetadataJson<ICategoriesAndTags>(`${coreApiBase}/config/smol/appMetadata-categoriesAndTags.json?zz=18`)
+			fetchMetadataJson<ICategoriesAndTags>(`${coreApiBase}/config/smol/appMetadata-categoriesAndTags.json?zz=19`)
 		),
 		fetchNamedMetadataSource(
 			'chain categories API',
 			fetchMetadataJson<{ categories: string[] }>(`${coreApiBase}/chains2`)
 		),
-		fetchNamedMetadataSource('CEX metadata API', fetchMetadataJson<RawCexsResponse>(`${coreApiBase}/cexs?zz=18`)),
+		fetchNamedMetadataSource('CEX metadata API', fetchMetadataJson<RawCexsResponse>(`${coreApiBase}/cexs?zz=19`)),
 		fetchNamedMetadataSource(
 			'RWA metadata API',
-			fetchMetadataJson<Omit<IRWAList, 'platformRoutes'>>(`${getMetadataUpstreamBase('rwa')}/list?zz=18`)
+			fetchMetadataJson<Omit<IRWAList, 'platformRoutes'>>(`${getMetadataUpstreamBase('rwa')}/list?zz=19`)
 		),
 		fetchNamedMetadataSource(
 			'RWA platforms metadata API',
@@ -113,16 +113,16 @@ export async function fetchCoreMetadataSources(): Promise<CoreMetadataSources> {
 		),
 		fetchNamedMetadataSource(
 			'RWA perps metadata API',
-			fetchMetadataJson<IRWAPerpsList>(`${getMetadataUpstreamBase('rwa-perps')}/list?includeCex=true&zz=18`)
+			fetchMetadataJson<IRWAPerpsList>(`${getMetadataUpstreamBase('rwa-perps')}/list?includeCex=true&zz=19`)
 		),
 		fetchNamedMetadataSource(
 			'token list API',
-			fetchMetadataJson<RawTokenListItem[]>(`${datasetsBase}/tokenlist/rankings.json?zz=18`)
+			fetchMetadataJson<RawTokenListItem[]>(`${datasetsBase}/tokenlist/rankings.json?zz=19`)
 		),
 		fetchNamedMetadataSource('token directory API', fetchMetadataJson<TokenDirectory>(TOKEN_DIRECTORY_API)),
 		fetchNamedMetadataSource(
 			'liquidations metadata API',
-			fetchMetadataJson<RawAllLiquidationsResponse>(`${LIQUIDATIONS_SERVER_URL_V2}/all?zz=18`)
+			fetchMetadataJson<RawAllLiquidationsResponse>(`${LIQUIDATIONS_SERVER_URL_V2}/all?zz=19`)
 		),
 		fetchNamedMetadataSource(
 			'bridges metadata API',
@@ -144,7 +144,7 @@ export async function fetchCoreMetadataSources(): Promise<CoreMetadataSources> {
 		fetchNamedMetadataSource('pre-IPO company routes API', fetchPreIpoCompanyIds()),
 		fetchNamedMetadataSource(
 			'token filter metadata',
-			fetchMetadataJson<TokenFilterMetadataArtifact>(`${datasetsBase}/tokenlist/filters.json?zz=18`)
+			fetchMetadataJson<TokenFilterMetadataArtifact>(`${datasetsBase}/tokenlist/filters.json?zz=19`)
 		)
 	])
 

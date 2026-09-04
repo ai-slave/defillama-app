@@ -45,7 +45,7 @@ function createEquitiesUrl(
 	if (params?.timeframe) {
 		url.searchParams.set('timeframe', params.timeframe)
 	}
-	url.searchParams.set('zz', '16')
+	url.searchParams.set('zz', '19')
 
 	return url.toString()
 }

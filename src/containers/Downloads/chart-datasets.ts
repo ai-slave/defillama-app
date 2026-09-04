@@ -713,7 +713,7 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 		category: 'TVL',
 		paramType: 'protocol',
 		paramLabel: 'Protocol',
-		optionsUrl: `${SERVER_URL}/lite/protocols2?zz=18`,
+		optionsUrl: `${SERVER_URL}/lite/protocols2?zz=19`,
 		extractOptions: extractLiteProtocolOptions,
 		buildUrl: (param: string) => `${V2_SERVER_URL}/chart/tvl/protocol/${encodeURIComponent(param)}`,
 		extractRows: extractTimestampValuePairs,
@@ -726,7 +726,7 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 		category: 'TVL',
 		paramType: 'protocol',
 		paramLabel: 'Protocol',
-		optionsUrl: `${SERVER_URL}/lite/protocols2?zz=18`,
+		optionsUrl: `${SERVER_URL}/lite/protocols2?zz=19`,
 		extractOptions: extractActiveLoansProtocolOptions,
 		buildUrl: (param: string) => `${V2_SERVER_URL}/chart/tvl/protocol/${encodeURIComponent(param)}?key=borrowed`,
 		extractRows: extractTimestampValuePairs

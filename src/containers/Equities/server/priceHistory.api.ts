@@ -19,7 +19,7 @@ export function buildEquitiesPriceHistoryUpstreamUrl(query: ApiQuery): string | 
 	url.searchParams.set('ticker', ticker)
 	url.searchParams.set('country', country)
 	url.searchParams.set('timeframe', toEquitiesPriceHistoryApiTimeframe(timeframe))
-	url.searchParams.set('zz', '16')
+	url.searchParams.set('zz', '19')
 	return url.toString()
 }
 
