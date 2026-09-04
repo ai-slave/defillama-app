@@ -381,13 +381,11 @@ function buildTokenMarketData(
 }
 
 function buildTreasurySummary(
-	treasury: {
-		tokenBreakdowns?: { ownTokens: number; stablecoins: number; majors: number; others: number }
-	} | null
+	treasury: { tokenBreakdowns: { ownTokens: number; stablecoins: number; majors: number; others: number } } | null
 ): TokenOverviewTreasury | null {
-	if (!treasury?.tokenBreakdowns) return null
+	if (!treasury) return null
 
-	const { majors = 0, stablecoins = 0, ownTokens = 0, others = 0 } = treasury.tokenBreakdowns
+	const { majors, stablecoins, ownTokens, others } = treasury.tokenBreakdowns
 
 	return {
 		majors,

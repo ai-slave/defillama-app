@@ -17,7 +17,6 @@ const mocks = vi.hoisted(() => ({
 	fetchRWAStats: vi.fn(),
 	fetchStablecoinAssetsApi: vi.fn(),
 	getStablecoinChainMcapSummary: vi.fn(),
-	fetchTreasuries: vi.fn(),
 	getSponsoredResearchReports: vi.fn(),
 	fetchJson: vi.fn(),
 	recordOptionalPageDataFailure: vi.fn(),
@@ -65,7 +64,6 @@ vi.mock('~/containers/Stablecoins/api', () => ({ fetchStablecoinAssetsApi: mocks
 vi.mock('~/containers/Stablecoins/queries.server', () => ({
 	getStablecoinChainMcapSummary: mocks.getStablecoinChainMcapSummary
 }))
-vi.mock('~/containers/Treasuries/api', () => ({ fetchTreasuries: mocks.fetchTreasuries }))
 vi.mock('~/containers/Articles/api', () => ({ getSponsoredResearchReports: mocks.getSponsoredResearchReports }))
 vi.mock('~/utils/async', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('~/utils/async')>()
@@ -115,7 +113,6 @@ function resetMocks() {
 	mocks.fetchRWAStats.mockResolvedValue(null)
 	mocks.fetchStablecoinAssetsApi.mockResolvedValue({ peggedAssets: [], chains: [] })
 	mocks.getStablecoinChainMcapSummary.mockResolvedValue(null)
-	mocks.fetchTreasuries.mockResolvedValue([])
 	mocks.getSponsoredResearchReports.mockResolvedValue({ sponsor: null, reports: [] })
 	mocks.fetchJson.mockResolvedValue(null)
 	mocks.recordOptionalPageDataFailure.mockClear()

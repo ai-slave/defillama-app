@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { ParentProtocolLite, ProtocolLite } from '~/containers/ProtocolLists/api.types'
 import { getFastJsonTimeoutMs } from '~/utils/async'
 import type { IProtocolMetadata } from '~/utils/metadata/types'
+import type { IProtocolExpenses } from '../api.types'
+import { buildProtocolExpenseRows } from '../expenses'
 
 const fetchAdapterProtocolChartData = vi.hoisted(() => vi.fn())
 const fetchAdapterProtocolMetrics = vi.hoisted(() => vi.fn().mockResolvedValue({}))
@@ -34,6 +37,7 @@ const fetchProtocolTvlChart = vi.hoisted(() => vi.fn().mockResolvedValue([]))
 const fetchOracleMetrics = vi.hoisted(() => vi.fn().mockResolvedValue(null))
 const fetchOracleProtocolChart = vi.hoisted(() => vi.fn().mockResolvedValue([]))
 const fetchTreasuries = vi.hoisted(() => vi.fn().mockResolvedValue([]))
+const fetchProtocolExpenses = vi.hoisted(() => vi.fn().mockResolvedValue([]))
 const fetchProtocols = vi.hoisted(() => vi.fn().mockResolvedValue({ protocols: [], chains: [], parentProtocols: [] }))
 const fetchJson = vi.hoisted(() => vi.fn().mockResolvedValue({ content_elements: [] }))
 const getTokenMarketSummaryByGeckoId = vi.hoisted(() => vi.fn().mockResolvedValue(null))
@@ -104,7 +108,7 @@ vi.mock('~/utils/optionalPageData', () => ({
 }))
 
 vi.mock('../api', () => ({
-	fetchProtocolExpenses: vi.fn().mockResolvedValue([]),
+	fetchProtocolExpenses,
 	fetchProtocolOverviewMetrics,
 	fetchProtocolTvlChart
 }))
@@ -126,6 +130,8 @@ describe('getProtocolOverviewPageData', () => {
 		fetchOracleProtocolChart.mockClear()
 		fetchTreasuries.mockResolvedValue([])
 		fetchTreasuries.mockClear()
+		fetchProtocolExpenses.mockResolvedValue([])
+		fetchProtocolExpenses.mockClear()
 		fetchProtocols.mockResolvedValue({
 			protocols: [],
 			chains: [],
@@ -808,6 +814,74 @@ describe('getProtocolOverviewPageData', () => {
 		expect(optionalPageData).toHaveBeenCalledWith('protocol:test-protocol:treasury', expect.any(Function), null)
 	})
 
+	it('keeps a present all-zero Treasury distinct from an absent Treasury', async () => {
+		fetchTreasuries.mockResolvedValueOnce([
+			{
+				id: 'test-protocol-treasury',
+				name: 'Test Protocol (treasury)',
+				logo: '',
+				slug: 'test-protocol-(treasury)',
+				tvl: 0,
+				chainTvls: {},
+				tokenBreakdowns: { majors: 0, stablecoins: 0, ownTokens: 0, others: 0 },
+				mcap: null
+			}
+		])
+		const { getProtocolOverviewPageData } = await import('../queries')
+
+		const data = await getProtocolOverviewPageData({
+			protocolId: 'test-protocol',
+			currentProtocolMetadata: {
+				displayName: 'Test Protocol',
+				treasury: true
+			} satisfies IProtocolMetadata,
+			chainMetadata: {},
+			tokenlist: {},
+			cgExchangeIdentifiers: [],
+			emissionsSupplyMetrics: {},
+			yieldsSnapshot
+		})
+
+		expect(data.treasury).toEqual({ majors: 0, stablecoins: 0, ownTokens: 0, others: 0, total: 0 })
+	})
+
+	it('preserves signed expense categories and missing optional metadata', async () => {
+		fetchProtocolExpenses.mockResolvedValueOnce([
+			{
+				protocolId: 'test-protocol',
+				annualUsdCost: { operations: 100, adjustment: -25 },
+				sources: null,
+				lastUpdate: '2026-08-30'
+			}
+		])
+		const { getProtocolOverviewPageData } = await import('../queries')
+
+		const data = await getProtocolOverviewPageData({
+			protocolId: 'test-protocol',
+			currentProtocolMetadata: {
+				displayName: 'Test Protocol',
+				expenses: true
+			} satisfies IProtocolMetadata,
+			chainMetadata: {},
+			tokenlist: {},
+			cgExchangeIdentifiers: [],
+			emissionsSupplyMetrics: {},
+			yieldsSnapshot
+		})
+
+		expect(data.expenses).toEqual({
+			headcount: null,
+			annualUsdCost: [
+				['Operations', 100],
+				['Adjustment', -25]
+			],
+			total: 75,
+			sources: null,
+			notes: null,
+			lastUpdate: '2026-08-30'
+		})
+	})
+
 	it('builds protocol page data when optional yields data fails', async () => {
 		const { getProtocolOverviewPageData } = await import('../queries')
 
@@ -986,5 +1060,93 @@ describe('getProtocolOverviewPageData', () => {
 		})
 
 		expect(data.outstandingFDV).toBe(0)
+	})
+})
+
+const expenseProtocol = {
+	name: 'Child Protocol',
+	symbol: 'CHILD',
+	logo: null,
+	url: '',
+	chains: [],
+	chainTvls: {},
+	tvl: null,
+	tvlPrevDay: null,
+	tvlPrevWeek: null,
+	tvlPrevMonth: null,
+	mcap: null,
+	defillamaId: '10',
+	geckoId: null,
+	category: 'Dexs'
+} satisfies ProtocolLite
+
+const expenseParentProtocol = {
+	id: 'parent#example',
+	name: 'Parent Protocol',
+	chains: [],
+	gecko_id: null,
+	mcap: null,
+	logo: ''
+} satisfies ParentProtocolLite
+
+describe('Protocol Expenses rows', () => {
+	it('joins child and parent identities and sums signed whole-USD categories', () => {
+		const expenses: IProtocolExpenses[] = [
+			{
+				protocolId: '10',
+				headcount: 0,
+				annualUsdCost: { salaries: 100, adjustment: -25 },
+				sources: [],
+				lastUpdate: '2026-01-01'
+			},
+			{
+				protocolId: 'parent#example',
+				annualUsdCost: { operations: 200 },
+				sources: null,
+				lastUpdate: '2026-01-02'
+			}
+		]
+
+		expect(
+			buildProtocolExpenseRows({
+				expenses,
+				protocols: [expenseProtocol],
+				parentProtocols: [expenseParentProtocol]
+			})
+		).toEqual([
+			{
+				name: 'Parent Protocol',
+				protocol: { ...expenseParentProtocol, defillamaId: 'parent#example' },
+				headcount: null,
+				sources: null,
+				sumAnnualUsdExpenses: 200
+			},
+			{
+				name: 'Child Protocol',
+				protocol: expenseProtocol,
+				headcount: 0,
+				sources: [],
+				sumAnnualUsdExpenses: 75
+			}
+		])
+	})
+
+	it('keeps a successful empty population empty', () => {
+		expect(buildProtocolExpenseRows({ expenses: [], protocols: [expenseProtocol], parentProtocols: [] })).toEqual([])
+	})
+
+	it('fails page construction when producer identity has no protocol metadata', () => {
+		const expenses: IProtocolExpenses[] = [
+			{
+				protocolId: 'missing',
+				annualUsdCost: { operations: 1 },
+				sources: null,
+				lastUpdate: '2026-01-01'
+			}
+		]
+
+		expect(() => buildProtocolExpenseRows({ expenses, protocols: [], parentProtocols: [] })).toThrow(
+			'Protocol Expenses metadata is missing for missing'
+		)
 	})
 })

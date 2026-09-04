@@ -191,8 +191,7 @@ export interface IProtocolExpenses {
 	protocolId: string
 	headcount?: number
 	annualUsdCost: Record<string, number>
-	annualTokenCosts?: Record<string, Record<string, number>>
-	sources?: Array<string> | null
+	sources: Array<string> | null
 	notes?: Array<string> | null
-	lastUpdate?: string | null
+	lastUpdate: string
 }

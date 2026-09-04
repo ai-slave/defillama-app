@@ -208,7 +208,6 @@ export function Stats(props: IStatsProps) {
 					perps={props.perps}
 					inflows={props.inflows}
 					users={props.users}
-					treasury={props.treasury}
 					chainRaises={props.chainRaises}
 					chainAssets={props.chainAssets}
 					nfts={props.nfts}

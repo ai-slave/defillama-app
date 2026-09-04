@@ -40,7 +40,6 @@ interface KeyMetricsProps {
 	perps: IChainOverviewData['perps']
 	inflows: IChainOverviewData['inflows']
 	users: IChainOverviewData['users']
-	treasury: IChainOverviewData['treasury']
 	chainRaises: IChainOverviewData['chainRaises']
 	chainAssets: IChainOverviewData['chainAssets']
 	nfts: IChainOverviewData['nfts']
@@ -155,7 +154,6 @@ export const KeyMetrics = memo(function KeyMetrics(props: KeyMetricsProps) {
 					/>
 				) : null}
 				<ActiveAddresses users={props.users} />
-				<TreasurySection treasury={props.treasury} />
 				<RaisesSection chainRaises={props.chainRaises} />
 				<BridgedTvlSection chainAssets={props.chainAssets} tvlSettingsGovtokens={props.tvlSettingsGovtokens} />
 				{props.nfts ? (
@@ -360,58 +358,6 @@ function ActiveAddresses({ users }: { users: IChainOverviewData['users'] }) {
 				<ChainSubMetricRow
 					label="Transactions (24h)"
 					value={formatCompactNumber(users.transactions, {
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					})}
-				/>
-			) : null}
-		</ChainMetricSection>
-	)
-}
-
-function TreasurySection({ treasury }: { treasury: IChainOverviewData['treasury'] }) {
-	if (!treasury) return null
-
-	return (
-		<ChainMetricSection
-			label="Treasury"
-			value={formatUsd(treasury.tvl, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
-		>
-			{treasury.tokenBreakdowns?.stablecoins != null ? (
-				<ChainSubMetricRow
-					label="Stablecoins"
-					value={formatUsd(treasury.tokenBreakdowns.stablecoins, {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					})}
-				/>
-			) : null}
-			{treasury.tokenBreakdowns?.majors != null ? (
-				<ChainSubMetricRow
-					label="Major Tokens (ETH, BTC)"
-					value={formatUsd(treasury.tokenBreakdowns.majors, {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					})}
-				/>
-			) : null}
-			{treasury.tokenBreakdowns?.others != null ? (
-				<ChainSubMetricRow
-					label="Other Tokens"
-					value={formatUsd(treasury.tokenBreakdowns.others, {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					})}
-				/>
-			) : null}
-			{treasury.tokenBreakdowns?.ownTokens != null ? (
-				<ChainSubMetricRow
-					label="Own Tokens"
-					value={formatUsd(treasury.tokenBreakdowns.ownTokens, {
-						compact: true,
 						minimumCompactValue: 1_000_000,
 						compactSuffix: 'lowercase'
 					})}

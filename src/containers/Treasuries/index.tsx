@@ -7,7 +7,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { Hovercard } from '~/ui/Hovercard'
 import { getDominancePercent } from '~/utils'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
-import type { ITreasuryRow } from './types'
+import type { ITreasuryRow, TreasuryTokenBreakdowns } from './types'
 
 const columnHelper = createColumnHelper<ITreasuryRow>()
 
@@ -34,7 +34,7 @@ export function Treasuries({ data, entity }: { data: ITreasuryRow[]; entity: boo
 			header={'Treasuries'}
 			headingAs="h1"
 			sortingState={sortingState}
-			csvFileName="treasuries"
+			csvFileName={entity ? 'entities' : 'treasuries'}
 		/>
 	)
 }
@@ -44,19 +44,20 @@ const columns = [
 		header: 'Name',
 		enableSorting: false,
 		cell: ({ getValue, row }) => {
-			const name = getValue().split(' (treasury)')[0]
-			const slug = row.original.slug.split('-(treasury)')[0]
+			const name = getValue()
+			const protocolHref = row.original.protocolHref
 
 			return (
 				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
-					<TokenLogo name={name} kind="token" data-lgonly alt={`Logo of ${name}`} />
-					<BasicLink
-						href={`/protocol/${slug}?treasury=true&tvl=false`}
-						className="truncate text-sm font-medium text-link"
-					>
-						{name}
-					</BasicLink>
+					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${name}`} />
+					{protocolHref ? (
+						<BasicLink href={protocolHref} className="truncate text-sm font-medium text-link">
+							{name}
+						</BasicLink>
+					) : (
+						<span className="truncate text-sm font-medium">{name}</span>
+					)}
 				</span>
 			)
 		},
@@ -70,24 +71,19 @@ const columns = [
 		enableSorting: false,
 		cell: (info) => {
 			const breakdown = info.getValue()
-			const entries = Object.entries(breakdown) as Array<[keyof ITreasuryRow['tokenBreakdowns'], number]>
-			let totalBreakdown = 0
-
-			for (const [, val] of entries) {
-				totalBreakdown += val
-			}
-
-			const breakdownDominance = new Map<keyof ITreasuryRow['tokenBreakdowns'], number>()
-
-			for (const [key, val] of entries) {
-				breakdownDominance.set(key, getDominancePercent(val, totalBreakdown))
-			}
-
-			const dominance = Array.from(breakdownDominance.entries()).sort((a, b) => b[1] - a[1])
+			const totalBreakdown = breakdown.stablecoins + breakdown.majors + breakdown.ownTokens + breakdown.others
 
 			if (totalBreakdown < 1) {
 				return null
 			}
+
+			const dominance: Array<[keyof TreasuryTokenBreakdowns, number]> = [
+				['stablecoins', getDominancePercent(breakdown.stablecoins, totalBreakdown)],
+				['majors', getDominancePercent(breakdown.majors, totalBreakdown)],
+				['ownTokens', getDominancePercent(breakdown.ownTokens, totalBreakdown)],
+				['others', getDominancePercent(breakdown.others, totalBreakdown)]
+			]
+			dominance.sort((a, b) => b[1] - a[1])
 
 			return (
 				<Hovercard
@@ -115,7 +111,7 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor((row) => row.stablecoins ?? undefined, {
+	columnHelper.accessor((row) => row.tokenBreakdowns.stablecoins, {
 		id: 'stablecoins',
 		header: 'Stablecoins',
 		cell: (info) =>
@@ -125,7 +121,7 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor((row) => row.majors ?? undefined, {
+	columnHelper.accessor((row) => row.tokenBreakdowns.majors, {
 		id: 'majors',
 		header: 'Majors (BTC, ETH)',
 		cell: (info) =>
@@ -135,7 +131,7 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor((row) => row.ownTokens ?? undefined, {
+	columnHelper.accessor((row) => row.tokenBreakdowns.ownTokens, {
 		id: 'ownTokens',
 		header: 'Own Tokens',
 		cell: (info) =>
@@ -145,7 +141,7 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor((row) => row.others ?? undefined, {
+	columnHelper.accessor((row) => row.tokenBreakdowns.others, {
 		id: 'others',
 		header: 'Others',
 		cell: (info) =>
@@ -155,7 +151,7 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor((row) => row.coreTvl ?? undefined, {
+	columnHelper.accessor((row) => row.coreTvl, {
 		id: 'coreTvl',
 		header: 'Total excl. own tokens',
 		cell: (info) =>
@@ -165,7 +161,7 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor((row) => row.tvl ?? undefined, {
+	columnHelper.accessor((row) => row.totalTvl, {
 		id: 'tvl',
 		header: 'Total Treasury',
 		cell: (info) =>
@@ -175,7 +171,7 @@ const columns = [
 			align: 'end'
 		}
 	}),
-	columnHelper.accessor((row) => row.mcap ?? undefined, {
+	columnHelper.accessor((row) => (row.mcap === 0 ? undefined : (row.mcap ?? undefined)), {
 		id: 'mcap',
 		header: 'Mcap',
 		cell: (info) =>

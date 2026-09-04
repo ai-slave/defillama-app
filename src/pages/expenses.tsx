@@ -5,8 +5,8 @@ import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
-import type { ParentProtocolLite, ProtocolLite } from '~/containers/ProtocolLists/api.types'
 import { fetchProtocolExpenses } from '~/containers/ProtocolOverview/api'
+import { buildProtocolExpenseRows } from '~/containers/ProtocolOverview/expenses'
 import Layout from '~/layout'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
@@ -18,28 +18,8 @@ import { withPerformanceLogging } from '~/utils/perf'
 export const getStaticProps = withPerformanceLogging('expenses', async () => {
 	const [{ protocols, parentProtocols }, expenses] = await Promise.all([fetchProtocols(), fetchProtocolExpenses()])
 
-	const protocolById = new Map<string, ProtocolLite | (ParentProtocolLite & { defillamaId: string })>()
-	for (const p of protocols) protocolById.set(p.defillamaId, p)
-	for (const p of parentProtocols) protocolById.set(p.id, { ...p, defillamaId: p.id })
-
 	return {
-		props: {
-			expenses: expenses
-				.map((e) => {
-					const protocol = protocolById.get(e.protocolId) ?? null
-					const sumAnnualUsdExpenses = Object.values(e.annualUsdCost).reduce(
-						(sum: number, x: number) => sum + x
-					) as number
-					return {
-						...e,
-						name: protocol?.name ?? '',
-						protocol,
-						avgCostPerFTE: sumAnnualUsdExpenses / e.headcount,
-						sumAnnualUsdExpenses
-					}
-				})
-				.sort((a, b) => b.sumAnnualUsdExpenses - a.sumAnnualUsdExpenses)
-		},
+		props: { expenses: buildProtocolExpenseRows({ expenses, parentProtocols, protocols }) },
 		revalidate: maxAgeForNext([22])
 	}
 })
@@ -128,16 +108,18 @@ const columns = [
 	columnHelper.accessor('sources', {
 		header: 'Source',
 		enableSorting: false,
-		cell: ({ getValue }) =>
-			getValue() ? (
+		cell: ({ getValue }) => {
+			const source = getValue()?.[0]
+			return source ? (
 				<Tooltip
-					content={getValue()[0]}
-					render={<a href={getValue()[0]} target="_blank" rel="noopener noreferrer" aria-label="View source" />}
+					content={source}
+					render={<a href={source} target="_blank" rel="noopener noreferrer" aria-label="View source" />}
 					className="hover-wash flex shrink-0 items-center justify-center rounded-md bg-brand-muted px-2.5 py-1 label-sm whitespace-nowrap text-link"
 				>
 					<Icon name="arrow-up-right" height={14} width={14} className="shrink-0" />
 				</Tooltip>
-			) : null,
+			) : null
+		},
 		meta: {
 			headerClassName: 'w-[90px]'
 		}

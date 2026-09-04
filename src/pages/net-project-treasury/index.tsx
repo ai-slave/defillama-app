@@ -1,4 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table'
+import type { InferGetStaticPropsType } from 'next'
 import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -21,7 +22,7 @@ const pageName = ['Protocols', 'ranked by', 'Net Project Treasury']
 const DEFAULT_SORTING_STATE = [{ id: 'netTreasury', desc: true }]
 const columnHelper = createColumnHelper<INetProjectTreasury>()
 
-const NetProjectTreasuries = (props) => {
+const NetProjectTreasuries = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
 	return (
 		<Layout
 			title="Net Treasury Rankings - Excl. Native Token - DefiLlama"

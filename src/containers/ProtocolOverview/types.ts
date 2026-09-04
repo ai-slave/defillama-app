@@ -162,11 +162,11 @@ export interface IProtocolOverviewPageData {
 	raises: Array<Raise> | null
 	expenses: {
 		headcount: number | null
-		total: number | null
+		total: number
 		annualUsdCost: Array<[string, number]>
-		sources?: Array<string> | null
-		notes?: Array<string> | null
-		lastUpdate?: string | null
+		sources: Array<string> | null
+		notes: Array<string> | null
+		lastUpdate: string
 	} | null
 	tokenCGData?: {
 		price: {

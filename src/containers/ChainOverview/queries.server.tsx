@@ -21,7 +21,6 @@ import type { IRWAStatsResponse } from '~/containers/RWA/api.types'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
 import { fetchStablecoinAssetsApi } from '~/containers/Stablecoins/api'
 import { getStablecoinChainMcapSummary } from '~/containers/Stablecoins/queries.server'
-import { fetchTreasuries } from '~/containers/Treasuries/api'
 import { feeRevenueMetrics, shouldFetchChainOverviewFeeRevenueMetric } from '~/metrics/feesRevenue'
 import { getPercentChange, lastDayOfWeek, slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
@@ -282,7 +281,6 @@ export async function getChainOverviewData({
 			transactions,
 			newUsers,
 			raisesData,
-			treasuriesData,
 			cgData,
 			nftVolumesData,
 			chainAssets,
@@ -360,7 +358,6 @@ export async function getChainOverviewData({
 				{ fallback: null }
 			),
 			timePhase('raises', () => fetchRaises(), { fallback: { raises: [] } }),
-			timePhase('treasuries', () => (chain === 'All' ? Promise.resolve(null) : fetchTreasuries()), { fallback: null }),
 			timePhase(
 				'coingecko',
 				() =>
@@ -534,13 +531,6 @@ export async function getChainOverviewData({
 		const chainRaises =
 			raisesData?.raises?.filter((r) => r.defillamaId === `chain#${currentChainMetadata.name.toLowerCase()}`) ?? null
 
-		const treasury =
-			treasuriesData?.find(
-				(t) =>
-					t?.name?.toLowerCase().startsWith(`${currentChainMetadata.name.toLowerCase()}`) &&
-					['Services', 'Chain', 'Foundation'].includes(t?.category)
-			) ?? null
-
 		let topProtocolsByFeesChart: Array<[string, number, string]> | null = null
 		if (feeProtocols?.length) {
 			const protocolsByFees: Array<{ protocol: (typeof allProtocols)[number]; total24h: number }> = []
@@ -689,7 +679,6 @@ export async function getChainOverviewData({
 			},
 			users: { activeUsers, newUsers, transactions },
 			inflows: inflowsData,
-			treasury: treasury ? { tvl: treasury.tvl ?? null, tokenBreakdowns: treasury.tokenBreakdowns ?? null } : null,
 			chainRaises: chainRaises ?? null,
 			chainAssets: formatChainAssets(chainAssets),
 			devMetrics: null,

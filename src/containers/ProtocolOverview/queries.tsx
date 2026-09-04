@@ -807,9 +807,9 @@ export const getProtocolOverviewPageData = async ({
 					headcount: expenses.headcount ?? null,
 					annualUsdCost,
 					total,
-					sources: expenses.sources ?? null,
+					sources: expenses.sources,
 					notes: expenses.notes ?? null,
-					lastUpdate: expenses.lastUpdate ?? null
+					lastUpdate: expenses.lastUpdate
 				}
 			})()
 		: null

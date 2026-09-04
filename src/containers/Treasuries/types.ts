@@ -1,24 +1,18 @@
-export interface ITreasuryRow {
-	name: string
-	slug: string
-	logo: string
-	category: string
-	tokenBreakdowns: {
-		ownTokens: number
-		stablecoins: number
-		majors: number
-		others: number
-	}
+export type TreasuryTokenBreakdowns = {
 	ownTokens: number
 	stablecoins: number
 	majors: number
 	others: number
+}
+
+export interface ITreasuryRow {
+	name: string
+	logo: string
+	protocolHref: string | null
+	tokenBreakdowns: TreasuryTokenBreakdowns
 	coreTvl: number
-	tvl: number
+	totalTvl: number
 	mcap: number | null
-	change_1d: number | null
-	change_7d: number | null
-	change_1m?: number | null
 }
 
 export interface INetProjectTreasury {

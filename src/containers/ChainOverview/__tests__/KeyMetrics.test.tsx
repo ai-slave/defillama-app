@@ -30,7 +30,6 @@ const baseProps: React.ComponentProps<typeof KeyMetrics> = {
 	perps: { total24h: null, total7d: null, change_7dover7d: null },
 	inflows: null,
 	users: { activeUsers: null, newUsers: null, transactions: null },
-	treasury: null,
 	chainRaises: null,
 	chainAssets: null,
 	nfts: null,
