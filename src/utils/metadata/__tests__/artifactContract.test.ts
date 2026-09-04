@@ -61,10 +61,10 @@ function createPayload(overrides: Partial<CoreMetadataPayload> = {}): CoreMetada
 		equitiesCompanyRoutes: [{ ticker: 'NVDA', country: 'US' }],
 		preIpoCompanyIds: ['anthropic'],
 		tokenFilterMetadata: {
-			schemaVersion: 1,
+			schemaVersion: 2,
 			generatedAt: 1,
 			sources: { coingeckoCatalogGeneratedAt: 1, rankingsUpdatedAt: null },
-			tokens: { aave: { chains: ['ethereum'], categories: ['governance'] } },
+			tokens: { aave: { chains: ['ethereum'], primaryChain: null, categories: ['governance'] } },
 			categories: [{ id: 'governance', label: 'Governance' }]
 		},
 		...overrides
@@ -255,5 +255,29 @@ describe('routes for renamed protocols', () => {
 
 			expect(metadata.cexRouteIdBySlug.shared).toBe('current')
 		}
+	})
+})
+
+describe('token filter schema compatibility', () => {
+	it('converts legacy native chains only at the artifact boundary', () => {
+		const artifact = METADATA_ARTIFACT_REGISTRY.tokenFilterMetadata.parse({
+			...createPayload().tokenFilterMetadata,
+			schemaVersion: 1,
+			tokens: {
+				aave: { chains: ['ethereum', 'base'], nativeChains: ['ethereum', 'base'], categories: ['governance'] },
+				missing: { chains: ['base'], categories: [] }
+			}
+		})
+		expect(artifact.schemaVersion).toBe(2)
+		expect(artifact.tokens.aave.primaryChain).toBe('ethereum')
+		expect(artifact.tokens.aave).not.toHaveProperty('nativeChains')
+		expect(artifact.tokens.missing.primaryChain).toBeNull()
+	})
+
+	it('preserves schema 2 primary chains and rejects unsupported schemas', () => {
+		const parse = METADATA_ARTIFACT_REGISTRY.tokenFilterMetadata.parse
+		const artifact = createPayload().tokenFilterMetadata
+		expect(parse(artifact)).toBe(artifact)
+		expect(parse({ ...artifact, schemaVersion: 3 }).tokens).toEqual({})
 	})
 })

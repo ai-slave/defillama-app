@@ -98,10 +98,10 @@ function createCoreMetadataSources(overrides: Record<string, unknown> = {}) {
 		equitiesCompanyRoutes: [{ ticker: 'NVDA', country: 'US' }],
 		preIpoCompanyIds: ['anthropic'],
 		tokenFilterMetadata: {
-			schemaVersion: 1,
+			schemaVersion: 2,
 			generatedAt: 1,
 			sources: { coingeckoCatalogGeneratedAt: 1, rankingsUpdatedAt: null },
-			tokens: { aave: { chains: ['ethereum'], nativeChains: ['ethereum'], categories: ['governance'] } },
+			tokens: { aave: { chains: ['ethereum'], primaryChain: 'ethereum', categories: ['governance'] } },
 			categories: [{ id: 'governance', label: 'Governance' }]
 		},
 		...overrides
@@ -146,7 +146,7 @@ describe('fetchCoreMetadata', () => {
 		expect(payload.preIpoCompanyIds).toEqual(['anthropic'])
 		expect(payload.tokenFilterMetadata.tokens.aave).toEqual({
 			chains: ['ethereum'],
-			nativeChains: ['ethereum'],
+			primaryChain: 'ethereum',
 			categories: ['governance']
 		})
 		expect(payload.rwaPlatformsIndex).toEqual({ generatedAt: 0, byPid: {}, platforms: {} })

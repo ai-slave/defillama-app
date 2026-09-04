@@ -174,7 +174,7 @@ export interface TokensChartDataset {
 export interface TokensSourceRow extends TokensRowCore {
 	searchKey: string
 	chains: string[]
-	nativeChains: string[]
+	primaryChain: string | null
 	categories: string[]
 }
 

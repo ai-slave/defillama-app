@@ -414,7 +414,7 @@ export function buildTokensSourceRows({
 				: null
 		const filterMembership = metadata.tokenFilterMetadata.tokens[geckoId]
 		const chains = filterMembership?.chains ?? []
-		const nativeChains = filterMembership?.nativeChains ?? []
+		const primaryChain = filterMembership?.primaryChain ?? null
 		const categories = filterMembership?.categories ?? []
 		const row: TokensSourceRow = {
 			id: token.id,
@@ -465,7 +465,7 @@ export function buildTokensSourceRows({
 			isStablecoin: categories.includes('stablecoins'),
 			searchKey: getSearchKey(token, record),
 			chains,
-			nativeChains,
+			primaryChain,
 			categories
 		}
 		addStats(stats, row)

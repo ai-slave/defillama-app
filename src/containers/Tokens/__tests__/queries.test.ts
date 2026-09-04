@@ -41,7 +41,7 @@ vi.mock('~/utils/metadata', () => ({
 		protocolMetadata: {},
 		emissionsSupplyMetrics: {},
 		tokenFilterMetadata: {
-			schemaVersion: 1,
+			schemaVersion: 2,
 			generatedAt: 0,
 			sources: { coingeckoCatalogGeneratedAt: 0, rankingsUpdatedAt: null },
 			tokens: {},
@@ -60,7 +60,7 @@ function tokenFilterMetadata(
 	tokens: MetadataCache['tokenFilterMetadata']['tokens'] = {}
 ): MetadataCache['tokenFilterMetadata'] {
 	return {
-		schemaVersion: 1,
+		schemaVersion: 2,
 		generatedAt: 0,
 		sources: { coingeckoCatalogGeneratedAt: 0, rankingsUpdatedAt: null },
 		tokens,
@@ -104,7 +104,7 @@ describe('buildTokenFilterOptions', () => {
 				['solana', 'Solana']
 			]),
 			tokenFilterMetadata: {
-				schemaVersion: 1,
+				schemaVersion: 2,
 				generatedAt: 1,
 				sources: { coingeckoCatalogGeneratedAt: 1, rankingsUpdatedAt: null },
 				tokens: {},
@@ -207,7 +207,7 @@ describe('buildTokensChartDataset', () => {
 				protocolMetadata: {},
 				emissionsSupplyMetrics: {},
 				tokenFilterMetadata: tokenFilterMetadata({
-					beta: { chains: [], categories: ['stablecoins'] }
+					beta: { chains: [], primaryChain: null, categories: ['stablecoins'] }
 				})
 			} as unknown as MetadataCache,
 			nowSec: 1_800_000_000
@@ -591,7 +591,7 @@ describe('buildTokensSourceRows', () => {
 				protocolMetadata: {},
 				emissionsSupplyMetrics: {},
 				tokenFilterMetadata: tokenFilterMetadata({
-					tether: { chains: ['ethereum'], nativeChains: ['ethereum'], categories: ['stablecoins'] }
+					tether: { chains: ['ethereum'], primaryChain: 'ethereum', categories: ['stablecoins'] }
 				})
 			} as unknown as MetadataCache,
 			nowSec: 1_800_000_000
@@ -599,7 +599,7 @@ describe('buildTokensSourceRows', () => {
 
 		const flagged = buildTokensSourceRows({ ...base, tokens })
 		expect(flagged.rows.map((row) => row.isStablecoin)).toEqual([true, false])
-		expect(flagged.rows.map((row) => row.nativeChains)).toEqual([['ethereum'], []])
+		expect(flagged.rows.map((row) => row.primaryChain)).toEqual(['ethereum', null])
 	})
 
 	it('links rights to the protocol page when no token-directory route exists', () => {

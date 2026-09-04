@@ -104,7 +104,7 @@ function metadataFixture(): MetadataCache {
 		preIpoCompanyIds: [],
 		preIpoCompanyIdsSet: new Set(),
 		tokenFilterMetadata: {
-			schemaVersion: 1,
+			schemaVersion: 2,
 			generatedAt: 0,
 			sources: { coingeckoCatalogGeneratedAt: 0, rankingsUpdatedAt: null },
 			tokens: {},

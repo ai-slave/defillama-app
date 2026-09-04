@@ -36,7 +36,7 @@ function row(overrides: Partial<TokensSourceRow> & Pick<TokensSourceRow, 'id' | 
 		isStablecoin: false,
 		searchKey: `${overrides.name} ${overrides.symbol}`.toLowerCase(),
 		chains: [],
-		nativeChains: [],
+		primaryChain: null,
 		categories: [],
 		...overrides
 	}
@@ -346,14 +346,14 @@ describe('getTokensPageFromRows', () => {
 				name: 'Chainlink',
 				symbol: 'LINK',
 				chains: ['ethereum', 'robinhood'],
-				nativeChains: ['ethereum']
+				primaryChain: 'ethereum'
 			}),
 			row({
 				id: 'robinhood-native',
 				name: 'Robinhood Native',
 				symbol: 'RHN',
 				chains: ['robinhood'],
-				nativeChains: ['robinhood']
+				primaryChain: 'robinhood'
 			}),
 			row({
 				id: 'unknown-primary',
@@ -396,7 +396,7 @@ describe('getTokensPageFromRows', () => {
 
 		const matched = getPage(filterRows, { categories: 'stablecoins', pageSize: '20' })
 		expect(matched.rows[0]).not.toHaveProperty('chains')
-		expect(matched.rows[0]).not.toHaveProperty('nativeChains')
+		expect(matched.rows[0]).not.toHaveProperty('primaryChain')
 		expect(matched.rows[0]).not.toHaveProperty('categories')
 	})
 })

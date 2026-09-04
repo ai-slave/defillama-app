@@ -286,7 +286,7 @@ function toTableRow(row: TokensSourceRow, rowNumber: number): TokensTableRow {
 	const {
 		searchKey: _searchKey,
 		chains: _chains,
-		nativeChains: _nativeChains,
+		primaryChain: _primaryChain,
 		categories: _categories,
 		...tableRow
 	} = row
@@ -331,8 +331,11 @@ export function matchesTokensRowFilter(row: TokensSourceRow, filter: TokensRowFi
 		if (numericFilter.max != null && value > numericFilter.max) return false
 	}
 	const chains = filter.chains
-	const rowChains = filter.nativeOnly ? row.nativeChains : row.chains
-	if (chains != null && !rowChains.some((chain) => chains.has(chain))) return false
+	if (chains != null) {
+		if (filter.nativeOnly) {
+			if (row.primaryChain == null || !chains.has(row.primaryChain)) return false
+		} else if (!row.chains.some((chain) => chains.has(chain))) return false
+	}
 	const categories = filter.categories
 	if (categories != null && !row.categories.some((category) => categories.has(category))) return false
 	return filter.search === '' || row.searchKey.includes(filter.search)
