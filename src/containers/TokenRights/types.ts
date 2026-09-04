@@ -27,8 +27,8 @@ interface ITokenRightsOverview {
 	description: string
 	utility: string | null
 	utilityItems: string[]
-	lastUpdated: string
-	lastUpdatedLabel: string
+	lastUpdated: string | null
+	lastUpdatedLabel: string | null
 }
 
 interface ITokenRightsGovernance {

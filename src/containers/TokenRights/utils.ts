@@ -42,15 +42,16 @@ function parseMarkdownLinks(raw: string | undefined): ITokenRightsParsedLink[] {
 	const seen = new Set<string>()
 
 	for (const match of raw.matchAll(MARKDOWN_LINK_RE)) {
-		const url = match[2].trim()
+		const label = match[1]!
+		const url = match[2]!.trim()
 		if (!seen.has(url)) {
 			seen.add(url)
-			links.push({ label: match[1].trim(), url })
+			links.push({ label: label.trim(), url })
 		}
 	}
 
 	for (const match of raw.matchAll(ANGLE_BRACKET_URL_RE)) {
-		const url = match[1].trim()
+		const url = match[1]!.trim()
 		if (!seen.has(url)) {
 			seen.add(url)
 			links.push({ label: new URL(url).hostname, url })
@@ -88,20 +89,20 @@ function parseAddresses(raw: string | undefined): ITokenRightsParsedAddress[] {
 
 		if (parts.length >= 2 && parts.length % 2 === 0) {
 			for (let i = 0; i < parts.length; i += 2) {
-				results.push({ label: parts[i], value: parts[i + 1] })
+				results.push({ label: parts[i]!, value: parts[i + 1]! })
 			}
 		} else if (parts.length === 1) {
 			const stripped = line.replace(/^<|>$/g, '')
 			const colonUrl = stripped.match(/^(.+?):\s*(https?:\/\/\S+)$/i)
 			if (colonUrl) {
-				results.push({ label: colonUrl[1].trim(), value: colonUrl[2] })
+				results.push({ label: colonUrl[1]!.trim(), value: colonUrl[2]! })
 			} else {
 				results.push({ label: null, value: stripped })
 			}
 		} else {
 			const pipeMatch = line.match(PIPE_PAIR_RE)
 			if (pipeMatch) {
-				results.push({ label: pipeMatch[1], value: pipeMatch[2] })
+				results.push({ label: pipeMatch[1]!, value: pipeMatch[2]! })
 			} else {
 				results.push({ label: null, value: line })
 			}
@@ -109,14 +110,6 @@ function parseAddresses(raw: string | undefined): ITokenRightsParsedAddress[] {
 	}
 
 	return results
-}
-
-/**
- * Find a protocol entry by its DefiLlama ID. The `defillamaId` parameter is the
- * metadata cache key (e.g. "182" or "parent#aave").
- */
-export function findProtocolEntry(data: IRawTokenRightsEntry[], defillamaId: string): IRawTokenRightsEntry | null {
-	return data.find((entry) => entry['DefiLlama ID'] === defillamaId) ?? null
 }
 
 function parseTokenDisplay(tokens: string[] | null | undefined): ITokenRightsTokenDisplay & { tokens: string[] } {
@@ -158,7 +151,7 @@ export function getEquityPieTone(fundraising: string[], equityRevenueCapture: st
 
 	if (
 		fundraising.length === 0 ||
-		(fundraising.length === 1 && normalizeTokenRightsValue(fundraising[0]) === 'unknown')
+		(fundraising.length === 1 && normalizeTokenRightsValue(fundraising[0]!) === 'unknown')
 	) {
 		return 'warning'
 	}
@@ -189,7 +182,7 @@ function formatList(values: string[]): string | null {
 export function parseTokenRightsEntry(raw: IRawTokenRightsEntry): ITokenRightsData {
 	const overviewTokens = parseTokenDisplay(raw.Token)
 	const utility = optionalText(raw.Utility)
-	const lastUpdated = raw['Last Updated'].trim()
+	const lastUpdated = optionalText(raw['Last Updated'])
 	const governanceDecisionTokens = parseTokenDisplay(raw['Governance Decisions'])
 	const fundraising = raw.Fundraising ?? []
 
@@ -203,7 +196,7 @@ export function parseTokenRightsEntry(raw: IRawTokenRightsEntry): ITokenRightsDa
 			utility,
 			utilityItems: splitUtilityLabels(utility),
 			lastUpdated,
-			lastUpdatedLabel: formatDate(lastUpdated) ?? lastUpdated
+			lastUpdatedLabel: lastUpdated ? (formatDate(lastUpdated) ?? lastUpdated) : null
 		},
 		governance: {
 			summary: raw['Governance Details (Summary)']?.trim() ?? '',

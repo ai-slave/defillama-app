@@ -1,9 +1,10 @@
 import type { GetStaticPropsContext } from 'next'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
+import type { IProtocolWarningBanner } from '~/containers/ProtocolOverview/api.types'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
-import type { IProtocolOverviewPageData, IProtocolPageMetrics } from '~/containers/ProtocolOverview/types'
+import type { IProtocolPageMetrics } from '~/containers/ProtocolOverview/types'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import type { Raise } from '~/containers/Raises/model'
 import { TokenRightsByProtocol } from '~/containers/TokenRights/TokenRightsByProtocol'
@@ -21,7 +22,7 @@ type TokenRightsPageProps = {
 	otherProtocols: string[]
 	category: string | null
 	metrics: IProtocolPageMetrics
-	warningBanners: IProtocolOverviewPageData['warningBanners']
+	warningBanners: IProtocolWarningBanner[]
 	toggleOptions: Array<{ name: string; key: string }>
 	tokenRightsData: ITokenRightsData
 	raises: Raise[] | null

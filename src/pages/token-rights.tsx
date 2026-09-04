@@ -13,8 +13,8 @@ import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { VirtualTable } from '~/components/Table/Table'
 import { TokenLogo } from '~/components/TokenLogo'
+import type { AdapterChainProtocol } from '~/containers/AdapterMetrics/api.types'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
-import type { ProtocolLite, ParentProtocolLite } from '~/containers/ProtocolLists/api.types'
 import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
@@ -79,9 +79,8 @@ type TokenRightsMetadataMatch =
 
 type SkippedTokenRightsEntry = {
 	defillamaId: string | null
-	reason: 'missing_defillama_id' | 'missing_metadata' | 'missing_display_name' | 'missing_gecko_id'
+	reason: 'missing_defillama_id' | 'missing_metadata' | 'missing_display_name'
 	metadataSource?: TokenRightsMetadataMatch['source']
-	geckoId?: string
 }
 
 type TokenRightsLinkResolution =
@@ -110,19 +109,21 @@ const TOKEN_RIGHTS_FILTERS: Array<{ key: TokenRightsFilter; label: string }> = [
 const DEFAULT_TOKEN_RIGHTS_SORTING: SortingState = [{ id: 'holdersRevenue24h', desc: true }]
 
 export const getStaticProps = withPerformanceLogging('token-rights', async () => {
-	const [entries, metadataModule, holdersRevenue, { protocols: liteProtocols, parentProtocols }] = await Promise.all([
+	const [entries, metadataModule, holdersRevenueResult] = await Promise.all([
 		import('~/containers/TokenRights/server/dataset.server').then((mod) => mod.fetchTokenRightsEntries()),
 		import('~/utils/metadata'),
-		import('~/containers/AdapterMetrics/api').then((m) =>
-			m.fetchAdapterChainMetrics({
-				adapterType: ADAPTER_TYPES.FEES,
-				chain: 'All',
-				dataType: ADAPTER_DATA_TYPES.DAILY_HOLDERS_REVENUE
-			})
-		),
-		import('~/containers/ProtocolLists/api')
-			.then((m) => m.fetchProtocols())
-			.catch(() => ({ protocols: [], parentProtocols: [] }))
+		import('~/containers/AdapterMetrics/api')
+			.then((m) =>
+				m.fetchAdapterChainMetrics({
+					adapterType: ADAPTER_TYPES.FEES,
+					chain: 'All',
+					dataType: ADAPTER_DATA_TYPES.DAILY_HOLDERS_REVENUE
+				})
+			)
+			.then(
+				(data) => ({ status: 'available' as const, data }),
+				() => ({ status: 'unavailable' as const })
+			)
 	])
 
 	const { chainMetadata, protocolMetadata, tokenDirectory, cexs } = metadataModule.default as {
@@ -131,14 +132,10 @@ export const getStaticProps = withPerformanceLogging('token-rights', async () =>
 		tokenDirectory: TokenDirectory
 		cexs: ICexItem[]
 	}
-	const holdersRevenueByDefillamaId = buildHoldersRevenueByDefillamaId(
-		holdersRevenue.protocols,
-		liteProtocols,
-		parentProtocols
-	)
-	const deprecatedProtocolIds = new Set(
-		liteProtocols.filter((protocol) => protocol.deprecated).map((protocol) => protocol.defillamaId)
-	)
+	const holdersRevenueAvailable = holdersRevenueResult.status === 'available'
+	const holdersRevenueByDefillamaId = holdersRevenueAvailable
+		? buildHoldersRevenueByDefillamaId(holdersRevenueResult.data.protocols)
+		: {}
 
 	const protocols: TokenRightsListItem[] = []
 	const skippedEntries: SkippedTokenRightsEntry[] = []
@@ -149,8 +146,7 @@ export const getStaticProps = withPerformanceLogging('token-rights', async () =>
 			protocolMetadata,
 			tokenDirectory,
 			cexs,
-			holdersRevenueByDefillamaId,
-			deprecatedProtocolIds
+			holdersRevenueByDefillamaId
 		})
 
 		if (resolved.type === 'linked') {
@@ -160,14 +156,16 @@ export const getStaticProps = withPerformanceLogging('token-rights', async () =>
 		}
 	}
 
-	protocols.sort((a, b) => (b.holdersRevenue24h ?? -1) - (a.holdersRevenue24h ?? -1))
+	if (holdersRevenueAvailable) {
+		protocols.sort((a, b) => (b.holdersRevenue24h ?? -1) - (a.holdersRevenue24h ?? -1))
+	}
 	reportSkippedTokenRightsEntries(skippedEntries)
 	if (skippedEntries.length > 0) {
 		await flushTelemetry({ timeoutMs: 2000, runtime: 'build' })
 	}
 
 	return {
-		props: { protocols },
+		props: { protocols, holdersRevenueAvailable },
 		revalidate: maxAgeForNext([22])
 	}
 })
@@ -179,15 +177,13 @@ function resolveTokenRightsListItem(
 		protocolMetadata,
 		tokenDirectory,
 		cexs,
-		holdersRevenueByDefillamaId,
-		deprecatedProtocolIds
+		holdersRevenueByDefillamaId
 	}: {
 		chainMetadata: Record<string, IChainMetadata>
 		protocolMetadata: Record<string, IProtocolMetadata>
 		tokenDirectory: TokenDirectory
 		cexs: ICexItem[]
 		holdersRevenueByDefillamaId: Record<string, number>
-		deprecatedProtocolIds: Set<string>
 	}
 ): TokenRightsLinkResolution {
 	const defillamaId = entry['DefiLlama ID']?.trim() || null
@@ -232,20 +228,10 @@ function resolveTokenRightsListItem(
 		}
 	}
 
-	if (!tokenRecord && !geckoId) {
-		return {
-			type: 'skipped',
-			entry: {
-				...baseSkippedEntry,
-				reason: 'missing_gecko_id',
-				metadataSource: metadataMatch.source
-			}
-		}
-	}
-
 	if (!tokenRecord) {
 		tokenRecord = findTokenDirectoryRecordByGeckoId(tokenDirectory, geckoId)
 	}
+	const deprecated = metadataMatch.source !== 'cex' && metadataMatch.metadata.deprecated === true
 
 	if (!tokenRecord) {
 		return {
@@ -255,7 +241,7 @@ function resolveTokenRightsListItem(
 				name,
 				href: null,
 				holdersRevenueByDefillamaId,
-				deprecated: deprecatedProtocolIds.has(defillamaId)
+				deprecated
 			})
 		}
 	}
@@ -268,7 +254,7 @@ function resolveTokenRightsListItem(
 			logo: tokenRecord.logo ?? tokenIconUrl(name),
 			href: tokenRecord.route ?? null,
 			holdersRevenueByDefillamaId,
-			deprecated: deprecatedProtocolIds.has(defillamaId)
+			deprecated
 		})
 	}
 }
@@ -322,38 +308,25 @@ function buildTokenRightsListItem({
 }
 
 function buildHoldersRevenueByDefillamaId(
-	holdersRevenueProtocols: Array<{ defillamaId: string; total24h?: number | null }>,
-	liteProtocols: ProtocolLite[],
-	parentProtocols: ParentProtocolLite[]
+	holdersRevenueProtocols: Array<Pick<AdapterChainProtocol, 'defillamaId' | 'parentProtocol' | 'total24h'>>
 ): Record<string, number> {
 	const holdersRevenueByDefillamaId: Record<string, number> = {}
 	const holdersRevenueByParentId: Record<string, number> = {}
-	const liteProtocolByDefillamaId: Record<string, ProtocolLite> = {}
-	const knownParentIds: Record<string, true> = {}
-
-	for (const parent of parentProtocols) {
-		knownParentIds[parent.id] = true
-	}
-
-	for (const protocol of liteProtocols) {
-		liteProtocolByDefillamaId[protocol.defillamaId] = protocol
-	}
 
 	for (const protocol of holdersRevenueProtocols) {
 		if (protocol.total24h == null) continue
 
 		holdersRevenueByDefillamaId[protocol.defillamaId] = protocol.total24h
 
-		const liteProtocol = liteProtocolByDefillamaId[protocol.defillamaId]
-		if (liteProtocol?.parentProtocol) {
-			holdersRevenueByParentId[liteProtocol.parentProtocol] =
-				(holdersRevenueByParentId[liteProtocol.parentProtocol] ?? 0) + protocol.total24h
+		if (protocol.parentProtocol) {
+			holdersRevenueByParentId[protocol.parentProtocol] =
+				(holdersRevenueByParentId[protocol.parentProtocol] ?? 0) + protocol.total24h
 		}
 	}
 
 	for (const parentId in holdersRevenueByParentId) {
 		const parentRevenue = holdersRevenueByParentId[parentId]
-		if (parentRevenue !== undefined && holdersRevenueByDefillamaId[parentId] == null && knownParentIds[parentId]) {
+		if (parentRevenue !== undefined && holdersRevenueByDefillamaId[parentId] === undefined) {
 			holdersRevenueByDefillamaId[parentId] = parentRevenue
 		}
 	}
@@ -461,10 +434,16 @@ function countSkippedTokenRightsReasons(skippedEntries: SkippedTokenRightsEntry[
 	return counts
 }
 
-function TokenRightsPage({ protocols }: { protocols: TokenRightsListItem[] }) {
+function TokenRightsPage({
+	protocols,
+	holdersRevenueAvailable
+}: {
+	protocols: TokenRightsListItem[]
+	holdersRevenueAvailable: boolean
+}) {
 	const [activeFilters, setActiveFilters] = useState<TokenRightsFilter[]>([])
 	const [searchValue, setSearchValue] = useState('')
-	const [sorting, setSorting] = useState<SortingState>(DEFAULT_TOKEN_RIGHTS_SORTING)
+	const [sorting, setSorting] = useState<SortingState>(holdersRevenueAvailable ? DEFAULT_TOKEN_RIGHTS_SORTING : [])
 	const deferredSearchValue = useDeferredValue(searchValue)
 	const seoDescription = `Compare governance, economic, and ownership rights across ${protocols.length} DeFi protocols`
 
@@ -477,7 +456,7 @@ function TokenRightsPage({ protocols }: { protocols: TokenRightsListItem[] }) {
 	const table = useReactTable({
 		data: filteredProtocols,
 		columns,
-		state: { sorting },
+		state: { sorting, columnVisibility: { holdersRevenue24h: holdersRevenueAvailable } },
 		defaultColumn: { sortUndefined: 'last' },
 		enableSortingRemoval: true,
 		onSortingChange: (updater) => startTransition(() => setSorting(updater)),

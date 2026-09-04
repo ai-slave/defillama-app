@@ -20,7 +20,7 @@ describe('getEquityPieTone', () => {
 })
 
 describe('parseTokenRightsEntry', () => {
-	it('treats a null buybacks value from the upstream dataset as inactive', () => {
+	it('treats omitted and null buybacks values as inactive', () => {
 		const entry: IRawTokenRightsEntry = {
 			'Protocol Name': 'Aave',
 			Token: ['AAVE'],
@@ -39,6 +39,36 @@ describe('parseTokenRightsEntry', () => {
 			tokens: [],
 			displayTokens: [],
 			fallbackToken: 'N/A'
+		})
+		expect(parseTokenRightsEntry(entry).overview).toMatchObject({
+			lastUpdated: '2026-08-20',
+			lastUpdatedLabel: 'Aug 20, 2026'
+		})
+
+		delete entry.Buybacks
+		expect(parseTokenRightsEntry(entry).valueAccrual.buybacks).toMatchObject({
+			tokens: [],
+			displayTokens: [],
+			fallbackToken: 'N/A'
+		})
+	})
+
+	it('omits the updated label when the producer omits Last Updated', () => {
+		const entry: IRawTokenRightsEntry = {
+			'Protocol Name': 'Aave',
+			Token: ['AAVE'],
+			'Governance Decisions': ['AAVE'],
+			'Treasury Decisions': ['AAVE'],
+			'Revenue Decisions': ['AAVE'],
+			'Fee Switch Status': 'OFF',
+			Dividends: ['N/A'],
+			Burns: 'N/A',
+			'DefiLlama ID': 'parent#aave'
+		}
+
+		expect(parseTokenRightsEntry(entry).overview).toMatchObject({
+			lastUpdated: null,
+			lastUpdatedLabel: null
 		})
 	})
 })

@@ -9,18 +9,16 @@ afterEach(() => {
 function setupPageModule({
 	cexs = [],
 	chainMetadata = {},
+	holdersRevenueFails = false,
 	holdersRevenueProtocols = [],
-	liteProtocols = [],
-	parentProtocols = [],
 	tokensJson = {},
 	tokenRightsEntries = [],
 	protocolMetadata = {}
 }: {
 	cexs?: Array<Record<string, unknown>>
 	chainMetadata?: Record<string, unknown>
+	holdersRevenueFails?: boolean
 	holdersRevenueProtocols?: Array<Record<string, unknown>>
-	liteProtocols?: Array<Record<string, unknown>>
-	parentProtocols?: Array<Record<string, unknown>>
 	tokensJson?: TokenDirectory
 	tokenRightsEntries?: unknown[]
 	protocolMetadata?: Record<string, unknown>
@@ -32,10 +30,13 @@ function setupPageModule({
 		fetchTokenRightsEntries: vi.fn().mockResolvedValue(tokenRightsEntries)
 	}))
 	vi.doMock('~/containers/AdapterMetrics/api', () => ({
-		fetchAdapterChainMetrics: vi.fn().mockResolvedValue({ protocols: holdersRevenueProtocols })
-	}))
-	vi.doMock('~/containers/ProtocolLists/api', () => ({
-		fetchProtocols: vi.fn().mockResolvedValue({ protocols: liteProtocols, parentProtocols })
+		fetchAdapterChainMetrics: vi
+			.fn()
+			.mockImplementation(() =>
+				holdersRevenueFails
+					? Promise.reject(new Error('holders revenue failed'))
+					: { protocols: holdersRevenueProtocols }
+			)
 	}))
 	vi.doMock('~/layout', () => ({
 		default: () => null
@@ -184,11 +185,10 @@ describe('token rights page', () => {
 		})
 	}, 30_000)
 
-	it('uses the canonical lite protocol id for deprecated rows', async () => {
+	it('uses resolved metadata for deprecated rows', async () => {
 		const page = await setupPageModule({
-			liteProtocols: [{ defillamaId: '182', deprecated: true }],
 			protocolMetadata: {
-				'182': { displayName: 'Lido', gecko_id: 'lido-dao' }
+				'182': { displayName: 'Lido', gecko_id: 'lido-dao', deprecated: true }
 			},
 			tokensJson: {
 				ldo: { name: 'Lido DAO', symbol: 'LDO', token_nk: 'coingecko:lido-dao', route: '/token/LDO' }
@@ -213,14 +213,9 @@ describe('token rights page', () => {
 				})
 			],
 			holdersRevenueProtocols: [
-				{ defillamaId: '2198', total24h: 700 },
-				{ defillamaId: '339', total24h: 300 }
+				{ defillamaId: '2198', parentProtocol: 'parent#uniswap', total24h: 700 },
+				{ defillamaId: '339', parentProtocol: 'parent#uniswap', total24h: 300 }
 			],
-			liteProtocols: [
-				{ defillamaId: '2198', parentProtocol: 'parent#uniswap' },
-				{ defillamaId: '339', parentProtocol: 'parent#uniswap' }
-			],
-			parentProtocols: [{ id: 'parent#uniswap', name: 'Uniswap' }],
 			protocolMetadata: {
 				'parent#uniswap': { displayName: 'Uniswap', gecko_id: 'uniswap' }
 			}
@@ -244,10 +239,8 @@ describe('token rights page', () => {
 			],
 			holdersRevenueProtocols: [
 				{ defillamaId: 'parent#uniswap', total24h: 900 },
-				{ defillamaId: '2198', total24h: 700 }
+				{ defillamaId: '2198', parentProtocol: 'parent#uniswap', total24h: 700 }
 			],
-			liteProtocols: [{ defillamaId: '2198', parentProtocol: 'parent#uniswap' }],
-			parentProtocols: [{ id: 'parent#uniswap', name: 'Uniswap' }],
 			protocolMetadata: {
 				'parent#uniswap': { displayName: 'Uniswap', gecko_id: 'uniswap' }
 			}
@@ -260,23 +253,89 @@ describe('token rights page', () => {
 		})
 	})
 
-	it('skips entries without metadata and keeps valid metadata rows without a route', async () => {
+	it('keeps a direct measured zero instead of replacing it with child revenue', async () => {
+		const page = await setupPageModule({
+			tokenRightsEntries: [
+				tokenRightsEntry({
+					'Protocol Name': 'Uniswap',
+					Token: ['UNI'],
+					'DefiLlama ID': 'parent#uniswap'
+				})
+			],
+			holdersRevenueProtocols: [
+				{ defillamaId: 'parent#uniswap', total24h: 0 },
+				{ defillamaId: '2198', parentProtocol: 'parent#uniswap', total24h: 700 }
+			],
+			protocolMetadata: {
+				'parent#uniswap': { displayName: 'Uniswap', gecko_id: 'uniswap' }
+			}
+		})
+
+		await expect(page.getStaticProps({} as never)).resolves.toMatchObject({
+			props: {
+				holdersRevenueAvailable: true,
+				protocols: [{ name: 'Uniswap', holdersRevenue24h: 0 }]
+			}
+		})
+	})
+
+	it('skips entries without metadata and keeps metadata rows without a token route', async () => {
 		const page = await setupPageModule({
 			chainMetadata: {
 				ethereum: { name: 'Ethereum', id: 'ethereum', gecko_id: 'ethereum' }
 			},
+			protocolMetadata: {
+				'382': { displayName: 'Pendle V2' }
+			},
 			tokenRightsEntries: [
 				tokenRightsEntry({ 'Protocol Name': 'Missing ID', 'DefiLlama ID': '' }),
 				tokenRightsEntry({ 'Protocol Name': 'Unknown Protocol', 'DefiLlama ID': '999' }),
+				tokenRightsEntry({ 'Protocol Name': 'Pendle', 'DefiLlama ID': '382' }),
 				tokenRightsEntry({ 'Protocol Name': 'Ethereum', 'DefiLlama ID': 'ethereum' })
 			]
 		})
 
 		await expect(page.getStaticProps({} as never)).resolves.toMatchObject({
 			props: {
-				protocols: [{ name: 'Ethereum', href: null }]
+				protocols: [
+					{ name: 'Pendle V2', href: null },
+					{ name: 'Ethereum', href: null }
+				]
 			},
 			revalidate: 123
+		})
+	})
+
+	it('keeps the directory available when holders revenue fails', async () => {
+		const page = await setupPageModule({
+			holdersRevenueFails: true,
+			protocolMetadata: {
+				'182': { displayName: 'Lido', gecko_id: 'lido-dao' }
+			},
+			tokenRightsEntries: [tokenRightsEntry({ 'Protocol Name': 'Lido DAO', 'DefiLlama ID': '182' })]
+		})
+
+		await expect(page.getStaticProps({} as never)).resolves.toMatchObject({
+			props: {
+				holdersRevenueAvailable: false,
+				protocols: [{ name: 'Lido', holdersRevenue24h: null }]
+			}
+		})
+	})
+
+	it('keeps holders revenue available for a successful empty response', async () => {
+		const page = await setupPageModule({
+			protocolMetadata: {
+				'182': { displayName: 'Lido', gecko_id: 'lido-dao' }
+			},
+			tokenRightsEntries: [tokenRightsEntry({ 'Protocol Name': 'Lido DAO', 'DefiLlama ID': '182' })]
+		})
+
+		await expect(page.getStaticProps({} as never)).resolves.toMatchObject({
+			props: {
+				holdersRevenueAvailable: true,
+				protocols: [{ name: 'Lido', holdersRevenue24h: null }]
+			}
 		})
 	})
 

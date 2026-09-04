@@ -16,7 +16,7 @@ export interface IRawTokenRightsEntry {
 	'Fee Switch Status': string
 	'Fee Switch Details'?: string
 	'Economic Rights (Summary)'?: string
-	Buybacks: string[] | null
+	Buybacks?: string[] | null
 	'Buyback Details'?: string
 	Dividends: string[]
 	'Dividends Details'?: string

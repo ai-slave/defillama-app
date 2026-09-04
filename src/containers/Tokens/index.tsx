@@ -3,7 +3,6 @@ import {
 	functionalUpdate,
 	getCoreRowModel,
 	useReactTable,
-	type ColumnDef,
 	type VisibilityState
 } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
@@ -238,7 +237,7 @@ function RightsPie({ rights, fullRightsHref }: { rights: TokensRightsSummary | n
 	)
 }
 
-const baseColumns: ColumnDef<TokensTableRow>[] = [
+const baseColumns = [
 	columnHelper.accessor((row) => row.rank ?? undefined, {
 		id: 'rank',
 		header: '#',
@@ -465,7 +464,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 	})
 ]
 
-const expanderColumn: ColumnDef<TokensTableRow> = columnHelper.display({
+const expanderColumn = columnHelper.display({
 	id: 'expander',
 	header: 'Markets',
 	enableSorting: false,
@@ -489,13 +488,11 @@ const expanderColumn: ColumnDef<TokensTableRow> = columnHelper.display({
 	}
 })
 
-export function buildTokensColumns({ expandable = false }: { expandable?: boolean } = {}): ColumnDef<TokensTableRow>[] {
+export function buildTokensColumns({ expandable = false }: { expandable?: boolean } = {}) {
 	if (!expandable) return baseColumns
-	const cols = baseColumns.slice()
-	const nameIndex = cols.findIndex((col) => col.id === 'name')
-	const insertAt = nameIndex >= 0 ? nameIndex + 1 : cols.length
-	cols.splice(insertAt, 0, expanderColumn)
-	return cols
+	const nameIndex = baseColumns.findIndex((column) => column.id === 'name')
+	const insertAt = nameIndex >= 0 ? nameIndex + 1 : baseColumns.length
+	return [...baseColumns.slice(0, insertAt), expanderColumn, ...baseColumns.slice(insertAt)]
 }
 
 function TokensStats({ stats }: { stats: TokensPageStatsDisplay }) {

@@ -15,7 +15,7 @@ export function useTokensPaginatedTable(queryString: string | null, initialData:
 	return useQuery<TokensPageResponse>({
 		queryKey: ['tokens-page', TOKENS_PAGE_RESPONSE_SCHEMA_VERSION, queryString],
 		queryFn: async ({ signal }) => (url ? fetchJson<TokensPageResponse>(url, { signal }) : initialData),
-		initialData: shouldUseInitialData ? initialData : undefined,
+		...(shouldUseInitialData ? { initialData } : {}),
 		placeholderData: (previousData) => previousData,
 		staleTime: 5 * 60 * 1000,
 		refetchOnWindowFocus: false,
