@@ -12,24 +12,20 @@ export async function fetchProtocolBySlug(protocolSlug: string): Promise<IProtoc
 /**
  * Fetch yield pools available to the LST dashboard.
  */
-export async function fetchYieldPools(snapshot: YieldsSnapshot): Promise<{ data: IYieldPoolApiItem[] }> {
+export async function fetchYieldPools(snapshot: YieldsSnapshot): Promise<IYieldPoolApiItem[]> {
 	const { getEntityEarn } = await import('~/containers/Yields/data/enrich.server')
 	const rows = await getEntityEarn(snapshot)
-	return {
-		data: rows
-			.slice()
-			.sort((left, right) => {
-				if (left.tvl_usd == null) return right.tvl_usd == null ? 0 : 1
-				if (right.tvl_usd == null) return -1
-				return right.tvl_usd - left.tvl_usd
-			})
-			.map((pool) => ({
-				project: pool.protocolSlug ?? pool.protocol,
-				chain: pool.chain,
-				symbol: pool.display.label ?? '',
-				apy: pool.apy.current.total
-			}))
+	const data: IYieldPoolApiItem[] = []
+	for (const pool of rows) {
+		data.push({
+			project: pool.protocolSlug ?? pool.protocol,
+			chain: pool.chain,
+			symbol: pool.display.label ?? '',
+			apy: pool.apy.current.total,
+			tvlUsd: pool.tvl_usd
+		})
 	}
+	return data
 }
 
 /** Fetch LST peg, symbol, and fee metadata. */

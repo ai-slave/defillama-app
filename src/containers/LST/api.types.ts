@@ -6,8 +6,8 @@ export interface IProtocolDetailApiItem {
 	chainTvls: Record<
 		string,
 		{
-			tokens?: Array<{ date: number; tokens: Record<string, number> }> | null
-			tokensInUsd?: Array<{ date: number; tokens: Record<string, number> }> | null
+			tokens: Array<{ date: number; tokens: Record<string, number> }>
+			tokensInUsd: Array<{ date: number; tokens: Record<string, number> }>
 		}
 	>
 }
@@ -18,15 +18,20 @@ export interface IYieldPoolApiItem {
 	chain: string
 	symbol: string
 	apy: number | null
+	tvlUsd: number | null
 }
 
 /** LST metadata from the lstRates endpoint. */
-export interface ILsdRateApiItem {
-	name: string
+interface ILsdRateApiItemBase {
+	name: string | null
 	symbol: string | null
+	address: string
 	type: 'rebase' | 'accruing' | null
-	ethPeg: number | null
-	marketRate: number | null
-	expectedRate: number | null
 	fee: number | null
 }
+
+export type ILsdRateApiItem = ILsdRateApiItemBase &
+	(
+		| { ethPeg: number; marketRate: number; expectedRate: number }
+		| { ethPeg: null; marketRate: number | null; expectedRate: number | null }
+	)

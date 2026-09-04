@@ -282,6 +282,14 @@ Fork, LST, and chain-category dominance instead normalize over the measurements 
 different launch, shutdown, and measurement ranges. Missing shares remain gaps rather than becoming zero. A complete
 all-zero row remains explicit zero.
 
+The LST directory builds one population for headline totals, charts, the table, and exports. Its core protocol histories
+are required, while the LST-rate and Yields APY sources are independent optional enrichments. A failed enrichment hides
+only its owned table columns; a successful empty response keeps those columns with empty cells. APY uses the pool whose
+symbol exactly matches the LST-rate symbol, then the largest eligible TVL pool when no exact match exists. The canonical
+LST member slug supplies the cross-source project identity; display-name reconstruction must not drop mixed-case names.
+Historical raw token balances continue to sum every uppercase `ETH` key, while current balances use the largest such key
+until the producer supplies one normalized ETH series.
+
 For grouped bar series, leading nulls before that dimension's first numeric point are pre-coverage gaps and do not
 poison its first measured bucket. A missing point at or after coverage begins makes that grouped bucket unavailable;
 cumulative output remains unavailable from that internal gap onward. Explicit zero starts coverage and remains zero.

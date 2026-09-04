@@ -34,31 +34,20 @@ const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeri
 
 const DEFAULT_SORTING_STATE = [{ id: 'stakedEth', desc: true }]
 
-const ETHPegTooltipContent = ({ marketRate, expectedRate }: { marketRate: number; expectedRate: number }) => {
-	return (
-		<span className="flex flex-col gap-1">
-			<span>{`Market Rate: ${formatRatio(marketRate, { maximumFractionDigits: 4 })}`}</span>
-			<span>{`Expected Rate: ${formatRatio(expectedRate, { maximumFractionDigits: 4 })}`}</span>
-		</span>
-	)
-}
-
 const columnHelper = createColumnHelper<ILSTTokenRow>()
 
-const LST_COLUMNS = [
+const LST_BASE_COLUMNS = [
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
 		cell: ({ getValue, row }) => {
-			const nameSlug = row.original.name.replace(/\s+/g, '-').toLowerCase()
-
 			return (
 				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<TokenLogo src={row.original.logo} alt={`Logo of ${row.original.name}`} data-lgonly />
 					<span className="flex items-center gap-1 overflow-hidden">
 						<BasicLink
-							href={`/protocol/${nameSlug}`}
+							href={`/protocol/${row.original.protocolSlug}`}
 							className="min-w-0 truncate text-sm font-medium text-link hover:underline"
 						>
 							{getValue()}
@@ -76,20 +65,29 @@ const LST_COLUMNS = [
 		id: 'stakedEth',
 		header: 'Staked ETH',
 		cell: (info) =>
-			formatCompactNumber(info.getValue(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			formatCompactNumber(info.getValue(), {
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 		meta: {
 			headerClassName: 'w-[120px]',
-			align: 'end'
+			align: 'end',
+			headerHelperText: 'Current amount of ETH represented by the provider’s tracked liquid staking deposits'
 		}
 	}),
 	columnHelper.accessor((row) => row.stakedEthInUsd ?? undefined, {
 		id: 'stakedEthInUsd',
 		header: 'TVL',
 		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+			formatUsd(info.getValue(), {
+				compact: true,
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			}),
 		meta: {
 			headerClassName: 'w-[110px]',
-			align: 'end'
+			align: 'end',
+			headerHelperText: 'Current USD value of the provider’s tracked staked ETH'
 		}
 	}),
 	columnHelper.accessor((row) => row.stakedEthPctChange7d ?? undefined, {
@@ -98,7 +96,8 @@ const LST_COLUMNS = [
 		cell: (info) => <PercentChange percent={info.getValue()} />,
 		meta: {
 			headerClassName: 'w-[110px]',
-			align: 'end'
+			align: 'end',
+			headerHelperText: 'Change in staked ETH from exactly 7 days before the latest observation'
 		}
 	}),
 	columnHelper.accessor((row) => row.stakedEthPctChange30d ?? undefined, {
@@ -107,7 +106,8 @@ const LST_COLUMNS = [
 		cell: (info) => <PercentChange percent={info.getValue()} />,
 		meta: {
 			headerClassName: 'w-[120px]',
-			align: 'end'
+			align: 'end',
+			headerHelperText: 'Change in staked ETH from exactly 30 days before the latest observation'
 		}
 	}),
 	columnHelper.accessor((row) => row.marketShare ?? undefined, {
@@ -130,89 +130,108 @@ const LST_COLUMNS = [
 		},
 		meta: {
 			headerClassName: 'w-[125px]',
-			align: 'end'
-		}
-	}),
-	columnHelper.accessor('lsdSymbol', {
-		header: 'LST',
-		cell: ({ getValue, row }) => {
-			const symbol = getValue() ?? ''
-			if (!row.original.pegInfo) return symbol
-			return (
-				<span className="flex items-center justify-end gap-1">
-					<QuestionHelper text={row.original.pegInfo} />
-					{symbol}
-				</span>
-			)
-		},
-		meta: {
-			headerClassName: 'w-[100px]',
-			align: 'end'
-		}
-	}),
-	columnHelper.accessor((row) => row.ethPeg ?? undefined, {
-		id: 'ethPeg',
-		header: 'ETH Peg',
-		cell: ({ getValue, row }) => {
-			const value = getValue()
-			if (value == null) return null
-			return (
-				<Tooltip
-					content={
-						<ETHPegTooltipContent
-							marketRate={row.original.marketRate ?? 0}
-							expectedRate={row.original.expectedRate ?? 0}
-						/>
-					}
-					className="justify-end"
-				>
-					<PercentChange percent={value} />
-				</Tooltip>
-			)
-		},
-		meta: {
-			headerClassName: 'w-[115px]',
 			align: 'end',
-			headerHelperText:
-				'Market Rate (pulled from 1inch) divided by Expected Rate. Hover for Market Rate and Expected Rate Info.'
-		}
-	}),
-	columnHelper.accessor((row) => row.mcapOverTvl ?? undefined, {
-		id: 'mcapOverTvl',
-		header: 'Mcap/TVL',
-		cell: ({ getValue }) => formatRatio(getValue()),
-		meta: {
-			headerClassName: 'w-[110px]',
-			align: 'end',
-			headerHelperText: 'Market cap / TVL ratio'
-		}
-	}),
-	columnHelper.accessor((row) => row.apy ?? undefined, {
-		id: 'apy',
-		header: 'Supply APY',
-		cell: (info) =>
-			info.getValue() != null
-				? `${formatPercent(info.getValue(), { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
-				: null,
-		meta: {
-			headerClassName: 'w-[130px]',
-			align: 'end',
-			headerHelperText: 'Annualized staking reward rate of the LST'
-		}
-	}),
-	columnHelper.accessor((row) => row.fee ?? undefined, {
-		id: 'fee',
-		header: 'Fee',
-		cell: (info) =>
-			info.getValue() != null
-				? `${formatPercent(info.getValue(), { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
-				: null,
-		meta: {
-			headerClassName: 'w-[90px]',
-			align: 'end',
-			headerHelperText: 'Share of staking rewards taken by the protocol'
+			headerHelperText: 'Share of current staked ETH across all providers shown in this table'
 		}
 	})
+]
+
+const LST_SYMBOL_COLUMN = columnHelper.accessor('lsdSymbol', {
+	header: 'LST',
+	cell: ({ getValue, row }) => {
+		const symbol = getValue() ?? ''
+		if (!row.original.pegInfo) return symbol
+		return (
+			<span className="flex items-center justify-end gap-1">
+				<QuestionHelper text={row.original.pegInfo} />
+				{symbol}
+			</span>
+		)
+	},
+	meta: {
+		headerClassName: 'w-[100px]',
+		align: 'end',
+		headerHelperText: 'Symbol of the liquid staking token tracked for peg and fee data'
+	}
+})
+
+const LST_PEG_COLUMN = columnHelper.accessor((row) => row.ethPeg?.deviation ?? undefined, {
+	id: 'ethPeg',
+	header: 'ETH Peg',
+	cell: ({ row }) => {
+		const peg = row.original.ethPeg
+		if (peg === null) return null
+		return (
+			<Tooltip
+				content={
+					<span className="flex flex-col gap-1">
+						<span>{`Market Rate: ${formatRatio(peg.marketRate, { maximumFractionDigits: 4 })}`}</span>
+						<span>{`Expected Rate: ${formatRatio(peg.expectedRate, { maximumFractionDigits: 4 })}`}</span>
+					</span>
+				}
+				className="justify-end"
+			>
+				<PercentChange percent={peg.deviation} />
+			</Tooltip>
+		)
+	},
+	meta: {
+		headerClassName: 'w-[115px]',
+		align: 'end',
+		headerHelperText:
+			'Percentage deviation of the executable market rate from the contract-derived expected ETH redemption rate'
+	}
+})
+
+const LST_MCAP_COLUMN = columnHelper.accessor((row) => row.mcapOverTvl ?? undefined, {
+	id: 'mcapOverTvl',
+	header: 'Mcap/TVL',
+	cell: ({ getValue }) => formatRatio(getValue()),
+	meta: {
+		headerClassName: 'w-[110px]',
+		align: 'end',
+		headerHelperText: 'Protocol market capitalization divided by the USD value of its staked ETH'
+	}
+})
+
+const LST_APY_COLUMN = columnHelper.accessor((row) => row.apy ?? undefined, {
+	id: 'apy',
+	header: 'Supply APY',
+	cell: (info) =>
+		info.getValue() != null
+			? `${formatPercent(info.getValue(), { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
+			: null,
+	meta: {
+		headerClassName: 'w-[130px]',
+		align: 'end',
+		headerHelperText: 'Current annualized staking yield of the selected Ethereum LST pool'
+	}
+})
+
+const LST_FEE_COLUMN = columnHelper.accessor((row) => row.fee ?? undefined, {
+	id: 'fee',
+	header: 'Fee',
+	cell: (info) =>
+		info.getValue() != null
+			? `${formatPercent(info.getValue(), { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
+			: null,
+	meta: {
+		headerClassName: 'w-[90px]',
+		align: 'end',
+		headerHelperText: 'Percentage of staking rewards retained by the protocol'
+	}
+})
+
+const LST_CORE_COLUMNS = [...LST_BASE_COLUMNS, LST_MCAP_COLUMN]
+const LST_COLUMNS_WITH_APY = [...LST_BASE_COLUMNS, LST_MCAP_COLUMN, LST_APY_COLUMN]
+const LST_COLUMNS_WITH_RATES = [...LST_BASE_COLUMNS, LST_SYMBOL_COLUMN, LST_PEG_COLUMN, LST_MCAP_COLUMN, LST_FEE_COLUMN]
+const LST_COLUMNS_WITH_RATES_AND_APY = [
+	...LST_BASE_COLUMNS,
+	LST_SYMBOL_COLUMN,
+	LST_PEG_COLUMN,
+	LST_MCAP_COLUMN,
+	LST_APY_COLUMN,
+	LST_FEE_COLUMN
 ]
 
 export const LSTOverview = ({
@@ -224,7 +243,9 @@ export const LSTOverview = ({
 	stakedEthInUsdSum,
 	lsdColors,
 	inflowsChartData,
-	barChartStacks
+	barChartStacks,
+	ratesAvailable,
+	apyAvailable
 }: LSTOverviewProps) => {
 	const [tab, setTab] = React.useState('breakdown')
 	const [groupBy, setGroupBy] = React.useState<LowercaseDwmcGrouping>('weekly')
@@ -232,7 +253,10 @@ export const LSTOverview = ({
 		activeSeries: selectedBreakdownTokens,
 		selectedCharts: selectedBreakdownTokensSet,
 		setSelectedSeries: setSelectedBreakdownTokens
-	} = useSeriesSelection({ availableSeries: tokens, selectionKey: 'breakdown' })
+	} = useSeriesSelection({
+		availableSeries: tokens,
+		selectionKey: 'breakdown'
+	})
 	const {
 		activeSeries: selectedInflowTokens,
 		selectedCharts: selectedInflowTokensSet,
@@ -264,6 +288,13 @@ export const LSTOverview = ({
 	const { chartInstance: breakdownChartInstance, handleChartReady: handleBreakdownReady } = useGetChartInstance()
 	const { chartInstance: inflowsChartInstance, handleChartReady: handleInflowsReady } = useGetChartInstance()
 	const { chartInstance: pieChartInstance, handleChartReady: handlePieReady } = useGetChartInstance()
+	const columns = ratesAvailable
+		? apyAvailable
+			? LST_COLUMNS_WITH_RATES_AND_APY
+			: LST_COLUMNS_WITH_RATES
+		: apyAvailable
+			? LST_COLUMNS_WITH_APY
+			: LST_CORE_COLUMNS
 
 	const breakdownExportFilenameBase = 'lst-breakdown-dominance'
 	const breakdownExportTitle = 'LST Breakdown (Dominance)'
@@ -458,7 +489,11 @@ export const LSTOverview = ({
 										valueSymbol="ETH"
 										showTotalInTooltip
 										{...(selectedInflowTokens.length > 1
-											? { chartOptions: { tooltip: { formatter: inflowsTooltipFormatter } } }
+											? {
+													chartOptions: {
+														tooltip: { formatter: inflowsTooltipFormatter }
+													}
+												}
 											: {})}
 										onReady={handleInflowsReady}
 									/>
@@ -473,7 +508,7 @@ export const LSTOverview = ({
 
 			<TableWithSearch
 				data={tokensList}
-				columns={LST_COLUMNS}
+				columns={columns}
 				columnToSearch={'name'}
 				placeholder={'Search protocols...'}
 				header="Liquid Staking Protocols"

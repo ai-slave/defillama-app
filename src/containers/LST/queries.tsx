@@ -3,8 +3,8 @@ import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'
 import { getNDistinctColors, slug } from '~/utils'
 import { fetchEthPrice, fetchLsdRates, fetchProtocolBySlug, fetchYieldPools } from './api'
-import type { ILsdRateApiItem, IYieldPoolApiItem } from './api.types'
-import type { ILSTTokenRow, InflowsChartData, LSTOverviewProps } from './types'
+import type { ILsdRateApiItem } from './api.types'
+import type { ILSTPeg, ILSTTokenRow, InflowsChartData, LSTHistoryRow, LSTOverviewProps } from './types'
 
 const roundDate = (ts: number): number => Math.floor(ts / 86400) * 86400
 
@@ -22,88 +22,81 @@ function getETHValue(obj: Record<string, number>): number {
 
 const EXCLUDED_PROTOCOLS = new Set(['StakeHound', 'Genius', 'SharedStake', 'VaultLayer'])
 
-const PROTOCOL_NAME_OVERRIDES: Record<string, string> = {
-	'binance-staked-eth': 'Binance staked ETH',
-	'bedrock-unieth': 'Bedrock uniETH',
-	'mantle-staked-eth': 'Mantle Staked ETH',
-	'dinero-(pirex-eth)': 'Dinero (Pirex ETH)',
-	'mev-protocol': 'MEV Protocol',
-	'crypto.com-staked-eth': 'Crypto.com Liquid Staking',
-	'dinero-(pxeth)': 'Dinero (pxETH)'
-}
-
-function formatPoolName(project: string): string {
-	return project
-		.split('-')
-		.map((i) =>
-			i === 'stakewise' ? 'StakeWise' : i === 'eth' ? i.toUpperCase() : i.charAt(0).toUpperCase() + i.slice(1)
-		)
-		.join(' ')
-}
-
-interface PoolWithName extends IYieldPoolApiItem {
+interface LSTMember {
 	name: string
+	protocolSlug: string
+	deprecated: boolean
 }
 
-export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverviewProps> {
-	const [{ protocols }, { data: pools }, lsdRates, ethPrice] = await Promise.all([
-		fetchProtocols(),
-		fetchYieldPools(snapshot),
-		fetchLsdRates().catch((): ILsdRateApiItem[] => []),
-		fetchEthPrice().catch(() => null)
-	])
-	const deprecatedByProtocolName = new Map(protocols.map((protocol) => [protocol.name, protocol.deprecated === true]))
+interface APYCandidate {
+	apy: number | null
+	tvlUsd: number | null
+	exactSymbol: boolean
+}
 
-	// filter for LSDs
-	const lsdProtocols: string[] = []
+interface HistoricEntry {
+	name: string
+	date: number
+	value: number
+}
+
+export async function getLSTPageData(snapshot: YieldsSnapshot | null): Promise<LSTOverviewProps> {
+	const ratesRequest = fetchLsdRates().then(
+		(data) => ({ available: true as const, data }),
+		() => ({ available: false as const, data: [] })
+	)
+	const poolsRequest = snapshot
+		? fetchYieldPools(snapshot).then(
+				(data) => ({ available: true as const, data }),
+				() => ({ available: false as const, data: [] })
+			)
+		: Promise.resolve({ available: false as const, data: [] })
+	const [{ protocols }, poolsResult, ratesResult, ethPrice] = await Promise.all([
+		fetchProtocols(),
+		poolsRequest,
+		ratesRequest,
+		fetchEthPrice()
+	])
+
+	const members: LSTMember[] = []
 	for (const protocol of protocols) {
 		if (
 			protocol.category === 'Liquid Staking' &&
 			protocol.chains.includes('Ethereum') &&
 			!EXCLUDED_PROTOCOLS.has(protocol.name)
 		) {
-			lsdProtocols.push(protocol.name)
-		}
-	}
-	lsdProtocols.push('Crypto.com Liquid Staking')
-
-	// get historical data
-	const lsdProtocolsSlug: string[] = []
-	const lsdProtocolsSlugSet = new Set<string>()
-	for (const protocol of lsdProtocols) {
-		const protocolSlug = slug(protocol)
-		lsdProtocolsSlug.push(protocolSlug)
-		lsdProtocolsSlugSet.add(protocolSlug)
-	}
-	const chartData = await Promise.all(lsdProtocolsSlug.map((protocolSlug) => fetchProtocolBySlug(protocolSlug)))
-
-	const cryptoComPool = pools.find((i) => i.project === 'crypto.com-staked-eth')
-	const lsdApy: PoolWithName[] = []
-	for (const pool of pools) {
-		if (lsdProtocolsSlugSet.has(pool.project) && pool.chain === 'Ethereum' && pool.symbol.includes('ETH')) {
-			lsdApy.push({
-				...pool,
-				name: PROTOCOL_NAME_OVERRIDES[pool.project] ?? formatPoolName(pool.project)
+			members.push({
+				name: protocol.name,
+				protocolSlug: slug(protocol.name),
+				deprecated: protocol.deprecated === true
 			})
 		}
 	}
-	if (cryptoComPool) {
-		lsdApy.push({
-			...cryptoComPool,
-			name: PROTOCOL_NAME_OVERRIDES[cryptoComPool.project] ?? formatPoolName(cryptoComPool.project)
-		})
-	}
+	members.push({
+		name: 'Crypto.com Liquid Staking',
+		protocolSlug: 'crypto.com-liquid-staking',
+		deprecated: false
+	})
 
-	const allColors = getNDistinctColors(lsdProtocols.length)
+	const memberNameBySlug = new Map<string, string>()
+	for (const member of members) {
+		memberNameBySlug.set(member.protocolSlug, member.name)
+	}
+	memberNameBySlug.set('crypto.com-staked-eth', 'Crypto.com Liquid Staking')
+	const chartData = await Promise.all(
+		members.map(async (member) => ({ member, protocol: await fetchProtocolBySlug(member.protocolSlug) }))
+	)
+
+	const allColors = getNDistinctColors(members.length)
 	const lsdColors: Record<string, string> = {}
-	for (const [index, protocol] of lsdProtocols.entries()) {
+	for (const [index, member] of members.entries()) {
 		const color = allColors[index]
-		if (color !== undefined) lsdColors[protocol] = color
+		if (color !== undefined) lsdColors[member.name] = color
 	}
 	lsdColors['Others'] = '#AAAAAA'
 
 	// --- Beth: combine Ethereum + BSC ---
-	const beth = chartData.find((protocol) => protocol.name === 'Binance staked ETH')
+	const beth = chartData.find(({ member }) => member.protocolSlug === 'binance-staked-eth')?.protocol
 	if (beth) {
 		const combineBethChains = (tokensKey: 'tokens' | 'tokensInUsd') => {
 			const bscByDate = new Map<number, Record<string, number>>()
@@ -128,12 +121,12 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 	const PRICE_DIFF_THRESHOLD = 0.01
 
 	// --- Build historicData and group by date + name ---
-	const historicByDate = new Map<number, Array<{ name: string; value: number }>>()
-	const historicByName = new Map<string, Array<{ date: number; value: number }>>()
+	const historicByDate = new Map<number, HistoricEntry[]>()
+	const historicByName = new Map<string, HistoricEntry[]>()
 
-	for (const protocol of chartData) {
+	for (const { member, protocol } of chartData) {
 		const tokensArray =
-			protocol.name === 'Crypto.com Liquid Staking'
+			member.protocolSlug === 'crypto.com-liquid-staking'
 				? protocol.chainTvls['Cronos']?.tokens
 				: protocol.chainTvls['Ethereum']?.tokens
 
@@ -154,20 +147,20 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 			}
 			if (totalEthValue <= 0) continue
 
-			const entry = { name: protocol.name, date, value: totalEthValue }
+			const entry = { name: member.name, date, value: totalEthValue }
 
 			const entriesForDate = historicByDate.get(date)
 			if (entriesForDate) entriesForDate.push(entry)
 			else historicByDate.set(date, [entry])
 
-			const entriesForProtocol = historicByName.get(protocol.name)
-			if (entriesForProtocol) entriesForProtocol.push({ date, value: totalEthValue })
-			else historicByName.set(protocol.name, [{ date, value: totalEthValue }])
+			const entriesForProtocol = historicByName.get(member.name)
+			if (entriesForProtocol) entriesForProtocol.push(entry)
+			else historicByName.set(member.name, [entry])
 		}
 	}
 
 	// --- areaChartData (canonical absolute ETH values; selection determines the percentage denominator) ---
-	const areaChartData: Array<Record<string, number>> = []
+	const areaChartData: LSTHistoryRow[] = []
 	const sortedHistoricEntries = Array.from(historicByDate.entries()).sort(([a], [b]) => a - b)
 	for (const [date, dayData] of sortedHistoricEntries) {
 		let data = dayData
@@ -182,17 +175,14 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 			}
 		}
 
+		const row: LSTHistoryRow = { date }
 		let hasLido = false
 		for (const item of data) {
 			if (item.name === 'Lido') hasLido = true
+			row[item.name] = item.value
 		}
 		// skip days after Dec 2020 that are missing lido data
 		if (date > 1608321600 && !hasLido) continue
-
-		const row: Record<string, number> = { date }
-		for (const item of data) {
-			row[item.name] = item.value
-		}
 		areaChartData.push(row)
 	}
 
@@ -201,6 +191,7 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 		Pick<
 			ILSTTokenRow,
 			| 'name'
+			| 'protocolSlug'
 			| 'logo'
 			| 'deprecated'
 			| 'mcap'
@@ -210,11 +201,15 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 			| 'stakedEthPctChange30d'
 		>
 	> = []
-	for (const protocol of chartData) {
+	let stakedEthSum = 0
+	let stakedEthInUsdSum: number | null = 0
+	for (const { member, protocol } of chartData) {
 		const p =
-			protocol.name === 'Crypto.com Liquid Staking' ? protocol.chainTvls['Cronos'] : protocol.chainTvls['Ethereum']
+			member.protocolSlug === 'crypto.com-liquid-staking'
+				? protocol.chainTvls['Cronos']
+				: protocol.chainTvls['Ethereum']
 
-		if (!p?.tokens?.length) {
+		if (!p?.tokens.length) {
 			continue
 		}
 
@@ -226,21 +221,21 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 
 		const lastTokens = lastTokenRecord.tokens
 		let lastTokensInUsd: Record<string, number> | null = null
-		const tokensInUsd = p.tokensInUsd
-		if (tokensInUsd) {
-			for (let index = tokensInUsd.length - 1; index >= 0; index--) {
-				const record = tokensInUsd[index]
-				if (!record) continue
-				if (record.date === lastDate) {
-					lastTokensInUsd = record.tokens
-					break
-				}
-				if (record.date < lastDate) break
+		for (let index = p.tokensInUsd.length - 1; index >= 0; index--) {
+			const record = p.tokensInUsd[index]
+			if (!record) continue
+			if (record.date === lastDate) {
+				lastTokensInUsd = record.tokens
+				break
 			}
+			if (record.date < lastDate) break
 		}
 		let lastTokens7d: Record<string, number> | null = null
 		let lastTokens30d: Record<string, number> | null = null
-		for (const item of p.tokens) {
+		// The producer returns unique ascending timestamps, so only the newest 30 days can match.
+		for (let index = p.tokens.length - 2; index >= 0; index--) {
+			const item = p.tokens[index]
+			if (!item || item.date < offset30d) break
 			if (lastTokens7d == null && item.date === offset7d) {
 				lastTokens7d = item.tokens
 			} else if (lastTokens30d == null && item.date === offset30d) {
@@ -267,46 +262,69 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 			continue
 		}
 
-		tokenTvls.push({
-			name: protocol.name,
+		const tokenTvl = {
+			name: member.name,
+			protocolSlug: member.protocolSlug,
 			logo: protocol.logo,
-			deprecated: deprecatedByProtocolName.get(protocol.name) === true,
+			deprecated: member.deprecated,
 			mcap: protocol.mcap,
 			stakedEth: correctedEth,
 			stakedEthInUsd: ethInUsd,
 			stakedEthPctChange7d: eth7d != null && eth7d > 0 ? ((correctedEth - eth7d) / eth7d) * 100 : null,
 			stakedEthPctChange30d: eth30d != null && eth30d > 0 ? ((correctedEth - eth30d) / eth30d) * 100 : null
-		})
+		}
+		tokenTvls.push(tokenTvl)
+		stakedEthSum += tokenTvl.stakedEth
+		if (tokenTvl.stakedEthInUsd == null) stakedEthInUsdSum = null
+		else if (stakedEthInUsdSum != null) stakedEthInUsdSum += tokenTvl.stakedEthInUsd
 	}
 	tokenTvls.sort((a, b) => b.stakedEth - a.stakedEth)
 
 	const rebase = 'Rebase Token: Staking rewards accrue as new tokens. Expected Peg = 1 : 1'
 	const valueAccruing = 'Value Accruing Token: Staking rewards are earned in form of an appreciating LSD value.'
 
-	let stakedEthSum = 0
-	let stakedEthInUsdSum: number | null = 0
-	for (const tokenTvl of tokenTvls) {
-		stakedEthSum += tokenTvl.stakedEth
-		if (tokenTvl.stakedEthInUsd == null) stakedEthInUsdSum = null
-		else if (stakedEthInUsdSum != null) stakedEthInUsdSum += tokenTvl.stakedEthInUsd
-	}
-
 	const ratesByName = new Map<string, ILsdRateApiItem>()
-	for (const rate of lsdRates) {
-		ratesByName.set(rate.name, rate)
+	for (const rate of ratesResult.data) {
+		if (rate.name !== null) ratesByName.set(rate.name, rate)
 	}
 
-	// Index V2 earn APY by protocol name for O(1) lookups.
-	const apyByName = new Map<string, PoolWithName>()
-	for (const pool of lsdApy) {
-		apyByName.set(pool.name, pool)
+	// Prefer the pool for the exact LST instrument, then the largest eligible protocol pool.
+	const apyByName = new Map<string, APYCandidate>()
+	for (const pool of poolsResult.data) {
+		const isCryptoCom = pool.project === 'crypto.com-staked-eth'
+		const name = memberNameBySlug.get(pool.project)
+		if (!name || (!isCryptoCom && (pool.chain !== 'Ethereum' || !pool.symbol.includes('ETH')))) continue
+		const rateSymbol = ratesByName.get(name)?.symbol
+		const candidate: APYCandidate = {
+			apy: pool.apy,
+			tvlUsd: pool.tvlUsd,
+			exactSymbol: rateSymbol != null && pool.symbol === rateSymbol
+		}
+		const current = apyByName.get(name)
+		if (
+			!current ||
+			(candidate.exactSymbol && !current.exactSymbol) ||
+			(candidate.exactSymbol === current.exactSymbol &&
+				candidate.tvlUsd != null &&
+				(current.tvlUsd == null || candidate.tvlUsd > current.tvlUsd))
+		) {
+			apyByName.set(name, candidate)
+		}
 	}
 
-	const visibleTokensList: ILSTTokenRow[] = []
+	const tokensList: ILSTTokenRow[] = []
 	const tokens: string[] = []
 	for (const p of tokenTvls) {
 		const lsd = ratesByName.get(p.name)
 		const pegInfo = lsd?.type === 'rebase' ? rebase : lsd?.type === 'accruing' ? valueAccruing : null
+		let ethPeg: ILSTPeg | null = null
+		if (lsd && lsd.ethPeg !== null) {
+			ethPeg = {
+				deviation: lsd.ethPeg,
+				marketRate: lsd.marketRate,
+				expectedRate: lsd.expectedRate
+			}
+		}
 		const mcap = p.mcap
 		const mcaptvl = mcap != null && p.stakedEthInUsd != null && p.stakedEthInUsd !== 0 ? mcap / p.stakedEthInUsd : null
 
@@ -314,18 +332,14 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 			...p,
 			marketShare: (p.stakedEth / stakedEthSum) * 100,
 			lsdSymbol: lsd?.symbol ?? null,
-			ethPeg: lsd?.ethPeg ?? null,
+			ethPeg,
 			pegInfo,
-			marketRate: lsd?.marketRate ?? null,
-			expectedRate: lsd?.expectedRate ?? null,
 			mcapOverTvl: mcaptvl,
 			apy: apyByName.get(p.name)?.apy ?? null,
 			fee: lsd?.fee != null ? lsd.fee * 100 : null
 		}
 		tokens.push(row.name)
-		if (row.name !== 'diva') {
-			visibleTokensList.push(row)
-		}
+		tokensList.push(row)
 	}
 
 	const pieSeries = prepareRuntimePieChartData({
@@ -357,12 +371,14 @@ export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverv
 	return {
 		areaChartData,
 		pieSeries,
-		tokensList: visibleTokensList,
+		tokensList,
 		tokens,
 		stakedEthSum,
 		stakedEthInUsdSum,
 		lsdColors,
 		inflowsChartData,
-		barChartStacks
+		barChartStacks,
+		ratesAvailable: ratesResult.available,
+		apyAvailable: poolsResult.available
 	}
 }

@@ -6,8 +6,8 @@ import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging('lsd', async () => {
-	const { acquireYieldsSnapshot } = await import('~/containers/Yields/server/dataset.server')
-	const data = await getLSTPageData(await acquireYieldsSnapshot('blocking'))
+	const { acquireOptionalYieldsSnapshot } = await import('~/containers/Yields/server/dataset.server')
+	const data = await getLSTPageData(await acquireOptionalYieldsSnapshot())
 
 	return {
 		props: data,

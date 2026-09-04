@@ -1,10 +1,17 @@
 import type { RuntimePieChartData } from '~/components/ECharts/PieChart/data'
 
+export interface ILSTPeg {
+	deviation: number
+	marketRate: number
+	expectedRate: number
+}
+
 /** A processed LST token row for the table */
 export interface ILSTTokenRow {
 	name: string
+	protocolSlug: string
 	logo: string | null
-	deprecated?: boolean
+	deprecated: boolean
 	mcap: number | null
 	stakedEth: number
 	stakedEthInUsd: number | null
@@ -12,10 +19,8 @@ export interface ILSTTokenRow {
 	stakedEthPctChange30d: number | null
 	marketShare: number
 	lsdSymbol: string | null
-	ethPeg: number | null
+	ethPeg: ILSTPeg | null
 	pegInfo: string | null
-	marketRate: number | null
-	expectedRate: number | null
 	mcapOverTvl: number | null
 	apy: number | null
 	fee: number | null
@@ -24,9 +29,11 @@ export interface ILSTTokenRow {
 /** Inflows chart data: timestamp -> { [protocol]: delta } */
 export type InflowsChartData = Record<number, Record<string, number>>
 
+export type LSTHistoryRow = { date: number } & Record<string, number>
+
 /** Props for the LSTOverview component */
 export interface LSTOverviewProps {
-	areaChartData: Array<Record<string, number>>
+	areaChartData: LSTHistoryRow[]
 	pieSeries: RuntimePieChartData
 	tokensList: ILSTTokenRow[]
 	tokens: string[]
@@ -35,4 +42,6 @@ export interface LSTOverviewProps {
 	lsdColors: Record<string, string>
 	inflowsChartData: InflowsChartData
 	barChartStacks: Record<string, string>
+	ratesAvailable: boolean
+	apyAvailable: boolean
 }
