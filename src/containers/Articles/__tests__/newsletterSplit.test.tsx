@@ -90,7 +90,7 @@ describe('newsletter and media-kit split', () => {
 	it('renders the desktop Research search dialog trigger in the hero', () => {
 		const html = renderWithQueryClient(<ResearchHero title="Research" subtitle="Market intelligence" reports={[]} />)
 
-		expect(html).toContain('aria-label="Search DefiLlama Research"')
+		expect(html).toContain('aria-label="Search DefiLlama Research and Newsletters"')
 		expect(html).toContain('type="button"')
 		expect(html).toContain('>Search</span>')
 		expect(html).toContain('/icons/v44.svg#search')
@@ -101,7 +101,7 @@ describe('newsletter and media-kit split', () => {
 		const html = renderWithQueryClient(<MobileSearch searchTrigger={<ResearchSearchDialog variant="mobile" />} />)
 
 		const llamaAiPosition = html.indexOf('href="/ai"')
-		const researchSearchPosition = html.indexOf('aria-label="Search DefiLlama Research"')
+		const researchSearchPosition = html.indexOf('aria-label="Search DefiLlama Research and Newsletters"')
 		expect(llamaAiPosition).toBeGreaterThan(-1)
 		expect(researchSearchPosition).toBeGreaterThan(llamaAiPosition)
 		expect(html).not.toContain('href="/research?search=1"')

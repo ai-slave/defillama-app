@@ -1,9 +1,10 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useRef, useState } from 'react'
+import { useRef, useState, type RefObject } from 'react'
 import { listArticles } from '~/containers/Articles/api'
 import { articleHref, formatDate, readingMinutes } from '~/containers/Articles/landing/utils'
+import { listResearchNewsletterItems, type ResearchNewsletterItem } from '~/containers/Articles/newsletterFeed'
 import { ARTICLE_SECTION_LABELS, type ArticleDocument, type ArticleSection } from '~/containers/Articles/types'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
@@ -15,19 +16,23 @@ import { formatNumber } from '~/utils/numberFormat'
 const RESEARCH_SEARCH_LIMIT = 10
 const LATEST_RESEARCH_LIMIT = 6
 
+type SearchContentType = ArticleSection | 'newsletter'
+type SearchDialogVariant = 'desktop' | 'article' | 'mobile'
+
 type SectionFilter = {
-	value: ArticleSection | null
+	value: SearchContentType | null
 	label: string
+	itemLabel: string
 }
 
 const SECTION_FILTERS: SectionFilter[] = [
-	{ value: null, label: 'All types' },
-	{ value: 'report', label: 'Reports' },
-	{ value: 'interview', label: 'Interviews' },
-	{ value: 'spotlight', label: 'Spotlights' },
-	{ value: 'opinion', label: 'Opinions' },
-	{ value: 'roundtables', label: 'Roundtables' },
-	{ value: 'press_release', label: 'Press Releases' }
+	{ value: null, label: 'All types', itemLabel: 'Content' },
+	{ value: 'report', label: 'Reports', itemLabel: 'Report' },
+	{ value: 'interview', label: 'Interviews', itemLabel: 'Interview' },
+	{ value: 'spotlight', label: 'Spotlights', itemLabel: 'Spotlight' },
+	{ value: 'opinion', label: 'Opinions', itemLabel: 'Opinion' },
+	{ value: 'roundtables', label: 'Roundtables', itemLabel: 'Roundtable' },
+	{ value: 'newsletter', label: 'Newsletters', itemLabel: 'Newsletter' }
 ]
 
 const SECTION_ICONS = {
@@ -39,6 +44,15 @@ const SECTION_ICONS = {
 	press_release: 'mail'
 } as const satisfies Record<ArticleSection, IIcon['name']>
 
+const SEARCH_TRIGGER_STYLES: Record<SearchDialogVariant, string> = {
+	mobile:
+		'-my-0.5 inline-flex size-11 shrink-0 items-center justify-center rounded-md bg-surface/15 text-on-brand shadow transition-colors hover:bg-surface/25 focus-visible:bg-surface/25 active:bg-surface/25 lg:hidden',
+	article:
+		'hidden h-11 min-w-[113px] items-center justify-center gap-2 rounded-full border border-medium bg-surface px-4 label-md text-primary transition-colors hover:border-brand hover:text-link lg:inline-flex',
+	desktop:
+		'inline-flex h-[45px] min-w-[113px] items-center justify-center gap-2 rounded-full bg-research-white px-4 text-base font-medium text-research-heading transition-colors hover:bg-research-black hover:text-research-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-research-white'
+}
+
 const RESEARCH_TOPICS = [
 	{ label: 'DeFi', query: 'DeFi' },
 	{ label: 'RWA', query: 'RWA' },
@@ -48,6 +62,24 @@ const RESEARCH_TOPICS = [
 	{ label: 'Regulation', query: 'regulation' }
 ] as const
 
+type ResearchSearchItem = {
+	id: string
+	title: string
+	description: string
+	href: string
+	imageUrl: string | null
+	publishedAt: string | null
+	typeLabel: string
+	iconName: IIcon['name']
+	readMinutes: number | null
+	external: boolean
+}
+
+type ResearchSearchResponse = {
+	items: ResearchSearchItem[]
+	totalItems: number
+}
+
 function articleSummary(article: ArticleDocument) {
 	return article.excerpt || article.subtitle || article.reportDescription || ''
 }
@@ -56,103 +88,181 @@ function articleCover(article: ArticleDocument) {
 	return article.carouselImage?.url || article.coverImage?.url || null
 }
 
-function ArticleVisual({ article, featured = false }: { article: ArticleDocument; featured?: boolean }) {
-	const cover = articleCover(article)
-	const iconName = article.section ? SECTION_ICONS[article.section] : 'file-text'
+function normalizeArticle(article: ArticleDocument): ResearchSearchItem {
+	return {
+		id: `research-${article.id}`,
+		title: article.title,
+		description: articleSummary(article),
+		href: articleHref(article),
+		imageUrl: articleCover(article),
+		publishedAt: article.displayDate ?? article.publishedAt ?? null,
+		typeLabel: article.section ? ARTICLE_SECTION_LABELS[article.section] : 'Research',
+		iconName: article.section ? SECTION_ICONS[article.section] : 'file-text',
+		readMinutes: readingMinutes(article),
+		external: false
+	}
+}
 
+function normalizeNewsletter(item: ResearchNewsletterItem): ResearchSearchItem {
+	return {
+		id: `newsletter-${item.id}`,
+		title: item.title,
+		description:
+			item.description === 'Research Notes' ? 'The latest edition of Research Notes.' : (item.description ?? ''),
+		href: item.href,
+		imageUrl: item.imageUrl,
+		publishedAt: item.publishedAt,
+		typeLabel: 'Newsletter',
+		iconName: 'mail',
+		readMinutes: null,
+		external: true
+	}
+}
+
+function publishedAtTimestamp(item: ResearchSearchItem) {
+	if (!item.publishedAt) return 0
+	const timestamp = new Date(item.publishedAt).getTime()
+	return Number.isNaN(timestamp) ? 0 : timestamp
+}
+
+async function searchResearchContent(
+	query: string,
+	section: SearchContentType | null,
+	limit: number
+): Promise<ResearchSearchResponse> {
+	const includeResearch = section !== 'newsletter'
+	const includeNewsletters = section === null || section === 'newsletter'
+	const articleSection = section && section !== 'newsletter' ? section : undefined
+
+	const [researchResult, newsletterResult] = await Promise.allSettled([
+		includeResearch ? listArticles({ query, limit, section: articleSection, sort: 'newest' }) : Promise.resolve(null),
+		includeNewsletters ? listResearchNewsletterItems({ query, limit }) : Promise.resolve(null)
+	])
+
+	const researchFailed = includeResearch && researchResult.status === 'rejected'
+	const newslettersFailed = includeNewsletters && newsletterResult.status === 'rejected'
+	if (
+		(researchFailed && !includeNewsletters) ||
+		(newslettersFailed && !includeResearch) ||
+		(researchFailed && newslettersFailed)
+	) {
+		throw researchResult.status === 'rejected'
+			? researchResult.reason
+			: newsletterResult.status === 'rejected'
+				? newsletterResult.reason
+				: new Error('Search failed')
+	}
+
+	const research = researchResult.status === 'fulfilled' ? researchResult.value : null
+	const newsletters = newsletterResult.status === 'fulfilled' ? newsletterResult.value : null
+	const items = [
+		...(research?.items.map(normalizeArticle) ?? []),
+		...(newsletters?.items.map(normalizeNewsletter) ?? [])
+	]
+		.sort((left, right) => publishedAtTimestamp(right) - publishedAtTimestamp(left))
+		.slice(0, limit)
+
+	return {
+		items,
+		totalItems: (research?.totalItems ?? 0) + (newsletters?.totalItems ?? 0)
+	}
+}
+
+function ResultVisual({ item, featured = false }: { item: ResearchSearchItem; featured?: boolean }) {
 	return (
 		<span
 			className={`relative grid shrink-0 place-items-center overflow-hidden bg-surface-elevated-2 text-link ${
 				featured ? 'min-h-28 w-full rounded-lg sm:h-full sm:min-h-36' : 'size-11 rounded-md'
 			}`}
 			style={
-				cover ? { backgroundImage: `url(${cover})`, backgroundPosition: 'center', backgroundSize: 'cover' } : undefined
+				item.imageUrl
+					? { backgroundImage: `url(${item.imageUrl})`, backgroundPosition: 'center', backgroundSize: 'cover' }
+					: undefined
 			}
 			aria-hidden
 		>
-			{cover ? <span className="absolute inset-0 bg-research-black/5" /> : <Icon name={iconName} className="size-4" />}
+			{item.imageUrl ? (
+				<span className="absolute inset-0 bg-research-black/5" />
+			) : (
+				<Icon name={item.iconName} className="size-4" />
+			)}
 		</span>
 	)
 }
 
-function ArticleMetadata({ article, compact = false }: { article: ArticleDocument; compact?: boolean }) {
-	const sectionLabel = article.section ? ARTICLE_SECTION_LABELS[article.section] : 'Research'
-	const publishedLabel = formatDate(article.displayDate ?? article.publishedAt)
+function ResultMetadata({ item, compact = false }: { item: ResearchSearchItem; compact?: boolean }) {
+	const publishedLabel = formatDate(item.publishedAt)
 
 	return (
 		<span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-			<span className="rounded-md bg-brand-faint px-1.5 py-0.5 label-xs text-link-on-tint">{sectionLabel}</span>
+			<span className="rounded-md bg-brand-faint px-1.5 py-0.5 label-xs text-link-on-tint">{item.typeLabel}</span>
 			{publishedLabel ? (
-				<time dateTime={article.displayDate ?? article.publishedAt ?? undefined} className="body-sm text-tertiary">
+				<time dateTime={item.publishedAt ?? undefined} className="body-sm text-tertiary">
 					{publishedLabel}
 				</time>
 			) : null}
-			{compact ? null : (
+			{compact || item.readMinutes === null ? null : (
 				<>
 					<span className="body-sm text-tertiary" aria-hidden>
 						·
 					</span>
-					<span className="body-sm text-tertiary">{readingMinutes(article)} min read</span>
+					<span className="body-sm text-tertiary">{item.readMinutes} min read</span>
 				</>
 			)}
 		</span>
 	)
 }
 
-function SearchResult({ article, onSelect }: { article: ArticleDocument; onSelect: () => void }) {
-	const summary = articleSummary(article)
-
+function SearchResult({ item, onSelect }: { item: ResearchSearchItem; onSelect: () => void }) {
 	return (
 		<li>
 			<Link
-				href={articleHref(article)}
+				href={item.href}
+				target={item.external ? '_blank' : undefined}
+				rel={item.external ? 'noreferrer noopener' : undefined}
 				onClick={onSelect}
 				className="group grid min-h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-hover-row focus-visible:bg-hover-row sm:px-3"
 			>
-				<ArticleVisual article={article} />
+				<ResultVisual item={item} />
 				<span className="min-w-0 space-y-1">
 					<span className="line-clamp-2 label-md text-primary transition-colors group-hover:text-link">
-						{article.title}
+						{item.title}
 					</span>
-					{summary ? <span className="hidden truncate body-sm text-tertiary sm:block">{summary}</span> : null}
-					<ArticleMetadata article={article} compact />
+					{item.description ? (
+						<span className="hidden truncate body-sm text-tertiary sm:block">{item.description}</span>
+					) : null}
+					<ResultMetadata item={item} compact />
 				</span>
 				<span className="grid size-7 place-items-center rounded-md text-tertiary transition-colors group-hover:bg-brand-faint group-hover:text-link">
-					<Icon name="chevron-right" className="size-4" aria-hidden />
+					<Icon name={item.external ? 'arrow-up-right' : 'chevron-right'} className="size-4" aria-hidden />
 				</span>
 			</Link>
 		</li>
 	)
 }
 
-function FeaturedResult({
-	article,
-	label,
-	onSelect
-}: {
-	article: ArticleDocument
-	label: string
-	onSelect: () => void
-}) {
-	const summary = articleSummary(article)
-
+function FeaturedResult({ item, label, onSelect }: { item: ResearchSearchItem; label: string; onSelect: () => void }) {
 	return (
 		<Link
-			href={articleHref(article)}
+			href={item.href}
+			target={item.external ? '_blank' : undefined}
+			rel={item.external ? 'noreferrer noopener' : undefined}
 			onClick={onSelect}
 			className="hover-wash group grid grid-cols-[104px_minmax(0,1fr)] gap-3 rounded-xl bg-brand-faint p-2.5 sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-4 sm:p-3"
 		>
-			<ArticleVisual article={article} featured />
+			<ResultVisual item={item} featured />
 			<span className="flex min-w-0 flex-col justify-center gap-2 py-0.5 sm:py-1">
 				<span className="flex items-center justify-between gap-2">
 					<span className="label-sm text-link-on-tint">{label}</span>
 					<Icon name="arrow-up-right" className="size-4 shrink-0 text-link-on-tint" aria-hidden />
 				</span>
 				<span className="line-clamp-3 heading-xs text-primary transition-colors group-hover:text-link sm:line-clamp-2">
-					{article.title}
+					{item.title}
 				</span>
-				{summary ? <span className="line-clamp-2 hidden body-sm text-secondary sm:block">{summary}</span> : null}
-				<ArticleMetadata article={article} />
+				{item.description ? (
+					<span className="line-clamp-2 hidden body-sm text-secondary sm:block">{item.description}</span>
+				) : null}
+				<ResultMetadata item={item} />
 			</span>
 		</Link>
 	)
@@ -178,7 +288,7 @@ function TopicExplorer({ onSelect }: { onSelect: (query: string) => void }) {
 	)
 }
 
-function EmptyState({ query, section }: { query: string; section: ArticleSection | null }) {
+function EmptyState({ query, section }: { query: string; section: SearchContentType | null }) {
 	const sectionLabel = section ? SECTION_FILTERS.find((filter) => filter.value === section)?.label : null
 
 	return (
@@ -191,23 +301,200 @@ function EmptyState({ query, section }: { query: string; section: ArticleSection
 					? `No results for “${query}”`
 					: sectionLabel
 						? `No ${sectionLabel.toLowerCase()} yet`
-						: 'No published research yet'}
+						: 'No published content yet'}
 			</h3>
 			<p className="max-w-sm body-sm text-tertiary">
 				{query
 					? 'Try a different keyword, topic, or format.'
 					: sectionLabel
-						? 'Choose another format or search across all Research.'
-						: 'Published Research content will appear here.'}
+						? 'Choose another format or search across all content.'
+						: 'Published Research and newsletter content will appear here.'}
 			</p>
 		</div>
 	)
 }
 
-export function ResearchSearchDialog({ variant }: { variant: 'desktop' | 'mobile' }) {
+function SearchDialogTrigger({ variant }: { variant: SearchDialogVariant }) {
+	return (
+		<Ariakit.DialogDisclosure
+			type="button"
+			aria-label="Search DefiLlama Research and Newsletters"
+			className={SEARCH_TRIGGER_STYLES[variant]}
+		>
+			<Icon name="search" height={20} width={20} aria-hidden />
+			{variant !== 'mobile' ? <span>Search</span> : null}
+		</Ariakit.DialogDisclosure>
+	)
+}
+
+function SearchField({
+	inputRef,
+	query,
+	onChange,
+	onClear
+}: {
+	inputRef: RefObject<HTMLInputElement | null>
+	query: string
+	onChange: (query: string) => void
+	onClear: () => void
+}) {
+	return (
+		<div className="px-4 pb-3">
+			<div className="relative">
+				<Icon name="search" height={16} width={16} className={searchFieldIconStyles} aria-hidden />
+				<Input
+					ref={inputRef}
+					type="text"
+					role="searchbox"
+					inputMode="search"
+					enterKeyHint="search"
+					aria-label="Search Research and Newsletters"
+					value={query}
+					onChange={(event) => onChange(event.currentTarget.value)}
+					placeholder="Search topics, protocols, or titles…"
+					className={`${searchFieldInputPlacementStyles} ${query ? 'pr-9' : ''}`}
+				/>
+				{query ? (
+					<button
+						type="button"
+						onClick={onClear}
+						aria-label="Clear search"
+						className="absolute top-0 right-1 bottom-0 my-auto grid size-7 place-items-center rounded-md text-tertiary transition-colors hover:bg-hover-row hover:text-primary"
+					>
+						<Icon name="x" className="size-4" aria-hidden />
+					</button>
+				) : null}
+			</div>
+		</div>
+	)
+}
+
+function SearchTypeFilters({
+	section,
+	onChange
+}: {
+	section: SearchContentType | null
+	onChange: (section: SearchContentType | null) => void
+}) {
+	return (
+		<nav className="border-t border-subtle px-4 py-3" aria-label="Research and newsletter content types">
+			<p className="mb-2 label-sm text-secondary">Browse by format</p>
+			<div className="flex scrollbar-none touch-pan-x gap-1 overflow-x-auto rounded-lg bg-surface-elevated-1 p-1 [-webkit-overflow-scrolling:touch]">
+				{SECTION_FILTERS.map((filter) => {
+					const active = filter.value === section
+					return (
+						<button
+							key={filter.label}
+							type="button"
+							onClick={() => onChange(filter.value)}
+							aria-pressed={active}
+							className={`shrink-0 rounded-md px-2.5 py-1.5 label-sm transition-colors ${
+								active ? 'bg-brand text-on-brand' : 'text-secondary hover:bg-hover-row hover:text-primary'
+							}`}
+						>
+							{filter.label}
+						</button>
+					)
+				})}
+			</div>
+		</nav>
+	)
+}
+
+function SearchResultsHeader({
+	data,
+	query,
+	section,
+	activeSection
+}: {
+	data: ResearchSearchResponse | undefined
+	query: string
+	section: SearchContentType | null
+	activeSection: SectionFilter | undefined
+}) {
+	let resultCount = 'Searching…'
+	if (data) {
+		resultCount = query
+			? `${formatNumber(data.totalItems)} ${data.totalItems === 1 ? 'result' : 'results'}`
+			: `${data.items.length} newest`
+	}
+
+	return (
+		<div className="flex items-center justify-between gap-3 border-t border-subtle px-4 py-2">
+			<p className="label-sm text-secondary">
+				{query ? 'Search results' : section ? activeSection?.label : 'Featured & latest'}
+			</p>
+			<p className="body-sm text-tertiary" aria-live="polite">
+				{resultCount}
+			</p>
+		</div>
+	)
+}
+
+function SearchResults({
+	data,
+	isLoading,
+	error,
+	query,
+	section,
+	activeSection,
+	onSelectTopic,
+	onSelectResult
+}: {
+	data: ResearchSearchResponse | undefined
+	isLoading: boolean
+	error: Error | null
+	query: string
+	section: SearchContentType | null
+	activeSection: SectionFilter | undefined
+	onSelectTopic: (query: string) => void
+	onSelectResult: () => void
+}) {
+	if (isLoading) {
+		return (
+			<div className="flex min-h-64 items-center justify-center" role="status" aria-live="polite">
+				<LoadingIndicator label="Searching Research and Newsletters" />
+			</div>
+		)
+	}
+
+	if (error) {
+		return (
+			<div className="flex min-h-64 items-center justify-center px-6 text-center">
+				<p role="alert" className="body-sm text-data-down">
+					Couldn&apos;t load search results. Please try again.
+				</p>
+			</div>
+		)
+	}
+
+	if (!data?.items.length) return <EmptyState query={query} section={section} />
+
+	return (
+		<div className="space-y-2">
+			{query ? null : <TopicExplorer onSelect={onSelectTopic} />}
+			{query ? null : (
+				<FeaturedResult
+					item={data.items[0]}
+					label={section ? `Latest ${activeSection?.itemLabel ?? 'content'}` : 'Latest published'}
+					onSelect={onSelectResult}
+				/>
+			)}
+			{data.items.length > 1 || query ? (
+				<ul className="space-y-0.5">
+					{(query ? data.items : data.items.slice(1)).map((item) => (
+						<SearchResult key={item.id} item={item} onSelect={onSelectResult} />
+					))}
+				</ul>
+			) : null}
+		</div>
+	)
+}
+
+export function ResearchSearchDialog({ variant }: { variant: SearchDialogVariant }) {
 	const [open, setOpen] = useState(false)
 	const [query, setQuery] = useState('')
-	const [section, setSection] = useState<ArticleSection | null>(null)
+	const [section, setSection] = useState<SearchContentType | null>(null)
 	const inputRef = useRef<HTMLInputElement>(null)
 	const debouncedQuery = useDebouncedValue(query.trim(), 250)
 	const resultLimit = debouncedQuery ? RESEARCH_SEARCH_LIMIT : LATEST_RESEARCH_LIMIT
@@ -215,13 +502,7 @@ export function ResearchSearchDialog({ variant }: { variant: 'desktop' | 'mobile
 
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['research', 'search-dialog', debouncedQuery, section, resultLimit],
-		queryFn: () =>
-			listArticles({
-				query: debouncedQuery,
-				limit: resultLimit,
-				section: section ?? undefined,
-				sort: 'newest'
-			}),
+		queryFn: () => searchResearchContent(debouncedQuery, section, resultLimit),
 		enabled: open,
 		retry: false,
 		staleTime: 60_000
@@ -240,17 +521,9 @@ export function ResearchSearchDialog({ variant }: { variant: 'desktop' | 'mobile
 		requestAnimationFrame(() => inputRef.current?.focus())
 	}
 
-	const triggerClassName =
-		variant === 'mobile'
-			? '-my-0.5 inline-flex size-11 shrink-0 items-center justify-center rounded-md bg-surface/15 text-on-brand shadow transition-colors hover:bg-surface/25 focus-visible:bg-surface/25 active:bg-surface/25 lg:hidden'
-			: 'inline-flex h-[45px] min-w-[113px] items-center justify-center gap-2 rounded-full bg-research-white px-4 text-base font-medium text-research-heading transition-colors hover:bg-research-black hover:text-research-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-research-white'
-
 	return (
 		<Ariakit.DialogProvider open={open} setOpen={handleOpenChange}>
-			<Ariakit.DialogDisclosure type="button" aria-label="Search DefiLlama Research" className={triggerClassName}>
-				<Icon name="search" height={20} width={20} aria-hidden />
-				{variant === 'desktop' ? <span>Search</span> : null}
-			</Ariakit.DialogDisclosure>
+			<SearchDialogTrigger variant={variant} />
 
 			<Ariakit.Dialog
 				className={`${dialogSurfaceStyles} [--dialog-width:700px]`}
@@ -260,110 +533,37 @@ export function ResearchSearchDialog({ variant }: { variant: 'desktop' | 'mobile
 			>
 				<div className="flex items-start gap-3 px-4 pt-4 pb-3">
 					<div className="min-w-0">
-						<DialogHeading>Search Research</DialogHeading>
-						<p className="mt-0.5 body-sm text-tertiary">Discover analysis across every Research format.</p>
+						<DialogHeading>Search Research &amp; Newsletters</DialogHeading>
+						<p className="mt-0.5 body-sm text-tertiary">Find published analysis and Research Notes.</p>
 					</div>
 					<DialogCloseButton className="-mt-1 -mr-1 ml-auto" ariaLabel="Close Research search" />
 				</div>
 
-				<div className="px-4 pb-3">
-					<div className="relative">
-						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} aria-hidden />
-						<Input
-							ref={inputRef}
-							type="text"
-							role="searchbox"
-							inputMode="search"
-							enterKeyHint="search"
-							aria-label="Search Research"
-							value={query}
-							onChange={(event) => setQuery(event.currentTarget.value)}
-							placeholder="Search topics, protocols, or titles…"
-							className={`${searchFieldInputPlacementStyles} ${query ? 'pr-9' : ''}`}
-						/>
-						{query ? (
-							<button
-								type="button"
-								onClick={() => {
-									setQuery('')
-									inputRef.current?.focus()
-								}}
-								aria-label="Clear search"
-								className="absolute top-0 right-1 bottom-0 my-auto grid size-7 place-items-center rounded-md text-tertiary transition-colors hover:bg-hover-row hover:text-primary"
-							>
-								<Icon name="x" className="size-4" aria-hidden />
-							</button>
-						) : null}
-					</div>
-				</div>
+				<SearchField
+					inputRef={inputRef}
+					query={query}
+					onChange={setQuery}
+					onClear={() => {
+						setQuery('')
+						inputRef.current?.focus()
+					}}
+				/>
 
-				<nav className="border-t border-subtle px-4 py-3" aria-label="Research content types">
-					<p className="mb-2 label-sm text-secondary">Browse by format</p>
-					<div className="flex scrollbar-none touch-pan-x gap-1 overflow-x-auto rounded-lg bg-surface-elevated-1 p-1 [-webkit-overflow-scrolling:touch]">
-						{SECTION_FILTERS.map((filter) => {
-							const active = filter.value === section
-							return (
-								<button
-									key={filter.label}
-									type="button"
-									onClick={() => setSection(filter.value)}
-									aria-pressed={active}
-									className={`shrink-0 rounded-md px-2.5 py-1.5 label-sm transition-colors ${
-										active ? 'bg-brand text-on-brand' : 'text-secondary hover:bg-hover-row hover:text-primary'
-									}`}
-								>
-									{filter.label}
-								</button>
-							)
-						})}
-					</div>
-				</nav>
+				<SearchTypeFilters section={section} onChange={setSection} />
 
-				<div className="flex items-center justify-between gap-3 border-t border-subtle px-4 py-2">
-					<p className="label-sm text-secondary">
-						{debouncedQuery ? 'Search results' : section ? activeSection?.label : 'Featured & latest'}
-					</p>
-					<p className="body-sm text-tertiary" aria-live="polite">
-						{data
-							? debouncedQuery
-								? `${formatNumber(data.totalItems)} ${data.totalItems === 1 ? 'result' : 'results'}`
-								: `${data.items.length} newest`
-							: 'Searching…'}
-					</p>
-				</div>
+				<SearchResultsHeader data={data} query={debouncedQuery} section={section} activeSection={activeSection} />
 
 				<div className={`${dialogScrollableBodyStyles} min-h-64 border-t border-subtle p-2`}>
-					{isLoading ? (
-						<div className="flex min-h-64 items-center justify-center" role="status" aria-live="polite">
-							<LoadingIndicator label="Searching Research" />
-						</div>
-					) : error ? (
-						<div className="flex min-h-64 items-center justify-center px-6 text-center">
-							<p role="alert" className="body-sm text-data-down">
-								Couldn&apos;t load Research results. Please try again.
-							</p>
-						</div>
-					) : data?.items.length ? (
-						<div className="space-y-2">
-							{debouncedQuery ? null : <TopicExplorer onSelect={selectTopic} />}
-							{debouncedQuery ? null : (
-								<FeaturedResult
-									article={data.items[0]}
-									label={section ? `Latest ${ARTICLE_SECTION_LABELS[section]}` : 'Latest from Research'}
-									onSelect={() => handleOpenChange(false)}
-								/>
-							)}
-							{data.items.length > 1 || debouncedQuery ? (
-								<ul className="space-y-0.5">
-									{(debouncedQuery ? data.items : data.items.slice(1)).map((article) => (
-										<SearchResult key={article.id} article={article} onSelect={() => handleOpenChange(false)} />
-									))}
-								</ul>
-							) : null}
-						</div>
-					) : (
-						<EmptyState query={debouncedQuery} section={section} />
-					)}
+					<SearchResults
+						data={data}
+						isLoading={isLoading}
+						error={error}
+						query={debouncedQuery}
+						section={section}
+						activeSection={activeSection}
+						onSelectTopic={selectTopic}
+						onSelectResult={() => handleOpenChange(false)}
+					/>
 				</div>
 			</Ariakit.Dialog>
 		</Ariakit.DialogProvider>

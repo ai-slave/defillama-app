@@ -448,6 +448,8 @@ describe('research SSR data loading', () => {
 		expect(html).toContain('Canonical Research')
 		expect(html).toContain('Server rendered body')
 		expect(html).toContain('Internal Admin')
+		expect(html).toContain('aria-label="Search DefiLlama Research and Newsletters"')
+		expect(html).toContain('>Search</span>')
 	})
 
 	it('does not render legacy draft preview controls on the public article page', () => {

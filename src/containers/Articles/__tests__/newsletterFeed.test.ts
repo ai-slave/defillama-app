@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseResearchNewsletterFeed } from '~/containers/Articles/newsletterFeed.server'
+import { parseResearchNewsletterFeed, searchResearchNewsletterItems } from '~/containers/Articles/newsletterFeed.server'
 
 describe('Beehiiv research newsletter feed', () => {
 	it('extracts safe card metadata and ignores full email HTML', () => {
@@ -55,5 +55,31 @@ describe('Beehiiv research newsletter feed', () => {
 				publishedAt: null
 			}
 		])
+	})
+
+	it('searches newsletter titles and descriptions case-insensitively before applying the result limit', () => {
+		const items = [
+			{
+				id: 'newsletter-1',
+				title: 'Why Kalshi leapfrogged Polymarket',
+				description: 'Prediction market liquidity',
+				href: 'https://defillama-research.beehiiv.com/p/kalshi',
+				imageUrl: null,
+				publishedAt: '2026-09-03T14:33:54.000Z'
+			},
+			{
+				id: 'newsletter-2',
+				title: 'Trading venues in 2026',
+				description: 'Kalshi and other event exchanges',
+				href: 'https://defillama-research.beehiiv.com/p/trading-venues',
+				imageUrl: null,
+				publishedAt: '2026-08-06T14:33:54.000Z'
+			}
+		]
+
+		expect(searchResearchNewsletterItems(items, 'KALSHI', 1)).toEqual({
+			items: [items[0]],
+			totalItems: 2
+		})
 	})
 })

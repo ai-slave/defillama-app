@@ -1,4 +1,4 @@
-import type { ResearchNewsletterItem } from '~/containers/Articles/newsletterFeed'
+import type { ResearchNewsletterItem, ResearchNewsletterListResponse } from '~/containers/Articles/newsletterFeed'
 import { cachedResult } from '~/server/api/resultCache'
 
 const DEFAULT_RESEARCH_NEWSLETTER_FEED_URL = 'https://rss.beehiiv.com/feeds/yFIFdSjo5o.xml'
@@ -126,14 +126,14 @@ async function fetchResearchNewsletterItems(feedUrl: string): Promise<ResearchNe
 		throw new Error('Beehiiv RSS response is larger than expected')
 	}
 
-	return parseResearchNewsletterFeed(xml).slice(0, MAX_LANDING_ITEMS)
+	return parseResearchNewsletterFeed(xml)
 }
 
-export function getResearchNewsletterItems(): Promise<ResearchNewsletterItem[]> {
+function getCachedResearchNewsletterItems(): Promise<ResearchNewsletterItem[]> {
 	const feedUrl = process.env.BEEHIIV_RESEARCH_RSS_URL?.trim() || DEFAULT_RESEARCH_NEWSLETTER_FEED_URL
 
 	return cachedResult(
-		'research-newsletter-feed',
+		'research-newsletter-feed-v2',
 		feedUrl,
 		{
 			ttlMs: FEED_CACHE_TTL_MS,
@@ -142,4 +142,28 @@ export function getResearchNewsletterItems(): Promise<ResearchNewsletterItem[]> 
 		},
 		() => fetchResearchNewsletterItems(feedUrl)
 	)
+}
+
+export async function getResearchNewsletterItems(): Promise<ResearchNewsletterItem[]> {
+	return (await getCachedResearchNewsletterItems()).slice(0, MAX_LANDING_ITEMS)
+}
+
+export function getResearchNewsletterArchiveItems(): Promise<ResearchNewsletterItem[]> {
+	return getCachedResearchNewsletterItems()
+}
+
+export function searchResearchNewsletterItems(
+	items: ResearchNewsletterItem[],
+	query: string,
+	limit: number
+): ResearchNewsletterListResponse {
+	const normalizedQuery = query.trim().toLocaleLowerCase()
+	const matches = normalizedQuery
+		? items.filter((item) => `${item.title} ${item.description ?? ''}`.toLocaleLowerCase().includes(normalizedQuery))
+		: items
+
+	return {
+		items: matches.slice(0, limit),
+		totalItems: matches.length
+	}
 }
