@@ -863,14 +863,16 @@ export function buildDirectoryColumns(
 			id: 'reservesSource',
 			header: definitions.reservesSource.label,
 			enableSorting: false,
-			cell: ({ getValue }) =>
-				getValue() ? (
-					<BasicLink href={getValue()} target="_blank" rel="noopener noreferrer" className="text-link hover:underline">
+			cell: ({ getValue }) => {
+				const sourceUrl = getValue()
+				return sourceUrl ? (
+					<BasicLink href={sourceUrl} target="_blank" rel="noopener noreferrer" className="text-link hover:underline">
 						Verify
 					</BasicLink>
 				) : (
 					'–'
-				),
+				)
+			},
 			meta: {
 				headerClassName: 'w-[79px] min-w-[79px]',
 				headerHelperText: definitions.reservesSource.description
@@ -913,10 +915,9 @@ export function buildDirectoryColumns(
 			id: 'feeToken',
 			header: definitions.feeToken.label,
 			cell: ({ row, getValue }) => {
+				const symbol = getValue()
 				const discount = row.original.fees?.feeToken?.discountFraction
-				return getValue()
-					? `${getValue().toUpperCase()}${discount == null ? '' : ` · ${percentage(discount)} off`}`
-					: '–'
+				return symbol ? `${symbol.toUpperCase()}${discount == null ? '' : ` · ${percentage(discount)} off`}` : '–'
 			},
 			meta: { headerClassName: 'w-[130px] min-w-[130px]', headerHelperText: definitions.feeToken.description }
 		}),
