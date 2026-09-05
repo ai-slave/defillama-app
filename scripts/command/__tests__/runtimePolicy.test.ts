@@ -18,7 +18,7 @@ describe('runtime policy', () => {
 	})
 
 	it('detects forbidden runtime invocations', () => {
-		const [bunNextRuntime, bunServerRuntime, nextStartRuntime] = FORBIDDEN_RUNTIME_INVOCATIONS
+		const [nextStartRuntime] = FORBIDDEN_RUNTIME_INVOCATIONS
 
 		expect(
 			findRuntimePolicyViolations([
@@ -30,16 +30,6 @@ describe('runtime policy', () => {
 				{ content: 'next dev', filePath: 'safe.json' }
 			])
 		).toEqual([
-			{
-				filePath: 'package.json',
-				message: bunNextRuntime.message,
-				patternId: bunNextRuntime.id
-			},
-			{
-				filePath: 'Dockerfile',
-				message: bunServerRuntime.message,
-				patternId: bunServerRuntime.id
-			},
 			{
 				filePath: 'standalone.sh',
 				message: nextStartRuntime.message,

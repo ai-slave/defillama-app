@@ -44,9 +44,15 @@ async function main(): Promise<void> {
 	}
 	if (leaks.length > 0) throw new Error(`Dataset snapshot server code found in browser output:\n${leaks.join('\n')}`)
 
+	// Vercel builds skip standalone output; the copy check only applies when the build produced it.
 	const sourceSnapshots = path.join(projectDir, '.cache', 'dataset-snapshots')
-	const standaloneSnapshots = path.join(projectDir, '.next', 'standalone', '.cache', 'dataset-snapshots')
-	if ((await pathExists(sourceSnapshots)) && !(await pathExists(standaloneSnapshots))) {
+	const standaloneDir = path.join(projectDir, '.next', 'standalone')
+	const standaloneSnapshots = path.join(standaloneDir, '.cache', 'dataset-snapshots')
+	if (
+		(await pathExists(sourceSnapshots)) &&
+		(await pathExists(standaloneDir)) &&
+		!(await pathExists(standaloneSnapshots))
+	) {
 		throw new Error('Dataset snapshots were not copied into standalone server output')
 	}
 	if (

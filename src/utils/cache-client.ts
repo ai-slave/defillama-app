@@ -7,35 +7,28 @@ import {
 
 let redis: import('ioredis').Redis | null = null
 let redisConnection: Promise<import('ioredis').Redis | null> | null = null
-const REDIS_URL = process.env.REDIS_URL as string
-const USE_REDIS = !!process.env.USE_REDIS
-const EXT_REDIS_URL = process.env.EXT_REDIS_URL as string | undefined
-const IS_RUNTIME = !!process.env.IS_RUNTIME
+// Setting REDIS_URL is the only deployment switch; `next dev` never connects even if one is set.
+const REDIS_URL = process.env.NODE_ENV === 'development' ? undefined : process.env.REDIS_URL
 
-if (typeof window === 'undefined' && USE_REDIS) {
-	// Server-side execution
-	const redisUrl = IS_RUNTIME ? REDIS_URL : EXT_REDIS_URL
+if (typeof window === 'undefined' && REDIS_URL) {
+	redisConnection = import('ioredis')
+		.then((Redis) => {
+			console.log('[cache] [connecting to redis]')
 
-	if (redisUrl) {
-		redisConnection = import('ioredis')
-			.then((Redis) => {
-				console.log('[cache] [connecting to redis]')
-
-				try {
-					redis = new Redis.default(redisUrl)
-					redis.on('connect', () => console.log('[cache] [redis] connected'))
-					redis.on('error', () => console.log('[cache] [redis error]'))
-					return redis
-				} catch {
-					console.log('[cache] [redis connection error]')
-					return null
-				}
-			})
-			.catch(() => {
-				console.log('[cache] [redis import error]')
+			try {
+				redis = new Redis.default(REDIS_URL)
+				redis.on('connect', () => console.log('[cache] [redis] connected'))
+				redis.on('error', () => console.log('[cache] [redis error]'))
+				return redis
+			} catch {
+				console.log('[cache] [redis connection error]')
 				return null
-			})
-	}
+			}
+		})
+		.catch(() => {
+			console.log('[cache] [redis import error]')
+			return null
+		})
 }
 
 const getRedisClient = async () => redis ?? (redisConnection ? await redisConnection : null)

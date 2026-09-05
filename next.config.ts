@@ -9,7 +9,11 @@ function resolveBuildId(): string | null {
 }
 
 const nextConfig: NextConfig = {
-	output: 'standalone',
+	// Standalone output is for the Docker image. Vercel's adapter traces functions itself, and with
+	// Turbopack the standalone writer needs a next-server trace that the adapter path never emits.
+	output: process.env.VERCEL ? undefined : 'standalone',
+	// Stop `next dev` (16.3+) from injecting its agent-rules block into AGENTS.md.
+	agentRules: false,
 	generateBuildId: resolveBuildId,
 	outputFileTracingIncludes: {
 		'/*': ['./.cache/app-metadata/**/*'],

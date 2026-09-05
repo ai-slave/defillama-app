@@ -17,16 +17,6 @@ function isStandaloneRuntimeLauncher(filePath: string): boolean {
 
 export const FORBIDDEN_RUNTIME_INVOCATIONS = [
 	{
-		id: 'bun-next-runtime',
-		message: 'Run Next.js through Node, not Bun runtime.',
-		pattern: /\bbun\s+--bun\s+next\b/
-	},
-	{
-		id: 'bun-server-runtime',
-		message: 'Run standalone Next.js server.js through Node, not Bun runtime.',
-		pattern: /\bbun\s+(?:\.\/)?server\.js\b/
-	},
-	{
 		id: 'next-start-standalone-runtime',
 		message: 'Use standalone server.js on Node instead of next start in Docker or standalone launchers.',
 		pattern: /\bnext\s+start\b/,

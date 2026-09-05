@@ -50,7 +50,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 - `bun run dev` starts plain Next.js development.
 - `bun run dev:prepared` refreshes local generated data before starting Next.js development.
-- `bun run build` refreshes generated metadata, dataset caches, site navigation, and `public/robots.txt`, then runs the Next.js production build with Webpack.
+- `bun run build` refreshes generated metadata, dataset caches, site navigation, and `public/robots.txt`, then runs the Next.js production build on the Bun runtime. Vercel builds pass `--webpack`; Coolify builds use Turbopack.
 - `bun run build:next` runs plain `next build` without refreshing generated data.
 - `bun run build:deploy` runs the self-hosted deploy wrapper, including build logs, artifact sync, and notifications.
 - `bun run start` starts a standard Next.js production server.
@@ -58,11 +58,13 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Vercel
 
-Use the Next.js framework preset and leave Build Command, Output Directory, Install Command, and Development Command overrides disabled. Vercel should run the package build script; do not override the Build Command to `next build`, because that skips metadata cache, dataset cache, site navigation, robots.txt generation, and the repo's Webpack build fallback.
+Use the Next.js framework preset and leave Build Command, Output Directory, Install Command, and Development Command overrides disabled. Vercel should run the package build script; do not override the Build Command to `next build`, because that skips metadata cache, dataset cache, site navigation, and robots.txt generation.
 
 Set the required Vercel environment variables from `.env.example`. For production indexing, set `ROBOTS_ALLOW_INDEXING=true` only in the Production environment.
 
-Do not set `NODE_OPTIONS` on Vercel for this project. The build wrapper applies the required heap setting only to the Next.js production build, and static generation memory is bounded in `next.config.ts`; setting Node flags globally can break Vercel's build runtime before Next.js starts.
+`vercel.json` sets `bunVersion` so Vercel Functions run on the Bun runtime; Vercel manages the patch version. Because the app uses ISR, the `build` and `dev` scripts run through `bun run --bun`, as the Bun runtime docs require.
+
+Do not set `NODE_OPTIONS` on Vercel for this project. Static generation memory is bounded in `next.config.ts`, and Node flags are ignored by the Bun runtime.
 
 ## Contributing
 
