@@ -27,6 +27,7 @@ export async function prepareTokensCsv({
 	const columns = TOKENS_CSV_COLUMNS.filter((column) => !hiddenColumnIds.has(column.id))
 	const rows: CsvCell[][] = [columns.map((column) => column.header)]
 	let hasMore = true
+	let snapshotVersion = 'latest'
 
 	for (let page = 1; page <= MAX_CSV_PAGES && hasMore; page++) {
 		const queryString = buildTokensTableQueryString({
@@ -34,10 +35,16 @@ export async function prepareTokensCsv({
 			pagination: { pageIndex: page - 1, pageSize: MAX_TOKENS_TABLE_PAGE_SIZE },
 			sorting
 		})
-		const response = await fetchJson<TokensPageResponse>(`${TOKENS_API}${queryString}`)
+		const response = await fetchJson<TokensPageResponse>(
+			`${TOKENS_API}${queryString}${queryString ? '&' : '?'}snapshot=${snapshotVersion}`
+		)
 		if (response.schemaVersion !== TOKENS_PAGE_RESPONSE_SCHEMA_VERSION) {
 			throw new Error('tokens csv export got an unexpected response schema')
 		}
+		if (!response.snapshotVersion || (snapshotVersion !== 'latest' && response.snapshotVersion !== snapshotVersion)) {
+			throw new Error('Tokens export snapshot changed. Please restart the export.')
+		}
+		snapshotVersion = response.snapshotVersion
 		for (const row of response.rows) {
 			rows.push(columns.map((column) => column.value(row)))
 		}

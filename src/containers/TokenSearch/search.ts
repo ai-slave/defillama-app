@@ -24,7 +24,7 @@ export function getGeckoIdFromSearchId(id: string): string {
 function getFallbackTokenName(geckoId: string): string {
 	return geckoId
 		.split('-')
-		.map((part) => (part ? `${part[0].toUpperCase()}${part.slice(1)}` : part))
+		.map((part) => (part ? `${part.charAt(0).toUpperCase()}${part.slice(1)}` : part))
 		.join(' ')
 }
 
@@ -75,8 +75,8 @@ export async function searchTokens(query: string, limit = TOKEN_SEARCH_LIMIT): P
 	)
 
 	const tokens: TokenSearchResult[] = []
-	for (let index = 0; index < sortedHits.length; index++) {
-		tokens.push(toTokenSearchResult(sortedHits[index], index + 1))
+	for (const hit of sortedHits) {
+		tokens.push(toTokenSearchResult(hit, tokens.length + 1))
 	}
 	return tokens
 }

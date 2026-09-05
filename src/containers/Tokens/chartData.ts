@@ -52,6 +52,7 @@ export function buildTokensTreemap(
 	let stablecoinMarketCap = 0
 	let stablecoinsHidden = 0
 
+	// The server appends all dataset arrays in lockstep; bounded indices preserve nullable gaps.
 	const rowCount = Math.min(data.marketCaps.length, universe)
 	for (let index = 0; index < rowCount; index++) {
 		const isStablecoin = data.stablecoins[index]
@@ -59,16 +60,16 @@ export function buildTokensTreemap(
 			stablecoinsHidden++
 			continue
 		}
-		const marketCap = data.marketCaps[index]
-		const change = priceChanges[index]
+		const marketCap = data.marketCaps[index]!
+		const change = priceChanges[index]!
 		const leaf: TokensTreemapLeaf = {
-			name: data.symbols[index],
+			name: data.symbols[index]!,
 			value: [marketCap, change],
 			iconKey: leaves.length,
 			itemStyle: { color: getEquitiesTreemapColor(change) },
-			companyName: data.names[index],
+			companyName: data.names[index]!,
 			marketCap,
-			iconUrl: toExportSafeIconUrl(resolveTokensChartLogo(data.logoSources[index]))
+			iconUrl: toExportSafeIconUrl(resolveTokensChartLogo(data.logoSources[index]!))
 		}
 		leaves.push(leaf)
 		if (isStablecoin) {
@@ -137,7 +138,7 @@ export function prepareTokensMoversCsv({
 		['Loser', movers.losers]
 	] as const) {
 		for (let index = 0; index < entries.length; index++) {
-			const entry = entries[index]
+			const entry = entries[index]!
 			rows.push([direction, index + 1, entry.name, entry.value])
 		}
 	}
@@ -151,16 +152,17 @@ export function buildTokensMovers(
 	const priceChanges = data.priceChanges[window]
 	const gainers: TokensMoverEntry[] = []
 	const losers: TokensMoverEntry[] = []
+	// The server appends all dataset arrays in lockstep; bounded indices preserve nullable gaps.
 	const rowCount = Math.min(data.marketCaps.length, universe)
 
 	for (let index = 0; index < rowCount; index++) {
-		const change = priceChanges[index]
+		const change = priceChanges[index]!
 		if (change == null || change === 0) continue
 		const entry = {
-			name: data.symbols[index],
+			name: data.symbols[index]!,
 			value: change,
-			logo: resolveTokensChartLogo(data.logoSources[index]),
-			href: data.hrefs[index]
+			logo: resolveTokensChartLogo(data.logoSources[index]!),
+			href: data.hrefs[index]!
 		}
 		insertMover(change > 0 ? gainers : losers, entry, change > 0)
 	}
@@ -171,7 +173,7 @@ export function buildTokensMovers(
 function insertMover(entries: TokensMoverEntry[], entry: TokensMoverEntry, largestFirst: boolean): void {
 	let index = entries.length
 	while (index > 0) {
-		const previous = entries[index - 1]
+		const previous = entries[index - 1]! // index is within this array.
 		if (largestFirst ? entry.value <= previous.value : entry.value >= previous.value) break
 		index--
 	}

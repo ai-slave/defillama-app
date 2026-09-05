@@ -94,6 +94,7 @@ export function StatItem({
 }
 
 export interface InlineStatStripItem {
+	tooltip?: ReactNode
 	label: string
 	value: ReactNode
 	/** Optional delta text rendered after the value. */
@@ -115,7 +116,19 @@ export function InlineStatStrip({ items, className }: { items: InlineStatStripIt
 		>
 			{items.map((item) => (
 				<div key={item.label} className="flex items-baseline gap-1.5">
-					<dt className="body-md text-secondary">{item.label}</dt>
+					<dt className="body-md text-secondary">
+						{item.tooltip ? (
+							<Tooltip
+								content={item.tooltip}
+								tabIndex={0}
+								className="cursor-help underline decoration-dotted underline-offset-4"
+							>
+								{item.label}
+							</Tooltip>
+						) : (
+							item.label
+						)}
+					</dt>
 					<dd className="label-md">{item.value}</dd>
 					{item.change != null ? (
 						<dd className={`label-md ${item.changeClassName ?? ''}`.trim()}>{item.change}</dd>

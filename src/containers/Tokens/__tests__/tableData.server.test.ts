@@ -43,7 +43,13 @@ async function blobFor(value: unknown) {
 }
 
 function storedSnapshot(version: string, generatedAt: number) {
-	return { version, generatedAt, tokens: [], markets: { last_updated: '', tokens: [] }, currentMetricsById: {} }
+	return {
+		version,
+		generatedAt,
+		tokens: [],
+		markets: { last_updated: '', tokens: [] },
+		currentMetricsById: {}
+	}
 }
 
 afterEach(() => {
@@ -100,5 +106,21 @@ describe('getTokensMarketSnapshot window freshness', () => {
 
 		expect(snapshot.version).toBe(winner.version)
 		expect(cacheMocks.setCache).not.toHaveBeenCalled()
+	})
+	it('keeps an outage null and does not reinterpret an old flag-based empty snapshot', async () => {
+		vi.useFakeTimers()
+		vi.setSystemTime(new Date('2027-04-01T10:02:00.000Z'))
+		const old = { ...storedSnapshot('old-market-0000000001', Date.now()), marketsAvailable: false }
+		cacheMocks.getObjectCache.mockImplementation(async (key: string) =>
+			key.startsWith('tokens-market:v3:') ? { version: old.version } : null
+		)
+		cacheMocks.getCache.mockResolvedValue(await blobFor(old))
+		upstreamMocks.fetchCoinGeckoTokensListFromDataset.mockResolvedValue([])
+		upstreamMocks.fetchTokenMarketsList.mockRejectedValue(new Error('Markets unavailable'))
+		cacheMocks.setCache.mockResolvedValue(true)
+		cacheMocks.setObjectCache.mockResolvedValue(true)
+		const snapshot = await getTokensMarketSnapshot()
+		expect(snapshot.markets).toBeNull()
+		expect(upstreamMocks.fetchTokenMarketsList).toHaveBeenCalledOnce()
 	})
 })

@@ -26,6 +26,7 @@ import {
 	TOKENS_TABLE_WIDTH_EXCLUDING_RANK
 } from '~/containers/Tokens'
 import { useWatchlistTokensTable } from '~/containers/Tokens/queries.client'
+import { TokensSourceAvailability } from '~/containers/Tokens/SourceAvailability'
 import type { TokensTableRow } from '~/containers/Tokens/types'
 import { WatchListTabs } from '~/containers/Yields/views/WatchlistView'
 import { DEFAULT_PORTFOLIO_NAME } from '~/contexts/LocalStorage'
@@ -33,7 +34,7 @@ import { useBookmarks } from '~/hooks/useBookmarks'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
-import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
 import { mergeMarketsSummary } from './marketsMerge'
 
@@ -74,8 +75,9 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 		for (const id of toAdd) addProtocol(id)
 		for (const id of savedTokenIds) if (!newSet.has(id)) removeProtocol(id)
 
-		if (toAdd.length > 0) {
-			const label = toAdd.length === 1 ? (tokenNameById.get(toAdd[0]) ?? toAdd[0]) : `${toAdd.length} tokens`
+		const firstAddedId = toAdd[0]
+		if (firstAddedId !== undefined) {
+			const label = toAdd.length === 1 ? (tokenNameById.get(firstAddedId) ?? firstAddedId) : `${toAdd.length} tokens`
 			toast.success(
 				<span>
 					Added {label} to{' '}
@@ -87,7 +89,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 		}
 	}
 
-	const { data, isLoading, isFetching } = useWatchlistTokensTable(savedTokenIds)
+	const { data, isLoading, isFetching, isError, refetch } = useWatchlistTokensTable(savedTokenIds)
 	const { data: marketsList } = useQuery({
 		queryKey: ['tokens-markets-summary'],
 		queryFn: () => fetchJson<TokenMarketsListResponse>('/api/public/markets/tokens'),
@@ -145,6 +147,14 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 			<WatchListTabs />
 			<div className="flex flex-col gap-2">
 				<TokensPortfolioSelection />
+				{hasSavedTokens && data && isError ? (
+					<InlineStatus variant="error">Unable to refresh token data. Showing the last available data.</InlineStatus>
+				) : null}
+				{data ? (
+					<TokensSourceAvailability
+						sources={data.unavailableSources.filter((source) => source !== 'markets' || !marketsList)}
+					/>
+				) : null}
 				<Card padding="none">
 					<div className="flex flex-wrap items-center gap-2 p-2">
 						<div className="mr-auto">
@@ -165,6 +175,13 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 					</div>
 					{hasSavedTokens && isLoading ? (
 						<SurfaceBodyLoadingStatus className="p-2" />
+					) : hasSavedTokens && !data && isError ? (
+						<SurfaceBodyStatus variant="error" className="p-2">
+							<p>Token data is unavailable. Your saved tokens are unchanged.</p>
+							<Button size="md" className="mt-2" onClick={() => void refetch()}>
+								Retry
+							</Button>
+						</SurfaceBodyStatus>
 					) : hasSavedTokens && rows.length ? (
 						<PaginatedTable
 							table={table}
@@ -180,8 +197,12 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 					) : (
 						<SurfaceBodyStatus variant="empty" className="p-2" contentClassName="flex flex-col items-center">
 							<Icon name="bookmark" height={32} width={32} className="mb-3" />
-							<p className="body-sm text-tertiary">No tokens in your watchlist</p>
-							<p className="mt-1 body-sm text-secondary opacity-75">Use the selector above to add tokens</p>
+							<p className="body-sm text-tertiary">
+								{hasSavedTokens ? 'No ranking data for your saved tokens' : 'No tokens in your watchlist'}
+							</p>
+							{!hasSavedTokens ? (
+								<p className="mt-1 body-sm text-secondary opacity-75">Use the selector above to add tokens</p>
+							) : null}
 						</SurfaceBodyStatus>
 					)}
 				</Card>

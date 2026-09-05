@@ -37,7 +37,30 @@ function row(overrides: Partial<TokensTableRow>): TokensTableRow {
 		unlock30dUsd: null,
 		upcomingUnlockUsd: null,
 		isStablecoin: false,
-		display: {} as TokensTableRow['display'],
+		display: {
+			price: null,
+			priceChange24h: null,
+			priceChange7d: null,
+			priceChange30d: null,
+			marketCap: null,
+			fdv: null,
+			outstandingFdv: null,
+			unlockedPercent: null,
+			unlockedPercentWidth: null,
+			spotVolume24h: null,
+			perpsVolume24h: null,
+			openInterest24h: null,
+			fees24h: null,
+			revenue24h: null,
+			holdersRevenue24h: null,
+			trsPercent: null,
+			trsPercentWidth: null,
+			unlock30dUsd: null,
+			upcomingUnlockUsd: null,
+			priceChange24hTone: 'neutral',
+			priceChange7dTone: 'neutral',
+			priceChange30dTone: 'neutral'
+		},
 		...overrides
 	}
 }
@@ -45,6 +68,7 @@ function row(overrides: Partial<TokensTableRow>): TokensTableRow {
 function pageResponse(rows: TokensTableRow[], hasMore: boolean) {
 	return {
 		schemaVersion: TOKENS_PAGE_RESPONSE_SCHEMA_VERSION,
+		snapshotVersion: 'snapshot-123456789012',
 		rows,
 		hasMore
 	}
@@ -65,13 +89,13 @@ describe('prepareTokensCsv', () => {
 
 		expect(filename).toBe('tokens.csv')
 		expect(fetchJson).toHaveBeenCalledTimes(2)
-		expect(fetchJson.mock.calls[0][0]).toBe('/api/public/tokens?pageSize=500')
-		expect(fetchJson.mock.calls[1][0]).toBe('/api/public/tokens?page=2&pageSize=500')
+		expect(fetchJson.mock.calls[0]?.[0]).toBe('/api/public/tokens?pageSize=500&snapshot=latest')
+		expect(fetchJson.mock.calls[1]?.[0]).toBe('/api/public/tokens?page=2&pageSize=500&snapshot=snapshot-123456789012')
 		expect(rows[0]).not.toContain('FDV')
 		expect(rows[0]).toContain('MCap')
 		expect(rows).toHaveLength(3)
-		expect(rows[1][1]).toBe('Bitcoin (BTC)')
-		expect(rows[2][1]).toBe('Ethereum (ETH)')
+		expect(rows[1]?.[1]).toBe('Bitcoin (BTC)')
+		expect(rows[2]?.[1]).toBe('Ethereum (ETH)')
 	})
 
 	it('carries table query params into the export requests', async () => {
@@ -90,7 +114,7 @@ describe('prepareTokensCsv', () => {
 			hiddenColumnIds: new Set()
 		})
 
-		const requestUrl = new URL(fetchJson.mock.calls[0][0], 'https://defillama.com')
+		const requestUrl = new URL(fetchJson.mock.calls[0]?.[0], 'https://defillama.com')
 		expect(requestUrl.pathname).toBe('/api/public/tokens')
 		expect(requestUrl.searchParams.getAll('chains')).toEqual(['solana', 'ethereum'])
 		expect(Object.fromEntries(requestUrl.searchParams)).toMatchObject({
@@ -111,5 +135,23 @@ describe('prepareTokensCsv', () => {
 		await expect(
 			prepareTokensCsv({ query: {}, sorting: [{ id: 'marketCap', desc: true }], hiddenColumnIds: new Set() })
 		).rejects.toThrow('unexpected response schema')
+	})
+	it('rejects a changed snapshot rather than combining pages', async () => {
+		fetchJson.mockReset()
+		fetchJson
+			.mockResolvedValueOnce(pageResponse([row({})], true))
+			.mockResolvedValueOnce({ ...pageResponse([row({})], false), snapshotVersion: 'different' })
+		await expect(prepareTokensCsv({ query: {}, sorting: [], hiddenColumnIds: new Set() })).rejects.toThrow(
+			'snapshot changed'
+		)
+	})
+	it('exports measured zero as zero and unavailable values as blank', async () => {
+		fetchJson.mockReset()
+		fetchJson.mockResolvedValueOnce(pageResponse([row({ unlock30dUsd: 0, upcomingUnlockUsd: null })], false))
+		const { rows } = await prepareTokensCsv({ query: {}, sorting: [], hiddenColumnIds: new Set() })
+		const header = rows[0]
+		if (!header) throw new Error('Expected CSV header')
+		expect(rows[1]?.[header.indexOf('Past 30D Unlocks')]).toBe(0)
+		expect(rows[1]?.[header.indexOf('Next 30D Unlocks')]).toBe('')
 	})
 })

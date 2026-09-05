@@ -61,8 +61,8 @@ function NumericInput({
 	value: string
 	onChange: (value: string) => void
 	placeholder: string
-	prefix?: string
-	suffix?: string
+	prefix?: string | undefined
+	suffix?: string | undefined
 }) {
 	return (
 		<label className="flex min-h-8 min-w-0 flex-1 items-center gap-1 rounded-lg border border-medium bg-page px-3 py-1.5 label-sm text-primary focus-within:border-brand">

@@ -36,6 +36,7 @@ import {
 	shouldApplyTokensFilterSorting,
 	type TokensActiveFilter
 } from './filters'
+import { TokensSourceAvailability } from './SourceAvailability'
 import { TokensChartsSection } from './TokensChartsSection'
 import { TokensActiveFilterPills, TokensFiltersDialog } from './TokensFiltersDialog'
 import type {
@@ -357,7 +358,7 @@ export const TOKENS_COLUMNS = [
 	}),
 	columnHelper.accessor((row) => row.spotVolume24h ?? undefined, {
 		id: 'spotVolume24h',
-		header: 'Spot Vol',
+		header: '24H Spot Vol',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.spotVolume24h} />,
 		meta: {
 			headerClassName: 'w-[120px] min-w-[120px]',
@@ -367,7 +368,7 @@ export const TOKENS_COLUMNS = [
 	}),
 	columnHelper.accessor((row) => row.perpsVolume24h ?? undefined, {
 		id: 'perpsVolume24h',
-		header: 'Perps Vol',
+		header: '24H Perps Vol',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.perpsVolume24h} />,
 		meta: {
 			headerClassName: 'w-[120px] min-w-[120px]',
@@ -446,22 +447,24 @@ export const TOKENS_COLUMNS = [
 	}),
 	columnHelper.accessor((row) => row.unlock30dUsd ?? undefined, {
 		id: 'unlock30dUsd',
-		header: '30D Unlocks',
+		header: 'Past 30D Unlocks',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.unlock30dUsd} />,
 		meta: {
-			headerClassName: 'w-[130px] min-w-[130px]',
+			headerClassName: 'w-[160px] min-w-[160px]',
 			align: 'end',
-			headerHelperText: 'Estimated value of unlock events over the previous 30 days'
+			headerHelperText:
+				'Estimated value of cliff and linear releases during the previous 30 days, valued at current token prices'
 		}
 	}),
 	columnHelper.accessor((row) => row.upcomingUnlockUsd ?? undefined, {
 		id: 'upcomingUnlockUsd',
-		header: 'Next Unlock',
+		header: 'Next 30D Unlocks',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.upcomingUnlockUsd} />,
 		meta: {
-			headerClassName: 'w-[130px] min-w-[130px]',
+			headerClassName: 'w-[160px] min-w-[160px]',
 			align: 'end',
-			headerHelperText: 'Estimated value of the next known unlock event'
+			headerHelperText:
+				'Estimated value of scheduled cliff and linear releases during the next 30 days, valued at current token prices'
 		}
 	})
 ]
@@ -502,15 +505,38 @@ function TokensStats({ stats }: { stats: TokensPageStatsDisplay }) {
 	const items: InlineStatStripItem[] = [
 		{
 			label: 'MCap',
+			tooltip: 'Total market capitalization of ranked tokens. Percentage shows the market-cap-weighted 24-hour change.',
 			value: stats.totalMarketCap,
 			change: stats.marketCapWeightedChange24h,
 			changeClassName: VALUE_TONE_CLASSES[stats.marketCapWeightedChange24hTone]
 		},
-		{ label: 'Spot Vol', value: stats.spotVolume24h },
-		{ label: 'Perps Vol', value: stats.perpsVolume24h },
-		{ label: 'OI', value: stats.openInterest24h },
-		{ label: '30D Unlocks', value: stats.unlock30dUsd },
-		{ label: 'Next Unlocks', value: stats.upcomingUnlockUsd }
+		{
+			label: '24H Spot Vol',
+			value: stats.spotVolume24h ?? '—',
+			tooltip: 'Spot trading volume over the last 24 hours across tracked markets.'
+		},
+		{
+			label: '24H Perps Vol',
+			value: stats.perpsVolume24h ?? '—',
+			tooltip: 'Perpetual futures trading volume over the last 24 hours across tracked markets.'
+		},
+		{
+			label: 'OI',
+			value: stats.openInterest24h ?? '—',
+			tooltip: 'Current USD value of outstanding perpetual futures positions across tracked markets.'
+		},
+		{
+			label: 'Past 30D Unlocks',
+			value: stats.unlock30dUsd ?? '—',
+			tooltip:
+				'Estimated value of cliff and linear releases during the previous 30 days, valued at current token prices.'
+		},
+		{
+			label: 'Next 30D Unlocks',
+			value: stats.upcomingUnlockUsd ?? '—',
+			tooltip:
+				'Estimated value of scheduled cliff and linear releases during the next 30 days, valued at current token prices.'
+		}
 	]
 
 	return <InlineStatStrip items={items} />
@@ -581,7 +607,12 @@ function TokensSharedControls({
 		[chainOptions]
 	)
 	const categorySelectOptions = React.useMemo(
-		() => categoryOptions.map((option) => ({ key: option.id, name: option.label, help: option.description })),
+		() =>
+			categoryOptions.map((option) => ({
+				key: option.id,
+				name: option.label,
+				...(option.description ? { help: option.description } : {})
+			})),
 		[categoryOptions]
 	)
 
@@ -848,6 +879,7 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 	return (
 		<div className="flex flex-col gap-2">
 			<TokensStats stats={serverTable.data.statsDisplay} />
+			{view === 'table' ? <TokensSourceAvailability sources={serverTable.data.unavailableSources} /> : null}
 			<Panel padding="none">
 				<ViewTabs
 					tabs={VIEW_TABS}

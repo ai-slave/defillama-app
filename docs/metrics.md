@@ -480,6 +480,23 @@ semantics are:
 - `Next Event Types`: filters the categories shown for the next event. It does not change the all-category Next 24h metric.
 - `7d Price Change After Unlock`: observed post-event price movement. It does not claim that the unlock caused the change.
 
+The Tokens directory uses two rolling unlock metrics: `Past 30D Unlocks` covers `[now - 30 days, now)`,
+and `Next 30D Unlocks` covers `[now, now + 30 days)`. Both include cliff and linear releases and value known
+amounts using the current price enrichment. Full schedules must be retained so earlier-starting linear releases
+contribute. These windows differ from the homepage's next 14 days and the Unlocks page's next 7/30 days.
+A supported, priced schedule with no releases produces zero; an unsupported token or missing price remains
+unavailable. Unknown event amounts are excluded; an all-unknown
+row window remains unavailable. Headline totals sum the ranked directory universe even when the table is filtered.
+
+Tokens source failures remain distinct from successful empty responses. Only the failed source's measurements
+are unavailable; successful measured zero and the established nullable activity aggregation rules are preserved.
+`OI` is current open interest, despite the legacy internal `openInterest24h` field name. Spot and perpetual
+volume are trailing 24-hour flows. Tokens CSV pagination pins complete derived rows, filter metadata and source
+availability to one immutable export snapshot. Its identity is computed once per cached complete dataset.
+The export fails if its snapshot cannot be saved or retrieved, rather than continuing on a new version.
+An unavailable snapshot returns HTTP 503: storage cannot distinguish expiry from an outage or unreadable data.
+Tokens page and chart clients check response schema versions and version their request URLs for deployment compatibility.
+
 ## RWA
 
 RWA metrics have their own definitions and breakdown files:

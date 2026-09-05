@@ -44,6 +44,8 @@ function row(overrides: Partial<TokensSourceRow> & Pick<TokensSourceRow, 'id' | 
 
 const basePage = {
 	schemaVersion: TOKENS_PAGE_RESPONSE_SCHEMA_VERSION,
+	snapshotVersion: null,
+	unavailableSources: [],
 	stats: {
 		totalMarketCap: 0,
 		marketCapWeightedChange24h: null,
@@ -195,8 +197,8 @@ describe('getTokensPageFromRows', () => {
 			{ sortBy: 'marketCap', pageSize: '50' }
 		)
 
-		expect(result.rows[0].display).toMatchObject({ price: '$0.9992', marketCap: '$61.85K' })
-		expect(result.rows[1].display).toMatchObject({ price: '$0.00001234', marketCap: '$1K' })
+		expect(result.rows[0]?.display).toMatchObject({ price: '$0.9992', marketCap: '$61.85K' })
+		expect(result.rows[1]?.display).toMatchObject({ price: '$0.00001234', marketCap: '$1K' })
 	})
 
 	it('ignores stale category params', () => {

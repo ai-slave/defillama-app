@@ -69,7 +69,7 @@ function tokenFilterMetadata(
 }
 
 describe('fetchTokensSourceRows', () => {
-	it('retains future emissions while bounding the historical unlock window', async () => {
+	it('retains complete schedules including earlier-starting linear emissions', async () => {
 		vi.useFakeTimers()
 		vi.setSystemTime(new Date('2026-08-23T12:00:00Z'))
 		const nowSec = Math.floor(Date.now() / 1000)
@@ -84,7 +84,6 @@ describe('fetchTokensSourceRows', () => {
 		})
 
 		expect(sourceMocks.getAllProtocolEmissions).toHaveBeenCalledWith({
-			startDate: nowSec - 30 * 24 * 60 * 60,
 			getHistoricalPrices: false,
 			tokenlist: {}
 		})
@@ -118,7 +117,7 @@ describe('buildTokenFilterOptions', () => {
 
 		expect(result.chainOptions.map((option) => option.id)).toEqual(['solana', 'ethereum'])
 		expect(result.categoryOptions.map((option) => option.id)).toEqual(['rwa', 'stablecoins', 'unused'])
-		expect(result.categoryOptions[0].description).toBe('Tokens backed by real-world assets.')
+		expect(result.categoryOptions[0]?.description).toBe('Tokens backed by real-world assets.')
 	})
 })
 
@@ -474,8 +473,8 @@ describe('buildTokensSourceRows', () => {
 			spotVolume24h: 100,
 			perpsVolume24h: 250,
 			openInterest24h: 325,
-			unlock30dUsd: 20,
-			upcomingUnlockUsd: 200
+			unlock30dUsd: 20 + ((10 * 10) / 604800) * 2,
+			upcomingUnlockUsd: 200 + ((10 * (604800 - 10)) / 604800) * 2
 		})
 
 		const ethena = result.rows[0]
@@ -496,8 +495,8 @@ describe('buildTokensSourceRows', () => {
 			revenue24h: 22,
 			holdersRevenue24h: 5.5,
 			trsPercent: 25,
-			unlock30dUsd: 20,
-			upcomingUnlockUsd: 200
+			unlock30dUsd: 20 + ((10 * 10) / 604800) * 2,
+			upcomingUnlockUsd: 200 + ((10 * (604800 - 10)) / 604800) * 2
 		})
 		expect(ethena.rights).toMatchObject({
 			protocolName: 'Ethena',

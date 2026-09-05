@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useMemo, useState } from 'react'
-import type { IResponseCGMarketsAPI } from '~/api/coingecko.types'
+import type { IResponseCGTokenRankingsDatasetItem } from '~/api/coingecko.types'
 import { fetchCoinPrices } from '~/api/pricing'
 import { TokenSearchDialog } from '~/containers/TokenSearch/TokenSearchDialog'
 import { buttonStyles } from '~/ui/Button'
@@ -15,11 +15,13 @@ import {
 	popoverMobileWrapperClassName
 } from '~/ui/Popover'
 import { LoadingIndicator } from '~/ui/Status'
+import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
+import { computeComparison } from './comparison'
 import type { CompareTokenProtocol } from './types'
 
-const EMPTY_SELECTED_COINS: Record<string, IResponseCGMarketsAPI> = {}
+const EMPTY_SELECTED_COINS: Record<string, IResponseCGTokenRankingsDatasetItem> = {}
 
 type CompareType = { label: string; value: string }
 
@@ -32,71 +34,11 @@ const compareTypes: CompareType[] = [
 	{ label: 'Fees', value: 'fees' }
 ]
 
-function getTokenFdvSupply(coin: IResponseCGMarketsAPI): number | null {
-	const supply = coin.max_supply ?? coin.total_supply
-	return supply != null && Number.isFinite(supply) ? supply : null
-}
-
-function getCompareValues(
-	type: string,
-	coin0: IResponseCGMarketsAPI,
-	coin1: IResponseCGMarketsAPI,
-	protocolsByGeckoId: Map<string, CompareTokenProtocol>,
-	protocolsByName: Map<string, CompareTokenProtocol>
-): [number | null, number | null] {
-	const p0 = protocolsByGeckoId.get(coin0.id) ?? protocolsByName.get(coin0.name)
-	const p1 = protocolsByGeckoId.get(coin1.id) ?? protocolsByName.get(coin1.name)
-
-	switch (type) {
-		case 'mcap':
-			return [coin0.market_cap ?? null, coin1.market_cap ?? null]
-		case 'fdv': {
-			return [getTokenFdvSupply(coin0), getTokenFdvSupply(coin1)]
-		}
-		case 'volume':
-			return [coin0.total_volume ?? null, coin1.total_volume ?? null]
-		case 'tvl':
-			return [p0?.tvl ?? null, p1?.tvl ?? null]
-		case 'fees':
-			return [p0?.fees ?? null, p1?.fees ?? null]
-		case 'revenue':
-			return [p0?.revenue ?? null, p1?.revenue ?? null]
-		default:
-			return [null, null]
-	}
-}
-
-function computeComparison(
-	compareType: CompareType,
-	selectedCoins: Array<IResponseCGMarketsAPI | undefined>,
-	coinPrices: number[],
-	protocolsByGeckoId: Map<string, CompareTokenProtocol>,
-	protocolsByName: Map<string, CompareTokenProtocol>
-): { newPrice: number; increase: number } | null {
-	const coin0 = selectedCoins[0]
-	const coin1 = selectedCoins[1]
-	if (!coin0 || !coin1) return null
-
-	const [val0, val1] = getCompareValues(compareType.value, coin0, coin1, protocolsByGeckoId, protocolsByName)
-	if (val0 == null || val1 == null || !Number.isFinite(val0) || !Number.isFinite(val1) || val0 === 0) return null
-
-	const basePrice = coinPrices[0]
-	const quotePrice = coinPrices[1]
-	if (!Number.isFinite(basePrice) || !Number.isFinite(quotePrice) || basePrice === 0) return null
-
-	const newPrice = (quotePrice * val1) / val0
-	if (!Number.isFinite(newPrice)) return null
-	const increase = newPrice / basePrice
-	if (!Number.isFinite(increase)) return null
-
-	return { newPrice, increase }
-}
-
 export function CompareTokens({
 	coinsData,
 	protocols
 }: {
-	coinsData: IResponseCGMarketsAPI[]
+	coinsData: IResponseCGTokenRankingsDatasetItem[]
 	protocols: CompareTokenProtocol[]
 }) {
 	const router = useRouter()
@@ -105,7 +47,7 @@ export function CompareTokens({
 	const typeParam = router.query?.type
 
 	const coinsDataById = useMemo(
-		() => new Map<string, IResponseCGMarketsAPI>(coinsData.map((c) => [c.id, c])),
+		() => new Map<string, IResponseCGTokenRankingsDatasetItem>(coinsData.map((c) => [c.id, c])),
 		[coinsData]
 	)
 	const { protocolsByGeckoId, protocolsByName } = useMemo(() => {
@@ -119,7 +61,7 @@ export function CompareTokens({
 	}, [protocols])
 
 	const { selectedCoins, coins, compareType } = useMemo(() => {
-		const queryCoins = coinParam ?? ([] as string[])
+		const queryCoins = coinParam ?? []
 
 		const coins = Array.isArray(queryCoins) ? queryCoins : [queryCoins]
 
@@ -144,7 +86,10 @@ export function CompareTokens({
 
 	const comparison = useMemo(() => {
 		if (priceData == null || coins.length !== 2) return null
-		const coinPrices = coins.map((c) => priceData[`coingecko:${c}`]?.price ?? NaN)
+		const coinPrices: [number, number] = [
+			priceData[`coingecko:${coins[0]}`]?.price ?? NaN,
+			priceData[`coingecko:${coins[1]}`]?.price ?? NaN
+		]
 		return computeComparison(compareType, selectedCoins, coinPrices, protocolsByGeckoId, protocolsByName)
 	}, [priceData, coins, compareType, selectedCoins, protocolsByGeckoId, protocolsByName])
 
@@ -159,7 +104,7 @@ export function CompareTokens({
 						{selectedCoins[0] != null ? (
 							<img
 								alt={''}
-								src={selectedCoins[0].image}
+								src={geckoTokenIconUrl(selectedCoins[0].id)}
 								height={16}
 								width={16}
 								loading="lazy"
@@ -186,8 +131,9 @@ export function CompareTokens({
 					</div>
 					<button
 						onClick={() => {
-							if (coins.length > 1) {
-								void pushShallowQuery(router, { coin: [coins[1], coins[0]] })
+							const [base, quote] = coins
+							if (base !== undefined && quote !== undefined) {
+								void pushShallowQuery(router, { coin: [quote, base] })
 							}
 						}}
 						className="flex shrink-0 items-center justify-center p-1"
@@ -199,7 +145,7 @@ export function CompareTokens({
 						{selectedCoins[1] != null ? (
 							<img
 								alt={''}
-								src={selectedCoins[1].image}
+								src={geckoTokenIconUrl(selectedCoins[1].id)}
 								height={16}
 								width={16}
 								loading="lazy"
@@ -267,7 +213,7 @@ export function CompareTokens({
 								<span className="flex items-center gap-1">
 									<img
 										alt={''}
-										src={selectedCoins[0]?.image}
+										src={selectedCoins[0] ? geckoTokenIconUrl(selectedCoins[0].id) : undefined}
 										height={'20px'}
 										width={'20px'}
 										loading="lazy"
@@ -282,7 +228,7 @@ export function CompareTokens({
 								<span className="flex items-center gap-1">
 									<img
 										alt={''}
-										src={selectedCoins[1]?.image}
+										src={selectedCoins[1] ? geckoTokenIconUrl(selectedCoins[1].id) : undefined}
 										height={'20px'}
 										width={'20px'}
 										loading="lazy"

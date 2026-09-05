@@ -94,7 +94,7 @@ export const TOKENS_HIDEABLE_COLUMN_SPECS: TokensColumnSpec[] = [
 	},
 	{
 		id: 'spotVolume24h',
-		header: 'Spot Vol',
+		header: '24H Spot Vol',
 		width: 120,
 		format: 'currency',
 		filterCategory: 'activity',
@@ -102,7 +102,7 @@ export const TOKENS_HIDEABLE_COLUMN_SPECS: TokensColumnSpec[] = [
 	},
 	{
 		id: 'perpsVolume24h',
-		header: 'Perps Vol',
+		header: '24H Perps Vol',
 		width: 120,
 		format: 'currency',
 		filterCategory: 'activity',
@@ -151,16 +151,16 @@ export const TOKENS_HIDEABLE_COLUMN_SPECS: TokensColumnSpec[] = [
 	{ id: 'rights', header: 'Rights', width: 90, csvValue: (row) => row.rights?.protocolName ?? '' },
 	{
 		id: 'unlock30dUsd',
-		header: '30D Unlocks',
-		width: 130,
+		header: 'Past 30D Unlocks',
+		width: 160,
 		format: 'currency',
 		filterCategory: 'unlocks',
 		csvValue: (row) => row.unlock30dUsd ?? ''
 	},
 	{
 		id: 'upcomingUnlockUsd',
-		header: 'Next Unlock',
-		width: 130,
+		header: 'Next 30D Unlocks',
+		width: 160,
 		format: 'currency',
 		filterCategory: 'unlocks',
 		csvValue: (row) => row.upcomingUnlockUsd ?? ''

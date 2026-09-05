@@ -34,6 +34,7 @@ import {
 	type TokensUniverse
 } from './chartState'
 import { useTokensChartDataset } from './queries.client'
+import { TokensSourceAvailability } from './SourceAvailability'
 
 const MarketTreemapChart = React.lazy(() => import('~/components/ECharts/TreemapChart/Market'))
 const HBarChart = React.lazy(() => import('~/components/ECharts/HBarChart')) as React.FC<IHBarChartProps>
@@ -188,6 +189,7 @@ export function TokensChartsSection({
 				</TableToolbarControlGroup>
 			</TableToolbar>
 			{filterPills}
+			{datasetQuery.data ? <TokensSourceAvailability sources={datasetQuery.data.unavailableSources} /> : null}
 			{data == null ? (
 				<ChartPanelBodyFallback
 					role={datasetQuery.isError ? 'alert' : 'status'}

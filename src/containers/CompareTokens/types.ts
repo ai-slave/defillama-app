@@ -1,4 +1,4 @@
-import type { IResponseCGMarketsAPI } from '~/api/coingecko.types'
+import type { IResponseCGTokenRankingsDatasetItem } from '~/api/coingecko.types'
 
 export type CompareTokenProtocol = {
 	geckoId: string | null
@@ -9,6 +9,6 @@ export type CompareTokenProtocol = {
 }
 
 export type CompareTokensPageData = {
-	coinsData: Array<IResponseCGMarketsAPI & { label: string; value: string }>
+	coinsData: Array<IResponseCGTokenRankingsDatasetItem & { label: string; value: string }>
 	protocols: CompareTokenProtocol[]
 }

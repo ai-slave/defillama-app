@@ -1,5 +1,5 @@
 import { fetchCoinGeckoTokensListFromDataset } from '~/api/coingecko'
-import type { IResponseCGMarketsAPI } from '~/api/coingecko.types'
+import type { IResponseCGTokenRankingsDatasetItem } from '~/api/coingecko.types'
 import { fetchAdapterChainMetrics } from '~/containers/AdapterMetrics/api'
 import type { IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
 import { ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
@@ -15,14 +15,14 @@ export async function getCompareTokensPageData(): Promise<CompareTokensPageData>
 		protocolCategories: []
 	}
 	const [coinsData, tvlProtocols, feesData, revenueData]: [
-		IResponseCGMarketsAPI[],
+		IResponseCGTokenRankingsDatasetItem[],
 		ProtocolsResponse,
 		IAdapterChainMetrics | null,
 		IAdapterChainMetrics | null
 	] = await Promise.all([
 		fetchCoinGeckoTokensListFromDataset().catch((error) => {
 			console.log(`Couldn't fetch CoinGecko tokens at path: compare-tokens`, 'Error:', error)
-			return [] as IResponseCGMarketsAPI[]
+			return []
 		}),
 		fetchProtocols().catch((error) => {
 			console.log(`Couldn't fetch TVL protocols list at path: compare-tokens`, 'Error:', error)

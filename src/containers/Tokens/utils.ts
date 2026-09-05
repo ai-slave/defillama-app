@@ -197,8 +197,8 @@ function compareString(a: string, b: string): number {
 function compareTokenRowsAsc(a: TokensSourceRow, b: TokensSourceRow, sortBy: TokensSortBy): number {
 	if (sortBy === 'name') return compareString(a.name, b.name) || compareString(a.id, b.id)
 
-	const aValue = a[sortBy] as number | null
-	const bValue = b[sortBy] as number | null
+	const aValue = a[sortBy]
+	const bValue = b[sortBy]
 	if (aValue == null && bValue == null) return compareString(a.id, b.id)
 	if (aValue == null) return 1
 	if (bValue == null) return -1
@@ -209,7 +209,7 @@ function compareTokenRowsAsc(a: TokensSourceRow, b: TokensSourceRow, sortBy: Tok
 function getNullStart(rows: TokensSourceRow[], sortBy: TokensSortBy): number {
 	if (sortBy === 'name') return rows.length
 	for (let i = 0; i < rows.length; i++) {
-		if (rows[i][sortBy] == null) return i
+		if (rows[i]![sortBy] == null) return i
 	}
 	return rows.length
 }
@@ -298,11 +298,11 @@ export function getTokensStatsDisplay(stats: TokensPageStats): TokensPageStatsDi
 		totalMarketCap: formatUsd(stats.totalMarketCap, { compact: true }),
 		marketCapWeightedChange24h: percentDisplay(stats.marketCapWeightedChange24h, true),
 		marketCapWeightedChange24hTone: percentTone(stats.marketCapWeightedChange24h),
-		spotVolume24h: formatUsd(stats.spotVolume24h, { compact: true }),
-		perpsVolume24h: formatUsd(stats.perpsVolume24h, { compact: true }),
-		openInterest24h: formatUsd(stats.openInterest24h, { compact: true }),
-		unlock30dUsd: formatUsd(stats.unlock30dUsd, { compact: true }),
-		upcomingUnlockUsd: formatUsd(stats.upcomingUnlockUsd, { compact: true })
+		spotVolume24h: currencyDisplay(stats.spotVolume24h),
+		perpsVolume24h: currencyDisplay(stats.perpsVolume24h),
+		openInterest24h: currencyDisplay(stats.openInterest24h),
+		unlock30dUsd: currencyDisplay(stats.unlock30dUsd),
+		upcomingUnlockUsd: currencyDisplay(stats.upcomingUnlockUsd)
 	}
 }
 
@@ -381,12 +381,13 @@ function collectDescendingRows(
 
 	while (i >= 0) {
 		let groupStart = i
-		while (groupStart > 0 && hasSameSortValue(index.rows[groupStart - 1], index.rows[i], index.sortBy)) {
+		// All indices are bounded by the same immutable sort array.
+		while (groupStart > 0 && hasSameSortValue(index.rows[groupStart - 1]!, index.rows[i]!, index.sortBy)) {
 			groupStart--
 		}
 
 		for (let j = groupStart; j <= i; j++) {
-			const row = index.rows[j]
+			const row = index.rows[j]!
 			if (!matchesTokensRowFilter(row, filter)) continue
 			if (matched >= start) pageRows.push(toTableRow(row, matched + 1))
 			matched++
@@ -397,7 +398,7 @@ function collectDescendingRows(
 	}
 
 	for (let j = index.nullStart; j < index.rows.length; j++) {
-		const row = index.rows[j]
+		const row = index.rows[j]!
 		if (!matchesTokensRowFilter(row, filter)) continue
 		if (matched >= start) pageRows.push(toTableRow(row, matched + 1))
 		matched++

@@ -198,7 +198,7 @@ describe('buildTokensMovers', () => {
 		])
 		const capped = buildTokensMovers(many, { window: '24h', universe: 100 })
 		expect(capped.gainers).toHaveLength(10)
-		expect(capped.gainers[0].name).toBe('T29')
+		expect(capped.gainers[0]?.name).toBe('T29')
 	})
 })
 

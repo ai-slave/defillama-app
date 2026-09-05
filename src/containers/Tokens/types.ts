@@ -1,6 +1,6 @@
 import type { TokenRightsPieTone } from '~/containers/TokenRights/utils'
 
-export const TOKENS_PAGE_RESPONSE_SCHEMA_VERSION = 13
+export const TOKENS_PAGE_RESPONSE_SCHEMA_VERSION = 15
 export const TOKENS_CHART_GECKO_LOGO_PREFIX = '@'
 
 export interface TokenMarketSummary {
@@ -171,6 +171,11 @@ export interface TokensChartDataset {
 	stablecoins: boolean[]
 }
 
+export interface TokensChartResponse extends TokensChartDataset {
+	schemaVersion: typeof TOKENS_PAGE_RESPONSE_SCHEMA_VERSION
+	unavailableSources: TokensOptionalSource[]
+}
+
 export interface TokensSourceRow extends TokensRowCore {
 	searchKey: string
 	chains: string[]
@@ -195,25 +200,29 @@ export type TokensSortIndexes = Record<TokensSortBy, TokensSortIndex>
 export interface TokensPageStats {
 	totalMarketCap: number
 	marketCapWeightedChange24h: number | null
-	spotVolume24h: number
-	perpsVolume24h: number
-	openInterest24h: number
-	unlock30dUsd: number
-	upcomingUnlockUsd: number
+	spotVolume24h: number | null
+	perpsVolume24h: number | null
+	openInterest24h: number | null
+	unlock30dUsd: number | null
+	upcomingUnlockUsd: number | null
 }
 
 export interface TokensPageStatsDisplay {
 	totalMarketCap: string
 	marketCapWeightedChange24h: string | null
 	marketCapWeightedChange24hTone: TokensDisplayTone
-	spotVolume24h: string
-	perpsVolume24h: string
-	openInterest24h: string
-	unlock30dUsd: string
-	upcomingUnlockUsd: string
+	spotVolume24h: string | null
+	perpsVolume24h: string | null
+	openInterest24h: string | null
+	unlock30dUsd: string | null
+	upcomingUnlockUsd: string | null
 }
 
+export type TokensOptionalSource = 'markets' | 'rights' | 'fees' | 'revenue' | 'holdersRevenue' | 'unlocks'
+
 export interface TokensPageResponse {
+	snapshotVersion: string | null
+	unavailableSources: TokensOptionalSource[]
 	schemaVersion: typeof TOKENS_PAGE_RESPONSE_SCHEMA_VERSION
 	rows: TokensTableRow[]
 	total: number

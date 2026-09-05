@@ -18,7 +18,7 @@ interface SharedTokensMarketSnapshot {
 	version: string
 	generatedAt: number
 	tokens: IResponseCGTokenRankingsDatasetItem[]
-	markets: TokenMarketsListResponse
+	markets: TokenMarketsListResponse | null
 	currentMetricsById: Record<string, TokenOverviewCurrentMetrics>
 }
 
@@ -27,7 +27,7 @@ interface TokensMarketSnapshot extends SharedTokensMarketSnapshot {
 }
 
 const tokensMarketStore = createRedisBlobStore<SharedTokensMarketSnapshot>({
-	prefix: 'tokens-market:v2',
+	prefix: 'tokens-market:v4',
 	versionTtlSeconds: 30 * 60,
 	pointerTtlSeconds: 5 * 60,
 	lastGoodTtlSeconds: 60 * 60,
@@ -38,22 +38,23 @@ const tokensMarketStore = createRedisBlobStore<SharedTokensMarketSnapshot>({
 async function buildSharedTokensMarketSnapshot(): Promise<SharedTokensMarketSnapshot> {
 	const [tokens, markets, metadataModule] = await Promise.all([
 		fetchCoinGeckoTokensListFromDataset(),
-		fetchTokenMarketsList().catch(() => EMPTY_MARKETS_LIST),
+		fetchTokenMarketsList().catch(() => null),
 		import('~/utils/metadata')
 	])
 	metadataModule.refreshMetadataInBackgroundIfStale('tokens')
+	const currentMetricsById = buildTokenOverviewCurrentMetricsById({
+		tokens,
+		markets: markets ?? EMPTY_MARKETS_LIST,
+		metadata: metadataModule.default
+	})
 	return {
 		// Content-addressed: an unchanged upstream republishes the same blob and
 		// only refreshes the freshness pointer.
-		version: contentHashVersion(JSON.stringify({ tokens, markets })),
+		version: contentHashVersion(JSON.stringify({ tokens, markets, currentMetricsById })),
 		generatedAt: Date.now(),
 		tokens,
 		markets,
-		currentMetricsById: buildTokenOverviewCurrentMetricsById({
-			tokens,
-			markets,
-			metadata: metadataModule.default
-		})
+		currentMetricsById
 	}
 }
 

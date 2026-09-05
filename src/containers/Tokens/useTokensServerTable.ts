@@ -16,6 +16,8 @@ type QueryRecord = Record<string, string | string[] | undefined>
 
 const EMPTY_TOKENS_PAGE_RESPONSE: TokensPageResponse = {
 	schemaVersion: TOKENS_PAGE_RESPONSE_SCHEMA_VERSION,
+	snapshotVersion: null,
+	unavailableSources: [],
 	rows: [],
 	total: 0,
 	page: 1,

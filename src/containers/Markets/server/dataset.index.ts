@@ -28,7 +28,7 @@ export function resolveExchangeByDefillamaCexSlug(
 	defillamaSlug: string
 ): CexExchangeSlugIndexEntry | null {
 	const key = slug(defillamaSlug)
-	return Object.hasOwn(index, key) ? index[key] : null
+	return Object.hasOwn(index, key) ? (index[key] ?? null) : null
 }
 
 export function hasTokenMarketsGeckoId(index: TokenMarketsGeckoIdIndex, geckoId: string): boolean {

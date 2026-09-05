@@ -118,13 +118,13 @@ describe('mergeMarketsSummary', () => {
 
 		// Existing spot value is preserved; the row is returned untouched (no perps/OI to fill either).
 		expect(result[0]).toBe(serverRow)
-		expect(result[0].spotVolume24h).toBe(123)
+		expect(result[0]?.spotVolume24h).toBe(123)
 	})
 
 	it('leaves a canonical row empty when the markets list has no entry for its symbol', () => {
 		const rows = [row({ id: 'obscure', symbol: 'ZZZ', marketCap: 1 })]
 		const result = mergeMarketsSummary(rows, marketsList([]))
 		expect(result[0]).toBe(rows[0])
-		expect(result[0].spotVolume24h).toBeNull()
+		expect(result[0]?.spotVolume24h).toBeNull()
 	})
 })

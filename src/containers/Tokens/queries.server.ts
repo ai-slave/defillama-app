@@ -14,9 +14,10 @@ import {
 	getTokenRightsPrimaryValueLabel,
 	parseTokenRightsEntry
 } from '~/containers/TokenRights/utils'
-import { getCliffEmissionAmount } from '~/containers/Unlocks/eventAmount'
+import { getEmissionAmountBreakdownOverInterval } from '~/containers/Unlocks/eventAmount'
 import { getAllProtocolEmissions, type EnrichedProtocolEmission } from '~/containers/Unlocks/queries'
 import { cachedResult } from '~/server/api/resultCache'
+import { contentHashVersion, createRedisBlobStore } from '~/server/datasetSnapshots/redisBlobStore.server'
 import { slug } from '~/utils'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
@@ -26,6 +27,7 @@ import {
 	buildMarketsMap,
 	buildTokenDirectoryIndexes,
 	buildUniqueTokenSymbols,
+	EMPTY_MARKETS_LIST,
 	resolveEmissionsProtocolSlug,
 	resolveProtocolId
 } from './readModel'
@@ -33,14 +35,16 @@ import { getTokensMarketSnapshot, type TokensMarketSnapshot } from './server/tab
 import type {
 	TokenMarketSummary,
 	TokensChartDataset,
+	TokensChartResponse,
 	TokensPageResponse,
 	TokensPageStats,
 	TokensFilterOption,
 	TokensRightsSummary,
 	TokensSortIndexes,
-	TokensSourceRow
+	TokensSourceRow,
+	TokensOptionalSource
 } from './types'
-import { TOKENS_CHART_GECKO_LOGO_PREFIX } from './types'
+import { TOKENS_CHART_GECKO_LOGO_PREFIX, TOKENS_PAGE_RESPONSE_SCHEMA_VERSION } from './types'
 import {
 	buildTokensRowFilter,
 	buildTokensSortIndexes,
@@ -54,6 +58,7 @@ const THIRTY_DAYS_SECONDS = 30 * 24 * 60 * 60
 type AdapterProtocolMetric = IAdapterChainMetrics['protocols'][number]
 
 interface TokensSourceRows {
+	unavailableSources: TokensOptionalSource[]
 	rows: TokensSourceRow[]
 	sortIndexes: TokensSortIndexes
 	stats: TokensPageStats
@@ -79,7 +84,7 @@ export interface TokensPageSnapshot {
 
 export interface TokensChartSnapshot {
 	generatedAt: number
-	data: TokensChartDataset
+	data: TokensChartResponse
 }
 
 export const TOKENS_CHART_ROW_LIMIT = 300
@@ -160,37 +165,22 @@ function buildUnlocksMap(rows: EnrichedProtocolEmission[], nowSec: number): Map<
 	for (const row of rows) {
 		if (!row.gecko_id) continue
 		const price = row.tPrice ?? null
-		let unlock30dUsd = 0
-		let upcomingUnlockUsd = 0
-
-		if (price !== null && price > 0) {
-			for (const event of row.events) {
-				if (event.timestamp < startSec || event.timestamp > nowSec) continue
-				const amount = getCliffEmissionAmount(event)
-				if (amount !== null && amount > 0) unlock30dUsd += amount * price
-			}
-
-			let nextCliffTimestamp: number | null = null
-			for (const event of row.events) {
-				if (event.timestamp < nowSec) continue
-				const amount = getCliffEmissionAmount(event)
-				if (amount === null || amount <= 0) continue
-				if (nextCliffTimestamp === null || event.timestamp < nextCliffTimestamp) {
-					nextCliffTimestamp = event.timestamp
-					upcomingUnlockUsd = amount * price
-				} else if (event.timestamp === nextCliffTimestamp) {
-					upcomingUnlockUsd += amount * price
-				}
-			}
-		}
+		const past = getEmissionAmountBreakdownOverInterval(row.events, startSec, nowSec)
+		const upcoming = getEmissionAmountBreakdownOverInterval(row.events, nowSec, nowSec + THIRTY_DAYS_SECONDS)
+		const unlock30dUsd =
+			price !== null && price > 0 && (past.total > 0 || past.unknownEventCount === 0) ? past.total * price : null
+		const upcomingUnlockUsd =
+			price !== null && price > 0 && (upcoming.total > 0 || upcoming.unknownEventCount === 0)
+				? upcoming.total * price
+				: null
 
 		const unlockedPercent = row.maxSupply
-			? Math.max(0, Math.min(100, 100 - ((row.totalLocked ?? 0) / row.maxSupply) * 100))
+			? Math.max(0, Math.min(100, 100 - (row.totalLocked / row.maxSupply) * 100))
 			: null
 		map.set(row.gecko_id.toLowerCase(), {
 			unlockedPercent,
-			unlock30dUsd: unlock30dUsd > 0 ? unlock30dUsd : null,
-			upcomingUnlockUsd: upcomingUnlockUsd > 0 ? upcomingUnlockUsd : null
+			unlock30dUsd,
+			upcomingUnlockUsd
 		})
 	}
 
@@ -239,11 +229,11 @@ function getSearchKey(token: IResponseCGTokenRankingsDatasetItem, record: TokenD
 
 function addStats(stats: TokensPageStats, row: TokensSourceRow): void {
 	stats.totalMarketCap += row.marketCap ?? 0
-	stats.spotVolume24h += row.spotVolume24h ?? 0
-	stats.perpsVolume24h += row.perpsVolume24h ?? 0
-	stats.openInterest24h += row.openInterest24h ?? 0
-	stats.unlock30dUsd += row.unlock30dUsd ?? 0
-	stats.upcomingUnlockUsd += row.upcomingUnlockUsd ?? 0
+	if (stats.spotVolume24h !== null) stats.spotVolume24h += row.spotVolume24h ?? 0
+	if (stats.perpsVolume24h !== null) stats.perpsVolume24h += row.perpsVolume24h ?? 0
+	if (stats.openInterest24h !== null) stats.openInterest24h += row.openInterest24h ?? 0
+	if (stats.unlock30dUsd !== null) stats.unlock30dUsd += row.unlock30dUsd ?? 0
+	if (stats.upcomingUnlockUsd !== null) stats.upcomingUnlockUsd += row.upcomingUnlockUsd ?? 0
 }
 
 function getUnlockedPercentFromSupplyMetrics(
@@ -259,9 +249,9 @@ function getUnlockedPercentFromSupplyMetrics(
 
 function firstUpdatedAt(
 	tokens: IResponseCGTokenRankingsDatasetItem[],
-	markets: TokenMarketsListResponse
+	markets: TokenMarketsListResponse | null
 ): string | null {
-	if (markets.last_updated) return markets.last_updated
+	if (markets?.last_updated) return markets.last_updated
 	for (const token of tokens) {
 		if (token.last_updated) return token.last_updated
 	}
@@ -302,47 +292,45 @@ export async function fetchTokensSourceRows(
 	}
 
 	const [tokenRightsEntries, fees, revenue, holdersRevenue, unlocks] = await Promise.all([
-		fetchTokenRightsEntries().catch(() => []),
+		fetchTokenRightsEntries().catch(() => null),
 		fetchAdapterChainMetrics({ adapterType: ADAPTER_TYPES.FEES, chain: 'All' })
 			.then((data) => data.protocols)
-			.catch(() => []),
+			.catch(() => null),
 		fetchAdapterChainMetrics({
 			adapterType: ADAPTER_TYPES.FEES,
 			chain: 'All',
 			dataType: ADAPTER_DATA_TYPES.DAILY_REVENUE
 		})
 			.then((data) => data.protocols)
-			.catch(() => []),
+			.catch(() => null),
 		fetchAdapterChainMetrics({
 			adapterType: ADAPTER_TYPES.FEES,
 			chain: 'All',
 			dataType: ADAPTER_DATA_TYPES.DAILY_HOLDERS_REVENUE
 		})
 			.then((data) => data.protocols)
-			.catch(() => []),
+			.catch(() => null),
 		getAllProtocolEmissions({
-			startDate: nowSec - THIRTY_DAYS_SECONDS,
 			getHistoricalPrices: false,
 			tokenlist: metadata.tokenlist
-		}).catch(() => [])
+		}).catch(() => null)
 	])
 
-	return {
-		...buildTokensSourceRows({
-			tokens: marketSnapshot.tokens,
-			markets: marketSnapshot.markets,
-			currentMetricsById: marketSnapshot.currentMetricsById,
-			tokenRightsEntries,
-			fees,
-			revenue,
-			holdersRevenue,
-			unlocks,
-			metadata,
-			nowSec
-		}),
-		version: marketSnapshot.version,
-		generatedAt: marketSnapshot.generatedAt
-	}
+	const { sortIndexes, ...rows } = buildTokensSourceRows({
+		tokens: marketSnapshot.tokens,
+		markets: marketSnapshot.markets,
+		currentMetricsById: marketSnapshot.currentMetricsById,
+		tokenRightsEntries,
+		fees,
+		revenue,
+		holdersRevenue,
+		unlocks,
+		metadata,
+		nowSec
+	})
+	const payload = { ...rows, generatedAt: marketSnapshot.generatedAt }
+	// Identity covers complete derived data and is computed once per cached source build.
+	return { ...payload, sortIndexes, version: contentHashVersion(JSON.stringify(payload)) }
 }
 
 export function buildTokensSourceRows({
@@ -358,32 +346,39 @@ export function buildTokensSourceRows({
 	nowSec
 }: {
 	tokens: IResponseCGTokenRankingsDatasetItem[]
-	markets: TokenMarketsListResponse
+	markets: TokenMarketsListResponse | null
 	currentMetricsById?: Record<string, TokenOverviewCurrentMetrics>
-	tokenRightsEntries: IRawTokenRightsEntry[]
-	fees: AdapterProtocolMetric[]
-	revenue: AdapterProtocolMetric[]
-	holdersRevenue: AdapterProtocolMetric[]
-	unlocks: EnrichedProtocolEmission[]
+	tokenRightsEntries: IRawTokenRightsEntry[] | null
+	fees: AdapterProtocolMetric[] | null
+	revenue: AdapterProtocolMetric[] | null
+	holdersRevenue: AdapterProtocolMetric[] | null
+	unlocks: EnrichedProtocolEmission[] | null
 	metadata: MetadataCache
 	nowSec: number
 }): TokensSourceRows {
 	const indexes = buildTokenDirectoryIndexes(metadata)
-	const marketsBySymbol = buildMarketsMap(markets, buildUniqueTokenSymbols(tokens))
-	const rightsByDefillamaId = buildTokenRightsMap(tokenRightsEntries)
-	const feeByDefillamaId = buildMetricMap(fees)
-	const revenueByDefillamaId = buildMetricMap(revenue)
-	const holdersRevenueByDefillamaId = buildMetricMap(holdersRevenue)
-	const unlocksByGeckoId = buildUnlocksMap(unlocks, nowSec)
+	const marketsBySymbol = buildMarketsMap(markets ?? EMPTY_MARKETS_LIST, buildUniqueTokenSymbols(tokens))
+	const rightsByDefillamaId = buildTokenRightsMap(tokenRightsEntries ?? [])
+	const feeByDefillamaId = buildMetricMap(fees ?? [])
+	const revenueByDefillamaId = buildMetricMap(revenue ?? [])
+	const holdersRevenueByDefillamaId = buildMetricMap(holdersRevenue ?? [])
+	const unlocksByGeckoId = buildUnlocksMap(unlocks ?? [], nowSec)
+	const unavailableSources: TokensOptionalSource[] = []
+	if (markets === null) unavailableSources.push('markets')
+	if (tokenRightsEntries === null) unavailableSources.push('rights')
+	if (fees === null) unavailableSources.push('fees')
+	if (revenue === null) unavailableSources.push('revenue')
+	if (holdersRevenue === null) unavailableSources.push('holdersRevenue')
+	if (unlocks === null) unavailableSources.push('unlocks')
 	const rows: TokensSourceRow[] = []
 	const stats: TokensPageStats = {
 		totalMarketCap: 0,
 		marketCapWeightedChange24h: null,
-		spotVolume24h: 0,
-		perpsVolume24h: 0,
-		openInterest24h: 0,
-		unlock30dUsd: 0,
-		upcomingUnlockUsd: 0
+		spotVolume24h: markets === null ? null : 0,
+		perpsVolume24h: markets === null ? null : 0,
+		openInterest24h: markets === null ? null : 0,
+		unlock30dUsd: unlocks === null ? null : 0,
+		upcomingUnlockUsd: unlocks === null ? null : 0
 	}
 	let weightedChangeMarketCap = 0
 	let weightedChangeNumerator = 0
@@ -481,6 +476,7 @@ export function buildTokensSourceRows({
 
 	const { chainOptions, categoryOptions } = buildTokenFilterOptions(rows, metadata)
 	return {
+		unavailableSources,
 		rows,
 		sortIndexes: buildTokensSortIndexes(rows),
 		stats,
@@ -521,7 +517,11 @@ export function buildTokenFilterOptions(
 	categoryOptions.sort(compareOptions)
 	return {
 		chainOptions: chainOptions.map(({ id, label }) => ({ id, label })),
-		categoryOptions: categoryOptions.map(({ id, label, description }) => ({ id, label, description }))
+		categoryOptions: categoryOptions.map(({ id, label, description }) => ({
+			id,
+			label,
+			...(description ? { description } : {})
+		}))
 	}
 }
 
@@ -533,7 +533,7 @@ export async function getTokensSourceData(): Promise<TokensSourceData> {
 	const filterGeneration = metadata.tokenFilterMetadata.generatedAt
 	return cachedResult(
 		'tokens-source-rows',
-		`v12:${marketSnapshot.version}:${filterGeneration}`,
+		`v15:${marketSnapshot.version}:${filterGeneration}`,
 		{ ttlMs: TOKENS_SOURCE_CACHE_TTL_MS, maxEntries: 2 },
 		() => fetchTokensSourceRows(marketSnapshot, metadata)
 	)
@@ -611,8 +611,14 @@ export function buildTokensChartDataset(
 	return chartData
 }
 
-function getTokensPageResponse(data: TokensSourceData, query: ParsedUrlQuery): TokensPageResponse {
+function getTokensPageResponse(
+	data: TokensSourceData,
+	query: ParsedUrlQuery,
+	snapshotVersion: string | null
+): TokensPageResponse {
 	return getTokensPageFromRows(data.rows, data.sortIndexes, query, {
+		snapshotVersion,
+		unavailableSources: data.unavailableSources,
 		stats: data.stats,
 		updatedAt: data.updatedAt,
 		chainOptions: data.chainOptions,
@@ -620,22 +626,61 @@ function getTokensPageResponse(data: TokensSourceData, query: ParsedUrlQuery): T
 	})
 }
 
-export async function getTokensPageSnapshot(query: ParsedUrlQuery = {}): Promise<TokensPageSnapshot> {
-	const data = await getTokensSourceData()
-	return {
-		generatedAt: data.generatedAt,
-		data: getTokensPageResponse(data, query)
+type TokensExportSnapshot = Omit<TokensSourceData, 'sortIndexes'>
+
+const tokensExportStore = createRedisBlobStore<TokensExportSnapshot>({
+	prefix: 'tokens-export:v15',
+	versionTtlSeconds: 30 * 60,
+	pointerTtlSeconds: 5 * 60,
+	lastGoodTtlSeconds: 30 * 60,
+	getIdentity: (data) => ({ key: 'all', version: data.version })
+})
+
+export class TokensExportSnapshotUnavailableError extends Error {
+	constructor() {
+		super('Tokens export snapshot is unavailable. Please retry the export.')
 	}
+}
+
+export async function getTokensPageSnapshot(query: ParsedUrlQuery = {}): Promise<TokensPageSnapshot> {
+	const requestedSnapshot = typeof query.snapshot === 'string' ? query.snapshot : null
+	let data: TokensSourceData
+	let snapshotVersion: string | null = null
+	if (requestedSnapshot && requestedSnapshot !== 'latest') {
+		data = await cachedResult('tokens-export', requestedSnapshot, { ttlMs: 60_000, maxEntries: 2 }, async () => {
+			const saved = await tokensExportStore.readVersion('all', requestedSnapshot)
+			if (!saved) throw new TokensExportSnapshotUnavailableError()
+			return { ...saved, sortIndexes: buildTokensSortIndexes(saved.rows) }
+		})
+		snapshotVersion = data.version
+	} else {
+		data = await getTokensSourceData()
+		if (requestedSnapshot === 'latest') {
+			const { sortIndexes: _sortIndexes, ...payload } = data
+			await cachedResult('tokens-export-published', data.version, { ttlMs: 60_000, maxEntries: 2 }, async () => {
+				if (!(await tokensExportStore.publish(payload))) {
+					throw new TokensExportSnapshotUnavailableError()
+				}
+				return true
+			})
+			snapshotVersion = data.version
+		}
+	}
+	return { generatedAt: data.generatedAt, data: getTokensPageResponse(data, query, snapshotVersion) }
 }
 
 export async function getTokensChartSnapshot(query: ParsedUrlQuery = {}): Promise<TokensChartSnapshot> {
 	const data = await getTokensSourceData()
 	return {
 		generatedAt: data.generatedAt,
-		data: buildTokensChartDataset(
-			data.sortIndexes.marketCap,
-			buildTokensRowFilter(query, data.chainOptions, data.categoryOptions)
-		)
+		data: {
+			schemaVersion: TOKENS_PAGE_RESPONSE_SCHEMA_VERSION,
+			unavailableSources: data.unavailableSources,
+			...buildTokensChartDataset(
+				data.sortIndexes.marketCap,
+				buildTokensRowFilter(query, data.chainOptions, data.categoryOptions)
+			)
+		}
 	}
 }
 
