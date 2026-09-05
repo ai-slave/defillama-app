@@ -31,7 +31,6 @@ export interface IProtocolPageMetrics {
 	fees: boolean
 	revenue: boolean
 	forks: boolean
-	governance: boolean
 	nfts: boolean
 	dev: boolean
 	inflows: boolean
@@ -145,12 +144,6 @@ export interface IProtocolOverviewPageData {
 		upcoming?: { timestamp: number; amount: number }
 	} | null
 	yields: { noOfPoolsTracked: number | null; averageAPY: number | null } | null
-	governance: {
-		lastProposal: {
-			title: string
-			status: string
-		}
-	} | null
 	articles: SponsoredResearchReportSummary[] | null
 	users?: {
 		activeUsers: number | null
@@ -206,7 +199,6 @@ export interface IProtocolOverviewPageData {
 	hallmarks: Array<[number, string]>
 	rangeHallmarks: Array<[[number, number], string]>
 	geckoId: string | null
-	governanceApis: Array<string> | null
 	incomeStatement?: {
 		data: Record<
 			'monthly' | 'quarterly' | 'yearly' | 'cumulative',
@@ -276,9 +268,6 @@ export const createDisabledProtocolToggledMetrics = (): IToggledMetrics => ({
 	treasury: 'false',
 	bridgeDeposits: 'false',
 	bridgeWithdrawals: 'false',
-	totalProposals: 'false',
-	successfulProposals: 'false',
-	maxVotes: 'false',
 	activeAddresses: 'false',
 	newAddresses: 'false',
 	transactions: 'false',

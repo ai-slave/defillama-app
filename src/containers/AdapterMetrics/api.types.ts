@@ -109,7 +109,6 @@ export interface IAdapterProtocolMetrics extends AdapterMetricPeriods {
 	description?: string | null
 	url?: string | null
 	github?: string[] | null
-	governanceID?: string[] | null
 	treasury?: string | null
 	cmcId?: string | null
 	defaultChartView?: ChartTimeGrouping | null

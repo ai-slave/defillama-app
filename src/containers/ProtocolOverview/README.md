@@ -16,7 +16,6 @@ Common routes:
 - `/protocol/yields/[protocol]`
 - `/protocol/perps/[protocol]`
 - `/protocol/forks/[protocol]`
-- `/protocol/governance/[protocol]`
 - `/protocol/stablecoins/[protocol]`
 - `/protocol/active-loans/[protocol]`
 - `/protocol/token-rights/[protocol]`
@@ -102,7 +101,7 @@ Prefer a local `ProtocolOverview` helper if this code needs extraction. Do not s
 
 ## Chart Notes
 
-- `useFetchProtocolChartData.ts` orchestrates TVL, adapter metrics, token liquidity, treasury, inflows, governance, activity, and other chart families.
+- `useFetchProtocolChartData.ts` orchestrates TVL, adapter metrics, token liquidity, treasury, inflows, activity, and other chart families.
 - `chartSeries.utils.ts` normalizes timestamp units for chart rendering.
 - `chartYAxis.ts` owns protocol chart y-axis grouping behavior.
 - `usePrefetchedProtocolChartQuery.ts` lets prefetched chart data avoid duplicate client fetches.

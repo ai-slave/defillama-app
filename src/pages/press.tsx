@@ -59,7 +59,7 @@ function PressPage() {
 				</p>
 				<p>
 					As a comprehensive DeFi data analysis platform, DefiLlama provides data across a wide variety of fundamentals,
-					including TVL, Fees, Revenue, Volume, Stablecoins, Governance, Unlocks, and Yields.
+					including TVL, Fees, Revenue, Volume, Stablecoins, Unlocks, and Yields.
 				</p>
 				<p>
 					DefiLlama’s vision is to aggregate the most accurate, transparent, and neutral data for all blockchains and

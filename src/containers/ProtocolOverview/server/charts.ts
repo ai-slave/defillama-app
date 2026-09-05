@@ -5,7 +5,6 @@ import {
 } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { fetchBridgeVolumeBySlug } from '~/containers/Bridges/api'
-import { fetchAndFormatGovernanceData } from '~/containers/Governance/queries.client'
 import { fetchNftMarketplaceVolumes } from '~/containers/Nft/api'
 import { fetchOracleProtocolChart } from '~/containers/Oracles/api'
 import { fetchProtocolTreasuryChart, fetchProtocolTvlChart } from '~/containers/ProtocolOverview/api'
@@ -48,11 +47,6 @@ type AdapterBreakdownRequest =
 	  }
 	| { ok: false; error: string }
 
-const getBodyParam = (value: unknown): string | undefined => (typeof value === 'string' ? value : undefined)
-
-const getArrayBodyParam = (value: unknown): string[] | null =>
-	Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : null
-
 // Protocol chart pages can also render CEX-like asset pages. Resolve normal
 // protocol metadata first, then fall back to the asset route cache.
 async function resolveCanonicalProtocolOrCexParam(protocol: string): Promise<string | null> {
@@ -75,17 +69,6 @@ const isValidAdapterType = (value: string): value is `${ADAPTER_TYPES}` => VALID
 const isValidAdapterDataType = (value: string): value is `${ADAPTER_DATA_TYPES}` => VALID_ADAPTER_DATA_TYPES.has(value)
 const isValidAdapterBreakdownType = (value: string): value is AdapterBreakdownType =>
 	VALID_ADAPTER_BREAKDOWN_TYPES.has(value as AdapterBreakdownType)
-
-const parseStringArrayParam = (value: string | undefined): string[] | null => {
-	if (!value) return null
-
-	try {
-		const parsed = JSON.parse(value) as unknown
-		return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : null
-	} catch {
-		return null
-	}
-}
 
 const parseProtocolBreakdownType = (value: string | undefined): ProtocolChartBreakdownType | undefined => {
 	switch (value) {
@@ -175,11 +158,10 @@ const parseAdapterBreakdownRequest = (params: {
 
 export const protocolCharts = defineApiRoute({
 	route: '/api/public/protocols/charts',
-	methods: ['GET', 'POST'],
+	methods: ['GET'],
 	cacheControl: CHART_CACHE_CONTROL,
 	handle: async (req) => {
-		const requestBody = (req.body ?? null) as { kind?: unknown; apis?: unknown } | null
-		const kind = queryString(req.query, 'kind') ?? getBodyParam(requestBody?.kind)
+		const kind = queryString(req.query, 'kind')
 		if (!kind) {
 			return badRequest('kind parameter is required')
 		}
@@ -381,19 +363,6 @@ export const protocolCharts = defineApiRoute({
 				const data = await fetchOracleProtocolChart({ protocol: canonicalOracle })
 
 				return ok(data)
-			}
-
-			if (kind === 'governance') {
-				const apis = getArrayBodyParam(requestBody?.apis) ?? parseStringArrayParam(queryString(req.query, 'apis'))
-				if (!apis || apis.length === 0) {
-					return badRequest('apis parameter is required')
-				}
-
-				const sources = await fetchAndFormatGovernanceData(apis)
-				if (sources.length !== apis.length) {
-					throw new Error('Failed to load every governance source')
-				}
-				return ok(sources.map((source) => source.data))
 			}
 
 			if (kind === 'nft-volume') {

@@ -115,7 +115,6 @@ const metrics: IProtocolPageMetrics = {
 	fees: false,
 	revenue: false,
 	forks: false,
-	governance: false,
 	nfts: false,
 	dev: false,
 	inflows: false,
@@ -162,7 +161,6 @@ const createProps = (): IProtocolOverviewPageData => ({
 	treasury: null,
 	unlocks: null,
 	yields: null,
-	governance: null,
 	articles: null,
 	raises: null,
 	expenses: null,
@@ -176,7 +174,6 @@ const createProps = (): IProtocolOverviewPageData => ({
 	hallmarks: [],
 	rangeHallmarks: [],
 	geckoId: null,
-	governanceApis: null,
 	seoTitle: 'Test Protocol',
 	seoDescription: 'Test Protocol overview'
 })

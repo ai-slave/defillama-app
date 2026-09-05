@@ -23,7 +23,6 @@ const metrics: IProtocolPageMetrics = {
 	fees: false,
 	revenue: false,
 	forks: false,
-	governance: false,
 	nfts: false,
 	dev: false,
 	inflows: false,
@@ -81,6 +80,22 @@ afterEach(() => {
 })
 
 describe('Protocol Investor Relations tab', () => {
+	it('preserves Token Rights but ignores the retired governance flag in cached metrics', async () => {
+		setupLayoutMocks(null)
+		const { ProtocolOverviewLayout } = await import('../Layout')
+		const cachedMetrics = { ...metrics, tokenRights: true, governance: true }
+		const markup = renderToStaticMarkup(
+			<ProtocolOverviewLayout name="Aave" category="Lending" metrics={cachedMetrics} tab="information">
+				<div>Protocol overview</div>
+			</ProtocolOverviewLayout>
+		)
+
+		expect(markup).toContain('href="/protocol/token-rights/aave"')
+		expect(markup).toContain('href="/protocol/tvl/aave"')
+		expect(markup).not.toContain('/protocol/governance')
+		expect(markup).not.toContain('>Governance<')
+	})
+
 	it('shows the Enterprise tab on an IR protocol', async () => {
 		setupLayoutMocks({ flags: { is_llama: true } })
 

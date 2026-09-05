@@ -30,9 +30,6 @@ export const protocolCharts = {
 	Treasury: 'treasury',
 	'Bridge Deposits': 'bridgeDeposits',
 	'Bridge Withdrawals': 'bridgeWithdrawals',
-	'Total Proposals': 'totalProposals',
-	'Successful Proposals': 'successfulProposals',
-	'Max Votes': 'maxVotes',
 	'Active Addresses': 'activeAddresses',
 	'New Addresses': 'newAddresses',
 	Transactions: 'transactions',
@@ -82,9 +79,6 @@ export const yAxisByChart: {
 	'Gas Used': 'Gas Used',
 	'Median APY': 'Median APY',
 	'USD Inflows': 'USD Inflows',
-	'Total Proposals': 'Total Proposals',
-	'Successful Proposals': 'Total Proposals',
-	'Max Votes': 'Max Votes',
 	Treasury: 'Treasury',
 	Tweets: 'Tweets',
 	'NFT Volume': 'NFT Volume',
@@ -110,8 +104,7 @@ export const protocolChartCategories = {
 	],
 	Liquidations: ['Liquidation Volume', 'Collateral Liquidated'],
 	Bridge: ['Bridge Deposits', 'Bridge Withdrawals'],
-	Activity: ['Active Addresses', 'New Addresses', 'Transactions', 'Gas Used', 'Tweets'],
-	Governance: ['Total Proposals', 'Successful Proposals', 'Max Votes']
+	Activity: ['Active Addresses', 'New Addresses', 'Transactions', 'Gas Used', 'Tweets']
 } as const satisfies Record<string, readonly ProtocolChartsLabels[]>
 
 export type ProtocolChartCategory = keyof typeof protocolChartCategories
@@ -123,8 +116,7 @@ export const protocolChartCategoryOrder: ProtocolChartCategory[] = [
 	'Volume',
 	'Liquidations',
 	'Bridge',
-	'Activity',
-	'Governance'
+	'Activity'
 ]
 
 export const PROTOCOL_CHART_LABELS: ProtocolChartsLabels[] = protocolChartCategoryOrder.flatMap(
@@ -143,9 +135,6 @@ export const BAR_CHARTS: ProtocolChartsLabels[] = [
 	'Transactions',
 	'Gas Used',
 	'USD Inflows',
-	'Total Proposals',
-	'Successful Proposals',
-	'Max Votes',
 	'Bridge Deposits',
 	'Bridge Withdrawals',
 	'Token Volume',

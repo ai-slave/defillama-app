@@ -34,7 +34,6 @@ interface LlamaConfigBaseProtocol {
 	twitter?: string | null
 	audit_links?: string[]
 	github?: string[]
-	governanceID?: string[]
 	stablecoins?: string[]
 	warningBanners?: LlamaConfigWarningBanner[]
 	deadUrl?: boolean
@@ -101,7 +100,6 @@ interface LlamaChainConfig {
 	chainId?: number | string
 	chainid?: number
 	github?: string[] | null
-	governanceID?: string[]
 	twitter?: string | null
 	url?: string | null
 	dimensions?: LlamaConfigDimensions

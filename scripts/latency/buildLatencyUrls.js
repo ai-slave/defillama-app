@@ -65,7 +65,6 @@ const STANDALONE = [
 	'/fees',
 	'/fees/chains',
 	'/forks',
-	'/governance',
 	'/hacks',
 	'/hacks/total-value-lost',
 	'/holders-revenue',
@@ -244,27 +243,6 @@ const SOURCES = {
 		}
 		return pairs
 	},
-	governanceProjects: async () => {
-		const urls = [
-			'https://defillama-datasets.llama.fi/governance-cache/overview/snapshot.json',
-			'https://defillama-datasets.llama.fi/governance-cache/overview/compound.json',
-			'https://defillama-datasets.llama.fi/governance-cache/overview/tally.json'
-		]
-		const seen = new Set()
-		for (const url of urls) {
-			let data
-			try {
-				data = await fetchJson(url)
-			} catch {
-				continue
-			}
-			for (const entry of Object.values(data || {})) {
-				const name = entry && (entry.name || entry.title)
-				if (name) seen.add(sluggify(name))
-			}
-		}
-		return [...seen]
-	},
 	raisesInvestors: async () => {
 		const r = await fetchJson('https://api.llama.fi/raises')
 		const investors = new Set()
@@ -351,7 +329,6 @@ const TEMPLATES = [
 	{ pattern: '/protocol/dex-aggregators/{x}', source: 'protocols' },
 	{ pattern: '/protocol/perps-aggregators/{x}', source: 'protocols' },
 	{ pattern: '/protocol/forks/{x}', source: 'protocols' },
-	{ pattern: '/protocol/governance/{x}', source: 'protocols' },
 	{ pattern: '/protocol/active-loans/{x}', source: 'protocols' },
 	{ pattern: '/protocol/token-rights/{x}', source: 'protocols' },
 	{ pattern: '/chart/protocol/{x}', source: 'protocols' },
@@ -405,7 +382,6 @@ const TEMPLATES = [
 	{ pattern: '/oracles/{x}', source: 'oracles' },
 	{ pattern: '/oracles/{x}/{y}', source: 'oracleChains', multi: true },
 
-	{ pattern: '/governance/{x}', source: 'governanceProjects' },
 	{ pattern: '/raises/{x}', source: 'raisesInvestors' },
 	{ pattern: '/narrative-tracker/{x}', source: 'narrativeCategories' },
 

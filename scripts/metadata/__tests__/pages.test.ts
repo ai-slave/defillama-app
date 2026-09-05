@@ -18,6 +18,30 @@ afterEach(async () => {
 })
 
 describe('metadata page helpers', () => {
+	it('excludes retired governance URLs while preserving related token and protocol pages', () => {
+		const retiredRoutes = [
+			'/governance',
+			'/governance/',
+			'/governance?sort=proposals',
+			'/governance/aave',
+			'/protocol/governance',
+			'/protocol/governance/aave'
+		]
+		const preservedRoutes = [
+			'/token-rights',
+			'/protocol/token-rights/aave',
+			'/protocols/governance-incentives',
+			'/rwa?includeGovernance=true',
+			'/protocol/aave'
+		]
+		const trendingPages = buildTrendingPages(
+			{},
+			[...retiredRoutes, ...preservedRoutes].map((route) => [route, 10])
+		)
+
+		expect(trendingPages.map((page) => page.route)).toEqual(preservedRoutes)
+	})
+
 	it('writes pages even when there are no trending pages', async () => {
 		const repoRoot = await createRepoRoot()
 		const pages: DefillamaPages = {

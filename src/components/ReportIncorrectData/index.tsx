@@ -32,7 +32,6 @@ const PROTOCOL_DATA_TYPES = [
 	'Active Loans',
 	'Median APY',
 	'USD Inflows',
-	'Governance',
 	'Bridge Volume',
 	'Events',
 	'Raises'

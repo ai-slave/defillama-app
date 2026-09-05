@@ -1,7 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
-import type { GovernanceDataEntry } from '~/containers/Governance/types'
 import type { IProtocolMedianApyChart } from '../api.types'
 import { protocolCharts } from '../constants'
 import type { IProtocolOverviewPageData, IProtocolPageMetrics, IToggledMetrics } from '../types'
@@ -29,9 +28,6 @@ const mocks = vi.hoisted(() => ({
 	useQuery: vi.fn(),
 	useQueries: vi.fn(),
 	useFetchProtocolTVLChart: vi.fn<(options: TvlChartOptions) => TvlQueryResult>(),
-	useFetchProtocolGovernanceData: vi.fn(
-		(_apis: string[] | null): QueryHookResult<GovernanceDataEntry[]> => ({ data: null, isLoading: false })
-	),
 	useFetchProtocolMedianAPY: vi.fn(
 		(_protocol: string | null): QueryHookResult<IProtocolMedianApyChart> => ({ data: null, isLoading: false })
 	),
@@ -51,10 +47,6 @@ vi.mock('next/router', () => ({
 
 vi.mock('~/hooks/useIsClient', () => ({
 	useIsClient: () => mocks.isClient
-}))
-
-vi.mock('~/containers/Governance/queries.client', () => ({
-	useFetchProtocolGovernanceData: mocks.useFetchProtocolGovernanceData
 }))
 
 vi.mock('~/containers/ProtocolOverview/queries.client', () => ({
@@ -116,7 +108,6 @@ const baseMetrics: IProtocolPageMetrics = {
 	fees: false,
 	revenue: false,
 	forks: false,
-	governance: false,
 	nfts: false,
 	dev: false,
 	inflows: false,
@@ -150,7 +141,6 @@ const feeProps: ProbeProps = {
 	availableCharts: ['Fees', 'Revenue', 'Holders Revenue'],
 	chartDenominations: [],
 	chartColors: {},
-	governanceApis: [],
 	tvlSettings: {},
 	isCEX: false,
 	fees: null,
@@ -171,7 +161,6 @@ const feeProps: ProbeProps = {
 	treasury: null,
 	unlocks: null,
 	yields: null,
-	governance: null,
 	articles: null,
 	raises: null,
 	expenses: null,
@@ -527,51 +516,21 @@ describe('ProtocolOverview chart metric semantics', () => {
 		expect(mocks.lastResult?.failedMetrics).toEqual([])
 	})
 
-	it('preserves numeric median APY and governance values without parsing or zero fallback', () => {
+	it('preserves numeric median APY without parsing or zero fallback', () => {
 		probeProps = {
 			...feeProps,
-			metrics: { ...baseMetrics, yields: true, governance: true },
-			toggledMetrics: makeToggledMetrics({
-				medianApy: 'true',
-				totalProposals: 'true',
-				successfulProposals: 'true',
-				maxVotes: 'true'
-			}),
-			availableCharts: ['Median APY', 'Total Proposals', 'Successful Proposals', 'Max Votes'],
-			governanceApis: ['https://example.com/governance']
+			metrics: { ...baseMetrics, yields: true },
+			toggledMetrics: makeToggledMetrics({ medianApy: 'true' }),
+			availableCharts: ['Median APY']
 		}
 		mocks.useFetchProtocolMedianAPY.mockReturnValueOnce({
 			data: [{ date: timestamp, medianAPY: -2.5 }],
-			isLoading: false
-		})
-		mocks.useFetchProtocolGovernanceData.mockReturnValueOnce({
-			data: [
-				{
-					metadata: {},
-					stats: null,
-					proposals: [],
-					controversialProposals: [],
-					activity: [{ date: timestamp, Total: 0, Successful: 2 }],
-					maxVotes: [{ date: timestamp, 'Max Votes': 1_000 }]
-				},
-				{
-					metadata: {},
-					stats: null,
-					proposals: [],
-					controversialProposals: [],
-					activity: [{ date: timestamp, Total: 3, Successful: 1 }],
-					maxVotes: [{ date: timestamp, 'Max Votes': 1_500 }]
-				}
-			],
 			isLoading: false
 		})
 
 		renderToStaticMarkup(<Probe />)
 
 		expect(mocks.lastResult?.finalCharts['Median APY']).toEqual([[timestampMs, -2.5]])
-		expect(mocks.lastResult?.finalCharts['Total Proposals']).toEqual([[timestampMs, 3]])
-		expect(mocks.lastResult?.finalCharts['Successful Proposals']).toEqual([[timestampMs, 3]])
-		expect(mocks.lastResult?.finalCharts['Max Votes']).toEqual([[timestampMs, 1_500]])
 	})
 
 	it('keeps cumulative fee-family charts in selected denomination units', () => {

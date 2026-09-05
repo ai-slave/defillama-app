@@ -42,7 +42,6 @@ const tabs = {
 	},
 	options: { id: 'options', name: 'Options Volume', route: '/protocol/options' },
 	tokenRights: { id: 'tokenRights', name: 'Token Rights', route: '/protocol/token-rights' },
-	governance: { id: 'governance', name: 'Governance', route: '/protocol/governance' },
 	forks: { id: 'forks', name: 'Forks', route: '/protocol/forks' },
 	investorRelations: { id: 'investorRelations', name: 'Investor Relations', route: '/protocol/investor-relations' }
 } as const
@@ -51,7 +50,6 @@ const standaloneCanonicals: Partial<Record<keyof typeof tabs, string>> = {
 	information: '/protocol',
 	borrowed: '/protocol/active-loans',
 	unlocks: '/unlocks',
-	governance: '/governance',
 	forks: '/forks'
 }
 
@@ -186,9 +184,6 @@ export function ProtocolOverviewLayout({
 		}
 		if (metrics.tokenRights) {
 			final.push(tabs.tokenRights)
-		}
-		if (metrics.governance) {
-			final.push(tabs.governance)
 		}
 		if (metrics.forks) {
 			final.push(tabs.forks)

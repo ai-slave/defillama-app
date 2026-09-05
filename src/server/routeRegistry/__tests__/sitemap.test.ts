@@ -1,4 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+	getProtocolSitemapRoutes,
+	getStandaloneProtocolSitemapRoutes
+} from '~/containers/ProtocolOverview/server/routes'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
 
 const metadataCache = vi.hoisted(
@@ -161,6 +165,22 @@ afterEach(() => {
 })
 
 describe('cache-backed sitemap sections', () => {
+	it('omits governance routes from legacy metadata while retaining token rights and unlocks', () => {
+		const originalMetadata = metadataCache.protocolMetadata.aave
+		const legacyMetadata = { ...originalMetadata, tokenRights: true, governance: true }
+		metadataCache.protocolMetadata.aave = legacyMetadata
+		try {
+			const standaloneRoutes = getStandaloneProtocolSitemapRoutes(metadataCache)
+			const paths = [...getProtocolSitemapRoutes(metadataCache), ...Object.values(standaloneRoutes).flat()]
+
+			expect(standaloneRoutes).not.toHaveProperty('governance')
+			expect(paths.some((path) => /^(?:protocol\/)?governance(?:\/|$)/.test(path))).toBe(false)
+			expect(paths).toEqual(expect.arrayContaining(['protocol/token-rights/aave', 'protocol/tvl/aave', 'unlocks/aave']))
+		} finally {
+			metadataCache.protocolMetadata.aave = originalMetadata
+		}
+	})
+
 	it('builds grouped public routes from metadata and dataset snapshots only', async () => {
 		const sections = await buildAppSitemapSections()
 		const entriesBySection = new Map(
@@ -168,6 +188,9 @@ describe('cache-backed sitemap sections', () => {
 		)
 		const allEntryPaths = sections.flatMap((section) => section.entries.map((entry) => entry.path))
 
+		expect(sections.map((section) => String(section.id))).not.toContain('governance')
+		expect(allEntryPaths).not.toContain('governance')
+		expect(allEntryPaths).toContain('token-rights')
 		expect(getSitemapSectionPath('protocols')).toBe('sitemap/protocols.xml')
 		expect(entriesBySection.get('protocols')).toEqual(expect.arrayContaining(['protocol/aave', 'protocol/fees/aave']))
 		expect(entriesBySection.get('protocols')).not.toContain('protocol/binance-cex')

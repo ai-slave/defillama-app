@@ -41,6 +41,16 @@ const eventCases: Array<{
 ]
 
 describe('protocol chart query resolution', () => {
+	it('ignores retired governance toggles in saved URLs while honoring supported charts', () => {
+		const query = { totalProposals: 'true', successfulProposals: 'true', maxVotes: 'true', tvl: 'true' }
+		const result = resolveQuery({ query })
+
+		expect(result.toggledCharts).toEqual(['TVL', 'Fees'])
+		expect(result.toggledMetrics).not.toHaveProperty('totalProposals')
+		expect(result.toggledMetrics).not.toHaveProperty('successfulProposals')
+		expect(result.toggledMetrics).not.toHaveProperty('maxVotes')
+	})
+
 	it.each(eventCases)(
 		'defaults events on for either point or range hallmarks and honors explicit visibility',
 		(events) => {

@@ -30,7 +30,6 @@ interface IBuildAvailableChartsParams {
 	hasUsdInflows: boolean
 	hasTreasury: boolean
 	hasMedianApy: boolean
-	hasGovernance: boolean
 	hasNfts: boolean
 	hasActiveAddresses: boolean
 	hasNewAddresses: boolean
@@ -68,7 +67,6 @@ export function buildAvailableCharts(params: IBuildAvailableChartsParams): Proto
 	if (params.hasUsdInflows) charts.push('USD Inflows')
 	if (params.hasTreasury) charts.push('Treasury')
 	if (params.hasMedianApy) charts.push('Median APY')
-	if (params.hasGovernance) charts.push('Total Proposals', 'Successful Proposals', 'Max Votes')
 	if (params.hasNfts) charts.push('NFT Volume')
 	if (params.hasActiveAddresses) charts.push('Active Addresses')
 	if (params.hasNewAddresses) charts.push('New Addresses')
@@ -139,10 +137,7 @@ export function buildDefaultToggledCharts({
 			'Mcap',
 			'Token Price',
 			'Token Volume',
-			'FDV',
-			'Total Proposals',
-			'Successful Proposals',
-			'Max Votes'
+			'FDV'
 		])
 		const fallbackLabel = availableCharts.find((chart) => !cannotShowAsDefault.has(chart))
 		if (fallbackLabel) pushUniqueIfAvailable(fallbackLabel)

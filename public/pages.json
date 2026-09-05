@@ -867,15 +867,6 @@
       "totalTrackedKey": "safeHarbor.protocols"
     },
     {
-      "name": "Governance",
-      "route": "/governance",
-      "category": "Others",
-      "description": "Overview of all governance proposals by protocol",
-      "totalTrackedKey": "governance.protocols",
-      "tab": "Protocols",
-      "oldName": "Governance"
-    },
-    {
       "name": "Token Rights",
       "route": "/token-rights",
       "category": "Others",

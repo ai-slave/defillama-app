@@ -4,7 +4,6 @@ import { useMemo } from 'react'
 import type { CgChartResponse } from '~/api/coingecko.types'
 import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
 import { formatBarChart, formatLineChart, formatNullableBarChart } from '~/components/ECharts/shared/timeSeries'
-import { useFetchProtocolGovernanceData } from '~/containers/Governance/queries.client'
 import {
 	useFetchProtocolActivityChart,
 	useFetchProtocolMedianAPY,
@@ -84,7 +83,6 @@ export const useFetchProtocolChartData = ({
 	groupBy,
 	availableCharts,
 	chartDenominations,
-	governanceApis,
 	tvlSettings,
 	isCEX
 }: IProtocolOverviewPageData & {
@@ -547,18 +545,6 @@ export const useFetchProtocolChartData = ({
 		dataType: 'dailyGasUsedUsd'
 	})
 
-	const isGovernanceEnabled = !!(
-		canFetchClientCharts &&
-		[toggledMetrics.totalProposals, toggledMetrics.successfulProposals, toggledMetrics.maxVotes].some(
-			(v) => v === 'true'
-		) &&
-		governanceApis &&
-		governanceApis.length > 0
-	)
-	const { data: governanceData = null, isLoading: fetchingGovernanceData } = useFetchProtocolGovernanceData(
-		isGovernanceEnabled ? governanceApis : null
-	)
-
 	const isNftVolumeEnabled = !!(toggledMetrics.nftVolume === 'true' && metrics.nfts && canFetchClientCharts)
 	const { data: nftVolumeData = null, isLoading: fetchingNftVolume } = useQuery<Array<[number, number | null]>>({
 		queryKey: ['protocol-overview', protocolSlug, 'nft-volume'],
@@ -600,12 +586,6 @@ export const useFetchProtocolChartData = ({
 			{ isLoading: isTreasuryToggled && fetchingTreasury, label: 'Treasury' },
 			{ isLoading: isUsdInflowsToggled && fetchingUsdInflows, label: 'USD Inflows' },
 			{ isLoading: toggledMetrics.medianApy === 'true' && fetchingMedianAPY, label: 'Median APY' },
-			{ isLoading: toggledMetrics.totalProposals === 'true' && fetchingGovernanceData, label: 'Total Proposals' },
-			{
-				isLoading: toggledMetrics.successfulProposals === 'true' && fetchingGovernanceData,
-				label: 'Successful Proposals'
-			},
-			{ isLoading: toggledMetrics.maxVotes === 'true' && fetchingGovernanceData, label: 'Max Votes' },
 			{ isLoading: isNftVolumeToggled && fetchingNftVolume, label: 'NFT Volume' },
 			{ isLoading: isActiveAddressesToggled && fetchingActiveAddresses, label: 'Active Addresses' },
 			{ isLoading: isNewAddressesToggled && fetchingNewAddresses, label: 'New Addresses' },
@@ -735,41 +715,6 @@ export const useFetchProtocolChartData = ({
 			})
 		}
 
-		if (governanceData) {
-			const totalProposals: Record<string, number> = {}
-			const successfulProposals: Record<string, number> = {}
-			const maxVotes: Record<string, number> = {}
-			for (const gItem of governanceData) {
-				for (const item of gItem.activity) {
-					const date = Math.floor(item.date / 86400) * 86400
-					totalProposals[date] = (totalProposals[date] ?? 0) + item.Total
-					successfulProposals[date] = (successfulProposals[date] ?? 0) + item.Successful
-				}
-				for (const item of gItem.maxVotes) {
-					const date = Math.floor(item.date / 86400) * 86400
-					const currentMax = maxVotes[date]
-					if (currentMax === undefined || item['Max Votes'] > currentMax) {
-						maxVotes[date] = item['Max Votes']
-					}
-				}
-			}
-			charts['Total Proposals'] = formatBarChart({
-				data: buildChartRowsFromTimestampRecord(totalProposals),
-				groupBy,
-				denominationPriceHistory: null
-			})
-			charts['Successful Proposals'] = formatBarChart({
-				data: buildChartRowsFromTimestampRecord(successfulProposals),
-				groupBy,
-				denominationPriceHistory: null
-			})
-			charts['Max Votes'] = formatLineChart({
-				data: buildChartRowsFromTimestampRecord(maxVotes),
-				groupBy,
-				denominationPriceHistory: null
-			})
-		}
-
 		if (nftVolumeData && isNftVolumeToggled)
 			charts['NFT Volume'] = formatNullableBarChart({
 				data: nftVolumeData,
@@ -867,8 +812,6 @@ export const useFetchProtocolChartData = ({
 		transactionsData,
 		fetchingGasUsed,
 		gasUsedData,
-		fetchingGovernanceData,
-		governanceData,
 		fetchingNftVolume,
 		nftVolumeData,
 		fetchingBridgeVolume,

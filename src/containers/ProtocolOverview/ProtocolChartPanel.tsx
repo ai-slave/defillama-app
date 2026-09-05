@@ -183,7 +183,6 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 			Liquidations: [],
 			Bridge: [],
 			Activity: [],
-			Governance: [],
 			Other: [],
 			Annotations: []
 		}

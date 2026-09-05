@@ -61,7 +61,6 @@ export interface IProtocolMetadata {
 	displayName?: string
 	chains?: Array<string>
 	hacks?: boolean
-	governance?: boolean
 	expenses?: boolean
 	treasury?: boolean
 	nfts?: boolean

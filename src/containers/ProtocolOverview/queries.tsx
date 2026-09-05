@@ -8,7 +8,6 @@ import { CHART_COLORS } from '~/constants/colors'
 import { fetchAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api'
 import { getSponsoredResearchReports } from '~/containers/Articles/api'
 import { fetchBridgeVolumeBySlug } from '~/containers/Bridges/api'
-import { governanceIdsToApis } from '~/containers/Governance/api'
 import { getProtocolIncentivesFromAggregatedEmissions } from '~/containers/Incentives/queries'
 import { fetchOracleMetrics, fetchOracleProtocolChart } from '~/containers/Oracles/api'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
@@ -99,7 +98,6 @@ export const getProtocolMetricFlags = ({
 		fees: !!metadata.fees,
 		revenue: !!metadata.revenue,
 		forks: !!metadata.forks,
-		governance: !!metadata.governance,
 		nfts: !!metadata.nfts,
 		dev: !!protocolData.github,
 		inflows: !!metadata.inflows,
@@ -696,7 +694,6 @@ export const getProtocolOverviewPageData = async ({
 		hasUsdInflows: Boolean(protocolMetrics.inflows),
 		hasTreasury: Boolean(treasury),
 		hasMedianApy: Boolean(yields && !protocolData.isParentProtocol),
-		hasGovernance: Boolean(protocolData.governanceID),
 		hasNfts: Boolean(currentProtocolMetadata.nfts),
 		hasActiveAddresses: protocolMetrics.activeUsers,
 		hasNewAddresses: protocolMetrics.newUsers,
@@ -744,11 +741,9 @@ export const getProtocolOverviewPageData = async ({
 	}
 
 	const titleMetrics: string[] = []
-	const seoExcludedCharts = ['Successful Proposals', 'Total Proposals', 'Max Votes']
-	if (incomeStatement) {
-		seoExcludedCharts.push('Fees', 'Revenue', 'Incentives', 'Holders Revenue')
-	}
-	const chartLabelsForSeo = availableCharts.filter((chart) => !seoExcludedCharts.includes(chart))
+	const chartLabelsForSeo = incomeStatement
+		? availableCharts.filter((chart) => !['Fees', 'Revenue', 'Incentives', 'Holders Revenue'].includes(chart))
+		: availableCharts
 
 	let seoDescription = `Track ${name} on DefiLlama. Including ${chartLabelsForSeo.length ? chartLabelsForSeo.join(', ') : 'key onchain and financial stats'}`
 
@@ -887,7 +882,6 @@ export const getProtocolOverviewPageData = async ({
 		bridgeVolume: bridgeVolumeData || null,
 		treasury,
 		unlocks: null,
-		governance: null,
 		yields,
 		articles: await researchReportsPromise,
 		incentives,
@@ -931,7 +925,6 @@ export const getProtocolOverviewPageData = async ({
 		hallmarks,
 		rangeHallmarks,
 		geckoId: tokenGeckoId,
-		governanceApis: governanceIdsToApis(protocolData.governanceID ?? []),
 		incomeStatement,
 		warningBanners: getProtocolWarningBanners(protocolData),
 		defaultChartView:

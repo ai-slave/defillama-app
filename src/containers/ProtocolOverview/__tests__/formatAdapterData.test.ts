@@ -40,7 +40,6 @@ function createAdapterMetrics(overrides: Partial<IAdapterProtocolMetrics> = {}):
 		description: 'Example protocol',
 		url: 'https://example.com',
 		github: [],
-		governanceID: null,
 		treasury: null,
 		cmcId: null,
 		defaultChartView: 'weekly',

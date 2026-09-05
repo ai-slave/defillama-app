@@ -312,12 +312,6 @@ is evaluated independently: a usable breakdown without the selected chain is zer
 breakdown is unavailable. Nonzero emissions cannot be allocated over a nonpositive revenue basis. Explicit zero revenue
 with zero emissions remains zero.
 
-Governance providers are independent on detail pages. Snapshot, Compound, and Tally requests settle separately, and
-successful provider tabs remain paired with their type in configured order when another source fails. If every configured
-detail provider fails, the request fails rather than becoming an empty/not-found project. Provider-membership discovery,
-the global Governance overview, and combined Protocol Overview charts require every configured index/provider; any failure
-makes the result unavailable so false 404s and partial project lists, counts, or chart sums are never presented as complete.
-
 Oracle membership and TVS measurement are separate contracts. `/v2/metrics/oracle` `oracles` owns global membership and
 order, while `protocolsByOracleChain` owns exact chain membership and secured-protocol counts. `oraclesTVS` supplies
 measurements only. Inside a successful current snapshot, an omitted known member contributes zero without erasing

@@ -109,7 +109,7 @@ behavior must be verified from source before proposing a visual change.
 - Keep `Panel` as a separately named contract for true titled chart/table shells: surface, header, divider, body/chart slot, 32px controls, and no chart visual changes. Do not collapse every panel into a generic card.
 - Use fixed `Card` outer chrome: `bg-surface border-subtle rounded-[8px]`. Repeated/directory tiles use the same subtle page-surface stroke as protocol/detail cards; `border-medium` is reserved for control/elevated chrome.
 - Require explicit `Card`/`Panel` padding at every call site. Density is intentional (`none`, `sm`, `md`, or Card `strip`), not hidden behind primitive defaults.
-- Keep the title-strip primitive phased. Current adopters include protocol TVL, Treasury, Active Loans, Forks, CEX assets/stablecoins, chain overview empty/title shell, bridge protocol overview, and LiquidationsV2 summary. Review unlocks/governance/LST separately because they need extra metadata/action slots.
+- Keep the title-strip primitive phased. Current adopters include protocol TVL, Treasury, Active Loans, Forks, CEX assets/stablecoins, chain overview empty/title shell, bridge protocol overview, and LiquidationsV2 summary. Review unlocks/LST separately because they need extra metadata/action slots.
 - Use 32px toolbar controls. Use 6px inside dense chart/table toolbar control clusters; use 8px for toolbar padding, page/panel/card gaps, and between larger control groups.
 - Keep `PanelHeader` as the taller Figma-derived titled-panel header. Add/use a separate compact chart/table toolbar recipe for route-specific inline chart controls.
 - Historical chart decision, now superseded: grid inset changes required screenshots/pixel checks. That review established the shared 8px visual-inset contract documented below.
@@ -227,7 +227,7 @@ behavior must be verified from source before proposing a visual change.
 - Grid/flex/layout notes: Title strips are candidates for a grid/flex primitive with slots: icon, title, inline metadata, actions. The implementation should be driven by the audited usages, not by a generic assumption that every header is identical.
 - Hardcoded hacks to remove later: Repeated local shells using `rounded-lg`/legacy border variables once their contexts are confirmed. Do not remove them until the replacement primitive covers their actual children/actions.
 - Decision: Keep `Panel` as the chart/table shell contract, keep `Card` as the fixed subtle content/detail surface, and keep title strips as separate standalone title surfaces. `Panel` is only for titled chart/table shells with header/body behavior.
-- Proposed direction: Continue targeted migrations through the existing primitives. Do not broaden `Panel` into non-chart title/detail cards, and do not migrate unlocks/governance/LST until their extra metadata/action slots are validated.
+- Proposed direction: Continue targeted migrations through the existing primitives. Do not broaden `Panel` into non-chart title/detail cards, and do not migrate unlocks/LST until their extra metadata/action slots are validated.
 - Verification needed: For each candidate route, capture current live dimensions, Figma node context if available, children/actions, text semantics, and whether a shared primitive would change chart/card surrounding layout.
 
 ### Initial Raises Chart Shell And ChartPanel Extraction
@@ -267,7 +267,7 @@ Outcome:
 
 ### Title Strip Usage Map
 
-- Route/page: Protocol TVL/Treasury/Active Loans/Forks, CEX assets/stablecoins, unlocks protocol pages, governance/liquidations pages, and comparable entity/title surfaces such as RWA asset, DAT company, LST, oracles, protocol taxonomy, and bridges.
+- Route/page: Protocol TVL/Treasury/Active Loans/Forks, CEX assets/stablecoins, unlocks protocol pages, liquidations pages, and comparable entity/title surfaces such as RWA asset, DAT company, LST, oracles, protocol taxonomy, and bridges.
 - Component/file: `src/ui/EntityTitleStrip.tsx` is the shared primitive. Some current candidates are migrated, while richer headers remain hand-written until their slots are checked.
 - Figma node(s): `6183:148786` is the canonical TVL entity title strip inside the `/protocol/tvl/:protocol` frame. `6183:148773` shows that strip followed by real `Panels` instances for titled charts. `6183:312589` shows the protocol overview page where the left protocol summary is a larger data card and the right chart area uses 32px toolbar controls.
 - Current issue: Similar-looking title strips currently use different padding, radius, tokens, logo sizes, and heading utilities. Some are true page-level strips, while others are in-card headers or table/panel headers and should not be migrated blindly.
@@ -282,7 +282,6 @@ Outcome:
 - Historical page-level title-strip candidates at this point in the audit (the final
   sweep review accepted their current richer compositions; no migration remains pending):
   - `src/containers/Unlocks/EmissionsByProtocol.tsx`: page-level token title strip plus inline token price/change metadata; the primitive would need metadata slots rather than only `icon + title`.
-  - `src/containers/Governance/GovernanceProject.tsx`: page-level project title strip plus filter/action slot.
   - `src/containers/LST/index.tsx`: title strip with title and right-aligned aggregate value; no logo, so this is likely a generic title strip variant rather than an entity-logo variant.
 - Near-misses that should not be forced into the title-strip primitive:
   - `src/containers/ProtocolOverview/index.tsx`: protocol name/logo is inside the larger protocol summary card, not a standalone page title strip.
@@ -295,7 +294,7 @@ Outcome:
 - Surrounding layout impact: Moving these to a shared primitive will change vertical density on protocol TVL/active-loans/forks from current `p-3`/24px-logo to Figma's `p-2`/28px-logo. That keeps the title strip at 44px, but text and logo alignment will shift. CEX pages will also migrate off legacy card tokens if approved.
 - Grid/flex/layout notes: This primitive should be layout-slot driven. A simple grid like `auto minmax(0,1fr) auto` can support icon/title/actions without `mr-auto` hacks; inline metadata can sit in the title row only where needed.
 - Hardcoded hacks to remove later: Repeated `rounded-md`/`rounded-lg`, `border-(--cards-border)`, `bg-(--cards-bg)`, ad hoc `p-3`, `mr-auto`, and inconsistent `text-xl font-bold` vs `heading-sm` once the primitive is agreed.
-- Decision: Existing title-strip adopters should stay on `EntityTitleStrip` and be live-verified route by route. No-logo generic strips and richer unlocks/governance/LST headers stay out until their slots are checked.
+- Decision: Existing title-strip adopters should stay on `EntityTitleStrip` and be live-verified route by route. No-logo generic strips and richer unlocks/LST headers stay out until their slots are checked.
 - Proposed direction: Continue focused migration from Figma `6183:148786`: support optional icon, title, right action/right text, and avoid turning the primitive into a catch-all card header.
 - Verification needed: For each migrated route, live-measure title strip height 44px, 8px padding, 8px radius, subtle border, 28px logo where present, 12px logo/title gap, and no layout regression in right-action/right-text variants.
 
@@ -627,11 +626,11 @@ Reviewed classification:
 
 ### Cross-Page Panel/Card/Table Propagation
 
-- Route/page: Home/chain, protocol overview/subpages, cex assets/stablecoins, stablecoins, bridges, DAT, token, RWA, LST, liquidations, adapter metrics, oracles, markets, MCP, governance, unlocks.
+- Route/page: Home/chain, protocol overview/subpages, cex assets/stablecoins, stablecoins, bridges, DAT, token, RWA, LST, liquidations, adapter metrics, oracles, markets, MCP, unlocks.
 - Component/file: `src/ui/Panel.tsx`, `src/ui/Card.tsx`, `src/components/Table/TableWithSearch.tsx`, `src/containers/ChainOverview/ChainChartPanel.tsx`, `src/containers/ProtocolOverview/ProtocolChartPanel.tsx`, `src/containers/Cexs/CexChartPanel.tsx`, and route-local chart/stat/table shells.
 - Figma node(s): Home/chain `6183:292119`, protocol `6183:312589/311951`, protocol TVL `6183:153039/148773/148797/148781`, unlocks `6298:54868/6183:355432`, plus route-family frames still queued in `design-sweep-todo.md`.
 - Current issue: The same visual layout language appears across many pages, but code is split between `Panel`, `Card`, and local shells using `rounded-md border border-(--cards-border) bg-(--cards-bg)`, `rounded-lg border-subtle bg-surface`, `p-3/gap-3`, or fixed/min-height hacks. Future changes should propagate through shared recipes instead of re-solving home/protocol in isolation. Figma-backed decision: `Card` and `Panel` share the same `bg-surface border-subtle rounded-[8px]` outer chrome; `Panel` is for chart/table structure, not a stronger border.
-- Already aligned: Protocol tab chart pages mostly use `Panel` (`protocol/tvl`, `treasury`, `fees`, `dexs`, `options`, `perps`, `active-loans`, `forks`, `stablecoins`, aggregator tabs), governance project and unlock emissions use `Panel`, CEX chart cards use `CexChartPanel` which wraps `Panel`, and DAT overview/by-asset have partial `Panel` adoption.
+- Already aligned: Protocol tab chart pages mostly use `Panel` (`protocol/tvl`, `treasury`, `fees`, `dexs`, `options`, `perps`, `active-loans`, `forks`, `stablecoins`, aggregator tabs), unlock emissions use `Panel`, CEX chart cards use `CexChartPanel` which wraps `Panel`, and DAT overview/by-asset have partial `Panel` adoption.
 - Shared source to update first: `TableWithSearch` now routes through shared table
   header/toolbar paths, so remaining table-toolbar drift should be fixed by tightening
   shared toolbar recipes and call-site group wrappers instead of reintroducing local
@@ -730,7 +729,7 @@ Reviewed classification:
 
 ### 2026-07-09 ChartPanel Shell Migration Notes
 
-- `ChartPanel` now covers the broad in-scope standard chart-shell pass: raises, protocol/chain overview, DAT, RWA, stablecoins, bridges/bridged TVL, forks, oracles, protocol taxonomy, protocol metric pages, adapter metrics, token overview, token usage toolbar usage, hacks, unlocks, banks, NFTs, compare routes, LST, governance, CEX chart helper, ETF, liquidations, and equities ticker chart shells.
+- `ChartPanel` now covers the broad in-scope standard chart-shell pass: raises, protocol/chain overview, DAT, RWA, stablecoins, bridges/bridged TVL, forks, oracles, protocol taxonomy, protocol metric pages, adapter metrics, token overview, token usage toolbar usage, hacks, unlocks, banks, NFTs, compare routes, LST, CEX chart helper, ETF, liquidations, and equities ticker chart shells.
 - The shared min-height constants were not kept as exported values. Call sites import the helper component that matches their chart shape instead: `ChartPanelBodyFallback` for an already-mounted toolbar plus 360px chart body, and `ChartPanelExportShellFallback` for a lazy chart component that renders its own 40px title/export header plus the 360px chart body.
 - Intentional leftovers are documented exceptions, not missed blanket replacements: mixed chart/table panels, row-count table placeholders, treemap/candlestick/HBar/custom-height branches, market mini charts, and excluded products.
 
@@ -739,7 +738,7 @@ Reviewed classification:
 - Primary table pages should promote existing visible table title text to `h1` instead
   of adding a new heading. Use `PanelHeader` + `PanelTitle as="h1"` directly, or
   `TableWithSearch headingAs="h1"` when the table uses that helper. Current audited
-  examples include Governance, Bridge Chains, RWA Assets, and `/protocols` Protocol
+  examples include Bridge Chains, RWA Assets, and `/protocols` Protocol
   Rankings.
 - Pages that already have a real h1/hero above the table should not add another table
   title. The table uses compact `TableToolbar` with search/filters/actions only.
@@ -1069,7 +1068,7 @@ variations instead of forcing a universal abstraction.
 - Migrated: /tokens rankings (labels 12→14px, padding p-2→strip), unlocks token
   stats (was hand-rolled), token-rights counts (labels 12→14px), LiquidationsV2
   totals (gap-x-5→6), CEX stablecoin summary (inverted label/value styles
-  corrected), governance project stats (raw text-sm utilities → named ramp).
+  corrected).
   Arbitrary `min-h-[46px]`/`min-h-[42px]` reservations dropped — strip padding
   and line height own the height.
 - Retained as separate documented roles: Markets `MetricStat` (mono values) and

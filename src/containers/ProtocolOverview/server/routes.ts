@@ -38,7 +38,6 @@ type ProtocolMetric =
 	| 'bridgeAggregators'
 	| 'tokenRights'
 	| 'emissions'
-	| 'governance'
 	| 'forks'
 	| 'raises'
 
@@ -82,19 +81,14 @@ const protocolTabRoutes = [
 		prefix: 'protocol/unlocks',
 		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.emissions)
 	},
-	{
-		prefix: 'protocol/governance',
-		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.governance)
-	},
 	{ prefix: 'protocol/forks', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.forks) }
 ]
 
 const standaloneProtocolRoutes: Array<{
-	prefix: 'unlocks' | 'governance' | 'forks'
+	prefix: 'unlocks' | 'forks'
 	hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => boolean
 }> = [
 	{ prefix: 'unlocks', hasMetric: (meta) => Boolean(meta.emissions) },
-	{ prefix: 'governance', hasMetric: (meta) => Boolean(meta.governance) },
 	{ prefix: 'forks', hasMetric: (meta) => Boolean(meta.forks) }
 ]
 
@@ -241,10 +235,9 @@ export function getProtocolSitemapRoutes(metadataCache: MetadataCache): string[]
 
 export function getStandaloneProtocolSitemapRoutes(
 	metadataCache: MetadataCache
-): Record<'unlocks' | 'governance' | 'forks', string[]> {
+): Record<'unlocks' | 'forks', string[]> {
 	const routes = {
 		unlocks: [] as string[],
-		governance: [] as string[],
 		forks: [] as string[]
 	}
 

@@ -137,7 +137,7 @@ export const CAPABILITIES: Capability[] = [
 			'Deep dive report on Lido — competitive position, tokenomics, risks, and catalysts',
 			'Comprehensive landscape analysis of all lending protocols — market share, growth, and differentiation',
 			'Research the restaking narrative — key players, risks, total value, and where it goes next',
-			'Full report on Uniswap vs competitors — volume trends, fee capture, governance, and moat analysis',
+			'Full report on Uniswap vs competitors — volume trends, fee capture, and moat analysis',
 			'What are the top emerging narratives in DeFi right now? Rank by capital flows and attention',
 			'Research report on the state of L2s — compare Arbitrum, Optimism, Base, and zkSync by all metrics',
 			'Investigate the RWA tokenization trend — protocols, TVL, institutional adoption, and regulatory risks'
@@ -184,20 +184,6 @@ export const CAPABILITIES: Capability[] = [
 			'Alert me daily with ETH lending rates across Aave, Compound, and Morpho',
 			'Weekly portfolio tracker — TVL, price, and revenue for AAVE, UNI, MKR, and LDO',
 			'Daily report of tokens with the biggest price moves (>10%) and their fundamentals'
-		]
-	},
-	{
-		key: 'governance',
-		name: 'Governance',
-		icon: 'graduation-cap',
-		description: 'Stay on top of DAO governance — active proposals, fee switch votes, buybacks, and voting outcomes.',
-		prompts: [
-			'Show all active governance proposals for Aave with voting status and deadline',
-			'Which DeFi protocols have proposed or passed fee switch votes in the last 90 days?',
-			'Uniswap governance activity — recent proposals, quorum status, and vote breakdown',
-			'Find all buyback or revenue-sharing proposals across major DAOs',
-			'Compare governance activity across Aave, Compound, Sky (MakerDAO), and Uniswap',
-			'Show recently executed governance proposals that changed protocol parameters'
 		]
 	},
 	{

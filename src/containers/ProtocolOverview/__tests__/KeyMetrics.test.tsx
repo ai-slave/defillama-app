@@ -40,7 +40,6 @@ const metrics: IProtocolPageMetrics = {
 	fees: true,
 	revenue: false,
 	forks: false,
-	governance: false,
 	nfts: false,
 	dev: false,
 	inflows: false,

@@ -111,14 +111,6 @@ const AXIS_CONFIG_BY_TYPE: Partial<Record<ProtocolChartsLabels, AxisConfig>> = {
 	'USD Inflows': {
 		resolveColor: ({ chartColors }) => chartColors['USD Inflows']
 	},
-	'Total Proposals': {
-		formatter: (value) => formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
-		resolveColor: ({ chartColors }) => chartColors['Total Proposals']
-	},
-	'Max Votes': {
-		formatter: (value) => formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
-		resolveColor: ({ chartColors }) => chartColors['Max Votes']
-	},
 	Treasury: {
 		resolveColor: ({ chartColors }) => chartColors['Treasury']
 	},

@@ -99,6 +99,8 @@ function isExcludedTrendingRoute(route: string): boolean {
 	if (route === '/pro' || route.startsWith('/pro/')) {
 		return true
 	}
+	// Retired routes can still appear in historical traffic data.
+	if (/^\/(?:protocol\/)?governance(?:[/?#]|$)/.test(route)) return true
 	return ['/chain/', '/metrics', '/tools', '/subscription'].some((page) => route.includes(page))
 }
 

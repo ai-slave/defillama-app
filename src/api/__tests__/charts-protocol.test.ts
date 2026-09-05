@@ -12,7 +12,6 @@ const {
 	fetchAdapterProtocolChartDataByBreakdownTypeMock,
 	getCachedCgChartDataMock,
 	fetchBridgeVolumeBySlugMock,
-	fetchAndFormatGovernanceDataMock,
 	fetchNftMarketplaceVolumesMock,
 	fetchOracleProtocolChartMock,
 	getProtocolEmissionsChartsMock,
@@ -27,7 +26,6 @@ const {
 	fetchAdapterProtocolChartDataByBreakdownTypeMock: vi.fn(),
 	getCachedCgChartDataMock: vi.fn(),
 	fetchBridgeVolumeBySlugMock: vi.fn(),
-	fetchAndFormatGovernanceDataMock: vi.fn(),
 	fetchNftMarketplaceVolumesMock: vi.fn(),
 	fetchOracleProtocolChartMock: vi.fn(),
 	getProtocolEmissionsChartsMock: vi.fn(),
@@ -49,10 +47,6 @@ vi.mock('~/containers/Bridges/api', () => ({
 
 vi.mock('~/containers/Bridges/server/routes', () => ({
 	resolveBridgeProtocolParamFromMetadata: resolveBridgeProtocolParamMock
-}))
-
-vi.mock('~/containers/Governance/queries.client', () => ({
-	fetchAndFormatGovernanceData: fetchAndFormatGovernanceDataMock
 }))
 
 vi.mock('~/containers/Nft/api', () => ({
@@ -118,6 +112,30 @@ beforeEach(() => {
 })
 
 describe('/api/public/protocols/charts', () => {
+	it('rejects retired governance chart requests without fetching upstream data', async () => {
+		const req = createRequest({ kind: 'governance', apis: JSON.stringify(['https://example.com/governance']) })
+		const res = createMockNextApiResponse()
+
+		await handler(req, res)
+
+		expect(res.status).toHaveBeenCalledWith(400)
+		expect(res.json).toHaveBeenCalledWith({ error: 'Unsupported kind: governance' })
+		expect(fetchJsonMock).not.toHaveBeenCalled()
+	})
+
+	it('rejects the retired governance POST transport', async () => {
+		const req = createRequest({})
+		req.method = 'POST'
+		req.body = { kind: 'governance', apis: ['https://example.com/governance'] }
+		const res = createMockNextApiResponse()
+
+		await handler(req, res)
+
+		expect(res.status).toHaveBeenCalledWith(405)
+		expect(res.setHeader).toHaveBeenCalledWith('Allow', 'GET')
+		expect(fetchJsonMock).not.toHaveBeenCalled()
+	})
+
 	it.each([
 		{
 			label: 'TVL value chart',
@@ -266,29 +284,6 @@ describe('/api/public/protocols/charts', () => {
 			[Date.parse('2026-07-16'), null],
 			[Date.parse('2026-07-17'), 0]
 		])
-	})
-
-	it('fails a combined governance chart when any configured provider is unavailable', async () => {
-		fetchAndFormatGovernanceDataMock.mockResolvedValue([
-			{
-				type: 'snapshot',
-				data: {
-					metadata: {},
-					stats: null,
-					proposals: [],
-					controversialProposals: [],
-					activity: [],
-					maxVotes: []
-				}
-			}
-		])
-		const req = createRequest({ kind: 'governance', apis: JSON.stringify(['snapshot', 'tally']) })
-		const res = createMockNextApiResponse()
-
-		await handler(req, res)
-
-		expect(res.status).toHaveBeenCalledWith(500)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Failed to load protocol chart data' })
 	})
 
 	it.each([

@@ -36,7 +36,6 @@ export const SITEMAP_SECTION_IDS = [
 	'oracles',
 	'liquidations',
 	'unlocks',
-	'governance',
 	'forks',
 	'raises',
 	'narratives',
@@ -146,7 +145,6 @@ async function buildBaseSitemapSection(
 		case 'liquidations':
 			return { id: sectionId, entries: toEntries(await getLiquidationsSitemapRoutes(metadataCache)) }
 		case 'unlocks':
-		case 'governance':
 		case 'forks':
 			return { id: sectionId, entries: toEntries(getStandaloneProtocolSitemapRoutes(metadataCache)[sectionId]) }
 		case 'raises':

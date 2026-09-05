@@ -23,7 +23,6 @@ interface IProtocolMetricsV2Common {
 	openSource?: boolean
 	forkedFrom?: Array<string>
 	oraclesByChain?: Record<string, Array<string>>
-	governanceID?: Array<string>
 	github?: Array<string>
 	currentChainTvls: Record<string, number>
 	mcap: number | null

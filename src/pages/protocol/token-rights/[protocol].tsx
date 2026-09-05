@@ -100,7 +100,6 @@ export const getStaticProps = withPerformanceLogging(
 				fees: false,
 				revenue: false,
 				forks: false,
-				governance: false,
 				nfts: false,
 				dev: false,
 				inflows: false,

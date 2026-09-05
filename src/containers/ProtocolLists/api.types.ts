@@ -35,7 +35,6 @@ export interface ProtocolLite {
 	listedAt?: number
 	deprecated?: true
 	forkedFrom?: string[]
-	governanceID?: string[]
 }
 
 /** Raw parent protocol from the lite/protocols2 API. */
