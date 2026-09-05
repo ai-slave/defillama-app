@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { AB_GROUP_COOKIE_NAME, AB_VISITOR_COOKIE_NAME, getABGroup, isABVisitorId } from '~/utils/abTesting'
 
 function stubProxyEnv(allowedOrigins = '', investorsSite = '', investorsPreview = '') {
 	vi.stubEnv('CORS_ALLOWED_ORIGINS', allowedOrigins)
@@ -35,9 +36,9 @@ function apiRequest(origin: string, method = 'POST', path = '/api/private/token-
 	})
 }
 
-function pageRequest(url: string) {
+function pageRequest(url: string, cookie?: string, accept = 'text/html') {
 	return new NextRequest(url, {
-		headers: { host: new URL(url).host }
+		headers: { host: new URL(url).host, accept, ...(cookie ? { cookie } : {}) }
 	})
 }
 
@@ -122,7 +123,82 @@ describe('api proxy CORS', () => {
 	})
 })
 
+describe('a/b assignment', () => {
+	it('assigns a stable 50/50 group cookie to new main-site visitors', async () => {
+		const { proxy } = await loadProxy()
+		const response = proxy(pageRequest('https://defillama.com/chains'))
+		const visitorCookie = response.cookies.get(AB_VISITOR_COOKIE_NAME)
+		const groupCookie = response.cookies.get(AB_GROUP_COOKIE_NAME)
+
+		expect(isABVisitorId(visitorCookie?.value)).toBe(true)
+		expect(groupCookie?.value).toBe(getABGroup(visitorCookie!.value))
+		expect(visitorCookie).toMatchObject({ httpOnly: true, path: '/', sameSite: 'lax', secure: true })
+		expect(groupCookie).toMatchObject({ path: '/', sameSite: 'lax', secure: true })
+		expect(response.headers.get('Cache-Control')).toBe('private, no-store')
+	})
+
+	it('keeps an existing valid assignment without resetting cookies', async () => {
+		const { proxy } = await loadProxy()
+		const visitorId = '00000000-0000-4000-8000-000000000009'
+		const response = proxy(
+			pageRequest('https://defillama.com/chains', `${AB_VISITOR_COOKIE_NAME}=${visitorId}; ${AB_GROUP_COOKIE_NAME}=b`)
+		)
+
+		expect(response.cookies.get(AB_VISITOR_COOKIE_NAME)).toBeUndefined()
+		expect(response.cookies.get(AB_GROUP_COOKIE_NAME)).toBeUndefined()
+		expect(response.headers.get('Cache-Control')).toBeNull()
+	})
+
+	it('does not assign groups on investor hosts or API requests', async () => {
+		const { proxy } = await loadProxy()
+		const investorResponse = proxy(pageRequest('https://investors.defillama.com/'))
+		const apiResponse = proxy(apiRequest('https://defillama.com'))
+
+		expect(investorResponse.cookies.get(AB_VISITOR_COOKIE_NAME)).toBeUndefined()
+		expect(apiResponse.cookies.get(AB_VISITOR_COOKIE_NAME)).toBeUndefined()
+	})
+
+	it('does not assign groups to non-HTML requests', async () => {
+		const { proxy } = await loadProxy()
+		const response = proxy(pageRequest('https://defillama.com/chains', undefined, '*/*'))
+
+		expect(response.cookies.get(AB_VISITOR_COOKIE_NAME)).toBeUndefined()
+		expect(response.cookies.get(AB_GROUP_COOKIE_NAME)).toBeUndefined()
+	})
+})
+
 describe('investors proxy routing', () => {
+	it('keeps investor routes in the unconditional matcher list', async () => {
+		const { config } = await loadProxy()
+
+		expect(config.matcher).toEqual(
+			expect.arrayContaining([
+				'/',
+				'/all',
+				'/etherfi',
+				'/spark',
+				'/maple',
+				'/berachain',
+				'/aave',
+				'/sonic',
+				'/near',
+				'/flare',
+				'/odyssey-ecosystem',
+				'/thorchain',
+				'/kpk',
+				'/uniswap'
+			])
+		)
+	})
+
+	it('rewrites investor routes for requests that do not accept HTML', async () => {
+		const { proxy } = await loadProxy('', 'enterprise')
+
+		const response = proxy(pageRequest('https://enterprise.defillama.com/', undefined, '*/*'))
+
+		expect(rewriteUrl(response)).toBe('https://enterprise.defillama.com/investors')
+	})
+
 	it('keeps the enterprise root on the landing page', async () => {
 		const { proxy } = await loadProxy('', 'enterprise')
 

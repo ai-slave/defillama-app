@@ -7,6 +7,13 @@ import {
 	SHOW_INVESTORS_COMING_SOON_PROJECT,
 	isActiveInvestorsHost
 } from '~/containers/Investors/config'
+import {
+	AB_COOKIE_MAX_AGE_SECONDS,
+	AB_GROUP_COOKIE_NAME,
+	AB_VISITOR_COOKIE_NAME,
+	getABGroup,
+	isABVisitorId
+} from '~/utils/abTesting'
 
 const ALLOWED_METHODS = 'GET,POST,PUT,PATCH,DELETE,OPTIONS'
 const DEFAULT_ALLOWED_HEADERS = 'Content-Type,Authorization,X-Requested-With'
@@ -73,6 +80,60 @@ function applyCorsHeaders(
 
 function isPublicApiPath(pathname: string) {
 	return pathname.startsWith('/api/public/')
+}
+
+function isABPageRequest(request: NextRequest) {
+	const hostname = request.nextUrl.hostname
+	const acceptsHtml = request.headers.get('accept')?.includes('text/html') ?? false
+	const isMainSite = hostname === 'defillama.com' || hostname === 'www.defillama.com'
+	const isLocalDevelopment =
+		process.env.NODE_ENV !== 'production' && (hostname === 'localhost' || hostname === '127.0.0.1')
+
+	return (
+		request.method === 'GET' &&
+		acceptsHtml &&
+		!request.nextUrl.pathname.startsWith('/api/') &&
+		(isMainSite || isLocalDevelopment)
+	)
+}
+
+function applyABAssignment(response: NextResponse, request: NextRequest) {
+	if (!isABPageRequest(request)) return
+
+	const currentVisitorId = request.cookies.get(AB_VISITOR_COOKIE_NAME)?.value
+	const currentGroup = request.cookies.get(AB_GROUP_COOKIE_NAME)?.value
+	const hasValidVisitorId = isABVisitorId(currentVisitorId)
+	const visitorId = hasValidVisitorId ? currentVisitorId : crypto.randomUUID()
+	const group = getABGroup(visitorId)
+	const shouldSetGroup = currentGroup !== group
+	const secure = request.nextUrl.protocol === 'https:'
+
+	if (!hasValidVisitorId) {
+		response.cookies.set({
+			name: AB_VISITOR_COOKIE_NAME,
+			value: visitorId,
+			httpOnly: true,
+			maxAge: AB_COOKIE_MAX_AGE_SECONDS,
+			path: '/',
+			sameSite: 'lax',
+			secure
+		})
+	}
+
+	if (shouldSetGroup) {
+		response.cookies.set({
+			name: AB_GROUP_COOKIE_NAME,
+			value: group,
+			maxAge: AB_COOKIE_MAX_AGE_SECONDS,
+			path: '/',
+			sameSite: 'lax',
+			secure
+		})
+	}
+
+	if (!hasValidVisitorId || shouldSetGroup) {
+		response.headers.set('Cache-Control', 'private, no-store')
+	}
 }
 
 function getInvestorsRewrite(request: NextRequest) {
@@ -148,6 +209,8 @@ export function proxy(request: NextRequest) {
 		applyCorsHeaders(response, request, allowedOrigin, !isPublicApi && !allowAnyOrigin)
 	}
 
+	applyABAssignment(response, request)
+
 	return response
 }
 
@@ -167,6 +230,10 @@ export const config = {
 		'/odyssey-ecosystem',
 		'/thorchain',
 		'/kpk',
-		'/uniswap'
+		'/uniswap',
+		{
+			source: '/((?!api|_next/static|_next/image).*)',
+			has: [{ type: 'header', key: 'accept', value: '.*text/html.*' }]
+		}
 	]
 }

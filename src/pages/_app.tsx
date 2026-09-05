@@ -16,7 +16,8 @@ import { useAuthBridge } from '~/hooks/useAuthBridge'
 import { useParentAuthTracker } from '~/hooks/useParentAuthTracker'
 import { useReferrer } from '~/hooks/useReferrer'
 import { useUmamiIdentityTracker } from '~/hooks/useUmamiIdentityTracker'
-import { UMAMI_READY_EVENT } from '~/utils/analytics/umami'
+import { AB_EXPERIMENT_ID, getABGroupFromCookie } from '~/utils/abTesting'
+import { addABTag, trackUmamiEvent, UMAMI_READY_EVENT } from '~/utils/analytics/umami'
 
 type NextPageWithLayout = AppProps['Component'] & {
 	getLayout?: (page: ReactElement) => ReactElement
@@ -27,8 +28,13 @@ type AppPropsWithLayout = AppProps & {
 }
 
 const CHUNK_LOAD_ERROR_KEY = 'chunk-load-error-reload'
+const AB_EXPOSURE_SESSION_KEY = `ab-exposure:${AB_EXPERIMENT_ID}`
 const MAIN_UMAMI_WEBSITE_ID = 'ca346731-f7ec-437f-9727-162f29bb67ae'
 const UMAMI_WEBSITE_ID = ACTIVE_INVESTORS_SITE?.umamiWebsiteId ?? MAIN_UMAMI_WEBSITE_ID
+
+if (typeof window !== 'undefined') {
+	window.umamiABBeforeSend = (_type, payload) => addABTag(payload, document.cookie)
+}
 
 const isChunkLoadError = (error: unknown) => {
 	if (!error) return false
@@ -44,6 +50,22 @@ const isChunkLoadError = (error: unknown) => {
 
 function App({ Component, pageProps }: AppPropsWithLayout) {
 	const reloadInProgressRef = useRef(false)
+
+	useEffect(() => {
+		const trackExposure = () => {
+			if (!window.umami || sessionStorage.getItem(AB_EXPOSURE_SESSION_KEY)) return
+
+			const group = getABGroupFromCookie(document.cookie)
+			if (!group) return
+
+			sessionStorage.setItem(AB_EXPOSURE_SESSION_KEY, group)
+			trackUmamiEvent('ab-exposure', { experiment: AB_EXPERIMENT_ID, group })
+		}
+
+		trackExposure()
+		window.addEventListener(UMAMI_READY_EVENT, trackExposure)
+		return () => window.removeEventListener(UMAMI_READY_EVENT, trackExposure)
+	}, [])
 
 	useEffect(() => {
 		const reloadOnce = (url?: string) => {
@@ -120,6 +142,7 @@ function App({ Component, pageProps }: AppPropsWithLayout) {
 				}}
 				data-website-id={UMAMI_WEBSITE_ID}
 				data-host-url="https://tasty.defillama.com"
+				data-before-send="umamiABBeforeSend"
 			/>
 
 			<RouteProgressIndicator />

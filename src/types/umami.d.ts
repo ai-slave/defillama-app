@@ -2,6 +2,7 @@ export {}
 
 declare global {
 	interface Window {
+		umamiABBeforeSend?: (type: string, payload: Record<string, unknown>) => Record<string, unknown>
 		umami?: {
 			track: {
 				(): void
