@@ -5,7 +5,7 @@ export type LogoKind = 'token' | 'chain' | 'exchange' | 'pegged' | 'equities'
 type TokenLogoProps = {
 	size?: number
 	alt?: string
-	title?: string
+	title?: string | undefined
 	fallbackSrc?: string | null
 	'data-lgonly'?: boolean
 } & (
@@ -67,10 +67,10 @@ function TokenLogoImg({
 }: {
 	resolvedSrc: string | null
 	size?: number
-	fallbackSrc?: string | null
-	alt?: string
-	title?: string
-	'data-lgonly'?: boolean
+	fallbackSrc: string | null | undefined
+	alt: string | undefined
+	title?: string | undefined
+	'data-lgonly': boolean | undefined
 }) {
 	const placeholderSrc = '/assets/placeholder.png'
 	const sources = [
@@ -99,7 +99,7 @@ function TokenLogoImg({
 
 					if (nextSourceIndex < sources.length) {
 						image.dataset.logoSourceIndex = String(nextSourceIndex)
-						image.src = sources[nextSourceIndex]
+						image.src = sources[nextSourceIndex]!
 						return
 					}
 

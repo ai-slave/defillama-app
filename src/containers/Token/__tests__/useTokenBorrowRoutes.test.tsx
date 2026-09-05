@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
+import { TOKEN_PAGE_BORROW_QUERY } from '~/containers/Yields/data/tokenPageQuery'
 import { useTokenBorrowRoutes } from '../useTokenBorrowRoutes'
 
 vi.mock('@tanstack/react-query', () => ({
@@ -19,7 +20,7 @@ describe('useTokenBorrowRoutes', () => {
 
 		expect(useQuery).toHaveBeenCalledWith(
 			expect.objectContaining({
-				queryKey: ['token-borrow-routes', 'token-page', 'family:btc'],
+				queryKey: ['token-borrow-routes', 'token-page', TOKEN_PAGE_BORROW_QUERY, 'family:btc'],
 				staleTime: 60 * 60 * 1000,
 				refetchOnWindowFocus: false,
 				retry: false,
@@ -33,7 +34,7 @@ describe('useTokenBorrowRoutes', () => {
 
 		expect(useQuery).toHaveBeenCalledWith(
 			expect.objectContaining({
-				queryKey: ['token-borrow-routes', 'token-page'],
+				queryKey: ['token-borrow-routes', 'token-page', TOKEN_PAGE_BORROW_QUERY],
 				enabled: false
 			})
 		)

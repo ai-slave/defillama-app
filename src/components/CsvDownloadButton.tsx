@@ -150,7 +150,7 @@ export function CSVDownloadButton(props: CSVDownloadButtonPropsUnion) {
 				return false
 			} catch (error) {
 				if (prepareCsv) {
-					toast.error('Failed to download CSV')
+					toast.error('Couldn’t complete the CSV export. Please try again.')
 				}
 				console.log(error)
 				if (shouldSetLoading) dispatch({ type: 'setStaticLoading', value: false })

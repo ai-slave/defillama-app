@@ -92,7 +92,7 @@ type ButtonProps<T extends ElementType> = {
 	size: ButtonSize
 	square?: boolean
 	/** Layout placement only (ml-auto, w-full, …) — never colors or spacing. */
-	className?: string
+	className?: string | undefined
 } & Omit<ComponentPropsWithRef<T>, 'as' | 'className'>
 
 export function Button<T extends ElementType = 'button'>({

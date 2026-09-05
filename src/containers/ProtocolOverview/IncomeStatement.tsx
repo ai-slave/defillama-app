@@ -72,7 +72,7 @@ interface IncomeStatementProps {
 	className?: string
 	showTitles?: boolean
 	titleClassName?: string
-	description?: string
+	description?: string | undefined
 }
 
 export const IncomeStatement = ({

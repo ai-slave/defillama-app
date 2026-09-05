@@ -3,6 +3,8 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { hasTokenLiquidationsData } from '~/containers/LiquidationsV2/server/dataset.server'
 import { getTokenIncomeStatement } from '~/containers/ProtocolOverview/queries'
+import type { Raise } from '~/containers/Raises/model'
+import { fetchRaisesByDefillamaId } from '~/containers/Raises/server/dataset.server'
 import { getTokenRiskData } from '~/containers/Token/queries'
 import {
 	getTokenOverviewData,
@@ -18,6 +20,8 @@ import {
 } from '~/containers/TokenRights/server/dataset.server'
 import { parseTokenRightsEntry } from '~/containers/TokenRights/utils'
 import { getTokenOverviewCurrentSnapshot } from '~/containers/Tokens/queries.server'
+import type { RawTreasuryProtocol } from '~/containers/Treasuries/api.types'
+import { fetchTreasuryById } from '~/containers/Treasuries/server/dataset.server'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
 import { getTokenBorrowRoutes, getTokenEarnRows } from '~/containers/Yields/data/server/tokenPage'
 import type { RouteTableRow } from '~/containers/Yields/data/types'
@@ -457,6 +461,7 @@ vi.mock('~/utils/metadata', () => ({
 			const records: Record<string, TokenDirectory[string]> = {}
 			for (const key in state.tokensJson) {
 				const token = state.tokensJson[key]
+				if (!token) throw new Error('Missing token fixture')
 				const route = token.route ?? `/token/${encodeURIComponent(token.symbol)}`
 				if (!route.startsWith('/token/')) continue
 				records[decodeURIComponent(route.slice('/token/'.length))] = token
@@ -544,6 +549,185 @@ afterEach(() => {
 })
 
 describe('token page', () => {
+	const raise: Raise = {
+		date: 1,
+		name: 'Stake DAO',
+		round: 'Seed',
+		amountUsd: 0,
+		valuationUsd: null,
+		chains: [],
+		sector: null,
+		category: null,
+		categoryGroup: null,
+		leadInvestors: [],
+		otherInvestors: [],
+		source: '',
+		defillamaId: 'parent#stake-dao'
+	}
+	const treasury: RawTreasuryProtocol = {
+		id: 'parent#stake-dao-treasury',
+		name: 'Stake DAO',
+		logo: '',
+		slug: 'stake-dao',
+		tvl: 50,
+		chainTvls: {},
+		mcap: null,
+		tokenBreakdowns: { ownTokens: 0, stablecoins: 50, majors: 0, others: 0 }
+	}
+
+	it.each(['raises', 'treasury', 'both'] as const)(
+		'contains ordinary %s failures and recovers on the next request',
+		async (failed) => {
+			state.tokensJson = {
+				sdt: {
+					name: 'Stake DAO',
+					symbol: 'SDT',
+					route: '/token/SDT',
+					token_nk: 'coingecko:stake-dao',
+					protocolId: 'parent#stake-dao'
+				}
+			}
+			const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+			try {
+				if (failed === 'raises' || failed === 'both')
+					vi.mocked(fetchRaisesByDefillamaId).mockRejectedValueOnce(new Error('Raises unavailable'))
+				else vi.mocked(fetchRaisesByDefillamaId).mockResolvedValueOnce([raise])
+				if (failed === 'treasury' || failed === 'both')
+					vi.mocked(fetchTreasuryById).mockRejectedValueOnce(new Error('Treasury unavailable'))
+				else vi.mocked(fetchTreasuryById).mockResolvedValueOnce(treasury)
+				await expect(runTokenPageRequest({ params: { token: 'SDT' } } as never)).resolves.toHaveProperty('props')
+				expect(fetchRaisesByDefillamaId).toHaveBeenLastCalledWith('parent#stake-dao')
+				expect(fetchTreasuryById).toHaveBeenLastCalledWith('parent#stake-dao-treasury')
+				expect(getTokenOverviewData).toHaveBeenLastCalledWith(
+					expect.objectContaining({
+						source: {
+							kind: 'prefetched',
+							raises: failed === 'treasury' ? [raise] : null,
+							treasury: failed === 'raises' ? treasury : null
+						}
+					})
+				)
+				expect(log).toHaveBeenCalledTimes(failed === 'both' ? 2 : 1)
+				vi.mocked(fetchRaisesByDefillamaId).mockResolvedValueOnce([raise])
+				vi.mocked(fetchTreasuryById).mockResolvedValueOnce(treasury)
+				await expect(runTokenPageRequest({ params: { token: 'SDT' } } as never)).resolves.toHaveProperty('props')
+				expect(getTokenOverviewData).toHaveBeenLastCalledWith(
+					expect.objectContaining({ source: { kind: 'prefetched', raises: [raise], treasury } })
+				)
+				expect(getTokenOverviewCurrentSnapshot).toHaveBeenCalledTimes(2)
+			} finally {
+				log.mockRestore()
+			}
+		}
+	)
+
+	it('keeps empty funding distinct from an outage and never fetches a chain treasury', async () => {
+		state.tokensJson = {
+			eth: {
+				name: 'Ethereum',
+				symbol: 'ETH',
+				route: '/token/ETH',
+				chainId: 'Ethereum',
+				protocolId: 'parent#ethereum',
+				token_nk: 'coingecko:ethereum'
+			}
+		}
+		const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+		try {
+			await expect(runTokenPageRequest({ params: { token: 'ETH' } } as never)).resolves.toHaveProperty('props')
+			expect(fetchRaisesByDefillamaId).toHaveBeenCalledWith('chain#ethereum')
+			expect(fetchTreasuryById).not.toHaveBeenCalled()
+			expect(getTokenOverviewData).toHaveBeenCalledWith(
+				expect.objectContaining({ source: { kind: 'prefetched', raises: [], treasury: null } })
+			)
+			expect(log).not.toHaveBeenCalled()
+		} finally {
+			log.mockRestore()
+		}
+	})
+
+	it.each(['raises', 'treasuries'] as const)(
+		'rethrows %s snapshot corruption instead of rendering missing data',
+		async (domain) => {
+			state.tokensJson = {
+				sdt: {
+					name: 'Stake DAO',
+					symbol: 'SDT',
+					route: '/token/SDT',
+					protocolId: 'parent#stake-dao',
+					token_nk: 'coingecko:stake-dao'
+				}
+			}
+			const error = new DatasetSnapshotIntegrityError(domain, 'raw/all.json', new Error('Corrupt artifact'))
+			if (domain === 'raises') vi.mocked(fetchRaisesByDefillamaId).mockRejectedValueOnce(error)
+			else vi.mocked(fetchTreasuryById).mockRejectedValueOnce(error)
+			await expect(runTokenPageRequest({ params: { token: 'SDT' } } as never)).rejects.toBe(error)
+			expect(getTokenOverviewData).not.toHaveBeenCalled()
+		}
+	)
+
+	it('shares each request’s current snapshot and Yields handle across concurrent detail construction', async () => {
+		state.tokensJson = {
+			sdt: {
+				name: 'Stake DAO',
+				symbol: 'SDT',
+				route: '/token/SDT',
+				protocolId: 'parent#stake-dao',
+				token_nk: 'coingecko:stake-dao',
+				is_yields: true
+			}
+		}
+		const snapshot = { generationId: 'test-detail', generatedAt: 1, readJson: vi.fn() }
+		vi.mocked(acquireOptionalYieldsSnapshot)
+			.mockResolvedValueOnce(snapshot)
+			.mockResolvedValueOnce(snapshot)
+			.mockResolvedValueOnce(snapshot)
+		const current = Promise.withResolvers<Awaited<ReturnType<typeof getTokenOverviewCurrentSnapshot>>>()
+		vi.mocked(getTokenOverviewCurrentSnapshot)
+			.mockReturnValueOnce(current.promise)
+			.mockReturnValueOnce(current.promise)
+			.mockReturnValueOnce(current.promise)
+		const requests: Array<Promise<TokenPageResult>> = []
+		try {
+			for (let count = 1; count <= 3; count++) {
+				requests.push(runTokenPageRequest({ params: { token: 'SDT' } } as never))
+				// Resolve Vitest's dynamic module mocks sequentially while keeping all data requests pending.
+				await vi.waitFor(() => expect(acquireOptionalYieldsSnapshot).toHaveBeenCalledTimes(count))
+			}
+		} finally {
+			current.resolve({ generatedAt: 42, metrics: null })
+		}
+		const results = await Promise.all(requests)
+		for (const result of results) expect(result).toHaveProperty('props')
+		expect(getTokenOverviewCurrentSnapshot).toHaveBeenCalledTimes(3)
+		expect(acquireOptionalYieldsSnapshot).toHaveBeenCalledTimes(3)
+		expect(fetchRaisesByDefillamaId).toHaveBeenCalledTimes(3)
+		expect(fetchTreasuryById).toHaveBeenCalledTimes(3)
+		expect(getTokenEarnRows).toHaveBeenCalledTimes(3)
+		expect(getTokenBorrowRoutes).toHaveBeenCalledTimes(3)
+		for (const [handle] of vi.mocked(getTokenEarnRows).mock.calls) expect(handle).toBe(snapshot)
+		for (const [handle] of vi.mocked(getTokenBorrowRoutes).mock.calls) expect(handle).toBe(snapshot)
+	})
+
+	it('propagates a core failure while optional Yields acquisition is pending', async () => {
+		const pendingYields = Promise.withResolvers<Awaited<ReturnType<typeof acquireOptionalYieldsSnapshot>>>()
+		vi.mocked(acquireOptionalYieldsSnapshot).mockReturnValueOnce(pendingYields.promise)
+		const error = new Error('Current snapshot unavailable')
+		vi.mocked(getTokenOverviewCurrentSnapshot).mockRejectedValueOnce(error)
+		const outcome = runTokenPageRequest({ params: { token: 'BTC' } } as never).then(
+			() => 'resolved',
+			(reason: unknown) => reason
+		)
+		try {
+			expect(
+				await Promise.race([outcome, new Promise((resolve) => setTimeout(() => resolve('still waiting'), 1000))])
+			).toBe(error)
+		} finally {
+			pendingYields.resolve(null)
+			await outcome
+		}
+	})
+
 	it('renders the sticky section nav and token sections in manifest order', () => {
 		const sections: TokenPageSection[] = [
 			makeOverviewSection(),
@@ -1688,3 +1872,47 @@ describe('token page', () => {
 		expect(renderedTokenSections).toContain('token-risks')
 	})
 })
+
+it.each(['success', 'current failure', 'import failure'] as const)(
+	'overlaps a cold module load and current snapshot with safe %s handling',
+	async (outcome) => {
+		vi.resetModules()
+		const moduleStarted = Promise.withResolvers<void>()
+		const moduleReady = Promise.withResolvers<void>()
+		vi.doMock('~/containers/Markets/server/dataset.server', async () => {
+			moduleStarted.resolve()
+			await moduleReady.promise
+			return { hasTokenMarkets: vi.fn(async () => false) }
+		})
+		const { getTokenOverviewCurrentSnapshot: readCurrent } = await import('~/containers/Tokens/queries.server')
+		const current = Promise.withResolvers<Awaited<ReturnType<typeof readCurrent>>>()
+		vi.mocked(readCurrent).mockReturnValueOnce(current.promise)
+		const { getServerSideProps: request } = await import('~/pages/token/[token]')
+		const error = new Error(outcome)
+		const result = request({ params: { token: 'BTC' } } as never).then(
+			(value) => ({ value }),
+			(reason: unknown) => ({ reason })
+		)
+		try {
+			await moduleStarted.promise
+			expect(readCurrent).toHaveBeenCalledOnce()
+			if (outcome === 'current failure') {
+				current.reject(error)
+				await expect(result).resolves.toEqual({ reason: error })
+			} else if (outcome === 'import failure') {
+				moduleReady.reject(error)
+				// Vitest wraps a failed module factory; the loader's rejection must still escape.
+				await expect(result).resolves.toMatchObject({ reason: { cause: error } })
+			} else {
+				current.resolve({ generatedAt: 42, metrics: null })
+				moduleReady.resolve()
+				expect(await result).toHaveProperty('value.props')
+			}
+		} finally {
+			current.resolve({ generatedAt: 42, metrics: null })
+			moduleReady.resolve()
+			await result
+			vi.doMock('~/containers/Markets/server/dataset.server', () => ({ hasTokenMarkets: vi.fn(async () => false) }))
+		}
+	}
+)

@@ -88,7 +88,14 @@ vi.mock('../deferred/DeferredPaginatedBorrowRoutesTable', () => ({
 
 vi.mock('../useTokenBorrowRoutes', () => ({
 	useTokenBorrowRoutes: (_tokenKeys: string[], options?: { enabled?: boolean }) =>
-		options?.enabled === false ? { data: undefined, error: null, isLoading: false } : strategiesState
+		options?.enabled === false
+			? { data: undefined, error: null, isLoading: false }
+			: {
+					...strategiesState,
+					isFetching: strategiesState.isLoading,
+					isFetched: Boolean(strategiesState.data || strategiesState.error),
+					refetch: vi.fn()
+				}
 }))
 
 afterEach(() => {

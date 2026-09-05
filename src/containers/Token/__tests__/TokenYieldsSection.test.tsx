@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
 
 var queryState: {
-	data?: IYieldTableRow[]
+	data: IYieldTableRow[] | undefined
 	error?: Error | null
 	isLoading: boolean
 } = {
@@ -33,12 +33,12 @@ var routerState = {
 
 const { yieldsTableCalls } = vi.hoisted(() => ({
 	yieldsTableCalls: [] as Array<{
-		appearance?: string
+		appearance?: string | undefined
 		dataLength: number
-		initialPageIndex?: number
-		initialPageSize?: number
-		interactionDisabled?: boolean
-		loadingLabel?: string
+		initialPageIndex?: number | undefined
+		initialPageSize?: number | undefined
+		interactionDisabled?: boolean | undefined
+		loadingLabel?: string | undefined
 	}>
 }))
 
@@ -46,7 +46,12 @@ const { yieldsTableCalls } = vi.hoisted(() => ({
 // hydration.rows until the client fetch resolves. The mock ignores `enabled` and
 // always returns queryState so tests drive the fetched vs hydrated paths directly.
 vi.mock('@tanstack/react-query', () => ({
-	useQuery: () => queryState
+	useQuery: () => ({
+		...queryState,
+		isFetching: queryState.isLoading,
+		isFetched: Boolean(queryState.data || queryState.error),
+		refetch: vi.fn()
+	})
 }))
 
 vi.mock('next/router', () => ({

@@ -161,10 +161,12 @@ describe('TokenRisksSection', () => {
 
 	it('shows a focusable chain breakdown trigger for multi-chain protocol summaries', () => {
 		const riskData = createRiskData()
+		const [firstRow] = riskData.exposures.rows
+		if (!firstRow) throw new Error('Missing exposure fixture')
 		setRiskRows(riskData, [
-			riskData.exposures.rows[0],
+			firstRow,
 			{
-				...riskData.exposures.rows[0],
+				...firstRow,
 				chain: 'base',
 				chainDisplayName: 'Base',
 				currentMaxBorrowUsd: 300,
@@ -198,19 +200,21 @@ describe('TokenRisksSection', () => {
 
 	it('shows partial bad-debt labels and unavailable totals when coverage is incomplete', () => {
 		const riskData = createRiskData()
+		const [firstRow, secondRow] = riskData.exposures.rows
+		if (!firstRow || !secondRow) throw new Error('Missing exposure fixtures')
 		riskData.exposures.summary.totalMinBadDebtAtPriceZeroUsd = 50
 		riskData.exposures.summary.minBadDebtKnownCount = 0
 		riskData.exposures.summary.minBadDebtUnknownCount = 2
 		setRiskRows(riskData, [
 			{
-				...riskData.exposures.rows[0],
+				...firstRow,
 				protocol: 'fluid',
 				protocolDisplayName: 'Fluid',
 				minBadDebtAtPriceZeroUsd: 50,
 				minBadDebtAtPriceZeroCoverage: 'partial'
 			},
 			{
-				...riskData.exposures.rows[1],
+				...secondRow,
 				protocol: 'fluid',
 				protocolDisplayName: 'Fluid',
 				minBadDebtAtPriceZeroUsd: null,

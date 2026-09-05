@@ -72,6 +72,15 @@ describe('TokenLogo', () => {
 		expect(image?.getAttribute('src')).toBe('/assets/placeholder.png')
 	})
 
+	it('treats an omitted or undefined title equally and renders a present title', async () => {
+		await act(async () => root.render(<TokenLogo src={null} />))
+		const omitted = container.innerHTML
+		await act(async () => root.render(<TokenLogo src={null} title={undefined} />))
+		expect(container.innerHTML).toBe(omitted)
+		await act(async () => root.render(<TokenLogo src={null} title="Bitcoin" />))
+		expect(container.firstElementChild?.getAttribute('title')).toBe('Bitcoin')
+	})
+
 	it('resolves exchange logos from the canonical exchange namespace', async () => {
 		await act(async () => root.render(<TokenLogo name="Binance" kind="exchange" />))
 

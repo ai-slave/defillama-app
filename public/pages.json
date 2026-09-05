@@ -737,30 +737,6 @@
       "oldName": "Earnings"
     },
     {
-      "name": "Treasuries",
-      "route": "/treasuries",
-      "category": "Treasury",
-      "description": "Value of tokens owned by a protocol, including its own token and breakdown of assets held",
-      "totalTrackedKey": "treasury.protocols",
-      "tab": "Protocols",
-      "oldName": "Treasuries"
-    },
-    {
-      "name": "Treasury: Entities",
-      "route": "/entities",
-      "category": "Treasury",
-      "description": "Treasury by entity",
-      "totalTrackedKey": "treasury.entities"
-    },
-    {
-      "name": "Net Project Treasury",
-      "route": "/net-project-treasury",
-      "category": "Treasury",
-      "description": "Value of tokens owned by a protocol, excluding its own token",
-      "totalTrackedKey": "treasury.protocols",
-      "tab": "Protocols"
-    },
-    {
       "name": "Bridges by Volume",
       "route": "/bridges",
       "category": "Bridge",
@@ -784,6 +760,30 @@
       "tab": "Chains",
       "oldCategory": "Bridges",
       "oldName": "Chains"
+    },
+    {
+      "name": "Treasuries",
+      "route": "/treasuries",
+      "category": "Treasury",
+      "description": "Value of tokens owned by a protocol, including its own token and breakdown of assets held",
+      "totalTrackedKey": "treasury.protocols",
+      "tab": "Protocols",
+      "oldName": "Treasuries"
+    },
+    {
+      "name": "Treasury: Entities",
+      "route": "/entities",
+      "category": "Treasury",
+      "description": "Treasury by entity",
+      "totalTrackedKey": "treasury.entities"
+    },
+    {
+      "name": "Net Project Treasury",
+      "route": "/net-project-treasury",
+      "category": "Treasury",
+      "description": "Value of tokens owned by a protocol, excluding its own token",
+      "totalTrackedKey": "treasury.protocols",
+      "tab": "Protocols"
     },
     {
       "name": "Raises: Overview",
@@ -918,6 +918,14 @@
       "oldName": "Directory"
     },
     {
+      "name": "Yields: Watchlist",
+      "route": "/yields/watchlist",
+      "category": "Tools",
+      "description": "Watchlist of all pools that we track in our yields section",
+      "oldCategory": "Yields",
+      "oldName": "Watchlist"
+    },
+    {
       "name": "Liquidations",
       "route": "/liquidations",
       "category": "Liquidations",
@@ -929,14 +937,6 @@
         "liquidation risk",
         "liquidation levels"
       ]
-    },
-    {
-      "name": "Yields: Watchlist",
-      "route": "/yields/watchlist",
-      "category": "Tools",
-      "description": "Watchlist of all pools that we track in our yields section",
-      "oldCategory": "Yields",
-      "oldName": "Watchlist"
     },
     {
       "name": "Transactions by Bridge",

@@ -186,11 +186,11 @@ Common usage examples:
 - [NFT Volume by Chain](https://defillama.com/nfts/chains): Volume of all NFTs that are tracked by DefiLlama traded on the chain Category: NFTs.
 - [NFTs: Collections](https://defillama.com/nfts): Overview of all NFT collections Category: NFTs.
 - [NFTs: Collection Earnings](https://defillama.com/nfts/earnings): Earnings of all NFT collections that are tracked by DefiLlama Category: NFTs.
+- [Bridges by Volume](https://defillama.com/bridges): Sum of the value of all assets that were bridged through the protocol Category: Bridge.
+- [Bridge Volume by Chain](https://defillama.com/bridges/chains): Sum of the value of all assets that were bridged through the protocol on each chain Category: Bridge.
 - [Treasuries](https://defillama.com/treasuries): Value of tokens owned by a protocol, including its own token and breakdown of assets held Category: Treasury.
 - [Treasury: Entities](https://defillama.com/entities): Treasury by entity Category: Treasury.
 - [Net Project Treasury](https://defillama.com/net-project-treasury): Value of tokens owned by a protocol, excluding its own token Category: Treasury.
-- [Bridges by Volume](https://defillama.com/bridges): Sum of the value of all assets that were bridged through the protocol Category: Bridge.
-- [Bridge Volume by Chain](https://defillama.com/bridges/chains): Sum of the value of all assets that were bridged through the protocol on each chain Category: Bridge.
 - [Raises: Overview](https://defillama.com/raises): Total amount of capital raised by a project Category: Raises.
 - [Investors](https://defillama.com/raises/investors): List of investors that have invested in a project Category: Raises.
 - [Unlocks: Overview](https://defillama.com/unlocks): Overview of token emissions by protocol Category: Unlocks.
@@ -210,8 +210,8 @@ Common usage examples:
 - [Sheets](https://defillama.com/sheets): Access DeFi data right in your spreadsheets
 - [Token Liquidity](https://defillama.com/liquidity): Check how deep the liquidity is for a given token
 - [Protocols Website Directory](https://defillama.com/directory): Directory of all protocols websites on DefiLlama
-- [Liquidations](https://defillama.com/liquidations): Collateral at risk of liquidation if asset prices reach certain levels Category: Liquidations.
 - [Yields: Watchlist](https://defillama.com/yields/watchlist): Watchlist of all pools that we track in our yields section
+- [Liquidations](https://defillama.com/liquidations): Collateral at risk of liquidation if asset prices reach certain levels Category: Liquidations.
 - [Transactions by Bridge](https://defillama.com/bridge-transactions): Download transaction data across different time periods by bridge
 - [Token Holder Profit and Loss](https://defillama.com/token-pnl): Calculate the percentage change in token price between two dates
 - [Report Error](https://defillama.com/report-error): Report errors in methodology, protocol metrics, or suggest site improvements

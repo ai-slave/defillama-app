@@ -423,6 +423,9 @@ subtotal visible with a dotted underline and a tooltip stating how many rounds a
 no disclosed amount shows `Undisclosed`, not `$0`; a measured zero remains `$0`, including alongside undisclosed rounds.
 Successful empty aggregate populations remain zero, and pages that omit empty funding sections keep doing so. Whole-source
 failure retains its existing unavailable/hidden behavior; it is not an undisclosed round.
+Token detail SSR contains ordinary optional Raises/Treasury acquisition failures at each source, keeping Overview
+and required current metrics available. Snapshot-integrity errors still propagate from these acquisitions, as do
+required current-snapshot errors. Chain-token pages never request a protocol Treasury.
 
 This presentation applies to Raises, protocol, token, Token Rights, chain and exchange funding summaries and the
 Potential Airdrops funding column. It replaces the earlier sticky-null display rule for mixed protocol funding totals.
@@ -518,3 +521,17 @@ Examples:
 - `adapter-chain` routes should validate chain parameters through chain metadata.
 - Normal protocol routes should validate protocol parameters through protocol metadata.
 - Chain Fees and Chain Revenue use protocol-style upstream paths with chain-level IDs, so protocol metadata can miss for valid chains. Prefer explicit `entity=chain` from the client, then validate against chain metadata and the relevant `chainFees` or `chainRevenue` flag before fetching.
+
+## Token detail Yields
+
+Token detail Yields uses the same population for SSR hydration and browser full-data requests: exact resolved asset
+keys, `tokenOn=both` (reference asset or pool-held token), and `includeMemeTokens=true`. A token-specific page includes
+its own meme-token pools. Browser pagination, sorting and filtering must not silently switch to the general Yields
+API defaults (`tokenOn=reference`, meme pools excluded). SSR earn and borrow construction share one immutable Yields
+handle; later browser refreshes acquire current data and are not pinned to the SSR generation.
+
+Token Borrow requests include meme pools on both collateral and debt legs, with net APY descending.
+Browser request settings and cache identities share the token-page policy used by SSR. Both Borrow responses
+must succeed before either list replaces hydration. Failed Earn/Borrow full-data loads retain existing rows
+and offer Retry beside the section error (or in the error placeholder when empty). Retry shows loading,
+prevents duplicate requests, and preserves the requested page and sorting.

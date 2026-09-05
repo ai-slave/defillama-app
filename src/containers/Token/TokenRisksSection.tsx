@@ -54,7 +54,7 @@ function TableEntityCell({
 
 function formatProtocolChains(chainBreakdowns: TokenRiskChainExposureSummary[]) {
 	if (chainBreakdowns.length === 0) return ''
-	if (chainBreakdowns.length === 1) return chainBreakdowns[0].chainDisplayName
+	if (chainBreakdowns.length === 1) return chainBreakdowns[0]!.chainDisplayName
 	return `${chainBreakdowns.length} chains`
 }
 
@@ -231,7 +231,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 		getPaginationRowModel: getPaginationRowModel()
 	})
 
-	const selectedCandidateDisplayName = scopeCandidates.length === 1 ? scopeCandidates[0].displayName : 'onchain'
+	const selectedCandidateDisplayName = scopeCandidates.length === 1 ? scopeCandidates[0]!.displayName : 'onchain'
 
 	const totalMaxExposureUsd =
 		exposures.summary.totalCurrentMaxBorrowUsd + (exposures.summary.totalMinBadDebtAtPriceZeroUsd ?? 0)

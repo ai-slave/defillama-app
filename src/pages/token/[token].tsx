@@ -103,17 +103,7 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 	const chainDefiLlamaId = record.chainId ? `chain#${record.chainId.toLowerCase()}` : null
 	const protocolDefiLlamaId = record.protocolId ?? protocolMetadata?.name ?? null
 	const currentSnapshotPromise = geckoId ? getTokenOverviewCurrentSnapshot(geckoId) : Promise.resolve(null)
-	const [
-		{ isDatasetSnapshotIntegrityError },
-		{ hasTokenLiquidationsData },
-		{ hasTokenMarkets },
-		{ fetchRaisesByDefillamaId },
-		{ getIndexedTokenRiskBorrowCapacity },
-		{ fetchTokenRightsEntryByDefillamaId, fetchTokenRightsEntryByName },
-		{ fetchTreasuryById },
-		{ acquireOptionalYieldsSnapshot },
-		{ getTokenBorrowRoutes, getTokenEarnRows }
-	] = await Promise.all([
+	const pagePromise = Promise.all([
 		import('~/server/datasetSnapshots/errors'),
 		import('~/containers/LiquidationsV2/server/dataset.server'),
 		import('~/containers/Markets/server/dataset.server'),
@@ -123,174 +113,202 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 		import('~/containers/Treasuries/server/dataset.server'),
 		import('~/containers/Yields/server/dataset.server'),
 		import('~/containers/Yields/data/server/tokenPage')
-	])
-	const yieldsDatasetSnapshot = await acquireOptionalYieldsSnapshot()
-	const downgradeTokenPageError = <T,>(error: unknown, message: string, fallback: T): T =>
-		downgradeTokenPageDataError(error, message, fallback, isDatasetSnapshotIntegrityError)
-	const marketsAvailablePromise = geckoId
-		? hasTokenMarkets(geckoId).catch((error) =>
-				downgradeTokenPageError(error, `Failed to load token markets index for ${geckoId}`, false)
-			)
-		: Promise.resolve(false)
-	let liquidationsPromise: Promise<boolean> = Promise.resolve(false)
-	if (metadataCache.liquidationsTokenSymbolsSet.has(record.symbol)) {
-		liquidationsPromise = hasTokenLiquidationsData(record.symbol).catch((error) =>
-			downgradeTokenPageError(error, `Failed to load token liquidations data for ${record.symbol}`, false)
-		)
-	}
-	const overviewPromise = (async () => {
-		const shouldFetchRaises = Boolean(chainDefiLlamaId || protocolDefiLlamaId)
-		const shouldFetchTreasury = Boolean(!record.chainId && protocolDefiLlamaId)
-		const [raises, treasury, currentSnapshot] = await Promise.all([
-			shouldFetchRaises ? fetchRaisesByDefillamaId(chainDefiLlamaId ?? protocolDefiLlamaId!) : Promise.resolve(null),
-			// Treasury shards are keyed by the upstream `${defillamaId}-treasury` convention.
-			shouldFetchTreasury ? fetchTreasuryById(`${protocolDefiLlamaId}-treasury`) : Promise.resolve(null),
-			currentSnapshotPromise
-		])
-
-		return getTokenOverviewData({
-			record,
-			displayName,
-			geckoId,
-			tokenEntry,
-			protocolMetadata,
-			cgExchangeIdentifiers: metadataCache.cgExchangeIdentifiers ?? [],
-			emissionsSupplyMetrics: metadataCache.emissionsSupplyMetrics,
-			currentMetrics: currentSnapshot?.metrics ?? null,
-			source: {
-				kind: 'prefetched',
-				raises,
-				treasury
-			},
-			prefetchedCharts: TOKEN_OVERVIEW_DEFAULT_CHARTS
-		})
-	})()
-
-	const tokenRightsDefillamaIds = Array.from(
-		new Set(
-			[record.chainId, record.protocolId].filter(
-				(defillamaId): defillamaId is string => typeof defillamaId === 'string' && defillamaId.length > 0
-			)
-		)
-	)
-	const tokenRightsPromise = record.tokenRights
-		? (async () => {
-				try {
-					for (const defillamaId of tokenRightsDefillamaIds) {
-						const rawEntry = await fetchTokenRightsEntryByDefillamaId(defillamaId)
-						if (rawEntry) return parseTokenRightsEntry(rawEntry)
-					}
-					const rawEntry = tokenRightsDefillamaIds.length === 0 ? await fetchTokenRightsEntryByName(record.name) : null
-					return rawEntry ? parseTokenRightsEntry(rawEntry) : null
-				} catch (error) {
-					return downgradeTokenPageError(
-						error,
-						`Failed to load token rights data for ${tokenRightsDefillamaIds.join(', ') || record.name}`,
-						null
+	]).then(
+		async ([
+			{ isDatasetSnapshotIntegrityError },
+			{ hasTokenLiquidationsData },
+			{ hasTokenMarkets },
+			{ fetchRaisesByDefillamaId },
+			{ getIndexedTokenRiskBorrowCapacity },
+			{ fetchTokenRightsEntryByDefillamaId, fetchTokenRightsEntryByName },
+			{ fetchTreasuryById },
+			{ acquireOptionalYieldsSnapshot },
+			{ getTokenBorrowRoutes, getTokenEarnRows }
+		]) => {
+			const yieldsDatasetSnapshotPromise = acquireOptionalYieldsSnapshot()
+			const downgradeTokenPageError = <T,>(error: unknown, message: string, fallback: T): T =>
+				downgradeTokenPageDataError(error, message, fallback, isDatasetSnapshotIntegrityError)
+			const marketsAvailablePromise = geckoId
+				? hasTokenMarkets(geckoId).catch((error) =>
+						downgradeTokenPageError(error, `Failed to load token markets index for ${geckoId}`, false)
 					)
-				}
-			})()
-		: Promise.resolve(null)
-
-	const incomeStatementPromise = record.incomeStatement
-		? getTokenIncomeStatement({ token }).catch((error) => {
-				console.error(`Failed to load income statement data for ${record.name}`, error)
-				return null
-			})
-		: Promise.resolve(null)
-
-	const tokenRiskPromise = geckoId
-		? (async () => {
-				return getTokenRiskData({
-					tokenSymbol: record.symbol,
-					displayLookups: {
-						protocolDisplayNames: metadataCache.protocolDisplayNames,
-						chainDisplayNames: metadataCache.chainDisplayNames
-					},
-					borrowCapacitySnapshot: await getIndexedTokenRiskBorrowCapacity()
-				})
-			})().catch((error) => {
-				return downgradeTokenPageError(error, `Failed to load token risk data for ${geckoId}`, null)
-			})
-		: Promise.resolve(null)
-
-	const yieldsRowsPromise =
-		record.is_yields && yieldsDatasetSnapshot
-			? getTokenEarnRows(yieldsDatasetSnapshot, record.symbol).catch((error) =>
-					downgradeTokenPageError(error, `Failed to load token yields data for ${record.symbol}`, {
-						rows: [],
-						tokenKeys: []
-					})
+				: Promise.resolve(false)
+			let liquidationsPromise: Promise<boolean> = Promise.resolve(false)
+			if (metadataCache.liquidationsTokenSymbolsSet.has(record.symbol)) {
+				liquidationsPromise = hasTokenLiquidationsData(record.symbol).catch((error) =>
+					downgradeTokenPageError(error, `Failed to load token liquidations data for ${record.symbol}`, false)
 				)
-			: Promise.resolve({ rows: [], tokenKeys: [] })
+			}
+			const overviewPromise = (async () => {
+				const raisesDefillamaId = chainDefiLlamaId ?? protocolDefiLlamaId
+				const shouldFetchTreasury = Boolean(!record.chainId && protocolDefiLlamaId)
+				const [raises, treasury, currentSnapshot] = await Promise.all([
+					raisesDefillamaId
+						? fetchRaisesByDefillamaId(raisesDefillamaId).catch((error) =>
+								downgradeTokenPageError(error, `Failed to load token raises for ${raisesDefillamaId}`, null)
+							)
+						: Promise.resolve(null),
+					// Treasury shards are keyed by the upstream `${defillamaId}-treasury` convention.
+					shouldFetchTreasury
+						? fetchTreasuryById(`${protocolDefiLlamaId}-treasury`).catch((error) =>
+								downgradeTokenPageError(error, `Failed to load token treasury for ${protocolDefiLlamaId}`, null)
+							)
+						: Promise.resolve(null),
+					currentSnapshotPromise
+				])
 
-	const borrowRoutesPromise = yieldsDatasetSnapshot
-		? getTokenBorrowRoutes(yieldsDatasetSnapshot, record.symbol).catch((error) =>
-				downgradeTokenPageError(error, `Failed to load token borrow routes data for ${record.symbol}`, null)
+				return getTokenOverviewData({
+					record,
+					displayName,
+					geckoId,
+					tokenEntry,
+					protocolMetadata,
+					cgExchangeIdentifiers: metadataCache.cgExchangeIdentifiers ?? [],
+					emissionsSupplyMetrics: metadataCache.emissionsSupplyMetrics,
+					currentMetrics: currentSnapshot?.metrics ?? null,
+					source: {
+						kind: 'prefetched',
+						raises,
+						treasury
+					},
+					prefetchedCharts: TOKEN_OVERVIEW_DEFAULT_CHARTS
+				})
+			})()
+
+			const tokenRightsDefillamaIds = Array.from(
+				new Set(
+					[record.chainId, record.protocolId].filter(
+						(defillamaId): defillamaId is string => typeof defillamaId === 'string' && defillamaId.length > 0
+					)
+				)
 			)
-		: Promise.resolve(null)
+			const tokenRightsPromise = record.tokenRights
+				? (async () => {
+						try {
+							for (const defillamaId of tokenRightsDefillamaIds) {
+								const rawEntry = await fetchTokenRightsEntryByDefillamaId(defillamaId)
+								if (rawEntry) return parseTokenRightsEntry(rawEntry)
+							}
+							const rawEntry =
+								tokenRightsDefillamaIds.length === 0 ? await fetchTokenRightsEntryByName(record.name) : null
+							return rawEntry ? parseTokenRightsEntry(rawEntry) : null
+						} catch (error) {
+							return downgradeTokenPageError(
+								error,
+								`Failed to load token rights data for ${tokenRightsDefillamaIds.join(', ') || record.name}`,
+								null
+							)
+						}
+					})()
+				: Promise.resolve(null)
 
-	const [
-		overview,
-		tokenRightsData,
-		resolvedIncomeStatementData,
-		yieldsData,
-		tokenBorrowRoutesData,
-		hasLiquidations,
-		tokenRiskData,
-		hasMarkets,
-		currentSnapshot
-	] = await Promise.all([
-		overviewPromise,
-		tokenRightsPromise,
-		incomeStatementPromise,
-		yieldsRowsPromise,
-		borrowRoutesPromise,
-		liquidationsPromise,
-		tokenRiskPromise,
-		marketsAvailablePromise,
-		currentSnapshotPromise
-	])
+			const incomeStatementPromise = record.incomeStatement
+				? getTokenIncomeStatement({ token }).catch((error) => {
+						console.error(`Failed to load income statement data for ${record.name}`, error)
+						return null
+					})
+				: Promise.resolve(null)
 
-	const yieldsSnapshot = buildInitialYieldsSnapshot(yieldsData.rows, yieldsData.tokenKeys)
-	const borrowRoutesSnapshot = buildInitialBorrowRoutesSnapshot(
-		tokenBorrowRoutesData,
-		tokenBorrowRoutesData?.tokenKeys ?? []
-	)
-	const issuerDisplayName = protocolMetadata?.displayName ?? protocolMetadata?.name ?? null
-	const issuer =
-		record.protocolId && issuerDisplayName ? { name: issuerDisplayName, slug: slug(issuerDisplayName) } : null
-	const sections = getTokenPageSections({
-		record,
-		geckoId,
-		tokenRightsData,
-		incomeStatement: resolvedIncomeStatementData,
-		tokenRiskData,
-		hasLiquidations,
-		hasMarkets,
-		resolvedUnlocksSlug,
-		yieldsSnapshot,
-		borrowRoutesSnapshot,
-		issuer,
-		overview
-	})
+			const tokenRiskPromise = geckoId
+				? (async () => {
+						return getTokenRiskData({
+							tokenSymbol: record.symbol,
+							displayLookups: {
+								protocolDisplayNames: metadataCache.protocolDisplayNames,
+								chainDisplayNames: metadataCache.chainDisplayNames
+							},
+							borrowCapacitySnapshot: await getIndexedTokenRiskBorrowCapacity()
+						})
+					})().catch((error) => {
+						return downgradeTokenPageError(error, `Failed to load token risk data for ${geckoId}`, null)
+					})
+				: Promise.resolve(null)
 
-	const seoTitle = record.tokenRights
-		? `${displayName} Price, Market Cap, Supply, Trading Volume & Token Rights`
-		: `${displayName} Price, Market Cap, Supply & Trading Volume`
-	const seoDescription = record.tokenRights
-		? `Track ${displayName} price, market cap, circulating supply, max supply, trading volume, and token rights.`
-		: `Track ${displayName} price, market cap, circulating supply, max supply, and trading volume.`
+			const yieldsRowsPromise = yieldsDatasetSnapshotPromise.then((snapshot) =>
+				record.is_yields && snapshot
+					? getTokenEarnRows(snapshot, record.symbol).catch((error) =>
+							downgradeTokenPageError(error, `Failed to load token yields data for ${record.symbol}`, {
+								rows: [],
+								tokenKeys: []
+							})
+						)
+					: { rows: [], tokenKeys: [] }
+			)
 
-	res.setHeader('Cache-Control', getTokensCacheControl(currentSnapshot?.generatedAt ?? Date.now()))
-	return {
-		props: {
-			seoTitle,
-			seoDescription,
-			canonicalUrl,
-			sections
+			const borrowRoutesPromise = yieldsDatasetSnapshotPromise.then((snapshot) =>
+				snapshot
+					? getTokenBorrowRoutes(snapshot, record.symbol).catch((error) =>
+							downgradeTokenPageError(error, `Failed to load token borrow routes data for ${record.symbol}`, null)
+						)
+					: null
+			)
+
+			const [
+				overview,
+				tokenRightsData,
+				resolvedIncomeStatementData,
+				yieldsData,
+				tokenBorrowRoutesData,
+				hasLiquidations,
+				tokenRiskData,
+				hasMarkets,
+				currentSnapshot
+			] = await Promise.all([
+				overviewPromise,
+				tokenRightsPromise,
+				incomeStatementPromise,
+				yieldsRowsPromise,
+				borrowRoutesPromise,
+				liquidationsPromise,
+				tokenRiskPromise,
+				marketsAvailablePromise,
+				currentSnapshotPromise
+			])
+
+			const yieldsSnapshot = buildInitialYieldsSnapshot(yieldsData.rows, yieldsData.tokenKeys)
+			const borrowRoutesSnapshot = buildInitialBorrowRoutesSnapshot(
+				tokenBorrowRoutesData,
+				tokenBorrowRoutesData?.tokenKeys ?? []
+			)
+			const issuerDisplayName = protocolMetadata?.displayName ?? protocolMetadata?.name ?? null
+			const issuer =
+				record.protocolId && issuerDisplayName ? { name: issuerDisplayName, slug: slug(issuerDisplayName) } : null
+			const sections = getTokenPageSections({
+				record,
+				geckoId,
+				tokenRightsData,
+				incomeStatement: resolvedIncomeStatementData,
+				tokenRiskData,
+				hasLiquidations,
+				hasMarkets,
+				resolvedUnlocksSlug,
+				yieldsSnapshot,
+				borrowRoutesSnapshot,
+				issuer,
+				overview
+			})
+
+			const seoTitle = record.tokenRights
+				? `${displayName} Price, Market Cap, Supply, Trading Volume & Token Rights`
+				: `${displayName} Price, Market Cap, Supply & Trading Volume`
+			const seoDescription = record.tokenRights
+				? `Track ${displayName} price, market cap, circulating supply, max supply, trading volume, and token rights.`
+				: `Track ${displayName} price, market cap, circulating supply, max supply, and trading volume.`
+
+			res.setHeader('Cache-Control', getTokensCacheControl(currentSnapshot?.generatedAt ?? Date.now()))
+			return {
+				props: {
+					seoTitle,
+					seoDescription,
+					canonicalUrl,
+					sections
+				}
+			}
 		}
-	}
+	)
+	// Observe both promises immediately: current data overlaps imports without an unhandled rejection.
+	const [page] = await Promise.all([pagePromise, currentSnapshotPromise])
+	return page
 }
 
 export const getServerSideProps = withServerSidePropsTelemetry('/token/[token]', getServerSidePropsHandler)

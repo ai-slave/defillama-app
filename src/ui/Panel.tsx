@@ -22,7 +22,7 @@ type PanelPadding = 'none' | 'sm' | 'md'
 type PanelProps = {
 	padding: PanelPadding
 } & Omit<ComponentPropsWithoutRef<'div'>, 'className'> & {
-		className?: string
+		className?: string | undefined
 	}
 
 const PANEL_PADDING: Record<PanelPadding, string> = {

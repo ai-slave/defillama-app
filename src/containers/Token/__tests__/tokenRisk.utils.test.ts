@@ -172,10 +172,10 @@ describe('tokenRisk utils', () => {
 		expect(section.summary.totalMinBadDebtAtPriceZeroUsd).toBe(400)
 		expect(section.summary.minBadDebtKnownCount).toBe(1)
 		expect(section.summary.minBadDebtUnknownCount).toBe(1)
-		expect(section.rows[0].currentMaxBorrowUsd).toBe(1000)
+		expect(section.rows[0]?.currentMaxBorrowUsd).toBe(1000)
 		expect(section.rows[0]).not.toHaveProperty('collateralBorrowedDebtUsd')
-		expect(section.rows[0].minBadDebtAtPriceZeroCoverage).toBe('known')
-		expect(section.rows[1].minBadDebtAtPriceZeroCoverage).toBe('unavailable')
+		expect(section.rows[0]?.minBadDebtAtPriceZeroCoverage).toBe('known')
+		expect(section.rows[1]?.minBadDebtAtPriceZeroCoverage).toBe('unavailable')
 		expect(section.protocolSummaries).toEqual([
 			{
 				protocol: 'aave-v3',
@@ -255,7 +255,7 @@ describe('tokenRisk utils', () => {
 			totalMinBadDebtAtPriceZeroUsd: 400,
 			minBadDebtAtPriceZeroCoverage: 'partial'
 		})
-		expect(summaries[0].chainBreakdowns.map((chain) => chain.chainDisplayName)).toEqual(['Ethereum', 'Base'])
+		expect(summaries[0]?.chainBreakdowns.map((chain) => chain.chainDisplayName)).toEqual(['Ethereum', 'Base'])
 	})
 
 	it('dedupes identical protocol-chain-asset rows and sums liquidity-based max borrow', () => {
@@ -300,9 +300,9 @@ describe('tokenRisk utils', () => {
 		)
 
 		expect(section.rows).toHaveLength(1)
-		expect(section.rows[0].currentMaxBorrowUsd).toBe(125)
-		expect(section.rows[0].minBadDebtAtPriceZeroUsd).toBe(15)
-		expect(section.rows[0].minBadDebtAtPriceZeroCoverage).toBe('known')
+		expect(section.rows[0]?.currentMaxBorrowUsd).toBe(125)
+		expect(section.rows[0]?.minBadDebtAtPriceZeroUsd).toBe(15)
+		expect(section.rows[0]?.minBadDebtAtPriceZeroCoverage).toBe('known')
 		expect(section.summary.totalCurrentMaxBorrowUsd).toBe(125)
 		expect(section.summary.totalMinBadDebtAtPriceZeroUsd).toBe(15)
 	})
@@ -337,8 +337,8 @@ describe('tokenRisk utils', () => {
 		)
 
 		expect(section.rows).toHaveLength(1)
-		expect(section.rows[0].minBadDebtAtPriceZeroUsd).toBe(100)
-		expect(section.rows[0].minBadDebtAtPriceZeroCoverage).toBe('partial')
+		expect(section.rows[0]?.minBadDebtAtPriceZeroUsd).toBe(100)
+		expect(section.rows[0]?.minBadDebtAtPriceZeroCoverage).toBe('partial')
 		expect(section.summary.totalMinBadDebtAtPriceZeroUsd).toBe(100)
 		expect(section.summary.minBadDebtKnownCount).toBe(0)
 		expect(section.summary.minBadDebtUnknownCount).toBe(1)
@@ -374,8 +374,8 @@ describe('tokenRisk utils', () => {
 		)
 
 		expect(section.rows).toHaveLength(1)
-		expect(section.rows[0].minBadDebtAtPriceZeroUsd).toBeNull()
-		expect(section.rows[0].minBadDebtAtPriceZeroCoverage).toBe('unavailable')
+		expect(section.rows[0]?.minBadDebtAtPriceZeroUsd).toBeNull()
+		expect(section.rows[0]?.minBadDebtAtPriceZeroCoverage).toBe('unavailable')
 		expect(section.summary.totalMinBadDebtAtPriceZeroUsd).toBeNull()
 		expect(section.summary.minBadDebtKnownCount).toBe(0)
 		expect(section.summary.minBadDebtUnknownCount).toBe(1)
@@ -420,7 +420,7 @@ describe('tokenRisk utils', () => {
 		)
 
 		expect(section.rows).toHaveLength(1)
-		expect(section.rows[0].protocol).toBe('morpho-v1')
+		expect(section.rows[0]?.protocol).toBe('morpho-v1')
 		expect(section.summary.exposureCount).toBe(1)
 		expect(section.summary.protocolCount).toBe(1)
 	})

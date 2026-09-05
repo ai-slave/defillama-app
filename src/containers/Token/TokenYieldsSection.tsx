@@ -5,6 +5,7 @@ import * as React from 'react'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
 import { TVLRange } from '~/components/Filters/TVLRange'
 import { YIELD_EARN_DATASET_API } from '~/containers/Yields/constants'
+import { TOKEN_PAGE_EARN_QUERY } from '~/containers/Yields/data/tokenPageQuery'
 import { APYRange } from '~/containers/Yields/Filters/APYRange'
 import { FilterByChain } from '~/containers/Yields/Filters/Chains'
 import { useFormatYieldQueryParams } from '~/containers/Yields/hooks'
@@ -20,6 +21,7 @@ import { formatPercent } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { DeferredPaginatedYieldsPoolTable } from './deferred/DeferredPaginatedYieldsPoolTable'
 import { DEFAULT_TABLE_PAGE_SIZE } from './tableUtils'
+import { TokenDataRetry } from './TokenDataRetry'
 import { TokenDeferredPaginationControls } from './TokenDeferredPaginationControls'
 import type { TokenYieldsHydration } from './types'
 import { getTokenYieldStats } from './yieldStats'
@@ -36,9 +38,8 @@ const EMPTY_YIELD_TABLE_ROWS: IYieldTableRow[] = []
 type EarnRowsResponse = { rows: IYieldTableRow[] }
 
 async function fetchTokenYieldRows(tokenKeys: string[]): Promise<IYieldTableRow[]> {
-	const params = new URLSearchParams()
+	const params = new URLSearchParams(TOKEN_PAGE_EARN_QUERY)
 	for (const key of tokenKeys) params.append('token', key)
-	params.set('pageSize', 'all')
 	const data = await fetchJson<EarnRowsResponse>(`${YIELD_EARN_DATASET_API}?${params.toString()}`)
 	return data.rows
 }
@@ -53,8 +54,14 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 	const [requestedPageIndex, setRequestedPageIndex] = React.useState(0)
 	const [tableSorting, setTableSorting] = React.useState<SortingState>([...DEFAULT_TABLE_SORTING])
 	const tokenKeys = hydration?.tokenKeys ?? []
-	const { data: fetchedRows, error } = useQuery({
-		queryKey: ['token-yields', 'token-page', ...tokenKeys],
+	const {
+		data: fetchedRows,
+		error,
+		isFetching,
+		isFetched,
+		refetch
+	} = useQuery({
+		queryKey: ['token-yields', 'token-page', TOKEN_PAGE_EARN_QUERY, ...tokenKeys],
 		queryFn: () => fetchTokenYieldRows(tokenKeys),
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
@@ -121,10 +128,23 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 	const tableSortingKey = React.useMemo(() => JSON.stringify(tableSorting), [tableSorting])
 	const hasNonDefaultSorting = tableSortingKey !== DEFAULT_TABLE_SORTING_KEY
 	const isFetchingFullData =
-		!fetchedRows &&
-		!error &&
-		(shouldFetchFullData || (hasPartialData && (hasActiveFilters || hasNonDefaultSorting || requestedPageIndex > 0)))
-	const showInitialLoader = isFetchingFullData && poolsList.length === 0
+		isFetching ||
+		(!error &&
+			!fetchedRows &&
+			!shouldFetchFullData &&
+			hasPartialData &&
+			(hasActiveFilters || hasNonDefaultSorting || requestedPageIndex > 0))
+	const showRetry = error != null || (isFetching && isFetched && !fetchedRows)
+	const retryStatus = showRetry ? (
+		<TokenDataRetry
+			message={error?.message ?? 'Loading full dataset…'}
+			isRetrying={isFetching}
+			onRetry={() => {
+				void refetch({ cancelRefetch: false })
+			}}
+		/>
+	) : null
+	const showInitialLoader = isFetchingFullData && poolsList.length === 0 && !showRetry
 	const showBackgroundLoading = isFetchingFullData && poolsList.length > 0
 
 	React.useEffect(() => {
@@ -143,7 +163,7 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 
 	const isFilteredEmpty = filteredPools.length === 0 && totalRowCount > 0 && !isFetchingFullData
 	const hasPlaceholderState =
-		showInitialLoader || (error != null && poolsList.length === 0) || (totalRowCount === 0 && !isFetchingFullData)
+		showInitialLoader || (showRetry && poolsList.length === 0) || (totalRowCount === 0 && !isFetchingFullData)
 	const summaryText =
 		filteredStats.noOfPoolsTracked > 0
 			? hasPartialData && !hasActiveFilters
@@ -195,8 +215,8 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 			<div className="flex flex-1 flex-col gap-2 p-2">
 				{showInitialLoader ? (
 					<SurfaceBodyLoadingStatus />
-				) : error && poolsList.length === 0 ? (
-					<SurfaceBodyStatus variant="error">{error.message}</SurfaceBodyStatus>
+				) : showRetry && poolsList.length === 0 ? (
+					<SurfaceBodyStatus variant="error">{retryStatus}</SurfaceBodyStatus>
 				) : poolsList.length === 0 ? (
 					<SurfaceBodyStatus variant="empty">No yield pools found.</SurfaceBodyStatus>
 				) : (
@@ -228,7 +248,7 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 								)}
 							</ResponsiveFilterLayout>
 						</TableToolbar>
-						{error ? <InlineStatus variant="error">{error.message}</InlineStatus> : null}
+						{showRetry ? <InlineStatus variant="error">{retryStatus}</InlineStatus> : null}
 
 						{isFilteredEmpty ? (
 							<SurfaceBodyStatus variant="empty">No pools match current filters</SurfaceBodyStatus>

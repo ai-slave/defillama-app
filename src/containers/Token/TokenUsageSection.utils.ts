@@ -24,9 +24,9 @@ export function buildTokenUsageRows(data: RawProtocolTokenUsageEntry[]): TokenUs
 		return {
 			name: entry.name,
 			category: entry.category,
-			logo: typeof entry.logo === 'string' ? entry.logo : undefined,
-			slug: typeof entry.slug === 'string' ? entry.slug : undefined,
-			misrepresentedTokens: entry.misrepresentedTokens,
+			...(entry.logo !== undefined ? { logo: entry.logo } : {}),
+			...(typeof entry.slug === 'string' ? { slug: entry.slug } : {}),
+			...(entry.misrepresentedTokens !== undefined ? { misrepresentedTokens: entry.misrepresentedTokens } : {}),
 			amountUsd
 		}
 	})

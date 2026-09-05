@@ -1,6 +1,7 @@
 import { getBorrowRoutesForTokenKeys } from '../borrow.server'
 import { getEarnPage } from '../earn.server'
 import { readYieldsMeta, type YieldsSnapshot } from '../snapshot'
+import { TOKEN_PAGE_EARN_QUERY } from '../tokenPageQuery'
 import type { EarnPageRow, RouteTableRow } from '../types'
 
 // Wrapper prefixes/suffixes (WRAPPER_PREFIXES + the Avalanche-bridged `.e` suffix). Only
@@ -75,9 +76,7 @@ export async function getTokenEarnRows(snapshot: YieldsSnapshot, symbol: string)
 	// asset AND pools that merely hold it, not just the reference-asset subset.
 	const page = await getEarnPage(snapshot, {
 		token: tokenKeys,
-		tokenOn: 'both',
-		pageSize: 'all',
-		includeMemeTokens: 'true'
+		...TOKEN_PAGE_EARN_QUERY
 	})
 	return { rows: page.rows, tokenKeys }
 }

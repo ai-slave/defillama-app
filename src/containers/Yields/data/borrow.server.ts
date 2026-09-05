@@ -17,6 +17,7 @@ import {
 } from './query'
 import { getRaiseValuationsUsd, getReferralUrls } from './server/raiseValuations'
 import { readYieldsDepegs, readYieldsMeta, type YieldsSnapshot } from './snapshot'
+import { TOKEN_PAGE_BORROW_QUERY } from './tokenPageQuery'
 import type {
 	ApyComponent,
 	ApyWindow,
@@ -333,13 +334,17 @@ export async function getBorrowRoutesForTokenKeys(snapshot: YieldsSnapshot, toke
 		getRiskCoveredPoolIds()
 	])
 	const depegByPool = new Map(depegs.map((depeg) => [depeg.pool_id, depeg]))
-	const window = parseApyWindow({})
-	const components = parseApyComponents({})
+	const window = parseApyWindow(TOKEN_PAGE_BORROW_QUERY)
+	const components = parseApyComponents(TOKEN_PAGE_BORROW_QUERY)
+	const memePoolIds = parseCommonFilters(TOKEN_PAGE_BORROW_QUERY).includeMemeTokens
+		? null
+		: new Set((await readYieldsMeta(snapshot)).meme_pool_ids)
 	const matchesToken = createTokensMatcher(tokenKeys)
 	const useAsCollateral: RouteTableRow[] = []
 	const borrowThis: RouteTableRow[] = []
 
 	for (const row of rows) {
+		if (memePoolIds && (memePoolIds.has(row.collateral.id) || memePoolIds.has(row.borrow.id))) continue
 		const collateralMatch = matchesToken([row.collateralTokenKeys])
 		const borrowMatch = matchesToken([row.borrowTokenKeys])
 		if (!collateralMatch && !borrowMatch) continue
@@ -357,7 +362,7 @@ export async function getBorrowRoutesForTokenKeys(snapshot: YieldsSnapshot, toke
 		if (borrowMatch) borrowThis.push(route)
 	}
 
-	const query = { sortBy: 'net_apy', sortDesc: 'true' }
+	const query = TOKEN_PAGE_BORROW_QUERY
 	return {
 		useAsCollateral: sortYieldsRows<RouteTableRow, RouteSortKey>({
 			rows: useAsCollateral,

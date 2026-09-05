@@ -16,6 +16,7 @@ import { formatNumber } from '~/utils/numberFormat'
 import { DeferredPaginatedBorrowRoutesTable } from './deferred/DeferredPaginatedBorrowRoutesTable'
 import { DEFAULT_TABLE_PAGE_SIZE } from './tableUtils'
 import { filterBorrowRoutes } from './TokenBorrowSection.utils'
+import { TokenDataRetry } from './TokenDataRetry'
 import { TokenDeferredPaginationControls } from './TokenDeferredPaginationControls'
 import type { TokenBorrowRoutesHydration } from './types'
 import { useTokenBorrowRoutes } from './useTokenBorrowRoutes'
@@ -58,7 +59,7 @@ function TokenBorrowAvailableRange({
 	maxAvailable: string
 	setMinAvailable: React.Dispatch<React.SetStateAction<string>>
 	setMaxAvailable: React.Dispatch<React.SetStateAction<string>>
-	nestedMenu?: boolean
+	nestedMenu: boolean
 }) {
 	const handleSubmit = (event: FormSubmitEvent) => {
 		event.preventDefault()
@@ -135,7 +136,9 @@ export function TokenBorrowSection({
 		}
 	})
 	const tokenKeys = hydration?.tokenKeys ?? []
-	const { data, error } = useTokenBorrowRoutes(tokenKeys, { enabled: shouldFetchFullData })
+	const { data, error, isFetching, isFetched, refetch } = useTokenBorrowRoutes(tokenKeys, {
+		enabled: shouldFetchFullData
+	})
 	const useRows = data?.useAsCollateral ?? hydration?.data.useAsCollateral ?? EMPTY_ROUTE_TABLE_ROWS
 	const borrowRows = data?.borrowThis ?? hydration?.data.borrowThis ?? EMPTY_ROUTE_TABLE_ROWS
 	const useChainList = React.useMemo(
@@ -226,13 +229,25 @@ export function TokenBorrowSection({
 	const sortingKey = React.useMemo(() => JSON.stringify(sortingByTab[activeTab]), [activeTab, sortingByTab])
 	const hasNonDefaultSorting = sortingKey !== DEFAULT_BORROW_TABLE_SORTING_KEY
 	const isFetchingFullData =
-		!data &&
-		!error &&
-		(shouldFetchFullData ||
-			(hasPartialData && (hasActiveFilters || hasNonDefaultSorting || requestedPageIndexByTab[activeTab] > 0)))
-	const showInitialLoader = isFetchingFullData && rows.length === 0
+		isFetching ||
+		(!error &&
+			!data &&
+			!shouldFetchFullData &&
+			hasPartialData &&
+			(hasActiveFilters || hasNonDefaultSorting || requestedPageIndexByTab[activeTab] > 0))
+	const showRetry = error != null || (isFetching && isFetched && !data)
+	const retryStatus = showRetry ? (
+		<TokenDataRetry
+			message={error?.message ?? 'Loading full dataset…'}
+			isRetrying={isFetching}
+			onRetry={() => {
+				void refetch({ cancelRefetch: false })
+			}}
+		/>
+	) : null
+	const showInitialLoader = isFetchingFullData && rows.length === 0 && !showRetry
 	const showBackgroundLoading = isFetchingFullData && rows.length > 0
-	const hasPlaceholderState = showInitialLoader || (error != null && rows.length === 0) || totalCount === 0
+	const hasPlaceholderState = showInitialLoader || (showRetry && rows.length === 0) || totalCount === 0
 	const tabLabel = activeTab === 'use' ? `Use ${tokenSymbol}` : `Borrow ${tokenSymbol}`
 	const summaryText =
 		filteredRows.length > 0
@@ -315,10 +330,8 @@ export function TokenBorrowSection({
 						<div className="flex flex-1 items-center justify-center">
 							<LoadingIndicator />
 						</div>
-					) : error && rows.length === 0 ? (
-						<div className="flex flex-1 items-center justify-center px-4 text-center">
-							<p className="body-sm text-secondary">{error.message}</p>
-						</div>
+					) : showRetry && rows.length === 0 ? (
+						<div className="flex flex-1 items-center justify-center px-4 text-center">{retryStatus}</div>
 					) : rows.length === 0 ? (
 						<div className="flex flex-1 items-center justify-center px-4 text-center">
 							<p className="body-sm text-secondary">
@@ -363,7 +376,7 @@ export function TokenBorrowSection({
 									)}
 								</ResponsiveFilterLayout>
 							</TableToolbar>
-							{error ? <InlineStatus variant="error">{error.message}</InlineStatus> : null}
+							{showRetry ? <InlineStatus variant="error">{retryStatus}</InlineStatus> : null}
 
 							{filteredRows.length === 0 && !isFetchingFullData ? (
 								<SurfaceBodyStatus variant="empty">{`No ${tabLabel.toLowerCase()} routes match current filters.`}</SurfaceBodyStatus>

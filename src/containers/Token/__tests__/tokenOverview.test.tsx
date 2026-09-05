@@ -607,6 +607,54 @@ describe('tokenOverview helpers', () => {
 		expect(mocks.fetchCoinPriceByCoinGeckoIdViaLlamaPrices).toHaveBeenCalledWith('bitcoin')
 	})
 
+	it.each([null, 0])(
+		'preserves current %s metrics against historical prices and handles absent prefetched funding',
+		async (value) => {
+			const currentMetrics = {
+				currentPrice: value,
+				percentChange24h: value,
+				circulatingSupply: value,
+				totalSupply: value,
+				maxSupply: value,
+				mcap: value,
+				fdv: value,
+				volume24h: value,
+				outstandingFDV: value
+			}
+			const result = await getTokenOverviewData({
+				record: { name: 'Test Protocol', symbol: 'TEST', protocolId: 'parent#test-protocol' },
+				displayName: 'TEST',
+				geckoId: 'bitcoin',
+				tokenEntry: tokenEntryFixture,
+				protocolMetadata: protocolMetadataFixture,
+				cgExchangeIdentifiers: [],
+				emissionsSupplyMetrics: emissionsSupplyMetricsFixture,
+				currentMetrics,
+				source: { kind: 'prefetched', raises: null, treasury: null }
+			})
+			expect(result.marketData).toMatchObject({
+				currentPrice: value,
+				circulatingSupply: value,
+				totalSupply: value,
+				maxSupply: value,
+				mcap: value,
+				fdv: value,
+				volume24h: { total: value }
+			})
+			expect(result.outstandingFDV).toBe(value)
+			expect(result.rawChartData['Token Price']?.length).toBeGreaterThan(0)
+			expect(result.raises).toBeNull()
+			expect(result.treasury).toBeNull()
+			expect(mocks.fetchRaisesByDefillamaId).not.toHaveBeenCalled()
+			expect(mocks.fetchTreasuryById).not.toHaveBeenCalled()
+			expect(mocks.fetchCoinPriceByCoinGeckoIdViaLlamaPrices).not.toHaveBeenCalled()
+			expect(mocks.fetchCoinGeckoCoinById).not.toHaveBeenCalled()
+			const html = renderTokenOverviewSection({ overview: result, geckoId: 'bitcoin' })
+			expect(html).not.toContain('Total Raised')
+			expect(html).not.toContain('Treasury')
+		}
+	)
+
 	it('uses the rankings metrics verbatim without calling a second current-price source', async () => {
 		const result = await getTokenOverviewData({
 			record: {
@@ -790,6 +838,23 @@ describe('TokenPageHero component', () => {
 })
 
 describe('TokenOverviewSection component', () => {
+	it('keeps zero funding and treasury visible alongside an undisclosed round', () => {
+		const html = renderTokenOverviewSection({
+			geckoId: 'bitcoin',
+			overview: {
+				...overviewFixture,
+				treasury: { ownTokens: 0, stablecoins: 0, majors: 0, others: 0, total: 0 },
+				raises: [
+					{ date: 1, round: 'Seed', amountUsd: 0, investors: [] },
+					{ date: 2, round: 'Private', amountUsd: null, investors: [] }
+				]
+			}
+		})
+		expect(html).toContain('Total Raised')
+		expect(html).toContain('Treasury')
+		expect(html).toContain('$0')
+		expect(html).toContain('Undisclosed')
+	})
 	it('keeps the known subtotal visible when another round is undisclosed', () => {
 		const html = renderTokenOverviewSection({
 			geckoId: 'bitcoin',
