@@ -138,12 +138,17 @@ Each PR covers one directory and lists the pattern used per site.
 - Trigger-only deps dropped (`articles`, `newsletters`, `items` in the landing widgets): the observers
   and rAF loop already react to content changes.
 
-Follow-up PR, deliberately out of this migration because each changes behavior: the admin forms reset
-their draft whenever a refetched object arrives, even for the same entity, so unsaved edits vanish on a
-background refetch (reset on entity id instead, adopt fresh data only when the draft is clean, and
-decide what a dirty draft does with a conflicting save); and the revision drawer silently switches the
-diff base when the chosen one is unavailable, where a "this is the live revision, choose another base"
-state would be clearer than either the sticky or the transient fallback.
+Follow-up done as its own PR (behavior changes, kept out of the migration): the admin forms now keep a
+draft through refetches of the same entity with a field-level merge (`useSavedDraft`): a different entity
+replaces the draft, untouched fields adopt what was saved elsewhere, edited fields stay and show a
+"changed elsewhere" notice with a "Load saved version" action until the draft matches the saved value
+again. A successful save calls `acceptSaved(stored, submitted)`, so trimmed text and server-filled asset
+metadata are adopted as the user's own save, not flagged as someone else's change (review round 1 of
+that PR caught both: identity-only asset comparison kept stale metadata in the next PATCH, and a
+normalized save produced a false conflict). Round 2 caught two more: the submitted snapshot must travel
+as the mutation variable, because TanStack's success callback sees the latest options and therefore the
+latest draft, and a single-field save must acknowledge only its field. The revision drawer keeps the chosen diff base and explains why nothing can be compared instead
+of switching bases.
 
 ### react/refs (79)
 

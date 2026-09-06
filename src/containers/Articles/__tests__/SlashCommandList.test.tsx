@@ -11,18 +11,6 @@ function item(id: string, group: string): SlashCommandItem {
 	return { id, title: id, description: '', icon: '', group, action: vi.fn() }
 }
 
-/** One entry per option: the group header rendered directly above it, or null when it continues a run. */
-function headersByOption(container: HTMLElement): Array<{ option: string; header: string | null }> {
-	const rows = container.querySelectorAll<HTMLElement>('[role="listbox"] > div')
-	return Array.from(rows, (row) => {
-		const first = row.firstElementChild
-		return {
-			option: row.querySelector('button')?.textContent?.trim() ?? '',
-			header: first && first.tagName === 'DIV' ? (first.textContent?.trim() ?? '') : null
-		}
-	})
-}
-
 describe('SlashCommandList', () => {
 	let container: HTMLDivElement
 	let root: Root
@@ -45,12 +33,10 @@ describe('SlashCommandList', () => {
 			root.render(<SlashCommandList items={items} command={vi.fn()} />)
 		})
 
-		expect(headersByOption(container)).toEqual([
-			{ option: 'h1', header: 'Blocks' },
-			{ option: 'h2', header: null },
-			{ option: 'image', header: 'Media' },
-			{ option: 'quote', header: 'Blocks' }
-		])
+		// Text order captures group boundaries without depending on wrapper tags or nesting.
+		expect(container.querySelector('[role="listbox"]')?.textContent?.replace(/\s+/g, '')).toBe(
+			'Blocksh1h2MediaimageBlocksquote'
+		)
 	})
 
 	test('renders the empty state without a listbox when nothing matches', async () => {

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
+import { SavedChangedNotice, sameValue, useSavedDraft, type SameField } from '~/containers/Articles/admin/savedDraft'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import {
 	ArticleApiError,
@@ -34,12 +35,9 @@ function rowStateFromArticle(article: ArticleDocument): RowState {
 	}
 }
 
-function isRowDirty(state: RowState, article: ArticleDocument): boolean {
-	if ((state.reportPdf?.id ?? null) !== (article.reportPdf?.id ?? null)) return true
-	if ((state.carouselImage?.url ?? null) !== (article.carouselImage?.url ?? null)) return true
-	if ((state.sponsorLogo?.url ?? null) !== (article.sponsorLogo?.url ?? null)) return true
-	if ((state.reportDescription || '').trim() !== (article.reportDescription || '').trim()) return true
-	return false
+const sameRowField: SameField<RowState> = (key, a, b) => {
+	if (key === 'reportDescription') return ((a as string) || '').trim() === ((b as string) || '').trim()
+	return sameValue(key, a, b)
 }
 
 function buildPatch(state: RowState): ReportFieldsPatch {
@@ -52,25 +50,27 @@ function buildPatch(state: RowState): ReportFieldsPatch {
 	}
 }
 
-function ReportRow({ article }: { article: ArticleDocument }) {
+export function ReportRow({ article }: { article: ArticleDocument }) {
 	const { authorizedFetch } = useAuthContext()
 	const queryClient = useQueryClient()
 	const revalidateLanding = useResearchLandingRevalidation()
-	const [state, setState] = useState<RowState>(() => rowStateFromArticle(article))
-	// The row draft restarts from the saved article whenever a new article object arrives.
-	const [syncedArticle, setSyncedArticle] = useState(article)
-	if (article !== syncedArticle) {
-		setSyncedArticle(article)
-		setState(rowStateFromArticle(article))
-	}
-
-	const dirty = isRowDirty(state, article)
+	const {
+		draft: state,
+		setDraft: setState,
+		dirty,
+		conflict,
+		loadSaved,
+		acceptSaved
+	} = useSavedDraft(article, article.id, rowStateFromArticle, sameRowField)
 	const isPublished = article.status === 'published'
 	const hasPending = article.pending != null
 
+	// The draft at click time travels as the mutation variable: by the time the request settles the user
+	// may have typed more, and those edits must survive the acknowledgement.
 	const saveMutation = useMutation({
-		mutationFn: () => updateArticleReportFields(article.id, buildPatch(state), authorizedFetch),
-		onSuccess: () => {
+		mutationFn: (submitted: RowState) => updateArticleReportFields(article.id, buildPatch(submitted), authorizedFetch),
+		onSuccess: (saved, submitted) => {
+			acceptSaved(rowStateFromArticle(saved), submitted)
 			queryClient.invalidateQueries({ queryKey: ['research', 'admin', 'reports'] })
 			revalidateLanding()
 			toast.success(isPublished ? 'Saved — publish to push live' : 'Saved')
@@ -81,13 +81,14 @@ function ReportRow({ article }: { article: ArticleDocument }) {
 	})
 
 	const publishMutation = useMutation({
-		mutationFn: async () => {
-			if (dirty) {
-				await updateArticleReportFields(article.id, buildPatch(state), authorizedFetch)
+		mutationFn: async ({ submitted, save }: { submitted: RowState; save: boolean }) => {
+			if (save) {
+				await updateArticleReportFields(article.id, buildPatch(submitted), authorizedFetch)
 			}
 			return publishArticle(article.id, authorizedFetch)
 		},
-		onSuccess: () => {
+		onSuccess: (saved, { submitted }) => {
+			acceptSaved(rowStateFromArticle(saved), submitted)
 			queryClient.invalidateQueries({ queryKey: ['research', 'admin', 'reports'] })
 			revalidateLanding()
 			toast.success('Published')
@@ -101,6 +102,7 @@ function ReportRow({ article }: { article: ArticleDocument }) {
 
 	return (
 		<li className="grid gap-4 px-4 py-5">
+			{conflict ? <SavedChangedNotice noun="report" onLoadSaved={loadSaved} /> : null}
 			<div className="flex flex-wrap items-start justify-between gap-3">
 				<div className="min-w-0">
 					<div className="flex flex-wrap items-center gap-2">
@@ -132,7 +134,7 @@ function ReportRow({ article }: { article: ArticleDocument }) {
 					<button
 						type="button"
 						disabled={!dirty || isMutating}
-						onClick={() => saveMutation.mutate()}
+						onClick={() => saveMutation.mutate(state)}
 						className="rounded-md border border-medium px-3 py-1.5 text-xs text-secondary transition-colors hover:border-link/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
 					>
 						{saveMutation.isPending ? 'Saving…' : 'Save'}
@@ -141,7 +143,7 @@ function ReportRow({ article }: { article: ArticleDocument }) {
 						<button
 							type="button"
 							disabled={isMutating || (!dirty && !hasPending)}
-							onClick={() => publishMutation.mutate()}
+							onClick={() => publishMutation.mutate({ submitted: state, save: dirty })}
 							className="rounded-md bg-success px-3 py-1.5 text-xs font-medium text-on-brand transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							{publishMutation.isPending ? 'Publishing…' : 'Save & publish'}

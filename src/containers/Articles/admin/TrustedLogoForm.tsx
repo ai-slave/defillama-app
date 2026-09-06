@@ -1,8 +1,8 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
+import { SavedChangedNotice, sameValue, useSavedDraft } from '~/containers/Articles/admin/savedDraft'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import { ArticleApiError, createTrustedLogo, listTrustedLogos, updateTrustedLogo } from '~/containers/Articles/api'
 import type { TrustedLogo, TrustedLogoPayload } from '~/containers/Articles/types'
@@ -60,23 +60,21 @@ export function TrustedLogoForm({ logoId }: Props) {
 
 	const logo = logoId ? ((logosQuery.data ?? []).find((item) => item.id === logoId) ?? null) : null
 
-	const [state, setState] = useState<FormState>(() => logoToForm(logo))
-	const initial = useMemo(() => logoToForm(logo), [logo])
-	// The draft restarts from the saved logo whenever a different logo (or a refetched copy) arrives.
-	const [syncedLogo, setSyncedLogo] = useState(logo)
-	if (logo !== syncedLogo) {
-		setSyncedLogo(logo)
-		setState(logoToForm(logo))
-	}
+	const {
+		draft: state,
+		setDraft: setState,
+		dirty,
+		conflict,
+		loadSaved,
+		acceptSaved
+	} = useSavedDraft(logo, logo?.id ?? null, logoToForm, sameValue)
 
 	const errors = validate(state)
 	const hasError = Object.keys(errors).length > 0
 
-	const dirty = state.name !== initial.name || state.linkUrl !== initial.linkUrl || state.imageUrl !== initial.imageUrl
-
 	const saveMutation = useMutation({
-		mutationFn: async () => {
-			const payload = buildPayload(state)
+		mutationFn: async (submitted: FormState) => {
+			const payload = buildPayload(submitted)
 			if (logo) return updateTrustedLogo(logo.id, payload, authorizedFetch)
 			return createTrustedLogo(payload, authorizedFetch)
 		}
@@ -100,7 +98,8 @@ export function TrustedLogoForm({ logoId }: Props) {
 		e.preventDefault()
 		if (hasError) return
 		try {
-			await saveMutation.mutateAsync()
+			const saved = await saveMutation.mutateAsync(state)
+			acceptSaved(logoToForm(saved), state)
 			revalidate()
 			toast.success(logo ? 'Logo saved' : 'Logo created')
 			router.push('/research/admin/trusted-by')
@@ -149,7 +148,8 @@ export function TrustedLogoForm({ logoId }: Props) {
 				{errors.imageUrl ? <p className="text-xs text-error">{errors.imageUrl}</p> : null}
 			</div>
 
-			<div className="sticky bottom-0 -mx-1 mt-2 border-t border-medium bg-page/90 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-page/70">
+			<div className="sticky bottom-0 -mx-1 mt-2 grid gap-2 border-t border-medium bg-page/90 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-page/70">
+				{conflict ? <SavedChangedNotice noun="logo" onLoadSaved={loadSaved} /> : null}
 				<div className="flex items-center justify-between gap-3">
 					<span className="inline-flex items-center gap-2 text-xs text-tertiary">
 						<span

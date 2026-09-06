@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { useMemo, useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
@@ -18,6 +18,7 @@ import {
 	validateBannerForm,
 	type BannerFormState
 } from '~/containers/Articles/admin/bannerFormState'
+import { SavedChangedNotice, sameValue, useSavedDraft } from '~/containers/Articles/admin/savedDraft'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import { ArticleApiError, createBanner, deleteBanner, updateBanner } from '~/containers/Articles/api'
 import {
@@ -77,43 +78,21 @@ export function BannerForm({ banner }: Props) {
 	const router = useRouter()
 	const { authorizedFetch } = useAuthContext()
 	const revalidateLanding = useResearchLandingRevalidation()
-	const [state, setState] = useState<BannerFormState>(() => bannerToForm(banner))
-	const initial = useMemo(() => bannerToForm(banner), [banner])
-	// The draft restarts from the saved banner whenever a different banner (or a refetched copy) arrives.
-	const [syncedBanner, setSyncedBanner] = useState(banner)
-	if (banner !== syncedBanner) {
-		setSyncedBanner(banner)
-		setState(bannerToForm(banner))
-	}
+	const {
+		draft: state,
+		setDraft: setState,
+		dirty,
+		conflict,
+		loadSaved,
+		acceptSaved
+	} = useSavedDraft(banner, banner?.id ?? null, bannerToForm, sameValue)
 
 	const errors = validateBannerForm(state)
 	const hasError = Object.keys(errors).length > 0
 
-	const dirty =
-		state.kind !== initial.kind ||
-		state.scope !== initial.scope ||
-		state.section !== initial.section ||
-		state.articleId !== initial.articleId ||
-		state.excludedArticleIds.join(',') !== initial.excludedArticleIds.join(',') ||
-		state.audienceMode !== initial.audienceMode ||
-		state.targetGroups.join(',') !== initial.targetGroups.join(',') ||
-		state.targetCountries.join(',') !== initial.targetCountries.join(',') ||
-		state.text !== initial.text ||
-		state.linkUrl !== initial.linkUrl ||
-		state.linkLabel !== initial.linkLabel ||
-		state.imageUrl !== initial.imageUrl ||
-		state.imageAlt !== initial.imageAlt ||
-		state.imageWideUrl !== initial.imageWideUrl ||
-		state.imageCardUrl !== initial.imageCardUrl ||
-		state.imageMobileUrl !== initial.imageMobileUrl ||
-		state.disclosureText !== initial.disclosureText ||
-		state.disclosureUrl !== initial.disclosureUrl ||
-		state.showOnLanding !== initial.showOnLanding ||
-		state.enabled !== initial.enabled
-
 	const saveMutation = useMutation({
-		mutationFn: async () => {
-			const payload = buildPayload(state)
+		mutationFn: async (submitted: BannerFormState) => {
+			const payload = buildPayload(submitted)
 			if (banner) return updateBanner(banner.id, payload, authorizedFetch)
 			return createBanner(payload, authorizedFetch)
 		}
@@ -146,7 +125,8 @@ export function BannerForm({ banner }: Props) {
 		e.preventDefault()
 		if (hasError) return
 		try {
-			const saved = await saveMutation.mutateAsync()
+			const saved = await saveMutation.mutateAsync(state)
+			acceptSaved(bannerToForm(saved), state)
 			revalidateLanding()
 			toast.success(banner ? 'Banner saved' : 'Banner created')
 			if (!banner && saved?.id) {
@@ -683,7 +663,8 @@ export function BannerForm({ banner }: Props) {
 				</label>
 			</Section>
 
-			<div className="sticky bottom-0 -mx-1 mt-2 border-t border-medium bg-page/90 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-page/70">
+			<div className="sticky bottom-0 -mx-1 mt-2 grid gap-2 border-t border-medium bg-page/90 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-page/70">
+				{conflict ? <SavedChangedNotice noun="banner" onLoadSaved={loadSaved} /> : null}
 				<div className="flex items-center justify-between gap-3">
 					<span className="inline-flex items-center gap-2 text-xs text-tertiary">
 						<span

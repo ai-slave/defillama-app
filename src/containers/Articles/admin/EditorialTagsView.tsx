@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { ArticlePicker } from '~/containers/Articles/admin/ArticlePicker'
 import { EditorialTagRow } from '~/containers/Articles/admin/EditorialTagRow'
 import { ReorderableEditorialTagList } from '~/containers/Articles/admin/ReorderableEditorialTagList'
+import { SavedChangedNotice, sameValue, useSavedDraft, type SameField } from '~/containers/Articles/admin/savedDraft'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import {
 	ArticleApiError,
@@ -208,7 +208,18 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 	)
 }
 
-function ReportHighlightControls({
+type HighlightForm = { highlightText: string; sponsorLogo: ArticleImage | null }
+
+function highlightFormFromArticle(article: ArticleDocument): HighlightForm {
+	return { highlightText: article.editorialTagMetadata?.highlightText ?? '', sponsorLogo: article.sponsorLogo ?? null }
+}
+
+const sameHighlightField: SameField<HighlightForm> = (key, a, b) => {
+	if (key === 'highlightText') return (a as string).trim() === (b as string).trim()
+	return sameValue(key, a, b)
+}
+
+export function ReportHighlightControls({
 	article,
 	pending,
 	invalidate
@@ -219,21 +230,16 @@ function ReportHighlightControls({
 }) {
 	const { authorizedFetch } = useAuthContext()
 	const queryClient = useQueryClient()
-	const currentText = article.editorialTagMetadata?.highlightText ?? ''
-	const currentLogo = article.sponsorLogo ?? null
-	const [highlightText, setHighlightText] = useState(currentText)
-	const [sponsorLogo, setSponsorLogo] = useState<ArticleImage | null>(currentLogo)
-	// Drafts restart from the saved values when the article, its saved text or its saved logo changes.
-	const [syncedFrom, setSyncedFrom] = useState({ id: article.id, currentText, currentLogo })
-	if (
-		syncedFrom.id !== article.id ||
-		syncedFrom.currentText !== currentText ||
-		syncedFrom.currentLogo !== currentLogo
-	) {
-		setSyncedFrom({ id: article.id, currentText, currentLogo })
-		setHighlightText(currentText)
-		setSponsorLogo(currentLogo)
-	}
+	const { draft, saved, setDraft, conflict, loadSaved, acceptSaved } = useSavedDraft(
+		article,
+		article.id,
+		highlightFormFromArticle,
+		sameHighlightField
+	)
+	const { highlightText, sponsorLogo } = draft
+	const currentText = saved.highlightText
+	const setHighlightText = (next: string) => setDraft((prev) => ({ ...prev, highlightText: next }))
+	const setSponsorLogo = (next: ArticleImage | null) => setDraft((prev) => ({ ...prev, sponsorLogo: next }))
 
 	const textDirty = highlightText.trim() !== currentText.trim()
 	const previewText =
@@ -251,8 +257,9 @@ function ReportHighlightControls({
 				{ highlightText: nextText.trim() || null },
 				authorizedFetch
 			),
-		onSuccess: (result) => {
-			setHighlightText(result.metadata.highlightText ?? '')
+		// Each control saves one field, so only that field is acknowledged and the other draft is left alone.
+		onSuccess: (result, submittedText) => {
+			acceptSaved({ highlightText: result.metadata.highlightText ?? '' }, { highlightText: submittedText })
 			invalidate()
 			toast.success('Highlight text saved')
 		},
@@ -264,19 +271,24 @@ function ReportHighlightControls({
 	const logoMutation = useMutation({
 		mutationFn: (nextLogo: ArticleImage | null) =>
 			updateReportHighlightSponsorLogo(article.id, nextLogo, authorizedFetch),
-		onSuccess: (updated) => {
-			setSponsorLogo(updated.sponsorLogo ?? null)
+		onSuccess: (updated, submittedLogo) => {
+			acceptSaved({ sponsorLogo: updated.sponsorLogo ?? null }, { sponsorLogo: submittedLogo })
 			invalidate()
 			queryClient.invalidateQueries({ queryKey: ['research', 'admin', 'reports'] })
 			toast.success('Sponsor logo updated')
 		},
-		onError: (err) => {
+		// The draft showed the new logo optimistically; a failed request puts the saved logo back so the UI
+		// never claims a change the server rejected. A newer logo action already replaced the draft, so it is
+		// left alone. Highlight text is untouched either way.
+		onError: (err, submittedLogo) => {
+			setDraft((prev) => (prev.sponsorLogo === submittedLogo ? { ...prev, sponsorLogo: saved.sponsorLogo } : prev))
 			toast.error(err instanceof ArticleApiError ? err.message : 'Failed to update sponsor logo')
 		}
 	})
 
 	return (
 		<div className="grid gap-4 border-t border-medium pt-4">
+			{conflict ? <SavedChangedNotice noun="highlight" onLoadSaved={loadSaved} /> : null}
 			<div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
 				<label className="grid gap-1.5">
 					<span className="flex items-baseline justify-between gap-2 font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">
@@ -327,14 +339,15 @@ function ReportHighlightControls({
 						helperText={
 							logoMutation.isPending ? 'Updating highlighted report…' : 'Updates the live highlighted report.'
 						}
-						onUploaded={(result) =>
-							logoMutation.mutate({
-								url: result.url,
-								width: result.width,
-								height: result.height
-							})
-						}
-						onCleared={() => logoMutation.mutate(null)}
+						onUploaded={(result) => {
+							const next = { url: result.url, width: result.width, height: result.height }
+							setSponsorLogo(next)
+							logoMutation.mutate(next)
+						}}
+						onCleared={() => {
+							setSponsorLogo(null)
+							logoMutation.mutate(null)
+						}}
 					/>
 				</div>
 			</div>

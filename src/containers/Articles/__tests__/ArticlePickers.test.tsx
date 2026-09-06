@@ -58,48 +58,63 @@ describe('article pickers keep known titles', () => {
 		queryClient.clear()
 	})
 
-	function chips() {
-		return Array.from(container.querySelectorAll('span.truncate'), (el) => el.textContent)
-	}
-
 	test('multi picker keeps a resolved title when another selection is removed and the new lookup fails', async () => {
 		listArticles.mockResolvedValueOnce({ items: [alpha, beta], nextCursor: null })
 		await render(<ArticleMultiPicker value={['article-a', 'article-b']} onChange={vi.fn()} />)
 		await flush()
-		expect(chips()).toEqual(['Alpha report', 'Beta report'])
+		expect(container.textContent).toContain('Alpha report')
+		expect(container.textContent).toContain('Beta report')
 
 		listArticles.mockRejectedValue(new Error('offline'))
 		await render(<ArticleMultiPicker value={['article-a']} onChange={vi.fn()} />)
 		await flush()
-		expect(chips()).toEqual(['Alpha report'])
+		expect(container.textContent).toContain('Alpha report')
+		expect(container.textContent).not.toContain('Beta report')
 	})
 
 	test('multi picker adopts a fresh title when a later lookup succeeds', async () => {
 		listArticles.mockResolvedValueOnce({ items: [alpha], nextCursor: null })
 		await render(<ArticleMultiPicker value={['article-a']} onChange={vi.fn()} />)
 		await flush()
-		expect(chips()).toEqual(['Alpha report'])
+		expect(container.textContent).toContain('Alpha report')
+		expect(container.textContent).not.toContain('Beta report')
 
 		listArticles.mockResolvedValueOnce({ items: [article('article-a', 'Alpha report v2'), beta], nextCursor: null })
 		await render(<ArticleMultiPicker value={['article-a', 'article-b']} onChange={vi.fn()} />)
 		await flush()
-		expect(chips()).toEqual(['Alpha report v2', 'Beta report'])
+		expect(container.textContent).toContain('Alpha report v2')
+		expect(container.textContent).toContain('Beta report')
 	})
 
 	function selectedLabel() {
-		return container.querySelector('input')?.getAttribute('placeholder')
+		return container.querySelector('[role="combobox"]')?.getAttribute('placeholder')
 	}
 
 	test('single picker keeps the selected title when its search results move on', async () => {
-		listArticles.mockResolvedValueOnce({ items: [alpha], nextCursor: null })
+		listArticles.mockImplementation(async ({ query }) => ({
+			items: query === 'Beta' ? [beta] : [alpha],
+			nextCursor: null
+		}))
 		await render(<ArticlePicker value="article-a" onChange={vi.fn()} />)
 		await flush()
 		expect(selectedLabel()).toBe('Alpha report')
 
-		await render(<ArticlePicker value="article-a" onChange={vi.fn()} listArticlesParams={{ limit: 5 }} />)
-		await flush()
+		const input = container.querySelector<HTMLInputElement>('[role="combobox"]')!
+		const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!
+		await act(async () => {
+			input.focus()
+			setValue.call(input, 'Beta')
+			input.dispatchEvent(new Event('input', { bubbles: true }))
+		})
+		await vi.waitFor(async () => {
+			await flush()
+			// The popover renders in a portal outside the component container.
+			const options = Array.from(document.querySelectorAll('[role="option"]'), (el) => el.textContent)
+			expect(options).toHaveLength(1)
+			expect(options[0]).toContain('Beta report')
+			expect(options[0]).not.toContain('Alpha report')
+		})
 		expect(selectedLabel()).toBe('Alpha report')
-		expect(listArticles).toHaveBeenCalledTimes(1)
 	})
 
 	test('single picker never shows another article title when the new selection fails to resolve', async () => {

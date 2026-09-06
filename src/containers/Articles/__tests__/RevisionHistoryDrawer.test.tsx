@@ -74,20 +74,14 @@ describe('RevisionHistoryDrawer diff base', () => {
 	}
 
 	function activeBase() {
-		return Array.from(container.querySelectorAll('button'))
-			.find(
-				(el) => el.className.includes('bg-link') && ['Previous', 'Live', 'Pending'].includes(el.textContent!.trim())
-			)
-			?.textContent?.trim()
+		return container.querySelector('button[aria-pressed="true"]')?.textContent?.trim()
 	}
 
-	function baseHeader() {
-		return Array.from(container.querySelectorAll('span, p, div')).find((el) =>
-			el.textContent?.trim().startsWith('base ·')
-		)?.textContent
+	function paneText() {
+		return container.textContent ?? ''
 	}
 
-	test('a forced fallback base sticks for later selections', async () => {
+	test('the chosen base is kept when the selected revision is that base, and the pane says why', async () => {
 		await act(async () => {
 			root.render(
 				<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -106,19 +100,19 @@ describe('RevisionHistoryDrawer diff base', () => {
 		await click(button('Live'))
 		expect(activeBase()).toBe('Live')
 
-		// The live revision cannot be compared with itself, so the base falls back to Previous.
+		// The live revision cannot be compared with itself: Live stays chosen and the pane explains.
 		await selectRevision('rev-3')
-		expect(activeBase()).toBe('Previous')
+		expect(activeBase()).toBe('Live')
+		expect(button('Live').disabled).toBe(true)
+		expect(paneText()).toContain('This is the live revision')
 
-		// The fallback stays: the earlier draft is compared with the creation, not with the live revision.
-		getArticleRevision.mockClear()
+		// The next selection is compared against Live again, as the user asked.
 		await selectRevision('rev-2')
-		expect(activeBase()).toBe('Previous')
-		expect(baseHeader()).toContain('Created')
-		expect(getArticleRevision.mock.calls.map(([, id]) => id)).not.toContain('rev-3')
+		expect(activeBase()).toBe('Live')
+		expect(paneText()).toContain('base · Published')
 	})
 
-	test('a chosen base that stays available is kept', async () => {
+	test('the oldest revision explains that nothing earlier exists', async () => {
 		await act(async () => {
 			root.render(
 				<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -134,9 +128,8 @@ describe('RevisionHistoryDrawer diff base', () => {
 		await flush()
 
 		await click(button('diff'))
-		await click(button('Live'))
-		await selectRevision('rev-2')
-		expect(activeBase()).toBe('Live')
-		expect(baseHeader()).toContain('Published')
+		await selectRevision('rev-1')
+		expect(activeBase()).toBe('Previous')
+		expect(paneText()).toContain('This is the oldest revision')
 	})
 })

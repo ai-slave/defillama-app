@@ -1,9 +1,9 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { MentionSlotPreview } from '~/containers/Articles/admin/MentionSlotPreview'
+import { SavedChangedNotice, sameValue, useSavedDraft } from '~/containers/Articles/admin/savedDraft'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import {
 	ArticleApiError,
@@ -66,14 +66,14 @@ export function SocialMentionForm({ mentionId }: Props) {
 
 	const mention = mentionId ? ((mentionsQuery.data ?? []).find((item) => item.id === mentionId) ?? null) : null
 
-	const [state, setState] = useState<FormState>(() => mentionToForm(mention))
-	const initial = useMemo(() => mentionToForm(mention), [mention])
-	// The draft restarts from the saved mention whenever a different mention (or a refetched copy) arrives.
-	const [syncedMention, setSyncedMention] = useState(mention)
-	if (mention !== syncedMention) {
-		setSyncedMention(mention)
-		setState(mentionToForm(mention))
-	}
+	const {
+		draft: state,
+		setDraft: setState,
+		dirty,
+		conflict,
+		loadSaved,
+		acceptSaved
+	} = useSavedDraft(mention, mention?.id ?? null, mentionToForm, sameValue)
 
 	const submittable = canSubmit(state)
 
@@ -89,16 +89,9 @@ export function SocialMentionForm({ mentionId }: Props) {
 		x_post_id: state.xPostId.trim()
 	}
 
-	const dirty =
-		state.quote !== initial.quote ||
-		state.username !== initial.username ||
-		state.socialMediaName !== initial.socialMediaName ||
-		state.socialMediaLink !== initial.socialMediaLink ||
-		state.xPostId !== initial.xPostId
-
 	const saveMutation = useMutation({
-		mutationFn: async () => {
-			const payload = buildPayload(state)
+		mutationFn: async (submitted: FormState) => {
+			const payload = buildPayload(submitted)
 			if (mention) return updateSocialMention(mention.id, payload, authorizedFetch)
 			return createSocialMention(payload, authorizedFetch)
 		}
@@ -122,7 +115,8 @@ export function SocialMentionForm({ mentionId }: Props) {
 		e.preventDefault()
 		if (!submittable) return
 		try {
-			await saveMutation.mutateAsync()
+			const saved = await saveMutation.mutateAsync(state)
+			acceptSaved(mentionToForm(saved), state)
 			revalidate()
 			toast.success(mention ? 'Mention saved' : 'Mention created')
 			router.push('/research/admin/trusted-by')
@@ -214,7 +208,8 @@ export function SocialMentionForm({ mentionId }: Props) {
 				</p>
 			</div>
 
-			<div className="sticky bottom-0 -mx-1 mt-2 border-t border-medium bg-page/90 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-page/70">
+			<div className="sticky bottom-0 -mx-1 mt-2 grid gap-2 border-t border-medium bg-page/90 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-page/70">
+				{conflict ? <SavedChangedNotice noun="mention" onLoadSaved={loadSaved} /> : null}
 				<div className="flex items-center justify-between gap-3">
 					<span className="inline-flex items-center gap-2 text-xs text-tertiary">
 						<span

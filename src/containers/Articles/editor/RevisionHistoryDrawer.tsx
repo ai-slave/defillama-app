@@ -28,6 +28,9 @@ type Props = {
 }
 
 type FilterKey = 'all' | 'edits' | 'publishes' | 'pending' | 'restores'
+
+/** Why the chosen diff base cannot be used: the selected revision is that base, or no such revision exists. */
+type BaseUnavailable = 'self' | 'missing'
 type ViewMode = 'preview' | 'diff'
 type BaseMode = 'previous' | 'live' | 'pending'
 const EMPTY_ARTICLE_REVISIONS: Array<ArticleRevisionSummary> = []
@@ -42,6 +45,21 @@ const EVENT_LABELS: Record<ArticleRevisionEventType, string> = {
 	pending_save: 'Pending edit',
 	discard_pending: 'Pending discarded',
 	restore_pending: 'Restored from history'
+}
+
+const BASE_UNAVAILABLE_TEXT: Record<BaseMode, Record<BaseUnavailable, string>> = {
+	previous: {
+		self: 'This is the oldest revision. Pick a later revision, or compare against Live or Pending.',
+		missing: 'This is the oldest revision. Pick a later revision, or compare against Live or Pending.'
+	},
+	live: {
+		self: 'This is the live revision. Pick another revision, or compare against Previous or Pending.',
+		missing: 'No live revision is recorded. Compare against Previous or Pending instead.'
+	},
+	pending: {
+		self: 'This is the pending revision. Pick another revision, or compare against Previous or Live.',
+		missing: 'No pending revision is recorded. Compare against Previous or Live instead.'
+	}
 }
 
 const EVENT_TONES: Record<ArticleRevisionEventType, string> = {
@@ -473,12 +491,14 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 		return { previous, live, pending }
 	}, [previousId, liveAnchorId, pendingAnchorId, selectedId])
 
-	// In diff view a base with nothing to diff against switches to the first available base. The switch is
-	// permanent, exactly as if the user had chosen it, so later selections keep the fallback base.
-	if (viewMode === 'diff' && !baseAvailability[baseMode]) {
-		const fallback = (['previous', 'live', 'pending'] as Array<BaseMode>).find((mode) => baseAvailability[mode])
-		if (fallback) setBaseMode(fallback)
-	}
+	// The chosen base is never switched behind the user's back. When it has nothing to diff against, the pane
+	// says why: the selected revision is that base itself, or no such revision exists.
+	const baseAnchorId = baseMode === 'previous' ? previousId : baseMode === 'live' ? liveAnchorId : pendingAnchorId
+	const baseUnavailable: BaseUnavailable | null = baseAvailability[baseMode]
+		? null
+		: baseAnchorId === selectedId && selectedId
+			? 'self'
+			: 'missing'
 
 	const baseId = useMemo(() => {
 		if (baseMode === 'previous') return baseAvailability.previous
@@ -728,7 +748,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 									selected={selectedRevision}
 									base={baseRevision}
 									baseMode={baseMode}
-									baseAvailable={Boolean(baseAvailability[baseMode])}
+									baseUnavailable={baseUnavailable}
 									diff={diff}
 								/>
 							) : (
@@ -944,6 +964,7 @@ function PreviewSpecimenHeader({
 										key={mode}
 										type="button"
 										onClick={() => enabled && onChangeBase(mode)}
+										aria-pressed={isActive}
 										disabled={!enabled}
 										title={
 											!enabled
@@ -997,13 +1018,13 @@ function DiffPane({
 	selected,
 	base,
 	baseMode,
-	baseAvailable,
+	baseUnavailable,
 	diff
 }: {
 	selected: ArticleRevision | null
 	base: ArticleRevision | null
 	baseMode: BaseMode
-	baseAvailable: boolean
+	baseUnavailable: BaseUnavailable | null
 	diff: {
 		paragraphs: Array<ParagraphDiffOp>
 		metadata: Array<FieldChange>
@@ -1017,9 +1038,7 @@ function DiffPane({
 			</div>
 		)
 	}
-	if (!baseAvailable) {
-		const label =
-			baseMode === 'previous' ? 'an earlier revision' : baseMode === 'live' ? 'a live revision' : 'a pending revision'
+	if (baseUnavailable) {
 		return (
 			<div className="grid h-full place-items-center px-6">
 				<div className="max-w-sm text-center">
@@ -1027,7 +1046,7 @@ function DiffPane({
 						<Icon name="code" className="size-5 text-tertiary" />
 					</div>
 					<p className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">Nothing to compare</p>
-					<p className="mt-2 text-sm text-secondary">There is no {label} to diff against.</p>
+					<p className="mt-2 text-sm text-secondary">{BASE_UNAVAILABLE_TEXT[baseMode][baseUnavailable]}</p>
 				</div>
 			</div>
 		)
