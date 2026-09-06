@@ -108,6 +108,70 @@ const RWAFlowsChart = lazy(() => import('./FlowsChart').then((module) => ({ defa
 type RWAOverviewChartMetric = RWAChartState['metric'] | 'flows' | 'flowVsPrice'
 
 const EMPTY_CHART_STACK_COLORS: Record<string, string> = {}
+/**
+ * Chart presentation, memoized in its own hook. In the component body the compiler cannot preserve a
+ * useMemo whose dependency is `chartView` or the pie selection (it reports "may be modified later" and
+ * skips the whole component), and without a useMemo it caches nothing there. As hook parameters the same
+ * values carry no such range, so these memos are preserved and RWAOverview still compiles.
+ * `scripts/reactCompilerCheck.cjs --cached` checks both facts.
+ */
+function useLimitedPieChartData(complete: Array<{ name: string; value: number }>, limit: number | null) {
+	return useMemo(() => (limit == null ? complete : limitRwaPieChartData(complete, limit)), [complete, limit])
+}
+
+function useRwaChartPresentation(
+	chartView: RWAChartState['view'] | 'timeSeries',
+	pieChartStackColors: Record<string, string>,
+	pieChartData: Array<{ name: string; value: number }>,
+	timeSeriesDataset: RWAPositionalChartDataset
+) {
+	const timeSeriesCharts = useMemo<Array<MultiSeriesChartSeriesConfig>>(
+		() => (chartView === 'timeSeries' ? buildRwaTimeSeriesCharts(timeSeriesDataset) : []),
+		[chartView, timeSeriesDataset]
+	)
+	const stackColors = useMemo(
+		() =>
+			chartView === 'pie' || chartView === 'hbar'
+				? valueSortedStackColors(pieChartStackColors, pieChartData)
+				: EMPTY_CHART_STACK_COLORS,
+		[chartView, pieChartStackColors, pieChartData]
+	)
+	const barChart = useMemo(
+		() => (chartView === 'hbar' ? barChartPresentation(pieChartData, stackColors) : EMPTY_HBAR_PRESENTATION),
+		[chartView, pieChartData, stackColors]
+	)
+	return { timeSeriesCharts, stackColors, barChart }
+}
+
+function valueSortedStackColors(
+	baseColors: Record<string, string>,
+	data: Array<{ name: string; value: number }>
+): Record<string, string> {
+	const stackColors: Record<string, string> = { ...baseColors }
+	const sortedData: Array<{ name: string; value: number }> = []
+	for (const item of data) {
+		if (item.value > 0) sortedData.push(item)
+	}
+	sortedData.sort((a, b) => b.value - a.value || a.name.localeCompare(b.name))
+	for (const [index, item] of sortedData.entries()) {
+		stackColors[item.name] = CHART_COLORS[index % CHART_COLORS.length] ?? CHART_COLORS[0]
+	}
+	return stackColors
+}
+
+function barChartPresentation(data: Array<{ name: string; value: number }>, stackColors: Record<string, string>) {
+	const rows = limitRwaHorizontalBarData(data, { sort: true })
+	const categories = new Array<string>(rows.length)
+	const values = new Array<number>(rows.length)
+	const colors = new Array<string>(rows.length)
+	for (const [index, row] of rows.entries()) {
+		categories[index] = row.name
+		values[index] = row.value
+		colors[index] = stackColors[row.name] ?? '#1f77b4'
+	}
+	return { categories, values, colors }
+}
+
 const EMPTY_HBAR_PRESENTATION = {
 	categories: [] as Array<string>,
 	values: [] as Array<number>,
@@ -145,9 +209,12 @@ export function RWAOverview(props: IRWAAssetsOverview) {
 	const isFlowVsPrice = flowQueryState.view === 'flowVsPrice'
 	const [flowVisibleRange, setFlowVisibleRange] = useState<RWAFlowVisibleRange | null>(null)
 	const handleFlowVisibleRangeChange = useCallback((range: RWAFlowVisibleRange | null) => {
-		setFlowVisibleRange((previous) =>
-			previous?.start === range?.start && previous?.end === range?.end ? previous : range
-		)
+		// Written without optional chains in the condition: the compiler (1.0.0) cannot lower those inside a
+		// logical test and would skip the whole component.
+		setFlowVisibleRange((previous) => {
+			if (previous === null || range === null) return previous === range ? previous : range
+			return previous.start === range.start && previous.end === range.end ? previous : range
+		})
 	}, [])
 	const canBreakdownByChain = isCategoryMode || isPlatformMode || isAssetGroupMode || props.selectedChain === 'All'
 	const chartMode = createRwaChartModeState(mode, canBreakdownByChain, props.assetGroupSlug)
@@ -447,7 +514,7 @@ export function RWAOverview(props: IRWAAssetsOverview) {
 		})
 
 	// Select pie chart breakdown based on route mode (same precedence as nav links).
-	const { completePieChartData, pieChartStackColors } = useMemo(() => {
+	const { completePieChartData, pieChartStackColors } = (() => {
 		switch (nonTimeSeriesBreakdown) {
 			case 'chain':
 				return {
@@ -482,32 +549,16 @@ export function RWAOverview(props: IRWAAssetsOverview) {
 			default:
 				return assertNever(nonTimeSeriesBreakdown)
 		}
-	}, [
-		assetGroupPieChartData,
-		assetGroupPieChartStackColors,
-		assetClassPieChartData,
-		assetClassPieChartStackColors,
-		assetNamePieChartData,
-		assetNamePieChartStackColors,
-		assetPlatformPieChartData,
-		assetPlatformPieChartStackColors,
-		assetCategoryPieChartData,
-		assetCategoryPieChartStackColors,
-		nonTimeSeriesBreakdown,
-		chainPieChartData,
-		chainPieChartStackColors
-	])
-	const selectedPieChartData = useMemo(() => {
-		const limit =
-			nonTimeSeriesBreakdown === 'chain'
-				? 10
-				: nonTimeSeriesBreakdown === 'assetName' ||
-					  nonTimeSeriesBreakdown === 'assetGroup' ||
-					  nonTimeSeriesBreakdown === 'platform'
-					? 24
-					: null
-		return limit == null ? completePieChartData : limitRwaPieChartData(completePieChartData, limit)
-	}, [completePieChartData, nonTimeSeriesBreakdown])
+	})()
+	const pieChartLimit =
+		nonTimeSeriesBreakdown === 'chain'
+			? 10
+			: nonTimeSeriesBreakdown === 'assetName' ||
+				  nonTimeSeriesBreakdown === 'assetGroup' ||
+				  nonTimeSeriesBreakdown === 'platform'
+				? 24
+				: null
+	const selectedPieChartData = useLimitedPieChartData(completePieChartData, pieChartLimit)
 
 	// Preserve filter/toggle query params only in chain mode.
 	// (The chain/category/platform itself is in the pathname, so we strip the dynamic param from the query object.)
@@ -596,40 +647,13 @@ export function RWAOverview(props: IRWAAssetsOverview) {
 		[aggregateAssets, flowAssetRows, flowGroupBy, flowOnChainMcapAssetRows, flowVisibleRange, isFlowVsPrice]
 	)
 	const selectedTimeSeriesDataset = chartDataset
-	const timeSeriesCharts = useMemo<Array<MultiSeriesChartSeriesConfig>>(
-		() => (chartView === 'timeSeries' ? buildRwaTimeSeriesCharts(selectedTimeSeriesDataset) : []),
-		[chartView, selectedTimeSeriesDataset]
-	)
 	const deferredSelectedTimeSeriesDataset = useDeferredValue(selectedTimeSeriesDataset)
 	const deferredSelectedPieChartData = useDeferredValue(selectedPieChartData)
-	const valueSortedPieChartStackColors = useMemo(() => {
-		if (chartView !== 'pie' && chartView !== 'hbar') return EMPTY_CHART_STACK_COLORS
-		const stackColors: Record<string, string> = { ...pieChartStackColors }
-		const sortedData: Array<{ name: string; value: number }> = []
-		for (const item of deferredSelectedPieChartData) {
-			if (item.value > 0) sortedData.push(item)
-		}
-		sortedData.sort((a, b) => b.value - a.value || a.name.localeCompare(b.name))
-
-		for (const [index, item] of sortedData.entries()) {
-			stackColors[item.name] = CHART_COLORS[index % CHART_COLORS.length] ?? CHART_COLORS[0]
-		}
-
-		return stackColors
-	}, [chartView, pieChartStackColors, deferredSelectedPieChartData])
-	const selectedBarChartPresentation = useMemo(() => {
-		if (chartView !== 'hbar') return EMPTY_HBAR_PRESENTATION
-		const rows = limitRwaHorizontalBarData(deferredSelectedPieChartData, { sort: true })
-		const categories = new Array<string>(rows.length)
-		const values = new Array<number>(rows.length)
-		const colors = new Array<string>(rows.length)
-		for (const [index, row] of rows.entries()) {
-			categories[index] = row.name
-			values[index] = row.value
-			colors[index] = valueSortedPieChartStackColors[row.name] ?? '#1f77b4'
-		}
-		return { categories, values, colors }
-	}, [chartView, deferredSelectedPieChartData, valueSortedPieChartStackColors])
+	const {
+		timeSeriesCharts,
+		stackColors: valueSortedPieChartStackColors,
+		barChart: selectedBarChartPresentation
+	} = useRwaChartPresentation(chartView, pieChartStackColors, deferredSelectedPieChartData, selectedTimeSeriesDataset)
 
 	const chartTypeSwitch = (
 		<SegmentedControl<RWAOverviewChartMetric>

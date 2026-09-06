@@ -25,16 +25,13 @@ export function IncomeStatementCard({ config }: IncomeStatementCardProps) {
 	const record = protocolsBySlug.get(config.protocol) ?? protocolsBySlug.get(config.protocol.toLowerCase()) ?? null
 	const displayName = record?.displayName || config.protocolName || protocolInfo?.name || config.protocol
 
-	const metadata = useMemo(
-		() => ({
-			displayName,
-			fees: Boolean(record?.flags?.fees),
-			revenue: Boolean(record?.flags?.revenue),
-			incentives: Boolean(record?.flags?.incentives),
-			emissions: Boolean(record?.flags?.emissions)
-		}),
-		[displayName, record?.flags?.fees, record?.flags?.revenue, record?.flags?.incentives, record?.flags?.emissions]
-	)
+	const metadata = {
+		displayName,
+		fees: Boolean(record?.flags?.fees),
+		revenue: Boolean(record?.flags?.revenue),
+		incentives: Boolean(record?.flags?.incentives),
+		emissions: Boolean(record?.flags?.emissions)
+	}
 
 	const streamDone = useContext(StreamDoneContext)
 	const {

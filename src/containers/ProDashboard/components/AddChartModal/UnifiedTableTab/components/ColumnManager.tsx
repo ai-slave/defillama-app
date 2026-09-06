@@ -601,7 +601,7 @@ export function ColumnManager({
 	}
 
 	useEffect(() => {
-		const handleClickOutside = () => setShowAutocomplete(false)
+		const handleClickOutside = () => setAutocompleteState((prev) => ({ ...prev, showAutocomplete: false }))
 		document.addEventListener('click', handleClickOutside)
 		return () => document.removeEventListener('click', handleClickOutside)
 	}, [])

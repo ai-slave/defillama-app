@@ -82,15 +82,16 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 			</a>
 		) : null
 
+	const fetchedChartConfig = data?.chartConfig
 	const charts = useMemo((): Array<ChartConfiguration> => {
 		if (hasInlineData && config.inlineChartConfig) {
 			return [config.inlineChartConfig]
 		}
-		if (data?.chartConfig) {
-			return [data.chartConfig]
+		if (fetchedChartConfig) {
+			return [fetchedChartConfig]
 		}
 		return []
-	}, [hasInlineData, config.inlineChartConfig, data?.chartConfig])
+	}, [hasInlineData, config.inlineChartConfig, fetchedChartConfig])
 
 	const rawChartData = hasInlineData ? config.inlineChartData : data?.chartData
 

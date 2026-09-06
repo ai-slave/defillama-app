@@ -147,13 +147,15 @@ export default function Revenue() {
 	const vc = data?.vesperClaimed
 	const oc = data?.odysseyClaimed
 	const hbm = data?.holdersByMonth
+	const llamaDailyChart = data?.llamaDailyChart
+	const holderRevenueChart = data?.holderRevenueChart
 	const [holderMode, setHolderMode] = useState<'daily' | 'monthly'>('monthly')
 
 	const dailyModel = useMemo(
 		() =>
-			data?.llamaDailyChart
+			llamaDailyChart
 				? (() => {
-						const model = chartToModel(data.llamaDailyChart)
+						const model = chartToModel(llamaDailyChart)
 						return {
 							...model,
 							charts: model.charts.map((chart) => ({
@@ -165,14 +167,14 @@ export default function Revenue() {
 						}
 					})()
 				: undefined,
-		[data?.llamaDailyChart]
+		[llamaDailyChart]
 	)
 
 	const holderModel = useMemo(
 		() =>
-			data?.holderRevenueChart
+			holderRevenueChart
 				? (() => {
-						const model = chartToModel(data.holderRevenueChart)
+						const model = chartToModel(holderRevenueChart)
 						return {
 							...model,
 							charts: model.charts.map((chart) => ({
@@ -184,7 +186,7 @@ export default function Revenue() {
 						}
 					})()
 				: undefined,
-		[data?.holderRevenueChart]
+		[holderRevenueChart]
 	)
 
 	const holdersByMonthModel = useMemo(

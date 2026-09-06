@@ -56,9 +56,10 @@ export function CompositionSection({
 	)
 
 	// Rebuilt only when the overlay changes, since the formatter closes over its name.
+	const overlay = model?.line
 	const chartOptions = useMemo(
-		() => (model?.line ? kpkCompositionChartOptions(model.line.name) : KPK_COMPOSITION_CHART_OPTIONS),
-		[model?.line]
+		() => (overlay ? kpkCompositionChartOptions(overlay.name) : KPK_COMPOSITION_CHART_OPTIONS),
+		[overlay]
 	)
 
 	const footer = useMemo<Array<FooterRow> | undefined>(() => {

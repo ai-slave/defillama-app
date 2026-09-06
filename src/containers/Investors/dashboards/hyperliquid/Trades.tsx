@@ -248,15 +248,20 @@ export default function Trades() {
 		[markets]
 	)
 
-	useEffect(() => {
+	// A different market or precision starts with an empty tape and book.
+	const marketKey = `${coin}|${nSigFigs}`
+	const [syncedMarketKey, setSyncedMarketKey] = useState(marketKey)
+	if (marketKey !== syncedMarketKey) {
+		setSyncedMarketKey(marketKey)
 		setTrades([])
 		setBook({ bids: [], asks: [] })
-	}, [coin, nSigFigs])
-
-	useEffect(() => {
-		if (!snapshotBook) return
-		setBook({ bids: snapshotBook.levels[0], asks: snapshotBook.levels[1] })
-	}, [snapshotBook])
+	}
+	// The REST snapshot seeds the book once per snapshot; websocket updates then replace it.
+	const [syncedSnapshot, setSyncedSnapshot] = useState<typeof snapshotBook>(null)
+	if (snapshotBook !== syncedSnapshot) {
+		setSyncedSnapshot(snapshotBook)
+		if (snapshotBook) setBook({ bids: snapshotBook.levels[0], asks: snapshotBook.levels[1] })
+	}
 
 	const subs: Array<WsSubscription> = useMemo(
 		() => [

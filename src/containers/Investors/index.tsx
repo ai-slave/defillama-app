@@ -118,13 +118,6 @@ function InvestorsShell({
 	// Custom tabs handle their own loading state and should not be blocked by the stream.
 	const showGlobalLoader = !!HeaderComponent && !contentReadyProjects.has(activeProject) && resolvedTab === 'dashboard'
 
-	// Auto-select first tab once tabs load (only if user hasn't manually selected)
-	useEffect(() => {
-		if (activeTab === null && tabs.length > 0 && tabs !== DEFAULT_TABS) {
-			setActiveTab(tabs[0].id)
-		}
-	}, [tabs, activeTab])
-
 	return (
 		<CustomServerDataContext.Provider value={customServerData ?? {}}>
 			<div className="investors-dashboard col-span-full flex min-h-screen flex-col pro-dashboard bg-pro-app-bg md:flex-row">

@@ -4,7 +4,7 @@ import { ContentReadyContext } from './ContentReadyContext'
 import { CustomServerDataContext } from './CustomServerDataContext'
 import { CustomOnlyContent, DEFAULT_TABS, InvestorsContent, SkeletonTable, TabLabel } from './DashboardTabsContent'
 import type { DashboardModule, DashboardTabConfig } from './dashboardTypes'
-import { getDashboardModule } from './registry'
+import { getDashboardModule, isDashboardRegistered } from './registry'
 
 const NOOP = () => {}
 
@@ -88,24 +88,30 @@ export function InvestorRelationsView({
 	entityName: string
 	customServerData?: Record<string, unknown>
 }) {
-	const [tabs, setTabs] = useState<Array<DashboardTabConfig> | null>(null)
-	const [HeaderComponent, setHeaderComponent] = useState<DashboardModule['header'] | null>(null)
+	// The loaded module is remembered with the dashboard it belongs to, so a dashboard switch shows the
+	// skeleton again instead of the previous dashboard's tabs, and the tab choice starts over.
+	const [loaded, setLoaded] = useState<{ dashboardId: string; dashboardModule: DashboardModule | null } | null>(null)
 	const [activeTab, setActiveTab] = useState<string | null>(null)
+	const [syncedDashboardId, setSyncedDashboardId] = useState(dashboardId)
+	if (dashboardId !== syncedDashboardId) {
+		setSyncedDashboardId(dashboardId)
+		setActiveTab(null)
+	}
+	const loadedForDashboard = loaded?.dashboardId === dashboardId ? loaded : null
+	const dashboardModule = loadedForDashboard?.dashboardModule ?? null
+	const tabs = !isDashboardRegistered(dashboardId)
+		? DEFAULT_TABS
+		: loadedForDashboard
+			? (dashboardModule?.tabs ?? DEFAULT_TABS)
+			: null
+	const HeaderComponent = dashboardModule?.header ?? null
 
 	useEffect(() => {
-		let cancelled = false
-		setTabs(null)
-		setHeaderComponent(null)
-		setActiveTab(null)
 		const loader = getDashboardModule(dashboardId)
-		if (!loader) {
-			setTabs(DEFAULT_TABS)
-			return
-		}
+		if (!loader) return
+		let cancelled = false
 		loader.then((mod) => {
-			if (cancelled) return
-			setTabs(mod?.tabs ?? DEFAULT_TABS)
-			setHeaderComponent(() => mod?.header ?? null)
+			if (!cancelled) setLoaded({ dashboardId, dashboardModule: mod ?? null })
 		})
 		return () => {
 			cancelled = true

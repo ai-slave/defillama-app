@@ -1,6 +1,6 @@
 import { useQueries } from '@tanstack/react-query'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import type { ProtocolBreakdownChart } from '~/containers/ProtocolOverview/valueChartSources'
+import { useMemo } from 'react'
+import { useIdleChartComputation } from '../hooks/useIdleChartComputation'
 import {
 	fetchProtocolTvlBreakdown,
 	getAdvancedTvlBreakdownSources,
@@ -54,43 +54,17 @@ export function useAdvancedTvlChartData({
 		sources.map((source) => JSON.stringify(getProtocolTvlBreakdownQueryKey(source.request))).join('|'),
 		queries.map((query) => query.dataUpdatedAt).join('|')
 	].join('::')
-	const latestBreakdowns = useRef<Array<ProtocolBreakdownChart | null | undefined>>([])
-	latestBreakdowns.current = queries.map((query) => query.data)
-	const [computed, setComputed] = useState<{ signature: string; data: AdvancedTvlChartData }>({
-		signature: '',
-		data: EMPTY_ADVANCED_TVL_DATA
+	const { value: data, isComputing } = useIdleChartComputation({
+		enabled: canCompute && !isNetworkLoading,
+		signature: computeSignature,
+		input: { chartType, sources, breakdowns: queries.map((query) => query.data), protocolName },
+		compute: (input) => buildAdvancedTvlChartData(input.chartType, input.sources, input.breakdowns, input.protocolName),
+		emptyValue: EMPTY_ADVANCED_TVL_DATA
 	})
 
-	useEffect(() => {
-		if (!canCompute || isNetworkLoading) return
-
-		let cancelled = false
-		const runComputation = () => {
-			if (cancelled) return
-			const data = buildAdvancedTvlChartData(chartType, sources, latestBreakdowns.current, protocolName)
-			if (!cancelled) setComputed({ signature: computeSignature, data })
-		}
-
-		let timeoutId: number | undefined
-		let idleCallbackId: number | undefined
-		if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
-			idleCallbackId = window.requestIdleCallback(runComputation, { timeout: 250 })
-		} else {
-			timeoutId = window.setTimeout(runComputation, 0)
-		}
-
-		return () => {
-			cancelled = true
-			if (idleCallbackId !== undefined && typeof window !== 'undefined') {
-				window.cancelIdleCallback(idleCallbackId)
-			}
-			if (timeoutId !== undefined) window.clearTimeout(timeoutId)
-		}
-	}, [canCompute, isNetworkLoading, computeSignature, chartType, sources, protocolName])
-
 	return {
-		data: canCompute && computed.signature === computeSignature ? computed.data : EMPTY_ADVANCED_TVL_DATA,
-		isLoading: isNetworkLoading || (canCompute && computed.signature !== computeSignature),
+		data,
+		isLoading: isNetworkLoading || (canCompute && isComputing),
 		hasSourceData,
 		sources
 	}

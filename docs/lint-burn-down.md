@@ -150,6 +150,46 @@ as the mutation variable, because TanStack's success callback sees the latest op
 latest draft, and a single-field save must acknowledge only its field. The revision drawer keeps the chosen diff base and explains why nothing can be compared instead
 of switching bases.
 
+### Phase 3b: Investors, RWA, ProDashboard (done)
+
+45 sites, all four rules; the three directories are clean for them. Patterns beyond Phase 3a:
+
+- The compiler is on (`reactCompiler: true`), and every `preserve-manual-memoization` hit makes it skip
+  the whole component. Where the flagged dependency is a value the compiler cannot prove stable (a
+  route-derived string, a value later passed to an unknown function), the manual memo is removed and the
+  compiler memoizes the value; two loops in RWAOverview became module-level pure helpers first.
+- `useIdleChartComputation` takes `input` plus `compute(input)`; the latest pair is written in a layout
+  effect inside the hook, so callers pass inputs as data instead of holding a ref for the hook to read.
+  useAdvancedTvlChartData's private copy of the idle scheduler went away with that.
+- Keyed resets in render: a market key for the hyperliquid tape and book, a stream key (dashboard, token,
+  enabled) for the dashboard stream, and the loaded module remembered with its dashboard id in
+  InvestorRelationsView (null while a registered module loads, so the skeleton shows on a switch).
+- An effect that only turned a derived default into stored state (Investors first-tab auto-select) is
+  removed rather than converted.
+- Animation state: the burn counter animates from a ref the frames write, so the effect no longer depends
+  on the displayed value.
+- **Removing a manual memo needs two proofs, not one: the file compiles, and the computation is actually
+  cached.** Review of this phase found both failures in RWAOverview, one after the other. First it did
+  not compile at all: an optional chain inside a logical test (`previous?.start === range?.start && ...`)
+  is not lowerable by compiler 1.0.0, so the whole component bailed. Then, with that fixed and the
+  component compiling, four chart computations were still emitted bare, because the compiler prunes a
+  memo scope whose dependency has a mutable range reaching past it (`chartView` aliases a hook object's
+  property; the oxlint label for this is "This dependency may be modified later").
+- The fix for a pruned scope is to move the memo into a small hook that takes those values as
+  parameters. Parameters carry no mutable range from the caller, so the `useMemo` is preserved, the
+  helper hook compiles, and the component still compiles: `useLimitedPieChartData` and
+  `useRwaChartPresentation` in RWA/index.tsx. Restoring the `useMemo` in the component body instead
+  re-bails the whole component, which is what main does today.
+- `node scripts/reactCompilerCheck.cjs . <files>` runs babel-plugin-react-compiler with Next's
+  production client options and prints which functions compiled and every bailout with its reason.
+  Add `--cached fn1,fn2` to assert that every call to those functions in the generated code sits inside
+  a memo cache guard; it exits non-zero otherwise. For this phase:
+  `node scripts/reactCompilerCheck.cjs . src/containers/RWA/index.tsx --cached
+limitRwaPieChartData,buildRwaTimeSeriesCharts,valueSortedStackColors,barChartPresentation`.
+  Known pre-existing bailouts it also shows, none of them a place where a memo was removed: value blocks
+  inside try/catch (hyperliquid useHyperliquidWs) and try/finally without catch (SqlChartModal,
+  useDashboardStream).
+
 ### react/refs (79)
 
 Verified in oxlint 1.81: a function returned by `useEffectEvent` may only be called from an effect or

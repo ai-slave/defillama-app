@@ -56,6 +56,7 @@ export function PeerRanking({
 		const isFullyVisible = rowRect.top >= containerRect.top + headerHeight && rowRect.bottom <= containerRect.bottom
 		if (isFullyVisible) return
 		container.scrollTop += rowRect.top - containerRect.top - (container.clientHeight - rowRect.height) / 2
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- the effect reads DOM refs; these values are when the selected row mounts or moves.
 	}, [peers, selectedSlug])
 
 	// The header carries the view switcher when the panel is tabbed, so loading

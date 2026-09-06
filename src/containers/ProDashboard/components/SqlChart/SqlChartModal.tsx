@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import type { ChartOptionsMap } from '~/containers/Downloads/chart-datasets'
 import {
@@ -67,7 +67,9 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 	const editorRef = useRef<EditorHandle | null>(null)
 	const runControllerRef = useRef<AbortController | null>(null)
 	const chartConfigRef = useRef(chartConfig)
-	chartConfigRef.current = chartConfig
+	useLayoutEffect(() => {
+		chartConfigRef.current = chartConfig
+	})
 
 	useEffect(() => {
 		let active = true

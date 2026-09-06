@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useEffectEvent, useRef } from 'react'
+import { useCallback, useEffect, useEffectEvent, useLayoutEffect, useRef } from 'react'
 import toast from 'react-hot-toast'
 import pb from '~/utils/pocketbase'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
@@ -57,8 +57,11 @@ interface PendingSaveData {
 
 export function useAutoSave(options: UseAutoSaveOptions) {
 	const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+	// Read by the debounce timer and the flush handler, which run outside render.
 	const optionsRef = useRef(options)
-	optionsRef.current = options
+	useLayoutEffect(() => {
+		optionsRef.current = options
+	})
 
 	const pendingDataRef = useRef<PendingSaveData | null>(null)
 

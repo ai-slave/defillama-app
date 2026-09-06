@@ -1,6 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
-import { useCallback } from 'react'
 import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -127,17 +126,15 @@ export function RWAChains({
 	const includeBridgeTvl = bridgeTvlQ != null ? isTrueQueryParam(bridgeTvlQ) : true
 	const inclusion = getRWAOverviewInclusion(includeStablecoins, includeGovernance, includeBridgeTvl)
 
-	const onToggleStablecoins = useCallback(() => {
+	const onToggleStablecoins = () => {
 		void pushShallowQuery(router, { includeStablecoins: includeStablecoins ? undefined : 'true' })
-	}, [includeStablecoins, router])
-
-	const onToggleGovernance = useCallback(() => {
+	}
+	const onToggleGovernance = () => {
 		void pushShallowQuery(router, { includeGovernance: includeGovernance ? undefined : 'true' })
-	}, [includeGovernance, router])
-
-	const onToggleBridgeTvl = useCallback(() => {
+	}
+	const onToggleBridgeTvl = () => {
 		void pushShallowQuery(router, { includeBridgeTvl: includeBridgeTvl ? 'false' : undefined })
-	}, [includeBridgeTvl, router])
+	}
 
 	const data = chains.map((row) => {
 		const tableData = getRWAOverviewTableData(row, inclusion)

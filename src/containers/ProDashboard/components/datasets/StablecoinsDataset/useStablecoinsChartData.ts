@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useCallback, useContext, useMemo, useRef } from 'react'
+import { useCallback, useContext, useMemo } from 'react'
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import {
 	buildRuntimePieChartCsvDataset,
@@ -231,17 +231,14 @@ export function useStablecoinsChartData(
 	})
 
 	const computeSignature = [chain, chartType, dataUpdatedAt].join('::')
-	const latestInputRef = useRef({ rawData, chain, chartType })
-	latestInputRef.current = { rawData, chain, chartType }
 	const { value: collected, isComputing } = useIdleChartComputation({
 		enabled: enabled && rawData != null && !isLoading,
 		signature: computeSignature,
-		compute: () => {
-			const input = latestInputRef.current
-			return input.rawData
+		input: { rawData, chain, chartType },
+		compute: (input) =>
+			input.rawData
 				? collectProStablecoinChart({ rawData: input.rawData, chain: input.chain, chartType: input.chartType })
-				: { kind: 'fixed' as const, chartType: input.chartType, presentation: EMPTY_STABLECOIN_PRESENTATION }
-		},
+				: { kind: 'fixed' as const, chartType: input.chartType, presentation: EMPTY_STABLECOIN_PRESENTATION },
 		emptyValue: { kind: 'fixed' as const, chartType, presentation: EMPTY_STABLECOIN_PRESENTATION }
 	})
 	const presentation = useMemo(

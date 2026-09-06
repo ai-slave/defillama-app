@@ -124,6 +124,9 @@ export default function Growth() {
 	const { data, isLoading } = useGrowthData()
 	const k = data?.kpis ?? ({} as Partial<NonNullable<typeof data>['kpis']>)
 	const loopr = data?.loopr
+	const looprChains = loopr?.chains
+	const depositsByChain = data?.depositsByChain
+	const marketCombined = data?.marketComparison?.combined
 	const cs = data?.caseStudies ?? ({} as Partial<NonNullable<typeof data>['caseStudies']>)
 
 	const [spendVenue, setSpendVenue] = useState('aerodrome')
@@ -161,8 +164,8 @@ export default function Growth() {
 	}, [data?.tokenPrices])
 
 	const perChainModels = useMemo(() => {
-		if (!loopr?.chains) return undefined
-		const entries = Object.entries(loopr.chains)
+		if (!looprChains) return undefined
+		const entries = Object.entries(looprChains)
 		const build = (metric: 'active_users' | 'active_positions') =>
 			buildSparseCartesianChartModel(
 				entries.map(([chain, rows]) => {
@@ -177,13 +180,13 @@ export default function Growth() {
 				})
 			)
 		return { activeUsers: build('active_users'), activePositions: build('active_positions') }
-	}, [loopr?.chains])
+	}, [looprChains])
 
 	const depositsModel = useMemo(
 		() =>
-			data?.depositsByChain
+			depositsByChain
 				? (() => {
-						const model = chartToModel(data.depositsByChain)
+						const model = chartToModel(depositsByChain)
 						return {
 							...model,
 							charts: model.charts.map((chart) => ({
@@ -194,14 +197,14 @@ export default function Growth() {
 						}
 					})()
 				: undefined,
-		[data?.depositsByChain]
+		[depositsByChain]
 	)
 
 	const marketComboModel = useMemo(
 		() =>
-			data?.marketComparison?.combined
+			marketCombined
 				? (() => {
-						const model = chartToModel(data.marketComparison.combined)
+						const model = chartToModel(marketCombined)
 						return {
 							...model,
 							charts: model.charts.map((chart, index) => ({
@@ -212,7 +215,7 @@ export default function Growth() {
 						}
 					})()
 				: undefined,
-		[data?.marketComparison?.combined]
+		[marketCombined]
 	)
 
 	const morphoMarketModel = useMemo(

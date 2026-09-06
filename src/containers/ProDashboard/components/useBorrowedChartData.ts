@@ -1,5 +1,5 @@
 import { useQueries } from '@tanstack/react-query'
-import { useMemo, useRef } from 'react'
+import { useMemo } from 'react'
 import { useIdleChartComputation } from '../hooks/useIdleChartComputation'
 import {
 	fetchProtocolTvlBreakdown,
@@ -43,15 +43,11 @@ export function useBorrowedChartData({
 	const canCompute = enabled || hasSourceData
 	const isNetworkLoading = enabled && queries.some((query) => query.isLoading)
 	const computeSignature = [protocol, chartType, ...queries.map((query) => query.dataUpdatedAt)].join('::')
-	const latestInputRef = useRef({ chartType, sources, breakdowns: [firstBreakdown, secondBreakdown] })
-	latestInputRef.current = { chartType, sources, breakdowns: [firstBreakdown, secondBreakdown] }
 	const { value: data, isComputing } = useIdleChartComputation({
 		enabled: canCompute && !isNetworkLoading,
 		signature: computeSignature,
-		compute: () => {
-			const input = latestInputRef.current
-			return buildBorrowedChartData(input.chartType, input.sources, input.breakdowns)
-		},
+		input: { chartType, sources, breakdowns: [firstBreakdown, secondBreakdown] },
+		compute: (input) => buildBorrowedChartData(input.chartType, input.sources, input.breakdowns),
 		emptyValue: EMPTY_BORROWED_CHART_DATA
 	})
 

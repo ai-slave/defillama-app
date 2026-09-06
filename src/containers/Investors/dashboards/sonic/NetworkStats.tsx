@@ -114,11 +114,12 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
 function BurnCounter({ totalBurnedS, price }: { totalBurnedS: number; price: number | null }) {
 	const [displayValue, setDisplayValue] = useState(totalBurnedS)
 	const animRef = useRef<number>(0)
-	const targetRef = useRef(totalBurnedS)
+	// Where the counter currently sits, written by the animation frames, so a new target animates from it
+	// without the effect depending on the displayed value.
+	const shownRef = useRef(totalBurnedS)
 
 	useEffect(() => {
-		targetRef.current = totalBurnedS
-		const start = displayValue
+		const start = shownRef.current
 		const diff = totalBurnedS - start
 		if (Math.abs(diff) < 1e-10) return
 
@@ -130,7 +131,9 @@ function BurnCounter({ totalBurnedS, price }: { totalBurnedS: number; price: num
 			const progress = Math.min(elapsed / duration, 1)
 			// ease-out-quart
 			const eased = 1 - (1 - progress) ** 4
-			setDisplayValue(start + diff * eased)
+			const next = start + diff * eased
+			shownRef.current = next
+			setDisplayValue(next)
 			if (progress < 1) {
 				animRef.current = requestAnimationFrame(animate)
 			}
@@ -140,7 +143,7 @@ function BurnCounter({ totalBurnedS, price }: { totalBurnedS: number; price: num
 		animRef.current = requestAnimationFrame(animate)
 
 		return () => cancelAnimationFrame(animRef.current)
-	}, [totalBurnedS]) // eslint-disable-line react-hooks/exhaustive-deps
+	}, [totalBurnedS])
 
 	const parts = formatNumber(displayValue, { minimumFractionDigits: 4, maximumFractionDigits: 4 }).split('.')
 	const intPart = parts[0]

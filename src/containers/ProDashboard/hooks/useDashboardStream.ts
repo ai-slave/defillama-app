@@ -147,17 +147,19 @@ export function useDashboardStream(
 		[queryClient]
 	)
 
+	// A new stream target (dashboard, token or enabled flag) starts a fresh streaming state in the same render
+	// that starts the stream, instead of one commit later.
+	const streamKey = dashboardId && dashboardId !== 'new' && enabled ? `${dashboardId}|${authToken ?? ''}` : null
+	const [syncedStreamKey, setSyncedStreamKey] = useState<string | null>(null)
+	if (streamKey !== syncedStreamKey) {
+		setSyncedStreamKey(streamKey)
+		if (streamKey) setState({ isStreaming: true, dashboard: undefined, isDone: false, error: null })
+	}
+
 	useEffect(() => {
 		if (!dashboardId || dashboardId === 'new' || !enabled) return
 
 		const abortController = new AbortController()
-
-		setState({
-			isStreaming: true,
-			dashboard: undefined,
-			isDone: false,
-			error: null
-		})
 
 		const startStream = async () => {
 			try {

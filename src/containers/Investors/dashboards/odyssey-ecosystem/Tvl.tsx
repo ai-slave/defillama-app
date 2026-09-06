@@ -63,12 +63,14 @@ export default function Tvl() {
 	const { data, isLoading } = useTvlData()
 	const k = data?.kpis ?? ({} as Partial<NonNullable<typeof data>['kpis']>)
 	const fromDate = data?.defaultFrom || '2025-01-01'
+	const ecosystemChart = data?.ecosystemChart
+	const marketOverlay = data?.marketOverlay
 
 	const ecoModel = useMemo(
 		() =>
-			data?.ecosystemChart
+			ecosystemChart
 				? (() => {
-						const model = chartToModel(data.ecosystemChart)
+						const model = chartToModel(ecosystemChart)
 						return {
 							...model,
 							charts: model.charts.map((chart) => ({
@@ -79,24 +81,24 @@ export default function Tvl() {
 						}
 					})()
 				: undefined,
-		[data?.ecosystemChart]
+		[ecosystemChart]
 	)
 	const ecoZoom = useMemo(
-		() => defaultZoomOptions(zoomStartPct(data?.ecosystemChart?.dates, fromDate)),
-		[data?.ecosystemChart?.dates, fromDate]
+		() => defaultZoomOptions(zoomStartPct(ecosystemChart?.dates, fromDate)),
+		[ecosystemChart?.dates, fromDate]
 	)
 
 	const ethOverlay = useMemo(
 		() =>
-			data?.marketOverlay
+			marketOverlay
 				? buildAlignedCartesianChartModel(
-						data.marketOverlay.dates.map((date) => Date.parse(`${date}T00:00:00Z`)),
+						marketOverlay.dates.map((date) => Date.parse(`${date}T00:00:00Z`)),
 						[
 							{
 								name: 'Total TVL',
 								type: 'line' as const,
 								color: '#6366f1',
-								values: data.marketOverlay.series[0]?.data ?? [],
+								values: marketOverlay.series[0]?.data ?? [],
 								yAxisIndex: 0,
 								valueSymbol: '$'
 							},
@@ -104,7 +106,7 @@ export default function Tvl() {
 								name: 'ETH Price',
 								type: 'line' as const,
 								color: '#f59e0b',
-								values: data.marketOverlay.series[1]?.data ?? [],
+								values: marketOverlay.series[1]?.data ?? [],
 								yAxisIndex: 1,
 								valueSymbol: '$'
 							}
@@ -112,11 +114,11 @@ export default function Tvl() {
 						{ timestampMultiplier: 1 }
 					)
 				: undefined,
-		[data?.marketOverlay]
+		[marketOverlay]
 	)
 	const ethZoom = useMemo(
-		() => defaultZoomOptions(zoomStartPct(data?.marketOverlay?.dates, fromDate)),
-		[data?.marketOverlay?.dates, fromDate]
+		() => defaultZoomOptions(zoomStartPct(marketOverlay?.dates, fromDate)),
+		[marketOverlay?.dates, fromDate]
 	)
 
 	const protocolByChainModels = useMemo(

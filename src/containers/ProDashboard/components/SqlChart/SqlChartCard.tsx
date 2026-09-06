@@ -1,5 +1,5 @@
 import type * as echarts from 'echarts/core'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { ChartRouter } from '~/containers/Downloads/sql/chart'
 import { migrateChartConfig } from '~/containers/Downloads/sql/chartConfig'
@@ -58,15 +58,18 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 	const { snapshot, isRefreshing, error, canRefresh, refresh } = useServerSqlRun(config.id, config.snapshot ?? null)
 	const [cardView, setCardView] = useState<'output' | 'query'>('output')
 
+	// Latest refresh and error for the refresh-all subscription and the unmount report, which run outside render.
 	const refreshRef = useRef(refresh)
-	refreshRef.current = refresh
+	const errorRef = useRef(error)
+	useLayoutEffect(() => {
+		refreshRef.current = refresh
+		errorRef.current = error
+	})
 	useEffect(() => {
 		if (!canRefresh) return
 		return subscribeSqlRefreshAll(() => refreshRef.current())
 	}, [canRefresh])
 
-	const errorRef = useRef(error)
-	errorRef.current = error
 	useEffect(() => {
 		if (!isRefreshing) return
 		reportSqlRefreshStart(config.id)

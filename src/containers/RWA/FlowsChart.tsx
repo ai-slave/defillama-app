@@ -1,5 +1,5 @@
 import type * as echarts from 'echarts/core'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import MultiSeriesChart from '~/components/ECharts/MultiSeriesChart'
 import { getRWAFlowChartOptions, type RWAFlowChart, type RWAFlowVisibleRange } from './flows'
 
@@ -61,9 +61,12 @@ export function RWAFlowsChart({
 	const onReadyRef = useRef(onReady)
 	const onVisibleRangeChangeRef = useRef(onVisibleRangeChange)
 	const chartInstanceRef = useRef<echarts.ECharts | null>(null)
-	sourceRef.current = chart.dataset.source
-	onReadyRef.current = onReady
-	onVisibleRangeChangeRef.current = onVisibleRangeChange
+	// Read by the ECharts datazoom and ready callbacks, which run outside render.
+	useLayoutEffect(() => {
+		sourceRef.current = chart.dataset.source
+		onReadyRef.current = onReady
+		onVisibleRangeChangeRef.current = onVisibleRangeChange
+	})
 
 	// Keep visible-range tracking local to RWA flows instead of expanding the shared
 	// MultiSeriesChart API. Other charts retain their existing lifecycle and zoom behavior.

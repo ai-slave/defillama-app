@@ -13,6 +13,7 @@ export function InViewDashboardCard({ children, minHeight }: { children: ReactNo
 		const element = containerRef.current
 		if (!element) return
 		if (typeof IntersectionObserver === 'undefined') {
+			// oxlint-disable-next-line react/set-state-in-effect -- capability probe: without IntersectionObserver the card mounts after hydration, so the first paint still matches the server's deferred markup.
 			setRenderState('visible')
 			return
 		}

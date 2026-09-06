@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { HyperliquidCandle } from '~/pages/api/public/hyperliquid/candles'
 import type { HlpFundingData } from '~/pages/api/public/hyperliquid/hlp-funding'
 import type { HlpOpenOrder } from '~/pages/api/public/hyperliquid/hlp-open-orders'
@@ -143,8 +143,11 @@ export function useHyperliquidWs(subscriptions: Array<WsSubscription>, onMessage
 	const mountedRef = useRef(true)
 	const prevSubsRef = useRef<Map<string, WsSubscription>>(new Map())
 
-	subsRef.current = subscriptions
-	cbRef.current = onMessage
+	// Read by the socket's reconnect and message handlers, which run outside render.
+	useLayoutEffect(() => {
+		subsRef.current = subscriptions
+		cbRef.current = onMessage
+	})
 
 	const sendMessage = useCallback((ws: WebSocket, method: 'subscribe' | 'unsubscribe', sub: WsSubscription) => {
 		if (ws.readyState !== WebSocket.OPEN) return
@@ -265,7 +268,9 @@ export function useHyperliquidWsChannels(
 	}>
 ) {
 	const handlersRef = useRef(handlers)
-	handlersRef.current = handlers
+	useLayoutEffect(() => {
+		handlersRef.current = handlers
+	})
 
 	return useHyperliquidWs(subscriptions, (message) => {
 		const parsed = parseHyperliquidWsMessage(message)
