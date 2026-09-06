@@ -135,11 +135,23 @@ function ViewToggle({
 			role="tablist"
 			aria-label="Results view"
 			className={`inline-flex items-center gap-0.5 rounded-md border border-subtle bg-surface p-0.5 ${
-				disabled ? 'pointer-events-none opacity-50' : ''
+				disabled ? 'opacity-50' : ''
 			}`}
 		>
-			<ToggleButton active={view === 'table'} onClick={() => onChange('table')} label="Table" icon="layout-grid" />
-			<ToggleButton active={view === 'chart'} onClick={() => onChange('chart')} label="Chart" icon="bar-chart-2" />
+			<ToggleButton
+				active={view === 'table'}
+				onClick={() => onChange('table')}
+				disabled={disabled}
+				label="Table"
+				icon="layout-grid"
+			/>
+			<ToggleButton
+				active={view === 'chart'}
+				onClick={() => onChange('chart')}
+				disabled={disabled}
+				label="Chart"
+				icon="bar-chart-2"
+			/>
 		</div>
 	)
 }
@@ -147,11 +159,13 @@ function ViewToggle({
 function ToggleButton({
 	active,
 	onClick,
+	disabled,
 	label,
 	icon
 }: {
 	active: boolean
 	onClick: () => void
+	disabled?: boolean
 	label: string
 	icon: 'layout-grid' | 'bar-chart-2'
 }) {
@@ -161,6 +175,7 @@ function ToggleButton({
 			type="button"
 			aria-selected={active}
 			onClick={onClick}
+			disabled={disabled}
 			className={`flex items-center gap-1.5 rounded-sm px-2 py-1 text-[11px] font-medium transition-colors ${
 				active
 					? 'bg-brand text-on-brand shadow-sm'

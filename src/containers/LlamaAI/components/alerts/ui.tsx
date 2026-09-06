@@ -72,13 +72,19 @@ export function AlertsDialogHeader({
 						<Icon name={icon} className="size-4 text-ai-warning-bright" />
 					</div>
 					<div className="flex min-w-0 flex-col leading-tight">
-						<h2 className="m-0 text-base font-semibold tracking-tight text-ai-primary">{title}</h2>
+						<Ariakit.DialogHeading
+							render={<h2>{title}</h2>}
+							className="m-0 text-base font-semibold tracking-tight text-ai-primary"
+						/>
 						{subtitle ? <p className="m-0 mt-0.5 truncate text-xs text-ai-tertiary">{subtitle}</p> : null}
 					</div>
 				</div>
 				<div className="flex shrink-0 items-center gap-1.5">
 					{right}
-					<Ariakit.DialogDismiss className="rounded-lg p-2 text-ai-tertiary transition-colors hover:bg-ai-hover hover:text-ai-primary">
+					<Ariakit.DialogDismiss
+						aria-label="Close dialog"
+						className="rounded-lg p-2 text-ai-tertiary transition-colors hover:bg-ai-hover hover:text-ai-primary"
+					>
 						<Icon name="x" className="size-4" />
 					</Ariakit.DialogDismiss>
 				</div>

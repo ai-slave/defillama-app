@@ -56,7 +56,10 @@ export function SchemaDrawer({
 			>
 				<header className="flex items-start justify-between gap-3 border-b border-subtle bg-pro-app-bg/40 px-5 py-3.5">
 					<div className="flex min-w-0 flex-col gap-0.5">
-						<h2 className="text-sm font-semibold tracking-tight text-pro-text-primary">SQL reference</h2>
+						<Ariakit.DialogHeading
+							render={<h2>SQL reference</h2>}
+							className="text-sm font-semibold tracking-tight text-pro-text-primary"
+						/>
 						<p className="text-[11.5px] leading-snug text-pro-text-tertiary">
 							{tab === 'schema' ? (
 								<>
@@ -68,7 +71,6 @@ export function SchemaDrawer({
 						</p>
 					</div>
 					<Ariakit.DialogDismiss
-						onClick={onClose}
 						aria-label="Close SQL reference"
 						className="flex size-7 shrink-0 items-center justify-center rounded-md text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
 					>

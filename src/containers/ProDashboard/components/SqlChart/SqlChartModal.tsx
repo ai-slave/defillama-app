@@ -240,9 +240,10 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 				className="fixed inset-0 z-50 flex flex-col gap-3 overflow-hidden pro-dashboard bg-surface p-3 md:inset-4 md:rounded-md md:border md:border-medium md:p-4 md:shadow-xl"
 			>
 				<div className="flex shrink-0 items-center justify-between">
-					<h2 className="text-xl font-semibold text-pro-text-primary">
-						{editItem ? 'Edit SQL chart' : 'New SQL chart'}
-					</h2>
+					<Ariakit.DialogHeading
+						render={<h2>{editItem ? 'Edit SQL chart' : 'New SQL chart'}</h2>}
+						className="text-xl font-semibold text-pro-text-primary"
+					/>
 					<Ariakit.DialogDismiss className="rounded-md pro-hover-bg p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary">
 						<Icon name="x" height={20} width={20} />
 						<span className="sr-only">Close dialog</span>

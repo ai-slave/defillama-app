@@ -37,7 +37,7 @@ export const Switch = ({
 				className="peer absolute size-[1em] opacity-[0.00001]"
 			/>
 			<span
-				className={`h-6 w-10 shrink-0 rounded-full p-1 transition-colors ${checked ? 'bg-brand' : 'bg-surface-elevated-2'}`}
+				className={`h-6 w-10 shrink-0 rounded-full p-1 transition-colors ${checked ? 'bg-brand peer-focus-visible:focus-ring-on-brand' : 'bg-surface-elevated-2 peer-focus-visible:focus-ring'}`}
 			>
 				<span
 					className={`block size-4 rounded-full bg-white shadow-xs transition-transform ${checked ? 'translate-x-4' : ''}`}
