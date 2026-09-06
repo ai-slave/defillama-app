@@ -102,6 +102,10 @@ export function exchangeTokenRows(profile: ExchangeProfileModel): Array<Exchange
 		const perpPairs = inSegment(PERP_SEGMENTS)
 		const spotVolume = normalizedVolume(spotPairs)
 		const perpVolume = normalizedVolume(linearPairs)
+		let maxLeverage: number | null = null
+		for (const pair of perpPairs) {
+			if (pair.maxLeverage != null) maxLeverage = Math.max(maxLeverage ?? 0, pair.maxLeverage)
+		}
 
 		return {
 			token,
@@ -110,10 +114,7 @@ export function exchangeTokenRows(profile: ExchangeProfileModel): Array<Exchange
 				(segment) => (bySegment.get(segment)?.get(token)?.length ?? 0) > 0
 			),
 			marketCount: inSegment(NVOL_SEGMENTS).length + inSegment(['inverse_perp']).length,
-			maxLeverage: perpPairs.reduce<number | null>(
-				(top, pair) => (pair.maxLeverage == null ? top : Math.max(top ?? 0, pair.maxLeverage)),
-				null
-			),
+			maxLeverage,
 			// Active liquidity needs a band, which exists for spot and USD perps only.
 			spotActiveLiquidity: sum(spotPairs.map((pair) => pair.normalizedVolume?.activeLiquidity)),
 			perpActiveLiquidity: sum(linearPairs.map((pair) => pair.normalizedVolume?.activeLiquidity)),

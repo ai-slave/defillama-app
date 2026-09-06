@@ -48,15 +48,13 @@ const formatDailyChart = ({
 }: Pick<FormatterInput, 'data' | 'dateInMs' | 'denominationPriceHistory'>): Array<[number, number | null]> => {
 	const formatted = new Array<[number, number | null]>(data.length)
 	if (!denominationPriceHistory) {
-		for (let i = 0; i < data.length; i++) {
-			const point = data[i]!
+		for (const [i, point] of data.entries()) {
 			formatted[i] = [dateInMs ? +point[0] : +point[0] * 1e3, point[1]]
 		}
 		return formatted
 	}
 
-	for (let i = 0; i < data.length; i++) {
-		const [date, value] = data[i]!
+	for (const [i, [date, value]] of data.entries()) {
 		const timestampSec = dateInMs ? +date / 1e3 : +date
 		const timestampMs = dateInMs ? +date : +date * 1e3
 		const price = denominationPriceHistory[String(timestampSec)] ?? denominationPriceHistory[String(timestampMs)]
@@ -84,8 +82,7 @@ const formatGroupedChart = ({
 	let cumulativeTotal: number | null = 0
 
 	if (!denominationPriceHistory) {
-		for (let i = 0; i < data.length; i++) {
-			const point = data[i]!
+		for (const point of data) {
 			const timestampMs = dateInMs ? +point[0] : +point[0] * 1e3
 			const bucketTimestampMs =
 				groupBy === 'cumulative'
@@ -112,8 +109,7 @@ const formatGroupedChart = ({
 		return formatted
 	}
 
-	for (let i = 0; i < data.length; i++) {
-		const [date, value] = data[i]!
+	for (const [date, value] of data) {
 		const timestampSec = dateInMs ? +date / 1e3 : +date
 		const timestampMs = dateInMs ? +date : +date * 1e3
 		const bucketTimestampMs =

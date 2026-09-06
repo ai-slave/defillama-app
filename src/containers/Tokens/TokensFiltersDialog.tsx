@@ -18,13 +18,9 @@ import {
 	type TokensFilterField
 } from './filters'
 
-const CATEGORY_LABELS: Record<TokensFilterCategory, string> = TOKENS_FILTER_CATEGORIES.reduce(
-	(acc, category) => {
-		acc[category.key] = category.label
-		return acc
-	},
-	{} as Record<TokensFilterCategory, string>
-)
+const CATEGORY_LABELS = Object.fromEntries(
+	TOKENS_FILTER_CATEGORIES.map((category) => [category.key, category.label])
+) as Record<TokensFilterCategory, string>
 
 interface TokensDraftFilter {
 	id: TokensFilterField

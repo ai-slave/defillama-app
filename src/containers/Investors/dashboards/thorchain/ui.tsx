@@ -104,7 +104,10 @@ function windowKpi(series: Array<[number, number]>, days?: number): KpiT {
 	if (!lastPoint) throw new Error('Expected a non-empty adapter series')
 	const last = lastPoint[0]
 	const cutoff = days ? last - days * DAY : -Infinity
-	const sum = series.reduce((acc, [t, v]) => (t > cutoff ? acc + (v || 0) : acc), 0)
+	let sum = 0
+	for (const [t, v] of series) {
+		if (t > cutoff) sum += v || 0
+	}
 	return {
 		value: sum,
 		formatted: formatUsd(sum, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })

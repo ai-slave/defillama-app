@@ -107,9 +107,8 @@ function detectColumnKind(header: string, values: Array<string>): ColumnKind {
 }
 
 function getColumnWidth(header: string, kind: ColumnKind, values: Array<string>, isFirst: boolean): number {
-	const sampleMaxLength = values
-		.slice(0, COLUMN_WIDTH_SAMPLE_SIZE)
-		.reduce((max, v) => Math.max(max, v.length), header.length)
+	let sampleMaxLength = header.length
+	for (const v of values.slice(0, COLUMN_WIDTH_SAMPLE_SIZE)) sampleMaxLength = Math.max(sampleMaxLength, v.length)
 	if (kind === 'date') return downloadPreviewHasTime(header, values) ? (isFirst ? 240 : 220) : isFirst ? 200 : 160
 	if (kind === 'currency' || kind === 'number' || kind === 'percent') return isFirst ? 200 : 140
 	const estimated = Math.max(140, Math.min(300, sampleMaxLength * 8 + 24))
@@ -770,17 +769,17 @@ export function ChartDatasetModal({
 
 			const ready: Array<{ label: string; value: string; csvText: string }> = []
 			const failed: Array<ParamOption> = []
-			csvQueries.forEach((query, i) => {
+			for (const [i, query] of csvQueries.entries()) {
 				const p = selectedParams[i]
-				if (!p) return
+				if (!p) continue
 				const data = query.data as unknown
 				if (typeof data === 'string') {
 					ready.push({ label: p.label, value: p.value, csvText: data })
-					return
+					continue
 				}
 				const err = (query as { error?: unknown }).error
 				if (err) failed.push(p)
-			})
+			}
 			if (ready.length === 0) {
 				toast.error('No data available to download')
 				return

@@ -174,16 +174,13 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 }
 
 function BillingTotals({ subscriptions }: { subscriptions: Array<TeamSubscription> }) {
-	const totals = subscriptions.reduce(
-		(acc, sub) => {
-			if (!isRenewingSub(sub)) return acc
-			const amount = getUnitPrice(sub.type, sub.billingInterval) * sub.seats.seatCount
-			if (sub.billingInterval === 'year') acc.yearly += amount
-			else acc.monthly += amount
-			return acc
-		},
-		{ monthly: 0, yearly: 0 }
-	)
+	const totals = { monthly: 0, yearly: 0 }
+	for (const sub of subscriptions) {
+		if (!isRenewingSub(sub)) continue
+		const amount = getUnitPrice(sub.type, sub.billingInterval) * sub.seats.seatCount
+		if (sub.billingInterval === 'year') totals.yearly += amount
+		else totals.monthly += amount
+	}
 
 	if (totals.monthly === 0 && totals.yearly === 0) return null
 

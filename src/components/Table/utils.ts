@@ -119,16 +119,14 @@ const getLeafColumnIds = (columns: Array<ColumnTableColumn>) => {
 }
 
 export function splitArrayByFalsyValues<T extends object, K extends keyof T>(data: Array<T>, column: K) {
-	return data.reduce(
-		(acc, curr) => {
-			const value = curr[column]
-			if (!value && value !== 0) {
-				acc[1].push(curr)
-			} else acc[0].push(curr)
-			return acc
-		},
-		[[], []] as [Array<T>, Array<T>]
-	)
+	const truthy: Array<T> = []
+	const falsy: Array<T> = []
+	for (const curr of data) {
+		const value = curr[column]
+		if (!value && value !== 0) falsy.push(curr)
+		else truthy.push(curr)
+	}
+	return [truthy, falsy] as [Array<T>, Array<T>]
 }
 
 function applyColumnOrder({ instance, order }: { instance: ColumnTableInstance; order: ColumnOrderState | null }) {

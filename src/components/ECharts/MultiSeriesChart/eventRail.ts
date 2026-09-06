@@ -229,8 +229,7 @@ function readTimestampEndpoint(value: unknown) {
 export function getSeriesTimeBounds(data: ReadonlyArray<readonly [number | string, unknown] | unknown>) {
 	let min: number | undefined
 	let max: number | undefined
-	for (let index = 0; index < data.length; index++) {
-		const point = data[index]
+	for (const point of data) {
 		if (!Array.isArray(point)) continue
 		min = readTimestampEndpoint(point[0])
 		if (min !== undefined) break
@@ -247,8 +246,8 @@ export function getSeriesTimeBounds(data: ReadonlyArray<readonly [number | strin
 export function getDatasetTimeBounds(source: Array<MultiSeriesChartArrayRow>, timestampIndex: number) {
 	let min: number | undefined
 	let max: number | undefined
-	for (let index = 0; index < source.length; index++) {
-		min = readTimestampEndpoint(source[index]![timestampIndex])
+	for (const row of source) {
+		min = readTimestampEndpoint(row![timestampIndex])
 		if (min !== undefined) break
 	}
 	for (let index = source.length - 1; index >= 0; index--) {

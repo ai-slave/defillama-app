@@ -332,7 +332,7 @@ export const buildBreakdownCharts = (
 	const source: Array<ProtocolTaxonomyChartRow> = []
 	for (const [timestamp, valueByProtocol] of breakdownChartData) {
 		const row: ProtocolTaxonomyChartRow = [normalizeChartTimestamp(timestamp)]
-		for (let index = 0; index < protocolNames.length; index++) row.push(null)
+		for (const _ of protocolNames) row.push(null)
 		for (const protocolName in valueByProtocol) {
 			const columnIndex = columnIndexByProtocol.get(protocolName)
 			if (columnIndex === undefined) continue
@@ -987,13 +987,10 @@ export async function getProtocolTaxonomyPageData(
 			dexVolumeData === null ? null : sumMetricTotals({ rows: childRows, selector: (row) => row.dexVolume })
 		const perpVolume =
 			perpVolumeData === null ? null : sumMetricTotals({ rows: childRows, selector: (row) => row.perpVolume })
-		const openInterest =
-			openInterestData === null
-				? null
-				: childRows.reduce<OpenInterestTotals>(
-						(acc, row) => ({ total24h: (acc.total24h ?? 0) + (row.openInterest?.total24h ?? 0) }),
-						{ total24h: 0 }
-					)
+		let openInterestTotal24h = 0
+		for (const row of childRows) openInterestTotal24h += row.openInterest?.total24h ?? 0
+		const openInterest: OpenInterestTotals | null =
+			openInterestData === null ? null : { total24h: openInterestTotal24h }
 		const optionsPremium =
 			optionsPremiumData === null ? null : sumMetricTotals({ rows: childRows, selector: (row) => row.optionsPremium })
 		const optionsNotional =

@@ -68,7 +68,7 @@ describe('research section engagement', () => {
 		now = 6500
 
 		await act(async () => window.dispatchEvent(new Event('pagehide')))
-		mocks.routerHandlers.get('beforeHistoryChange')?.forEach((handler) => handler())
+		for (const handler of mocks.routerHandlers.get('beforeHistoryChange') ?? []) handler()
 
 		expect(mocks.trackUmamiEvent).toHaveBeenCalledOnce()
 		expect(mocks.trackUmamiEvent).toHaveBeenCalledWith('research-section-engagement', {
@@ -105,7 +105,7 @@ describe('research section engagement', () => {
 		expect([...mocks.routerHandlers.keys()]).toEqual(['beforeHistoryChange'])
 
 		now = 5000
-		mocks.routerHandlers.get('beforeHistoryChange')?.forEach((handler) => handler())
+		for (const handler of mocks.routerHandlers.get('beforeHistoryChange') ?? []) handler()
 		expect(mocks.trackUmamiEvent).toHaveBeenCalledOnce()
 		expect(mocks.trackUmamiEvent).toHaveBeenCalledWith('research-section-engagement', {
 			page_type: 'research',

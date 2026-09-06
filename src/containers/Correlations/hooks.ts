@@ -21,14 +21,10 @@ export const usePriceCharts = (geckoIds: Array<string>) => {
 	return {
 		data: Object.fromEntries(
 			data.map((res, i) => {
-				const points: Array<PricePoint> =
-					res.data?.data?.prices?.reduce<Array<PricePoint>>((acc, point) => {
-						const [timestamp, price] = point
-						if (Number.isFinite(timestamp) && Number.isFinite(price)) {
-							acc.push({ timestamp, price })
-						}
-						return acc
-					}, []) ?? []
+				const points: Array<PricePoint> = []
+				for (const [timestamp, price] of res.data?.data?.prices ?? []) {
+					if (Number.isFinite(timestamp) && Number.isFinite(price)) points.push({ timestamp, price })
+				}
 
 				return [geckoIds[i], points]
 			})

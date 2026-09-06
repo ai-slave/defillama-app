@@ -17,10 +17,9 @@ const ALL_COLUMN_IDS = ['name', ...UNIFIED_TABLE_COLUMN_DICTIONARY.map((column) 
 const createVisibility = (columns: Array<string>): VisibilityState => {
 	const visible = new Set(columns)
 	visible.add('name')
-	return ALL_COLUMN_IDS.reduce<VisibilityState>((acc, id) => {
-		acc[id] = visible.has(id)
-		return acc
-	}, {})
+	const visibility: VisibilityState = {}
+	for (const id of ALL_COLUMN_IDS) visibility[id] = visible.has(id)
+	return visibility
 }
 
 export const DEFAULT_UNIFIED_TABLE_PRESET: UnifiedTablePreset = {

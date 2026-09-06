@@ -110,9 +110,9 @@ function makeProps(overrides: Record<string, unknown> = {}) {
 	return {
 		...baseProps,
 		...overrides,
-		options: { ...baseProps.options, ...((overrides.options as Record<string, unknown> | undefined) ?? {}) },
-		selections: { ...baseProps.selections, ...((overrides.selections as Record<string, unknown> | undefined) ?? {}) },
-		modes: { ...baseProps.modes, ...((overrides.modes as Record<string, unknown> | undefined) ?? {}) }
+		options: { ...baseProps.options, ...(overrides.options as Record<string, unknown> | undefined) },
+		selections: { ...baseProps.selections, ...(overrides.selections as Record<string, unknown> | undefined) },
+		modes: { ...baseProps.modes, ...(overrides.modes as Record<string, unknown> | undefined) }
 	}
 }
 

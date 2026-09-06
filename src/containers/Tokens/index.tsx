@@ -777,10 +777,10 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 		}
 		return next
 	}, [columnVisibility, filters])
-	const visibleColumnsWidth = HIDEABLE_COLUMNS.reduce(
-		(sum, column) => (effectiveColumnVisibility[column.id] === false ? sum : sum + column.width),
-		rankColumnWidth + NAME_COLUMN_WIDTH
-	)
+	let visibleColumnsWidth = rankColumnWidth + NAME_COLUMN_WIDTH
+	for (const column of HIDEABLE_COLUMNS) {
+		if (effectiveColumnVisibility[column.id] !== false) visibleColumnsWidth += column.width
+	}
 	const tableStyle: TokensTableStyle = {
 		'--tokens-rank-column-width': `${rankColumnWidth}px`,
 		'--tokens-table-min-width': `${visibleColumnsWidth}px`

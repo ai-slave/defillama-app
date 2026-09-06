@@ -379,16 +379,18 @@ export function buildHeadline(
 		coverage
 	)
 	const worst = worstPick ? (computed.find((s) => s.scenarioId === worstPick.scenarioId) ?? null) : null
-	const noEscape = computed
-		.filter((s) => s.actingWindow.kind === 'no-escape')
-		.reduce<ScenarioVM | null>((best, s) => (!best || s.lossMaxUsd > best.lossMaxUsd ? s : best), null)
+	let noEscape: ScenarioVM | null = null
+	for (const s of computed) {
+		if (s.actingWindow.kind === 'no-escape' && (!noEscape || s.lossMaxUsd > noEscape.lossMaxUsd)) noEscape = s
+	}
 
 	// Headline coverage is scoped to the worst-case scenario: a layer only counts when the
 	// worst case is among the scenarios it backs.
 	const worstScenarioId = worst?.scenarioId ?? null
 	const coverageTotalUsd = applicableCoverageUsd(coverage, worstScenarioId)
 	const worstCaseMaxUsd = worst?.lossMaxUsd ?? 0
-	const aggregateTrustUsd = collateral.reduce((a, c) => Math.max(a, c.aggregateTrustUsd), 0)
+	let aggregateTrustUsd = 0
+	for (const c of collateral) aggregateTrustUsd = Math.max(aggregateTrustUsd, c.aggregateTrustUsd)
 
 	return {
 		worstCaseMaxUsd,
@@ -406,15 +408,18 @@ export function buildHeadline(
 
 function buildExitReadiness(vault: VaultRiskFixture, scenarios: Array<ScenarioVM>): ExitReadinessVM {
 	const computed = scenarios.filter((s) => s.status === 'computed')
-	const worstNoEscape = computed
-		.filter((s) => s.actingWindow.kind === 'no-escape')
-		.reduce<ScenarioVM | null>((best, s) => (!best || s.lossMaxUsd > best.lossMaxUsd ? s : best), null)
-	const bestExit = scenarios
-		.filter((s) => s.actingWindow.kind === 'window')
-		.reduce<ScenarioVM | null>(
-			(best, s) => (!best || s.actingWindow.maxSec > best.actingWindow.maxSec ? s : best),
-			null
-		)
+	let worstNoEscape: ScenarioVM | null = null
+	for (const s of computed) {
+		if (s.actingWindow.kind === 'no-escape' && (!worstNoEscape || s.lossMaxUsd > worstNoEscape.lossMaxUsd)) {
+			worstNoEscape = s
+		}
+	}
+	let bestExit: ScenarioVM | null = null
+	for (const s of scenarios) {
+		if (s.actingWindow.kind === 'window' && (!bestExit || s.actingWindow.maxSec > bestExit.actingWindow.maxSec)) {
+			bestExit = s
+		}
+	}
 	return {
 		poolType: vault.pool_type,
 		availableLiquidityUsd: vault.available_liquidity_usd,

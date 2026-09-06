@@ -251,13 +251,13 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		if (result.kind !== 'treemap') return
 		expect(result.treeData).toHaveLength(22)
 		expect(result.treeData.some((node) => node.name === 'Others')).toBe(false)
-		expect(
-			result.treeData.reduce((total, node) => {
-				const share = node.value[1]
-				if (share == null) throw new Error(`Missing treemap share for ${node.name}`)
-				return total + share
-			}, 0)
-		).toBeCloseTo(100, 1)
+		let totalShare = 0
+		for (const node of result.treeData) {
+			const share = node.value[1]
+			if (share == null) throw new Error(`Missing treemap share for ${node.name}`)
+			totalShare += share
+		}
+		expect(totalShare).toBeCloseTo(100, 1)
 	})
 
 	test('selects every source entity by default while rendering top N plus selected-tail Others', () => {

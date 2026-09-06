@@ -197,7 +197,7 @@ const TABLE_TYPE_CARDS: Array<{
 	}
 ]
 
-const RWA_TABLE_TYPES: Array<CombinedTableType> = ['rwa', 'rwa-chains', 'rwa-selected-chain']
+const RWA_TABLE_TYPES = new Set<CombinedTableType>(['rwa', 'rwa-chains', 'rwa-selected-chain'])
 
 const RWA_TABS: Array<{ value: CombinedTableType; label: string }> = [
 	{ value: 'rwa-chains', label: 'By Chain' },
@@ -205,7 +205,7 @@ const RWA_TABS: Array<{ value: CombinedTableType; label: string }> = [
 	{ value: 'rwa-selected-chain', label: 'On Chain' }
 ]
 
-const EQUITIES_TABLE_TYPES: Array<CombinedTableType> = ['equities', 'equities-financials', 'equities-filings']
+const EQUITIES_TABLE_TYPES = new Set<CombinedTableType>(['equities', 'equities-financials', 'equities-filings'])
 
 const EQUITIES_TABS: Array<{ value: CombinedTableType; label: string }> = [
 	{ value: 'equities', label: 'Companies' },
@@ -262,8 +262,8 @@ function TabContent({
 	})
 	const isEditing = Boolean(editItem)
 	const isEditingUnifiedTable = editItem?.kind === 'unified-table'
-	const isRwaType = RWA_TABLE_TYPES.includes(selectedTableType)
-	const isEquitiesType = EQUITIES_TABLE_TYPES.includes(selectedTableType)
+	const isRwaType = RWA_TABLE_TYPES.has(selectedTableType)
+	const isEquitiesType = EQUITIES_TABLE_TYPES.has(selectedTableType)
 	const [showTypeSelector, setShowTypeSelector] = useState(!isEditing && selectedTableType === 'protocols')
 	const [showRwaSelector, setShowRwaSelector] = useState(isEditing && isRwaType)
 	const [showEquitiesSelector, setShowEquitiesSelector] = useState(isEditing && isEquitiesType)
@@ -314,10 +314,8 @@ function TabContent({
 			}
 		}
 		const baseOrder = ['name', ...allColumns.slice(1)]
-		const baseVisibility = allColumns.reduce<VisibilityState>((acc, id) => {
-			acc[id] = id === 'name' || customColumnIds.includes(id)
-			return acc
-		}, {})
+		const baseVisibility: VisibilityState = {}
+		for (const id of allColumns) baseVisibility[id] = id === 'name' || customColumnIds.includes(id)
 		return {
 			order: baseOrder,
 			visibility: baseVisibility,
@@ -671,7 +669,7 @@ function TabContent({
 	}, [])
 
 	if (showRwaSelector) {
-		const activeRwaTab = RWA_TABLE_TYPES.includes(selectedTableType) ? selectedTableType : 'rwa-chains'
+		const activeRwaTab = RWA_TABLE_TYPES.has(selectedTableType) ? selectedTableType : 'rwa-chains'
 
 		return (
 			<div className="flex h-full flex-col gap-4 p-4">
@@ -731,7 +729,7 @@ function TabContent({
 	}
 
 	if (showEquitiesSelector) {
-		const activeEquitiesTab = EQUITIES_TABLE_TYPES.includes(selectedTableType) ? selectedTableType : 'equities'
+		const activeEquitiesTab = EQUITIES_TABLE_TYPES.has(selectedTableType) ? selectedTableType : 'equities'
 		const needsTicker = activeEquitiesTab === 'equities-financials' || activeEquitiesTab === 'equities-filings'
 
 		return (

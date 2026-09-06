@@ -319,17 +319,17 @@ export const ResearchSocialMediaMentions: React.FC<{ mentions?: Array<SocialMent
 	))
 
 	const mobileSlides: Array<React.ReactNode> = []
-	activeBlocks.forEach((block, blockIndex) => {
-		block.forEach((q, qIndex) => {
-			if (!q.quote && !q.username && !q.x_post_id) return
+	for (const [blockIndex, block] of activeBlocks.entries()) {
+		for (const [qIndex, q] of block.entries()) {
+			if (!q.quote && !q.username && !q.x_post_id) continue
 			const variant: 'primary' | 'secondary' = qIndex === 2 ? 'secondary' : 'primary'
 			mobileSlides.push(
 				<div key={`mobile-${blockIndex}-${qIndex}`} className="w-full min-w-0 shrink-0 snap-start px-0">
 					<MobileSlide quote={q} tweetId={q.x_post_id} variant={variant} />
 				</div>
 			)
-		})
-	})
+		}
+	}
 
 	if (isMobile) {
 		return <AutoplayCarousel slides={mobileSlides} containerClassName="snap-x snap-mandatory" showDots />

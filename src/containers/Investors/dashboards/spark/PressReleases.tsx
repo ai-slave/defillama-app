@@ -133,14 +133,14 @@ export default function PressReleases() {
 				const reports: Array<ParagraphPost> = []
 				const releases: Array<ParagraphPost> = []
 
-				posts.forEach((post: ParagraphPost) => {
+				for (const post of posts) {
 					if (isFinancialReport(post)) {
 						reports.push(post)
 					} else if (isWithinLastThreeMonths(post.publishedAt)) {
 						// Only include press releases from the last 3 months
 						releases.push(post)
 					}
-				})
+				}
 
 				setFinancialReports(reports)
 				setPressReleases(releases)

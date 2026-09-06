@@ -71,15 +71,15 @@ interface IProps extends IAdapterByChainPageData {
 	defaultSorting?: SortingState
 }
 
-const SUPPORTED_OLD_VIEWS: Array<TPageType> = [
+const SUPPORTED_OLD_VIEWS = new Set<TPageType>([
 	'DEX Volume',
 	'Perp Volume',
 	'Options Premium Volume',
 	'Options Notional Volume',
 	'DEX Aggregator Volume',
 	'Bridge Aggregator Volume'
-]
-const FEES_CHART_PAGE_TYPES: Array<TPageType> = ['Fees', 'Revenue', 'Holders Revenue']
+])
+const FEES_CHART_PAGE_TYPES = new Set<TPageType>(['Fees', 'Revenue', 'Holders Revenue'])
 
 const DEFAULT_SORTING: SortingState = [{ desc: true, id: 'total24h' }]
 
@@ -233,7 +233,7 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 	for (const col of instance.getAllLeafColumns()) {
 		if (col.getIsVisible()) selectedColumns.push(col.id)
 	}
-	const showChartPanel = props.adapterType !== 'fees' || FEES_CHART_PAGE_TYPES.includes(props.type)
+	const showChartPanel = props.adapterType !== 'fees' || FEES_CHART_PAGE_TYPES.has(props.type)
 
 	return (
 		<>
@@ -373,7 +373,7 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 							size="md"
 						/>
 					) : null}
-					{SUPPORTED_OLD_VIEWS.includes(props.type) ? <FullOldViewButton /> : null}
+					{SUPPORTED_OLD_VIEWS.has(props.type) ? <FullOldViewButton /> : null}
 					<CSVDownloadButton
 						prepareCsv={() => prepareTableCsv({ instance, filename: `${props.type}-${props.chain}-protocols` })}
 						smol

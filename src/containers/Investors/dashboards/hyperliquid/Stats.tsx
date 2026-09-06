@@ -158,25 +158,17 @@ function PriceTickerTape({ coins }: { coins: Array<string> }) {
 						minimumCompactValue: 1_000_000,
 						compactSuffix: 'lowercase'
 					}) as string
-					pEls.forEach((el) => {
-						el.textContent = formatted
-					})
+					for (const el of pEls) el.textContent = formatted
 
-					if (prev[coin] && mids[coin] !== prev[coin]) {
-						const flashColor = price > parseFloat(prev[coin]) ? '#4ade80' : '#f87171'
-						const iEls = itemEls.current.get(coin)
-						if (iEls) {
-							iEls.forEach((el) => {
-								el.style.color = flashColor
-							})
-							clearTimeout(flashTimers.current[coin])
-							flashTimers.current[coin] = setTimeout(() => {
-								iEls.forEach((el) => {
-									el.style.color = ''
-								})
-							}, 700)
-						}
-					}
+					if (!prev[coin] || mids[coin] === prev[coin]) continue
+					const flashColor = price > parseFloat(prev[coin]) ? '#4ade80' : '#f87171'
+					const iEls = itemEls.current.get(coin)
+					if (!iEls) continue
+					for (const el of iEls) el.style.color = flashColor
+					clearTimeout(flashTimers.current[coin])
+					flashTimers.current[coin] = setTimeout(() => {
+						for (const el of iEls) el.style.color = ''
+					}, 700)
 				}
 				prevPrices.current = mids
 			}

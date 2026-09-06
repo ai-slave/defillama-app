@@ -194,10 +194,10 @@ export const formatBridgesData = ({
 		}
 		return keepNeededProperties(bridge, bridgeProps)
 	})
-	const messagingProtocols = ['layerzero', 'wormhole', 'circle', 'hyperlane', 'ccip', 'hyperbridge']
-	const regularBridges = filteredBridges.filter((bridge) => !messagingProtocols.includes(bridge.name?.toLowerCase()))
+	const messagingProtocols = new Set(['layerzero', 'wormhole', 'circle', 'hyperlane', 'ccip', 'hyperbridge'])
+	const regularBridges = filteredBridges.filter((bridge) => !messagingProtocols.has(bridge.name?.toLowerCase() ?? ''))
 	const messagingProtocolsBridges = filteredBridges.filter((bridge) =>
-		messagingProtocols.includes(bridge.name?.toLowerCase())
+		messagingProtocols.has(bridge.name?.toLowerCase() ?? '')
 	)
 
 	const sortedRegularBridges = regularBridges.sort((a, b) => (b.lastDailyVolume ?? 0) - (a.lastDailyVolume ?? 0))

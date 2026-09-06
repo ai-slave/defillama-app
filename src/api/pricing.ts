@@ -115,11 +115,12 @@ export async function fetchCoinPrices(
 		Object.assign(mergedPrices, batchResult)
 	}
 
-	return coins.reduce<Record<string, PriceObject>>((acc, coin) => {
+	const prices: Record<string, PriceObject> = {}
+	for (const coin of coins) {
 		const val = mergedPrices[coin]
-		if (val !== undefined) acc[coin] = val
-		return acc
-	}, {})
+		if (val !== undefined) prices[coin] = val
+	}
+	return prices
 }
 
 /**

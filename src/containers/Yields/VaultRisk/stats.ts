@@ -43,10 +43,18 @@ export interface WorstCandidate {
 // Worst = biggest loss; ties break toward no-escape, then toward the least-covered
 // scenario, so the headline never borrows a backstop from a luckier sibling.
 export function pickWorst<T extends WorstCandidate>(items: Array<T>, coverage: Array<CoverageVM>): T | null {
-	return items.reduce<T | null>((best, s) => {
-		if (!best || s.lossMaxUsd > best.lossMaxUsd) return s
-		if (s.lossMaxUsd < best.lossMaxUsd) return best
-		if (s.noEscape !== best.noEscape) return s.noEscape ? s : best
-		return applicableCoverageUsd(coverage, s.scenarioId) < applicableCoverageUsd(coverage, best.scenarioId) ? s : best
-	}, null)
+	let best: T | null = null
+	for (const s of items) {
+		if (!best || s.lossMaxUsd > best.lossMaxUsd) {
+			best = s
+			continue
+		}
+		if (s.lossMaxUsd < best.lossMaxUsd) continue
+		if (s.noEscape !== best.noEscape) {
+			if (s.noEscape) best = s
+			continue
+		}
+		if (applicableCoverageUsd(coverage, s.scenarioId) < applicableCoverageUsd(coverage, best.scenarioId)) best = s
+	}
+	return best
 }

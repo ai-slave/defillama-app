@@ -275,16 +275,12 @@ export function AgenticSidebar({
 	}, [filteredSessions])
 
 	const groupedSessions = useMemo(() => {
-		return Object.entries(
-			unpinnedSessions.reduce((acc: Record<string, Array<ChatSession>>, session) => {
-				const groupName = getGroupName(session.lastActivity, nowMs)
-				const group = acc[groupName] ?? (acc[groupName] = [])
-				group.push(session)
-				return acc
-			}, {})
-		).sort((a, b) => Date.parse(b[1][0].lastActivity) - Date.parse(a[1][0].lastActivity)) as Array<
-			[string, Array<ChatSession>]
-		>
+		const groups: Record<string, Array<ChatSession>> = {}
+		for (const session of unpinnedSessions) {
+			const group = (groups[getGroupName(session.lastActivity, nowMs)] ??= [])
+			group.push(session)
+		}
+		return Object.entries(groups).sort((a, b) => Date.parse(b[1][0].lastActivity) - Date.parse(a[1][0].lastActivity))
 	}, [unpinnedSessions, nowMs])
 
 	const virtualItems = useMemo(() => {

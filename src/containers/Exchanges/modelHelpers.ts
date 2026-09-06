@@ -247,10 +247,10 @@ function brandRow(
 	//
 	// Quality rank: the brand row wears the family's BEST rank (usually the parent's,
 	// but a family is as strong as its strongest member); each child row keeps its own.
-	const bestQuality = [parent, ...children].reduce<ExchangeDirectoryRowModel['quality']>(
-		(best, row) => (row.quality && (!best || row.quality.score > best.score) ? row.quality : best),
-		null
-	)
+	let bestQuality: ExchangeDirectoryRowModel['quality'] = null
+	for (const row of [parent, ...children]) {
+		if (row.quality && (!bestQuality || row.quality.score > bestQuality.score)) bestQuality = row.quality
+	}
 	return {
 		...parent,
 		quality: bestQuality,

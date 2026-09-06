@@ -132,7 +132,8 @@ export async function renderTableImage(input: TableImageInput): Promise<Blob> {
 
 	const palette = input.isDark ? DARK : LIGHT
 	const scale = input.scale ?? 2
-	const columnCount = rows.reduce((max, row) => Math.max(max, row.length), 0)
+	let columnCount = 0
+	for (const row of rows) columnCount = Math.max(columnCount, row.length)
 	const normalized = rows.map((row) => Array.from({ length: columnCount }, (_, i) => row[i] ?? ''))
 
 	const measureCanvas = document.createElement('canvas')
@@ -149,7 +150,8 @@ export async function renderTableImage(input: TableImageInput): Promise<Blob> {
 		})
 	)
 	const rowHeights = wrapped.map((row) => {
-		const lines = row.reduce((max, cell) => Math.max(max, cell.length), 1)
+		let lines = 1
+		for (const cell of row) lines = Math.max(lines, cell.length)
 		return lines * LINE_HEIGHT + CELL_PAD_Y * 2
 	})
 

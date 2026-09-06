@@ -78,7 +78,10 @@ function realisticWorst(
 	const inBand = (usd: number) => usd > supplyUsd * 0.01 && usd < ceil * 0.95
 	const anchors = (stress?.anchors ?? []).filter((a) => inBand(a.bad_debt_usd))
 	if (anchors.length > 0) {
-		const deepest = anchors.reduce((best, a) => (a.bad_debt_usd > best.bad_debt_usd ? a : best))
+		let deepest = anchors[0]!
+		for (const a of anchors) {
+			if (a.bad_debt_usd > deepest.bad_debt_usd) deepest = a
+		}
 		return {
 			lossUsd: deepest.bad_debt_usd,
 			condition: `if collateral falls ${deepest.drop_pct}%`

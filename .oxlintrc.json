@@ -63,7 +63,11 @@
 		"typescript/require-await": "warn",
 		// --- Allocation and iteration: one pass per dataset, loops over chained transforms ---
 		"oxc/no-accumulating-spread": "error",
-		"oxc/no-map-spread": "error",
+		// Measured in Phase 2c over 128 sites: about half map React props, state, module constants or test
+		// fixtures, where the copy is required; most of the rest map cached API responses. The rule's fix
+		// (mutate the source) is only safe for arrays the function itself created, so it is off; the
+		// "one pass per dataset" guidance stays a review concern.
+		"oxc/no-map-spread": "off",
 		"unicorn/catch-error-name": "error",
 		"unicorn/consistent-function-scoping": "error",
 		"unicorn/explicit-length-check": "error",

@@ -216,7 +216,7 @@ export function UtrDocsDrawer({
 				},
 				{ root, rootMargin: '0px 0px -75% 0px', threshold: 0 }
 			)
-			targets.forEach((target) => observer?.observe(target))
+			for (const target of targets) observer?.observe(target)
 		})
 		return () => {
 			cancelAnimationFrame(raf)

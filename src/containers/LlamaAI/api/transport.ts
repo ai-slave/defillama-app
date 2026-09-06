@@ -41,9 +41,7 @@ function getErrorMessage(body: unknown, fallback: string) {
 
 function headersToRecord(headers: Headers) {
 	const record: Record<string, string> = {}
-	headers.forEach((value, key) => {
-		record[key] = value
-	})
+	for (const [key, value] of headers) record[key] = value
 	return record
 }
 

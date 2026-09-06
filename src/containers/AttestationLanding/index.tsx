@@ -285,7 +285,9 @@ function useVerificationRun() {
 		}
 
 		const timers = verificationStageDelays.map((delay, index) => window.setTimeout(() => setStage(index + 1), delay))
-		return () => timers.forEach((timer) => window.clearTimeout(timer))
+		return () => {
+			for (const timer of timers) window.clearTimeout(timer)
+		}
 	}, [run, started])
 
 	return {

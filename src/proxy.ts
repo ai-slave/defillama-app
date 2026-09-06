@@ -19,11 +19,13 @@ const ALLOWED_METHODS = 'GET,POST,PUT,PATCH,DELETE,OPTIONS'
 const DEFAULT_ALLOWED_HEADERS = 'Content-Type,Authorization,X-Requested-With'
 const MAX_AGE_SECONDS = '86400'
 const rawAllowedOrigins = process.env.CORS_ALLOWED_ORIGINS ?? ''
-const allowedOrigins = rawAllowedOrigins
-	.split(',')
-	.map((origin) => origin.trim())
-	.filter(Boolean)
-const allowAnyOrigin = allowedOrigins.includes('*')
+const allowedOrigins = new Set(
+	rawAllowedOrigins
+		.split(',')
+		.map((origin) => origin.trim())
+		.filter(Boolean)
+)
+const allowAnyOrigin = allowedOrigins.has('*')
 
 function appendVaryHeader(response: NextResponse, value: string) {
 	const currentValue = response.headers.get('Vary')
@@ -51,7 +53,7 @@ function resolveAllowedOrigin(origin: string | null, requestOrigin: string): str
 		return origin
 	}
 
-	return allowedOrigins.includes(origin) ? origin : null
+	return allowedOrigins.has(origin) ? origin : null
 }
 
 function appendPreflightVaryHeaders(response: NextResponse) {

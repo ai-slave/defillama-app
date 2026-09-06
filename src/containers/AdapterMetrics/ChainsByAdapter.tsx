@@ -47,7 +47,7 @@ interface IProps extends IChainsByAdapterPageData {
 	type: TPageType
 }
 
-const FEES_CHART_PAGE_TYPES: Array<TPageType> = ['Holders Revenue', 'App Fees', 'App Revenue']
+const FEES_CHART_PAGE_TYPES = new Set<TPageType>(['Holders Revenue', 'App Fees', 'App Revenue'])
 
 export function ChainsByAdapter(props: IProps) {
 	const [sorting, setSorting] = useState<SortingState>([{ desc: true, id: 'total24h' }])
@@ -80,7 +80,7 @@ export function ChainsByAdapter(props: IProps) {
 	useSortColumnOrders({
 		instance
 	})
-	const showChartPanel = props.adapterType !== 'fees' || FEES_CHART_PAGE_TYPES.includes(props.type)
+	const showChartPanel = props.adapterType !== 'fees' || FEES_CHART_PAGE_TYPES.has(props.type)
 
 	return (
 		<>

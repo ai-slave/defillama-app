@@ -159,8 +159,7 @@ export function buildNFTMarketplaceChartPresentation(
 		dimensions: ['timestamp', ...visibleSeries],
 		source: dataset.source.map((input, rowIndex) => {
 			const row: NFTMarketplaceDatasetRow = [input[0]]
-			for (let index = 0; index < explicitSeries.length; index++) {
-				const name = explicitSeries[index]!
+			for (const name of explicitSeries) {
 				const inputIndex = canonicalIndex.get(name)
 				if (inputIndex === undefined) throw new Error(`Missing NFT marketplace dimension: ${name}`)
 				row.push(input[inputIndex] ?? 0)

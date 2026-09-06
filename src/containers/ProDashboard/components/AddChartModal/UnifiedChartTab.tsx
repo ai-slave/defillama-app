@@ -216,9 +216,17 @@ export function UnifiedChartTab({
 	onSelectedRwaAssetNameChange,
 	onSelectedRwaAssetMetricsChange
 }: UnifiedChartTabPropsExtended) {
-	const specialtyTabs = ['yields', 'stablecoins', 'advanced-tvl', 'borrowed', 'income-statement', 'unlocks', 'rwa']
+	const specialtyTabs = new Set([
+		'yields',
+		'stablecoins',
+		'advanced-tvl',
+		'borrowed',
+		'income-statement',
+		'unlocks',
+		'rwa'
+	])
 	const [viewMode, setViewMode] = useState<ManualChartViewMode>(() =>
-		specialtyTabs.includes(selectedChartTab) || composerItems.length > 0 ? 'form' : 'cards'
+		specialtyTabs.has(selectedChartTab) || composerItems.length > 0 ? 'form' : 'cards'
 	)
 
 	const { loading: metaLoading, availableProtocolChartTypes, availableChainChartTypes } = useAppMetadata()

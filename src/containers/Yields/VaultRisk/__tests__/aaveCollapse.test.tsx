@@ -123,7 +123,8 @@ function collapseAave(vault: VaultRiskFixture): VaultRiskFixture {
 		const computed = rows.filter((r) => r.loss.status === 'computed')
 		const sumMax = computed.reduce((a, r) => a + (r.loss.max_usd || 0), 0)
 		const sumMin = computed.reduce((a, r) => a + (r.loss.min_usd || 0), 0)
-		const maxSingle = computed.reduce((a, r) => Math.max(a, r.loss.max_usd || 0), 0)
+		let maxSingle = 0
+		for (const r of computed) maxSingle = Math.max(maxSingle, r.loss.max_usd || 0)
 		const { asset: _drop, ...head } = rows[0]!
 		aggregated.push({
 			...head,

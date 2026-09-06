@@ -911,9 +911,7 @@ export function mapExchangeRanking(
 		})
 	}
 	rows.sort((a, b) => b.score - a.score || a.rankInKind - b.rankInKind)
-	rows.forEach((row, index) => {
-		row.overallRank = index + 1
-	})
+	for (const [index, row] of rows.entries()) row.overallRank = index + 1
 	const insufficient: ExchangeRankingModel['insufficient'] = []
 	for (const slug of ranks.insufficient_data ?? []) {
 		const venue = rowsBySlug.get(slug)

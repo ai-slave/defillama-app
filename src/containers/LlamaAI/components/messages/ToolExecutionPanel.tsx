@@ -45,10 +45,11 @@ export function ToolExecutionPanel({
 	const totalTime = toolExecutions.reduce((sum, execution) => sum + execution.executionTimeMs, 0)
 	const successCount = toolExecutions.filter((execution) => execution.success).length
 	const failedCount = toolExecutions.length - successCount
-	const totalCost = toolExecutions.reduce((sum, execution) => {
+	let totalCost = 0
+	for (const execution of toolExecutions) {
 		const cost = execution.costUsd ? parseFloat(execution.costUsd) : NaN
-		return Number.isFinite(cost) ? sum + cost : sum
-	}, 0)
+		if (Number.isFinite(cost)) totalCost += cost
+	}
 	const detailsRef = useRef<HTMLDetailsElement>(null)
 	const contentRef = useRef<HTMLDivElement>(null)
 	const getRowKey = createOccurrenceKeyFactory()

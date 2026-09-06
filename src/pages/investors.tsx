@@ -250,7 +250,7 @@ function useStampCells(): Array<StampCell> {
 		setCells(delays.map((delay) => ({ ...randomStampPosition(), delay: `${delay / 1000}s` })))
 
 		const timers: Array<ReturnType<typeof setTimeout>> = []
-		delays.forEach((delay, i) => {
+		for (const [i, delay] of delays.entries()) {
 			const moveCell = () =>
 				setCells((prev) => prev.map((cell, j) => (j === i ? { ...cell, ...randomStampPosition() } : cell)))
 			timers.push(
@@ -262,8 +262,10 @@ function useStampCells(): Array<StampCell> {
 					delay + STAMP_CYCLE_MS * 0.45
 				)
 			)
-		})
-		return () => timers.forEach(clearTimeout)
+		}
+		return () => {
+			for (const timer of timers) clearTimeout(timer)
+		}
 	}, [])
 
 	return cells

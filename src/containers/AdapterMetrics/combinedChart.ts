@@ -87,7 +87,7 @@ export function buildAdapterByChainCombinedChartPresentation({
 
 			if (!bucketRow) {
 				bucketRow = [bucketTimestamp]
-				for (let index = 0; index < seriesDefinitions.length; index++) bucketRow.push(null)
+				for (const _ of seriesDefinitions) bucketRow.push(null)
 				rowsByTimestamp.set(bucketTimestamp, bucketRow)
 			}
 

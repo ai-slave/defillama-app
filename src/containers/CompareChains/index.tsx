@@ -431,15 +431,14 @@ function useChainsChartFilterState() {
 			(value): value is string => typeof value === 'string'
 		)
 		const selectedSet = new Set(valuesArray)
+		const chartFlags: Record<string, string> = {}
+		for (const chart of supportedCharts) chartFlags[chart.key] = selectedSet.has(chart.key) ? 'true' : 'false'
 
 		void router.push(
 			{
 				query: {
 					chains: router.query.chains,
-					...supportedCharts.reduce<Record<string, string>>((acc, chart) => {
-						acc[chart.key] = selectedSet.has(chart.key) ? 'true' : 'false'
-						return acc
-					}, {})
+					...chartFlags
 				}
 			},
 			undefined,

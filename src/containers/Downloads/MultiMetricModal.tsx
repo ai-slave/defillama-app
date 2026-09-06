@@ -307,19 +307,19 @@ export function MultiMetricModal({
 			if (!param) return
 			const readyWithSlug: Array<CsvItem & { slug: string }> = []
 			const failed: Array<{ slug: string; name: string }> = []
-			csvQueries.forEach((query, i) => {
+			for (const [i, query] of csvQueries.entries()) {
 				const slug = selectedMetrics[i]
-				if (!slug) return
+				if (!slug) continue
 				const dataset = chartDatasetsBySlug.get(slug)
-				if (!dataset) return
+				if (!dataset) continue
 				const data = query.data as unknown
 				if (typeof data === 'string') {
 					readyWithSlug.push({ label: dataset.name, value: shortMetricName(dataset), csvText: data, slug })
-					return
+					continue
 				}
 				const err = (query as { error?: unknown }).error
 				if (err) failed.push({ slug, name: dataset.name })
-			})
+			}
 			if (readyWithSlug.length === 0) {
 				toast.error('No data ready to download')
 				return

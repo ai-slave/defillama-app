@@ -196,12 +196,7 @@ export function decodeDownloadConfig(
 		const rl = firstStr(query.rl)
 		const parsedSort = sort ? decodeSort(sort) : null
 		const exclude =
-			excl && excl.length > 0
-				? splitEscaped(excl).reduce<Record<string, boolean>>((acc, key) => {
-						acc[key] = true
-						return acc
-					}, {})
-				: undefined
+			excl && excl.length > 0 ? Object.fromEntries(splitEscaped(excl).map((key) => [key, true])) : undefined
 		const rowLimit = rl ? Number.parseInt(rl, 10) : undefined
 		const config: DatasetInput = {
 			kind: 'dataset',

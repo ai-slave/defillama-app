@@ -65,8 +65,8 @@ export function NotebookView({
 
 	const cellTables = useMemo<Array<CellVirtualTable>>(() => {
 		const out: Array<CellVirtualTable> = []
-		cells.forEach((cell, i) => {
-			if (cell.type !== 'sql') return
+		for (const [i, cell] of cells.entries()) {
+			if (cell.type !== 'sql') continue
 			const name = `cell_${i + 1}`
 			const cols = cell.result?.columns ?? []
 			out.push({
@@ -75,7 +75,7 @@ export function NotebookView({
 				rowCount: cell.result?.rows.length ?? 0,
 				hasRun: !!cell.result
 			})
-		})
+		}
 		return out
 	}, [cells])
 
@@ -106,14 +106,11 @@ export function NotebookView({
 	const hasRunnableSql = runnableSqlCount > 0
 	const hasRunAny = cells.some((c) => c.type === 'sql' && (c.result != null || c.lastRun != null))
 	const promoteRunAll = hasRunnableSql && !hasRunAny
-	const cellNames = useMemo(
-		() =>
-			cells.reduce<Record<string, string>>((acc, c, i) => {
-				acc[c.id] = `cell_${i + 1}`
-				return acc
-			}, {}),
-		[cells]
-	)
+	const cellNames = useMemo(() => {
+		const names: Record<string, string> = {}
+		for (const [i, c] of cells.entries()) names[c.id] = `cell_${i + 1}`
+		return names
+	}, [cells])
 
 	const chartSourcesByCellId = useMemo(() => {
 		const out: Record<string, Array<ChartSourceOption>> = {}

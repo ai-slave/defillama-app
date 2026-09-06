@@ -57,13 +57,9 @@ const CATEGORICAL_VALUE_LABELS: Record<EquityCategoricalFilterField, string> = {
 	industry: 'Industries'
 }
 
-const CATEGORY_LABELS: Record<EquityFilterCategory, string> = EQUITY_FILTER_CATEGORIES.reduce(
-	(acc, category) => {
-		acc[category.key] = category.label
-		return acc
-	},
-	{} as Record<EquityFilterCategory, string>
-)
+const CATEGORY_LABELS = Object.fromEntries(
+	EQUITY_FILTER_CATEGORIES.map((category) => [category.key, category.label])
+) as Record<EquityFilterCategory, string>
 
 function replaceFilter(filters: Array<EquityDraftFilter>, nextFilter: EquityDraftFilter): Array<EquityDraftFilter> {
 	const next = filters.slice()

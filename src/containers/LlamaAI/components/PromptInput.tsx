@@ -23,9 +23,7 @@ const PASTE_TO_FILE_THRESHOLD = 1500
 
 // Browser object URLs are only needed for local previews, so clean them up after use.
 function revokeImageUrls(images: Array<{ url: string }>) {
-	for (let i = 0; i < images.length; i++) {
-		URL.revokeObjectURL(images[i].url)
-	}
+	for (const image of images) URL.revokeObjectURL(image.url)
 }
 
 export type PromptSubmitMode =
@@ -286,14 +284,14 @@ export function PromptInput({
 
 	const prepareImagesForSubmit = useCallback(async (imagesToSend: Array<{ file: File; isPasted?: boolean }>) => {
 		const imagePromises: Array<Promise<{ data: string; mimeType: string; filename: string; isPasted?: boolean }>> = []
-		for (let i = 0; i < imagesToSend.length; i++) {
-			const file = imagesToSend[i].file
+		for (const image of imagesToSend) {
+			const file = image.file
 			imagePromises.push(
 				fileToBase64(file).then((data) => ({
 					data,
 					mimeType: file.type,
 					filename: file.name,
-					...(imagesToSend[i].isPasted ? { isPasted: true } : {})
+					...(image.isPasted ? { isPasted: true } : {})
 				}))
 			)
 		}

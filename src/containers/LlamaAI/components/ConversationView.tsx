@@ -544,7 +544,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 				return
 			}
 
-			const previousMessage = anchoredUserMessages.filter((item) => item.top < upThreshold).at(-1)
+			const previousMessage = anchoredUserMessages.findLast((item) => item.top < upThreshold)
 			const firstMessage = anchoredUserMessages[0]
 			const isAtFirstRenderedMessage =
 				previousMessage?.anchorId === firstMessage.anchorId && firstMessage.top >= containerTop - 8

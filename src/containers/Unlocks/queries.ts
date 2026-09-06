@@ -38,10 +38,7 @@ function buildEmissionsDataset(chartData: Array<EmissionsChartRow>, stacks: Arra
 	const source: EmissionsDataset['source'] = []
 	for (const input of chartData) {
 		const row: EmissionsDataset['source'][number] = [input.timestamp]
-		for (let stackIndex = 0; stackIndex < stacks.length; stackIndex++) {
-			const stack = stacks[stackIndex]!
-			row.push(input[stack] ?? null)
-		}
+		for (const stack of stacks) row.push(input[stack] ?? null)
 		source.push(row)
 	}
 	return {
@@ -599,10 +596,7 @@ export async function getUnlocksCalendarStaticPropsData(): Promise<{
 			for (const event of dailyData.events) windowEvents.push({ date: dateStr, event })
 		}
 	}
-	for (let windowIndex = 0; windowIndex < listWindowEvents.length; windowIndex++) {
-		const events = listWindowEvents[windowIndex]!
-		events.sort((a, b) => a.date.localeCompare(b.date))
-	}
+	for (const events of listWindowEvents) events.sort((a, b) => a.date.localeCompare(b.date))
 
 	// Precompute chart payloads for the current week/month so the client can render MultiSeriesChart
 	// without recomputing on first paint (still falls back to client computation for filtered views).

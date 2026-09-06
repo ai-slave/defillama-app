@@ -493,7 +493,8 @@ export function adaptCartesianChartData(
 			// (interval:'auto'). When crowded, force every label to show and tilt them so all stay
 			// readable, and reserve bottom room so the tilted text isn't clipped.
 			const categoryLabels = categoryOrder.map((c) => String(c))
-			const maxLabelLength = categoryLabels.reduce((m, c) => Math.max(m, c.length), 0)
+			let maxLabelLength = 0
+			for (const c of categoryLabels) maxLabelLength = Math.max(maxLabelLength, c.length)
 			const crowded = categoryLabels.length > 6 || maxLabelLength > 10
 			chartOptions.xAxis = {
 				type: 'category',

@@ -47,7 +47,7 @@ interface ChartStyleEditorProps {
 
 const clone = (config: ChartConfiguration): ChartConfiguration => structuredClone(config)
 
-const LEGEND_TYPES: Array<ChartConfiguration['type']> = ['line', 'area', 'bar', 'combo']
+const LEGEND_TYPES = new Set<ChartConfiguration['type']>(['line', 'area', 'bar', 'combo'])
 
 const toDateInput = (unixSeconds: number): string => {
 	const d = new Date(unixSeconds * 1000)
@@ -281,7 +281,7 @@ export function ChartStyleEditor({
 	const canReorder = !perCategory && (draft.series?.length ?? 0) > 1
 	const hasHallmarks = caps.showHallmarks && (draft.hallmarks?.length ?? 0) > 0
 	const canEditHallmarks = draft.axes?.x?.type === 'time'
-	const canLegend = LEGEND_TYPES.includes(draft.type) && (draft.series?.length ?? 0) > 1
+	const canLegend = LEGEND_TYPES.has(draft.type) && (draft.series?.length ?? 0) > 1
 
 	const problems = useMemo(() => {
 		const out: Array<string> = []

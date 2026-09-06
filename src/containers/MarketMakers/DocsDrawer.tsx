@@ -123,7 +123,7 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 				},
 				{ root, rootMargin: '0px 0px -75% 0px', threshold: 0 }
 			)
-			sections.forEach((section) => observer?.observe(section))
+			for (const section of sections) observer?.observe(section)
 		})
 		return () => {
 			cancelAnimationFrame(raf)

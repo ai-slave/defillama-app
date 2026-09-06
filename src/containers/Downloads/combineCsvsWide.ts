@@ -30,10 +30,9 @@ export function combineCsvsWide(items: Array<CsvItem>, range?: DateRangeConfig |
 		const dateIndex = headers.indexOf('date')
 		const nonDateIndices: Array<number> = []
 		const outputHeaders: Array<string> = []
-		headers.forEach((_, index) => {
-			if (index === dateIndex) return
-			nonDateIndices.push(index)
-		})
+		for (let index = 0; index < headers.length; index++) {
+			if (index !== dateIndex) nonDateIndices.push(index)
+		}
 		const useBareValue = nonDateIndices.length === 1
 		for (const index of nonDateIndices) {
 			outputHeaders.push(useBareValue ? item.value : `${item.value}_${headers[index]}`)

@@ -123,7 +123,7 @@ export function sumLadders(ladders: Array<ExchangeDepthLadder>): ExchangeDepthLa
 		let bidUsd: number | null = null
 		let askUsd: number | null = null
 		let measured = false
-		ladders.forEach((ladder, ladderIndex) => {
+		for (const [ladderIndex, ladder] of ladders.entries()) {
 			const entry = ladder[index]
 			const last = carried[ladderIndex]
 			if (isMeasured(entry)) {
@@ -132,10 +132,10 @@ export function sumLadders(ladders: Array<ExchangeDepthLadder>): ExchangeDepthLa
 				last.seen = true
 				measured = true
 			}
-			if (!last.seen) return
+			if (!last.seen) continue
 			if (last.bidUsd != null) bidUsd = (bidUsd ?? 0) + last.bidUsd
 			if (last.askUsd != null) askUsd = (askUsd ?? 0) + last.askUsd
-		})
+		}
 		return { band: band.band, bidUsd, askUsd, coverage: measured ? 1 : 0 }
 	})
 }

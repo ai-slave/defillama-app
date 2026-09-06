@@ -602,7 +602,8 @@ const revalidateStablecoinChainsPageData = (
 	{ pageData, latestChainTimestamps }: StablecoinChainsPageCacheEntry,
 	currentTimeMs = Date.now()
 ): PeggedChainsPageData => {
-	let chainCirculatings = pageData.chainCirculatings
+	// Copy-on-write: the list is cloned once, only if a stale chain needs its deltas cleared.
+	let updated: typeof pageData.chainCirculatings | null = null
 	for (const [index, chain] of pageData.chainCirculatings.entries()) {
 		const timestamp = latestChainTimestamps[chain.name]
 		if (timestamp == null || isStablecoinTimestampFresh(timestamp, currentTimeMs)) continue
@@ -616,8 +617,8 @@ const revalidateStablecoinChainsPageData = (
 		) {
 			continue
 		}
-		if (chainCirculatings === pageData.chainCirculatings) chainCirculatings = [...chainCirculatings]
-		chainCirculatings[index] = {
+		if (!updated) updated = pageData.chainCirculatings.slice()
+		updated[index] = {
 			...chain,
 			mcapPrevDay: null,
 			mcapPrevWeek: null,
@@ -627,6 +628,7 @@ const revalidateStablecoinChainsPageData = (
 			change_1m: null
 		}
 	}
+	const chainCirculatings = updated ?? pageData.chainCirculatings
 
 	const aggregateTimestamp = pageData.dataTimestamp
 	const isAggregateStale = aggregateTimestamp != null && !isStablecoinTimestampFresh(aggregateTimestamp, currentTimeMs)

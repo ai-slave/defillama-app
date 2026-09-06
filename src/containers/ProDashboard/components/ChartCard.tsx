@@ -47,9 +47,9 @@ interface ChartRendererProps {
 	onChartReady: (instance: echarts.ECharts | null) => void
 }
 
-const userMetricTypes = ['activeUsers', 'newUsers', 'txs']
-const percentMetricTypes = ['medianApy']
-const ratioMetricTypes = ['pfRatio', 'psRatio']
+const userMetricTypes = new Set(['activeUsers', 'newUsers', 'txs'])
+const percentMetricTypes = new Set(['medianApy'])
+const ratioMetricTypes = new Set(['pfRatio', 'psRatio'])
 const CUMULATIVE_DISPLAY_OPTIONS = [
 	{ name: 'Show individual values', key: 'Individual' },
 	{ name: 'Show cumulative values', key: 'Cumulative' }
@@ -69,11 +69,7 @@ function ChartRenderer({
 	if (!chartType) throw new Error(`Unsupported dashboard chart type: ${type}`)
 	const [todayTimestamp] = useState(() => Math.floor(Date.now() / 1000))
 	const valueSymbol =
-		userMetricTypes.includes(type) || ratioMetricTypes.includes(type)
-			? ''
-			: percentMetricTypes.includes(type)
-				? '%'
-				: '$'
+		userMetricTypes.has(type) || ratioMetricTypes.has(type) ? '' : percentMetricTypes.has(type) ? '%' : '$'
 	const chartOptions = useMemo(() => createSingleSeriesChartOptions(valueSymbol), [valueSymbol])
 	const seriesName = dataset.dimensions[1]
 	if (!seriesName) throw new Error(`Missing series dimension for dashboard chart type: ${type}`)

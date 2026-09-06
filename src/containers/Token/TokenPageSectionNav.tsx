@@ -90,11 +90,11 @@ export function TokenPageSectionNav({ sections }: { sections: Array<TokenPageSec
 				return entry ? entry.boundingClientRect.top <= 140 : false
 			})
 
-			const nextActiveSectionId =
-				entriesAtThreshold.at(-1) ??
-				candidateEntries.reduce((closest, entry) =>
-					entry.boundingClientRect.top < closest.boundingClientRect.top ? entry : closest
-				).target.id
+			let closest = candidateEntries[0]!
+			for (const entry of candidateEntries) {
+				if (entry.boundingClientRect.top < closest.boundingClientRect.top) closest = entry
+			}
+			const nextActiveSectionId = entriesAtThreshold.at(-1) ?? closest.target.id
 
 			syncActiveSection(nextActiveSectionId)
 		}

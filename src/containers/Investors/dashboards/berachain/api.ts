@@ -143,7 +143,7 @@ function mergeSeries(series: Array<Array<[number, number]>>) {
 			let entry = dateMap.get(timestamp)
 			if (!entry) {
 				entry = [timestamp]
-				for (let emptyIndex = 0; emptyIndex < series.length; emptyIndex++) entry.push(0)
+				for (const _ of series) entry.push(0)
 				dateMap.set(timestamp, entry)
 			}
 			entry[seriesIndex + 1] = value

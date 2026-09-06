@@ -48,8 +48,8 @@ function decodeWindow(value: string | Array<string> | undefined): ApyWindow {
 function decodeComponents(value: string | Array<string> | undefined): { reward: boolean; intrinsic: boolean } {
 	const raw = readSingle(value)
 	if (raw == null) return { reward: true, intrinsic: false }
-	const parts = raw.split(',').map((part) => part.trim())
-	return { reward: parts.includes('reward'), intrinsic: parts.includes('intrinsic') }
+	const parts = new Set(raw.split(',').map((part) => part.trim()))
+	return { reward: parts.has('reward'), intrinsic: parts.has('intrinsic') }
 }
 
 // Encode back to the `apyComponents` param. Base is always implied. The default

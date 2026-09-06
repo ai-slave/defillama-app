@@ -284,15 +284,12 @@ export async function getOracleDetailPageData({
 			fetchProtocols()
 		])
 		protocolsResponse = fetchedProtocolsResponse
-		chartData = fetchedOracleChainBreakdown.reduce<OracleChartData>((acc, dayData) => {
+		chartData = []
+		for (const dayData of fetchedOracleChainBreakdown) {
 			const chainValue = dayData[canonicalChain]
-			if (typeof chainValue !== 'number') return acc
-			acc.push({
-				timestamp: dayData.timestamp,
-				[canonicalOracle]: chainValue
-			})
-			return acc
-		}, [])
+			if (typeof chainValue !== 'number') continue
+			chartData.push({ timestamp: dayData.timestamp, [canonicalOracle]: chainValue })
+		}
 	} else {
 		const [oracleChart, fetchedProtocolsResponse] = await Promise.all([
 			fetchOracleProtocolChart({ protocol: canonicalOracle }),

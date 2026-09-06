@@ -26,7 +26,7 @@ import {
 	withCountryParam
 } from './queryState'
 
-const SEGMENTS: Array<ExchangeSegment> = ['spot', 'linear_perp', 'inverse_perp']
+const SEGMENTS = new Set<ExchangeSegment>(['spot', 'linear_perp', 'inverse_perp'])
 const EMPTY_TOKEN_LISTINGS: Array<TokenExchangeListing> = []
 const SEGMENT_LABELS: Record<ExchangeSegment, string> = {
 	spot: 'Spot',
@@ -77,7 +77,7 @@ export function buildTokenFinderRows({
 			}
 			const segments = new Set<ExchangeSegment>()
 			for (const segment of listing.segments) {
-				if (!SEGMENTS.includes(segment)) continue
+				if (!SEGMENTS.has(segment)) continue
 				if (availableSegments && !availableSegments.includes(segment)) continue
 				segments.add(segment)
 			}

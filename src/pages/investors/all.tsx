@@ -22,14 +22,12 @@ export const getServerSideProps: GetServerSideProps = async () => {
 		}
 	}
 
-	let customServerData: Record<string, unknown> = {}
+	const customServerData: Record<string, unknown> = {}
 	try {
 		const customResults = await Promise.all(
 			INVESTORS_PROJECTS.filter((p) => p.dashboardId).map((project) => fetchCustomServerData(project.dashboardId))
 		)
-		for (const data of customResults) {
-			customServerData = { ...customServerData, ...data }
-		}
+		for (const data of customResults) Object.assign(customServerData, data)
 	} catch {}
 
 	return { props: { customServerData } }

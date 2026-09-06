@@ -15,9 +15,8 @@ export function ScoresTable({ rows, onSelectMM }: IScoresTableProps) {
 
 	const rankById = React.useMemo(() => {
 		const map = new Map<string, number>()
-		;[...rows]
-			.sort((a, b) => (b.composite ?? -Infinity) - (a.composite ?? -Infinity))
-			.forEach((row, index) => map.set(row.marketMakerId, index + 1))
+		const ranked = rows.toSorted((a, b) => (b.composite ?? -Infinity) - (a.composite ?? -Infinity))
+		for (const [index, row] of ranked.entries()) map.set(row.marketMakerId, index + 1)
 		return map
 	}, [rows])
 

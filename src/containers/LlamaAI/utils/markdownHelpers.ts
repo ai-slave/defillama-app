@@ -8,7 +8,7 @@ import { stripBeforeReportStart } from '~/containers/LlamaAI/utils/reportMarkers
 /**
  * Only allow secure external links in user-generated citations and artifacts.
  */
-const ALLOWED_PROTOCOLS = ['https:']
+const ALLOWED_PROTOCOLS = new Set(['https:'])
 
 /**
  * Validate and sanitize a URL for safe use in href attributes.
@@ -23,7 +23,7 @@ export function sanitizeUrl(url: string): string | null {
 	try {
 		const parsed = new URL(trimmed)
 
-		if (!ALLOWED_PROTOCOLS.includes(parsed.protocol)) {
+		if (!ALLOWED_PROTOCOLS.has(parsed.protocol)) {
 			return null
 		}
 

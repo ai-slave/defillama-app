@@ -222,7 +222,7 @@ export interface AppliedDatasetConfig {
 
 export function applyDatasetConfig(config: DatasetSavedConfig, headers: Array<string>): AppliedDatasetConfig {
 	const headerToIndex = new Map<string, number>()
-	headers.forEach((h, i) => headerToIndex.set(h, i))
+	for (const [i, h] of headers.entries()) headerToIndex.set(h, i)
 
 	const selected = new Set<number>()
 	const missingColumns: Array<string> = []
@@ -237,7 +237,7 @@ export function applyDatasetConfig(config: DatasetSavedConfig, headers: Array<st
 
 	// If all saved columns are missing, fall back to all columns (rather than a blank table)
 	if (selected.size === 0 && headers.length > 0) {
-		headers.forEach((_, i) => selected.add(i))
+		for (let i = 0; i < headers.length; i++) selected.add(i)
 	}
 
 	let sort: { index: number; direction: SavedSortDir } | null = null
@@ -298,7 +298,7 @@ export function applyChartColumnsAndSort(
 	missingSortColumn: string | null
 } {
 	const headerToIndex = new Map<string, number>()
-	headers.forEach((h, i) => headerToIndex.set(h, i))
+	for (const [i, h] of headers.entries()) headerToIndex.set(h, i)
 
 	let selectedColumns: Set<number> | null = null
 	const missingColumns: Array<string> = []
@@ -310,7 +310,7 @@ export function applyChartColumnsAndSort(
 			else selected.add(idx)
 		}
 		if (selected.size === 0 && headers.length > 0) {
-			headers.forEach((_, i) => selected.add(i))
+			for (let i = 0; i < headers.length; i++) selected.add(i)
 		}
 		selectedColumns = selected
 	}

@@ -14,7 +14,7 @@ interface ImagePreviewModalProps {
 function extractFilename(url: string): string {
 	try {
 		const pathname = new URL(url).pathname
-		const last = pathname.split('/').filter(Boolean).pop()
+		const last = pathname.split('/').findLast(Boolean)
 		return last || 'defillama-image.png'
 	} catch {
 		return 'defillama-image.png'

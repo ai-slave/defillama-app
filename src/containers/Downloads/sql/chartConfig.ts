@@ -112,11 +112,11 @@ function guessCandlestickMapping(classified: Array<ClassifiedColumn>): Candlesti
 
 export function defaultChartConfig(classified: Array<ClassifiedColumn>): ChartConfig {
 	const chartType = chooseDefaultChartType(classified)
-	const dates = classified.filter((c) => c.coarse === 'date')
-	const categories = classified.filter((c) => c.coarse === 'category')
+	const firstDate = classified.find((c) => c.coarse === 'date')
+	const firstCategory = classified.find((c) => c.coarse === 'category')
 	const numbers = classified.filter((c) => c.coarse === 'number')
 
-	const xCol = dates[0]?.name ?? categories[0]?.name ?? null
+	const xCol = firstDate?.name ?? firstCategory?.name ?? null
 	const yCols = numbers
 		.filter((c) => c.name !== xCol)
 		.slice(0, MAX_AUTO_SERIES)
@@ -151,6 +151,7 @@ export function migrateChartConfig(prev: ChartConfig, classified: Array<Classifi
 	if (!stillValid) return defaultChartConfig(classified)
 
 	const yCols = filterExisting(prev.yCols).slice(0, MAX_AUTO_SERIES)
+	const firstNumber = classified.find((c) => c.coarse === 'number')
 
 	return {
 		...prev,
@@ -173,8 +174,8 @@ export function migrateChartConfig(prev: ChartConfig, classified: Array<Classifi
 		histogram:
 			prev.histogram && names.has(prev.histogram.valueCol)
 				? prev.histogram
-				: prev.chartType === 'histogram' && classified.find((c) => c.coarse === 'number')
-					? { valueCol: classified.find((c) => c.coarse === 'number')!.name, binCount: prev.histogram?.binCount ?? 30 }
+				: prev.chartType === 'histogram' && firstNumber
+					? { valueCol: firstNumber.name, binCount: prev.histogram?.binCount ?? 30 }
 					: prev.histogram
 	}
 }

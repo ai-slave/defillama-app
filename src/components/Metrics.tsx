@@ -28,22 +28,18 @@ interface IPage {
 
 const trending = [{ category: 'Trending', metrics: trendingPages as Array<IPage> }]
 
+const metricsByCategoryName: Record<string, Array<IPage>> = {}
+for (const metric of defillamaPages.Metrics) {
+	const category = metric.category || 'Others'
+	const list = (metricsByCategoryName[category] ??= [])
+	list.push({
+		...metric,
+		name: metric.name.includes(': ') ? metric.name.split(': ')[1] : metric.name,
+		description: metric.description ?? ''
+	})
+}
 const metricsByCategory = trending.concat(
-	Object.entries(
-		defillamaPages.Metrics.reduce<Record<string, Array<IPage>>>((acc, metric) => {
-			const category = metric.category || 'Others'
-			acc[category] = acc[category] || []
-			acc[category].push({
-				...metric,
-				name: metric.name.includes(': ') ? metric.name.split(': ')[1] : metric.name,
-				description: metric.description ?? ''
-			})
-			return acc
-		}, {})
-	).map(([category, metrics]: [string, Array<IPage>]) => ({
-		category,
-		metrics
-	}))
+	Object.entries(metricsByCategoryName).map(([category, metrics]) => ({ category, metrics }))
 )
 
 const TABS = ['All', 'Protocols', 'Chains'] as const
@@ -331,12 +327,10 @@ export function usePinnedRoutes(): Set<string> {
 }
 
 const getTotalTracked = (totalTrackedByMetric: Record<string, unknown>, totalTrackedKey: string): string | null => {
-	const value = totalTrackedKey
-		.split('.')
-		.reduce<unknown>(
-			(obj, key) => (obj && typeof obj === 'object' ? (obj as Record<string, unknown>)[key] : undefined),
-			totalTrackedByMetric
-		)
+	let value: unknown = totalTrackedByMetric
+	for (const key of totalTrackedKey.split('.')) {
+		value = value && typeof value === 'object' ? (value as Record<string, unknown>)[key] : undefined
+	}
 	if (!value) return null
 	return `${value} tracked`
 }

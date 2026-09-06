@@ -89,7 +89,7 @@ function layoutDeps(
 	for (const kind of kinds) {
 		const group = byKind.get(kind)!
 		const span = (group.length / deps.length) * usableDeg
-		group.forEach((d, i) => {
+		for (const [i, d] of group.entries()) {
 			const angle = ((cursor + (span * (i + 0.5)) / group.length) * Math.PI) / 180
 			const ring = globalIndex % 2 === 0 ? 1 : 0.74
 			globalIndex++
@@ -101,7 +101,7 @@ function layoutDeps(
 				x: round3(50 + RX * ring * Math.cos(angle)),
 				y: round3(50 + RY * ring * Math.sin(angle))
 			})
-		})
+		}
 		const mid = ((cursor + span / 2) * Math.PI) / 180
 		const cos = Math.cos(mid)
 		const sin = Math.sin(mid)

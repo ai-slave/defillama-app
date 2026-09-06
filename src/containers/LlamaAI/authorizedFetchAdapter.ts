@@ -8,9 +8,7 @@ function getAuthorizedFetchInput(input: RequestInfo | URL, init?: RequestInit) {
 
 	const mergedHeaders = new Headers(input.headers)
 	if (init?.headers) {
-		new Headers(init.headers).forEach((value, key) => {
-			mergedHeaders.set(key, value)
-		})
+		for (const [key, value] of new Headers(init.headers)) mergedHeaders.set(key, value)
 	}
 
 	const mergedInit: RequestInit = {

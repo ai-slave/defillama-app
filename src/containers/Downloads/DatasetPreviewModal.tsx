@@ -139,9 +139,9 @@ function detectColumnKind(header: string, values: Array<string>): ColumnKind {
 }
 
 function getColumnWidth(header: string, kind: ColumnKind, values: Array<string>, isFirst: boolean): number {
-	const sampleMaxLength = values.slice(0, COLUMN_WIDTH_SAMPLE_SIZE).reduce((max, value) => {
-		return Math.max(max, value.length)
-	}, header.length)
+	let sampleMaxLength = header.length
+	for (const value of values.slice(0, COLUMN_WIDTH_SAMPLE_SIZE))
+		sampleMaxLength = Math.max(sampleMaxLength, value.length)
 	if (kind === 'date') return downloadPreviewHasTime(header, values) ? (isFirst ? 240 : 220) : isFirst ? 200 : 160
 	if (kind === 'currency' || kind === 'number' || kind === 'percent') return isFirst ? 200 : 140
 	const estimated = Math.max(140, Math.min(300, sampleMaxLength * 8 + 24))
@@ -356,9 +356,9 @@ export function DatasetPreviewModal({
 		const toggles = dataset.excludeToggles
 		if (!toggles || toggles.length === 0) return rows
 		const headerIndices = new Map<string, number>()
-		headers.forEach((header, index) => {
+		for (const [index, header] of headers.entries()) {
 			if (!headerIndices.has(header)) headerIndices.set(header, index)
-		})
+		}
 		const fieldIndices: Array<number> = []
 		for (const toggle of toggles) {
 			if (!excludeState[toggle.field]) continue

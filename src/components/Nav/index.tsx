@@ -50,22 +50,18 @@ for (const [category, categoryPages] of Object.entries(pages)) {
 	}
 }
 
-const oldMetricLinks: Array<TOldNavLink> = Object.values(
-	[...pages.Metrics, ...pages.Tools].reduce<Record<string, TOldNavLink>>((acc, curr) => {
-		if (curr.oldCategory && curr.oldName) {
-			acc[curr.oldCategory] = acc[curr.oldCategory] || { name: curr.oldCategory, pages: [] }
-			const groupedMetric = acc[curr.oldCategory]
-			if (!groupedMetric.pages) {
-				groupedMetric.pages = []
-			}
-			groupedMetric.pages.push({ name: curr.oldName, route: curr.route })
-		}
-		if (curr.oldName && !curr.oldCategory) {
-			acc[curr.oldName] = acc[curr.oldName] || { name: curr.oldName, route: curr.route }
-		}
-		return acc
-	}, {})
-)
+const oldMetricLinksByName: Record<string, TOldNavLink> = {}
+for (const curr of [...pages.Metrics, ...pages.Tools]) {
+	if (curr.oldCategory && curr.oldName) {
+		const groupedMetric = (oldMetricLinksByName[curr.oldCategory] ??= { name: curr.oldCategory, pages: [] })
+		groupedMetric.pages ??= []
+		groupedMetric.pages.push({ name: curr.oldName, route: curr.route })
+	}
+	if (curr.oldName && !curr.oldCategory) {
+		oldMetricLinksByName[curr.oldName] ??= { name: curr.oldName, route: curr.route }
+	}
+}
+const oldMetricLinks: Array<TOldNavLink> = Object.values(oldMetricLinksByName)
 
 function normalizeAiRoute(route: string, shouldSkipLanding: boolean): string {
 	return route === '/ai' && shouldSkipLanding ? '/ai/chat' : route

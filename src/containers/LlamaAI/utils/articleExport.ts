@@ -73,7 +73,7 @@ export function splitMarkdownTables(markdown: string): Array<MarkdownSegment> {
 			i++
 			continue
 		}
-		const precedingLine = buffer.filter((l) => l.trim().length > 0).pop()
+		const precedingLine = buffer.findLast((l) => l.trim().length > 0)
 		flushText()
 		const tableLines = [lines[i], lines[i + 1]]
 		i += 2

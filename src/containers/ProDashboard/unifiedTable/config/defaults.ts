@@ -23,24 +23,15 @@ export const DEFAULT_COLUMN_ORDER = [
 	'mcaptvl'
 ]
 
-export const DEFAULT_COLUMN_VISIBILITY: Record<string, boolean> = UNIFIED_TABLE_COLUMN_DICTIONARY.reduce<
-	Record<string, boolean>
->((acc, column) => {
-	if (column.render.startsWith('meta')) {
-		acc[column.id] = true
-		return acc
-	}
-
-	if (
-		column.tags?.includes('dominance') ||
-		column.tags?.includes('cumulative') ||
-		column.tags?.includes('specialized') ||
-		column.tags?.includes('share')
-	) {
-		acc[column.id] = false
-		return acc
-	}
-
-	acc[column.id] = true
-	return acc
-}, {})
+// Meta columns always start visible; dominance, cumulative, specialized and share columns start hidden.
+export const DEFAULT_COLUMN_VISIBILITY: Record<string, boolean> = {}
+for (const column of UNIFIED_TABLE_COLUMN_DICTIONARY) {
+	DEFAULT_COLUMN_VISIBILITY[column.id] =
+		column.render.startsWith('meta') ||
+		!(
+			column.tags?.includes('dominance') ||
+			column.tags?.includes('cumulative') ||
+			column.tags?.includes('specialized') ||
+			column.tags?.includes('share')
+		)
+}

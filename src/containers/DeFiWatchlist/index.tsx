@@ -362,8 +362,8 @@ function PortfolioNotifications({
 				const mappedProtocolMetrics = selectedProtocolMetrics.map(mapUIMetricToAPI)
 				const protocolsMap: NotificationSettings['protocols'] = {}
 				let protocolCount = 0
-				for (let i = 0; i < filteredProtocols.length; i++) {
-					const identifier = filteredProtocols[i].slug
+				for (const protocol of filteredProtocols) {
+					const identifier = protocol.slug
 					if (!identifier) continue
 					protocolsMap[identifier] = mappedProtocolMetrics
 					protocolCount++
@@ -377,9 +377,9 @@ function PortfolioNotifications({
 				const mappedChainMetrics = selectedChainMetrics.map(mapUIMetricToAPI)
 				const chainsMap: NotificationSettings['chains'] = {}
 				let chainCount = 0
-				for (let i = 0; i < filteredChains.length; i++) {
-					if (!filteredChains[i].name) continue
-					chainsMap[filteredChains[i].name] = mappedChainMetrics
+				for (const chain of filteredChains) {
+					if (!chain.name) continue
+					chainsMap[chain.name] = mappedChainMetrics
 					chainCount++
 				}
 				if (chainCount > 0) {

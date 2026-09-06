@@ -460,7 +460,7 @@ export function HistoryStrip({
 	)
 
 	const rootRef = useInViewOnce<HTMLDivElement>((root) => {
-		root.querySelectorAll<HTMLElement>('[data-hs-pt]').forEach((el, i) => {
+		for (const [i, el] of root.querySelectorAll<HTMLElement>('[data-hs-pt]').entries()) {
 			el.animate(
 				[
 					{ opacity: 0, scale: '0.5' },
@@ -473,7 +473,7 @@ export function HistoryStrip({
 					fill: 'backwards'
 				}
 			)
-		})
+		}
 	})
 
 	if (!vm) return null

@@ -12,13 +12,8 @@ import type { CustomColumnDefinition, UnifiedRowHeaderType } from '../../../unif
 import { sanitizeConfigColumns } from '../config/metricCapabilities'
 import type { UnifiedTablePreset } from '../config/PresetRegistry'
 
-const ALL_COLUMNS_HIDDEN: Record<string, boolean> = UNIFIED_TABLE_COLUMN_DICTIONARY.reduce<Record<string, boolean>>(
-	(acc, column) => {
-		acc[column.id] = false
-		return acc
-	},
-	{ name: false }
-)
+const ALL_COLUMNS_HIDDEN: Record<string, boolean> = { name: false }
+for (const column of UNIFIED_TABLE_COLUMN_DICTIONARY) ALL_COLUMNS_HIDDEN[column.id] = false
 
 type ColumnOrderConfig = {
 	columnOrder?: UnifiedTableConfig['columnOrder']

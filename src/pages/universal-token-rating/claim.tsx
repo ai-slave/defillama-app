@@ -21,22 +21,21 @@ export const getStaticProps = withPerformanceLogging('universal-token-rating/cla
 	])
 	const exchangeOptions = exchangeOptionsFromScoringConfig(scoringConfig)
 	const scoreByProject = new Map(scoreSummaries.map((summary) => [summary.arcticId, summary]))
-	const projectOptions = projects.reduce<Array<UtrClaimProjectOption>>((options, project) => {
-		if (project.isActive) {
-			const summary = scoreByProject.get(project.arcticId)
-			options.push({
-				arcticId: project.arcticId,
-				projectName: project.projectName,
-				symbol: project.symbol,
-				coingeckoId: project.coingeckoId,
-				tgeStatus: project.tgeStatus,
-				disclosureScore: summary?.disclosureScore ?? null,
-				gradedCount: summary?.gradedCount ?? 0,
-				criteriaCount: summary?.criteriaCount ?? 0
-			})
-		}
-		return options
-	}, [])
+	const projectOptions: Array<UtrClaimProjectOption> = []
+	for (const project of projects) {
+		if (!project.isActive) continue
+		const summary = scoreByProject.get(project.arcticId)
+		projectOptions.push({
+			arcticId: project.arcticId,
+			projectName: project.projectName,
+			symbol: project.symbol,
+			coingeckoId: project.coingeckoId,
+			tgeStatus: project.tgeStatus,
+			disclosureScore: summary?.disclosureScore ?? null,
+			gradedCount: summary?.gradedCount ?? 0,
+			criteriaCount: summary?.criteriaCount ?? 0
+		})
+	}
 	projectOptions.sort((a, b) => a.projectName.localeCompare(b.projectName))
 
 	return {

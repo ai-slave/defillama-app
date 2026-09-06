@@ -196,7 +196,7 @@ function SqlWorkspaceInner({
 	useEffect(() => {
 		const map = runControllersRef.current
 		return () => {
-			map.forEach((c) => c.abort())
+			for (const c of map.values()) c.abort()
 			map.clear()
 		}
 	}, [])
@@ -408,7 +408,7 @@ function SqlWorkspaceInner({
 
 	const cellViewNames = useCallback((cells: Array<NotebookCell>): Set<string> => {
 		const set = new Set<string>()
-		cells.forEach((_, i) => set.add(`cell_${i + 1}`))
+		for (let i = 0; i < cells.length; i++) set.add(`cell_${i + 1}`)
 		return set
 	}, [])
 

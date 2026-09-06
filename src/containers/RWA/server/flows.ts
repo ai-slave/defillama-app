@@ -8,7 +8,7 @@ import type { ApiQuery } from '~/server/api/types'
 const RWA_FLOW_CACHE_CONTROL = 'public, s-maxage=1800, stale-while-revalidate=1800'
 const RWA_FLOW_RESULT_TTL_MS = 30 * 60 * 1000
 const FLOW_SCOPES = ['asset', 'assetGroup', 'category', 'platform', 'chain'] as const
-const OVERVIEW_SPLITS: ReadonlyArray<RWAFlowOverviewSplitBy> = ['assetGroup', 'category', 'platform', 'chain']
+const OVERVIEW_SPLITS: ReadonlySet<RWAFlowOverviewSplitBy> = new Set(['assetGroup', 'category', 'platform', 'chain'])
 const ASSET_BREAKDOWN_SCOPES = ['assetGroup', 'category', 'platform', 'chain'] as const
 
 function optionalUnixTimestamp(query: ApiQuery, name: 'start' | 'end'): string | null | undefined {
@@ -23,7 +23,7 @@ export function buildRWAFlowProxyUrl(query: ApiQuery): string | null {
 
 	if (path.length === 1 && path[0] === 'overview') {
 		const splitBy = queryString(query, 'splitBy')
-		if (splitBy !== undefined && !OVERVIEW_SPLITS.includes(splitBy as RWAFlowOverviewSplitBy)) return null
+		if (splitBy !== undefined && !OVERVIEW_SPLITS.has(splitBy as RWAFlowOverviewSplitBy)) return null
 		const includeStablecoin = queryString(query, 'includeStablecoin')
 		const includeGovernance = queryString(query, 'includeGovernance')
 		if (

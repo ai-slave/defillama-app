@@ -323,8 +323,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 				if (selectedId === revisionId) {
 					setSelectedId((current) => {
 						if (current !== revisionId) return current
-						const remaining = items.filter((entry) => entry.id !== revisionId)
-						return remaining[0]?.id ?? null
+						return items.find((entry) => entry.id !== revisionId)?.id ?? null
 					})
 				}
 				toast.success('Revision removed from history')

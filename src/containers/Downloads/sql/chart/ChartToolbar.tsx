@@ -26,8 +26,8 @@ const STACK_OPTIONS: Array<{ value: StackMode; label: string }> = [
 	{ value: 'expand', label: '100%' }
 ]
 
-const TYPES_SUPPORTING_STACK: Array<ChartType> = ['bar', 'hbar', 'area', 'areaStacked', 'areaPct']
-const TYPES_SUPPORTING_SPLIT: Array<ChartType> = ['line', 'area', 'areaStacked', 'areaPct', 'bar', 'hbar']
+const TYPES_SUPPORTING_STACK = new Set<ChartType>(['bar', 'hbar', 'area', 'areaStacked', 'areaPct'])
+const TYPES_SUPPORTING_SPLIT = new Set<ChartType>(['line', 'area', 'areaStacked', 'areaPct', 'bar', 'hbar'])
 
 export function ChartToolbar({ config, classified, onChange }: ChartToolbarProps) {
 	const xOptions = classified.filter(
@@ -36,9 +36,9 @@ export function ChartToolbar({ config, classified, onChange }: ChartToolbarProps
 	const yOptions = classified.filter((c) => c.coarse === 'number')
 	const categoryOptions = classified.filter((c) => c.coarse === 'category' && c.name !== config.xCol)
 
-	const canStack = TYPES_SUPPORTING_STACK.includes(config.chartType) && config.yCols.length >= 2
+	const canStack = TYPES_SUPPORTING_STACK.has(config.chartType) && config.yCols.length >= 2
 	const canSplit =
-		TYPES_SUPPORTING_SPLIT.includes(config.chartType) && categoryOptions.length > 0 && config.yCols.length <= 1
+		TYPES_SUPPORTING_SPLIT.has(config.chartType) && categoryOptions.length > 0 && config.yCols.length <= 1
 
 	const handleChartType = (next: ChartType) => {
 		if (!canUseChartType(next, classified)) return
@@ -219,8 +219,8 @@ function PickerChip({
 	)
 }
 
-const DUAL_AXIS_TYPES: Array<ChartType> = ['line', 'bar', 'area', 'areaStacked']
-const KIND_EDIT_TYPES: Array<ChartType> = ['line', 'bar']
+const DUAL_AXIS_TYPES = new Set<ChartType>(['line', 'bar', 'area', 'areaStacked'])
+const KIND_EDIT_TYPES = new Set<ChartType>(['line', 'bar'])
 
 function YSeriesPicker({
 	yCols,
@@ -251,8 +251,8 @@ function YSeriesPicker({
 				? yCols[0]
 				: `${yCols.length} series`
 
-	const dualAxisEligible = DUAL_AXIS_TYPES.includes(config.chartType) && yCols.length >= 2
-	const seriesKindEligible = KIND_EDIT_TYPES.includes(config.chartType)
+	const dualAxisEligible = DUAL_AXIS_TYPES.has(config.chartType) && yCols.length >= 2
+	const seriesKindEligible = KIND_EDIT_TYPES.has(config.chartType)
 
 	return (
 		<div className="flex items-center gap-1.5">

@@ -242,8 +242,7 @@ const buildTimestampValueRows = (timestamps: ReadonlyArray<number>, values: Read
 const getSeriesNames = (assetsOrChainsList: Array<string>, filteredIndexes?: Array<number>): Array<string> => {
 	const names: Array<string> = []
 	if (!filteredIndexes) {
-		for (let i = 0; i < assetsOrChainsList.length; i++) {
-			const name = assetsOrChainsList[i]
+		for (const name of assetsOrChainsList) {
 			if (name) names.push(name)
 		}
 		return names

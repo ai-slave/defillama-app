@@ -5,7 +5,7 @@ import { Card } from '~/ui/Card'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
-const hideProtocols = ['Mycelium', 'Hubble Exchange', 'NEX']
+const hideProtocols = new Set(['Mycelium', 'Hubble Exchange', 'NEX'])
 
 export const getStaticProps = withPerformanceLogging('donations', async () => {
 	const { protocols, parentProtocols } = await fetchProtocols()
@@ -46,7 +46,7 @@ export const getStaticProps = withPerformanceLogging('donations', async () => {
 
 	const finalProtocols = []
 	for (const protocol in protocolsWithReferralurl) {
-		if (hideProtocols.includes(protocolsWithReferralurl[protocol].name)) continue
+		if (hideProtocols.has(protocolsWithReferralurl[protocol].name)) continue
 		finalProtocols.push(protocolsWithReferralurl[protocol])
 	}
 

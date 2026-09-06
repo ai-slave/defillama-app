@@ -503,7 +503,7 @@ function buildDisclosures(
 function validateDocuments(documents: UtrClaimDocuments, errors: Record<string, string>): UtrClaimDocuments {
 	for (const key of UTR_CLAIM_DOCUMENT_KEYS) {
 		if (documents[key].length > 10) errors[`documents.${key}`] = 'No more than 10 documents are allowed'
-		documents[key].forEach((document, index) => {
+		for (const [index, document] of documents[key].entries()) {
 			const path = `documents.${key}.${index}`
 			if (
 				typeof document.key !== 'string' ||
@@ -520,7 +520,7 @@ function validateDocuments(documents: UtrClaimDocuments, errors: Record<string, 
 			} else if (typeof document.signature !== 'string' || !document.signature) {
 				errors[path] = 'Document receipt is missing its signature'
 			}
-		})
+		}
 	}
 	return documents
 }
