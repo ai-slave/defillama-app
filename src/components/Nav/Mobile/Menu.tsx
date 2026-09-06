@@ -166,11 +166,11 @@ function PinnedPagesSection({
 }) {
 	const [isReordering, setIsReordering] = useState(false)
 
-	React.useEffect(() => {
-		if (pinnedPages.length <= 1 && isReordering) {
-			setIsReordering(false)
-		}
-	}, [isReordering, pinnedPages.length])
+	// Reordering ends as soon as there is nothing left to reorder, in the same render. Self-terminating:
+	// the next render sees isReordering false.
+	if (pinnedPages.length <= 1 && isReordering) {
+		setIsReordering(false)
+	}
 
 	return (
 		<div className="group/pinned mb-3 flex flex-col first:mb-auto">

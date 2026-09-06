@@ -174,6 +174,9 @@ export function UtrDocsDrawer({
 	useEffect(() => {
 		if (!open) return
 		if (initialChapterId) {
+			// Selecting the requested chapter and scrolling to it are one action: the section only exists to
+			// scroll to after it has rendered.
+			// oxlint-disable-next-line react/set-state-in-effect -- see above
 			setActiveId(initialChapterId)
 			const frame = requestAnimationFrame(() => {
 				document.getElementById(`utr-docs-${initialChapterId}`)?.scrollIntoView({ block: 'start' })

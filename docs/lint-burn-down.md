@@ -150,6 +150,44 @@ as the mutation variable, because TanStack's success callback sees the latest op
 latest draft, and a single-field save must acknowledge only its field. The revision drawer keeps the chosen diff base and explains why nothing can be compared instead
 of switching bases.
 
+### Phase 3d: the long tail (done)
+
+56 sites across 38 files; everything outside LlamaAI is now clean for the compiler rules. What this slice
+adds to the patterns above:
+
+- **A browser-only value read after hydration belongs in `useSyncExternalStore`, not in state.** The
+  announcement dismissal cookie and the device-platform sniff both became stores with a server snapshot
+  that matches the server HTML, which deletes the state and the effect. The cookie writer now notifies its
+  subscribers, so every banner for the same announcement hides together.
+- **`react/hook-use-state` and the compiler pull in opposite directions** for "build once per instance":
+  `useState(() => build())` trips the lint rule, so these use `useMemo` and say why rebuilding is harmless.
+- **A reset that also writes a ref cannot move into render**, because the ref write cannot. Those keep the
+  effect and a disable that names the pairing (the lead dialogs, the onboarding guard, the pool chart).
+- **Adjusting state during render must be provably self-terminating.** Each site either compares against a
+  synced copy of its input or sets a value the condition excludes; the narrative-tracker reset relies on
+  the dollar denom never being disabled, which the builder guarantees with an explicit `continue`.
+- **An effect also ran on mount; the render-time form must not lose that.** The store-previous-prop shape
+  initializes its marker from the current prop, so the first application is skipped unless the state's own
+  initializer already equals what the effect would have set. Review of this phase found two places where
+  it did not: the vault-risk deposit input rendered empty for an existing position (blurring then cleared
+  it), and the token page ignored a `#section` hash on load. Check every conversion by asking what the
+  effect did on the first commit; where the answer needs the client (a URL hash, localStorage), keep the
+  effect.
+- **Deriving a value is not the same as writing it.** The seat purchase modal forced the billing interval
+  to match an existing subscription by writing it into state, so it stayed chosen after switching to a
+  type with no subscription. Replacing that with `lockedInterval ?? billingInterval` silently changed the
+  submitted interval. Adjusting state during render keeps both the rule and the behaviour.
+- **SSR is a reason to keep an effect.** Moving the Token borrow and yields "fetch the full dataset" latch
+  into render changed the server markup, because on the server the effect never runs and the hydration
+  snapshot is what should render. An existing test caught it; both latches stayed effects with the reason
+  recorded.
+
+Known better abstraction, deliberately left for its own PR: the two market-maker lead dialogs reset a
+dozen fields by hand when they open. Their state should live in a body that Ariakit already unmounts
+(`unmountOnHide`), so a fresh open starts from fresh state with no reset at all. That needs `LeadDialog`
+to stop taking header and footer props computed from form state, which is a refactor of a form with a
+captcha and analytics click ids, not a lint change.
+
 ### Phase 3c: ECharts, Downloads, hooks, pages (done)
 
 43 sites; the four areas are clean for the compiler rules. New ground beyond 3a/3b:

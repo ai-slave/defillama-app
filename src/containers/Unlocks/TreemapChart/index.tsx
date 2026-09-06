@@ -221,7 +221,7 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 		}
 
 		instance.setOption(option, { notMerge: true })
-	}, [chartDataTree, isDark, timeView, selectedDate])
+	}, [chartDataTree, isDark, timeView])
 
 	const goToPrevMonth = () => setSelectedDate((d) => d.subtract(1, 'month'))
 	const goToNextMonth = () => setSelectedDate((d) => d.add(1, 'month'))

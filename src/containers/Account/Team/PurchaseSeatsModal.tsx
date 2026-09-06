@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { EmbeddedCheckout, EmbeddedCheckoutProvider } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { STRIPE_PUBLISHABLE_KEY } from '~/constants'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
@@ -35,13 +35,13 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 
 	const lockedInterval = getExistingInterval(teamSubscriptions, subscriptionType)
 
-	// When the selected type has an existing sub, force the interval to match it —
-	// the backend rejects mixing monthly and yearly for the same subscription type.
-	useEffect(() => {
-		if (lockedInterval && billingInterval !== lockedInterval) {
-			setBillingInterval(lockedInterval)
-		}
-	}, [lockedInterval, billingInterval])
+	// When the selected type has an existing sub, the interval is forced to match it — the backend rejects
+	// mixing monthly and yearly for the same subscription type. Written into state, so it is still the
+	// chosen interval after switching to a type that has no subscription. Self-terminating: the next render
+	// sees the locked value.
+	if (lockedInterval && billingInterval !== lockedInterval) {
+		setBillingInterval(lockedInterval)
+	}
 
 	const handlePurchase = async () => {
 		try {

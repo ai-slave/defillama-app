@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 
 // Shared motion utilities: everything is in-view triggered and honors
 // prefers-reduced-motion by never firing — the resting state is always complete.
@@ -14,8 +14,11 @@ function prefersReducedMotion(): boolean {
 // under reduced motion.
 export function useInViewOnce<T extends HTMLElement>(onVisible: (el: T) => void): React.RefObject<T | null> {
 	const ref = useRef<T>(null)
+	// Read by the observer callback, which fires on scroll, never during render.
 	const cb = useRef(onVisible)
-	cb.current = onVisible
+	useLayoutEffect(() => {
+		cb.current = onVisible
+	})
 
 	useEffect(() => {
 		const el = ref.current

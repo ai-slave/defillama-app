@@ -285,6 +285,9 @@ export function Leaderboard({
 		if (!focusRequest || typeof window === 'undefined') return
 		const targetPage = pageForUtrAsset(sortedRows, focusRequest.asset)
 		if (targetPage == null) return
+		// Paging to the requested asset and scrolling to its row are one action: the row only exists to
+		// scroll to after the new page has rendered.
+		// oxlint-disable-next-line react/set-state-in-effect -- see above
 		setPage(targetPage)
 		let secondFrame = 0
 		const firstFrame = window.requestAnimationFrame(() => {

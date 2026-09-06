@@ -1,4 +1,6 @@
 import type { ParsedUrlQuery } from 'node:querystring'
+import type { NextRouter } from 'next/router'
+import { useCallback, useMemo } from 'react'
 import {
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
@@ -7,7 +9,7 @@ import type {
 	StablecoinAssetChartType as StablecoinDashboardAssetChartType,
 	StablecoinChartType as StablecoinDashboardChartType
 } from '~/containers/ProDashboard/types'
-import { readSingleQueryValue } from '~/utils/routerQuery'
+import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type {
 	StablecoinVolumeChainChartKind,
 	StablecoinVolumeGlobalChartKind,
@@ -115,6 +117,34 @@ export function getStablecoinChartTypeOptions(
 	mode: StablecoinChartMode
 ): ReadonlyArray<StablecoinChartOption<StablecoinChartType>> {
 	return getAllowedTypes(mode).map((key) => TYPE_OPTIONS[key])
+}
+
+/**
+ * Hooks around the option builders so the compiler keeps their memoization: in a page component the
+ * route-derived chart state carries a mutable range it cannot see past, and it drops the memo instead.
+ * Parameters carry none.
+ */
+export function useStablecoinChartViewChange(
+	chartMode: Parameters<typeof getStablecoinChartViewQueryValue>[0],
+	chartType: Parameters<typeof getStablecoinChartViewQueryValue>[1],
+	handleChartReady: (instance: null) => void,
+	router: NextRouter
+) {
+	return useCallback(
+		(nextChartView: string) => {
+			const view = parseStablecoinChartView(nextChartView)
+			if (!view) return
+			handleChartReady(null)
+			void pushShallowQuery(router, {
+				chartView: getStablecoinChartViewQueryValue(chartMode, chartType, view)
+			})
+		},
+		[chartMode, chartType, handleChartReady, router]
+	)
+}
+
+export function useStablecoinChartViewOptions(chartState: Parameters<typeof getStablecoinChartViewOptions>[0]) {
+	return useMemo(() => getStablecoinChartViewOptions(chartState), [chartState])
 }
 
 export function getStablecoinChartViewOptions(

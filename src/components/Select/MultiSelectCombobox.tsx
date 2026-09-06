@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
-import { startTransition, useEffect, useMemo, useRef, useState } from 'react'
+import { startTransition, useMemo, useRef, useState } from 'react'
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import {
@@ -58,13 +58,16 @@ export function MultiSelectCombobox({
 
 	const comboboxRef = useRef<HTMLDivElement>(null)
 
-	useEffect(() => {
-		if (!open) {
+	// Closing by any route (selection, Escape, outside click) clears the search, so the next open starts
+	// from the full list.
+	const setOpenAndResetSearch = (nextOpen: boolean) => {
+		setOpen(nextOpen)
+		if (!nextOpen) {
 			setSearchValue('')
 			onSearchChange?.('')
 			setViewableMatches(DEFAULT_VIEWABLE_MATCHES)
 		}
-	}, [onSearchChange, open])
+	}
 
 	const updateSearch = (value: string) => {
 		startTransition(() => {
@@ -88,7 +91,7 @@ export function MultiSelectCombobox({
 			setSelectedValue={setSelectedValues}
 			setInputValue={updateSearch}
 			open={open}
-			setOpen={setOpen}
+			setOpen={setOpenAndResetSearch}
 		>
 			<span className="relative flex w-full flex-1 flex-wrap items-center gap-1 rounded-lg border border-medium bg-page focus-within:border-brand">
 				{selectedValues.length > 0 ? (

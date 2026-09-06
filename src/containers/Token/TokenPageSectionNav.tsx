@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
 
 type TokenPageSectionNavItem = {
@@ -19,23 +19,21 @@ export function TokenPageSectionNav({ sections }: { sections: Array<TokenPageSec
 		return sectionIds.includes(hashSectionId) ? hashSectionId : null
 	}, [sectionIds])
 
-	const syncActiveSection = (nextActiveSectionId: string) => {
+	// An Effect Event: the observer effect below is the only caller, and it must see the latest sections.
+	const syncActiveSection = useEffectEvent((nextActiveSectionId: string) => {
 		setActiveSectionId((currentActiveSectionId) => {
 			if (currentActiveSectionId === nextActiveSectionId) return currentActiveSectionId
 
 			return nextActiveSectionId
 		})
-	}
+	})
 
 	useEffect(() => {
-		if (initialHashSectionId) {
-			setActiveSectionId(initialHashSectionId)
-			return
-		}
-
-		if (sectionIds[0]) {
-			setActiveSectionId(sectionIds[0])
-		}
+		// The hash target is only known on the client, so highlighting it has to wait for the mount: reading
+		// window.location.hash during render would not match the server markup.
+		const nextSectionId = initialHashSectionId ?? sectionIds[0]
+		// oxlint-disable-next-line react/set-state-in-effect -- see above
+		if (nextSectionId) setActiveSectionId(nextSectionId)
 	}, [initialHashSectionId, sectionIds])
 
 	useEffect(() => {

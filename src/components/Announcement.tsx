@@ -1,7 +1,12 @@
 import clsx from 'clsx'
 import * as React from 'react'
 import { Icon } from '~/ui/Icon'
-import { createAnnouncementDismissalToken, dismissAnnouncement, isAnnouncementDismissed } from '~/utils/cookies'
+import {
+	createAnnouncementDismissalToken,
+	dismissAnnouncement,
+	isAnnouncementDismissed,
+	subscribeToAnnouncementDismissals
+} from '~/utils/cookies'
 
 type DismissibleAnnouncementProps = {
 	children: React.ReactNode
@@ -42,11 +47,13 @@ export function Announcement(props: AnnouncementProps) {
 	const dismissalToken = props.notCancellable
 		? null
 		: createAnnouncementDismissalToken(props.announcementId, props.version)
-	const [isDismissed, setIsDismissed] = React.useState(false)
-
-	React.useEffect(() => {
-		setIsDismissed(dismissalToken ? isAnnouncementDismissed(dismissalToken) : false)
-	}, [dismissalToken])
+	// The cookie is the source of truth, read as an external store: the server and the first client render
+	// both report "not dismissed", so the markup matches, and dismissing anywhere updates every banner.
+	const isDismissed = React.useSyncExternalStore(
+		subscribeToAnnouncementDismissals,
+		() => (dismissalToken ? isAnnouncementDismissed(dismissalToken) : false),
+		() => false
+	)
 
 	if (isDismissed) {
 		return null
@@ -55,7 +62,6 @@ export function Announcement(props: AnnouncementProps) {
 	const closeAnnouncement = () => {
 		if (!dismissalToken) return
 		dismissAnnouncement(dismissalToken)
-		setIsDismissed(true)
 	}
 
 	const wrapperStyle: React.CSSProperties & Record<'--announcement-bg', string> = {

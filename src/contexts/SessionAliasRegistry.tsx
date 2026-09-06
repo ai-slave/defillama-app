@@ -13,6 +13,7 @@ export function SessionAliasProvider({ userId, children }: PropsWithChildren<{ u
 
 	useEffect(() => {
 		aliasesRef.current = new Map()
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- userId is the trigger: aliases from the previous session must not resolve for the next one.
 	}, [userId])
 
 	const value = useMemo<SessionAliasRegistry>(

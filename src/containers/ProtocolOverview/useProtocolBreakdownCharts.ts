@@ -857,33 +857,38 @@ export function useProtocolBreakdownCharts(
 		tokenBreakdownUsdCharts: [],
 		tokenBreakdownRawCharts: []
 	})
-	latestComputeInputRef.current = {
-		tvlCharts: tvlChartQueries.some((query) => query.isError && query.data === undefined)
-			? []
-			: tvlChartQueries.map((query) => query.data),
-		chainBreakdownCharts: chainBreakdownChartQueries.some((query) => query.isError && query.data === undefined)
-			? []
-			: chainBreakdownChartQueries.map((query) => query.data),
-		tokenBreakdownUsdCharts: tokenBreakdownUsdQueries.some((query) => query.isError && query.data === undefined)
-			? []
-			: tokenBreakdownUsdQueries.map((query) => query.data),
-		tokenBreakdownRawCharts: tokenBreakdownRawQueries.some((query) => query.isError && query.data === undefined)
-			? []
-			: tokenBreakdownRawQueries.map((query) => query.data)
-	}
+	// Written after commit and read only by the scheduled computation, never during render.
+	React.useLayoutEffect(() => {
+		latestComputeInputRef.current = {
+			tvlCharts: tvlChartQueries.some((query) => query.isError && query.data === undefined)
+				? []
+				: tvlChartQueries.map((query) => query.data),
+			chainBreakdownCharts: chainBreakdownChartQueries.some((query) => query.isError && query.data === undefined)
+				? []
+				: chainBreakdownChartQueries.map((query) => query.data),
+			tokenBreakdownUsdCharts: tokenBreakdownUsdQueries.some((query) => query.isError && query.data === undefined)
+				? []
+				: tokenBreakdownUsdQueries.map((query) => query.data),
+			tokenBreakdownRawCharts: tokenBreakdownRawQueries.some((query) => query.isError && query.data === undefined)
+				? []
+				: tokenBreakdownRawQueries.map((query) => query.data)
+		}
+	})
 
 	const [computed, setComputed] = React.useState<IUseProtocolBreakdownChartsComputed>(EMPTY_COMPUTED_RESULT)
 	const [isComputing, setIsComputing] = React.useState(false)
 	const computeRunIdRef = React.useRef(0)
 
 	React.useEffect(() => {
-		if (isNetworkLoading) {
-			setIsComputing(false)
-			return
-		}
+		// While the network is loading the caller already reports loading, so the flag is left as it is and
+		// the next run sets it.
+		if (isNetworkLoading) return
 
 		let cancelled = false
 		const runId = ++computeRunIdRef.current
+		// The flag drives a loading state for work scheduled on an idle callback, which is an external
+		// scheduler; it cannot be derived during render.
+		// oxlint-disable-next-line react/set-state-in-effect -- see above
 		setIsComputing(true)
 
 		const runComputation = () => {
@@ -924,6 +929,7 @@ export function useProtocolBreakdownCharts(
 				window.clearTimeout(timeoutId)
 			}
 		}
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- computeSignature is the trigger: the computation reads its inputs from the ref, so the signature is what says they changed.
 	}, [isNetworkLoading, computeSignature, source, inflows, computeInflows, tokenPieMinimumValue])
 
 	const errors = React.useMemo(

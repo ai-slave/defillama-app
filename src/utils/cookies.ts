@@ -264,6 +264,16 @@ export const getDismissedAnnouncements = (): Array<string> => {
 	return parseDismissedAnnouncementsCookie(document.cookie)
 }
 
+const announcementDismissalListeners = new Set<() => void>()
+
+/** Lets a component read the dismissal cookie as an external store instead of copying it into state. */
+export const subscribeToAnnouncementDismissals = (listener: () => void): (() => void) => {
+	announcementDismissalListeners.add(listener)
+	return () => {
+		announcementDismissalListeners.delete(listener)
+	}
+}
+
 export const isAnnouncementDismissed = (token: string): boolean => {
 	return getDismissedAnnouncements().includes(token)
 }
@@ -279,6 +289,7 @@ export const dismissAnnouncement = (token: string): void => {
 	const cookieString = `${ANNOUNCEMENT_DISMISSALS_COOKIE_NAME}=${encodeURIComponent(nextTokens.join(','))}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureFlag}`
 	document.cookie = cookieString
 	syncAnnouncementDismissalStyles(nextTokens)
+	for (const listener of announcementDismissalListeners) listener()
 }
 
 export const setLlamaAICookie = (cookieName: LlamaAICookieName, value: boolean): void => {

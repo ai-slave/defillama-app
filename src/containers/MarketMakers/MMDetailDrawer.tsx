@@ -306,6 +306,7 @@ function DrawerBody({
 			cancelAnimationFrame(frame)
 			cancelScroll()
 		}
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- marketMakerId is the trigger: a different market maker re-runs the scroll for the same focused section.
 	}, [open, isPending, focusSection, marketMakerId])
 
 	if (isPending) {
@@ -441,12 +442,14 @@ export function MMDetailDrawer({
 	// does not blank out to N/A before it finishes leaving.
 	const [lastId, setLastId] = useState<string | null>(marketMakerId)
 	const [lastName, setLastName] = useState<string | undefined>(fallbackName)
-	useEffect(() => {
+	const [syncedMarketMaker, setSyncedMarketMaker] = useState({ marketMakerId, fallbackName })
+	if (syncedMarketMaker.marketMakerId !== marketMakerId || syncedMarketMaker.fallbackName !== fallbackName) {
+		setSyncedMarketMaker({ marketMakerId, fallbackName })
 		if (marketMakerId) {
 			setLastId(marketMakerId)
 			setLastName(fallbackName)
 		}
-	}, [marketMakerId, fallbackName])
+	}
 
 	const id = marketMakerId ?? lastId
 	const name = fallbackName ?? lastName
@@ -455,9 +458,12 @@ export function MMDetailDrawer({
 	const logo = asStr(asDict(detail.data).imageUrl)
 
 	const [leadDialog, setLeadDialog] = useState<'connect' | 'claim' | null>(null)
-	useEffect(() => {
+	// Closing the drawer closes whatever lead dialog it opened.
+	const [wasOpen, setWasOpen] = useState(open)
+	if (open !== wasOpen) {
+		setWasOpen(open)
 		if (!open) setLeadDialog(null)
-	}, [open])
+	}
 
 	return (
 		<>

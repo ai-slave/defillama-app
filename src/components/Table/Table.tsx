@@ -216,6 +216,7 @@ export function VirtualTable<T extends RowData>({
 	})
 	useEffect(() => {
 		rowVirtualizer.measure()
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- triggers, not inputs: the virtualizer re-measures after a different row count or offset has rendered.
 	}, [rowVirtualizer, rows.length, containerOffset])
 	const virtualItems = rowVirtualizer.getVirtualItems()
 	const tableHeaderRef = useRef<HTMLTableSectionElement>(null)
@@ -425,6 +426,7 @@ export function VirtualTable<T extends RowData>({
 				stickyScrollbar.removeEventListener('scroll', handleStickyScroll)
 			}
 		}
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- triggers, not inputs: any of these changes the table layout the listeners measure, so they are re-attached against the new DOM.
 	}, [rows.length, isSmallScreen, headerGroups.length, visibleLeafColumns.length, skipVirtualization, useStickyHeader])
 
 	if (hasNoVisibleColumns) {

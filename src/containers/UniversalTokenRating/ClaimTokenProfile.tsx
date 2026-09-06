@@ -358,6 +358,8 @@ export function ClaimTokenProfile({
 		if (variant !== 'claim' || typeof window === 'undefined') return
 		const requested = new URL(window.location.href).searchParams.get('token')
 		const projectId = resolveRequestedProjectId(projects, requested)
+		// Preselects from the ?token= param once the project list has loaded, so it waits for async data.
+		// oxlint-disable-next-line react/set-state-in-effect -- see above
 		if (projectId) setToken(projectId)
 	}, [projects, variant])
 	const [verifyMmEngagements, setVerifyMmEngagements] = useState(true)

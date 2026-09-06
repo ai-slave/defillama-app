@@ -145,10 +145,9 @@ export function CategoryPerformanceContainer({
 		return disabled
 	}, [groupBy, performanceTimeSeries, pctChanges])
 
-	React.useEffect(() => {
-		// Prevent selecting a denom that can't be applied (would look like "filter doesn't work").
-		if (disabledDenoms.includes(groupByDenom)) setGroupByDenom('$')
-	}, [disabledDenoms, groupByDenom])
+	// Prevent selecting a denom that can't be applied (would look like "filter doesn't work"). Done in
+	// render and self-terminating: the next render sees the dollar denom, which is never disabled.
+	if (disabledDenoms.includes(groupByDenom)) setGroupByDenom('$')
 
 	// All values here are returns / relative returns expressed in percent.
 	const chartValueSymbol = '%'

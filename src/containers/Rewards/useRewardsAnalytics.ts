@@ -140,6 +140,7 @@ export function useRewardsAnalytics(mode: RewardsAnalyticsMode, rows: Array<Row<
 		if (!containerRef.current) return
 		analytics.current ??= { seen: new Set<string>(), pending: [] }
 		return observeRewardsLinks(containerRef.current, mode, analytics.current)
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- rows is the trigger: new rows render new links, which have to be observed.
 	}, [mode, rows])
 	return containerRef
 }

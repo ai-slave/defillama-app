@@ -124,6 +124,9 @@ export function WelcomeOnboarding() {
 			return
 		}
 		slackAcquisitionHandledRef.current = true
+		// Reads sessionStorage once after hydration and marks a ref guard in the same step, so it cannot
+		// move into render.
+		// oxlint-disable-next-line react/set-state-in-effect -- see above
 		setSlackAcquisition(acquisition)
 		void persistSlackAcquisitionIfFirst(acquisition, {
 			fetch: authorizedFetch,

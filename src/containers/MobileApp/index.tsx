@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 import { BasicLink } from '~/components/Link'
 import { SubscriptionBackground, SubscriptionFooter, SubscriptionHeader } from '~/containers/Subscription/sections'
 import { Icon } from '~/ui/Icon'
@@ -90,20 +90,23 @@ const FLOATING_CHIPS = [
 
 // Detected after mount so the server-rendered markup keeps both store links:
 // crawlers and unknown platforms see the full pair, phones narrow to their own store.
+/** The user agent never changes while the page is open, so the store never notifies. */
+function subscribeToDevicePlatform(): () => void {
+	return () => {}
+}
+
+function readDevicePlatform(): 'ios' | 'android' | null {
+	const ua = navigator.userAgent
+	// iPads report a Macintosh UA, so touch points are what separate them from desktop Safari
+	if (/iPhone|iPad|iPod/.test(ua) || (ua.includes('Macintosh') && navigator.maxTouchPoints > 1)) return 'ios'
+	if (/Android/.test(ua)) return 'android'
+	return null
+}
+
 export function useDevicePlatform(): 'ios' | 'android' | null {
-	const [platform, setPlatform] = useState<'ios' | 'android' | null>(null)
-
-	useEffect(() => {
-		const ua = navigator.userAgent
-		// iPads report a Macintosh UA, so touch points are what separate them from desktop Safari
-		if (/iPhone|iPad|iPod/.test(ua) || (ua.includes('Macintosh') && navigator.maxTouchPoints > 1)) {
-			setPlatform('ios')
-		} else if (/Android/.test(ua)) {
-			setPlatform('android')
-		}
-	}, [])
-
-	return platform
+	// Read as an external store: the server and the first client render both report null, so the markup
+	// matches, and the platform appears right after hydration.
+	return useSyncExternalStore(subscribeToDevicePlatform, readDevicePlatform, () => null)
 }
 
 // Official badge glyphs (Apple artwork, Google artwork + brand colors) rendered on our

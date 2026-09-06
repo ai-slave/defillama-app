@@ -10,11 +10,11 @@ const ReorderablePinnedPages = React.lazy(() => import('./ReorderablePinnedPages
 export function PinnedPages({ pinnedPages, asPath }: { pinnedPages: Array<TNavLink>; asPath: string }) {
 	const [isReordering, setIsReordering] = React.useState(false)
 
-	React.useEffect(() => {
-		if (pinnedPages.length <= 1 && isReordering) {
-			setIsReordering(false)
-		}
-	}, [isReordering, pinnedPages.length])
+	// Reordering ends as soon as there is nothing left to reorder, in the same render. Self-terminating:
+	// the next render sees isReordering false.
+	if (pinnedPages.length <= 1 && isReordering) {
+		setIsReordering(false)
+	}
 
 	return (
 		<div className="group/pinned flex flex-col">

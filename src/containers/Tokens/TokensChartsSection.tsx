@@ -273,8 +273,11 @@ function MoversChart({
 	color: string
 }) {
 	const router = useRouter()
+	// Read by the chart's click handler, which echarts calls on user interaction, never during render.
 	const entriesRef = React.useRef(entries)
-	entriesRef.current = entries
+	React.useLayoutEffect(() => {
+		entriesRef.current = entries
+	})
 	const chartData = React.useMemo(() => {
 		const categories: Array<string> = []
 		const values: Array<number> = []

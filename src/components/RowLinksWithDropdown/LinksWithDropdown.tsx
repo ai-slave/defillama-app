@@ -163,6 +163,7 @@ export function LinksWithDropdown({
 	useEffect(() => {
 		cachedRef.current = null
 		dispatch({ type: 'REQUEST_MEASURE' })
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- these are the triggers: a different link set invalidates the cached measurement, which the effect body does not read.
 	}, [links.length, linksLayoutSignature])
 
 	// Full measurement: runs synchronously before paint when isMeasuring is true.
@@ -221,6 +222,7 @@ export function LinksWithDropdown({
 			window.removeEventListener('resize', handleResize)
 			resizeObserver?.disconnect()
 		}
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- the trigger: switching to menu-only changes which element the listeners must observe.
 	}, [overflowState.renderMenuOnly])
 
 	const activeLinkIndex = activeLink ? links.findIndex((link) => link.label === activeLink) : -1

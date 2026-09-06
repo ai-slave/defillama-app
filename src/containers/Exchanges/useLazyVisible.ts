@@ -9,6 +9,9 @@ export function useLazyVisible<T extends HTMLElement>(rootMargin = '400px') {
 		const node = ref.current
 		if (!node) return
 		if (typeof IntersectionObserver === 'undefined') {
+			// Capability probe: without IntersectionObserver the content mounts after hydration, so the first
+			// paint still matches the server's markup.
+			// oxlint-disable-next-line react/set-state-in-effect -- see above
 			setVisible(true)
 			return
 		}

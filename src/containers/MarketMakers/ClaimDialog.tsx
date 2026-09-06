@@ -49,7 +49,10 @@ export function ClaimDialog({
 
 	useEffect(() => {
 		if (!open) return
+		// Opening the dialog restarts the form. The reset also clears refs (the captcha widget, the pending
+		// click id) and starts a request, so it belongs after commit rather than in render.
 		resetSubmit()
+		// oxlint-disable-next-line react/set-state-in-effect -- see above
 		setPosition('')
 		setHasContact('no')
 		setContactName('')

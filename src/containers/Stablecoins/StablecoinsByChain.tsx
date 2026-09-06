@@ -34,13 +34,12 @@ import {
 	getStablecoinChartTypeOptions,
 	getStablecoinChartTypeQueryValue,
 	getStablecoinChartViewLabel,
-	getStablecoinChartViewOptions,
-	getStablecoinChartViewQueryValue,
+	useStablecoinChartViewChange,
+	useStablecoinChartViewOptions,
 	getStablecoinOverviewSeriesChart,
 	getStablecoinOverviewVolumeChartKind,
 	getStablecoinSeriesSelectorLabel,
 	parseStablecoinChartState,
-	parseStablecoinChartView,
 	parseStablecoinVolumeGroupBy,
 	type StablecoinChartType as StablecoinChartCategory
 } from '~/containers/Stablecoins/chartState'
@@ -132,7 +131,7 @@ export function StablecoinsByChain({
 	)
 	const volumeGroupBy = parseStablecoinVolumeGroupBy(router.query.groupBy)
 	const chartTypeOptions = React.useMemo(() => getStablecoinChartTypeOptions(chartMode), [chartMode])
-	const chartViewOptions = React.useMemo(() => getStablecoinChartViewOptions(chartState), [chartState])
+	const chartViewOptions = useStablecoinChartViewOptions(chartState)
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
 	const onChartTypeChange = React.useCallback(
 		(nextChartType: StablecoinChartCategory) => {
@@ -144,17 +143,7 @@ export function StablecoinsByChain({
 		},
 		[chartMode, handleChartReady, router]
 	)
-	const onChartViewChange = React.useCallback(
-		(nextChartView: string) => {
-			const view = parseStablecoinChartView(nextChartView)
-			if (!view) return
-			handleChartReady(null)
-			void pushShallowQuery(router, {
-				chartView: getStablecoinChartViewQueryValue(chartMode, chartType, view)
-			})
-		},
-		[chartMode, chartType, handleChartReady, router]
-	)
+	const onChartViewChange = useStablecoinChartViewChange(chartMode, chartType, handleChartReady, router)
 	const onVolumeGroupByChange = React.useCallback(
 		(nextGroupBy: LowercaseDwmcGrouping) => {
 			void pushShallowQuery(router, { groupBy: nextGroupBy === 'daily' ? undefined : nextGroupBy })

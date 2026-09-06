@@ -75,8 +75,13 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 	useLayoutEffect(() => {
 		articleIdRef.current = article.id
 	}, [article.id])
+	// The editor is built once and its plugins must reach the current upload function and article id, so the
+	// options carry getters over refs. The compiler cannot prove the getters are not called while rendering,
+	// so it will not keep this memo; useMemo still does the work at runtime, which is what tiptap needs.
+	// oxlint-disable-next-line react/preserve-manual-memoization -- see above
 	const extensions = useMemo(
 		() =>
+			// oxlint-disable-next-line react/refs -- the getters are stored for tiptap's paste and drop handlers, which run on editor events.
 			createArticleEditorExtensions({
 				getUpload: () => inlineUploadRef.current,
 				getArticleId: () => articleIdRef.current,

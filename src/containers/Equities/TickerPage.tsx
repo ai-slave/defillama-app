@@ -211,6 +211,23 @@ function EquityTitle({
 	)
 }
 
+/**
+ * The chart memo lives in a hook so the compiler preserves it: in the component body `activeTimeframe`
+ * carries a mutable range it cannot see past, and it drops the memo instead. A parameter carries none.
+ */
+function useIntradayPriceHistoryChart(
+	intradayTimeframe: Parameters<typeof buildIntradayPriceHistoryChart>[1] | null,
+	priceHistoryData: Parameters<typeof buildIntradayPriceHistoryChart>[0] | undefined
+) {
+	return useMemo(
+		() =>
+			intradayTimeframe && priceHistoryData?.length
+				? buildIntradayPriceHistoryChart(priceHistoryData, intradayTimeframe)
+				: null,
+		[intradayTimeframe, priceHistoryData]
+	)
+}
+
 export function EquityTickerPage(props: IEquityTickerPageProps) {
 	const router = useRouter()
 	const { chartInstance: priceChartInstance, handleChartReady: handlePriceChartReady } = useGetChartInstance()
@@ -256,12 +273,9 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 		return buildPriceHistoryChart(priceHistory.data)
 	}, [isIntradayTimeframe, priceHistory.data])
 
-	const intradayPriceHistoryChart = useMemo(
-		() =>
-			isIntradayTimeframe && priceHistory.data?.length
-				? buildIntradayPriceHistoryChart(priceHistory.data, activeTimeframe)
-				: null,
-		[activeTimeframe, priceHistory.data, isIntradayTimeframe]
+	const intradayPriceHistoryChart = useIntradayPriceHistoryChart(
+		isIntradayTimeframe ? activeTimeframe : null,
+		priceHistory.data
 	)
 
 	const activePriceHistoryChart = intradayPriceHistoryChart ?? dailyPriceHistoryChart

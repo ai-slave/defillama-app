@@ -257,7 +257,10 @@ export function TokenBorrowSection({
 			: null
 
 	React.useEffect(() => {
+		// Deliberately after commit: the server renders the hydration snapshot, and only the mounted client
+		// switches to the full dataset. Setting this during render would change the server markup.
 		if ((hasActiveFilters || hasNonDefaultSorting) && !shouldFetchFullData) {
+			// oxlint-disable-next-line react/set-state-in-effect -- see above
 			setShouldFetchFullData(true)
 		}
 	}, [hasActiveFilters, hasNonDefaultSorting, shouldFetchFullData])

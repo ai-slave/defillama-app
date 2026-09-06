@@ -199,6 +199,7 @@ export function SubscriptionComparisonSection({
 
 	useEffect(() => {
 		syncHeaderTrackOffset()
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- triggers, not inputs: each changes the rendered table, and the sticky header has to be re-aligned to it.
 	}, [syncHeaderTrackOffset, billingCycle, planOrder, selectedPlan])
 
 	return (

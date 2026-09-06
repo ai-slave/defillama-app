@@ -289,6 +289,7 @@ function useVerificationRun() {
 		return () => {
 			for (const timer of timers) window.clearTimeout(timer)
 		}
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- run is the replay counter: bumping it restarts the staged timers.
 	}, [run, started])
 
 	return {
@@ -587,6 +588,7 @@ function ReconciliationLedger() {
 			{ duration: 700, easing: 'cubic-bezier(.25,1,.5,1)', fill: 'forwards' }
 		)
 		return () => animation.cancel()
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- run is the replay counter: bumping it replays the animation for the same stage.
 	}, [run, stage])
 
 	return (
@@ -1206,6 +1208,7 @@ function PublicProofSection() {
 		if (!isManualPaused) return
 		const timer = window.setTimeout(() => setIsManualPaused(false), 10_000)
 		return () => window.clearTimeout(timer)
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- manualPauseVersion is the trigger: each new manual pause restarts the ten-second window.
 	}, [isManualPaused, manualPauseVersion])
 
 	useEffect(() => {

@@ -254,6 +254,9 @@ export function PoolApyChart({
 		const id = ++reqId.current
 		// Already covered by the widest loaded range → slice locally, no network.
 		if (RANK[range] <= RANK[widest.range]) {
+			// One request lifecycle: the local-slice branch clears the flags the fetching branch sets, and the
+			// request id it reads is a ref.
+			// oxlint-disable-next-line react/set-state-in-effect -- see above
 			setLoading(false)
 			setError(false)
 			return

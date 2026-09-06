@@ -229,11 +229,14 @@ export function SelectWithCombobox({
 
 	const [viewableMatches, setViewableMatches] = React.useState(visibleOptionLimit ?? 20)
 
-	React.useEffect(() => {
+	// A new limit from the caller replaces however far the list was expanded.
+	const [syncedVisibleOptionLimit, setSyncedVisibleOptionLimit] = React.useState(visibleOptionLimit)
+	if (visibleOptionLimit !== syncedVisibleOptionLimit) {
+		setSyncedVisibleOptionLimit(visibleOptionLimit)
 		if (visibleOptionLimit !== null) {
 			setViewableMatches(visibleOptionLimit)
 		}
-	}, [visibleOptionLimit])
+	}
 
 	const getMatchKeys = React.useCallback(() => matches.map(getOptionKey), [matches, getOptionKey])
 

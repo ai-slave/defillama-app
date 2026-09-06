@@ -39,6 +39,8 @@ function usePositionUsdState(): PositionState {
 			const raw = localStorage.getItem(STORAGE_KEY)
 			if (raw) {
 				const n = Number(raw)
+				// Read after mount so SSR and the first client render agree.
+				// oxlint-disable-next-line react/set-state-in-effect -- see above
 				if (Number.isFinite(n) && n > 0) setPosition(n)
 			}
 		} catch {
@@ -81,8 +83,13 @@ export function PositionControl({
 	position: number | null
 	onChange: (v: number | null) => void
 }) {
-	const [draft, setDraft] = useState('')
-	useEffect(() => setDraft(position ? formatNumber(position) : ''), [position])
+	// Starts from the committed position, then restarts from it whenever it changes.
+	const [draft, setDraft] = useState(() => (position ? formatNumber(position) : ''))
+	const [syncedPosition, setSyncedPosition] = useState(position)
+	if (position !== syncedPosition) {
+		setSyncedPosition(position)
+		setDraft(position ? formatNumber(position) : '')
+	}
 
 	const commit = () => {
 		const v = parseAmount(draft)

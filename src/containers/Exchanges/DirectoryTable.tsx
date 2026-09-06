@@ -172,6 +172,36 @@ function sortingFor(group: DirectoryColumnGroup): SortingState {
 	return group === 'transparency' ? [{ id: 'reservesUsd', desc: true }] : []
 }
 
+/**
+ * Both memos live in hooks so the compiler preserves them: in the component body the route-derived `kind`
+ * and `scope` carry a mutable range it cannot see past, and it drops the memos instead, which would hand
+ * TanStack a new model on every unrelated render. Parameters carry no such range.
+ */
+function useFilteredDirectoryRows(
+	rows: Array<ExchangeDirectoryRowModel>,
+	kind: DirectoryKind,
+	scope: DirectoryScope,
+	country: string | null,
+	catalog: Parameters<typeof filterDirectoryRows>[1]['catalog']
+) {
+	return React.useMemo(
+		() => nestDirectoryRows(filterDirectoryRows(rows, { kind, scope, country, catalog })),
+		[rows, kind, scope, country, catalog]
+	)
+}
+
+function useDirectoryColumns(
+	scope: DirectoryScope,
+	executionAvailable: Parameters<typeof buildDirectoryColumns>[1],
+	executionCostBasket: Parameters<typeof buildDirectoryColumns>[2],
+	executionFillBasket: Parameters<typeof buildDirectoryColumns>[3]
+) {
+	return React.useMemo(
+		() => buildDirectoryColumns(scope, executionAvailable, executionCostBasket, executionFillBasket),
+		[scope, executionAvailable, executionCostBasket, executionFillBasket]
+	)
+}
+
 export function DirectoryTable({
 	rows,
 	country,
@@ -196,18 +226,12 @@ export function DirectoryTable({
 
 	// TanStack derives table models from reference identity, so keep both inputs stable across unrelated control renders.
 	// Venues whose parent entity is itself listed render as child rows nested under the parent.
-	const filteredRows = React.useMemo(
-		() => nestDirectoryRows(filterDirectoryRows(rows, { kind, scope, country, catalog })),
-		[rows, kind, scope, country, catalog]
-	)
+	const filteredRows = useFilteredDirectoryRows(rows, kind, scope, country, catalog)
 	// Brand rows start collapsed in the merged view: it is the default landing table and
 	// every expanded parent pushes the ranked list further down. The exact-segment
 	// tables keep their expanded default.
 	const brandRowsExpanded = scope === 'all' ? undefined : true
-	const columns = React.useMemo(
-		() => buildDirectoryColumns(scope, executionAvailable, executionCostBasket, executionFillBasket),
-		[scope, executionAvailable, executionCostBasket, executionFillBasket]
-	)
+	const columns = useDirectoryColumns(scope, executionAvailable, executionCostBasket, executionFillBasket)
 
 	return (
 		<TableWithSearch<DirectoryTreeRow>

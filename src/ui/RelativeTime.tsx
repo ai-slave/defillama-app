@@ -22,6 +22,8 @@ export function RelativeTime({
 	const [now, setNow] = useState<Date | null>(null)
 
 	useEffect(() => {
+		// The clock starts on the client only: rendering a time during SSR would not match hydration.
+		// oxlint-disable-next-line react/set-state-in-effect -- see above
 		setNow(new Date())
 		const timer = window.setInterval(() => setNow(new Date()), refreshIntervalMs)
 		return () => window.clearInterval(timer)
