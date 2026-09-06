@@ -86,6 +86,7 @@ function PinnedPageRow({ page }: { page: TNavLink }) {
 				content="Unpin from navigation"
 				render={
 					<button
+						type="button"
 						onClick={(e) => {
 							e.preventDefault()
 							e.stopPropagation()

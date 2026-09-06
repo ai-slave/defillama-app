@@ -105,6 +105,7 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 					<span className="text-sm font-semibold text-sub-text-primary">{`${formatUsd(total)}${intervalSuffix}`}</span>
 					{isMonthly && active && !isCanceling && (
 						<button
+							type="button"
 							onClick={() => setShowUpgradeConfirm(true)}
 							disabled={upgradePending}
 							className="flex h-7 items-center gap-1.5 rounded-lg border border-sub-border-slate-100 px-2.5 text-xs font-medium text-sub-text-primary hover:bg-sub-brand-primary/5 disabled:opacity-50 dark:border-sub-border-strong"
@@ -114,6 +115,7 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 						</button>
 					)}
 					<button
+						type="button"
 						onClick={() => setShowManageModal(true)}
 						disabled={upgradePending}
 						className="flex h-7 items-center gap-1.5 rounded-lg border border-sub-border-slate-100 px-2.5 text-xs font-medium text-sub-text-primary hover:bg-sub-brand-primary/5 disabled:opacity-50 dark:border-sub-border-strong"
@@ -237,6 +239,7 @@ export function TeamSeatsCard() {
 				<div className="flex items-center gap-2">
 					{teamSubscriptions.length > 0 && hasStripe && (
 						<button
+							type="button"
 							onClick={() => void createPortalSession()}
 							disabled={createPortalSessionMutation.isPending}
 							className="flex h-8 items-center gap-1.5 rounded-lg border border-sub-border-slate-100 px-3 text-xs font-medium text-sub-text-primary hover:bg-sub-brand-primary/5 disabled:opacity-50 dark:border-sub-border-strong"
@@ -246,6 +249,7 @@ export function TeamSeatsCard() {
 						</button>
 					)}
 					<button
+						type="button"
 						onClick={() => setShowPurchaseModal(true)}
 						disabled={upgradePending}
 						className="flex h-8 items-center gap-1.5 rounded-lg bg-sub-brand-primary px-3 text-xs font-medium text-on-brand disabled:opacity-50"

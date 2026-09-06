@@ -293,6 +293,7 @@ export function LinkToMetricOrToolPage({
 				content={isPinned ? 'Unpin from navigation' : 'Pin to navigation'}
 				render={
 					<button
+						type="button"
 						onClick={(e) => {
 							const currentPinnedMetrics = JSON.parse(window.localStorage.getItem('pinned-metrics') || '[]')
 							setStorageItem(

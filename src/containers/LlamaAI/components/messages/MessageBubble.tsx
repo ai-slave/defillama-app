@@ -728,6 +728,7 @@ function DashboardInlineCard({ dashboard }: { dashboard: DashboardArtifact }) {
 
 	return (
 		<button
+			type="button"
 			onClick={toggleDashboardPanel}
 			className="my-2 flex w-full items-center gap-3 rounded-lg border border-ai-action/30 bg-ai-action/5 px-3.5 py-2.5 text-left transition-all hover:border-ai-action/50 hover:bg-ai-action/10"
 		>

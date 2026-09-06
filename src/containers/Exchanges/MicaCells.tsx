@@ -89,7 +89,7 @@ export function PromotionGift({ promotion, venue }: { promotion: ExchangePromoti
 	return (
 		<Ariakit.HovercardProvider placement="right-start" showTimeout={0} hideTimeout={50}>
 			<Ariakit.HovercardAnchor
-				render={<button />}
+				render={<button type="button" />}
 				type="button"
 				className="hover-wash inline-flex size-7 shrink-0 items-center justify-center rounded-lg border border-subtle bg-surface text-secondary hover:border-strong hover:text-primary focus-visible:border-strong focus-visible:text-primary"
 				aria-label={`${venue.name} promotion: ${promotion.label}`}

@@ -51,7 +51,7 @@ export const CopyDashboardLinkButton = ({
 		return (
 			<Tooltip
 				content="Make dashboard public to share"
-				render={<button aria-disabled />}
+				render={<button type="button" aria-disabled />}
 				className="flex cursor-not-allowed items-center gap-1 rounded-md border border-pro-cards-border px-1.5 py-1 text-xs text-tertiary hover:border-transparent focus-visible:border-transparent"
 			>
 				{copied ? <Icon name="check-circle" height={14} width={14} /> : <Icon name="link" height={14} width={14} />}
@@ -83,6 +83,7 @@ export const CopyDashboardLinkButton = ({
 								className="flex-1 rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-2.5 py-1.5 text-xs"
 							/>
 							<button
+								type="button"
 								onClick={() => {
 									void handleCopyLink()
 								}}
@@ -102,6 +103,7 @@ export const CopyDashboardLinkButton = ({
 						<p className="text-xs font-medium text-pro-text-label">Share on</p>
 						<div className="flex gap-2">
 							<button
+								type="button"
 								onClick={() => handleShareTo('twitter')}
 								className="flex flex-1 items-center justify-center gap-2 rounded-md border pro-border pro-hover-bg px-3 py-2 text-xs text-pro-text-secondary transition-colors hover:text-pro-text-primary"
 								title="Share on Twitter/X"
@@ -110,6 +112,7 @@ export const CopyDashboardLinkButton = ({
 								<span>Twitter</span>
 							</button>
 							<button
+								type="button"
 								onClick={() => handleShareTo('telegram')}
 								className="flex flex-1 items-center justify-center gap-2 rounded-md border pro-border pro-hover-bg px-3 py-2 text-xs text-pro-text-secondary transition-colors hover:text-pro-text-primary"
 								title="Share on Telegram"

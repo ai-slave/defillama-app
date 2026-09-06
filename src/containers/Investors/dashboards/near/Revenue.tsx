@@ -93,6 +93,7 @@ function TimeframeToggle({
 		<div className="inline-flex gap-0.5 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-0.5">
 			{options.map((option) => (
 				<button
+					type="button"
 					key={option.value}
 					onClick={() => onChange(option.value)}
 					className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${

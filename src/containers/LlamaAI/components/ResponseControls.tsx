@@ -236,6 +236,7 @@ export function ResponseControls({
 						content={copied ? 'Copied' : 'Copy'}
 						render={
 							<button
+								type="button"
 								onClick={() => {
 									void handleCopy()
 								}}
@@ -254,7 +255,13 @@ export function ResponseControls({
 					<>
 						<Tooltip
 							content={isRatedAsGood ? 'Rated as good' : 'Rate as good'}
-							render={<button onClick={handleRateGood} disabled={showFeedback || isRatedAsGood || isRatedAsBad} />}
+							render={
+								<button
+									type="button"
+									onClick={handleRateGood}
+									disabled={showFeedback || isRatedAsGood || isRatedAsBad}
+								/>
+							}
 							className={`rounded-md p-1.5 transition-colors hover:bg-ai-hover hover:text-ai-secondary ${isRatedAsGood ? 'text-success' : 'text-ai-muted'}`}
 						>
 							<Icon name="thumbs-up" height={16} width={16} />
@@ -262,7 +269,13 @@ export function ResponseControls({
 						</Tooltip>
 						<Tooltip
 							content={isRatedAsBad ? 'Rated as bad' : 'Rate as bad'}
-							render={<button onClick={handleRateBad} disabled={showFeedback || isRatedAsGood || isRatedAsBad} />}
+							render={
+								<button
+									type="button"
+									onClick={handleRateBad}
+									disabled={showFeedback || isRatedAsGood || isRatedAsBad}
+								/>
+							}
 							className={`rounded-md p-1.5 transition-colors hover:bg-ai-hover hover:text-ai-secondary ${isRatedAsBad ? 'text-error' : 'text-ai-muted'}`}
 						>
 							<Icon name="thumbs-down" height={16} width={16} />
@@ -321,7 +334,9 @@ export function ResponseControls({
 				{!readOnly ? (
 					<Tooltip
 						content="Provide Feedback"
-						render={<button onClick={handleOpenGeneralFeedback} disabled={showFeedback || !!submittedRating} />}
+						render={
+							<button type="button" onClick={handleOpenGeneralFeedback} disabled={showFeedback || !!submittedRating} />
+						}
 						className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-secondary"
 					>
 						<Icon name="message-square-warning" height={16} width={16} />
@@ -331,7 +346,7 @@ export function ResponseControls({
 				{sessionId && !readOnly && onShare ? (
 					<Tooltip
 						content="Share"
-						render={<button onClick={() => onShare(messageId)} />}
+						render={<button type="button" onClick={() => onShare(messageId)} />}
 						className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-secondary"
 					>
 						<Icon name="share" height={16} width={16} />

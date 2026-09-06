@@ -186,6 +186,7 @@ export function FollowingShelves() {
 			{totalPages > 1 ? (
 				<div className="flex items-center justify-center gap-2">
 					<button
+						type="button"
 						onClick={() => goToPage(Math.max(1, page - 1))}
 						disabled={page === 1}
 						className={`px-3 py-1 ${page === 1 ? 'cursor-not-allowed text-pro-text-tertiary' : 'text-pro-text-primary hover:bg-pro-glass-bg'}`}
@@ -205,6 +206,7 @@ export function FollowingShelves() {
 						}
 						return (
 							<button
+								type="button"
 								key={pageNum}
 								onClick={() => goToPage(pageNum)}
 								className={`px-3 py-1 ${
@@ -217,6 +219,7 @@ export function FollowingShelves() {
 					})}
 
 					<button
+						type="button"
 						onClick={() => goToPage(Math.min(totalPages, page + 1))}
 						disabled={page === totalPages}
 						className={`px-3 py-1 ${

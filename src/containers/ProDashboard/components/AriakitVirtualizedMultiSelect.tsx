@@ -167,6 +167,7 @@ export function AriakitVirtualizedMultiSelect({
 											const iconUrl = renderIcon ? renderIcon(option) : option.logo
 											return (
 												<button
+													type="button"
 													key={option.value}
 													onClick={() => {
 														if (!isDisabled) {

@@ -509,6 +509,7 @@ const NameColumn = (type: IProps['type']) =>
 				<span className={`relative flex items-center gap-2 ${row.depth > 0 ? 'pl-6' : 'pl-0'}`}>
 					{row.subRows?.length > 0 ? (
 						<button
+							type="button"
 							className="absolute -left-4.5"
 							{...{
 								onClick: row.getToggleExpandedHandler()

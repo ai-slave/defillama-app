@@ -195,6 +195,7 @@ export function LlamaAIFloatingButton() {
 				<Ariakit.TooltipAnchor
 					render={
 						<button
+							type="button"
 							onClick={handleButtonClick}
 							className="fixed right-6 bottom-6 z-50 flex size-14 items-center justify-center rounded-full shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl active:scale-95"
 							style={{

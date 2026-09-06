@@ -97,6 +97,7 @@ export function SubscriptionCard({
 				<div className="flex gap-2">
 					{onTopup && (
 						<button
+							type="button"
 							onClick={onTopup}
 							disabled={isTopupLoading}
 							className="flex h-8 items-center gap-1 rounded-lg bg-sub-brand-primary px-3 text-xs font-medium whitespace-nowrap text-on-brand disabled:opacity-50"
@@ -106,6 +107,7 @@ export function SubscriptionCard({
 						</button>
 					)}
 					<button
+						type="button"
 						onClick={onManage}
 						disabled={isManageLoading}
 						className="flex h-8 items-center gap-1 rounded-lg border border-sub-border-muted px-3 text-xs font-medium whitespace-nowrap text-sub-text-primary disabled:opacity-50 dark:border-sub-border-strong"
@@ -114,6 +116,7 @@ export function SubscriptionCard({
 						{!isManageLoading && <Icon name="circle-external-link" height={16} width={16} className="shrink-0" />}
 					</button>
 					<button
+						type="button"
 						onClick={onCancel}
 						className="flex h-8 items-center rounded-lg border border-sub-border-muted px-3 text-xs font-medium whitespace-nowrap text-sub-text-primary dark:border-sub-border-strong"
 					>

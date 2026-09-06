@@ -121,6 +121,7 @@ export function ChartTab(props: ChartTabProps) {
 			<div className="mb-3 rounded-xl border border-pro-cards-border p-1 shadow-sm">
 				<div className="grid grid-cols-2 gap-1">
 					<button
+						type="button"
 						onClick={() => onChartModeChange('builder')}
 						className={`group flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
 							chartMode === 'builder'
@@ -139,6 +140,7 @@ export function ChartTab(props: ChartTabProps) {
 						<span>Builder</span>
 					</button>
 					<button
+						type="button"
 						onClick={() => onChartModeChange('manual')}
 						className={`group flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
 							chartMode === 'manual'

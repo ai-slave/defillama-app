@@ -66,6 +66,7 @@ export function ReferralCard() {
 				<div className="flex items-center justify-between">
 					<span className="text-sm text-sub-text-primary">Your Referral Link</span>
 					<button
+						type="button"
 						onClick={handleCopy}
 						className="flex h-6 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-[10px] leading-3 font-medium text-sub-text-primary dark:border-sub-border-strong"
 					>
@@ -79,6 +80,7 @@ export function ReferralCard() {
 				<p className="text-xs leading-4 text-sub-text-primary">
 					Share this link to refer new users. You can also add{' '}
 					<button
+						type="button"
 						onClick={handleCopyRefParam}
 						title="Copy to clipboard"
 						className="cursor-pointer font-mono underline decoration-dotted underline-offset-2 hover:text-sub-brand-primary"
@@ -95,6 +97,7 @@ export function ReferralCard() {
 					<div className="flex items-center justify-between">
 						<span className="text-xs text-sub-text-primary">Couldn't load referral stats.</span>
 						<button
+							type="button"
 							onClick={() => refetchStats()}
 							className="text-xs font-medium text-sub-text-primary underline decoration-dotted underline-offset-2 hover:text-sub-brand-primary"
 						>

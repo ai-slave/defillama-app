@@ -272,6 +272,7 @@ function AssetControls({
 					const isSelected = selectedMetrics.includes(metric)
 					return (
 						<button
+							type="button"
 							key={metric}
 							onClick={() => handleMetricToggle(metric)}
 							className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${

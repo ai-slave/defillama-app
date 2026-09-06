@@ -83,7 +83,7 @@ export function ChartControls({
 					{controls.groupingOptions.map((interval) => (
 						<Tooltip
 							content={capitalizeFirstLetter(interval)}
-							render={<button />}
+							render={<button type="button" />}
 							className="inline-flex min-w-8 items-center justify-center px-3 py-1.5 text-xs whitespace-nowrap hover:not-disabled:pro-btn-primary focus-visible:not-disabled:pro-btn-primary disabled:opacity-50 data-[active=true]:bg-brand data-[active=true]:font-medium data-[active=true]:text-ai-white"
 							data-active={controls.state.grouping === interval}
 							disabled={controls.groupingLocked && interval !== 'day'}

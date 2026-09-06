@@ -205,6 +205,7 @@ export default function YieldsEmissions() {
 							</span>
 							<div className="flex gap-1">
 								<button
+									type="button"
 									onClick={() => table.previousPage()}
 									disabled={!table.getCanPreviousPage()}
 									className="rounded-md border border-pro-cards-border px-3 py-1 text-xs text-pro-text-secondary transition-colors hover:bg-sl-hover-bg disabled:opacity-40"
@@ -212,6 +213,7 @@ export default function YieldsEmissions() {
 									Prev
 								</button>
 								<button
+									type="button"
 									onClick={() => table.nextPage()}
 									disabled={!table.getCanNextPage()}
 									className="rounded-md border border-pro-cards-border px-3 py-1 text-xs text-pro-text-secondary transition-colors hover:bg-sl-hover-bg disabled:opacity-40"

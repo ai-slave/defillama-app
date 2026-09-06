@@ -89,7 +89,7 @@ const columns = [
 				<Hovercard
 					content={<BreakdownTooltipContent dominance={dominance} protocolName={info.row.original.name} />}
 					contentClassName="w-max max-w-[min(20rem,var(--popover-available-width))] p-3"
-					render={<button />}
+					render={<button type="button" />}
 					className="ml-auto flex h-5 w-full! flex-nowrap items-center bg-white"
 				>
 					{dominance.map((dom) => {

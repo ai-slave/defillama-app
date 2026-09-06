@@ -13,6 +13,7 @@ export function UserHeader({ displayName, onLogout }: UserHeaderProps) {
 				<span className="text-sm font-medium text-sub-text-primary">{displayName}</span>
 			</div>
 			<button
+				type="button"
 				onClick={onLogout}
 				className="flex h-8 items-center justify-center gap-1 rounded-lg border border-sub-border-muted px-3 text-xs leading-4 font-medium text-error dark:border-sub-border-strong"
 			>

@@ -336,6 +336,7 @@ const ConversationLiveStatus = memo(function ConversationLiveStatus({
 							Attempt {Math.max(recovery.attemptCount, 1)}. Connection lost temporarily.
 						</p>
 						<button
+							type="button"
 							onClick={onReconnectNow}
 							className="shrink-0 rounded-md bg-ai-warning-soft px-3 py-1 text-xs font-medium text-ai-warning-strong hover:bg-ai-warning"
 						>
@@ -351,6 +352,7 @@ const ConversationLiveStatus = memo(function ConversationLiveStatus({
 					{promptFailureAction ? (
 						<div className="mt-1 flex items-center gap-2">
 							<button
+								type="button"
 								onClick={promptFailureAction.onActivate}
 								className="rounded-md bg-ai-error-bg px-3 py-1 text-sm text-ai-error-strong hover:bg-ai-error-border"
 							>
@@ -358,6 +360,7 @@ const ConversationLiveStatus = memo(function ConversationLiveStatus({
 							</button>
 							{promptFailureAction.onDiscard ? (
 								<button
+									type="button"
 									onClick={promptFailureAction.onDiscard}
 									className="rounded-md px-3 py-1 text-sm text-ai-secondary hover:bg-ai-surface-muted"
 								>
@@ -854,7 +857,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 			>
 				<Tooltip
 					content="Scroll to bottom"
-					render={<button onClick={scrollToBottom} />}
+					render={<button type="button" onClick={scrollToBottom} />}
 					className={`mx-auto flex size-8 items-center justify-center rounded-full border border-ai-line bg-page shadow-md hover:bg-ai-surface-muted focus-visible:bg-ai-surface-muted ${showScrollToBottom ? 'pointer-events-auto' : 'pointer-events-none'}`}
 				>
 					<Icon name="arrow-down" height={16} width={16} />
@@ -925,6 +928,7 @@ export function EmptyConversationErrorState({ message, onRetry }: { message: str
 			<p className="text-sm text-ai-error-strong">{message}</p>
 			{onRetry ? (
 				<button
+					type="button"
 					onClick={onRetry}
 					className="rounded-md bg-ai-error-bg px-3 py-1 text-sm text-ai-error-strong hover:bg-ai-error-border"
 				>

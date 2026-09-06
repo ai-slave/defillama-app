@@ -59,13 +59,19 @@ export function Pagination<T>({ table }: { table: Table<T> }) {
 			</span>
 			<div className="flex gap-2">
 				<button
+					type="button"
 					onClick={() => table.previousPage()}
 					disabled={!table.getCanPreviousPage()}
 					className="disabled:opacity-30"
 				>
 					← Prev
 				</button>
-				<button onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} className="disabled:opacity-30">
+				<button
+					type="button"
+					onClick={() => table.nextPage()}
+					disabled={!table.getCanNextPage()}
+					className="disabled:opacity-30"
+				>
 					Next →
 				</button>
 			</div>

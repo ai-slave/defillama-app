@@ -202,7 +202,7 @@ export function MicaLicenseValue({
 	return (
 		<Ariakit.HovercardProvider placement="left-start" showTimeout={0} hideTimeout={80}>
 			<Ariakit.HovercardAnchor
-				render={<button />}
+				render={<button type="button" />}
 				type="button"
 				className="inline-flex rounded-sm focus-visible:focus-ring"
 				aria-label={`${presentation.label} MiCA details for ${name}`}
@@ -249,7 +249,7 @@ function KycSummaryHovercard({ summary, name }: { summary: string; name: string 
 	return (
 		<Ariakit.HovercardProvider placement="left-start" showTimeout={0} hideTimeout={80}>
 			<Ariakit.HovercardAnchor
-				render={<button />}
+				render={<button type="button" />}
 				type="button"
 				className="inline-flex size-7 items-center justify-center rounded-lg border border-subtle text-tertiary hover:border-strong hover:bg-hover-row hover:text-primary focus-visible:border-strong focus-visible:bg-hover-row focus-visible:text-primary"
 				aria-label={`Full KYC requirements for ${name}`}

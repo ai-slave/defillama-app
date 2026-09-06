@@ -259,6 +259,7 @@ function ManualSetup() {
 				<div className="flex scrollbar-none overflow-x-auto border-b border-subtle">
 					{clientConfigs.map((c, i) => (
 						<button
+							type="button"
 							key={c.name}
 							onClick={() => setActive(i)}
 							className={`shrink-0 px-4 py-2.5 label-sm transition-colors ${
@@ -339,6 +340,7 @@ function ToolCategoryGroup({
 	return (
 		<div>
 			<button
+				type="button"
 				onClick={() => setOpen((v) => !v)}
 				aria-expanded={open}
 				aria-controls={panelId}

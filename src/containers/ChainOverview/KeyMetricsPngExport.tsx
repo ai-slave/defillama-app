@@ -293,6 +293,7 @@ export function KeyMetricsPngExportButton({
 
 	return (
 		<button
+			type="button"
 			onClick={() => {
 				void handleExport()
 			}}

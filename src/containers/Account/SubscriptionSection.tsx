@@ -109,6 +109,7 @@ function YearlyUpgradeBanner({ onUpgrade, planType = 'pro' }: { onUpgrade: () =>
 					</p>
 				</div>
 				<button
+					type="button"
 					onClick={onUpgrade}
 					className="flex h-8 w-full items-center justify-center rounded-lg bg-sub-brand-primary px-3 text-xs font-medium text-on-brand"
 				>
@@ -200,6 +201,7 @@ function PastDueSubscriptionCard({
 			<div className="flex flex-wrap gap-2">
 				{canUpdatePayment && (
 					<button
+						type="button"
 						onClick={onUpdatePayment}
 						disabled={isUpdateLoading}
 						className="flex h-9 items-center gap-1 rounded-lg bg-sub-brand-primary px-3 text-sm font-medium whitespace-nowrap text-on-brand disabled:opacity-50"
@@ -210,6 +212,7 @@ function PastDueSubscriptionCard({
 				)}
 				{onCancel && (
 					<button
+						type="button"
 						onClick={onCancel}
 						className="flex h-9 items-center rounded-lg border border-sub-border-muted px-3 text-sm font-medium whitespace-nowrap text-sub-text-primary dark:border-sub-border-strong"
 					>

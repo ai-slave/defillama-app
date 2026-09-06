@@ -79,6 +79,7 @@ interface CategoryCardProps {
 function CategoryCard({ card, onClick }: CategoryCardProps) {
 	return (
 		<button
+			type="button"
 			onClick={onClick}
 			className="flex h-full flex-col items-start justify-between rounded-lg border pro-border p-4 text-left transition-all hover:border-brand/40"
 		>

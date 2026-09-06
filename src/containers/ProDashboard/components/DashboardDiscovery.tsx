@@ -148,6 +148,7 @@ export function DashboardDiscovery({
 				{!isBrowseMode ? (
 					<nav className="flex items-center gap-1 text-sm">
 						<button
+							type="button"
 							onClick={() => {
 								void router.push(
 									{
@@ -256,6 +257,7 @@ export function DashboardDiscovery({
 
 							<div className="flex items-center rounded-md border border-pro-form-control-border bg-pro-cards-bg">
 								<button
+									type="button"
 									onClick={() => {
 										pushProQuery({ view: 'grid' })
 									}}
@@ -266,6 +268,7 @@ export function DashboardDiscovery({
 									<span className="sr-only">View as grid</span>
 								</button>
 								<button
+									type="button"
 									onClick={() => {
 										pushProQuery({ view: 'list' })
 									}}
@@ -286,6 +289,7 @@ export function DashboardDiscovery({
 						<div className="flex flex-wrap gap-2">
 							{selectedTags.map((tag) => (
 								<button
+									type="button"
 									key={`pro-dashboard-tag-${tag}`}
 									onClick={() => {
 										const { tag: currentTag } = router.query
@@ -309,6 +313,7 @@ export function DashboardDiscovery({
 							))}
 						</div>
 						<button
+							type="button"
 							onClick={() => {
 								pushProQuery({ tag: undefined })
 							}}
@@ -351,6 +356,7 @@ export function DashboardDiscovery({
 							<div className="flex flex-wrap justify-center gap-2">
 								{SUGGESTED_TAGS.map((tag) => (
 									<button
+										type="button"
 										key={tag}
 										onClick={() => handleTagClick(tag)}
 										className="rounded-full border border-pro-switch-border bg-pro-cards-bg px-3 py-1.5 text-sm font-medium text-pro-text-form transition-all duration-150 hover:scale-105 hover:border-transparent hover:bg-brand hover:text-on-brand"
@@ -396,6 +402,7 @@ export function DashboardDiscovery({
 						<div className="flex flex-col items-center gap-4">
 							<div className="flex flex-nowrap items-center justify-center gap-2 overflow-x-auto">
 								<button
+									type="button"
 									onClick={() => {
 										const targetPage = 1
 										pushProQuery({ page: toPageQueryValue(targetPage) })
@@ -406,6 +413,7 @@ export function DashboardDiscovery({
 									<Icon name="chevrons-left" height={16} width={16} />
 								</button>
 								<button
+									type="button"
 									onClick={() => {
 										const targetPage = Math.max(1, selectedPage - 1)
 										pushProQuery({ page: toPageQueryValue(targetPage) })
@@ -419,6 +427,7 @@ export function DashboardDiscovery({
 									const isActive = selectedPage === pageNum
 									return (
 										<button
+											type="button"
 											key={`page-to-navigate-to-${pageNum}`}
 											onClick={() => {
 												const targetPage = pageNum
@@ -432,6 +441,7 @@ export function DashboardDiscovery({
 									)
 								})}
 								<button
+									type="button"
 									onClick={() => {
 										const targetPage = Math.min(totalPages, selectedPage + 1)
 										pushProQuery({ page: toPageQueryValue(targetPage) })
@@ -442,6 +452,7 @@ export function DashboardDiscovery({
 									<Icon name="chevron-right" height={16} width={16} />
 								</button>
 								<button
+									type="button"
 									onClick={() => {
 										const targetPage = totalPages
 										pushProQuery({ page: toPageQueryValue(targetPage) })

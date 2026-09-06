@@ -483,6 +483,7 @@ export default function SheetsContainer() {
 					</p>
 					<div className="mt-1 flex flex-col gap-3 sm:flex-row">
 						<button
+							type="button"
 							onClick={onGoogleSheetsButtonClick}
 							data-umami-event="sheets-google-sheets-click"
 							className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1a3a2a] px-6 py-3 text-sm font-semibold text-on-brand transition-all hover:-translate-y-px hover:bg-[#224a35] hover:shadow-sub-google"
@@ -491,6 +492,7 @@ export default function SheetsContainer() {
 							Google Sheets
 						</button>
 						<button
+							type="button"
 							onClick={onExcelButtonClick}
 							data-umami-event="sheets-excel-addin-click"
 							className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#162e22] px-6 py-3 text-sm font-semibold text-on-brand transition-all hover:-translate-y-px hover:bg-[#1e3d2d] hover:shadow-sub-google-deep"

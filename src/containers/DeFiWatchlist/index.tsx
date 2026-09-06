@@ -476,6 +476,7 @@ function PortfolioNotifications({
 
 				<div className="flex flex-wrap items-center gap-2">
 					<button
+						type="button"
 						onClick={handleNotificationsButtonClick}
 						disabled={loaders.userLoading || isLoading}
 						className={smallActionButtonClassName}
@@ -488,6 +489,7 @@ function PortfolioNotifications({
 						<>
 							{preferences.active ? (
 								<button
+									type="button"
 									onClick={handleDisableNotifications}
 									disabled={loaders.userLoading || isUpdatingStatus}
 									className={smallActionButtonClassName}
@@ -499,6 +501,7 @@ function PortfolioNotifications({
 							) : null}
 							{!preferences.active ? (
 								<button
+									type="button"
 									onClick={() => {
 										void updateStatus({ portfolioName: selectedPortfolio, active: true })
 									}}
@@ -511,6 +514,7 @@ function PortfolioNotifications({
 								</button>
 							) : null}
 							<button
+								type="button"
 								onClick={handleDeleteNotifications}
 								disabled={loaders.userLoading || isDeleting}
 								className={destructiveActionButtonClassName}

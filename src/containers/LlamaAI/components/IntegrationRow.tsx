@@ -63,12 +63,14 @@ export function IntegrationRow({
 						</span>
 						<div className="flex gap-2">
 							<button
+								type="button"
 								onClick={() => link.disconnect()}
 								className="shrink-0 rounded-lg border border-ai-line-medium px-3 py-1.5 text-xs whitespace-nowrap hover:bg-ai-hover"
 							>
 								Disconnect
 							</button>
 							<button
+								type="button"
 								onClick={() => link.connect()}
 								className="shrink-0 rounded-lg bg-ai-accent-blue-deep px-3 py-1.5 text-xs whitespace-nowrap text-ai-white hover:bg-ai-accent-blue-deep/90"
 							>
@@ -78,6 +80,7 @@ export function IntegrationRow({
 					</div>
 				) : link.state.status === 'idle' || link.state.status === 'starting' || link.state.status === 'loading' ? (
 					<button
+						type="button"
 						disabled={link.state.status === 'starting' || link.state.status === 'loading'}
 						onClick={() => link.connect()}
 						className="shrink-0 rounded-lg bg-ai-accent-blue-deep px-3 py-1.5 text-xs whitespace-nowrap text-ai-white disabled:opacity-50"
@@ -149,6 +152,7 @@ export function IntegrationRow({
 					</p>
 					<div className="flex gap-2">
 						<button
+							type="button"
 							onClick={() => {
 								link.confirmSwitch().then((consumed) => {
 									if (consumed) onInitialStateConsumed?.()
@@ -159,6 +163,7 @@ export function IntegrationRow({
 							Yes, switch
 						</button>
 						<button
+							type="button"
 							onClick={() => {
 								link.cancelSwitch()
 								onInitialStateConsumed?.()

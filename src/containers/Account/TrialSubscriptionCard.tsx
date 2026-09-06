@@ -61,6 +61,7 @@ export function TrialSubscriptionCard({ trialEndDate, isCancelPending, onCancel 
 					</p>
 					<div className="flex gap-2">
 						<button
+							type="button"
 							onClick={onCancel}
 							className="flex h-8 items-center rounded-lg border border-sub-border-muted px-3 text-xs font-medium whitespace-nowrap text-sub-text-primary dark:border-sub-border-strong"
 						>

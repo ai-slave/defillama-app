@@ -232,6 +232,7 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 				{timeView === 'Month' ? (
 					<div className="order-1 flex items-center gap-2 md:order-0">
 						<button
+							type="button"
 							onClick={goToPrevMonth}
 							className="rounded-md p-1.5 text-secondary hover:bg-hover-row focus-visible:bg-hover-row"
 							aria-label="Previous Month"
@@ -240,6 +241,7 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 						</button>
 						<span className="w-28 text-center label-md">{selectedDate.format('MMMM YYYY')}</span>
 						<button
+							type="button"
 							onClick={goToNextMonth}
 							className="rounded-md p-1.5 text-secondary hover:bg-hover-row focus-visible:bg-hover-row"
 							aria-label="Next Month"

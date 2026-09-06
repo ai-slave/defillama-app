@@ -111,6 +111,7 @@ export function TokenSearchDialog({
 				<div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-2">
 					{visibleTokens.map((token) => (
 						<button
+							type="button"
 							key={token.id}
 							onClick={() => {
 								selectToken(token)
@@ -136,6 +137,7 @@ export function TokenSearchDialog({
 					) : null}
 					{hasMoreLocalResults ? (
 						<button
+							type="button"
 							className="w-full rounded-md p-3 text-left body-sm text-link hover:bg-hover-row focus-visible:bg-hover-row"
 							onClick={showMoreLocalResults}
 						>

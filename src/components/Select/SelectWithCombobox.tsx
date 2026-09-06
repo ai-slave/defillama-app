@@ -495,6 +495,7 @@ export function SelectWithCombobox({
 										) : null}
 										{showCheckboxes ? (
 											<button
+												type="button"
 												onClick={(e) => {
 													e.stopPropagation()
 													selectOnlyOne(optionKey)

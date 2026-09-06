@@ -30,6 +30,7 @@ export function TabNavigation({ selectedMainTab, editItem, onTabChange, isSqlAll
 					const locked = (PRO_ONLY_TABS.has(tab.id) && !hasActiveSubscription) || (tab.id === 'sql' && !isSqlAllowed)
 					return (
 						<button
+							type="button"
 							key={tab.id}
 							className={`rounded-lg px-3 py-2.5 text-xs font-medium transition-all duration-200 md:text-sm ${
 								selectedMainTab === tab.id

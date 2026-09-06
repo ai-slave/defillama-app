@@ -73,7 +73,7 @@ export const IconsRow = ({ items = EMPTY_ITEMS, align = 'end' }: IIconsRowProps)
 			{hiddenItems.length > 0 && items.length > 2 ? (
 				<Ariakit.HovercardProvider>
 					<Ariakit.HovercardAnchor
-						render={<button />}
+						render={<button type="button" />}
 						className="flex size-6 shrink-0 items-center justify-center rounded-full bg-surface-elevated-2 label-xs text-primary"
 					>
 						{`+${hiddenItems.length}`}

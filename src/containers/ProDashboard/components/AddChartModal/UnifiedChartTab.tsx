@@ -804,6 +804,7 @@ export function UnifiedChartTab({
 										{getProDashboardChartTypeConfig(item.type)?.title || item.type}
 									</span>
 									<button
+										type="button"
 										onClick={() => onRemoveFromComposer(item.id)}
 										className="text-pro-text-tertiary transition-colors hover:text-error"
 									>

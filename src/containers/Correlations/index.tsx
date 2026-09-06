@@ -325,6 +325,7 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 							<h2 className="flex h-12 items-center px-3 label-xs text-secondary">Tokens</h2>
 							{coins.map((coin) => (
 								<button
+									type="button"
 									key={coin.id}
 									onClick={() => removeCoin(coin.id)}
 									className="group flex h-12 items-center gap-2 rounded-md px-2 hover:bg-hover-row focus-visible:bg-hover-row"
@@ -340,6 +341,7 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 								</button>
 							))}
 							<button
+								type="button"
 								onClick={dialogStore.toggle}
 								className="flex h-12 items-center gap-1 rounded-md px-3 py-2 body-sm text-link hover:bg-hover-row focus-visible:bg-hover-row"
 							>
@@ -363,7 +365,7 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 										<td>
 											<Tooltip
 												content="Add token"
-												render={<button onClick={dialogStore.toggle} aria-label="Add token to compare" />}
+												render={<button type="button" onClick={dialogStore.toggle} aria-label="Add token to compare" />}
 												className="flex size-12 items-center justify-center text-link hover:bg-hover-row focus-visible:bg-hover-row"
 											>
 												<Icon name="plus" height={16} width={16} />
@@ -403,7 +405,7 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 										<td>
 											<Tooltip
 												content="Add token"
-												render={<button onClick={dialogStore.toggle} aria-label="Add token to compare" />}
+												render={<button type="button" onClick={dialogStore.toggle} aria-label="Add token to compare" />}
 												className="flex size-12 items-center justify-center text-link hover:bg-hover-row focus-visible:bg-hover-row"
 											>
 												<Icon name="plus" height={16} width={16} />

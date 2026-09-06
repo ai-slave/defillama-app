@@ -41,7 +41,9 @@ vi.mock('../deferred/DeferredPaginatedBorrowRoutesTable', () => ({
 	}) => (
 		<div data-routes data-page={initialPageIndex} data-sort={JSON.stringify(sortingState)}>
 			<span data-ids>{data.map((row) => `${row.collateralId}:${row.borrowId}`).join(',')}</span>
-			<button onClick={() => onSortingChange([{ id: 'available', desc: true }])}>Sort Available</button>
+			<button type="button" onClick={() => onSortingChange([{ id: 'available', desc: true }])}>
+				Sort Available
+			</button>
 		</div>
 	)
 }))

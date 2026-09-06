@@ -266,6 +266,7 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 				<div className="flex min-h-[500px] flex-1 flex-col items-center justify-center gap-4">
 					<p className="mb-2 text-sm text-pro-text-secondary">Failed to load token usage data</p>
 					<button
+						type="button"
 						onClick={() => {
 							void refetch()
 						}}

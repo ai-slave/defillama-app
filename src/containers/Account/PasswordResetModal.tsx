@@ -44,6 +44,7 @@ export function PasswordResetModal({
 							<div className="flex items-center gap-1 text-sm leading-[21px]">
 								<span className="text-sub-text-primary">Didn't receive it?</span>
 								<button
+									type="button"
 									onClick={onResend}
 									disabled={isPending}
 									className="text-sub-brand-secondary underline disabled:opacity-50"

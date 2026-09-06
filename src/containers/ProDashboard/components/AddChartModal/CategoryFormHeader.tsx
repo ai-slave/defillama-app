@@ -22,6 +22,7 @@ export function CategoryFormHeader({ category, onBack }: CategoryFormHeaderProps
 	return (
 		<div className="mb-3 flex items-center gap-2 border-b pro-border pb-3">
 			<button
+				type="button"
 				onClick={onBack}
 				className="flex items-center justify-center rounded-sm pro-hover-bg p-1.5 transition-colors"
 				title="Back to categories"

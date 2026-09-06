@@ -50,6 +50,7 @@ export function ExternalDataBalanceCard({
 					<span className="text-base leading-5 font-medium text-sub-text-primary">External Data Balance</span>
 				</div>
 				<button
+					type="button"
 					onClick={onTopUp}
 					className="flex h-8 items-center gap-1 rounded-lg bg-sub-brand-primary px-3 text-xs font-medium text-on-brand"
 				>

@@ -13,6 +13,7 @@ export function CategoryCardsGrid({ onSelectCategory }: CategoryCardsGridProps) 
 	return (
 		<div className="flex h-full flex-col p-4">
 			<button
+				type="button"
 				onClick={() => onSelectCategory(heroCard.id)}
 				className="group relative flex flex-col rounded-xl border pro-border p-5 text-left transition-all hover:border-brand/50"
 			>
@@ -50,6 +51,7 @@ export function CategoryCardsGrid({ onSelectCategory }: CategoryCardsGridProps) 
 				<div className="grid grid-cols-2 gap-2">
 					{otherCards.map((card) => (
 						<button
+							type="button"
 							key={card.id}
 							onClick={() => onSelectCategory(card.id)}
 							className="group flex items-start gap-2.5 rounded-lg border pro-border p-3 text-left transition-all hover:border-brand/50"

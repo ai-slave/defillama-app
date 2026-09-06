@@ -168,7 +168,7 @@ const overviewColumns = [
 					<Hovercard
 						content={<AssetTooltipContent assetBreakdown={assetBreakdown} protocolName={info.row.original.name} />}
 						contentClassName="w-72 max-w-(--popover-available-width) p-3"
-						render={<button />}
+						render={<button type="button" />}
 						className="ml-auto flex h-5 w-full! flex-nowrap items-center bg-white"
 					>
 						{assetBreakdown.map((asset) => (

@@ -56,7 +56,9 @@ vi.mock('../deferred/DeferredPaginatedYieldsPoolTable', () => ({
 	}) => (
 		<div data-pools data-page={initialPageIndex} data-sort={JSON.stringify(sortingState)}>
 			<span data-ids>{data.map((row) => row.id).join(',')}</span>
-			<button onClick={() => onSortingChange([{ id: 'apy', desc: true }])}>Sort APY</button>
+			<button type="button" onClick={() => onSortingChange([{ id: 'apy', desc: true }])}>
+				Sort APY
+			</button>
 		</div>
 	)
 }))

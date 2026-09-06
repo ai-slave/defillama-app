@@ -27,6 +27,7 @@ export function DashboardList({ dashboards, isLoading, onCreateNew, onDeleteDash
 					<h1 className="text-center text-2xl font-bold">No dashboards yet</h1>
 					<p className="text-center text-pro-text-label">Create your first dashboard to get started</p>
 					<button
+						type="button"
 						onClick={onCreateNew}
 						className="mt-7 flex items-center gap-1 rounded-md pro-btn-ai px-6 py-3 font-medium"
 					>

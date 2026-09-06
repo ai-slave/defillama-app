@@ -356,6 +356,7 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 							</p>
 						</div>
 						<button
+							type="button"
 							onClick={handleSuccessDone}
 							className="flex h-10 w-full items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand"
 						>

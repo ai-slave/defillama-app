@@ -515,6 +515,7 @@ export function YieldsChartTab({
 												const iconUrl = getItemIconUrl('chain', null, option.value)
 												return (
 													<button
+														type="button"
 														key={option.value}
 														onClick={() => toggleChain(option.value)}
 														className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs transition-all ${
@@ -625,6 +626,7 @@ export function YieldsChartTab({
 												const iconUrl = getItemIconUrl('protocol', null, option.value)
 												return (
 													<button
+														type="button"
 														key={option.value}
 														onClick={() => toggleProject(option.value)}
 														className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs transition-all ${
@@ -735,6 +737,7 @@ export function YieldsChartTab({
 												const isActive = normalizedSelectedTokenSet.has(option.value)
 												return (
 													<button
+														type="button"
 														key={option.value}
 														onClick={() => toggleToken(option.value)}
 														className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs transition-all ${
@@ -917,6 +920,7 @@ export function YieldsChartTab({
 							<div className="grid grid-cols-[1fr_100px_100px_80px] gap-2 border-b border-pro-cards-border px-3 py-2 text-[11px] font-medium">
 								<p className="text-pro-text-tertiary">Pool</p>
 								<button
+									type="button"
 									onClick={() => toggleSort('tvl')}
 									className={`flex items-center justify-end gap-1 ${
 										sortColumn === 'tvl' ? 'text-brand' : 'text-pro-text-tertiary hover:text-pro-text-primary'
@@ -931,6 +935,7 @@ export function YieldsChartTab({
 									/>
 								</button>
 								<button
+									type="button"
 									onClick={() => toggleSort('apy')}
 									className={`flex items-center justify-end gap-1 ${
 										sortColumn === 'apy' ? 'text-brand' : 'text-pro-text-tertiary hover:text-pro-text-primary'
@@ -966,6 +971,7 @@ export function YieldsChartTab({
 											const iconUrl = getItemIconUrl('protocol', null, pool.project)
 											return (
 												<button
+													type="button"
 													key={pool.configID}
 													onClick={() => {
 														onSelectedYieldPoolChange({
@@ -1076,6 +1082,7 @@ export function YieldsChartTab({
 									const isActive = selectedYieldChartType === type.value
 									return (
 										<button
+											type="button"
 											key={type.value}
 											onClick={() => type.available && onSelectedYieldChartTypeChange(type.value)}
 											disabled={!type.available || isLoading}

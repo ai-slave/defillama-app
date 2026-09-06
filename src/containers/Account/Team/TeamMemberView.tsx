@@ -80,6 +80,7 @@ export function TeamMemberView() {
 				</div>
 
 				<button
+					type="button"
 					onClick={() => setShowLeaveConfirm(true)}
 					className="flex h-8 w-fit items-center gap-1.5 rounded-lg border border-sub-border-muted px-3 text-xs font-medium text-error dark:border-sub-border-strong"
 				>

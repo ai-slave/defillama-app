@@ -44,6 +44,7 @@ const categoriesColumns = [
 				<span className={`relative flex items-center gap-2 ${row.depth > 0 ? 'pl-8' : 'pl-4'}`}>
 					{row.subRows?.length != null && row.subRows.length > 0 ? (
 						<button
+							type="button"
 							className="absolute -left-1"
 							{...{
 								onClick: row.getToggleExpandedHandler()

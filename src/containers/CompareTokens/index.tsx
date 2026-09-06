@@ -130,6 +130,7 @@ export function CompareTokens({
 						/>
 					</div>
 					<button
+						type="button"
 						onClick={() => {
 							const [base, quote] = coins
 							if (base !== undefined && quote !== undefined) {

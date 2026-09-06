@@ -64,6 +64,7 @@ export function ApiAccessCard({
 						You don't have an API key yet. Generate one to start making requests to the DefiLlama API.
 					</p>
 					<button
+						type="button"
 						onClick={onRegenerateKey}
 						disabled={isRegenerateLoading}
 						className="flex h-11 items-center gap-2 rounded-lg bg-sub-brand-primary px-6 text-sm font-medium text-on-brand disabled:opacity-50"
@@ -90,6 +91,7 @@ export function ApiAccessCard({
 					<span className="text-sm text-sub-text-primary">Your API Key</span>
 					<div className="flex gap-2">
 						<button
+							type="button"
 							onClick={() => setShowKey((v) => !v)}
 							disabled={!apiKey}
 							className="flex h-6 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-[10px] leading-3 font-medium text-sub-text-primary disabled:opacity-50 dark:border-sub-border-strong"
@@ -99,6 +101,7 @@ export function ApiAccessCard({
 							{showKey ? 'Hide' : 'Show'}
 						</button>
 						<button
+							type="button"
 							onClick={handleCopy}
 							disabled={!apiKey}
 							className="flex h-6 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-[10px] leading-3 font-medium text-sub-text-primary disabled:opacity-50 dark:border-sub-border-strong"
@@ -107,6 +110,7 @@ export function ApiAccessCard({
 							{copied ? 'Copied' : 'Copy'}
 						</button>
 						<button
+							type="button"
 							onClick={() => {
 								if (
 									window.confirm(

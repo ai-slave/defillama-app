@@ -138,6 +138,7 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 								placement="top"
 							>
 								<button
+									type="button"
 									onClick={() => setSeatCount((c) => Math.max(minSeats, c - 1))}
 									disabled={decrementDisabled}
 									className="flex size-10 items-center justify-center rounded-lg border border-sub-border-slate-100 text-sub-text-primary disabled:opacity-30 dark:border-sub-border-strong"
@@ -158,6 +159,7 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 								className="h-10 w-20 rounded-lg border border-sub-border-slate-100 bg-white text-center text-sm text-sub-text-primary focus:border-sub-brand-primary focus:outline-hidden dark:border-sub-border-strong dark:bg-sub-surface-dark"
 							/>
 							<button
+								type="button"
 								onClick={() => setSeatCount((c) => c + 1)}
 								className="flex size-10 items-center justify-center rounded-lg border border-sub-border-slate-100 text-sub-text-primary dark:border-sub-border-strong"
 							>
@@ -206,6 +208,7 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 					) : null}
 
 					<button
+						type="button"
 						onClick={handleSubmit}
 						disabled={isPending || !hasChange}
 						className="flex h-10 w-full items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand disabled:opacity-50"
@@ -215,6 +218,7 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 
 					{!isCanceling && subscription.seats.seatCount > 0 ? (
 						<button
+							type="button"
 							onClick={() => {
 								setSeatsMutation.reset()
 								setShowCancelConfirm(true)

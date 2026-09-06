@@ -139,6 +139,7 @@ export function CategoryFilterModal({
 					style={{ backgroundColor: 'var(--pro-panel-bg)' }}
 				>
 					<button
+						type="button"
 						onClick={() => {
 							setSelectedInclude([])
 							setSelectedExclude([])
@@ -155,6 +156,7 @@ export function CategoryFilterModal({
 							Cancel
 						</Ariakit.DialogDismiss>
 						<button
+							type="button"
 							onClick={() => {
 								onApply(selectedInclude, selectedExclude)
 								onClose()

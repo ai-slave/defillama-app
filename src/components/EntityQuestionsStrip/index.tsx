@@ -81,6 +81,7 @@ export function EntityQuestionsStrip({ questions, entitySlug, entityType, entity
 								))
 							: questions.map((question) => (
 									<button
+										type="button"
 										key={`q-string-${question}`}
 										onClick={() => handleClick(question)}
 										className="shrink-0 touch-pan-x rounded-md border border-ai-line bg-ai-white px-2.5 py-1.5 text-left text-xs whitespace-nowrap text-ai-tertiary transition-all hover:border-ai-gold hover:bg-ai-gold-bright/20 hover:text-ai-gold-deep dark:bg-ai-surface-muted dark:hover:border-ai-gold-bright/50 dark:hover:bg-ai-gold-bright/10 dark:hover:text-ai-gold-bright"

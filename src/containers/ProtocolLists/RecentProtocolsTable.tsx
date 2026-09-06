@@ -203,6 +203,7 @@ const protocolsColumns = [
 				>
 					{row.subRows?.length > 0 ? (
 						<button
+							type="button"
 							className="absolute -left-0.5"
 							{...{
 								onClick: row.getToggleExpandedHandler()

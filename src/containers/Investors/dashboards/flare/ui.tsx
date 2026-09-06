@@ -101,6 +101,7 @@ export function ToggleButton({
 }) {
 	return (
 		<button
+			type="button"
 			onClick={onClick}
 			className={`rounded-md px-3 py-1 text-xs font-semibold tracking-wide transition-colors ${
 				active

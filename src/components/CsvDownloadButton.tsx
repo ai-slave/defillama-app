@@ -196,6 +196,7 @@ export function CSVDownloadButton(props: CSVDownloadButtonPropsUnion) {
 		<>
 			{replaceClassName ? (
 				<button
+					type="button"
 					data-umami-event="export-csv"
 					data-umami-event-page={router.pathname}
 					className={className}

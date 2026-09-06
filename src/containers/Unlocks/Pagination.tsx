@@ -221,6 +221,7 @@ export const Pagination = ({ items, startIndex = 0 }: PaginationProps) => {
 			>
 				{totalPages > 1 ? (
 					<button
+						type="button"
 						onClick={handlePrevPage}
 						className={`${desktopPageButtonStyles} max-md:hidden`}
 						aria-label="Previous page"
@@ -239,6 +240,7 @@ export const Pagination = ({ items, startIndex = 0 }: PaginationProps) => {
 				</div>
 				{totalPages > 1 ? (
 					<button
+						type="button"
 						onClick={handleNextPage}
 						className={`${desktopPageButtonStyles} max-md:hidden`}
 						aria-label="Next page"
@@ -250,7 +252,12 @@ export const Pagination = ({ items, startIndex = 0 }: PaginationProps) => {
 
 			{totalPages > 1 ? (
 				<div className="mt-2 flex items-center justify-center gap-2">
-					<button onClick={handlePrevPage} className={`${mobilePageButtonStyles} md:hidden`} aria-label="Previous page">
+					<button
+						type="button"
+						onClick={handlePrevPage}
+						className={`${mobilePageButtonStyles} md:hidden`}
+						aria-label="Previous page"
+					>
 						<Icon name="arrow-left" height={14} width={14} />
 					</button>
 
@@ -258,7 +265,12 @@ export const Pagination = ({ items, startIndex = 0 }: PaginationProps) => {
 						{currentPage + 1} / {totalPages}
 					</span>
 
-					<button onClick={handleNextPage} className={`${mobilePageButtonStyles} md:hidden`} aria-label="Next page">
+					<button
+						type="button"
+						onClick={handleNextPage}
+						className={`${mobilePageButtonStyles} md:hidden`}
+						aria-label="Next page"
+					>
 						<Icon name="arrow-right" height={14} width={14} />
 					</button>
 				</div>

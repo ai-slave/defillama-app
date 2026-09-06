@@ -47,6 +47,7 @@ export function ReturnModal({ isOpen, onClose, returnUrl }: ReturnModalProps) {
 							Yes, take me back
 						</BasicLink>
 						<button
+							type="button"
 							onClick={handleStayOnPage}
 							className="w-full rounded-lg bg-[#22242930] px-4 py-3 font-medium text-on-brand transition-colors hover:bg-sub-line"
 						>

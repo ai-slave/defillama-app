@@ -142,10 +142,12 @@ describe('ProtocolOverview final page SEO', () => {
 		vi.doMock('@ariakit/react', () => ({
 			MenuProvider: ({ children }: { children: React.ReactNode }) =>
 				React.createElement(React.Fragment, null, children),
-			MenuButton: ({ children }: { children: React.ReactNode }) => React.createElement('button', null, children),
+			MenuButton: ({ children }: { children: React.ReactNode }) =>
+				React.createElement('button', { type: 'button' }, children),
 			MenuButtonArrow: () => null,
 			Menu: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children),
-			PopoverDismiss: ({ children }: { children: React.ReactNode }) => React.createElement('button', null, children),
+			PopoverDismiss: ({ children }: { children: React.ReactNode }) =>
+				React.createElement('button', { type: 'button' }, children),
 			MenuItem: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children)
 		}))
 		vi.doMock('~/components/Bookmark', () => ({
@@ -206,10 +208,12 @@ function setupLayoutMocks() {
 	}))
 	vi.doMock('@ariakit/react', () => ({
 		MenuProvider: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children),
-		MenuButton: ({ children }: { children: React.ReactNode }) => React.createElement('button', null, children),
+		MenuButton: ({ children }: { children: React.ReactNode }) =>
+			React.createElement('button', { type: 'button' }, children),
 		MenuButtonArrow: () => null,
 		Menu: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children),
-		PopoverDismiss: ({ children }: { children: React.ReactNode }) => React.createElement('button', null, children),
+		PopoverDismiss: ({ children }: { children: React.ReactNode }) =>
+			React.createElement('button', { type: 'button' }, children),
 		MenuItem: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children)
 	}))
 	vi.doMock('~/components/EntityQuestionsStrip', () => ({
@@ -587,7 +591,8 @@ describe('ProtocolInfo category links', () => {
 				children: React.ReactNode
 				href: string
 			}) => React.createElement('a', { href, ...props }, children),
-			ButtonLink: ({ children }: { children: React.ReactNode }) => React.createElement('button', null, children)
+			ButtonLink: ({ children }: { children: React.ReactNode }) =>
+				React.createElement('button', { type: 'button' }, children)
 		}))
 		vi.doMock('~/components/Menu', () => ({
 			Menu: () => null

@@ -118,6 +118,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 			<div className="grid grid-cols-1 gap-3 md:grid-cols-2">
 				{filteredCharts?.map((chart) => (
 					<button
+						type="button"
 						key={chart.id}
 						onClick={() => onChartSelect(selectedChart?.id === chart.id ? null : chart)}
 						className={`group flex flex-col gap-2 rounded-lg border p-3 text-left transition-all ${
@@ -131,6 +132,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 									<Icon name="check" height={16} width={16} className="text-brand" />
 								) : null}
 								<button
+									type="button"
 									onClick={(e) => {
 										e.stopPropagation()
 										setDeleteConfirmId(chart.id)
@@ -178,12 +180,14 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 						</p>
 						<div className="mt-4 flex justify-end gap-2">
 							<button
+								type="button"
 								onClick={() => setDeleteConfirmId(null)}
 								className="rounded-sm px-3 py-1.5 text-sm text-pro-text-secondary hover:bg-black/5 dark:hover:bg-white/5"
 							>
 								Cancel
 							</button>
 							<button
+								type="button"
 								onClick={() => deleteMutation.mutate(deleteConfirmId)}
 								disabled={deleteMutation.isPending}
 								className="rounded-sm bg-error px-3 py-1.5 text-sm text-on-brand hover:bg-red-600 disabled:opacity-50"

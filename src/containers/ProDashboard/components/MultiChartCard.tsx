@@ -373,7 +373,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 						{groupingOptions.map((dataInterval) => (
 							<Tooltip
 								content={capitalizeFirstLetter(dataInterval)}
-								render={<button />}
+								render={<button type="button" />}
 								className="shrink-0 px-2 py-1 text-xs whitespace-nowrap hover:not-disabled:pro-btn-primary focus-visible:not-disabled:pro-btn-primary data-[active=true]:bg-pro-accent data-[active=true]:font-medium data-[active=true]:text-on-brand"
 								data-active={multi.grouping === dataInterval}
 								onClick={() => handleGroupingChange(multi.id, dataInterval)}

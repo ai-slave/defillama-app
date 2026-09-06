@@ -176,6 +176,7 @@ function ReservesTable({ data }: { data: Array<FlatReserve> }) {
 					</span>
 					<div className="flex gap-1">
 						<button
+							type="button"
 							onClick={() => setPage((p) => p - 1)}
 							disabled={page === 0}
 							className="rounded-sm px-2 py-1 transition-colors hover:bg-sl-hover-bg disabled:opacity-30"
@@ -183,6 +184,7 @@ function ReservesTable({ data }: { data: Array<FlatReserve> }) {
 							Prev
 						</button>
 						<button
+							type="button"
 							onClick={() => setPage((p) => p + 1)}
 							disabled={page >= totalPages - 1}
 							className="rounded-sm px-2 py-1 transition-colors hover:bg-sl-hover-bg disabled:opacity-30"

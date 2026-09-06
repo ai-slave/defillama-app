@@ -202,6 +202,7 @@ const ActiveInvestors = ({ investors }: IInvestorsPageData) => {
 					<div className={`${TAG_GROUP_VARIANTS.solid.container} ${TAG_GROUP_SIZES.md}`}>
 						{allPeriods.map((dataInterval) => (
 							<button
+								type="button"
 								className={TAG_GROUP_VARIANTS.solid.button}
 								data-active={dataInterval.value === selectedPeriod}
 								onClick={() => {

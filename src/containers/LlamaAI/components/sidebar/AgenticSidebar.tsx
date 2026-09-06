@@ -393,6 +393,7 @@ export function AgenticSidebar({
 				<div className="flex h-6 items-center">
 					{isLoading || hasNonProjectSessions ? (
 						<button
+							type="button"
 							onClick={selectMode ? exitSelectMode : () => setSelectMode(true)}
 							disabled={isLoading && !hasNonProjectSessions}
 							className={`flex h-6 items-center gap-1 rounded-sm px-1.5 text-[11px] transition-colors disabled:invisible ${
@@ -408,6 +409,7 @@ export function AgenticSidebar({
 							content={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
 							render={
 								<button
+									type="button"
 									onClick={toggleFullscreen}
 									data-umami-event="llamaai-fullscreen-toggle"
 									data-umami-event-action={isFullscreen ? 'exit' : 'enter'}
@@ -424,6 +426,7 @@ export function AgenticSidebar({
 							content="Close Chat History"
 							render={
 								<button
+									type="button"
 									onClick={toggleSidebar}
 									data-umami-event="llamaai-sidebar-toggle"
 									data-umami-event-action="close"
@@ -439,6 +442,7 @@ export function AgenticSidebar({
 				</div>
 
 				<button
+					type="button"
 					onClick={() => {
 						trackUmamiEvent('llamaai-new-chat')
 						onNewChat()
@@ -470,6 +474,7 @@ export function AgenticSidebar({
 						) : null}
 						{searchQuery ? (
 							<button
+								type="button"
 								onClick={() => clearSearch()}
 								className="mr-1.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-ai-handle text-ai-white transition-colors hover:bg-ai-handle-hover"
 							>

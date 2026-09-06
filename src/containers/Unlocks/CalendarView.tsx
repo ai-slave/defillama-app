@@ -201,6 +201,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 				<div className="flex items-center gap-2">
 					<div className="flex min-h-8 items-center rounded-lg border border-medium label-sm text-primary">
 						<button
+							type="button"
 							onClick={() => navigate(-1)}
 							className="flex min-h-8 shrink-0 items-center px-3 hover:bg-hover-row focus-visible:bg-hover-row"
 							aria-label="Previous"
@@ -217,6 +218,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 										: `${currentDate.format('MMM D')} – ${currentDate.add(30, 'day').format('MMM D')}`}
 						</span>
 						<button
+							type="button"
 							onClick={() => navigate(1)}
 							className="flex min-h-8 shrink-0 items-center px-3 hover:bg-hover-row focus-visible:bg-hover-row"
 							aria-label="Next"

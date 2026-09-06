@@ -320,6 +320,7 @@ function Pagination<Row>({ table }: { table: Table<Row> }) {
 			</span>
 			<div className="flex gap-1">
 				<button
+					type="button"
 					onClick={() => table.previousPage()}
 					disabled={!table.getCanPreviousPage()}
 					className="rounded-sm px-2.5 py-1 text-xs font-medium text-pro-text-label transition-colors hover:bg-sl-hover-bg disabled:opacity-30 disabled:hover:bg-transparent"
@@ -327,6 +328,7 @@ function Pagination<Row>({ table }: { table: Table<Row> }) {
 					Prev
 				</button>
 				<button
+					type="button"
 					onClick={() => table.nextPage()}
 					disabled={!table.getCanNextPage()}
 					className="rounded-sm px-2.5 py-1 text-xs font-medium text-pro-text-label transition-colors hover:bg-sl-hover-bg disabled:opacity-30 disabled:hover:bg-transparent"

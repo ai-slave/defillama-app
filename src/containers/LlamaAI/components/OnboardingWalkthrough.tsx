@@ -426,6 +426,7 @@ export function OnboardingWalkthrough({
 								</div>
 
 								<button
+									type="button"
 									onClick={nextStep}
 									className="w-full rounded-xl bg-ai-gold-cta py-2.5 text-[13px] font-semibold text-ai-on-gold-strong shadow-ai-gold-ring transition-all hover:shadow-ai-gold-ring-hover"
 								>
@@ -522,6 +523,7 @@ export function OnboardingWalkthrough({
 
 								{!RESEARCH_STEPS.has(currentStep) ? (
 									<button
+										type="button"
 										onClick={nextStep}
 										className="mt-3 w-full rounded-lg bg-ai-ink-raised py-2 text-xs font-medium text-ai-on-ink transition-colors hover:bg-ai-ink-hover hover:text-ai-white"
 									>
@@ -567,6 +569,7 @@ export function OnboardingWalkthrough({
 								<div className="mb-4 flex flex-col gap-1.5">
 									{ONBOARDING_PROMPTS.map((p) => (
 										<button
+											type="button"
 											key={p.label}
 											onClick={() => handlePromptClick(p.prompt)}
 											className="group flex items-center gap-3 rounded-xl border border-ai-ink-line bg-ai-ink px-3.5 py-2.5 text-left transition-all duration-150 hover:border-ai-accent-blue/20 hover:bg-ai-accent-blue/5"
@@ -595,6 +598,7 @@ export function OnboardingWalkthrough({
 								</p>
 
 								<button
+									type="button"
 									onClick={handleStartChatting}
 									className="w-full rounded-xl border border-ai-ink-line bg-ai-ink py-2.5 text-[13px] font-medium text-ai-on-ink transition-colors hover:bg-ai-ink-raised hover:text-ai-white"
 								>
@@ -627,7 +631,11 @@ function ProgressFooter({ currentStep, steps, onSkip }: { currentStep: Step; ste
 					/>
 				))}
 			</div>
-			<button onClick={onSkip} className="text-[11px] text-ai-secondary transition-colors hover:text-ai-on-ink-muted">
+			<button
+				type="button"
+				onClick={onSkip}
+				className="text-[11px] text-ai-secondary transition-colors hover:text-ai-on-ink-muted"
+			>
 				Skip
 			</button>
 		</div>

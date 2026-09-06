@@ -67,6 +67,7 @@ export function YieldsTableHeader({
 				<div className="no-scrollbar flex min-w-0 items-center gap-2 overflow-x-auto">
 					{presetKeys.map((preset) => (
 						<button
+							type="button"
 							key={preset}
 							onClick={() => applyPreset(preset)}
 							className={`flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm capitalize transition-colors ${
@@ -84,6 +85,7 @@ export function YieldsTableHeader({
 					{downloadCSV && <CSVExportButton onClick={downloadCSV} smol />}
 
 					<button
+						type="button"
 						onClick={() => setShowFiltersPanel(!showFiltersPanel)}
 						className="hover:bg-surface-secondary relative flex items-center gap-2 rounded-md border border-subtle bg-surface px-3 py-1.5 text-sm transition-colors"
 					>
@@ -97,6 +99,7 @@ export function YieldsTableHeader({
 						<Icon name={showFiltersPanel ? 'chevron-up' : 'chevron-down'} height={12} width={12} />
 					</button>
 					<button
+						type="button"
 						onClick={() => setShowColumnPanel(!showColumnPanel)}
 						className="hover:bg-surface-secondary flex items-center gap-2 rounded-md border border-subtle bg-surface px-3 py-1.5 text-sm transition-colors"
 					>

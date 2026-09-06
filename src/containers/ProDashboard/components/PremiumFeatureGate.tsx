@@ -42,6 +42,7 @@ export function PremiumFeatureGate({ featureName, paywallReason = 'pro-feature',
 					</p>
 				</div>
 				<button
+					type="button"
 					onClick={() => {
 						setSignupSource('pro-dashboard')
 						setPaywallOpen(true)

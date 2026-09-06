@@ -29,6 +29,7 @@ export function TrialUpgradeBanner({ onUpgrade }: TrialUpgradeBannerProps) {
 					</ul>
 				</div>
 				<button
+					type="button"
 					onClick={onUpgrade}
 					className="flex h-8 w-full items-center justify-center rounded-lg bg-sub-brand-primary px-3 text-xs font-medium text-on-brand"
 				>

@@ -377,6 +377,7 @@ export function Select(props: ISelect) {
 
 								{showCheckboxes ? (
 									<button
+										type="button"
 										onClick={(e) => {
 											e.stopPropagation()
 											selectOnlyOne(getOptionKey(option))

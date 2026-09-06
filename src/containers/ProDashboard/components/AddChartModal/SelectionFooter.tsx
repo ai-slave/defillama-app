@@ -63,6 +63,7 @@ export function SelectionFooter({
 								aria-label="Select chart color"
 							/>
 							<button
+								type="button"
 								onClick={() => onRemoveFromComposer(item.id)}
 								className="text-pro-text-tertiary transition-colors hover:text-error"
 								title="Remove from selection"

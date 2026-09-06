@@ -381,6 +381,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 						<div className="flex overflow-hidden rounded-md border border-pro-form-control-border">
 							{groupingOptions.map((option, index) => (
 								<button
+									type="button"
 									key={option}
 									onClick={() => handleGroupingChange(builder.id, option)}
 									className={`px-2 py-1 text-xs font-medium transition-colors duration-150 ease-in-out sm:px-3 ${index > 0 ? 'border-l border-pro-form-control-border' : ''} ${

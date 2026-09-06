@@ -63,6 +63,7 @@ export function AddToDashboardButton({
 		`${buttonStyles({ size: 'md', ...(smol === undefined ? {} : { square: smol }) })} ${className ?? ''}`.trim()
 	const button = (
 		<button
+			type="button"
 			onClick={handleClick}
 			disabled={loaders.userLoading || disabled || !hasConfig}
 			className={baseClassName}

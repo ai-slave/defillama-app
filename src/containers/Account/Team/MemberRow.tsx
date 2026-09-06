@@ -49,6 +49,7 @@ export function MemberRow({ member }: { member: TeamMember }) {
 						{!hasSubscription ? (
 							hasAvailableSeats && (
 								<button
+									type="button"
 									onClick={() => setShowAssignModal(true)}
 									className="flex h-7 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-xs font-medium text-sub-text-primary transition-colors hover:bg-sub-brand-primary/5 dark:border-sub-border-strong"
 									title="Assign subscription"
@@ -59,6 +60,7 @@ export function MemberRow({ member }: { member: TeamMember }) {
 							)
 						) : (
 							<button
+								type="button"
 								onClick={() => setShowUnassignConfirm(true)}
 								className="flex h-7 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-xs font-medium text-sub-text-muted transition-colors hover:border-error hover:text-error dark:border-sub-border-strong"
 								title="Unassign subscription"
@@ -69,6 +71,7 @@ export function MemberRow({ member }: { member: TeamMember }) {
 						)}
 						{!isCurrentUser && !isAdminMember && (
 							<button
+								type="button"
 								onClick={() => setShowRemoveConfirm(true)}
 								className="flex h-7 items-center justify-center rounded-md border border-sub-border-muted px-2 text-sub-text-muted transition-colors hover:border-error hover:text-error dark:border-sub-border-strong"
 								title="Remove member"

@@ -322,7 +322,7 @@ const COLUMN_REGISTRY = {
 			return (
 				<span className={`relative flex items-center gap-2 ${row.depth > 0 ? 'pl-8' : 'pl-4'}`}>
 					{row.subRows?.length > 0 ? (
-						<button className="absolute -left-0.5" onClick={row.getToggleExpandedHandler()}>
+						<button type="button" className="absolute -left-0.5" onClick={row.getToggleExpandedHandler()}>
 							{row.getIsExpanded() ? (
 								<>
 									<Icon name="chevron-down" height={16} width={16} className="text-tertiary" />

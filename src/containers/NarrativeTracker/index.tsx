@@ -255,6 +255,7 @@ export const CategoryPerformanceContainer = ({
 			<div className="rounded-lg border border-subtle bg-surface">
 				<div className="flex flex-wrap overflow-x-auto border-b border-medium">
 					<button
+						type="button"
 						className="border-b border-medium px-6 py-2 whitespace-nowrap hover:bg-hover-row focus-visible:bg-hover-row data-[selected=true]:border-b-brand"
 						onClick={() => setTab('linechart')}
 						data-selected={tab === 'linechart'}
@@ -262,6 +263,7 @@ export const CategoryPerformanceContainer = ({
 						Linechart
 					</button>
 					<button
+						type="button"
 						className="border-b border-l border-medium px-6 py-2 whitespace-nowrap hover:bg-hover-row focus-visible:bg-hover-row data-[selected=true]:border-b-brand"
 						onClick={() => setTab('barchart')}
 						data-selected={tab === 'barchart'}
@@ -269,6 +271,7 @@ export const CategoryPerformanceContainer = ({
 						Barchart
 					</button>
 					<button
+						type="button"
 						className="border-b border-l border-medium px-6 py-2 whitespace-nowrap hover:bg-hover-row focus-visible:bg-hover-row data-[selected=true]:border-b-brand"
 						onClick={() => setTab('heatmap')}
 						data-selected={tab === 'heatmap'}

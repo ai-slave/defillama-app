@@ -112,6 +112,7 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 								<label className="text-xs font-medium text-sub-text-muted">Subscription Type</label>
 								<div className="flex gap-2">
 									<button
+										type="button"
 										onClick={() => setSubscriptionType('llamafeed')}
 										className={`flex h-10 flex-1 items-center justify-center rounded-lg border text-sm font-medium transition-colors ${
 											subscriptionType === 'llamafeed'
@@ -122,6 +123,7 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 										Pro
 									</button>
 									<button
+										type="button"
 										onClick={() => setSubscriptionType('api')}
 										className={`flex h-10 flex-1 items-center justify-center rounded-lg border text-sm font-medium transition-colors ${
 											subscriptionType === 'api'
@@ -148,6 +150,7 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 										className="flex-1"
 									>
 										<button
+											type="button"
 											onClick={() => setBillingInterval('month')}
 											disabled={lockedInterval === 'year'}
 											className={`flex h-10 w-full flex-1 items-center justify-center rounded-lg border text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
@@ -169,6 +172,7 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 										className="flex-1"
 									>
 										<button
+											type="button"
 											onClick={() => setBillingInterval('year')}
 											disabled={lockedInterval === 'month'}
 											className={`flex h-10 w-full flex-1 items-center justify-center rounded-lg border text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
@@ -190,6 +194,7 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 								</label>
 								<div className="flex items-center gap-2">
 									<button
+										type="button"
 										onClick={() => setSeatCount((c) => Math.max(1, c - 1))}
 										disabled={seatCount <= 1}
 										className="flex size-10 items-center justify-center rounded-lg border border-sub-border-slate-100 text-sub-text-primary disabled:opacity-30 dark:border-sub-border-strong"
@@ -209,6 +214,7 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 										className="h-10 w-20 rounded-lg border border-sub-border-slate-100 bg-white text-center text-sm text-sub-text-primary focus:border-sub-brand-primary focus:outline-hidden dark:border-sub-border-strong dark:bg-sub-surface-dark"
 									/>
 									<button
+										type="button"
 										onClick={() => setSeatCount((c) => c + 1)}
 										className="flex size-10 items-center justify-center rounded-lg border border-sub-border-slate-100 text-sub-text-primary dark:border-sub-border-strong"
 									>
@@ -252,6 +258,7 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 							) : null}
 
 							<button
+								type="button"
 								onClick={() => void handlePurchase()}
 								disabled={purchaseSeatsMutation.isPending}
 								className="flex h-10 w-full items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand disabled:opacity-50"

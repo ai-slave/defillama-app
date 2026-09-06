@@ -98,6 +98,7 @@ export function SubscribeAPICard({
 						{currentBillingInterval === 'month' || !currentBillingInterval ? (
 							<div className="flex flex-col gap-2">
 								<button
+									type="button"
 									className="w-full rounded-lg border border-sub-purple bg-sub-purple px-4 py-3 font-medium text-on-brand shadow-xs transition-all duration-200 hover:bg-sub-purple-hover hover:shadow-md disabled:cursor-not-allowed disabled:opacity-70"
 									onClick={handleUpgradeToYearly}
 									disabled={loading === 'stripe'}
@@ -113,6 +114,7 @@ export function SubscribeAPICard({
 							<p className="mt-2 text-center text-sm text-warning">Cancellation scheduled</p>
 						) : onCancelSubscription ? (
 							<button
+								type="button"
 								className="mt-2 w-full rounded-lg bg-sub-dark-card px-4 py-2 text-on-brand transition-colors hover:bg-sub-line"
 								onClick={onCancelSubscription}
 							>

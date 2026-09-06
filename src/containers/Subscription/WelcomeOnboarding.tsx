@@ -224,6 +224,7 @@ export function WelcomeOnboarding() {
 						refreshing.
 					</p>
 					<button
+						type="button"
 						onClick={() => window.location.reload()}
 						className="rounded-lg border border-sub-line px-4 py-2 text-sm text-sub-text-muted transition-colors hover:bg-sub-dark-card-raised hover:text-on-brand"
 					>
@@ -266,6 +267,7 @@ export function WelcomeOnboarding() {
 					const c = option.color
 					return (
 						<button
+							type="button"
 							key={option.id}
 							onClick={() => toggleFeature(option.id)}
 							style={{
@@ -325,6 +327,7 @@ export function WelcomeOnboarding() {
 
 			<div className="mt-6 flex w-full flex-col items-center gap-2">
 				<button
+					type="button"
 					onClick={handleContinue}
 					disabled={selectedFeatures.size === 0}
 					className="w-full rounded-xl bg-sub-purple py-3 text-sm font-semibold text-on-brand transition-all duration-200 hover:bg-sub-purple-hover hover:shadow-sub-purple-glow disabled:cursor-not-allowed disabled:opacity-30 disabled:shadow-none"
@@ -332,6 +335,7 @@ export function WelcomeOnboarding() {
 					Get started
 				</button>
 				<button
+					type="button"
 					onClick={() => void router.push('/account')}
 					className="py-1 text-xs text-sub-text-muted transition-colors hover:text-sub-text-soft"
 				>

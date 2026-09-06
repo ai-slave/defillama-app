@@ -63,6 +63,7 @@ function Pagination<Row>({ table }: { table: Table<Row> }) {
 			</span>
 			<div className="flex gap-1">
 				<button
+					type="button"
 					onClick={() => table.previousPage()}
 					disabled={!table.getCanPreviousPage()}
 					className="rounded-sm px-2.5 py-1 text-xs font-medium text-pro-text-label transition-colors hover:bg-sl-hover-bg disabled:opacity-30 disabled:hover:bg-transparent"
@@ -70,6 +71,7 @@ function Pagination<Row>({ table }: { table: Table<Row> }) {
 					Prev
 				</button>
 				<button
+					type="button"
 					onClick={() => table.nextPage()}
 					disabled={!table.getCanNextPage()}
 					className="rounded-sm px-2.5 py-1 text-xs font-medium text-pro-text-label transition-colors hover:bg-sl-hover-bg disabled:opacity-30 disabled:hover:bg-transparent"
@@ -509,6 +511,7 @@ export default function Positions() {
 				<div className="text-xs font-medium tracking-wide text-pro-text-label">Vault:</div>
 				{(['All', 'A', 'B'] as Array<VaultFilter>).map((value) => (
 					<button
+						type="button"
 						key={value}
 						onClick={() => setVaultFilter(value)}
 						className={`rounded-sm px-3 py-1.5 text-xs ${vaultFilter === value ? 'bg-brand text-on-brand' : 'bg-sl-btn-inactive-bg text-pro-text-label'}`}
@@ -535,6 +538,7 @@ export default function Positions() {
 				<div className="text-xs font-medium tracking-wide text-pro-text-label">Portfolio Window:</div>
 				{(['day', 'week', 'month', 'allTime'] as const).map((value) => (
 					<button
+						type="button"
 						key={value}
 						onClick={() => setPortfolioWindow(value)}
 						className={`rounded-sm px-3 py-1.5 text-xs ${portfolioWindow === value ? 'bg-brand text-on-brand' : 'bg-sl-btn-inactive-bg text-pro-text-label'}`}
@@ -550,6 +554,7 @@ export default function Positions() {
 				<div className="text-xs font-medium tracking-wide text-pro-text-label">Funding Window:</div>
 				{(['24h', '7d', '30d'] as const).map((value) => (
 					<button
+						type="button"
 						key={value}
 						onClick={() => setFundingWindow(value)}
 						className={`rounded-sm px-3 py-1.5 text-xs ${fundingWindow === value ? 'bg-brand text-on-brand' : 'bg-sl-btn-inactive-bg text-pro-text-label'}`}

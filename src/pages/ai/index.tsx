@@ -103,6 +103,7 @@ function FreeQuestionsSection({ landingQuestions }: { landingQuestions?: Array<L
 					{isAuthenticated ? null : (
 						<>
 							<button
+								type="button"
 								onClick={() => signInDialogStore.show()}
 								className="font-medium text-ai-gold underline decoration-ai-gold/40 transition-colors hover:text-ai-bronze-deep dark:text-ai-gold-bright dark:hover:text-ai-gold-soft"
 							>
@@ -116,6 +117,7 @@ function FreeQuestionsSection({ landingQuestions }: { landingQuestions?: Array<L
 			<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
 				{displayed.map((q, i) => (
 					<button
+						type="button"
 						key={i}
 						onClick={() => handleClick(q)}
 						className={clsx(
@@ -401,6 +403,7 @@ function ExampleShowcase() {
 			<div className="mt-3 flex items-center justify-center gap-2">
 				{EXAMPLE_CONVERSATIONS.map((_, i) => (
 					<button
+						type="button"
 						key={i}
 						onClick={() => {
 							goTo(i)
@@ -837,6 +840,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 							<div className="relative aspect-video w-full">
 								{!isVideoPlaying ? (
 									<button
+										type="button"
 										onClick={() => {
 											trackUmamiEvent('llamaai-landing-video-play')
 											setIsVideoPlaying(true)

@@ -84,6 +84,7 @@ export function Bookmark({
 			className={classNames}
 			render={
 				<button
+					type="button"
 					{...props}
 					style={buttonStyle}
 					className={classNames}

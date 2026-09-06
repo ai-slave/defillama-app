@@ -54,12 +54,12 @@ vi.mock('~/containers/LlamaAI/components/charts/ChartControls', () => ({
 			data-labels={controls.state.showLabels}
 			data-grouping={controls.state.grouping}
 		>
-			<button data-action="grouping" onClick={() => onGroupingChange('month')} />
-			<button data-action="percentage" onClick={() => onPercentageChange(!controls.state.percentage)} />
-			<button data-action="cumulative" onClick={() => onCumulativeChange(true)} />
-			<button data-action="stacking" onClick={() => onStackedChange(!controls.state.stacked)} />
-			<button data-action="log" onClick={() => onLogScaleChange(!controls.state.logScale)} />
-			<button data-action="labels" onClick={() => onLabelsChange(!controls.state.showLabels)} />
+			<button type="button" data-action="grouping" onClick={() => onGroupingChange('month')} />
+			<button type="button" data-action="percentage" onClick={() => onPercentageChange(!controls.state.percentage)} />
+			<button type="button" data-action="cumulative" onClick={() => onCumulativeChange(true)} />
+			<button type="button" data-action="stacking" onClick={() => onStackedChange(!controls.state.stacked)} />
+			<button type="button" data-action="log" onClick={() => onLogScaleChange(!controls.state.logScale)} />
+			<button type="button" data-action="labels" onClick={() => onLabelsChange(!controls.state.showLabels)} />
 			{children}
 		</div>
 	)

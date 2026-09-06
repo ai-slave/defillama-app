@@ -93,6 +93,7 @@ export function AuthenticationCard() {
 							<div className="flex items-center justify-between">
 								<span className="text-sm text-sub-text-primary">Enable Email Auth</span>
 								<button
+									type="button"
 									onClick={() => setIsSwitchToEmailModalOpen(true)}
 									className="flex h-8 items-center rounded-lg border border-sub-border-muted px-3 text-xs font-medium text-sub-text-primary disabled:opacity-50 dark:border-sub-border-strong"
 								>
@@ -118,6 +119,7 @@ export function AuthenticationCard() {
 							</div>
 							<div className="flex gap-2">
 								<button
+									type="button"
 									onClick={handleChangeEmail}
 									disabled={loaders.changeEmail}
 									className="flex h-8 items-center rounded-lg border border-sub-border-muted px-3 text-xs font-medium text-sub-text-primary disabled:opacity-50 dark:border-sub-border-strong"
@@ -125,6 +127,7 @@ export function AuthenticationCard() {
 									Change Email
 								</button>
 								<button
+									type="button"
 									onClick={handleChangePassword}
 									disabled={resetPasswordMutation.isPending}
 									className="flex h-8 items-center rounded-lg border border-sub-border-muted px-3 text-xs font-medium text-sub-text-primary disabled:opacity-50 dark:border-sub-border-strong"
@@ -162,6 +165,7 @@ export function AuthenticationCard() {
 							</p>
 						</div>
 						<button
+							type="button"
 							onClick={handleVerifyEmail}
 							className="flex h-8 shrink-0 items-center rounded-lg border border-sub-warning-border-light px-3 text-xs font-medium whitespace-nowrap text-sub-warning-text-light disabled:opacity-50 dark:border-sub-warning-border-dark dark:text-sub-warning-text-dark"
 						>

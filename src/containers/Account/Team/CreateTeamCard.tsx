@@ -48,6 +48,7 @@ export function CreateTeamCard() {
 					{createTeamMutation.isError ? <p className="text-xs text-error">{createTeamMutation.error.message}</p> : null}
 					<div className="flex gap-2">
 						<button
+							type="button"
 							onClick={handleCreate}
 							disabled={!teamName.trim() || createTeamMutation.isPending}
 							className="flex h-9 flex-1 items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand disabled:opacity-50"
@@ -55,6 +56,7 @@ export function CreateTeamCard() {
 							{createTeamMutation.isPending ? 'Creating...' : 'Create'}
 						</button>
 						<button
+							type="button"
 							onClick={() => {
 								createTeamMutation.reset()
 								setIsCreating(false)
@@ -68,6 +70,7 @@ export function CreateTeamCard() {
 				</div>
 			) : (
 				<button
+					type="button"
 					onClick={() => setIsCreating(true)}
 					className="flex h-10 items-center gap-2 rounded-lg bg-sub-brand-primary px-5 text-sm font-medium text-on-brand"
 				>

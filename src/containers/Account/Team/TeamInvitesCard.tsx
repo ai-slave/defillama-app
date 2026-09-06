@@ -62,6 +62,7 @@ function InviteRow({ invite }: { invite: TeamInvite }) {
 				</div>
 				{!isExpired && (
 					<button
+						type="button"
 						onClick={handleResend}
 						disabled={onCooldown || isResending}
 						className="flex h-7 shrink-0 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-xs font-medium text-sub-text-muted transition-colors hover:border-sub-brand-primary hover:text-sub-brand-primary disabled:cursor-not-allowed disabled:opacity-50 dark:border-sub-border-strong"
@@ -72,6 +73,7 @@ function InviteRow({ invite }: { invite: TeamInvite }) {
 					</button>
 				)}
 				<button
+					type="button"
 					onClick={() => setShowRevokeConfirm(true)}
 					className="flex h-7 shrink-0 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-xs font-medium text-sub-text-muted transition-colors hover:border-error hover:text-error dark:border-sub-border-strong"
 					title="Revoke invite"
@@ -113,6 +115,7 @@ export function TeamInvitesCard() {
 					<span className="text-base leading-5 font-medium text-sub-text-primary">Pending Invites</span>
 				</div>
 				<button
+					type="button"
 					onClick={() => setShowInviteModal(true)}
 					className="flex h-8 items-center gap-1.5 rounded-lg bg-sub-brand-primary px-3 text-xs font-medium text-on-brand"
 				>

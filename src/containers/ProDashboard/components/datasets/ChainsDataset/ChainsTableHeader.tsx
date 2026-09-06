@@ -39,6 +39,7 @@ export function ChainsTableHeader({
 					<div className="flex items-center gap-2">
 						{presetButtons.map((preset) => (
 							<button
+								type="button"
 								key={preset.key}
 								onClick={() => {
 									applyPreset(preset.key)
@@ -59,6 +60,7 @@ export function ChainsTableHeader({
 						<CSVExportButton onClick={handleExportCSV} smol />
 
 						<button
+							type="button"
 							onClick={() => setShowColumnSelector(!showColumnSelector)}
 							className="flex items-center gap-2 rounded-md border pro-border pro-hover-bg pro-panel-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors"
 						>

@@ -155,6 +155,7 @@ export function RecentProtocols({
 						</a>
 					))}
 					<button
+						type="button"
 						onClick={() => {
 							resetEligibilityCheck()
 							airdropCheckerDialog.toggle()

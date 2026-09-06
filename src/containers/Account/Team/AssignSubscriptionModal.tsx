@@ -100,12 +100,14 @@ export function AssignSubscriptionModal({ isOpen, onClose, member }: AssignSubsc
 					) : null}
 					<div className="flex gap-3">
 						<button
+							type="button"
 							onClick={handleClose}
 							className="flex h-9 flex-1 items-center justify-center rounded-lg border border-sub-border-muted text-sm font-medium text-sub-text-primary dark:border-sub-border-strong"
 						>
 							Cancel
 						</button>
 						<button
+							type="button"
 							onClick={handleAssign}
 							disabled={!selectedType || assignMemberMutation.isPending}
 							className="flex h-9 flex-1 items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand disabled:opacity-50"

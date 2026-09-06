@@ -46,7 +46,9 @@ function Harness({ visible }: { visible: boolean }) {
 	const [view, setView] = useState('chart')
 	return (
 		<EChartsRenderVisibilityProvider visible={visible}>
-			<button onClick={() => setView('table')}>{view}</button>
+			<button type="button" onClick={() => setView('table')}>
+				{view}
+			</button>
 			<ScatterChart chartData={[[1, 2]]} />
 			<CandlestickChart data={[[1, 10, 12, 9, 13, 100]]} />
 		</EChartsRenderVisibilityProvider>

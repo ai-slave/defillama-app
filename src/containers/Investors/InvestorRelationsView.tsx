@@ -52,6 +52,7 @@ function PillStrip({
 				const isActive = activeTab === tab.id
 				return (
 					<button
+						type="button"
 						key={tab.id}
 						onClick={() => onSelect(tab.id)}
 						className={`shrink-0 rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${

@@ -528,12 +528,14 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 					</p>
 					<div className="flex shrink-0 gap-2">
 						<button
+							type="button"
 							onClick={() => switchMode('view')}
 							className="rounded-lg px-3 py-1.5 text-xs text-ai-tertiary transition-colors hover:bg-ai-hover"
 						>
 							Cancel
 						</button>
 						<button
+							type="button"
 							onClick={() => deleteAlertMutation.mutate(alert.id)}
 							disabled={deleteAlertMutation.isPending}
 							className="flex items-center gap-1.5 rounded-lg bg-ai-error-vivid px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-ai-error disabled:opacity-50"
@@ -570,6 +572,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 		return (
 			<AlertCard>
 				<button
+					type="button"
 					onClick={() => setSelectedExecId(null)}
 					className="mb-3 flex items-center gap-1 text-xs font-medium text-link hover:underline"
 				>
@@ -660,6 +663,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 				<div className="flex shrink-0 items-center gap-0.5">
 					{isFiredOneTimePriceAlert(alert) ? (
 						<button
+							type="button"
 							onClick={handleRearm}
 							className="mr-1 flex items-center gap-1 rounded-lg bg-ai-warning-bright/10 px-2 py-1 text-xs font-medium text-ai-warning transition-colors hover:bg-ai-warning-bright/20"
 						>
@@ -669,6 +673,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 					) : null}
 					{alert.run_count > 0 ? (
 						<button
+							type="button"
 							onClick={handleToggleExecutions}
 							className={`${alertIconButtonClass} ${showExecutions ? 'bg-ai-hover text-ai-primary' : ''}`}
 							title="View history"
@@ -677,6 +682,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 						</button>
 					) : null}
 					<button
+						type="button"
 						onClick={() => switchMode(mode === 'editing' ? 'view' : 'editing')}
 						className={`${alertIconButtonClass} ${mode === 'editing' ? 'bg-ai-hover text-ai-primary' : ''}`}
 						title="Edit"
@@ -684,6 +690,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 						<Icon name="pencil" className="size-3.5" />
 					</button>
 					<button
+						type="button"
 						onClick={() => switchMode('deleting')}
 						className="flex size-7 items-center justify-center rounded-lg text-ai-muted transition-colors hover:bg-ai-error-vivid/10 hover:text-ai-error-vivid"
 						title="Delete"
@@ -726,6 +733,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 						<div className="flex flex-col">
 							{executionsQuery.data.map((exec) => (
 								<button
+									type="button"
 									key={exec.id}
 									onClick={() => setSelectedExecId(exec.id)}
 									disabled={execDetailQuery.isLoading}

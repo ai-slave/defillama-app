@@ -131,6 +131,7 @@ function InvestorsShell({
 
 				<div className="sticky top-0 z-10 flex items-center gap-3 bg-pro-app-bg px-4 py-3 md:hidden">
 					<button
+						type="button"
 						onClick={() => setSidebarOpen(true)}
 						className="flex size-8 items-center justify-center rounded-md text-pro-text-secondary hover:bg-sl-hover-bg hover:text-pro-text-primary"
 					>
@@ -159,6 +160,7 @@ function InvestorsShell({
 							return (
 								<div key={project.id}>
 									<button
+										type="button"
 										onClick={() => {
 											if (isSingleProtocol) return
 											if (isActive && !project.comingSoon) {
@@ -247,6 +249,7 @@ function InvestorsShell({
 															</a>
 														) : (
 															<button
+																type="button"
 																onClick={() => {
 																	if (resolvedTab !== tab.id) scrollToPageTop()
 																	setActiveTab(tab.id)
@@ -273,6 +276,7 @@ function InvestorsShell({
 
 					<div className="mt-auto flex items-center justify-end pt-4">
 						<button
+							type="button"
 							onClick={toggleTheme}
 							className="flex size-8 items-center justify-center rounded-lg text-pro-text-secondary transition-colors hover:bg-sl-hover-bg hover:text-pro-text-primary"
 						>

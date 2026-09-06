@@ -155,6 +155,7 @@ export function WindowToggle({
 		<div className="flex">
 			{options.map((w, i) => (
 				<button
+					type="button"
 					key={w.value}
 					onClick={() => onChange(w.value)}
 					className={`px-3 py-1.5 text-sm leading-tight font-medium transition-colors ${
@@ -184,6 +185,7 @@ export function Pagination<T>({ table }: { table: Table<T> }) {
 			</span>
 			<div className="flex gap-1">
 				<button
+					type="button"
 					onClick={() => table.previousPage()}
 					disabled={!table.getCanPreviousPage()}
 					className="rounded-sm px-2 py-1 transition-colors hover:bg-sl-hover-bg disabled:opacity-30"
@@ -191,6 +193,7 @@ export function Pagination<T>({ table }: { table: Table<T> }) {
 					Prev
 				</button>
 				<button
+					type="button"
 					onClick={() => table.nextPage()}
 					disabled={!table.getCanNextPage()}
 					className="rounded-sm px-2 py-1 transition-colors hover:bg-sl-hover-bg disabled:opacity-30"

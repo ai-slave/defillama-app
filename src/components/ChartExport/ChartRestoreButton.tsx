@@ -26,6 +26,7 @@ export function ChartRestoreButton({
 
 	return (
 		<button
+			type="button"
 			data-umami-event="chart-restore"
 			data-umami-event-page={router.pathname}
 			className={className}

@@ -309,6 +309,7 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 								const isActive = enabledMetrics.includes(metric.key)
 								return (
 									<button
+										type="button"
 										key={`add-metric-${metric.key}`}
 										onClick={() => {
 											void pushShallowQuery(router, getRWAPerpsContractMetricQueryPatch({ metric, isActive })).then(

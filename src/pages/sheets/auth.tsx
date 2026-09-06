@@ -110,6 +110,7 @@ function AuthContent() {
 
 						<div className="space-y-3">
 							<button
+								type="button"
 								onClick={logout}
 								className="w-full rounded-lg border border-sub-line bg-transparent py-3 font-medium text-on-brand transition-colors hover:bg-sub-dark-card-raised"
 							>

@@ -2618,6 +2618,7 @@ export function AgenticChat({
 					<p className="flex items-center gap-1 text-center">
 						Please{' '}
 						<button
+							type="button"
 							onClick={() => {
 								setSignupSource('llamaai')
 								if (!shouldRenderSubscribeModal) setShouldRenderSubscribeModal(true)
@@ -2698,6 +2699,7 @@ export function AgenticChat({
 								) : null}
 								{!readOnly && !isSharedView && effectiveMessages.length > 0 ? (
 									<button
+										type="button"
 										onClick={() => openShareModal()}
 										data-umami-event="llamaai-share-modal-open"
 										data-umami-event-source="header_controls"
@@ -2874,6 +2876,7 @@ const ChatControls = memo(function ChatControls({
 					content={tooltipContent}
 					render={
 						<button
+							type="button"
 							onClick={toggleSidebar}
 							data-umami-event="llamaai-sidebar-toggle"
 							data-umami-event-action="open"
@@ -2887,7 +2890,7 @@ const ChatControls = memo(function ChatControls({
 				</Tooltip>
 				<Tooltip
 					content="New Chat"
-					render={<button onClick={handleNewChat} />}
+					render={<button type="button" onClick={handleNewChat} />}
 					className="flex size-6 items-center justify-center gap-2 rounded-sm bg-brand text-ai-white hover:bg-brand focus-visible:bg-brand max-lg:ml-auto"
 				>
 					<Icon name="message-square-plus" height={16} width={16} />
@@ -2895,6 +2898,7 @@ const ChatControls = memo(function ChatControls({
 				</Tooltip>
 				{canShare ? (
 					<button
+						type="button"
 						onClick={onShare}
 						data-umami-event="llamaai-share-modal-open"
 						data-umami-event-source="header_controls"
@@ -2909,6 +2913,7 @@ const ChatControls = memo(function ChatControls({
 						content={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
 						render={
 							<button
+								type="button"
 								onClick={toggleFullscreen}
 								data-umami-event="llamaai-fullscreen-toggle"
 								data-umami-event-action={isFullscreen ? 'exit' : 'enter'}
@@ -2924,7 +2929,7 @@ const ChatControls = memo(function ChatControls({
 			</nav>
 			<Tooltip
 				content="Settings"
-				render={<button onClick={onOpenSettings} />}
+				render={<button type="button" onClick={onOpenSettings} />}
 				className="absolute bottom-2.5 left-2.5 z-10 flex size-6 items-center justify-center rounded-sm bg-brand/12 text-brand hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white max-lg:hidden"
 			>
 				<div className="relative">

@@ -80,6 +80,7 @@ function ToggleButton({
 }) {
 	return (
 		<button
+			type="button"
 			onClick={onClick}
 			className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
 				active

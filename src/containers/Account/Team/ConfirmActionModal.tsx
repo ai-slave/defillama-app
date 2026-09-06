@@ -56,6 +56,7 @@ export function ConfirmActionModal({
 					) : null}
 					<div className="flex gap-3">
 						<button
+							type="button"
 							onClick={onClose}
 							disabled={isLoading}
 							className="flex h-9 flex-1 items-center justify-center rounded-lg border border-sub-border-muted text-sm font-medium text-sub-text-primary disabled:opacity-50 dark:border-sub-border-strong"
@@ -63,6 +64,7 @@ export function ConfirmActionModal({
 							Cancel
 						</button>
 						<button
+							type="button"
 							onClick={onConfirm}
 							disabled={isLoading}
 							className={`flex h-9 flex-1 items-center justify-center rounded-lg text-sm font-medium text-on-brand disabled:opacity-50 ${

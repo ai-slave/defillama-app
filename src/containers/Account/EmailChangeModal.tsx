@@ -72,6 +72,7 @@ export function EmailChangeModal({ isOpen, onClose }: EmailChangeModalProps) {
 								change.
 							</p>
 							<button
+								type="button"
 								onClick={handleClose}
 								className="flex h-10 w-full items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand"
 							>

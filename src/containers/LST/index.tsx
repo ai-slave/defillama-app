@@ -367,6 +367,7 @@ export const LSTOverview = ({
 			<Card padding="none" className="flex w-full flex-col">
 				<div className="flex flex-wrap overflow-x-auto border-b border-medium">
 					<button
+						type="button"
 						className="border-medium px-6 py-2 label-md whitespace-nowrap text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary data-[selected=true]:border-b data-[selected=true]:border-b-brand data-[selected=true]:text-primary"
 						onClick={() => setTab('breakdown')}
 						data-selected={tab === 'breakdown'}
@@ -374,6 +375,7 @@ export const LSTOverview = ({
 						Breakdown
 					</button>
 					<button
+						type="button"
 						className="border-l border-medium px-6 py-2 label-md whitespace-nowrap text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary data-[selected=true]:border-b data-[selected=true]:border-b-brand data-[selected=true]:text-primary"
 						onClick={() => setTab('inflows')}
 						data-selected={tab === 'inflows'}

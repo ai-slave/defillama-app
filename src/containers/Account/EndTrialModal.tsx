@@ -62,6 +62,7 @@ export function EndTrialModal({
 			<div className="flex items-center justify-between">
 				<h3 className="text-xl font-bold">{upgraded ? 'Upgrade Successful' : title}</h3>
 				<button
+					type="button"
 					onClick={handleClose}
 					disabled={isLoading}
 					className="rounded-full p-1.5 text-tertiary transition-colors hover:bg-gray-100 hover:text-secondary disabled:cursor-not-allowed disabled:opacity-50 dark:text-sub-text-muted dark:hover:bg-sub-line dark:hover:text-sub-text-primary"
@@ -82,6 +83,7 @@ export function EndTrialModal({
 						</div>
 					</div>
 					<button
+						type="button"
 						onClick={handleClose}
 						className="w-full rounded-lg bg-sub-brand-primary px-4 py-3 font-medium text-on-brand transition-colors hover:bg-sub-brand-primary/90"
 					>
@@ -128,6 +130,7 @@ export function EndTrialModal({
 					{/* Actions */}
 					<div className="mt-2 flex flex-col gap-3">
 						<button
+							type="button"
 							onClick={() => void handleConfirm()}
 							disabled={isLoading}
 							className="w-full rounded-lg bg-sub-brand-primary px-4 py-3 font-medium text-on-brand transition-colors hover:bg-sub-brand-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
@@ -143,6 +146,7 @@ export function EndTrialModal({
 							</a>
 						) : (
 							<button
+								type="button"
 								onClick={handleClose}
 								disabled={isLoading}
 								className="w-full rounded-lg border border-medium px-4 py-2 text-tertiary transition-colors hover:bg-page hover:text-secondary disabled:cursor-not-allowed disabled:opacity-50 dark:border-sub-line dark:text-sub-text-muted dark:hover:bg-sub-dark-card-raised dark:hover:text-sub-text-primary"

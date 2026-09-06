@@ -23,7 +23,7 @@ export function errorToast({ title, description }: { title: string; description:
 				<p className="flex items-center gap-2 text-base font-semibold text-error">
 					<Icon name="alert-triangle" height={16} width={16} />
 					<span>{title}</span>
-					<button onClick={() => toast.dismiss(t.id)} className="ml-auto text-primary">
+					<button type="button" onClick={() => toast.dismiss(t.id)} className="ml-auto text-primary">
 						<Icon name="circle-x" height={16} width={16} />
 
 						<span className="sr-only">Close</span>

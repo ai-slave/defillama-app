@@ -132,6 +132,7 @@ export function DiscoverySection({
 					<>
 						<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-16 bg-linear-to-r from-pro-app-bg to-transparent md:block" />
 						<button
+							type="button"
 							onClick={() => scroll('left')}
 							className="absolute top-1/2 left-2 z-10 hidden -translate-y-1/2 rounded-full border border-pro-cards-border bg-pro-cards-bg p-2 shadow-md hover:bg-surface-elevated-2 md:block"
 						>
@@ -159,6 +160,7 @@ export function DiscoverySection({
 					<>
 						<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-16 bg-linear-to-l from-pro-app-bg to-transparent md:block" />
 						<button
+							type="button"
 							onClick={() => scroll('right')}
 							className="absolute top-1/2 right-2 z-10 hidden -translate-y-1/2 rounded-full border border-pro-cards-border bg-pro-cards-bg p-2 shadow-md hover:bg-surface-elevated-2 md:block"
 						>

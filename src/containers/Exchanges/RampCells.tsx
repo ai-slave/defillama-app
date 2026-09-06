@@ -46,7 +46,7 @@ export function CostBadge({
 	return (
 		<Ariakit.HovercardProvider placement="left-start" showTimeout={0} hideTimeout={80}>
 			<Ariakit.HovercardAnchor
-				render={<button />}
+				render={<button type="button" />}
 				type="button"
 				className={`inline-flex rounded-md border px-2 py-0.5 label-sm whitespace-nowrap ${badgeTone ? FEE_TONE_CLASS[badgeTone] : 'border-subtle text-primary'}`}
 				aria-label={ariaLabel}

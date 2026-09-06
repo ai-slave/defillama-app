@@ -145,6 +145,7 @@ function DashboardPanelInner({
 						</div>
 						<div className="flex items-center gap-2">
 							<button
+								type="button"
 								onClick={() => handleCreateDashboard()}
 								disabled={isPending || !config}
 								className="flex items-center gap-1.5 rounded-md bg-ai-action px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-ai-action-hover disabled:opacity-50"
@@ -152,6 +153,7 @@ function DashboardPanelInner({
 								{isPending ? 'Creating...' : 'Create Dashboard'}
 							</button>
 							<button
+								type="button"
 								onClick={onClose}
 								aria-label="Close"
 								className="flex size-7 items-center justify-center rounded-md text-ai-tertiary transition-colors hover:bg-ai-surface-muted"
@@ -172,6 +174,7 @@ function DashboardPanelInner({
 					{hasMultipleVersions ? (
 						<div className="flex items-center justify-center gap-3 border-t border-ai-line px-4 py-2.5">
 							<button
+								type="button"
 								onClick={() => onVersionChange(versionIndex - 1)}
 								disabled={versionIndex === 0}
 								aria-label="Previous version"
@@ -183,6 +186,7 @@ function DashboardPanelInner({
 								Version {versionIndex + 1} of {versions.length}
 							</span>
 							<button
+								type="button"
 								onClick={() => onVersionChange(versionIndex + 1)}
 								disabled={versionIndex === versions.length - 1}
 								aria-label="Next version"

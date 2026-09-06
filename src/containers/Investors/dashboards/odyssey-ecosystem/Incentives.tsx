@@ -47,6 +47,7 @@ function TabBtns<T extends string>({
 		<div className="mb-3 flex flex-wrap gap-1">
 			{options.map((o) => (
 				<button
+					type="button"
 					key={o.id}
 					onClick={() => onChange(o.id)}
 					className={`rounded-sm px-3 py-1 text-xs font-medium transition-colors ${

@@ -43,7 +43,7 @@ function SessionPage() {
 			<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-medium bg-surface p-1">
 				<p className="flex items-center gap-1 text-center">
 					Please{' '}
-					<button onClick={signInDialogStore.show} className="underline">
+					<button type="button" onClick={signInDialogStore.show} className="underline">
 						sign in
 					</button>{' '}
 					to access this page.

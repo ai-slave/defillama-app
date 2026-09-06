@@ -502,6 +502,7 @@ export function CitationPill({ reference }: CitationPillProps) {
 					</>
 				) : (
 					<button
+						type="button"
 						onClick={() => open(reference)}
 						className="self-start text-[11px] font-medium text-ai-accent-blue hover:underline"
 					>

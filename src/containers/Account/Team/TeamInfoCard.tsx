@@ -45,13 +45,14 @@ export function TeamInfoCard() {
 								autoFocus
 							/>
 							<button
+								type="button"
 								onClick={handleSave}
 								disabled={!editName.trim() || updateTeamMutation.isPending}
 								className="text-xs font-medium text-sub-brand-primary disabled:opacity-50"
 							>
 								{updateTeamMutation.isPending ? '...' : 'Save'}
 							</button>
-							<button onClick={() => setIsEditing(false)} className="text-xs text-sub-text-muted">
+							<button type="button" onClick={() => setIsEditing(false)} className="text-xs text-sub-text-muted">
 								Cancel
 							</button>
 						</div>
@@ -60,6 +61,7 @@ export function TeamInfoCard() {
 							<span className="shrink-0 text-xs leading-4 text-sub-text-primary">{team.name}</span>
 							{isAdmin && (
 								<button
+									type="button"
 									onClick={startEditing}
 									className="text-sub-text-muted transition-colors hover:text-sub-text-primary"
 								>

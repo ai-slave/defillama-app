@@ -375,7 +375,11 @@ export const TokenUsageSearch = () => {
 			setOpen={setOpen}
 		>
 			<span className="relative isolate w-full lg:max-w-[50vw]">
-				<button onClick={() => setOpen((prev) => !prev)} className="absolute top-1 bottom-1 left-2 my-auto opacity-50">
+				<button
+					type="button"
+					onClick={() => setOpen((prev) => !prev)}
+					className="absolute top-1 bottom-1 left-2 my-auto opacity-50"
+				>
 					{open ? (
 						<>
 							<span className="sr-only">Close Search</span>

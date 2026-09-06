@@ -9,6 +9,7 @@ export const AddressesTableSwitch = () => {
 	return (
 		<div className={`${TAG_GROUP_VARIANTS.default.container} ${TAG_GROUP_SIZES.md}`}>
 			<button
+				type="button"
 				data-active={!isBridgesShowingAddresses}
 				onClick={() => toggleBridgesSettings(BRIDGES_SHOWING_ADDRESSES)}
 				className={`${TAG_GROUP_VARIANTS.default.button} flex items-center gap-1`}
@@ -17,6 +18,7 @@ export const AddressesTableSwitch = () => {
 				<span>Tokens</span>
 			</button>
 			<button
+				type="button"
 				data-active={isBridgesShowingAddresses}
 				onClick={() => toggleBridgesSettings(BRIDGES_SHOWING_ADDRESSES)}
 				className={`${TAG_GROUP_VARIANTS.default.button} flex items-center gap-1`}

@@ -559,6 +559,7 @@ export function ChartBuilderTab({
 							<div className="grid grid-cols-2 gap-0.5">
 								{MODE_OPTIONS.map((option) => (
 									<button
+										type="button"
 										key={option.value}
 										onClick={() => handleModeChange(option.value)}
 										className={`rounded-md px-2 py-1.5 text-xs font-medium transition-all duration-200 ${
@@ -798,6 +799,7 @@ export function ChartBuilderTab({
 						<div className="grid grid-cols-4 gap-1">
 							{CHART_TYPE_OPTIONS.map((option) => (
 								<button
+									type="button"
 									key={option.value}
 									onClick={() => handleChartTypeChange(option.value)}
 									className={`flex flex-col items-center gap-0.5 rounded-md border p-1 transition-colors ${

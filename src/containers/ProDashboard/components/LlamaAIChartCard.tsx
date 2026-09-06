@@ -133,6 +133,7 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 				<Icon name="alert-triangle" height={24} width={24} className="text-sub-orange" />
 				<p className="text-pro-text-form">Failed to load chart</p>
 				<button
+					type="button"
 					className="text-sm text-link hover:underline"
 					onClick={() => {
 						void refetch()
@@ -164,6 +165,7 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 					) : null}
 					{canRefresh ? (
 						<button
+							type="button"
 							className="text-xs text-link hover:underline disabled:cursor-not-allowed disabled:opacity-60"
 							disabled={data.refreshPending || refreshMutation.isPending}
 							onClick={() => {

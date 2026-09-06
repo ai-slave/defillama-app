@@ -90,6 +90,7 @@ export function ButtonLink({
 	}
 
 	return (
+		// oxlint-disable-next-line react/button-has-type -- the type is always set: the caller's, else 'button'.
 		<button {...props} type={props.type ?? 'button'} onClick={handleClick} onAuxClick={handleAuxClick}>
 			{children}
 		</button>

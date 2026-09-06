@@ -74,6 +74,7 @@ export function ColumnManagementPanel({
 				<h4 className="text-sm font-medium text-pro-text-primary">Customize Columns</h4>
 				<div className="flex items-center gap-2">
 					<button
+						type="button"
 						onClick={() => {
 							for (const col of columns) {
 								if (columnVisibility[col.id] === false) {
@@ -86,6 +87,7 @@ export function ColumnManagementPanel({
 						Show All
 					</button>
 					<button
+						type="button"
 						onClick={() => {
 							for (const col of columns) {
 								if (col.id !== 'name' && columnVisibility[col.id] !== false) {
@@ -148,6 +150,7 @@ export function ColumnManagementPanel({
 									<div className="flex items-center gap-1">
 										{moveColumnUp && !isFirst ? (
 											<button
+												type="button"
 												onClick={() => moveColumnUp(columnId)}
 												className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
 												title="Move up"
@@ -157,6 +160,7 @@ export function ColumnManagementPanel({
 										) : null}
 										{moveColumnDown && !isLast ? (
 											<button
+												type="button"
 												onClick={() => moveColumnDown(columnId)}
 												className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
 												title="Move down"
@@ -165,6 +169,7 @@ export function ColumnManagementPanel({
 											</button>
 										) : null}
 										<button
+											type="button"
 											onClick={() => toggleColumnVisibility(columnId)}
 											className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
 											disabled={columnId === 'name'}
@@ -193,6 +198,7 @@ export function ColumnManagementPanel({
 										.filter((col) => columnVisibility[col.id] === false)
 										.map((column) => (
 											<button
+												type="button"
 												key={column.id}
 												onClick={() => toggleColumnVisibility(column.id)}
 												className="flex w-full items-center gap-2 rounded-md border pro-divider pro-hover-bg pro-panel-raised p-2 text-left transition-colors"
@@ -218,6 +224,7 @@ export function ColumnManagementPanel({
 					{activeColumns.length} of {columns.length} columns visible
 				</span>
 				<button
+					type="button"
 					onClick={() => setShowColumnPanel(false)}
 					className="rounded-md border border-brand bg-brand px-3 py-1 text-on-brand transition-colors hover:bg-brand-muted"
 				>

@@ -972,6 +972,7 @@ function ChartRendererImpl({
 				<div className="-mt-2 flex border-b border-ai-line">
 					{charts.map((chart) => (
 						<button
+							type="button"
 							key={`toggle-${chart.id}`}
 							onClick={() => setSelectedChartId(chart.id)}
 							className={`border-b-2 px-2 py-1.5 text-sm transition-colors ${

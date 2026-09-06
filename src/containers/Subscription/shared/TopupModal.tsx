@@ -93,6 +93,7 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 						{/* Stripe step header */}
 						<div className="flex items-center gap-3 border-b border-sub-border-slate-100 px-5 py-4">
 							<button
+								type="button"
 								onClick={() => {
 									setStep('select')
 									topupMutation.reset()
@@ -176,6 +177,7 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 						<div className="flex gap-2">
 							{TOPUP_CONFIG.quickAmounts.map((qa) => (
 								<button
+									type="button"
 									key={qa}
 									onClick={() => setAmount(String(qa))}
 									className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
@@ -194,6 +196,7 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 							<label className="text-sm text-sub-text-primary">Payment Method</label>
 							<div className="grid grid-cols-2 gap-3">
 								<button
+									type="button"
 									onClick={handleStripe}
 									disabled={!isValidAmount || topupMutation.isPending}
 									className="flex flex-col items-center gap-2 rounded-xl border border-sub-border-muted p-4 transition-colors hover:border-sub-brand-primary disabled:opacity-40 dark:border-sub-border-strong dark:hover:border-sub-brand-primary"
@@ -202,6 +205,7 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 									<span className="text-sm font-medium text-sub-text-primary">Pay with Card</span>
 								</button>
 								<button
+									type="button"
 									onClick={() => void handleLlamaPay()}
 									disabled={!isValidAmount || topupMutation.isPending || isRedirecting}
 									className="flex flex-col items-center gap-2 rounded-xl border border-sub-border-muted p-4 transition-colors hover:border-sub-brand-primary disabled:opacity-40 dark:border-sub-border-strong dark:hover:border-sub-brand-primary"

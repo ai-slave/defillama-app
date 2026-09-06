@@ -229,6 +229,7 @@ export default function Protocols({ emissions }: { emissions: Array<CalendarEmis
 
 							<span className={popoverActionBarStyles}>
 								<button
+									type="button"
 									onClick={() => {
 										void pushShallowQuery(router, { type: 'None' })
 									}}
@@ -237,6 +238,7 @@ export default function Protocols({ emissions }: { emissions: Array<CalendarEmis
 									Clear
 								</button>
 								<button
+									type="button"
 									onClick={() => {
 										void pushShallowQuery(router, { type: 'All' })
 									}}

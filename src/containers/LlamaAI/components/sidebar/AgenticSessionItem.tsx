@@ -216,7 +216,13 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 			<div className="flex items-center justify-center opacity-0 group-focus-within:opacity-100 group-hover:opacity-100">
 				<Tooltip
 					content="Edit Session Title"
-					render={<button onClick={() => setIsEditing(true)} disabled={isUpdatingTitle || isDeleting || isRestoring} />}
+					render={
+						<button
+							type="button"
+							onClick={() => setIsEditing(true)}
+							disabled={isUpdatingTitle || isDeleting || isRestoring}
+						/>
+					}
 					className="flex aspect-square items-center justify-center rounded-sm p-1.5 hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
 				>
 					<Icon name="pencil" height={12} width={12} className="shrink-0" />

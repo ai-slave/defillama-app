@@ -481,6 +481,7 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 													content="Shrink width"
 													render={
 														<button
+															type="button"
 															onClick={() => handleColSpanChange(item.id, shrinkTarget)}
 															disabled={disableShrink}
 														/>
@@ -494,6 +495,7 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 													content="Expand width"
 													render={
 														<button
+															type="button"
 															onClick={() => handleColSpanChange(item.id, expandTarget)}
 															disabled={disableExpand}
 														/>

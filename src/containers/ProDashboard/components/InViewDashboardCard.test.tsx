@@ -84,7 +84,9 @@ describe('InViewDashboardCard', () => {
 			const [selection, setSelection] = useState('USDC')
 			return (
 				<>
-					<button onClick={() => setSelection('USDT')}>{selection}</button>
+					<button type="button" onClick={() => setSelection('USDT')}>
+						{selection}
+					</button>
 					<Renderer />
 				</>
 			)

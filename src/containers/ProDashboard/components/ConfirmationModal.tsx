@@ -52,6 +52,7 @@ export function ConfirmationModal({
 						{cancelText}
 					</Ariakit.DialogDismiss>
 					<button
+						type="button"
 						onClick={() => {
 							onConfirm()
 							onClose()
