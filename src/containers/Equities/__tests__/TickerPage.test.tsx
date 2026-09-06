@@ -221,7 +221,7 @@ describe('EquityTickerPage price history', () => {
 			expect(document.querySelector('[data-umami-event="export-image"]')).not.toBeNull()
 		})
 
-		await act(async () => button('1M').click())
+		await act(async () => container.querySelector<HTMLInputElement>('input[type="radio"][value="1M"]')!.click())
 		expect(router.push).toHaveBeenCalledWith({ pathname: '/equities/NVDA:US', query: { timeframe: '1M' } }, undefined, {
 			shallow: true
 		})

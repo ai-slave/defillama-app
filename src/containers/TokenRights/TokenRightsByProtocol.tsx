@@ -6,7 +6,8 @@ import { summarizeRaises } from '~/containers/Raises/summary'
 import { Card } from '~/ui/Card'
 import { CopyHelper } from '~/ui/Copy'
 import { Icon } from '~/ui/Icon'
-import { SegmentedControl, segmentedControlTabIds } from '~/ui/SegmentedControl'
+import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Tabs, TabPanel } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
@@ -92,299 +93,273 @@ export function TokenRightsByProtocol({
 	// overview card shouldn't repeat the name; surface the token-variant pills in the header instead.
 	const showCardIdentity = !(showHeader && headerVariant === 'protocol')
 
-	return (
-		<div
-			id={isEmbedded ? EMBEDDED_TOKEN_RIGHTS_SECTION_ID : undefined}
-			className={isEmbedded ? 'scroll-mt-24 rounded-lg border border-subtle bg-surface' : 'grid grid-cols-1 gap-2'}
-		>
-			{showHeader ? (
-				headerVariant === 'embedded' ? (
-					<div className="flex flex-wrap items-center gap-2 border-b border-subtle p-2">
-						<h2 className="group relative flex items-center gap-1 heading-xs">
-							Token Rights and Value Accrual
-							<a
-								aria-hidden="true"
-								tabIndex={-1}
-								href={`#${EMBEDDED_TOKEN_RIGHTS_SECTION_ID}`}
-								className="absolute top-0 right-0 z-10 flex size-full items-center"
+	const content =
+		activeView === 'overview' ? (
+			<TokenRightsOverviewView name={name} tokenRightsData={tokenRightsData} showIdentity={showCardIdentity} />
+		) : (
+			<div className="grid gap-2 xl:grid-cols-2">
+				{/* ── Left column ── */}
+				<div className="flex flex-col gap-2">
+					{/* Overview */}
+					<SectionCard title="Overview">
+						<dl className="empty:hidden">
+							{overview.identityTokens.length > 0 ? (
+								<KeyValueRow label="Token(s)">
+									<TokenRightsChipList items={overview.identityTokens} tone="positive" variant="details" />
+								</KeyValueRow>
+							) : null}
+							{overview.tokenTypes.length > 0 ? (
+								<KeyValueRow label="Token Type">
+									<TokenRightsChipList items={overview.tokenTypes} tone="neutral" variant="details" />
+								</KeyValueRow>
+							) : null}
+							{overview.utilityItems.length > 0 ? (
+								<KeyValueRow label="Utility">
+									<TokenRightsChipList items={overview.utilityItems} tone="neutral" variant="details" />
+								</KeyValueRow>
+							) : null}
+						</dl>
+						<p className="body-sm">{overview.description}</p>
+					</SectionCard>
+
+					{/* Governance & Decisions */}
+					<SectionCard title="Governance Rights" badge="Control">
+						<p className="body-sm">{governance.summary}</p>
+						<RightsRow
+							label="Governance Decisions"
+							tooltip={TOOLTIPS['Governance Decisions']}
+							details={governance.details}
+						>
+							<DetailsTokenList display={governance.decisionTokenDisplay} />
+						</RightsRow>
+						<RightsRow
+							label="Treasury Decisions"
+							tooltip={TOOLTIPS['Treasury Decisions']}
+							details={decisions.treasury.details}
+						>
+							<DetailsTokenList display={decisions.treasury} />
+						</RightsRow>
+						<RightsRow
+							label="Revenue Decisions"
+							tooltip={TOOLTIPS['Revenue Decisions']}
+							details={decisions.revenue.details}
+						>
+							<DetailsTokenList display={decisions.revenue} />
+						</RightsRow>
+						<RightsRow label="Fee Switch" tooltip={TOOLTIPS['Fee Switch']} details={economic.feeSwitchDetails}>
+							<TokenRightsChip
+								label={economic.feeSwitchStatus}
+								tone={feeSwitchTone(economic.feeSwitchStatus)}
+								variant="details"
 							/>
-							<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
-						</h2>
-						<TokenRightsHeaderControls
-							activeView={activeView}
-							updatedLabel={overview.lastUpdatedLabel}
-							onChange={setActiveView}
-						/>
-					</div>
-				) : (
-					<Card as="header" padding="sm" className="flex flex-wrap items-center gap-2">
-						<TokenLogo name={name} kind="token" size={24} alt={`Logo of ${name}`} />
-						<h1 className="heading-xs">{symbol ? `$${symbol}` : name} Token Rights</h1>
-						{overview.identityTokens.length > 0 ? (
-							<TokenRightsChipList items={overview.identityTokens} tone="positive" variant="overview" />
-						) : null}
-						<TokenRightsHeaderControls
-							activeView={activeView}
-							updatedLabel={overview.lastUpdatedLabel}
-							onChange={setActiveView}
-						/>
-					</Card>
-				)
-			) : null}
+						</RightsRow>
+						<InlineLinks links={governance.links} />
+					</SectionCard>
 
-			<div
-				{...(showHeader
-					? {
-							role: 'tabpanel',
-							id: segmentedControlTabIds(TOKEN_RIGHTS_PANEL_PREFIX, activeView).panelId,
-							'aria-labelledby': segmentedControlTabIds(TOKEN_RIGHTS_PANEL_PREFIX, activeView).tabId
-						}
-					: {})}
-				className={isEmbedded ? 'p-2' : undefined}
-			>
-				{activeView === 'overview' ? (
-					<TokenRightsOverviewView name={name} tokenRightsData={tokenRightsData} showIdentity={showCardIdentity} />
-				) : (
-					<div className="grid gap-2 xl:grid-cols-2">
-						{/* ── Left column ── */}
-						<div className="flex flex-col gap-2">
-							{/* Overview */}
-							<SectionCard title="Overview">
-								<dl className="empty:hidden">
-									{overview.identityTokens.length > 0 ? (
-										<KeyValueRow label="Token(s)">
-											<TokenRightsChipList items={overview.identityTokens} tone="positive" variant="details" />
-										</KeyValueRow>
+					{/* Resources */}
+					{resources.addresses.length > 0 || resources.reports.length > 0 ? (
+						<SectionCard title="Resources">
+							{resources.addresses.length > 0 ? (
+								<div className="flex flex-col gap-2 body-sm">
+									{resources.addresses.every((a) => !a.label) ? (
+										<h3 className="text-secondary">Foundation Multisigs / Addresses</h3>
 									) : null}
-									{overview.tokenTypes.length > 0 ? (
-										<KeyValueRow label="Token Type">
-											<TokenRightsChipList items={overview.tokenTypes} tone="neutral" variant="details" />
-										</KeyValueRow>
-									) : null}
-									{overview.utilityItems.length > 0 ? (
-										<KeyValueRow label="Utility">
-											<TokenRightsChipList items={overview.utilityItems} tone="neutral" variant="details" />
-										</KeyValueRow>
-									) : null}
-								</dl>
-								<p className="body-sm">{overview.description}</p>
-							</SectionCard>
-
-							{/* Governance & Decisions */}
-							<SectionCard title="Governance Rights" badge="Control">
-								<p className="body-sm">{governance.summary}</p>
-								<RightsRow
-									label="Governance Decisions"
-									tooltip={TOOLTIPS['Governance Decisions']}
-									details={governance.details}
-								>
-									<DetailsTokenList display={governance.decisionTokenDisplay} />
-								</RightsRow>
-								<RightsRow
-									label="Treasury Decisions"
-									tooltip={TOOLTIPS['Treasury Decisions']}
-									details={decisions.treasury.details}
-								>
-									<DetailsTokenList display={decisions.treasury} />
-								</RightsRow>
-								<RightsRow
-									label="Revenue Decisions"
-									tooltip={TOOLTIPS['Revenue Decisions']}
-									details={decisions.revenue.details}
-								>
-									<DetailsTokenList display={decisions.revenue} />
-								</RightsRow>
-								<RightsRow label="Fee Switch" tooltip={TOOLTIPS['Fee Switch']} details={economic.feeSwitchDetails}>
-									<TokenRightsChip
-										label={economic.feeSwitchStatus}
-										tone={feeSwitchTone(economic.feeSwitchStatus)}
-										variant="details"
-									/>
-								</RightsRow>
-								<InlineLinks links={governance.links} />
-							</SectionCard>
-
-							{/* Resources */}
-							{resources.addresses.length > 0 || resources.reports.length > 0 ? (
-								<SectionCard title="Resources">
-									{resources.addresses.length > 0 ? (
-										<div className="flex flex-col gap-2 body-sm">
-											{resources.addresses.every((a) => !a.label) ? (
-												<h3 className="text-secondary">Foundation Multisigs / Addresses</h3>
-											) : null}
-											{resources.addresses.map((a, i) => {
-												const isLink = a.value.startsWith('http://') || a.value.startsWith('https://')
-												return (
-													<div key={`${a.value}-${i}`} className="flex min-w-0 flex-col gap-0.5">
-														{a.label ? <span className="text-secondary">{a.label}</span> : null}
-														{isLink ? (
-															<a
-																href={a.value}
-																target="_blank"
-																rel="noopener noreferrer"
-																className="truncate text-link underline"
-															>
-																{a.value}
-															</a>
-														) : (
-															<div className="flex items-center justify-between gap-4">
-																<span className="truncate font-mono text-secondary">{a.value}</span>
-																<CopyHelper toCopy={a.value} />
-															</div>
-														)}
+									{resources.addresses.map((a, i) => {
+										const isLink = a.value.startsWith('http://') || a.value.startsWith('https://')
+										return (
+											<div key={`${a.value}-${i}`} className="flex min-w-0 flex-col gap-0.5">
+												{a.label ? <span className="text-secondary">{a.label}</span> : null}
+												{isLink ? (
+													<a
+														href={a.value}
+														target="_blank"
+														rel="noopener noreferrer"
+														className="truncate text-link underline"
+													>
+														{a.value}
+													</a>
+												) : (
+													<div className="flex items-center justify-between gap-4">
+														<span className="truncate font-mono text-secondary">{a.value}</span>
+														<CopyHelper toCopy={a.value} />
 													</div>
-												)
-											})}
-										</div>
-									) : null}
-									{resources.reports.length > 0 ? (
-										<>
-											<hr className="my-2 border-subtle" />
-											<div className="flex flex-col gap-2 body-sm">
-												{resources.reports.map((r) => (
-													<div key={r.url} className="flex items-center justify-between gap-4">
-														<span>{r.label}</span>
-														<a
-															href={r.url}
-															target="_blank"
-															rel="noopener noreferrer"
-															className="inline-flex shrink-0 items-center gap-1 label-sm text-link hover:underline"
-														>
-															{tryHostname(r.url)}
-															<Icon name="external-link" className="size-3.5" />
-														</a>
-													</div>
-												))}
+												)}
 											</div>
-										</>
-									) : null}
-								</SectionCard>
+										)
+									})}
+								</div>
 							) : null}
+							{resources.reports.length > 0 ? (
+								<>
+									<hr className="my-2 border-subtle" />
+									<div className="flex flex-col gap-2 body-sm">
+										{resources.reports.map((r) => (
+											<div key={r.url} className="flex items-center justify-between gap-4">
+												<span>{r.label}</span>
+												<a
+													href={r.url}
+													target="_blank"
+													rel="noopener noreferrer"
+													className="inline-flex shrink-0 items-center gap-1 label-sm text-link hover:underline"
+												>
+													{tryHostname(r.url)}
+													<Icon name="external-link" className="size-3.5" />
+												</a>
+											</div>
+										))}
+									</div>
+								</>
+							) : null}
+						</SectionCard>
+					) : null}
+				</div>
+
+				{/* ── Right column ── */}
+				<div className="flex flex-col gap-2">
+					{hasPrimaryValueAccrual ? (
+						<GreenCard
+							title="Primary Value Accrual"
+							tooltip="The main mechanism by which value accrues to token holders"
+						>
+							{primaryValueLabel !== null ? <span className="label-sm uppercase">{primaryValueLabel}</span> : null}
+							{valueAccrual.details !== null ? <p className="body-sm">{valueAccrual.details}</p> : null}
+						</GreenCard>
+					) : null}
+
+					{hasEquityStatement ? (
+						<GreenCard
+							title="Equity Statement"
+							tooltip="Protocol statement on the relationship between equity and token holders, and how value ultimately flows or may flow in the future"
+						>
+							<p className="body-sm">{alignment.equityStatement}</p>
+						</GreenCard>
+					) : null}
+
+					{/* Economic Rights & Value Accrual */}
+					<SectionCard title="Economic Rights" badge="Value Capture">
+						{economic.summary !== null ? <p className="body-sm">{economic.summary}</p> : null}
+						<RightsRow label="Buybacks" tooltip={TOOLTIPS['Buybacks']} details={valueAccrual.buybacks.details}>
+							<DetailsTokenList display={valueAccrual.buybacks} />
+						</RightsRow>
+						<RightsRow label="Dividends" tooltip={TOOLTIPS['Dividends']} details={valueAccrual.dividends.details}>
+							<DetailsTokenList display={valueAccrual.dividends} />
+						</RightsRow>
+						<RightsRow label="Burns" tooltip={TOOLTIPS['Burns']} details={valueAccrual.burns.details}>
+							<TokenRightsChip
+								label={valueAccrual.burns.status}
+								tone={valueAccrual.burns.isActive ? 'positive' : 'neutral'}
+								variant="details"
+							/>
+						</RightsRow>
+						<InlineLinks links={economic.links} />
+					</SectionCard>
+
+					{/* Ownership */}
+					{hasOwnershipContent ? (
+						<SectionCard title="Ownership">
+							{raises && raises.length > 0 ? (
+								<RaiseHistorySection tooltip={TOOLTIPS['Raise History']} raises={raises} />
+							) : null}
+							<dl className="empty:hidden">
+								{alignment.fundraising.length > 0 ? (
+									<KeyValueRow label="Fundraising" tooltip={TOOLTIPS['Fundraising']}>
+										<TokenRightsChipList items={alignment.fundraising} tone="neutral" variant="details" />
+									</KeyValueRow>
+								) : null}
+								{alignment.equityRevenueCapture !== null ? (
+									<KeyValueRow label="Equity Revenue Capture" tooltip={TOOLTIPS['Equity Revenue Capture']}>
+										<TokenRightsChip
+											label={alignment.equityRevenueCapture}
+											tone={equityCaptureTone(alignment.equityRevenueCapture)}
+											variant="details"
+										/>
+									</KeyValueRow>
+								) : null}
+								{alignment.associatedEntities.length > 0 ? (
+									<KeyValueRow label="Associated Entities" tooltip={TOOLTIPS['Associated Entities']}>
+										<TokenRightsChipList items={alignment.associatedEntities} tone="neutral" variant="details" />
+									</KeyValueRow>
+								) : null}
+								{alignment.ipAndBrand !== null ? (
+									<KeyValueRow label="IP & Brand" tooltip={TOOLTIPS['IP & Brand']}>
+										<TokenRightsChipList items={[alignment.ipAndBrand]} tone="neutral" variant="details" />
+									</KeyValueRow>
+								) : null}
+								{alignment.domain !== null ? (
+									<KeyValueRow label="Domain" tooltip={TOOLTIPS['Domain']}>
+										<TokenRightsChipList items={[alignment.domain]} tone="neutral" variant="details" />
+									</KeyValueRow>
+								) : null}
+							</dl>
+							<InlineLinks links={alignment.links} />
+						</SectionCard>
+					) : null}
+				</div>
+			</div>
+		)
+
+	return (
+		<Tabs<TokenRightsView>
+			value={activeView}
+			onValueChange={setActiveView}
+			values={TOKEN_RIGHTS_VIEW_OPTIONS.map((option) => option.value)}
+			id={TOKEN_RIGHTS_PANEL_PREFIX}
+		>
+			<div
+				id={isEmbedded ? EMBEDDED_TOKEN_RIGHTS_SECTION_ID : undefined}
+				className={isEmbedded ? 'scroll-mt-24 rounded-lg border border-subtle bg-surface' : 'grid grid-cols-1 gap-2'}
+			>
+				{showHeader ? (
+					headerVariant === 'embedded' ? (
+						<div className="flex flex-wrap items-center gap-2 border-b border-subtle p-2">
+							<h2 className="group relative flex items-center gap-1 heading-xs">
+								Token Rights and Value Accrual
+								<a
+									aria-hidden="true"
+									tabIndex={-1}
+									href={`#${EMBEDDED_TOKEN_RIGHTS_SECTION_ID}`}
+									className="absolute top-0 right-0 z-10 flex size-full items-center"
+								/>
+								<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
+							</h2>
+							<TokenRightsHeaderControls updatedLabel={overview.lastUpdatedLabel} />
 						</div>
-
-						{/* ── Right column ── */}
-						<div className="flex flex-col gap-2">
-							{hasPrimaryValueAccrual ? (
-								<GreenCard
-									title="Primary Value Accrual"
-									tooltip="The main mechanism by which value accrues to token holders"
-								>
-									{primaryValueLabel !== null ? <span className="label-sm uppercase">{primaryValueLabel}</span> : null}
-									{valueAccrual.details !== null ? <p className="body-sm">{valueAccrual.details}</p> : null}
-								</GreenCard>
+					) : (
+						<Card as="header" padding="sm" className="flex flex-wrap items-center gap-2">
+							<TokenLogo name={name} kind="token" size={24} alt={`Logo of ${name}`} />
+							<h1 className="heading-xs">{symbol ? `$${symbol}` : name} Token Rights</h1>
+							{overview.identityTokens.length > 0 ? (
+								<TokenRightsChipList items={overview.identityTokens} tone="positive" variant="overview" />
 							) : null}
+							<TokenRightsHeaderControls updatedLabel={overview.lastUpdatedLabel} />
+						</Card>
+					)
+				) : null}
 
-							{hasEquityStatement ? (
-								<GreenCard
-									title="Equity Statement"
-									tooltip="Protocol statement on the relationship between equity and token holders, and how value ultimately flows or may flow in the future"
-								>
-									<p className="body-sm">{alignment.equityStatement}</p>
-								</GreenCard>
-							) : null}
-
-							{/* Economic Rights & Value Accrual */}
-							<SectionCard title="Economic Rights" badge="Value Capture">
-								{economic.summary !== null ? <p className="body-sm">{economic.summary}</p> : null}
-								<RightsRow label="Buybacks" tooltip={TOOLTIPS['Buybacks']} details={valueAccrual.buybacks.details}>
-									<DetailsTokenList display={valueAccrual.buybacks} />
-								</RightsRow>
-								<RightsRow label="Dividends" tooltip={TOOLTIPS['Dividends']} details={valueAccrual.dividends.details}>
-									<DetailsTokenList display={valueAccrual.dividends} />
-								</RightsRow>
-								<RightsRow label="Burns" tooltip={TOOLTIPS['Burns']} details={valueAccrual.burns.details}>
-									<TokenRightsChip
-										label={valueAccrual.burns.status}
-										tone={valueAccrual.burns.isActive ? 'positive' : 'neutral'}
-										variant="details"
-									/>
-								</RightsRow>
-								<InlineLinks links={economic.links} />
-							</SectionCard>
-
-							{/* Ownership */}
-							{hasOwnershipContent ? (
-								<SectionCard title="Ownership">
-									{raises && raises.length > 0 ? (
-										<RaiseHistorySection tooltip={TOOLTIPS['Raise History']} raises={raises} />
-									) : null}
-									<dl className="empty:hidden">
-										{alignment.fundraising.length > 0 ? (
-											<KeyValueRow label="Fundraising" tooltip={TOOLTIPS['Fundraising']}>
-												<TokenRightsChipList items={alignment.fundraising} tone="neutral" variant="details" />
-											</KeyValueRow>
-										) : null}
-										{alignment.equityRevenueCapture !== null ? (
-											<KeyValueRow label="Equity Revenue Capture" tooltip={TOOLTIPS['Equity Revenue Capture']}>
-												<TokenRightsChip
-													label={alignment.equityRevenueCapture}
-													tone={equityCaptureTone(alignment.equityRevenueCapture)}
-													variant="details"
-												/>
-											</KeyValueRow>
-										) : null}
-										{alignment.associatedEntities.length > 0 ? (
-											<KeyValueRow label="Associated Entities" tooltip={TOOLTIPS['Associated Entities']}>
-												<TokenRightsChipList items={alignment.associatedEntities} tone="neutral" variant="details" />
-											</KeyValueRow>
-										) : null}
-										{alignment.ipAndBrand !== null ? (
-											<KeyValueRow label="IP & Brand" tooltip={TOOLTIPS['IP & Brand']}>
-												<TokenRightsChipList items={[alignment.ipAndBrand]} tone="neutral" variant="details" />
-											</KeyValueRow>
-										) : null}
-										{alignment.domain !== null ? (
-											<KeyValueRow label="Domain" tooltip={TOOLTIPS['Domain']}>
-												<TokenRightsChipList items={[alignment.domain]} tone="neutral" variant="details" />
-											</KeyValueRow>
-										) : null}
-									</dl>
-									<InlineLinks links={alignment.links} />
-								</SectionCard>
-							) : null}
-						</div>
-					</div>
+				{showHeader ? (
+					<TabPanel value={activeView} className={isEmbedded ? 'p-2' : undefined}>
+						{content}
+					</TabPanel>
+				) : (
+					<div className={isEmbedded ? 'p-2' : undefined}>{content}</div>
 				)}
 			</div>
-		</div>
+		</Tabs>
 	)
 }
 
-function TokenRightsHeaderControls({
-	activeView,
-	updatedLabel,
-	onChange
-}: {
-	activeView: TokenRightsView
-	updatedLabel: string | null
-	onChange: (view: TokenRightsView) => void
-}) {
+function TokenRightsHeaderControls({ updatedLabel }: { updatedLabel: string | null }) {
 	return (
 		<div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-			<TokenRightsViewToggle activeView={activeView} onChange={onChange} />
+			<SegmentedControl<TokenRightsView>
+				options={TOKEN_RIGHTS_VIEW_OPTIONS}
+				label="Token rights view"
+				variant="default"
+				size="md"
+				semantics="tabs"
+			/>
 			{updatedLabel ? <span className="label-sm text-secondary">Updated {updatedLabel}</span> : null}
 		</div>
-	)
-}
-
-function TokenRightsViewToggle({
-	activeView,
-	onChange
-}: {
-	activeView: TokenRightsView
-	onChange: (view: TokenRightsView) => void
-}) {
-	return (
-		<SegmentedControl<TokenRightsView>
-			value={activeView}
-			onValueChange={onChange}
-			options={TOKEN_RIGHTS_VIEW_OPTIONS}
-			label="Token rights view"
-			variant="default"
-			size="md"
-			semantics="tabs"
-			panelIdPrefix={TOKEN_RIGHTS_PANEL_PREFIX}
-		/>
 	)
 }
 

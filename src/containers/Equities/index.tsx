@@ -14,13 +14,14 @@ import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { PaginatedTable, usePaginatedTableDisplayRowNumber } from '~/components/Table/PaginatedTable'
 import { TokenLogo } from '~/components/TokenLogo'
-import { ViewTabs, viewTabIds, type ViewTab } from '~/components/ViewTabs'
+import { ViewTabs, type ViewTab } from '~/components/ViewTabs'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import defs from '~/public/equities-definitions.json'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
+import { Tabs, TabPanel } from '~/ui/Tabs'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formatDateTime } from '~/utils/dateFormat'
 import { equityCountryFlagUrl } from '~/utils/icons'
@@ -1012,34 +1013,29 @@ export function EquitiesOverview({ initialData, initialDataGeneratedAt }: IEquit
 			</div>
 		</div>
 	)
-	const { tabId, panelId } = viewTabIds(VIEW_TABS_ID_PREFIX, view)
 	const updatedAt = serverTable.updatedAt
 
 	return (
 		<div className="flex flex-col gap-2">
 			<Panel padding="none">
-				<ViewTabs
-					tabs={VIEW_TABS}
-					activeTab={view}
-					onChange={setView}
-					idPrefix={VIEW_TABS_ID_PREFIX}
-					label="Equities view"
-				/>
-				<div role="tabpanel" id={panelId} aria-labelledby={tabId}>
-					{view === 'table' ? (
-						<EquitiesRankingsTable
-							key={selectedPreset}
-							preset={selectedPreset}
-							serverTable={serverTable}
-							filters={filters}
-							sharedControls={sharedControls}
-							filterPills={filterPills}
-							presetsRow={presetsRow}
-						/>
-					) : (
-						<EquitiesTreemapSection sharedControls={sharedControls} filterPills={filterPills} />
-					)}
-				</div>
+				<Tabs value={view} onValueChange={setView} values={VIEW_TABS.map((tab) => tab.id)} id={VIEW_TABS_ID_PREFIX}>
+					<ViewTabs tabs={VIEW_TABS} label="Equities view" />
+					<TabPanel value={view}>
+						{view === 'table' ? (
+							<EquitiesRankingsTable
+								key={selectedPreset}
+								preset={selectedPreset}
+								serverTable={serverTable}
+								filters={filters}
+								sharedControls={sharedControls}
+								filterPills={filterPills}
+								presetsRow={presetsRow}
+							/>
+						) : (
+							<EquitiesTreemapSection sharedControls={sharedControls} filterPills={filterPills} />
+						)}
+					</TabPanel>
+				</Tabs>
 			</Panel>
 
 			<p className="px-1 body-sm text-tertiary">

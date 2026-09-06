@@ -167,15 +167,17 @@ describe('equities markets venue filter', () => {
 		await act(async () => root.render(<EquitiesMarketsTable markets={mixedVenueMarkets} ticker="NVDA" />))
 	}
 	const rowPairs = () => [...container.querySelectorAll('tbody tr')].map((row) => row.children[0].textContent)
-	const venueButton = (label: string) =>
-		[...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === label)
+	const venueRadio = (label: string) =>
+		[...container.querySelectorAll<HTMLInputElement>('input[type="radio"]')].find(
+			(radio) => radio.parentElement?.textContent === label
+		)
 
 	test('shows every market with per-venue counts by default', async () => {
 		await render()
 		expect(rowPairs()).toHaveLength(3)
-		expect(venueButton('All (3)')).toBeTruthy()
-		expect(venueButton('CEX (2)')).toBeTruthy()
-		expect(venueButton('DEX (1)')).toBeTruthy()
+		expect(venueRadio('All (3)')).toBeTruthy()
+		expect(venueRadio('CEX (2)')).toBeTruthy()
+		expect(venueRadio('DEX (1)')).toBeTruthy()
 	})
 
 	test('filters to the venue named by the query param', async () => {
@@ -186,7 +188,7 @@ describe('equities markets venue filter', () => {
 
 	test('pushes the venue into the URL so a filtered view is shareable', async () => {
 		await render()
-		await act(async () => venueButton('CEX (2)')!.click())
+		await act(async () => venueRadio('CEX (2)')!.click())
 		expect(routerMock.push.mock.calls[0][0].query.marketVenue).toBe('cex')
 	})
 
@@ -194,6 +196,6 @@ describe('equities markets venue filter', () => {
 		await act(async () =>
 			root.render(<EquitiesMarketsTable markets={[{ ...markets[0]!, exchangeType: 'CEX' }]} ticker="NVDA" />)
 		)
-		expect(venueButton('DEX (0)')?.disabled).toBe(true)
+		expect(venueRadio('DEX (0)')?.disabled).toBe(true)
 	})
 })

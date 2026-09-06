@@ -1204,13 +1204,12 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 			{props.platformPage ? (
 				<RWAPlatformDataViews
 					data={props.platformPage}
-					renderAssetsTable={(viewSwitch) => (
+					renderAssetsTable={() => (
 						<RWAAssetsTable
 							assets={filteredAssets}
 							selectedChain={props.selectedChain}
 							includeRwaPerps={includeRwaPerps}
 							includeBridgeTvl={includeBridgeTvl}
-							headerSlot={viewSwitch}
 						/>
 					)}
 				/>

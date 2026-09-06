@@ -107,11 +107,19 @@ describe('Protocol Rankings hydration', () => {
 		vi.stubGlobal(
 			'IntersectionObserver',
 			class {
+				callback: IntersectionObserverCallback
 				constructor(callback: IntersectionObserverCallback) {
-					triggerIntersection = () =>
-						callback([{ isIntersecting: true } as IntersectionObserverEntry], this as unknown as IntersectionObserver)
+					this.callback = callback
 				}
-				observe() {}
+				observe(element: Element) {
+					// Focusable controls also observe visibility; trigger only the table footer.
+					if (element.getAttribute('role') !== 'status') return
+					triggerIntersection = () =>
+						this.callback(
+							[{ target: element, isIntersecting: true } as IntersectionObserverEntry],
+							this as unknown as IntersectionObserver
+						)
+				}
 				disconnect() {}
 			}
 		)

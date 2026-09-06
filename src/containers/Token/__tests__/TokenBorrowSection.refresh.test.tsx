@@ -160,6 +160,13 @@ test.each(['use', 'borrow', 'sort', 'empty', 'no-rows'] as const)(
 		const container = document.createElement('div')
 		document.body.appendChild(container)
 		const root = createRoot(container)
+		const findRadio = (label: string) => {
+			const radio = [...container.querySelectorAll<HTMLInputElement>('input[type="radio"]')].find(
+				(input) => input.parentElement?.textContent === label
+			)
+			if (!radio) throw new Error(`Missing radio: ${label}`)
+			return radio
+		}
 		const findButton = (text: string) => {
 			const b = Array.from(container.querySelectorAll('button')).find((x) => x.textContent === text)
 			if (!b) throw new Error(`Missing ${text}`)
@@ -175,9 +182,7 @@ test.each(['use', 'borrow', 'sort', 'empty', 'no-rows'] as const)(
 			)
 			// The segmented control exposes the leg by its accessible label.
 			if (tab === 'borrow') {
-				const button = Array.from(container.querySelectorAll('button')).find((x) => x.textContent === 'Borrow DOGE')
-				if (!button) throw new Error('Missing debt tab')
-				await act(async () => button.click())
+				await act(async () => findRadio('Borrow DOGE').click())
 			}
 			let retained = container.querySelector('[data-ids]')?.textContent
 			expect(retained).toBeTruthy()
@@ -203,7 +208,7 @@ test.each(['use', 'borrow', 'sort', 'empty', 'no-rows'] as const)(
 			})
 			expect(container.querySelector('[data-ids]')?.textContent).toBe(retained)
 			if (scenario === 'no-rows') {
-				await act(async () => findButton('Use DOGE').click())
+				await act(async () => findRadio('Use DOGE').click())
 				retained = undefined
 				expect(container.querySelector('[data-ids]')).toBeNull()
 				expect(findButton('Retry').disabled).toBe(false)

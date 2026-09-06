@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 
+import type * as Ariakit from '@ariakit/react'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
@@ -22,7 +23,8 @@ vi.mock('next/router', () => ({
 	useRouter: () => mocks.routerState
 }))
 
-vi.mock('@ariakit/react', () => ({
+vi.mock('@ariakit/react', async (importOriginal) => ({
+	...(await importOriginal<typeof Ariakit>()),
 	useDialogStore: () => ({ hide: vi.fn() }),
 	DialogProvider: ({ children }: { children: React.ReactNode }) => children,
 	DialogDisclosure: ({ children }: { children: React.ReactNode }) => children,

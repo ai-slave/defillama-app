@@ -77,11 +77,9 @@ const data: RWAPlatformPageData = {
 	defiActiveTvlToAumPct: 10
 }
 
-// The real table renders the view switcher in its panel header; the stand-in
-// keeps that so switching views is reachable from the assets view.
-const renderAssetsTable = (viewSwitch: React.ReactNode) => {
+const renderAssetsTable = () => {
 	mocks.assetsTableMounted()
-	return <div>{viewSwitch}</div>
+	return <div />
 }
 
 describe('RWA platform data views', () => {
@@ -114,6 +112,30 @@ describe('RWA platform data views', () => {
 		await act(async () => root.unmount())
 		container.remove()
 		vi.restoreAllMocks()
+	})
+
+	test('keeps focus on the same switch across lazy view changes without navigating on arrows', async () => {
+		await render()
+		const tabs = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')]
+		const assets = tabs.find((tab) => tab.textContent === 'Assets')!
+		const peers = tabs.find((tab) => tab.textContent === 'Peers')!
+		await act(async () => {
+			assets.focus()
+			assets.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }))
+			await new Promise((resolve) => setTimeout(resolve, 30))
+		})
+		expect(document.activeElement).toBe(peers)
+		expect(mocks.push).not.toHaveBeenCalled()
+		expect(mocks.peerRankingMounted).not.toHaveBeenCalled()
+		await selectView('Peers')
+		expect(mocks.push).toHaveBeenCalledTimes(1)
+		mocks.query = { view: 'peers' }
+		await render()
+		expect(document.activeElement).toBe(peers)
+		expect(peers.getAttribute('aria-selected')).toBe('true')
+		const panel = document.getElementById(peers.getAttribute('aria-controls')!)!
+		expect(panel.getAttribute('aria-labelledby')).toBe(peers.id)
+		expect(mocks.peerRankingMounted).toHaveBeenCalled()
 	})
 
 	test('mounts the peer ranking only once the peers view is requested', async () => {

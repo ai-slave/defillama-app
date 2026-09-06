@@ -1,3 +1,4 @@
+import type * as Ariakit from '@ariakit/react'
 import { flexRender } from '@tanstack/react-table'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
@@ -70,7 +71,8 @@ vi.mock('next/router', () => ({
 	useRouter: () => ({ asPath: '/token/link' })
 }))
 
-vi.mock('@ariakit/react', () => ({
+vi.mock('@ariakit/react', async (importOriginal) => ({
+	...(await importOriginal<typeof Ariakit>()),
 	Checkbox: ({ clickOnEnter: _clickOnEnter, onFocusVisible: _onFocusVisible, ...props }: any) => (
 		<input type="checkbox" {...props} />
 	),

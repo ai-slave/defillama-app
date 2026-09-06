@@ -13,7 +13,7 @@ import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { TokenLogo } from '~/components/TokenLogo'
-import { ViewTabs, viewTabIds, type ViewTab } from '~/components/ViewTabs'
+import { ViewTabs, type ViewTab } from '~/components/ViewTabs'
 import { TokenRightsPieChart } from '~/containers/TokenRights/TokenRightsPieChart'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
@@ -24,6 +24,7 @@ import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInput
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
+import { Tabs, TabPanel } from '~/ui/Tabs'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { getTokensChartQueryValue, parseTokensChartState, type TokensPageView } from './chartState'
@@ -852,7 +853,6 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 		},
 		[router]
 	)
-	const { tabId, panelId } = viewTabIds(VIEW_TABS_ID_PREFIX, view)
 	const sharedControls = (
 		<TokensSharedControls
 			search={serverTable.pageQuery.search}
@@ -881,52 +881,48 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 			<TokensStats stats={serverTable.data.statsDisplay} />
 			{view === 'table' ? <TokensSourceAvailability sources={serverTable.data.unavailableSources} /> : null}
 			<Panel padding="none">
-				<ViewTabs
-					tabs={VIEW_TABS}
-					activeTab={view}
-					onChange={setView}
-					idPrefix={VIEW_TABS_ID_PREFIX}
-					label="Tokens view"
-				/>
-				<div role="tabpanel" id={panelId} aria-labelledby={tabId}>
-					{view === 'table' ? (
-						<>
-							<TableToolbar>
-								{sharedControls}
-								<TableToolbarControlGroup className="ml-auto justify-end">
-									<SelectWithCombobox
-										allValues={COLUMN_PICKER_OPTIONS}
-										selectedValues={selectedColumns}
-										setSelectedValues={setSelectedColumns}
-										nestedMenu={false}
-										label="Columns"
-										labelType="smol"
-										variant="filter-responsive"
-										size="md"
-									/>
-									<CSVDownloadButton prepareCsv={prepareCsv} smol size="md" />
-								</TableToolbarControlGroup>
-							</TableToolbar>
-							{filterPills}
-							<PaginatedTable
-								table={table}
-								pageSizeOptions={PAGE_SIZE_OPTIONS}
-								style={tableStyle}
-								tableClassName="min-w-(--tokens-table-min-width)"
-								stickyHeader
-								interactionDisabled={serverTable.rowsQuery.isFetching}
-								shell="none"
+				<Tabs value={view} onValueChange={setView} values={VIEW_TABS.map((tab) => tab.id)} id={VIEW_TABS_ID_PREFIX}>
+					<ViewTabs tabs={VIEW_TABS} label="Tokens view" />
+					<TabPanel value={view}>
+						{view === 'table' ? (
+							<>
+								<TableToolbar>
+									{sharedControls}
+									<TableToolbarControlGroup className="ml-auto justify-end">
+										<SelectWithCombobox
+											allValues={COLUMN_PICKER_OPTIONS}
+											selectedValues={selectedColumns}
+											setSelectedValues={setSelectedColumns}
+											nestedMenu={false}
+											label="Columns"
+											labelType="smol"
+											variant="filter-responsive"
+											size="md"
+										/>
+										<CSVDownloadButton prepareCsv={prepareCsv} smol size="md" />
+									</TableToolbarControlGroup>
+								</TableToolbar>
+								{filterPills}
+								<PaginatedTable
+									table={table}
+									pageSizeOptions={PAGE_SIZE_OPTIONS}
+									style={tableStyle}
+									tableClassName="min-w-(--tokens-table-min-width)"
+									stickyHeader
+									interactionDisabled={serverTable.rowsQuery.isFetching}
+									shell="none"
+								/>
+							</>
+						) : (
+							<TokensChartsSection
+								view={view}
+								filterQueryString={buildTokensChartQueryString(serverTable.query)}
+								sharedControls={sharedControls}
+								filterPills={filterPills}
 							/>
-						</>
-					) : (
-						<TokensChartsSection
-							view={view}
-							filterQueryString={buildTokensChartQueryString(serverTable.query)}
-							sharedControls={sharedControls}
-							filterPills={filterPills}
-						/>
-					)}
-				</div>
+						)}
+					</TabPanel>
+				</Tabs>
 			</Panel>
 		</div>
 	)

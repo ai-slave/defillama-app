@@ -1,5 +1,7 @@
+import * as Ariakit from '@ariakit/react'
 import clsx from 'clsx'
 import * as React from 'react'
+import { Tab } from './Tabs'
 import { Tooltip } from './Tooltip'
 
 /* Two selection controls in the design system — do not conflate:
@@ -64,8 +66,6 @@ export type SegmentedControlOption<T extends string> = {
 }
 
 type SegmentedControlProps<T extends string> = Omit<React.ComponentProps<'div'>, 'children' | 'onChange'> & {
-	value: T | null
-	onValueChange: (value: T) => void
 	options: ReadonlyArray<SegmentedControlOption<T>>
 	label: string
 	leading?: React.ReactNode
@@ -73,132 +73,100 @@ type SegmentedControlProps<T extends string> = Omit<React.ComponentProps<'div'>,
 	size: TagGroupSize
 	className?: string
 	buttonClassName?: string
-	/**
-	 * `radio` (default) is for choosing a *value* that reconfigures one region —
-	 * a period, a denomination, a grouping. `tabs` is for switching between
-	 * distinct content panels, and requires `panelIdPrefix`: each option is then
-	 * a tab that names and points at its own panel, so assistive tech can tell
-	 * that the region below changed and can jump straight to it.
-	 */
-	semantics?: 'radio' | 'tabs'
-	/** Required by `semantics="tabs"`. See {@link segmentedControlTabIds}. */
-	panelIdPrefix?: string
-}
+} & (
+		| { semantics?: 'radio'; value: T | null; onValueChange: (value: T) => void }
+		| { semantics: 'tabs'; value?: never; onValueChange?: never }
+	)
 
-/** Wires a tabs-semantics control to its panel: the panel element must carry
-    `role="tabpanel"`, `id={panelId}` and `aria-labelledby={tabId}` for the
-    option it renders. Ids are derived, so caller and control cannot drift. */
-export function segmentedControlTabIds(panelIdPrefix: string, value: string) {
-	return { tabId: `${panelIdPrefix}-tab-${value}`, panelId: `${panelIdPrefix}-panel-${value}` }
-}
-
-/** A single-choice control with a roving tab stop, in radio or tab semantics. */
-export function SegmentedControl<T extends string>({
-	value,
-	onValueChange,
-	options,
-	label,
-	leading,
-	variant,
-	size,
-	className,
-	buttonClassName,
-	semantics = 'radio',
-	panelIdPrefix,
-	...props
-}: SegmentedControlProps<T>) {
-	if (semantics === 'tabs' && panelIdPrefix == null) {
-		throw new Error('SegmentedControl: semantics="tabs" requires panelIdPrefix')
-	}
-	const isTabs = semantics === 'tabs'
+/** Single-value filters use radios; panel switches share their parent's Tabs provider. */
+export function SegmentedControl<T extends string>(props: SegmentedControlProps<T>) {
+	const {
+		options,
+		label,
+		leading,
+		variant,
+		size,
+		className,
+		buttonClassName,
+		semantics,
+		value,
+		onValueChange,
+		...rest
+	} = props
 	const { container, button } = TAG_GROUP_VARIANTS[variant]
-	const refs = React.useRef<Array<HTMLButtonElement | null>>([])
-	const selectedIndex = options.findIndex((option) => option.value === value && !option.disabled)
-	const tabStopIndex = selectedIndex >= 0 ? selectedIndex : options.findIndex((option) => !option.disabled)
-
-	const selectAt = React.useCallback(
-		(index: number) => {
-			const option = options[index]
-			if (!option || option.disabled) return
-			onValueChange(option.value)
-			refs.current[index]?.focus()
-		},
-		[onValueChange, options]
-	)
-
-	const move = React.useCallback(
-		(start: number, direction: 1 | -1) => {
-			for (let offset = 1; offset <= options.length; offset++) {
-				const index = (start + direction * offset + options.length) % options.length
-				if (!options[index].disabled) {
-					selectAt(index)
-					return
-				}
-			}
-		},
-		[options, selectAt]
-	)
-
-	return (
-		<div
-			role={isTabs ? 'tablist' : 'radiogroup'}
-			aria-label={label}
-			className={clsx(container, TAG_GROUP_SIZES[size], className)}
-			{...props}
-		>
-			{leading ? <span className="pr-1 pl-3">{leading}</span> : null}
-			{options.map((option, index) => {
-				const isSelected = option.value === value
-				const ids = isTabs ? segmentedControlTabIds(panelIdPrefix as string, option.value) : null
-				const control = (
-					<button
-						ref={(element) => {
-							refs.current[index] = element
-						}}
-						type="button"
-						role={isTabs ? 'tab' : 'radio'}
-						{...(isTabs
-							? {
-									id: ids?.tabId,
-									'aria-selected': isSelected,
-									// Only the selected tab's panel is in the document, so
-									// pointing at the others would dangle.
-									...(isSelected ? { 'aria-controls': ids?.panelId } : {})
-								}
-							: { 'aria-checked': isSelected })}
-						aria-label={option.ariaLabel}
-						tabIndex={index === tabStopIndex ? 0 : -1}
+	const groupProps = {
+		'aria-label': label,
+		className: clsx(container, TAG_GROUP_SIZES[size], className)
+	}
+	// A selected venue can become empty after a data refresh. Preserve the value,
+	// but keep one enabled entry point while Ariakit's active item is disabled.
+	const selectedIsDisabled = semantics !== 'tabs' && options.some((option) => option.value === value && option.disabled)
+	const firstEnabledValue = selectedIsDisabled ? options.find((option) => !option.disabled)?.value : undefined
+	const controls = options.map((option) => {
+		const controlProps = {
+			'aria-label': option.ariaLabel,
+			disabled: option.disabled,
+			className: clsx(button, buttonClassName),
+			children: option.label
+		}
+		const control =
+			semantics === 'tabs' ? (
+				<Tab value={option.value} {...controlProps} />
+			) : (
+				<label
+					className={clsx(
+						button,
+						buttonClassName,
+						'relative cursor-pointer has-focus-visible:focus-ring has-disabled:cursor-not-allowed',
+						variant === 'solid' && 'inline-flex items-center justify-center',
+						(variant === 'solid' || variant === 'solid-responsive') &&
+							'data-[active=true]:has-focus-visible:focus-ring-on-brand'
+					)}
+					data-active={option.value === value}
+					aria-disabled={option.disabled}
+				>
+					<Ariakit.Radio
+						value={option.value}
+						tabIndex={selectedIsDisabled ? (option.value === firstEnabledValue ? 0 : -1) : undefined}
 						disabled={option.disabled}
-						className={clsx(button, buttonClassName)}
-						data-active={isSelected}
-						onClick={() => onValueChange(option.value)}
-						onKeyDown={(event) => {
-							if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
-								event.preventDefault()
-								move(index, 1)
-							} else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
-								event.preventDefault()
-								move(index, -1)
-							} else if (event.key === 'Home') {
-								event.preventDefault()
-								selectAt(options.findIndex((item) => !item.disabled))
-							} else if (event.key === 'End') {
-								event.preventDefault()
-								selectAt(options.findLastIndex((item) => !item.disabled))
-							}
-						}}
-					>
-						{option.label}
-					</button>
-				)
-
-				return (
-					<React.Fragment key={option.value}>
-						{option.tooltip ? <Tooltip content={option.tooltip}>{control}</Tooltip> : control}
-					</React.Fragment>
-				)
-			})}
-		</div>
+						aria-label={option.ariaLabel}
+						className="sr-only"
+					/>
+					{option.label}
+				</label>
+			)
+		return (
+			<React.Fragment key={option.value}>
+				{option.tooltip ? <Tooltip content={option.tooltip}>{control}</Tooltip> : control}
+			</React.Fragment>
+		)
+	})
+	const content = (
+		<>
+			{leading ? <span className="pr-1 pl-3">{leading}</span> : null}
+			{controls}
+		</>
+	)
+	if (semantics === 'tabs') {
+		return (
+			<Ariakit.TabList {...rest} {...groupProps}>
+				{content}
+			</Ariakit.TabList>
+		)
+	}
+	return (
+		<Ariakit.RadioProvider
+			orientation="both"
+			value={value}
+			setValue={(next) => {
+				const option = options.find((item) => item.value === next)
+				if (option && next !== value) onValueChange(option.value)
+			}}
+		>
+			<Ariakit.RadioGroup {...rest} {...groupProps}>
+				{content}
+			</Ariakit.RadioGroup>
+		</Ariakit.RadioProvider>
 	)
 }
 

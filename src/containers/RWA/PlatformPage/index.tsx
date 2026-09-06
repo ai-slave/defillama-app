@@ -8,8 +8,9 @@ import { buttonStyles } from '~/ui/Button'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
-import { SegmentedControl, segmentedControlTabIds } from '~/ui/SegmentedControl'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatItem, SummaryStatsCard } from '~/ui/SummaryStats'
+import { Tabs, TabPanel } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatCompactNumber, formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
@@ -310,10 +311,12 @@ function MixList({ rows }: { rows: Array<RWAPlatformMixRow> }) {
 	)
 }
 
-function AssetMix({ data, headerSlot }: { data: RWAPlatformPageData; headerSlot: React.ReactNode }) {
+function AssetMix({ data }: { data: RWAPlatformPageData }) {
 	return (
 		<Panel padding="none">
-			<PanelHeader>{headerSlot}</PanelHeader>
+			<PanelHeader>
+				<PanelTitle>Asset mix</PanelTitle>
+			</PanelHeader>
 			<div className="grid grid-cols-1 gap-6 p-4 md:grid-cols-2 xl:grid-cols-3">
 				{data.categoryMix.length > 0 ? (
 					<InfoGroup title="Categories">
@@ -614,7 +617,7 @@ function EntityBackground({ meta }: { meta: RWAPlatformMeta }) {
 	)
 }
 
-function Information({ data, headerSlot }: { data: RWAPlatformPageData; headerSlot: React.ReactNode | null }) {
+function Information({ data }: { data: RWAPlatformPageData }) {
 	const { meta } = data
 	const columns = [
 		hasProfileFacts(meta) ? <ProfileFacts key="profile" meta={meta} /> : null,
@@ -624,7 +627,9 @@ function Information({ data, headerSlot }: { data: RWAPlatformPageData; headerSl
 
 	return (
 		<Panel padding="none">
-			<PanelHeader>{headerSlot ?? <PanelTitle>{`About ${meta.name}`}</PanelTitle>}</PanelHeader>
+			<PanelHeader>
+				<PanelTitle>{`About ${meta.name}`}</PanelTitle>
+			</PanelHeader>
 			<div className="flex flex-col gap-6 p-4">
 				<Overview meta={meta} />
 				<LinkRow meta={meta} />
@@ -665,24 +670,6 @@ const DEFAULT_DATA_VIEW: RWAPlatformDataView = 'assets'
 
 const DATA_VIEW_PANEL_PREFIX = 'rwa-platform-view'
 
-/** The panel half of the tab contract: named by its tab, addressable by it. */
-function TabPanel({
-	view,
-	hidden,
-	children
-}: {
-	view: RWAPlatformDataView
-	hidden?: boolean
-	children: React.ReactNode
-}) {
-	const { tabId, panelId } = segmentedControlTabIds(DATA_VIEW_PANEL_PREFIX, view)
-	return (
-		<div role="tabpanel" id={panelId} aria-labelledby={tabId} className={hidden ? 'hidden' : 'flex flex-col'}>
-			{children}
-		</div>
-	)
-}
-
 /** `?view=` is the shareable name of the selected view; assets is the default
     and stays out of the query string. */
 export function parseRWAPlatformDataView(value: string | undefined): RWAPlatformDataView {
@@ -697,7 +684,7 @@ export function RWAPlatformDataViews({
 	renderAssetsTable
 }: {
 	data: RWAPlatformPageData
-	renderAssetsTable: (viewSwitch: React.ReactNode) => React.ReactNode
+	renderAssetsTable: () => React.ReactNode
 }) {
 	const router = useRouter()
 	const hasMix = data.categoryMix.length > 0 || data.assetClassMix.length > 0 || data.chainMix.length > 0
@@ -705,38 +692,38 @@ export function RWAPlatformDataViews({
 	const view = parseRWAPlatformDataView(readSingleQueryValue(router.query.view))
 	const activeView = view === 'mix' && !hasMix ? DEFAULT_DATA_VIEW : view
 
-	const viewSwitch = (
-		<SegmentedControl<RWAPlatformDataView>
+	return (
+		<Tabs
 			value={activeView}
 			onValueChange={(nextView) => {
 				void pushShallowQuery(router, { view: nextView === DEFAULT_DATA_VIEW ? undefined : nextView })
 			}}
-			options={options}
-			label="Platform data view"
-			variant="default"
-			size="md"
-			className="mr-auto"
-			semantics="tabs"
-			panelIdPrefix={DATA_VIEW_PANEL_PREFIX}
-		/>
-	)
-
-	return (
-		<>
-			{activeView === 'assets' ? <TabPanel view="assets">{renderAssetsTable(viewSwitch)}</TabPanel> : null}
+			values={options.map((option) => option.value)}
+			id={DATA_VIEW_PANEL_PREFIX}
+		>
+			<Panel padding="sm">
+				<SegmentedControl<RWAPlatformDataView>
+					options={options}
+					label="Platform data view"
+					variant="default"
+					size="md"
+					semantics="tabs"
+				/>
+			</Panel>
+			{activeView === 'assets' ? <TabPanel value="assets">{renderAssetsTable()}</TabPanel> : null}
 			{activeView === 'peers' ? (
-				<TabPanel view="peers">
-					<PeerRanking selectedSlug={data.meta.slug} headerSlot={viewSwitch} />
+				<TabPanel value="peers">
+					<PeerRanking selectedSlug={data.meta.slug} />
 				</TabPanel>
 			) : null}
 			{activeView === 'mix' ? (
-				<TabPanel view="mix">
-					<AssetMix data={data} headerSlot={viewSwitch} />
+				<TabPanel value="mix">
+					<AssetMix data={data} />
 				</TabPanel>
 			) : null}
-			<TabPanel view="information" hidden={activeView !== 'information'}>
-				<Information data={data} headerSlot={activeView === 'information' ? viewSwitch : null} />
+			<TabPanel value="information">
+				<Information data={data} />
 			</TabPanel>
-		</>
+		</Tabs>
 	)
 }

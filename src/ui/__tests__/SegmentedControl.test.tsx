@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
-import { SegmentedControl, segmentedControlTabIds } from '../SegmentedControl'
+import { SegmentedControl } from '../SegmentedControl'
+import { Tabs, TabPanel, tabIds } from '../Tabs'
 
 const OPTIONS = [
 	{ value: 'previous', label: 'Previous' },
@@ -31,74 +32,32 @@ function buttonMarkup(html: string, label: string) {
 }
 
 describe('SegmentedControl', () => {
-	test('gives the first enabled option the tab stop when no value is selected', () => {
-		const html = renderControl({ disabled: ['previous'] })
-
-		expect(buttonMarkup(html, 'Previous')).toContain('tabindex="-1"')
-		expect(buttonMarkup(html, 'Next')).toContain('tabindex="0"')
-	})
-
-	test('keeps the selected enabled option as the only tab stop', () => {
-		const html = renderControl({ value: 'next' })
-
-		expect(buttonMarkup(html, 'Previous')).toContain('tabindex="-1"')
-		expect(buttonMarkup(html, 'Next')).toContain('tabindex="0"')
-	})
-
-	test('does not create a tab stop when every option is disabled', () => {
-		const html = renderControl({ disabled: ['previous', 'next'] })
-
-		expect(html).not.toContain('tabindex="0"')
-	})
-
-	test('chooses radio semantics by default', () => {
-		const html = renderControl({ value: 'next' })
-
+	test('renders native labeled radios with the controlled checked value', () => {
+		const html = renderControl({ value: 'next', disabled: ['previous'] })
 		expect(html).toContain('role="radiogroup"')
-		expect(buttonMarkup(html, 'Next')).toContain('aria-checked="true"')
+		expect(html).toMatch(/<label[^>]*><input[^>]*type="radio"[^>]*disabled=""[^>]*\/>Previous<\/label>/)
+		expect(html).toMatch(/<label[^>]*><input[^>]*checked=""[^>]*\/>Next<\/label>/)
 	})
 
 	test('names and addresses the selected panel under tabs semantics', () => {
 		const html = renderToStaticMarkup(
-			<SegmentedControl
-				value="next"
-				onValueChange={vi.fn()}
-				options={OPTIONS}
-				label="Pagination"
-				variant="default"
-				size="md"
-				semantics="tabs"
-				panelIdPrefix="demo"
-			/>
+			<Tabs value="next" onValueChange={vi.fn()} values={['previous', 'next']} id="demo">
+				<SegmentedControl options={OPTIONS} label="Pagination" variant="default" size="md" semantics="tabs" />
+				<TabPanel value="next">Next panel</TabPanel>
+			</Tabs>
 		)
-		const { tabId, panelId } = segmentedControlTabIds('demo', 'next')
+		const { tabId, panelId } = tabIds('demo', 'next')
 
 		expect(html).toContain('role="tablist"')
 		expect(buttonMarkup(html, 'Next')).toContain('role="tab"')
 		expect(buttonMarkup(html, 'Next')).toContain('aria-selected="true"')
 		expect(buttonMarkup(html, 'Next')).toContain(`id="${tabId}"`)
-		expect(buttonMarkup(html, 'Next')).toContain(`aria-controls="${panelId}"`)
+		expect(html).toContain(`id="${panelId}"`)
 		// The unselected panel is not in the document, so its tab must not claim one.
 		expect(buttonMarkup(html, 'Previous')).not.toContain('aria-controls')
 	})
 
-	test('refuses tabs semantics without a panel id to point at', () => {
-		expect(() =>
-			renderToStaticMarkup(
-				<SegmentedControl
-					value="next"
-					onValueChange={vi.fn()}
-					options={OPTIONS}
-					label="Pagination"
-					variant="default"
-					size="md"
-					semantics="tabs"
-				/>
-			)
-		).toThrow(/panelIdPrefix/)
-	})
-
-	test('anchors optional tooltip content around the complete button', () => {
+	test('anchors optional tooltip content around the complete label', () => {
 		const html = renderToStaticMarkup(
 			<SegmentedControl
 				value="daily"
@@ -110,6 +69,6 @@ describe('SegmentedControl', () => {
 			/>
 		)
 
-		expect(html).toMatch(/<span[^>]*><button[^>]*aria-label="Daily"[^>]*>D<\/button><\/span>/)
+		expect(html).toMatch(/<span[^>]*><label[^>]*><input[^>]*aria-label="Daily"[^>]*\/>D<\/label><\/span>/)
 	})
 })

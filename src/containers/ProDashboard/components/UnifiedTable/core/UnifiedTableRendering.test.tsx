@@ -299,7 +299,7 @@ describe('UnifiedTable rendering', () => {
 		expect(virtualizer.scrollToOffset).toHaveBeenCalledWith(0, { align: 'start' })
 
 		virtualizer.scrollToOffset.mockClear()
-		await act(async () => button('30').click())
+		await act(async () => container.querySelector<HTMLInputElement>('input[type="radio"][value="30"]')!.click())
 		expect(rowNames()).toEqual(Array.from({ length: 21 }, (_, index) => `Row ${index + 1}`))
 		expect(container.textContent).not.toContain('Page 2 of 3')
 		expect(virtualizer.scrollToOffset).toHaveBeenCalledWith(0, { align: 'start' })
