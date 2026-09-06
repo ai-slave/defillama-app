@@ -79,7 +79,7 @@ function tabs() {
 	return [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')]
 }
 function editor() {
-	return container.querySelector<HTMLTextAreaElement>('textarea[maxlength="8000"]')!
+	return container.querySelector<HTMLTextAreaElement>('[role="tabpanel"] textarea')!
 }
 async function press(element: HTMLElement, key: string) {
 	await act(async () => {
@@ -129,25 +129,32 @@ test('URL switches retain the real instructions draft and composer, but unmount 
 	mocks.router.query.tab = 'sources'
 	await render()
 	const instructions = editor()
-	const composer = container.querySelector('textarea')!
+	const composer = container.querySelector<HTMLTextAreaElement>('textarea[placeholder="New chat in Research"]')!
 	await act(async () => {
 		Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(
 			instructions,
 			'Unsaved local draft'
 		)
 		instructions.dispatchEvent(new Event('input', { bubbles: true }))
+		Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(composer, 'Unsent question')
+		composer.dispatchEvent(new Event('input', { bubbles: true }))
 	})
 	expect(container.textContent).toContain('Unsaved')
 	delete mocks.router.query.tab
 	await render()
 	expect(editor()).toBe(instructions)
-	expect(container.querySelector('textarea')).toBe(composer)
+	expect(container.querySelector<HTMLTextAreaElement>('textarea[placeholder="New chat in Research"]')!.value).toBe(
+		'Unsent question'
+	)
 	expect(container.querySelector('[aria-label="Files search"]')).toBeNull()
 	mocks.instructions = 'Server refresh'
 	mocks.router.query.tab = 'sources'
 	await render()
 	expect(editor()).toBe(instructions)
 	expect(instructions.value).toBe('Unsaved local draft')
+	expect(container.querySelector<HTMLTextAreaElement>('textarea[placeholder="New chat in Research"]')!.value).toBe(
+		'Unsent question'
+	)
 	expect(container.querySelector('[aria-label="Files search"]')).not.toBeNull()
 	expect(container.querySelectorAll('[role="tabpanel"]:not([hidden])')).toHaveLength(1)
 	expect(mocks.router.replace).not.toHaveBeenCalled()

@@ -30,6 +30,8 @@ import {
 	alertSelectClass,
 	PriceInput,
 	SegmentedToggle,
+	PRICE_OPERATOR_OPTIONS,
+	DELIVERY_OPTIONS,
 	SettingsIntegrationsLink
 } from '~/containers/LlamaAI/components/alerts/ui'
 import { useTipActions } from '~/containers/LlamaAI/components/TipActionContext'
@@ -418,12 +420,10 @@ export const AlertArtifact = memo(function AlertArtifact({
 							<div className="flex flex-wrap items-center gap-2">
 								<span className="font-mono text-sm text-primary">{formatTokenLabel(trigger.token_nk)}</span>
 								<SegmentedToggle<'above' | 'below'>
+									label="Price comparison"
 									value={priceOp}
 									onChange={setPriceOp}
-									options={[
-										{ value: 'above', label: 'Above' },
-										{ value: 'below', label: 'Below' }
-									]}
+									options={PRICE_OPERATOR_OPTIONS}
 								/>
 								<PriceInput value={priceValue} onValueChange={setPriceValue} />
 							</div>
@@ -478,13 +478,10 @@ export const AlertArtifact = memo(function AlertArtifact({
 						<span className={alertFieldLabelClass}>Where should it go?</span>
 						<div className="flex flex-wrap items-center gap-2">
 							<SegmentedToggle<DeliveryChannel>
+								label="Delivery channel"
 								value={deliveryChannel}
 								onChange={setDeliveryChannel}
-								options={[
-									{ value: 'email', label: 'Email' },
-									{ value: 'telegram', label: 'Telegram' },
-									{ value: 'slack', label: 'Slack' }
-								]}
+								options={DELIVERY_OPTIONS}
 							/>
 							{isSlack ? (
 								<>

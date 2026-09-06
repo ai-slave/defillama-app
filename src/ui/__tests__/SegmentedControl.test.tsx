@@ -1,74 +1,54 @@
+// @vitest-environment happy-dom
+
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, test, vi } from 'vitest'
+import { expect, test, vi } from 'vitest'
 import { SegmentedControl } from '../SegmentedControl'
-import { Tabs, TabPanel, tabIds } from '../Tabs'
+import { Tabs, TabPanel } from '../Tabs'
 
 const OPTIONS = [
 	{ value: 'previous', label: 'Previous' },
 	{ value: 'next', label: 'Next' }
 ] as const
 
-function renderControl({
-	value = null,
-	disabled = []
-}: {
-	value?: (typeof OPTIONS)[number]['value'] | null
-	disabled?: Array<(typeof OPTIONS)[number]['value']>
-} = {}) {
-	return renderToStaticMarkup(
+test('server-rendered radios expose labels, selection and disabled state before hydration', () => {
+	const html = renderToStaticMarkup(
 		<SegmentedControl
-			value={value}
+			value="next"
 			onValueChange={vi.fn()}
-			options={OPTIONS.map((option) => ({ ...option, disabled: disabled.includes(option.value) }))}
+			options={[
+				{ ...OPTIONS[0], disabled: true },
+				{ ...OPTIONS[1], label: 'N', ariaLabel: 'Next', tooltip: 'Next page' }
+			]}
 			label="Pagination"
 			variant="default"
 			size="md"
 		/>
 	)
-}
+	const document = new DOMParser().parseFromString(html, 'text/html')
+	const group = document.querySelector('[role="radiogroup"]')!
+	expect(group.getAttribute('aria-label')).toBe('Pagination')
+	const radios = [...group.querySelectorAll<HTMLInputElement>('input[type="radio"]')]
+	expect(radios).toHaveLength(2)
+	expect(radios.map((radio) => radio.checked)).toEqual([false, true])
+	expect(radios.map((radio) => radio.disabled)).toEqual([true, false])
+	expect(radios[0].labels?.[0].textContent).toBe('Previous')
+	expect(radios[1].getAttribute('aria-label')).toBe('Next')
+})
 
-function buttonMarkup(html: string, label: string) {
-	return html.match(new RegExp(`<button[^>]*>${label}</button>`))?.[0] ?? ''
-}
-
-describe('SegmentedControl', () => {
-	test('renders native labeled radios with the controlled checked value', () => {
-		const html = renderControl({ value: 'next', disabled: ['previous'] })
-		expect(html).toContain('role="radiogroup"')
-		expect(html).toMatch(/<label[^>]*><input[^>]*type="radio"[^>]*disabled=""[^>]*\/>Previous<\/label>/)
-		expect(html).toMatch(/<label[^>]*><input[^>]*checked=""[^>]*\/>Next<\/label>/)
-	})
-
-	test('names and addresses the selected panel under tabs semantics', () => {
-		const html = renderToStaticMarkup(
-			<Tabs value="next" onValueChange={vi.fn()} values={['previous', 'next']} id="demo">
-				<SegmentedControl options={OPTIONS} label="Pagination" variant="default" size="md" semantics="tabs" />
-				<TabPanel value="next">Next panel</TabPanel>
-			</Tabs>
-		)
-		const { tabId, panelId } = tabIds('demo', 'next')
-
-		expect(html).toContain('role="tablist"')
-		expect(buttonMarkup(html, 'Next')).toContain('role="tab"')
-		expect(buttonMarkup(html, 'Next')).toContain('aria-selected="true"')
-		expect(buttonMarkup(html, 'Next')).toContain(`id="${tabId}"`)
-		expect(html).toContain(`id="${panelId}"`)
-		// The unselected panel is not in the document, so its tab must not claim one.
-		expect(buttonMarkup(html, 'Previous')).not.toContain('aria-controls')
-	})
-
-	test('anchors optional tooltip content around the complete label', () => {
-		const html = renderToStaticMarkup(
-			<SegmentedControl
-				value="daily"
-				onValueChange={vi.fn()}
-				options={[{ value: 'daily', label: 'D', ariaLabel: 'Daily', tooltip: 'Daily' }]}
-				label="Chart grouping"
-				variant="default"
-				size="md"
-			/>
-		)
-
-		expect(html).toMatch(/<span[^>]*><label[^>]*><input[^>]*aria-label="Daily"[^>]*\/>D<\/label><\/span>/)
-	})
+test('server-rendered selected panel is named by its tab before hydration', () => {
+	const html = renderToStaticMarkup(
+		<Tabs value="next" onValueChange={vi.fn()} values={['previous', 'next']}>
+			<SegmentedControl options={OPTIONS} label="Pagination" variant="default" size="md" semantics="tabs" />
+			<TabPanel value="next">Next panel</TabPanel>
+		</Tabs>
+	)
+	const document = new DOMParser().parseFromString(html, 'text/html')
+	const panel = document.querySelector('[role="tabpanel"]')!
+	const selectedTab = document.querySelector('[role="tab"][aria-selected="true"]')!
+	expect(selectedTab.textContent).toBe('Next')
+	expect(selectedTab.id).not.toBe('')
+	expect(document.getElementById(panel.getAttribute('aria-labelledby')!)).toBe(selectedTab)
+	expect(panel.textContent).toBe('Next panel')
+	// The unselected panel is not in the document, so its tab must not claim one.
+	expect(document.querySelector('[role="tab"][aria-selected="false"]')!.hasAttribute('aria-controls')).toBe(false)
 })

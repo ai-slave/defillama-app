@@ -119,7 +119,7 @@ describe('controlled selection primitives', () => {
 	test('radio: preserves an explicitly unselected value', async () => {
 		const onChange = vi.fn()
 		await render({ kind: 'radio', onChange, initial: null })
-		expect(controls().every((button) => button.getAttribute('aria-checked') === 'false')).toBe(true)
+		expect(controls().map((button) => button.getAttribute('aria-checked'))).toEqual(['false', 'false', 'false'])
 		expect(controls().filter((button) => button.tabIndex === 0)).toHaveLength(1)
 		expect(onChange).not.toHaveBeenCalled()
 	})
@@ -198,7 +198,7 @@ describe('controlled selection primitives', () => {
 		async (kind) => {
 			const onChange = vi.fn()
 			await render({ kind, onChange, disabled: ['table', 'chart', 'details'] })
-			expect(controls().every((button) => button.getAttribute('aria-disabled') === 'true')).toBe(true)
+			expect(controls().map((button) => button.getAttribute('aria-disabled'))).toEqual(['true', 'true', 'true'])
 			await act(async () => controls()[1].click())
 			await press(controls()[1], 'Enter')
 			expect(onChange).not.toHaveBeenCalled()
@@ -244,7 +244,7 @@ describe('controlled selection primitives', () => {
 				</>
 			)
 		)
-		const ids = [...container.querySelectorAll('[id]')].map((element) => element.id)
+		const ids = [...container.querySelectorAll('[role="tab"], [role="tabpanel"]')].map((element) => element.id)
 		expect(new Set(ids).size).toBe(ids.length)
 		await act(async () => controls()[1].click())
 		expect(controls()[1].getAttribute('aria-selected')).toBe('true')

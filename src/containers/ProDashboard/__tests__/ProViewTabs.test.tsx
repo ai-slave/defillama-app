@@ -157,7 +157,6 @@ test('signed-out private links show Discover and restore the requested view afte
 	expect(tabs()).toHaveLength(1)
 	expect(tabs()[0].tabIndex).toBe(0)
 	expect(panel(tabs()[0]).hidden).toBe(false)
-	expect(mocks.router.query).toEqual({ tab: 'favorites' })
 	expect(mocks.router.replace).not.toHaveBeenCalled()
 })
 

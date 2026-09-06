@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
@@ -43,6 +43,8 @@ import {
 	alertSelectClass,
 	AlertsDialogHeader,
 	PriceInput,
+	PRICE_OPERATOR_OPTIONS,
+	DELIVERY_OPTIONS,
 	SegmentedToggle,
 	SettingsIntegrationsLink
 } from '~/containers/LlamaAI/components/alerts/ui'
@@ -65,29 +67,28 @@ interface CreateAlertModalProps {
 
 function AlertTypeCard({
 	active,
-	onClick,
+	value,
 	icon,
 	title,
 	description
 }: {
 	active: boolean
-	onClick: () => void
+	value: TriggerType
 	icon: 'calendar' | 'trending-up'
 	title: string
 	description: string
 }) {
+	const id = useId()
 	return (
-		<button
-			type="button"
-			role="radio"
-			aria-checked={active}
-			onClick={onClick}
-			className={`flex items-start gap-2.5 rounded-xl border p-2.5 text-left transition-colors ${
+		<label
+			htmlFor={id}
+			className={`relative flex cursor-pointer items-start gap-2.5 rounded-xl border p-2.5 text-left transition-colors has-focus-visible:focus-ring ${
 				active
 					? 'border-link/40 bg-link/4 ring-1 ring-link/30'
 					: 'border-ai-line-medium hover:border-ai-line-strong hover:bg-ai-hover-faint'
 			}`}
 		>
+			<Ariakit.Radio id={id} value={value} aria-label={title} aria-description={description} className="sr-only" />
 			<span
 				className={`mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg ${
 					active ? 'bg-link/10 text-link' : 'bg-ai-hover text-ai-muted'
@@ -99,7 +100,7 @@ function AlertTypeCard({
 				<span className={`text-sm font-medium ${active ? 'text-link' : 'text-primary'}`}>{title}</span>
 				<span className="text-xs leading-snug text-ai-tertiary">{description}</span>
 			</span>
-		</button>
+		</label>
 	)
 }
 
@@ -155,6 +156,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 	const [slackTeamId, setSlackTeamId] = useState('')
 	const [slackChannelId, setSlackChannelId] = useState('')
 
+	const initialPromptRef = useRef<HTMLTextAreaElement>(null)
 	const generationRef = useRef(0)
 	const pendingSubmissionGenerationRef = useRef<number | null>(null)
 
@@ -312,6 +314,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 		<Ariakit.DialogProvider store={dialogStore}>
 			<Ariakit.Dialog
 				className={alertDialogClass}
+				initialFocus={initialPromptRef}
 				backdrop={<div className={alertBackdropClass} />}
 				portal
 				unmountOnHide
@@ -348,22 +351,29 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 					) : (
 						<form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
 							<div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-5 py-3.5">
-								<div role="radiogroup" aria-label="Alert type" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-									<AlertTypeCard
-										active={triggerType === 'schedule'}
-										onClick={() => setTriggerType('schedule')}
-										icon="calendar"
-										title="Scheduled report"
-										description="Answers a question of yours every day or week"
-									/>
-									<AlertTypeCard
-										active={triggerType === 'price'}
-										onClick={() => setTriggerType('price')}
-										icon="trending-up"
-										title="Price alert"
-										description="Instant ping when a token crosses your level"
-									/>
-								</div>
+								<Ariakit.RadioProvider
+									value={triggerType}
+									setValue={(value) => {
+										if (value === 'schedule' || value === 'price') setTriggerType(value)
+									}}
+								>
+									<Ariakit.RadioGroup aria-label="Alert type" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+										<AlertTypeCard
+											active={triggerType === 'schedule'}
+											value="schedule"
+											icon="calendar"
+											title="Scheduled report"
+											description="Answers a question of yours every day or week"
+										/>
+										<AlertTypeCard
+											active={triggerType === 'price'}
+											value="price"
+											icon="trending-up"
+											title="Price alert"
+											description="Instant ping when a token crosses your level"
+										/>
+									</Ariakit.RadioGroup>
+								</Ariakit.RadioProvider>
 
 								{triggerType === 'schedule' ? (
 									<div className="flex flex-col gap-2">
@@ -372,7 +382,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 										</label>
 										<textarea
 											id="create-alert-prompt"
-											autoFocus
+											ref={initialPromptRef}
 											value={prompt}
 											onChange={(e) => setPrompt(e.target.value)}
 											rows={2}
@@ -401,6 +411,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 										<span className="text-sm font-medium text-primary">When should it fire?</span>
 										<ReactSelect
 											placeholder="Search tokens..."
+											aria-label="Token"
 											value={priceToken ? { value: priceToken.symbol, label: priceToken.symbol.toUpperCase() } : null}
 											onChange={(option: any) => {
 												if (!option) {
@@ -422,12 +433,10 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 										<div className="flex flex-wrap items-center gap-2">
 											<span className="text-xs text-ai-muted">goes</span>
 											<SegmentedToggle<PriceOp>
+												label="Price comparison"
 												value={priceOp}
 												onChange={setPriceOp}
-												options={[
-													{ value: 'above', label: 'Above' },
-													{ value: 'below', label: 'Below' }
-												]}
+												options={PRICE_OPERATOR_OPTIONS}
 											/>
 											<PriceInput value={priceValue} onValueChange={setPriceValue} />
 										</div>
@@ -456,6 +465,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 											<div className="flex flex-wrap items-center gap-2">
 												<select
 													value={frequency}
+													aria-label="Frequency"
 													onChange={(e) => setFrequency(e.target.value as 'daily' | 'weekly')}
 													className={alertSelectClass}
 												>
@@ -465,6 +475,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 												{frequency === 'weekly' ? (
 													<select
 														value={dayOfWeek}
+														aria-label="Day of week"
 														onChange={(e) => setDayOfWeek(Number(e.target.value))}
 														className={alertSelectClass}
 													>
@@ -478,6 +489,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 												<span className="text-xs text-ai-muted">at</span>
 												<select
 													value={hour}
+													aria-label="Hour"
 													onChange={(e) => setHour(Number(e.target.value))}
 													className={alertSelectClass}
 												>
@@ -489,6 +501,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 												</select>
 												<select
 													value={timezone}
+													aria-label="Timezone"
 													onChange={(e) => setTimezone(e.target.value)}
 													className={alertSelectClass}
 												>
@@ -520,13 +533,10 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 										<span className={alertFieldLabelClass}>Where should it go?</span>
 										<div className="flex flex-wrap items-center gap-2">
 											<SegmentedToggle<DeliveryChannel>
+												label="Delivery channel"
 												value={deliveryChannel}
 												onChange={setDeliveryChannel}
-												options={[
-													{ value: 'email', label: 'Email' },
-													{ value: 'telegram', label: 'Telegram' },
-													{ value: 'slack', label: 'Slack' }
-												]}
+												options={DELIVERY_OPTIONS}
 											/>
 											{deliveryChannel === 'slack' ? (
 												<>
@@ -535,6 +545,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 													) : activeSlackWorkspaces.length > 0 ? (
 														<select
 															value={slackTeamId}
+															aria-label="Slack workspace"
 															onChange={(e) => {
 																setSlackTeamId(e.target.value)
 																const workspace = activeSlackWorkspaces.find((w) => w.team_id === e.target.value)
@@ -560,6 +571,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 														) : (
 															<select
 																value={slackChannelId}
+																aria-label="Slack channel"
 																onChange={(e) => setSlackChannelId(e.target.value)}
 																className={alertSelectClass}
 															>

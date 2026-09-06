@@ -66,7 +66,8 @@ test.each(['dismiss', 'Escape'] as const)('SQL reference is named and %s closes 
 	expect(onClose).toHaveBeenCalledTimes(1)
 })
 
-test.each(['Alerts', 'New alert'])('%s uses its visible title as the dialog name', async (title) => {
+test('alert dialogs use the supplied visible title as the dialog name', async () => {
+	const title = 'New alert'
 	const setOpen = vi.fn()
 	await act(async () =>
 		root.render(

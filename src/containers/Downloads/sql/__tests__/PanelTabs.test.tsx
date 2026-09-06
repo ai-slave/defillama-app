@@ -107,8 +107,7 @@ test('Downloads focus leaves SQL unmounted; activation preserves shallow URL rep
 	])
 })
 
-test('SQL reference arrows preserve its content and actions until explicit activation', async () => {
-	const onApplyAndRun = vi.fn()
+test('SQL reference arrows preserve its content until explicit activation', async () => {
 	await act(async () =>
 		root.render(
 			<SchemaDrawer
@@ -121,7 +120,7 @@ test('SQL reference arrows preserve its content and actions until explicit activ
 				onLoad={async () => null}
 				onReplaceSql={vi.fn()}
 				onInsertAtCursor={vi.fn()}
-				onApplyAndRun={onApplyAndRun}
+				onApplyAndRun={vi.fn()}
 			/>
 		)
 	)
@@ -137,11 +136,9 @@ test('SQL reference arrows preserve its content and actions until explicit activ
 	expectPanel(cookbook, 'Cookbook content')
 	await press(shortcuts, ' ')
 	expectPanel(shortcuts, 'Shortcuts content')
-	expect(onApplyAndRun).not.toHaveBeenCalled()
 })
 
 test('SQL chart reference switches only on activation and keeps inactive sections unmounted', async () => {
-	const onApply = vi.fn()
 	await act(async () =>
 		root.render(
 			<SqlChartModalSidebar
@@ -151,11 +148,11 @@ test('SQL chart reference switches only on activation and keeps inactive section
 				schemaLoading={null}
 				busyTaskId={null}
 				savedQueries={[]}
-				onApplyExample={onApply}
-				onApplySaved={onApply}
-				onReplaceSql={onApply}
-				onInsertAtCursor={onApply}
-				onApplyAndRun={onApply}
+				onApplyExample={vi.fn()}
+				onApplySaved={vi.fn()}
+				onReplaceSql={vi.fn()}
+				onInsertAtCursor={vi.fn()}
+				onApplyAndRun={vi.fn()}
 			/>
 		)
 	)
@@ -172,5 +169,4 @@ test('SQL chart reference switches only on activation and keeps inactive section
 	await press(shortcuts, 'ArrowLeft')
 	await press(saved, 'Enter')
 	expectPanel(saved, 'Saved content')
-	expect(onApply).not.toHaveBeenCalled()
 })

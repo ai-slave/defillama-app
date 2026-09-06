@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -263,24 +264,24 @@ export function WelcomeOnboarding() {
 				</div>
 			) : null}
 
-			<div className="flex w-full flex-col gap-2">
+			<Ariakit.Group aria-label="What brought you here? Pick all that apply." className="flex w-full flex-col gap-2">
 				{ONBOARDING_OPTIONS.map((option, i) => {
 					const isSelected = selectedFeatures.has(option.id)
 					const c = option.color
 					return (
-						<button
-							type="button"
+						<Ariakit.Checkbox
+							render={<button type="button" aria-label={option.label} />}
+							aria-description={option.description ?? undefined}
 							key={option.id}
-							onClick={() => toggleFeature(option.id)}
+							checked={isSelected}
+							onChange={() => toggleFeature(option.id)}
 							style={{
 								animationDelay: `${i * 40}ms`,
 								...(isSelected ? { borderColor: `${c}66`, backgroundColor: `${c}0f` } : {})
 							}}
-							className={`group flex animate-[fadein_0.2s_ease-out_both] items-center gap-3.5 rounded-xl border px-4 py-3 text-left transition-all duration-200 ${
+							className={`group flex animate-[fadein_0.2s_ease-out_both] items-center gap-3.5 rounded-xl border px-4 py-3 text-left transition-all duration-200 focus-visible:focus-ring ${
 								isSelected ? '' : 'border-sub-line bg-sub-dark-panel hover:border-sub-line hover:bg-sub-dark-card'
 							}`}
-							role="checkbox"
-							aria-checked={isSelected}
 						>
 							<div
 								className="flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors duration-200"
@@ -322,10 +323,10 @@ export function WelcomeOnboarding() {
 									{isSelected ? <Icon name="check" height={10} width={10} className="text-on-brand" /> : null}
 								</div>
 							</div>
-						</button>
+						</Ariakit.Checkbox>
 					)
 				})}
-			</div>
+			</Ariakit.Group>
 
 			<div className="mt-6 flex w-full flex-col items-center gap-2">
 				<button

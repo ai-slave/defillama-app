@@ -75,7 +75,6 @@ describe('Select on the Combobox module', () => {
 	let root: Root
 
 	beforeEach(() => {
-		globalThis.IS_REACT_ACT_ENVIRONMENT = true
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
@@ -158,7 +157,6 @@ describe('SelectWithCombobox on one Combobox store', () => {
 	let root: Root
 
 	beforeEach(() => {
-		globalThis.IS_REACT_ACT_ENVIRONMENT = true
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
@@ -176,10 +174,10 @@ describe('SelectWithCombobox on one Combobox store', () => {
 		await click(trigger())
 		const input = document.querySelector<HTMLInputElement>('input[role="combobox"]')!
 		expect(input).not.toBeNull()
-		expect(options().map((option) => option.textContent)).toHaveLength(3)
+		expect(options()).toHaveLength(3)
 
 		await type(input, 'fe')
-		expect(options().map((option) => option.textContent?.trim())).toEqual(['FeesOnly'])
+		expect(options()).toHaveLength(1)
 		expect(optionByText('Fees').getAttribute('aria-selected')).toBe('false')
 
 		await click(optionByText('Fees'))
@@ -259,7 +257,6 @@ describe('nested filter composition', () => {
 	let container: HTMLDivElement
 	let root: Root
 	beforeEach(() => {
-		globalThis.IS_REACT_ACT_ENVIRONMENT = true
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)

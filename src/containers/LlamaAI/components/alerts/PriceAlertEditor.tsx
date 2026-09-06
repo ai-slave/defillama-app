@@ -2,7 +2,12 @@ import { useState } from 'react'
 import { formatTokenLabel } from '~/containers/LlamaAI/components/alerts/alertsListHelpers'
 import { roundPriceValue } from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import type { PriceTrigger } from '~/containers/LlamaAI/components/alerts/types'
-import { alertFieldLabelClass, PriceInput, SegmentedToggle } from '~/containers/LlamaAI/components/alerts/ui'
+import {
+	alertFieldLabelClass,
+	PriceInput,
+	PRICE_OPERATOR_OPTIONS,
+	SegmentedToggle
+} from '~/containers/LlamaAI/components/alerts/ui'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 
@@ -33,7 +38,7 @@ export function PriceAlertEditor({
 		<form
 			onSubmit={(e) => {
 				e.preventDefault()
-				if (!isValueValid || !canSave) return
+				if (!isValueValid || !canSave || isSaving) return
 				onSave({ type: 'price', token_nk: trigger.token_nk, op, value: numericValue, recurring: trigger.recurring })
 			}}
 			className="flex flex-col gap-3"
@@ -44,12 +49,10 @@ export function PriceAlertEditor({
 			</div>
 			<div className="flex flex-wrap items-center gap-2">
 				<SegmentedToggle<'above' | 'below'>
+					label="Price comparison"
 					value={op}
 					onChange={setOp}
-					options={[
-						{ value: 'above', label: 'Above' },
-						{ value: 'below', label: 'Below' }
-					]}
+					options={PRICE_OPERATOR_OPTIONS}
 				/>
 				<PriceInput value={value} onValueChange={setValue} />
 			</div>

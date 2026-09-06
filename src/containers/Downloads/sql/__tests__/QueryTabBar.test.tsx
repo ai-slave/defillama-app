@@ -102,9 +102,9 @@ function button(name: string) {
 		(e) => e.getAttribute('aria-label') === name || e.textContent === name
 	)!
 }
-function item(name: string) {
-	return [...document.querySelectorAll<HTMLElement>('[role="menu"]:not([hidden]) [role="menuitem"]')].find(
-		(e) => e.textContent?.trim() === name
+function item(name: string | RegExp) {
+	return [...document.querySelectorAll<HTMLElement>('[role="menu"]:not([hidden]) [role="menuitem"]')].find((e) =>
+		typeof name === 'string' ? e.textContent?.trim() === name : name.test(e.textContent ?? '')
 	)!
 }
 async function press(element: HTMLElement, key: string, shiftKey = false) {
@@ -209,7 +209,7 @@ test('duplicate and new query/notebook actions focus the new selection without l
 	expect(model.activeTab.id).not.toBe('a')
 	expect(document.activeElement?.getAttribute('id')).toBe(container.querySelector('[aria-selected="true"]')?.id)
 	await click(button('New tab'))
-	await click(item('New query tab⌘T'))
+	await click(item(/^New query tab/))
 	expect(model.activeTab.sql).toBe('')
 	expect(document.activeElement).toBe(tab('Untitled'))
 	await click(button('New tab'))
@@ -230,7 +230,7 @@ test('bulk close and conversion keep focus on surviving tabs', async () => {
 	expect(model.activeTab.mode).toBe('notebook')
 	expect(document.activeElement).toBe(tab('Notebook: A'))
 	await click(button('New tab'))
-	await click(item('New query tab⌘T'))
+	await click(item(/^New query tab/))
 	await click(button('Actions for A'))
 	await click(item('Close others'))
 	expect(model.tabs.map((t) => t.id)).toEqual(['a'])
@@ -281,11 +281,11 @@ test('context menus restore focus and popups escape the scrolling tab strip', as
 	expect(
 		container.querySelector('[role="tablist"]')?.contains(document.querySelector('[role="menu"]:not([hidden])'))
 	).toBe(false)
-	await press(item('New query tab⌘T'), 'Escape')
+	await press(item(/^New query tab/), 'Escape')
 	expect(document.activeElement).toBe(button('New tab'))
 })
 
-test('renaming with IME keeps the draft until composition ends, then persists once', async () => {
+test('renaming with IME keeps the draft until composition ends, then saves the renamed tab', async () => {
 	await mount()
 	await click(button('Actions for B'))
 	await click(item('Rename'))
@@ -299,14 +299,13 @@ test('renaming with IME keeps the draft until composition ends, then persists on
 	expect(document.activeElement).toBe(input)
 	await press(input, 'Enter')
 	expect(mocks.rename.mock.calls).toEqual([['b', 'SQL 日本語']])
-	await act(async () => {
-		await new Promise((resolve) => setTimeout(resolve, 280))
-	})
-	expect(mocks.setStorageJSON).toHaveBeenLastCalledWith(
-		'sql-studio:tabs:v2',
-		expect.objectContaining({
-			activeTabId: 'b',
-			tabs: expect.arrayContaining([expect.objectContaining({ id: 'b', title: 'SQL 日本語', sql: "SELECT 'b'" })])
-		})
+	await vi.waitFor(() =>
+		expect(mocks.setStorageJSON).toHaveBeenLastCalledWith(
+			'sql-studio:tabs:v2',
+			expect.objectContaining({
+				activeTabId: 'b',
+				tabs: expect.arrayContaining([expect.objectContaining({ id: 'b', title: 'SQL 日本語', sql: "SELECT 'b'" })])
+			})
+		)
 	)
 })

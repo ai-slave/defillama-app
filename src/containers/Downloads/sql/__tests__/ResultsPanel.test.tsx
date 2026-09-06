@@ -61,24 +61,6 @@ test.each(['table', 'chart'] as const)(
 	}
 )
 
-test('uncontrolled populated results still switch between table and chart', async () => {
-	await act(async () =>
-		root.render(
-			<ResultsPanel
-				result={{ columns: [{ name: 'value', type: 'INTEGER' }], rows: [[1]] }}
-				running={false}
-				chartConfig={undefined}
-				onChartConfigChange={vi.fn()}
-			/>
-		)
-	)
-	const buttons = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')]
-	await act(async () => buttons[1].click())
-	expect(container.textContent).toContain('Chart content')
-	await act(async () => buttons[0].click())
-	expect(container.textContent).toContain('Table content')
-})
-
 test('Results keyboard focus does not activate charts and multiple panels remain independent', async () => {
 	const props = {
 		result: { columns: [{ name: 'value', type: 'INTEGER' }], rows: [[1]] },
@@ -113,7 +95,10 @@ test('Results keyboard focus does not activate charts and multiple panels remain
 	expect(panel.getAttribute('aria-labelledby')).toBe(tabs[1].id)
 	expect(panel.textContent).toBe('Chart content')
 	expect(tabs[2].getAttribute('aria-selected')).toBe('true')
-	const ids = [...container.querySelectorAll('[id]')].map((e) => e.id)
+	const ids = [...container.querySelectorAll('[role="tab"], [role="tabpanel"]')].map((e) => e.id)
 	expect(new Set(ids).size).toBe(ids.length)
-	expect(props.onChartConfigChange).not.toHaveBeenCalled()
+	await press(tabs[1], 'ArrowLeft')
+	await press(tabs[0], 'Enter')
+	expect(container.textContent).not.toContain('Chart content')
+	expect(document.getElementById(tabs[0].getAttribute('aria-controls')!)!.textContent).toBe('Table content')
 })

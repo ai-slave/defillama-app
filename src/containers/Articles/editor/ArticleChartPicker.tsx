@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useQueries } from '@tanstack/react-query'
-import { lazy, Suspense, useContext, useMemo, useState } from 'react'
+import { lazy, Suspense, useContext, useMemo, useRef, useState } from 'react'
 import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
@@ -42,6 +42,56 @@ const RANGES: Array<{ value: ArticleChartRange; label: string }> = [
 	{ value: '365d', label: '1Y' },
 	{ value: 'all', label: 'All' }
 ]
+
+const ENTITY_TYPES = [
+	{ value: 'protocol', label: 'Protocols' },
+	{ value: 'chain', label: 'Chains' }
+] as const
+const SCALES = [
+	{ value: 'linear', label: 'Linear' },
+	{ value: 'log', label: 'Log' }
+] as const
+
+function ChartOptionGroup<T extends string>({
+	value,
+	options,
+	onChange,
+	label,
+	className
+}: {
+	value: T
+	options: ReadonlyArray<{ value: T; label: string }>
+	onChange: (value: T) => void
+	label: string
+	className?: string
+}) {
+	return (
+		<Ariakit.RadioProvider
+			value={value}
+			setValue={(next) => {
+				const option = options.find((option) => option.value === next)
+				if (option && option.value !== value) onChange(option.value)
+			}}
+		>
+			<Ariakit.RadioGroup
+				aria-label={label}
+				className={`flex items-center rounded-md border border-medium bg-page p-0.5 text-xs ${className ?? ''}`}
+			>
+				{options.map((option) => (
+					<label
+						key={option.value}
+						className={`relative cursor-pointer rounded-sm px-2.5 py-1 font-medium transition-colors has-focus-visible:focus-ring ${
+							value === option.value ? 'bg-surface text-primary shadow-sm' : 'text-tertiary hover:text-primary'
+						}`}
+					>
+						<Ariakit.Radio value={option.value} aria-label={option.label} className="sr-only" />
+						{option.label}
+					</label>
+				))}
+			</Ariakit.RadioGroup>
+		</Ariakit.RadioProvider>
+	)
+}
 
 type Entity = {
 	entityType: ArticleChartEntityType
@@ -242,6 +292,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 	const initialLastProtocol = [...initialSeries].reverse().find((s) => s.entityType === 'protocol')
 	const initialLastChain = [...initialSeries].reverse().find((s) => s.entityType === 'chain')
 	const [tab, setTab] = useState<ArticleChartEntityType>(initialFirstSeries?.entityType ?? 'protocol')
+	const searchRef = useRef<HTMLInputElement>(null)
 	const [query, setQuery] = useState('')
 	const [series, setSeries] = useState<Array<ArticleChartSeries>>(() => initialSeries.map((s) => ({ ...s })))
 	const [caption, setCaption] = useState(normalizedInitialConfig?.caption ?? '')
@@ -411,6 +462,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 	return (
 		<Ariakit.Dialog
 			store={store}
+			initialFocus={searchRef}
 			modal
 			backdrop={<div className="fixed inset-0 z-[80] bg-research-backdrop backdrop-blur-sm" />}
 			className="fixed top-1/2 left-1/2 z-[81] flex max-h-[92vh] w-[min(1180px,96vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-medium bg-surface shadow-article-dialog outline-hidden"
@@ -419,28 +471,16 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 				<Ariakit.DialogHeading className="mr-2 text-sm font-semibold tracking-tight text-primary">
 					Embed a DefiLlama chart
 				</Ariakit.DialogHeading>
-				<div role="tablist" className="flex items-center rounded-md border border-medium bg-page p-0.5 text-xs">
-					{(['protocol', 'chain'] as const).map((value) => {
-						const active = tab === value
-						return (
-							<button
-								key={value}
-								role="tab"
-								aria-selected={active}
-								type="button"
-								onClick={() => {
-									setTab(value)
-									setQuery('')
-								}}
-								className={`rounded-sm px-3 py-1 font-medium transition-colors ${
-									active ? 'bg-surface text-primary shadow-sm' : 'text-tertiary hover:text-primary'
-								}`}
-							>
-								{value === 'protocol' ? 'Protocols' : 'Chains'}
-							</button>
-						)
-					})}
-				</div>
+				<ChartOptionGroup
+					label="Entity type"
+					className="[&_label]:px-3"
+					value={tab}
+					options={ENTITY_TYPES}
+					onChange={(value) => {
+						setTab(value)
+						setQuery('')
+					}}
+				/>
 				{series.length > 0 ? (
 					<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">
 						{series.length} / {MAX_SERIES} series
@@ -475,9 +515,10 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 								className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-tertiary"
 							/>
 							<input
-								autoFocus
+								ref={searchRef}
 								value={query}
 								onChange={(event) => setQuery(event.target.value)}
+								aria-label={tab === 'protocol' ? 'Search protocols' : 'Search chains'}
 								placeholder={tab === 'protocol' ? 'Search protocols' : 'Search chains'}
 								className="w-full rounded-md border border-medium bg-surface py-1.5 pr-2 pl-8 text-sm text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
 							/>
@@ -496,12 +537,12 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 								const limitReached = !checked && series.length >= MAX_SERIES
 								return (
 									<li key={`${entity.entityType}:${entity.slug}`}>
-										<button
-											type="button"
-											onClick={() => toggleEntity(entity)}
+										<Ariakit.Checkbox
+											render={<button type="button" aria-label={entity.name} />}
+											onChange={() => toggleEntity(entity)}
 											disabled={limitReached}
-											aria-pressed={checked}
-											className={`group flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+											checked={checked}
+											className={`group flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors focus-visible:focus-ring disabled:cursor-not-allowed disabled:opacity-40 ${
 												checked ? 'bg-research-tint text-link' : 'text-primary hover:bg-research-tint-hover'
 											}`}
 										>
@@ -517,7 +558,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 											</span>
 											<span className="min-w-0 flex-1 truncate text-sm">{entity.name}</span>
 											{tvl ? <span className="shrink-0 text-[11px] text-tertiary tabular-nums">{tvl}</span> : null}
-										</button>
+										</Ariakit.Checkbox>
 									</li>
 								)
 							})
@@ -584,52 +625,21 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 							<div className="flex flex-wrap items-center gap-3 px-5 pb-3">
 								<div className="grid gap-1.5">
 									<span className="text-[10px] font-medium tracking-wide text-tertiary uppercase">Range</span>
-									<div className="flex items-center rounded-md border border-medium bg-page p-0.5 text-xs">
-										{RANGES.map((r) => {
-											const active = range === r.value
-											return (
-												<button
-													key={r.value}
-													type="button"
-													onClick={() => setRange(r.value)}
-													className={`rounded-sm px-2.5 py-1 font-medium transition-colors ${
-														active ? 'bg-surface text-primary shadow-sm' : 'text-tertiary hover:text-primary'
-													}`}
-												>
-													{r.label}
-												</button>
-											)
-										})}
-									</div>
+									<ChartOptionGroup<ArticleChartRange>
+										label="Range"
+										value={range}
+										options={RANGES}
+										onChange={setRange}
+									/>
 								</div>
 								<div className="grid gap-1.5">
 									<span className="text-[10px] font-medium tracking-wide text-tertiary uppercase">Y-axis</span>
-									<div
-										role="radiogroup"
-										aria-label="Y-axis scale"
-										className="flex items-center rounded-md border border-medium bg-page p-0.5 text-xs"
-									>
-										{[
-											{ value: false, label: 'Linear' },
-											{ value: true, label: 'Log' }
-										].map((opt) => {
-											const active = logScale === opt.value
-											return (
-												<button
-													key={String(opt.value)}
-													type="button"
-													role="radio"
-													aria-checked={active}
-													onClick={() => setLogScale(opt.value)}
-													className={`rounded-sm px-2.5 py-1 font-medium transition-colors ${
-														active ? 'bg-surface text-primary shadow-sm' : 'text-tertiary hover:text-primary'
-													}`}
-												>
-													{opt.label}
-												</button>
-											)
-										})}
-									</div>
+									<ChartOptionGroup
+										label="Y-axis scale"
+										value={logScale ? 'log' : 'linear'}
+										options={SCALES}
+										onChange={(value) => setLogScale(value === 'log')}
+									/>
 								</div>
 							</div>
 
@@ -678,6 +688,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 												</span>
 												<input
 													type="date"
+													aria-label={`Annotation ${i + 1} date`}
 													value={annotation.date.slice(0, 10)}
 													onChange={(e) => updateAnnotation(i, { date: e.target.value })}
 													className="rounded-sm border border-medium bg-surface px-2 py-1 text-xs text-primary focus:border-link focus:outline-hidden"
@@ -686,6 +697,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 													value={annotation.label}
 													onChange={(e) => updateAnnotation(i, { label: e.target.value })}
 													placeholder="Label"
+													aria-label={`Annotation ${i + 1} label`}
 													className="rounded-sm border border-medium bg-surface px-2 py-1 text-xs text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
 												/>
 												<button

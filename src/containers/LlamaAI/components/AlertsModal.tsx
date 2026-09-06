@@ -50,6 +50,7 @@ import {
 	alertSelectClass,
 	AlertsDialogHeader,
 	SegmentedToggle,
+	DELIVERY_OPTIONS,
 	StatusChip,
 	SettingsIntegrationsLink,
 	ToggleSwitch
@@ -445,13 +446,10 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 			<span className={alertFieldLabelClass}>Deliver to</span>
 			<div className="flex flex-wrap items-center gap-2">
 				<SegmentedToggle<DeliveryChannel>
+					label="Delivery channel"
 					value={deliveryChannel}
 					onChange={setDeliveryChannel}
-					options={[
-						{ value: 'email', label: 'Email' },
-						{ value: 'telegram', label: 'Telegram' },
-						{ value: 'slack', label: 'Slack' }
-					]}
+					options={DELIVERY_OPTIONS}
 				/>
 				{deliveryChannel === 'telegram' && !telegramLinked && (
 					<span className="text-xs text-ai-warning">

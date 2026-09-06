@@ -125,6 +125,7 @@ export function PriceInput({
 					onValueChange(canonical)
 				}}
 				placeholder={placeholder}
+				aria-label={placeholder}
 				className={`${alertInputClass} pl-6`}
 			/>
 		</div>
@@ -163,32 +164,51 @@ export function ToggleSwitch({
 	)
 }
 
+export const DELIVERY_OPTIONS = [
+	{ value: 'email', label: 'Email' },
+	{ value: 'telegram', label: 'Telegram' },
+	{ value: 'slack', label: 'Slack' }
+] as const
+
+export const PRICE_OPERATOR_OPTIONS = [
+	{ value: 'above', label: 'Above' },
+	{ value: 'below', label: 'Below' }
+] as const
+
 export function SegmentedToggle<T extends string>({
 	value,
 	onChange,
 	options,
+	label,
 	disabled
 }: {
 	value: T
 	onChange: (next: T) => void
-	options: Array<{ value: T; label: string }>
+	options: ReadonlyArray<{ value: T; label: string }>
+	label: string
 	disabled?: boolean
 }) {
 	return (
-		<div className="flex w-fit items-center gap-0.5 rounded-lg bg-ai-hover p-0.5">
-			{options.map((option) => (
-				<button
-					key={option.value}
-					type="button"
-					disabled={disabled}
-					onClick={() => onChange(option.value)}
-					data-active={value === option.value}
-					className="rounded-md px-3 py-1.5 text-xs font-medium text-ai-tertiary capitalize transition-colors hover:text-primary disabled:opacity-50 data-[active=true]:bg-ai-white data-[active=true]:text-link data-[active=true]:shadow-ai-xs data-[active=true]:ring-1 data-[active=true]:ring-ai-line-subtle dark:hover:text-ai-primary dark:data-[active=true]:bg-ai-hover-strong dark:data-[active=true]:shadow-none dark:data-[active=true]:ring-ai-line-medium"
-				>
-					{option.label}
-				</button>
-			))}
-		</div>
+		<Ariakit.RadioProvider
+			value={value}
+			setValue={(next) => {
+				const option = options.find((option) => option.value === next)
+				if (option && option.value !== value) onChange(option.value)
+			}}
+		>
+			<Ariakit.RadioGroup aria-label={label} className="flex w-fit items-center gap-0.5 rounded-lg bg-ai-hover p-0.5">
+				{options.map((option) => (
+					<label
+						key={option.value}
+						data-active={value === option.value}
+						className="relative cursor-pointer rounded-md px-3 py-1.5 text-xs font-medium text-ai-tertiary capitalize transition-colors hover:text-primary has-focus-visible:focus-ring has-disabled:cursor-not-allowed has-disabled:opacity-50 data-[active=true]:bg-ai-white data-[active=true]:text-link data-[active=true]:shadow-ai-xs data-[active=true]:ring-1 data-[active=true]:ring-ai-line-subtle dark:hover:text-ai-primary dark:data-[active=true]:bg-ai-hover-strong dark:data-[active=true]:shadow-none dark:data-[active=true]:ring-ai-line-medium"
+					>
+						<Ariakit.Radio value={option.value} aria-label={option.label} disabled={disabled} className="sr-only" />
+						{option.label}
+					</label>
+				))}
+			</Ariakit.RadioGroup>
+		</Ariakit.RadioProvider>
 	)
 }
 
