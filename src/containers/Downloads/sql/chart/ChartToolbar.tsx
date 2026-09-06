@@ -1,4 +1,5 @@
 import * as Ariakit from '@ariakit/react'
+import { useRef } from 'react'
 import { CHART_COLORS } from '~/constants/colors'
 import { Icon } from '~/ui/Icon'
 import { canUseChartType, type ChartConfig, type ChartType, type NumberFormat, type StackMode } from '../chartConfig'
@@ -102,7 +103,7 @@ export function ChartToolbar({ config, classified, onChange }: ChartToolbarProps
 				{canSplit ? (
 					<PickerChip
 						label="split by"
-						value={config.splitByCol}
+						value={config.splitByCol ?? '∅'}
 						onChange={(next) => handleSplitBy(next === '∅' ? null : next)}
 						options={['∅', ...categoryOptions.map((c) => c.name)]}
 						optionLabel={(v) => (v === '∅' ? 'none' : v)}
@@ -143,31 +144,22 @@ function SegmentedControl<T extends string>({
 	'aria-label': string
 }) {
 	return (
-		<div
-			role="radiogroup"
-			aria-label={ariaLabel}
-			className="inline-flex items-center gap-0.5 rounded-md border border-subtle bg-pro-app-bg/50 p-0.5"
-		>
-			{options.map((opt) => {
-				const active = value === opt.value
-				return (
-					<button
+		<Ariakit.RadioProvider value={value} orientation="both">
+			<Ariakit.RadioGroup
+				aria-label={ariaLabel}
+				className="inline-flex items-center gap-0.5 rounded-md border border-subtle bg-pro-app-bg/50 p-0.5"
+			>
+				{options.map((opt) => (
+					<label
 						key={opt.value}
-						type="button"
-						role="radio"
-						aria-checked={active}
-						onClick={() => onChange(opt.value)}
-						className={`rounded-[3px] px-2 py-1 font-mono text-[10.5px] transition-colors ${
-							active
-								? 'bg-brand text-on-brand'
-								: 'text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
-						}`}
+						className={`relative cursor-pointer rounded-[3px] px-2 py-1 font-mono text-[10.5px] transition-colors has-focus-visible:focus-ring ${value === opt.value ? 'bg-brand text-on-brand' : 'text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'}`}
 					>
+						<Ariakit.Radio value={opt.value} onChange={() => onChange(opt.value)} className="sr-only" />
 						{opt.label}
-					</button>
-				)
-			})}
-		</div>
+					</label>
+				))}
+			</Ariakit.RadioGroup>
+		</Ariakit.RadioProvider>
 	)
 }
 
@@ -189,7 +181,7 @@ function PickerChip({
 	return (
 		<div className="flex items-center gap-1.5">
 			<span className="text-pro-text-tertiary">{label}</span>
-			<Ariakit.MenuProvider>
+			<Ariakit.MenuProvider values={{ choice: value ?? false }}>
 				<Ariakit.MenuButton
 					aria-label={label}
 					className="inline-flex max-w-[200px] items-center gap-1 rounded-md border border-subtle px-2 py-1 font-mono text-[11px] text-pro-text-primary hover:bg-hover-row"
@@ -198,6 +190,7 @@ function PickerChip({
 					<Icon name="chevron-down" className="size-3 shrink-0" />
 				</Ariakit.MenuButton>
 				<Ariakit.Menu
+					portal
 					gutter={4}
 					className="z-50 max-h-64 overflow-auto rounded-lg border border-medium bg-surface-elevated-1 p-1 shadow-lg"
 				>
@@ -205,15 +198,18 @@ function PickerChip({
 						<div className="px-2 py-1 text-[11px] text-pro-text-tertiary">No options</div>
 					) : (
 						options.map((opt) => (
-							<Ariakit.MenuItem
+							<Ariakit.MenuItemRadio
+								name="choice"
+								value={opt}
+								hideOnClick
 								key={opt}
-								onClick={() => onChange(opt)}
-								className={`flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 font-mono text-[11px] text-pro-text-primary hover:bg-hover-row ${
+								onChange={() => onChange(opt)}
+								className={`flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 font-mono text-[11px] text-pro-text-primary hover:bg-hover-row data-active-item:bg-hover-row ${
 									opt === value ? 'bg-hover-row' : ''
 								}`}
 							>
 								<span className="truncate">{optionLabel ? optionLabel(opt) : opt}</span>
-							</Ariakit.MenuItem>
+							</Ariakit.MenuItemRadio>
 						))
 					)}
 				</Ariakit.Menu>
@@ -241,6 +237,12 @@ function YSeriesPicker({
 	config: ChartConfig
 	onChange: (patch: Partial<ChartConfig>) => void
 }) {
+	const popoverRef = useRef<HTMLDivElement>(null)
+	const toggleSeries = (name: string) => {
+		// Adding/removing a series replaces the focused control. Keep focus in settings.
+		popoverRef.current?.focus()
+		onToggle(name)
+	}
 	const label = splitByActive
 		? 'split series'
 		: yCols.length === 0
@@ -255,16 +257,19 @@ function YSeriesPicker({
 	return (
 		<div className="flex items-center gap-1.5">
 			<span className="text-pro-text-tertiary">y</span>
-			<Ariakit.MenuProvider>
-				<Ariakit.MenuButton
+			<Ariakit.PopoverProvider>
+				<Ariakit.PopoverDisclosure
 					aria-label="Y series"
 					disabled={splitByActive}
 					className="inline-flex max-w-[240px] items-center gap-1 rounded-md border border-subtle px-2 py-1 font-mono text-[11px] text-pro-text-primary hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60"
 				>
 					<span className="truncate">{label}</span>
 					<Icon name="chevron-down" className="size-3 shrink-0" />
-				</Ariakit.MenuButton>
-				<Ariakit.Menu
+				</Ariakit.PopoverDisclosure>
+				<Ariakit.Popover
+					ref={popoverRef}
+					aria-label="Y series settings"
+					portal
 					gutter={4}
 					className="z-50 flex max-h-[60vh] w-[280px] flex-col gap-1 overflow-auto rounded-lg border border-medium bg-surface-elevated-1 p-2 shadow-lg"
 				>
@@ -281,7 +286,7 @@ function YSeriesPicker({
 									chartType={config.chartType}
 									config={config}
 									onChange={onChange}
-									onRemove={() => onToggle(name)}
+									onRemove={() => toggleSeries(name)}
 									dualAxisEligible={dualAxisEligible}
 									seriesKindEligible={seriesKindEligible}
 								/>
@@ -297,19 +302,21 @@ function YSeriesPicker({
 						available
 							.filter((n) => !yCols.includes(n))
 							.map((name) => (
-								<Ariakit.MenuItem
+								<button
+									type="button"
+									disabled={yCols.length >= 8}
+									aria-label={`Add ${name}`}
 									key={name}
-									hideOnClick={false}
-									onClick={() => onToggle(name)}
-									className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 font-mono text-[11px] text-pro-text-primary hover:bg-hover-row"
+									onClick={() => toggleSeries(name)}
+									className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 font-mono text-[11px] text-pro-text-primary hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
 								>
 									<Icon name="plus" className="size-3 text-pro-text-tertiary" />
 									<span className="truncate">{name}</span>
-								</Ariakit.MenuItem>
+								</button>
 							))
 					)}
-				</Ariakit.Menu>
-			</Ariakit.MenuProvider>
+				</Ariakit.Popover>
+			</Ariakit.PopoverProvider>
 		</div>
 	)
 }

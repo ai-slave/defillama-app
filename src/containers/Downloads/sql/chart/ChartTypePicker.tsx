@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import type { ReactNode } from 'react'
 import { canUseChartType, type ChartType } from '../chartConfig'
 import type { ClassifiedColumn } from '../columnKind'
@@ -166,42 +167,49 @@ interface ChartTypePickerProps {
 }
 
 export function ChartTypePicker({ value, onChange, classified }: ChartTypePickerProps) {
+	const selectedIsDisabled = !canUseChartType(value, classified)
+	const firstEnabled = selectedIsDisabled
+		? GROUPS.flatMap((group) => group.options).find((option) => canUseChartType(option.type, classified))?.type
+		: undefined
 	return (
-		<div
-			role="radiogroup"
-			aria-label="Chart type"
-			className="inline-flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-subtle bg-pro-app-bg/50 p-0.5"
-		>
-			{GROUPS.map((group, groupIndex) => (
-				<div key={group.key} className="flex items-center gap-0.5">
-					{group.options.map((opt) => {
-						const active = value === opt.type
-						const available = canUseChartType(opt.type, classified)
-						return (
-							<button
-								key={opt.type}
-								type="button"
-								role="radio"
-								aria-checked={active}
-								aria-label={opt.label}
-								title={available ? opt.label : `${opt.label} (not compatible with current columns)`}
-								disabled={!available}
-								onClick={() => onChange(opt.type)}
-								className={`relative flex h-6 w-7 items-center justify-center rounded-[4px] transition-colors ${
-									active
-										? 'bg-brand text-on-brand shadow-sm'
-										: available
-											? 'text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
-											: 'cursor-not-allowed text-pro-text-tertiary/50'
-								}`}
-							>
-								{opt.icon}
-							</button>
-						)
-					})}
-					{groupIndex < GROUPS.length - 1 ? <span aria-hidden className="mx-0.5 h-4 w-px bg-border-subtle" /> : null}
-				</div>
-			))}
-		</div>
+		<Ariakit.RadioProvider value={value} orientation="both">
+			<Ariakit.RadioGroup
+				aria-label="Chart type"
+				className="inline-flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-subtle bg-pro-app-bg/50 p-0.5"
+			>
+				{GROUPS.map((group, groupIndex) => (
+					<div key={group.key} className="flex items-center gap-0.5">
+						{group.options.map((opt) => {
+							const active = value === opt.type
+							const available = canUseChartType(opt.type, classified)
+							return (
+								<label
+									key={opt.type}
+									title={available ? opt.label : `${opt.label} (not compatible with current columns)`}
+									className={`relative flex h-6 w-7 cursor-pointer items-center justify-center rounded-[4px] transition-colors has-focus-visible:focus-ring ${
+										active
+											? 'bg-brand text-on-brand shadow-sm'
+											: available
+												? 'text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
+												: 'cursor-not-allowed text-pro-text-tertiary/50'
+									}`}
+								>
+									<Ariakit.Radio
+										value={opt.type}
+										disabled={!available}
+										aria-label={opt.label}
+										tabIndex={selectedIsDisabled ? (opt.type === firstEnabled ? 0 : -1) : undefined}
+										onChange={() => onChange(opt.type)}
+										className="sr-only"
+									/>
+									{opt.icon}
+								</label>
+							)
+						})}
+						{groupIndex < GROUPS.length - 1 ? <span aria-hidden className="mx-0.5 h-4 w-px bg-border-subtle" /> : null}
+					</div>
+				))}
+			</Ariakit.RadioGroup>
+		</Ariakit.RadioProvider>
 	)
 }

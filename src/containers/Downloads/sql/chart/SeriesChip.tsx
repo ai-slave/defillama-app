@@ -46,7 +46,7 @@ export function SeriesChip({
 
 	return (
 		<div className="group flex items-center gap-1.5 rounded-md bg-hover-row/60 px-1.5 py-0.5">
-			<ColorPicker value={color} fallback={paletteColor} onChange={setColor} />
+			<ColorPicker name={name} value={color} fallback={paletteColor} onChange={setColor} />
 			<span className="truncate font-mono text-[10.5px] text-pro-text-primary" style={{ maxWidth: '14ch' }}>
 				{name}
 			</span>
@@ -65,7 +65,8 @@ export function SeriesChip({
 				<button
 					type="button"
 					onClick={toggleAxis}
-					aria-label={`Axis: ${isRight ? 'right' : 'left'}`}
+					aria-label={`Use right axis for ${name}`}
+					aria-pressed={isRight}
 					title={`Axis: ${isRight ? 'right' : 'left'}`}
 					className={`flex h-4 w-5 items-center justify-center rounded-sm border font-mono label-sm transition-colors ${
 						isRight
