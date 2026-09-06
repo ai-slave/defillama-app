@@ -1,6 +1,8 @@
+import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import type { SortingState } from '@tanstack/react-table'
-import { type KeyboardEvent, Suspense, useMemo, useReducer, useRef } from 'react'
+import { Suspense, useMemo, useReducer } from 'react'
+import type { TableWithSearchLayout } from '~/components/Table/TableWithSearch'
 import { ExchangeFeatureGate, useExchangeAccessState } from '~/containers/Exchanges/ExchangeAccessGate'
 import { fetchExchangeExecutionSlippage } from '~/containers/Exchanges/master.api'
 import { mapExchangePair } from '~/containers/Exchanges/master.mappers'
@@ -211,63 +213,51 @@ function HeaderStrip({
 	)
 }
 
-function Tabs<T extends string>({
-	tabs,
-	activeTab,
+function MarketFilter<T extends string>({
+	options,
+	value,
 	onChange,
-	ariaLabel
+	label
 }: {
-	tabs: ReadonlyArray<{ id: T; label: string }>
-	activeTab: T
+	options: ReadonlyArray<{ id: T; label: string }>
+	value: T
 	onChange: (id: T) => void
-	ariaLabel: string
+	label: string
 }) {
-	const buttonRefs = useRef<Array<HTMLButtonElement | null>>([])
-	const focusTab = (index: number) => {
-		const tab = tabs[index]
-		if (!tab) return
-		onChange(tab.id)
-		buttonRefs.current[index]?.focus()
-	}
-	const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
-		if (event.key === 'ArrowLeft') {
-			event.preventDefault()
-			focusTab((index - 1 + tabs.length) % tabs.length)
-		} else if (event.key === 'ArrowRight') {
-			event.preventDefault()
-			focusTab((index + 1) % tabs.length)
-		} else if (event.key === 'Home') {
-			event.preventDefault()
-			focusTab(0)
-		} else if (event.key === 'End') {
-			event.preventDefault()
-			focusTab(tabs.length - 1)
-		}
-	}
-
 	return (
-		<div className="flex items-center overflow-x-auto" role="tablist" aria-label={ariaLabel}>
-			{tabs.map((tab, index) => (
-				<TabLink
-					as="button"
-					key={tab.id}
-					ref={(node) => {
-						buttonRefs.current[index] = node
-					}}
-					type="button"
-					role="tab"
-					aria-selected={activeTab === tab.id}
-					tabIndex={activeTab === tab.id ? 0 : -1}
-					data-active={activeTab === tab.id}
-					onClick={() => onChange(tab.id)}
-					onKeyDown={(event) => handleKeyDown(event, index)}
-				>
-					{tab.label}
-				</TabLink>
-			))}
-		</div>
+		<Ariakit.RadioProvider
+			value={value}
+			setValue={(next) => {
+				const option = options.find((option) => option.id === next)
+				if (option && option.id !== value) onChange(option.id)
+			}}
+			orientation="both"
+		>
+			<Ariakit.RadioGroup className="flex items-center overflow-x-auto" aria-label={label}>
+				{options.map((option) => (
+					<TabLink
+						as="label"
+						key={option.id}
+						data-active={value === option.id}
+						className="has-focus-visible:focus-ring"
+					>
+						<Ariakit.Radio value={option.id} className="sr-only" />
+						{option.label}
+					</TabLink>
+				))}
+			</Ariakit.RadioGroup>
+		</Ariakit.RadioProvider>
 	)
 }
+
+const renderMarketTableLayout: TableWithSearchLayout = (controls, table) => (
+	<>
+		<div className="col-start-1 row-start-2 min-w-0 self-center sm:col-start-2 sm:row-start-1 sm:[&_label]:mr-0 sm:[&_label]:ml-auto">
+			{controls}
+		</div>
+		<div className="col-span-full row-start-3 min-w-0 sm:row-start-2">{table}</div>
+	</>
+)
 
 interface TokenMarketsSectionProps {
 	geckoId: string
@@ -425,44 +415,45 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 				<TokenDepthChart pairs={perpDepthPairs} slippage={tokenSlippage} symbol={tokenSymbol.toUpperCase()} />
 			</ExchangeFeatureGate>
 
-			<Tabs
-				tabs={visibleVenueTabs}
-				activeTab={selectedVenueTab}
+			<MarketFilter
+				options={visibleVenueTabs}
+				value={selectedVenueTab}
 				onChange={(id) => setVenueTab(id)}
-				ariaLabel="Market venue"
+				label="Market venue"
 			/>
 
 			<HeaderStrip rows={rows} totals={totals} showOi={isPerpCategory} />
-			{/* Remount per venue/category tab so sorting and search reset, matching the prior behavior.
-			    CEX and All start with no active sort — rows already come pre-ranked (bybit's top pair
-			    first, then volume) from rankRowsBybitFirst — so no header shows a sort indicator until
-			    the user picks a column. DEX keeps the plain volume-desc default sort. */}
-			<Suspense fallback={<div className="min-h-[360px]" />}>
-				<DeferredPairTable
-					key={`${selectedVenueTab}-${selectedCategoryTab}`}
-					pairs={tableRows}
-					segment={selectedCategoryTab}
-					capabilities={{ openInterest: isPerpCategory, funding: isPerpCategory, depth: true }}
-					csvFileName={`token-markets-${tokenSymbol}-${selectedVenueTab}-${selectedCategoryTab}`}
-					showVenue
-					omitColumns={TOKEN_PAGE_OMITTED_COLUMNS}
-					columnOrder={TOKEN_PAGE_COLUMN_ORDER}
-					initialVisibleColumns={TOKEN_PAGE_VISIBLE_COLUMNS[selectedCategoryTab]}
-					sorting={selectedVenueTab === 'dex' ? DEFAULT_SORTING : NO_SORTING}
-					columnToSearch="venue"
-					placeholder="Search exchanges..."
-					header={null}
-					embedded
-					leadingControls={
-						<Tabs
-							tabs={visibleCategoryTabs}
-							activeTab={selectedCategoryTab}
-							onChange={(id) => setCategoryTab(id)}
-							ariaLabel="Market category"
-						/>
-					}
-				/>
-			</Suspense>
+			<div className="grid grid-cols-1 sm:grid-cols-[auto_minmax(0,1fr)]">
+				<div className="col-start-1 row-start-1 min-w-0 p-2 pb-0 sm:pb-2">
+					<MarketFilter
+						options={visibleCategoryTabs}
+						value={selectedCategoryTab}
+						onChange={(id) => setCategoryTab(id)}
+						label="Market category"
+					/>
+				</div>
+				{/* Reset table state per venue/category without replacing the focused filter.
+				    All/CEX preserve pre-ranked rows; DEX starts sorted by volume. */}
+				<Suspense fallback={<div className="col-span-full min-h-[360px]" />}>
+					<DeferredPairTable
+						key={`${selectedVenueTab}-${selectedCategoryTab}`}
+						pairs={tableRows}
+						segment={selectedCategoryTab}
+						capabilities={{ openInterest: isPerpCategory, funding: isPerpCategory, depth: true }}
+						csvFileName={`token-markets-${tokenSymbol}-${selectedVenueTab}-${selectedCategoryTab}`}
+						showVenue
+						omitColumns={TOKEN_PAGE_OMITTED_COLUMNS}
+						columnOrder={TOKEN_PAGE_COLUMN_ORDER}
+						initialVisibleColumns={TOKEN_PAGE_VISIBLE_COLUMNS[selectedCategoryTab]}
+						sorting={selectedVenueTab === 'dex' ? DEFAULT_SORTING : NO_SORTING}
+						columnToSearch="venue"
+						placeholder="Search exchanges..."
+						header={null}
+						embedded
+						renderLayout={renderMarketTableLayout}
+					/>
+				</Suspense>
+			</div>
 		</>
 	)
 

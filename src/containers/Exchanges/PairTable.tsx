@@ -1,7 +1,7 @@
 import { createColumnHelper, type SortingState, type VisibilityState } from '@tanstack/react-table'
 import * as React from 'react'
 import { BasicLink } from '~/components/Link'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { TableWithSearch, type TableWithSearchLayout } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
@@ -479,7 +479,8 @@ export function PairTable({
 	placeholder = 'Search pairs...',
 	header = 'Markets',
 	embedded = false,
-	leadingControls = null
+	leadingControls = null,
+	renderLayout
 }: {
 	pairs: Array<PairTableRow>
 	segment: ExchangeSegment
@@ -500,6 +501,7 @@ export function PairTable({
 	header?: string | null
 	embedded?: boolean
 	leadingControls?: React.ReactNode
+	renderLayout?: TableWithSearchLayout
 }) {
 	const { openInterest, funding, depth: supportsDepth } = capabilities
 	const columns = React.useMemo(() => {
@@ -525,6 +527,7 @@ export function PairTable({
 			placeholder={placeholder}
 			header={header}
 			leadingControls={leadingControls}
+			renderLayout={renderLayout}
 			columnVisibility={columnVisibility}
 			showColumnSelect
 			csvExportAllColumns
