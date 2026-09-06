@@ -35,6 +35,8 @@ const EMPTY_EXPANDED: ExpandedState = {}
 
 type CustomFiltersProp = React.ReactNode | (() => React.ReactNode)
 
+export type TableWithSearchLayout = (controls: React.ReactNode, table: React.ReactNode) => React.ReactNode
+
 interface ITableWithSearchBaseProps<T extends RowData> {
 	data: Array<T>
 	// Each column keeps the value type inferred by createColumnHelper; TanStack erases
@@ -52,6 +54,8 @@ interface ITableWithSearchBaseProps<T extends RowData> {
 	rowSize?: number | null
 	compact?: boolean
 	embedded?: boolean
+	/** Arrange the toolbar and table around persistent controls owned by the caller. */
+	renderLayout?: TableWithSearchLayout
 	skipVirtualization?: boolean
 	tableLayout?: VirtualTableLayout
 	getSubRows?: (row: T) => Array<T> | undefined
@@ -89,6 +93,7 @@ export function TableWithSearch<T extends RowData>({
 	rowSize = null,
 	compact = false,
 	embedded = false,
+	renderLayout,
 	skipVirtualization = false,
 	tableLayout = 'fixed',
 	showColumnSelect = false,
@@ -253,31 +258,23 @@ export function TableWithSearch<T extends RowData>({
 			</TableToolbar>
 		)
 
-	if (embedded) {
-		return (
-			<>
-				{controls}
-				<VirtualTable
-					instance={instance}
-					{...(rowSize != null ? { rowSize } : {})}
-					compact={compact}
-					skipVirtualization={skipVirtualization}
-					tableLayout={tableLayout}
-				/>
-			</>
-		)
-	}
-
-	return (
-		<Card padding="none">
-			{controls}
-			<VirtualTable
-				instance={instance}
-				{...(rowSize != null ? { rowSize } : {})}
-				compact={compact}
-				skipVirtualization={skipVirtualization}
-				tableLayout={tableLayout}
-			/>
-		</Card>
+	const table = (
+		<VirtualTable
+			instance={instance}
+			{...(rowSize != null ? { rowSize } : {})}
+			compact={compact}
+			skipVirtualization={skipVirtualization}
+			tableLayout={tableLayout}
+		/>
 	)
+	const content = renderLayout ? (
+		renderLayout(controls, table)
+	) : (
+		<>
+			{controls}
+			{table}
+		</>
+	)
+
+	return embedded ? content : <Card padding="none">{content}</Card>
 }

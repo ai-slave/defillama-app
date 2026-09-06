@@ -5,7 +5,7 @@ import type { LiquidationsOverviewPageProps } from './api.types'
 import { LiquidationsDistributionChart } from './LiquidationsDistributionChart'
 import { LiquidationsSummaryStats } from './Summary'
 import { LiquidationsOverviewChainsTable, LiquidationsProtocolsTable } from './Table'
-import { LiquidationsTableTabs } from './TableTabs'
+import { LiquidationsTableTabs, renderLiquidationsTableLayout } from './TableTabs'
 
 const OVERVIEW_TABS = [
 	{ id: 'protocols', label: 'Protocols' },
@@ -38,23 +38,26 @@ export function LiquidationsOverview(props: LiquidationsOverviewPageProps) {
 			</div>
 
 			<Panel padding="none" className="mt-2">
-				{activeTab === 'protocols' ? (
-					<LiquidationsProtocolsTable
-						rows={props.protocolRows}
-						embedded
-						leadingControls={
-							<LiquidationsTableTabs tabs={OVERVIEW_TABS} activeTab={activeTab} setActiveTab={handleSetActiveTab} />
-						}
-					/>
-				) : (
-					<LiquidationsOverviewChainsTable
-						rows={props.chainRows}
-						embedded
-						leadingControls={
-							<LiquidationsTableTabs tabs={OVERVIEW_TABS} activeTab={activeTab} setActiveTab={handleSetActiveTab} />
-						}
-					/>
-				)}
+				<LiquidationsTableTabs
+					tabs={OVERVIEW_TABS}
+					activeTab={activeTab}
+					setActiveTab={handleSetActiveTab}
+					resetTableOnChange
+				>
+					{activeTab === 'protocols' ? (
+						<LiquidationsProtocolsTable
+							rows={props.protocolRows}
+							embedded
+							renderLayout={renderLiquidationsTableLayout}
+						/>
+					) : (
+						<LiquidationsOverviewChainsTable
+							rows={props.chainRows}
+							embedded
+							renderLayout={renderLiquidationsTableLayout}
+						/>
+					)}
+				</LiquidationsTableTabs>
 			</Panel>
 		</>
 	)

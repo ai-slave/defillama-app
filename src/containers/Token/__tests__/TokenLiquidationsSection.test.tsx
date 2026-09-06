@@ -1,3 +1,4 @@
+import type * as Ariakit from '@ariakit/react'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, describe, expect, test, vi } from 'vitest'
@@ -65,7 +66,8 @@ vi.mock('next/router', () => ({
 	useRouter: () => ({ asPath: '/token/wsteth' })
 }))
 
-vi.mock('@ariakit/react', () => ({
+vi.mock('@ariakit/react', async (importOriginal) => ({
+	...(await importOriginal<typeof Ariakit>()),
 	useDialogStore: () => ({ show: vi.fn() })
 }))
 

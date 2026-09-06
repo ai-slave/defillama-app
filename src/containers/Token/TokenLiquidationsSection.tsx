@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic'
 import { Suspense, useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
-import { LiquidationsTableTabs } from '~/containers/LiquidationsV2/TableTabs'
+import { LiquidationsTableTabs, renderLiquidationsTableLayout } from '~/containers/LiquidationsV2/TableTabs'
 import { Panel } from '~/ui/Panel'
 import { formatUsd } from '~/utils/numberFormat'
 import { fetchTokenLiquidationsClient } from '../LiquidationsV2/api'
@@ -165,8 +165,6 @@ export function TokenLiquidationsSection({ tokenSymbol }: { tokenSymbol: string 
 		return null
 	}
 
-	const tabs = <LiquidationsTableTabs tabs={TABS} activeTab={activeTab} setActiveTab={handleSetActiveTab} />
-
 	return (
 		<TokenPrivateSectionGate
 			access={access}
@@ -200,29 +198,36 @@ export function TokenLiquidationsSection({ tokenSymbol }: { tokenSymbol: string 
 
 					<Panel padding="none">
 						<Suspense fallback={<div className="min-h-[360px]" />}>
-							{activeTab === 'protocols' ? (
-								<DeferredTableWithSearch
-									data={data.protocolRows}
-									columns={protocolColumns}
-									leadingControls={tabs}
-									columnToSearch="name"
-									placeholder="Search protocols..."
-									csvFileName={`token-liquidations-100k-protocols-${tokenSymbol}`}
-									embedded
-									sortingState={[{ id: 'totalCollateralUsd', desc: true }]}
-								/>
-							) : (
-								<DeferredTableWithSearch
-									data={data.chainRows}
-									columns={chainColumns}
-									leadingControls={tabs}
-									columnToSearch="name"
-									placeholder="Search chains..."
-									csvFileName={`token-liquidations-100k-chains-${tokenSymbol}`}
-									embedded
-									sortingState={[{ id: 'totalCollateralUsd', desc: true }]}
-								/>
-							)}
+							<LiquidationsTableTabs
+								tabs={TABS}
+								activeTab={activeTab}
+								setActiveTab={handleSetActiveTab}
+								resetTableOnChange={false}
+							>
+								{activeTab === 'protocols' ? (
+									<DeferredTableWithSearch
+										data={data.protocolRows}
+										columns={protocolColumns}
+										renderLayout={renderLiquidationsTableLayout}
+										columnToSearch="name"
+										placeholder="Search protocols..."
+										csvFileName={`token-liquidations-100k-protocols-${tokenSymbol}`}
+										embedded
+										sortingState={[{ id: 'totalCollateralUsd', desc: true }]}
+									/>
+								) : (
+									<DeferredTableWithSearch
+										data={data.chainRows}
+										columns={chainColumns}
+										renderLayout={renderLiquidationsTableLayout}
+										columnToSearch="name"
+										placeholder="Search chains..."
+										csvFileName={`token-liquidations-100k-chains-${tokenSymbol}`}
+										embedded
+										sortingState={[{ id: 'totalCollateralUsd', desc: true }]}
+									/>
+								)}
+							</LiquidationsTableTabs>
 						</Suspense>
 					</Panel>
 				</>

@@ -2,7 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import type { BlockExplorersResponse } from '~/api/types'
 import { BasicLink } from '~/components/Link'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { TableWithSearch, type TableWithSearchLayout } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
@@ -13,6 +13,7 @@ import { LiquidationsExplorerProvider, LiquidationsOwnerLink } from './OwnerLink
 interface LiquidationsTableProps {
 	embedded?: boolean
 	leadingControls?: React.ReactNode | null
+	renderLayout?: TableWithSearchLayout
 }
 
 const protocolColumnHelper = createColumnHelper<OverviewProtocolRow>()
@@ -312,7 +313,8 @@ const positionColumns = [
 export function LiquidationsProtocolsTable({
 	rows,
 	embedded = false,
-	leadingControls = null
+	leadingControls = null,
+	renderLayout
 }: { rows: Array<OverviewProtocolRow> } & LiquidationsTableProps) {
 	return (
 		<TableWithSearch
@@ -320,6 +322,7 @@ export function LiquidationsProtocolsTable({
 			columns={protocolColumns}
 			header={embedded ? null : 'Protocols'}
 			leadingControls={leadingControls}
+			renderLayout={renderLayout}
 			columnToSearch="name"
 			placeholder="Search protocols..."
 			csvFileName="liquidations-v2-100k-protocols"
@@ -332,7 +335,8 @@ export function LiquidationsProtocolsTable({
 export function LiquidationsOverviewChainsTable({
 	rows,
 	embedded = false,
-	leadingControls = null
+	leadingControls = null,
+	renderLayout
 }: { rows: Array<OverviewChainRow> } & LiquidationsTableProps) {
 	return (
 		<TableWithSearch
@@ -340,6 +344,7 @@ export function LiquidationsOverviewChainsTable({
 			columns={overviewChainColumns}
 			header={embedded ? null : 'Chains'}
 			leadingControls={leadingControls}
+			renderLayout={renderLayout}
 			columnToSearch="name"
 			placeholder="Search chains..."
 			csvFileName="liquidations-v2-100k-chains"
@@ -352,7 +357,8 @@ export function LiquidationsOverviewChainsTable({
 export function LiquidationsProtocolChainsTable({
 	rows,
 	embedded = false,
-	leadingControls = null
+	leadingControls = null,
+	renderLayout
 }: { rows: Array<ProtocolChainRow> } & LiquidationsTableProps) {
 	return (
 		<TableWithSearch
@@ -360,6 +366,7 @@ export function LiquidationsProtocolChainsTable({
 			columns={protocolChainColumns}
 			header={embedded ? null : 'Chains'}
 			leadingControls={leadingControls}
+			renderLayout={renderLayout}
 			columnToSearch="name"
 			placeholder="Search chains..."
 			csvFileName="liquidations-v2-100k-protocol-chains"
@@ -374,7 +381,8 @@ export function LiquidationsPositionsTable({
 	ownerBlockExplorers,
 	header,
 	embedded = false,
-	leadingControls = null
+	leadingControls = null,
+	renderLayout
 }: {
 	rows: Array<LiquidationPosition>
 	ownerBlockExplorers: BlockExplorersResponse
@@ -395,6 +403,7 @@ export function LiquidationsPositionsTable({
 				columns={positionColumns}
 				header={embedded ? null : header}
 				leadingControls={leadingControls}
+				renderLayout={renderLayout}
 				customFilters={
 					<label className={searchFieldInlineWrapperStyles}>
 						<span className="sr-only">Search positions</span>

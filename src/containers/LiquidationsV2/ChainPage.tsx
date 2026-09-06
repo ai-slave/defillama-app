@@ -6,7 +6,7 @@ import type { LiquidationsChainPageProps } from './api.types'
 import { LiquidationsDistributionChart } from './LiquidationsDistributionChart'
 import { LiquidationsPageHeader, LiquidationsSummaryStats } from './Summary'
 import { LiquidationsPositionsTable, LiquidationsProtocolChainsTable } from './Table'
-import { LiquidationsTableTabs } from './TableTabs'
+import { LiquidationsTableTabs, renderLiquidationsTableLayout } from './TableTabs'
 
 const CHAIN_TABS = [
 	{ id: 'positions', label: 'Positions' },
@@ -47,25 +47,28 @@ export function LiquidationsChainPage(props: LiquidationsChainPageProps) {
 			</div>
 
 			<Panel padding="none" className="mt-2">
-				{activeTab === 'chains' ? (
-					<LiquidationsProtocolChainsTable
-						rows={props.chainRows}
-						embedded
-						leadingControls={
-							<LiquidationsTableTabs tabs={CHAIN_TABS} activeTab={activeTab} setActiveTab={handleSetActiveTab} />
-						}
-					/>
-				) : (
-					<LiquidationsPositionsTable
-						rows={props.positions}
-						ownerBlockExplorers={props.ownerBlockExplorers}
-						header="Positions"
-						embedded
-						leadingControls={
-							<LiquidationsTableTabs tabs={CHAIN_TABS} activeTab={activeTab} setActiveTab={handleSetActiveTab} />
-						}
-					/>
-				)}
+				<LiquidationsTableTabs
+					tabs={CHAIN_TABS}
+					activeTab={activeTab}
+					setActiveTab={handleSetActiveTab}
+					resetTableOnChange
+				>
+					{activeTab === 'chains' ? (
+						<LiquidationsProtocolChainsTable
+							rows={props.chainRows}
+							embedded
+							renderLayout={renderLiquidationsTableLayout}
+						/>
+					) : (
+						<LiquidationsPositionsTable
+							rows={props.positions}
+							ownerBlockExplorers={props.ownerBlockExplorers}
+							header="Positions"
+							embedded
+							renderLayout={renderLiquidationsTableLayout}
+						/>
+					)}
+				</LiquidationsTableTabs>
 			</Panel>
 		</>
 	)
