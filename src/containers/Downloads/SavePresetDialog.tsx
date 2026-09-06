@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Icon } from '~/ui/Icon'
 
 interface Props {
@@ -25,6 +25,7 @@ export function SavePresetDialog({
 	replaceLabel = 'Replace',
 	placeholder = 'e.g. Aave fees — weekly'
 }: Props) {
+	const nameRef = useRef<HTMLInputElement>(null)
 	const [name, setName] = useState(suggestedName)
 
 	const existingSet = useMemo(() => {
@@ -45,6 +46,7 @@ export function SavePresetDialog({
 			}}
 		>
 			<Ariakit.Dialog
+				initialFocus={nameRef}
 				className="fixed inset-0 z-60 m-auto flex h-fit w-[calc(100vw-2rem)] max-w-md flex-col gap-4 rounded-xl border border-subtle bg-surface p-5 shadow-2xl"
 				portal
 				unmountOnHide
@@ -52,16 +54,16 @@ export function SavePresetDialog({
 			>
 				<div className="flex items-start justify-between gap-3">
 					<div className="flex flex-col gap-1">
-						<h2 className="heading-xs">{title}</h2>
+						<Ariakit.DialogHeading className="heading-xs">{title}</Ariakit.DialogHeading>
 						{description ? <p className="text-xs text-pro-text-tertiary">{description}</p> : null}
 					</div>
-					<button
+					<Ariakit.DialogDismiss
 						type="button"
-						onClick={onClose}
+						aria-label="Close preset dialog"
 						className="rounded-md p-1.5 text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
 					>
 						<Icon name="x" className="size-4" />
-					</button>
+					</Ariakit.DialogDismiss>
 				</div>
 
 				<form
@@ -78,7 +80,7 @@ export function SavePresetDialog({
 							type="text"
 							value={name}
 							onChange={(e) => setName(e.target.value)}
-							autoFocus
+							ref={nameRef}
 							className="w-full rounded-md border border-subtle bg-transparent px-2.5 py-1.5 text-sm outline-hidden placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand/30"
 							placeholder={placeholder}
 						/>
@@ -89,13 +91,12 @@ export function SavePresetDialog({
 					) : null}
 
 					<div className="mt-1 flex justify-end gap-2">
-						<button
+						<Ariakit.DialogDismiss
 							type="button"
-							onClick={onClose}
 							className="rounded-md border border-subtle px-3 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
 						>
 							Cancel
-						</button>
+						</Ariakit.DialogDismiss>
 						<button
 							type="submit"
 							disabled={isEmpty}

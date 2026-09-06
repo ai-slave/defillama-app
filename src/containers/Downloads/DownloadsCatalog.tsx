@@ -1,5 +1,6 @@
+import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
-import { useCallback, useDeferredValue, useMemo, useState } from 'react'
+import { useCallback, useDeferredValue, useMemo, useRef, useState, type RefObject } from 'react'
 import { toast } from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { TrialCsvLimitModal } from '~/containers/Subscription/shared/TrialCsvLimitModal'
@@ -70,6 +71,7 @@ function filterDownloadGroups<T extends { category: string; description: string;
 }
 
 export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOptionsMap }) {
+	const savedTabRef = useRef<HTMLButtonElement>(null)
 	const { isAuthenticated, hasActiveSubscription, isTrial, loaders, authorizedFetch } = useAuthContext()
 	const { savedDownloads, deleteDownload, renameDownload } = useSavedDownloads()
 	const { recentDownloads, clearRecents } = useRecentDownloads()
@@ -203,6 +205,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 				{ALL_TABS.map((tab) => (
 					<button
 						key={tab}
+						ref={tab === 'Saved' ? savedTabRef : undefined}
 						type="button"
 						onClick={() => {
 							setActiveTab(tab)
@@ -409,6 +412,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 				</div>
 			) : (
 				<SavedDownloadsContent
+					finalFocus={savedTabRef}
 					savedDownloads={savedDownloads}
 					onRun={handleRunPreset}
 					onRename={renameDownload}
@@ -656,11 +660,13 @@ function RecentDownloadsStrip({
 }
 
 function SavedDownloadsContent({
+	finalFocus,
 	savedDownloads,
 	onRun,
 	onRename,
 	onDelete
 }: {
+	finalFocus: RefObject<HTMLButtonElement | null>
 	savedDownloads: Array<SavedDownload>
 	onRun: (preset: SavedDownload) => void
 	onRename: (id: string, name: string) => void
@@ -751,6 +757,7 @@ function SavedDownloadsContent({
 			) : null}
 			{deletingId ? (
 				<DeletePresetDialog
+					finalFocus={finalFocus}
 					preset={savedDownloads.find((p) => p.id === deletingId) ?? null}
 					onConfirm={() => {
 						if (deletingId) onDelete(deletingId)
@@ -938,59 +945,61 @@ function SavedDownloadRow({
 }
 
 function DeletePresetDialog({
+	finalFocus,
 	preset,
 	onConfirm,
 	onClose
 }: {
+	finalFocus: RefObject<HTMLButtonElement | null>
 	preset: SavedDownload | null
 	onConfirm: () => void
 	onClose: () => void
 }) {
+	const returnFocusRef = useRef<HTMLElement | null>(null)
 	if (!preset) return null
 	return (
-		<div
-			role="dialog"
-			aria-modal="true"
-			aria-labelledby="delete-preset-title"
-			className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px]"
-			onClick={onClose}
+		<Ariakit.Dialog
+			open
+			onClose={onClose}
+			finalFocus={returnFocusRef}
+			role="alertdialog"
+			backdrop={<div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px]" />}
+			className="fixed inset-0 z-50 m-auto flex h-fit w-[calc(100%-2rem)] max-w-sm flex-col gap-3 rounded-xl border border-subtle bg-surface p-5 shadow-2xl"
 		>
-			<div
-				onClick={(e) => e.stopPropagation()}
-				className="flex w-full max-w-sm flex-col gap-3 rounded-xl border border-subtle bg-surface p-5 shadow-2xl"
-			>
-				<div className="flex items-start gap-3">
-					<div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-error/10">
-						<Icon name="trash-2" className="size-4 text-error" />
-					</div>
-					<div className="flex flex-col gap-1">
-						<h3 id="delete-preset-title" className="text-sm font-semibold text-pro-text-primary">
-							Delete preset?
-						</h3>
-						<p className="text-xs text-pro-text-secondary">
-							<span className="font-medium text-pro-text-primary">"{preset.name}"</span> will be removed. This can't be
-							undone.
-						</p>
-					</div>
+			<div className="flex items-start gap-3">
+				<div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-error/10">
+					<Icon name="trash-2" className="size-4 text-error" />
 				</div>
-				<div className="flex justify-end gap-2 pt-1">
-					<button
-						type="button"
-						onClick={onClose}
-						className="rounded-md border border-subtle px-3 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
-					>
-						Cancel
-					</button>
-					<button
-						type="button"
-						onClick={onConfirm}
-						autoFocus
-						className="rounded-md bg-error px-3 py-1.5 text-xs font-medium text-on-brand transition-colors hover:bg-red-600"
-					>
-						Delete
-					</button>
+				<div className="flex flex-col gap-1">
+					<Ariakit.DialogHeading
+						render={<h3>Delete preset?</h3>}
+						className="text-sm font-semibold text-pro-text-primary"
+					/>
+					<Ariakit.DialogDescription className="text-xs text-pro-text-secondary">
+						<span className="font-medium text-pro-text-primary">"{preset.name}"</span> will be removed. This can't be
+						undone.
+					</Ariakit.DialogDescription>
 				</div>
 			</div>
-		</div>
+			<div className="flex justify-end gap-2 pt-1">
+				<Ariakit.DialogDismiss
+					type="button"
+					className="rounded-md border border-subtle px-3 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
+				>
+					Cancel
+				</Ariakit.DialogDismiss>
+				<button
+					type="button"
+					onClick={() => {
+						// Deleting removes the trigger row; return to the persistent Saved control.
+						returnFocusRef.current = finalFocus.current
+						onConfirm()
+					}}
+					className="rounded-md bg-error px-3 py-1.5 text-xs font-medium text-on-brand transition-colors hover:bg-red-600"
+				>
+					Delete
+				</button>
+			</div>
+		</Ariakit.Dialog>
 	)
 }

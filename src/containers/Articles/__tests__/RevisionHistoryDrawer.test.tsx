@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act } from 'react'
+import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { RevisionHistoryDrawer } from '../editor/RevisionHistoryDrawer'
@@ -57,7 +57,7 @@ describe('RevisionHistoryDrawer diff base', () => {
 	})
 
 	function button(text: string) {
-		const match = Array.from(container.querySelectorAll('button')).find((el) => el.textContent?.trim() === text)
+		const match = Array.from(document.querySelectorAll('button')).find((el) => el.textContent?.trim() === text)
 		if (!match) throw new Error(`No button "${text}"`)
 		return match
 	}
@@ -70,15 +70,15 @@ describe('RevisionHistoryDrawer diff base', () => {
 	}
 
 	function selectRevision(id: string) {
-		return click(container.querySelector(`[data-revision-id="${id}"] button`)!)
+		return click(document.querySelector(`[data-revision-id="${id}"] button`)!)
 	}
 
 	function activeBase() {
-		return container.querySelector('button[aria-pressed="true"]')?.textContent?.trim()
+		return document.querySelector('button[aria-pressed="true"]')?.textContent?.trim()
 	}
 
 	function paneText() {
-		return container.textContent ?? ''
+		return document.querySelector('[role="dialog"]')?.textContent ?? ''
 	}
 
 	test('the chosen base is kept when the selected revision is that base, and the pane says why', async () => {
@@ -131,5 +131,61 @@ describe('RevisionHistoryDrawer diff base', () => {
 		await selectRevision('rev-1')
 		expect(activeBase()).toBe('Previous')
 		expect(paneText()).toContain('This is the oldest revision')
+	})
+	test('history owns focus and shortcuts; Escape cancels confirmation before closing', async () => {
+		const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+		const onClose = vi.fn()
+		function Harness() {
+			const [open, setOpen] = useState(false)
+			return (
+				<QueryClientProvider client={client}>
+					<button type="button" onClick={() => setOpen(true)}>
+						History
+					</button>
+					{open && (
+						<RevisionHistoryDrawer
+							articleId="article-1"
+							authorizedFetch={vi.fn()}
+							onRestored={vi.fn()}
+							onClose={() => {
+								onClose()
+								setOpen(false)
+							}}
+						/>
+					)}
+				</QueryClientProvider>
+			)
+		}
+		await act(async () => root.render(<Harness />))
+		const trigger = button('History')
+		await act(async () => {
+			trigger.focus()
+			trigger.click()
+		})
+		await flush()
+		const drawer = document.querySelector<HTMLElement>('[role="dialog"]')!
+		await vi.waitFor(() => expect(drawer.contains(document.activeElement)).toBe(true))
+		expect(document.getElementById(drawer.getAttribute('aria-labelledby')!)!.textContent).toBe('Revision history')
+		const press = async (target: HTMLElement, key: string) => {
+			await act(async () =>
+				target.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
+			)
+			await flush()
+		}
+		await press(drawer, 'j')
+		expect(getArticleRevision).toHaveBeenLastCalledWith('article-1', 'rev-3', expect.any(Function))
+		await press(drawer, 'k')
+		expect(drawer.textContent).toContain('Revision 4')
+		await press(drawer, 'r')
+		await vi.waitFor(() => expect(document.activeElement).toBe(button('Cancel')))
+		await press(button('Cancel'), 'Escape')
+		expect(document.querySelector('[role="alertdialog"]')).toBeNull()
+		expect(onClose).not.toHaveBeenCalled()
+		await vi.waitFor(() => expect(document.activeElement?.textContent).toContain('Restore as pending'))
+		await press(document.activeElement as HTMLElement, 'Escape')
+		await vi.waitFor(() => expect(document.activeElement).toBe(trigger))
+		expect(onClose).toHaveBeenCalledTimes(1)
+		expect(document.querySelector('[role="dialog"]')).toBeNull()
+		client.clear()
 	})
 })

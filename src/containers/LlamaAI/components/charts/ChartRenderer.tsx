@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import type * as echarts from 'echarts/core'
 import {
 	type Dispatch,
@@ -13,7 +14,6 @@ import {
 	useRef,
 	useState
 } from 'react'
-import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { AddToDashboardButton } from '~/components/AddToDashboard/AddToDashboardButton'
@@ -809,44 +809,32 @@ function ActiveSingleChart({
 }
 
 function ChartEditorModal({ title, onClose, children }: { title?: string; onClose: () => void; children: ReactNode }) {
-	useEffect(() => {
-		const onKey = (e: KeyboardEvent) => {
-			if (e.key === 'Escape') onClose()
-		}
-		document.addEventListener('keydown', onKey)
-		const prevOverflow = document.body.style.overflow
-		document.body.style.overflow = 'hidden'
-		return () => {
-			document.removeEventListener('keydown', onKey)
-			document.body.style.overflow = prevOverflow
-		}
-	}, [onClose])
-
-	return createPortal(
-		<div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
-			<div className="absolute inset-0 bg-ai-backdrop" onClick={onClose} />
-			<div className="relative flex h-[85dvh] max-h-[560px] w-full max-w-5xl flex-col overflow-y-auto overscroll-contain rounded-xl border border-ai-line bg-ai-surface-card shadow-2xl lg:flex-row lg:overflow-hidden">
-				<div className="flex shrink-0 items-center justify-between border-b border-ai-line px-4 py-2.5 lg:hidden">
-					<span className="truncate text-sm font-semibold text-secondary">{title ?? 'Edit chart'}</span>
-					<Button type="button" variant="ghost" size="md" square onClick={onClose} aria-label="Close editor">
-						<Icon name="x" className="size-4" aria-hidden="true" />
-					</Button>
-				</div>
-				<Button
-					type="button"
-					variant="ghost"
-					size="md"
-					square
-					onClick={onClose}
+	return (
+		<Ariakit.Dialog
+			open
+			onClose={onClose}
+			aria-label={title ? `Edit chart: ${title}` : 'Edit chart'}
+			backdrop={<div className="fixed inset-0 z-50 bg-ai-backdrop" />}
+			className="fixed inset-0 z-50 m-auto flex h-[85dvh] max-h-[560px] w-[calc(100%-2rem)] max-w-5xl flex-col overflow-y-auto overscroll-contain rounded-xl border border-ai-line bg-ai-surface-card shadow-2xl lg:flex-row lg:overflow-hidden"
+		>
+			<div className="flex shrink-0 items-center justify-between border-b border-ai-line px-4 py-2.5 lg:hidden">
+				<span className="truncate text-sm font-semibold text-secondary">{title ?? 'Edit chart'}</span>
+				<Ariakit.DialogDismiss
+					render={<Button type="button" variant="ghost" size="md" square />}
 					aria-label="Close editor"
-					className="absolute top-2.5 right-2.5 z-10 hidden lg:flex"
 				>
 					<Icon name="x" className="size-4" aria-hidden="true" />
-				</Button>
-				{children}
+				</Ariakit.DialogDismiss>
 			</div>
-		</div>,
-		document.body
+			<Ariakit.DialogDismiss
+				render={<Button type="button" variant="ghost" size="md" square />}
+				aria-label="Close editor"
+				className="absolute top-2.5 right-2.5 z-10 hidden lg:flex"
+			>
+				<Icon name="x" className="size-4" aria-hidden="true" />
+			</Ariakit.DialogDismiss>
+			{children}
+		</Ariakit.Dialog>
 	)
 }
 

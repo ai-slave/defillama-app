@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 
+import * as Ariakit from '@ariakit/react'
 import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
@@ -544,5 +545,36 @@ describe('ChartRenderer', () => {
 		}
 		await act(async () => root.render(<ChartRenderer charts={[updated]} chartData={chartData} />))
 		expect(adaptChartData).toHaveBeenCalledTimes(2)
+	})
+	test('nested style editor owns Escape and returns focus without saving its draft', async () => {
+		const onLocalStyleSave = vi.fn()
+		const onParentClose = vi.fn()
+		await act(async () =>
+			root.render(
+				<Ariakit.Dialog open onClose={onParentClose} aria-label="Article editor">
+					<ChartRenderer charts={[makeCartesianChart()]} chartData={chartData} onLocalStyleSave={onLocalStyleSave} />
+				</Ariakit.Dialog>
+			)
+		)
+		const trigger = document.querySelector<HTMLButtonElement>('[title="Edit chart style"]')!
+		await act(async () => {
+			trigger.focus()
+			trigger.click()
+		})
+		const editor = document.querySelector<HTMLElement>('[role="dialog"][aria-label="Edit chart: Protocol Revenue"]')!
+		await vi.waitFor(() => expect(editor.contains(document.activeElement)).toBe(true))
+		const title = editor.querySelector<HTMLInputElement>('[aria-label="Chart title"]')!
+		await setInputValue(title, 'Discard this title')
+		await act(async () => {
+			title.focus()
+			title.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
+		})
+		await vi.waitFor(() => expect(document.activeElement).toBe(trigger))
+		expect(onParentClose).not.toHaveBeenCalled()
+		expect(document.querySelector('[aria-label="Article editor"]')).not.toBeNull()
+		expect(document.querySelector('[aria-label="Edit chart: Protocol Revenue"]')).toBeNull()
+		expect(onLocalStyleSave).not.toHaveBeenCalled()
+		await act(async () => trigger.click())
+		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')!.value).toBe('Protocol Revenue')
 	})
 })

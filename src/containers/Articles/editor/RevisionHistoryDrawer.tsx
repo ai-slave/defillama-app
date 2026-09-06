@@ -1,5 +1,6 @@
+import * as Ariakit from '@ariakit/react'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import toast from 'react-hot-toast'
 import { Icon } from '~/ui/Icon'
 import {
@@ -413,34 +414,6 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 	)
 
 	useEffect(() => {
-		const handler = (event: KeyboardEvent) => {
-			if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return
-			if (event.key === 'Escape') {
-				event.preventDefault()
-				if (confirming) setConfirming(null)
-				else onClose()
-				return
-			}
-			if (event.key === 'j' || event.key === 'ArrowDown') {
-				event.preventDefault()
-				moveSelection(1)
-				return
-			}
-			if (event.key === 'k' || event.key === 'ArrowUp') {
-				event.preventDefault()
-				moveSelection(-1)
-				return
-			}
-			if (event.key === 'r' && !event.metaKey && !event.ctrlKey) {
-				event.preventDefault()
-				if (selectedId) setConfirming('restore')
-			}
-		}
-		window.addEventListener('keydown', handler)
-		return () => window.removeEventListener('keydown', handler)
-	}, [onClose, moveSelection, confirming, selectedId])
-
-	useEffect(() => {
 		if (!selectedId || !listRef.current) return
 		const node = listRef.current.querySelector<HTMLElement>(`[data-revision-id="${selectedId}"]`)
 		if (node) node.scrollIntoView({ block: 'nearest' })
@@ -536,231 +509,250 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 	}, [viewMode, selectedRevision, baseRevision])
 
 	return (
-		<div className="fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-label="Revision history">
-			<button
-				type="button"
-				aria-label="Close history"
-				onClick={onClose}
-				className="absolute inset-0 bg-research-backdrop-soft backdrop-blur-sm transition-opacity"
-			/>
-			<div className="relative ml-auto flex size-full max-w-[1280px] flex-col border-l border-medium bg-surface shadow-2xl">
-				<header className="grid grid-cols-[1fr_auto] items-end gap-6 border-b border-medium px-7 pt-6 pb-4">
-					<div className="grid gap-1">
-						<div className="flex items-center gap-2 font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">
-							<span aria-hidden>›</span>
-							<span>Article</span>
-							<span aria-hidden>·</span>
-							<span>Ledger</span>
-						</div>
-						<h2 className="text-2xl leading-tight font-semibold tracking-tight text-primary">Revision history</h2>
-						<p className="font-jetbrains text-[11px] text-tertiary">
-							<span className="text-secondary tabular-nums">{counts.all}</span> entries
-							<span aria-hidden> · </span>
-							<kbd className="rounded-sm border border-medium px-1 py-px text-[9px] tracking-tight">J/K</kbd>
-							<span> navigate </span>
-							<kbd className="rounded-sm border border-medium px-1 py-px text-[9px] tracking-tight">R</kbd>
-							<span> restore </span>
-							<kbd className="rounded-sm border border-medium px-1 py-px text-[9px] tracking-tight">Esc</kbd>
-							<span> close</span>
-						</p>
+		<Ariakit.Dialog
+			open
+			onClose={onClose}
+			hideOnEscape={() => {
+				if (!confirming) return true
+				setConfirming(null)
+				return false
+			}}
+			onKeyDown={(event) => {
+				if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return
+				const target = event.target as HTMLElement
+				// Nested controls own their keys; history shortcuts only act inside this drawer.
+				if (target.closest('[role="dialog"], [role="alertdialog"]') !== event.currentTarget) return
+				if (
+					target.closest(
+						'input, textarea, select, [contenteditable="true"], [role="combobox"], [role="menu"], [role="listbox"]'
+					)
+				)
+					return
+				if (event.key === 'j' || event.key === 'ArrowDown') {
+					event.preventDefault()
+					moveSelection(1)
+				} else if (event.key === 'k' || event.key === 'ArrowUp') {
+					event.preventDefault()
+					moveSelection(-1)
+				} else if (event.key === 'r' && selectedId) {
+					event.preventDefault()
+					setConfirming('restore')
+				}
+			}}
+			backdrop={<div className="fixed inset-0 z-50 bg-research-backdrop-soft backdrop-blur-sm" />}
+			className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[1280px] flex-col border-l border-medium bg-surface shadow-2xl"
+		>
+			<header className="grid grid-cols-[1fr_auto] items-end gap-6 border-b border-medium px-7 pt-6 pb-4">
+				<div className="grid gap-1">
+					<div className="flex items-center gap-2 font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">
+						<span aria-hidden>›</span>
+						<span>Article</span>
+						<span aria-hidden>·</span>
+						<span>Ledger</span>
 					</div>
-					<button
-						type="button"
-						onClick={onClose}
-						aria-label="Close"
-						className="flex size-9 items-center justify-center rounded-md border border-medium bg-surface text-secondary transition-colors hover:border-link/40 hover:text-primary"
-					>
-						<Icon name="x" className="size-4" />
-					</button>
-				</header>
-
-				<div className="grid min-h-0 flex-1 grid-cols-[360px_1fr]">
-					<aside className="flex min-h-0 flex-col border-r border-medium">
-						<div className="flex flex-wrap items-center gap-1 border-b border-medium px-3 py-2">
-							{(Object.keys(FILTER_LABELS) as Array<FilterKey>).map((key) => {
-								const isActive = filter === key
-								return (
-									<button
-										key={key}
-										type="button"
-										onClick={() => setFilter(key)}
-										className={`flex items-center gap-1.5 rounded-sm px-2 py-1 font-jetbrains text-[10px] tracking-[0.14em] uppercase transition-colors ${
-											isActive
-												? 'bg-primary text-surface'
-												: 'text-tertiary hover:bg-research-tint-hover hover:text-secondary'
-										}`}
-									>
-										<span>{FILTER_LABELS[key]}</span>
-										<span className={`tabular-nums ${isActive ? 'text-surface/70' : 'text-tertiary/60'}`}>
-											{counts[key]}
-										</span>
-									</button>
-								)
-							})}
-						</div>
-
-						<div ref={listRef} className="min-h-0 flex-1 overflow-y-auto">
-							{isLoading ? (
-								<TimelineSkeleton />
-							) : grouped.length === 0 ? (
-								<EmptyState filter={filter} />
-							) : (
-								<div className="relative">
-									{grouped.map((group) => (
-										<section key={group.key}>
-											<header className="sticky top-0 z-10 flex items-baseline justify-between gap-2 border-b border-medium bg-surface/95 px-5 py-2 backdrop-blur">
-												<span className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">
-													{group.label}
-												</span>
-												<span className="font-jetbrains text-[10px] text-tertiary/70 tabular-nums">
-													{group.items.length}
-												</span>
-											</header>
-											<ul className="relative">
-												<span
-													aria-hidden
-													className="pointer-events-none absolute top-2 bottom-2 left-[34px] w-px bg-border-medium"
-												/>
-												{group.items.map((entry) => {
-													const isSelected = entry.id === selectedId
-													const isLive = entry.id === liveAnchorId
-													const isPendingAnchor = entry.id === pendingAnchorId
-													const tone = EVENT_TONES[entry.eventType] ?? 'text-secondary'
-													const isDeleting = pendingDeleteId === entry.id
-													return (
-														<li
-															key={entry.id}
-															data-revision-id={entry.id}
-															className={`group relative ${isDeleting ? 'opacity-50' : ''}`}
-														>
-															<button
-																type="button"
-																onClick={() => selectRevision(entry.id)}
-																aria-current={isSelected}
-																className={`relative flex w-full items-start gap-3 px-5 py-3 text-left transition-colors ${
-																	isSelected ? 'bg-research-tint' : 'hover:bg-research-tint-hover/60'
-																}`}
-															>
-																{isSelected ? (
-																	<span aria-hidden className="absolute top-0 bottom-0 left-0 w-0.5 bg-link" />
-																) : null}
-																<span className="relative z-10 mt-0.5 grid size-5 place-items-center rounded-full bg-surface">
-																	<EventGlyph type={entry.eventType} active={isSelected} />
-																</span>
-																<div className="min-w-0 flex-1">
-																	<div className="flex items-center gap-2">
-																		<span
-																			className={`font-jetbrains text-[10px] font-medium tracking-[0.18em] uppercase ${tone}`}
-																		>
-																			{EVENT_LABELS[entry.eventType] ?? entry.eventType}
-																		</span>
-																		{isLive ? <StatusBadge label="Live" tone="live" /> : null}
-																		{isPendingAnchor ? <StatusBadge label="Pending" tone="pending" /> : null}
-																	</div>
-																	<div className="mt-1 flex items-baseline gap-2">
-																		<span className="font-jetbrains text-xs text-primary tabular-nums">
-																			{formatTime(entry.createdAt)}
-																		</span>
-																		<span className="text-[11px] text-tertiary">{formatRelative(entry.createdAt)}</span>
-																	</div>
-																	{entry.actor ? (
-																		<div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-tertiary">
-																			<ActorAvatar
-																				name={entry.actor.displayName}
-																				url={entry.actor.avatarUrl}
-																				size={14}
-																			/>
-																			<span className="truncate">{entry.actor.displayName}</span>
-																		</div>
-																	) : null}
-																</div>
-															</button>
-														</li>
-													)
-												})}
-											</ul>
-										</section>
-									))}
-									{revisionsQuery.hasNextPage ? (
-										<div className="px-5 py-4">
-											<button
-												type="button"
-												onClick={loadMore}
-												disabled={isLoadingMore}
-												className="w-full rounded-sm border border-dashed border-medium bg-transparent px-3 py-2 font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase transition-colors hover:border-secondary hover:text-secondary disabled:opacity-50"
-											>
-												{isLoadingMore ? 'Loading…' : '↓  Older revisions'}
-											</button>
-										</div>
-									) : items.length > 0 ? (
-										<div className="px-5 py-6 text-center font-jetbrains text-[10px] tracking-[0.22em] text-tertiary/60 uppercase">
-											· end of ledger ·
-										</div>
-									) : null}
-								</div>
-							)}
-						</div>
-					</aside>
-
-					<section className="flex min-h-0 flex-col bg-page">
-						<PreviewSpecimenHeader
-							revision={selectedRevision}
-							isLoading={isLoadingRevision}
-							wordCount={wordCount}
-							isLive={selectedRevision ? selectedRevision.id === liveAnchorId : false}
-							isPendingAnchor={selectedRevision ? selectedRevision.id === pendingAnchorId : false}
-							confirming={confirming}
-							isRestoring={isRestoring}
-							isDeleting={selectedId ? pendingDeleteId === selectedId : false}
-							canDelete={!!selectedRevision && selectedRevision.id !== liveAnchorId}
-							onAskRestore={() => setConfirming('restore')}
-							onAskDelete={() => setConfirming('delete')}
-							onCancelConfirm={() => setConfirming(null)}
-							onConfirmRestore={() => void handleRestore()}
-							onConfirmDelete={() => selectedId && void handleDelete(selectedId)}
-							viewMode={viewMode}
-							onChangeView={setViewMode}
-							baseMode={baseMode}
-							onChangeBase={setBaseMode}
-							baseAvailability={baseAvailability}
-							baseRevision={baseRevision}
-							diffStats={diff?.stats ?? null}
-						/>
-						<div className="min-h-0 flex-1 overflow-y-auto">
-							{isLoadingRevision ? (
-								<PreviewSkeleton />
-							) : !previewArticle ? (
-								<div className="grid h-full place-items-center px-6">
-									<div className="max-w-sm text-center">
-										<div className="mx-auto mb-4 grid size-12 place-items-center rounded-full border border-dashed border-medium">
-											<Icon name="clock" className="size-5 text-tertiary" />
-										</div>
-										<p className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">
-											No revision selected
-										</p>
-										<p className="mt-2 text-sm text-secondary">
-											Pick an entry from the ledger to inspect its snapshot.
-										</p>
-									</div>
-								</div>
-							) : viewMode === 'diff' ? (
-								<DiffPane
-									selected={selectedRevision}
-									base={baseRevision}
-									baseMode={baseMode}
-									baseUnavailable={baseUnavailable}
-									diff={diff}
-								/>
-							) : (
-								<div className="article-page-frame">
-									<ArticleRenderer article={previewArticle} />
-								</div>
-							)}
-						</div>
-					</section>
+					<Ariakit.DialogHeading className="text-2xl leading-tight font-semibold tracking-tight text-primary">
+						Revision history
+					</Ariakit.DialogHeading>
+					<p className="font-jetbrains text-[11px] text-tertiary">
+						<span className="text-secondary tabular-nums">{counts.all}</span> entries
+						<span aria-hidden> · </span>
+						<kbd className="rounded-sm border border-medium px-1 py-px text-[9px] tracking-tight">J/K</kbd>
+						<span> navigate </span>
+						<kbd className="rounded-sm border border-medium px-1 py-px text-[9px] tracking-tight">R</kbd>
+						<span> restore </span>
+						<kbd className="rounded-sm border border-medium px-1 py-px text-[9px] tracking-tight">Esc</kbd>
+						<span> close</span>
+					</p>
 				</div>
+				<Ariakit.DialogDismiss
+					type="button"
+					aria-label="Close"
+					className="flex size-9 items-center justify-center rounded-md border border-medium bg-surface text-secondary transition-colors hover:border-link/40 hover:text-primary"
+				>
+					<Icon name="x" className="size-4" />
+				</Ariakit.DialogDismiss>
+			</header>
+
+			<div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)_minmax(0,2fr)] md:grid-cols-[360px_minmax(0,1fr)] md:grid-rows-1">
+				<aside className="flex min-h-0 flex-col border-b border-medium md:border-r md:border-b-0">
+					<div className="flex flex-wrap items-center gap-1 border-b border-medium px-3 py-2">
+						{(Object.keys(FILTER_LABELS) as Array<FilterKey>).map((key) => {
+							const isActive = filter === key
+							return (
+								<button
+									key={key}
+									type="button"
+									onClick={() => setFilter(key)}
+									className={`flex items-center gap-1.5 rounded-sm px-2 py-1 font-jetbrains text-[10px] tracking-[0.14em] uppercase transition-colors ${
+										isActive
+											? 'bg-primary text-surface'
+											: 'text-tertiary hover:bg-research-tint-hover hover:text-secondary'
+									}`}
+								>
+									<span>{FILTER_LABELS[key]}</span>
+									<span className={`tabular-nums ${isActive ? 'text-surface/70' : 'text-tertiary/60'}`}>
+										{counts[key]}
+									</span>
+								</button>
+							)
+						})}
+					</div>
+
+					<div ref={listRef} className="min-h-0 flex-1 overflow-y-auto">
+						{isLoading ? (
+							<TimelineSkeleton />
+						) : grouped.length === 0 ? (
+							<EmptyState filter={filter} />
+						) : (
+							<div className="relative">
+								{grouped.map((group) => (
+									<section key={group.key}>
+										<header className="sticky top-0 z-10 flex items-baseline justify-between gap-2 border-b border-medium bg-surface/95 px-5 py-2 backdrop-blur">
+											<span className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">
+												{group.label}
+											</span>
+											<span className="font-jetbrains text-[10px] text-tertiary/70 tabular-nums">
+												{group.items.length}
+											</span>
+										</header>
+										<ul className="relative">
+											<span
+												aria-hidden
+												className="pointer-events-none absolute top-2 bottom-2 left-[34px] w-px bg-border-medium"
+											/>
+											{group.items.map((entry) => {
+												const isSelected = entry.id === selectedId
+												const isLive = entry.id === liveAnchorId
+												const isPendingAnchor = entry.id === pendingAnchorId
+												const tone = EVENT_TONES[entry.eventType] ?? 'text-secondary'
+												const isDeleting = pendingDeleteId === entry.id
+												return (
+													<li
+														key={entry.id}
+														data-revision-id={entry.id}
+														className={`group relative ${isDeleting ? 'opacity-50' : ''}`}
+													>
+														<button
+															type="button"
+															onClick={() => selectRevision(entry.id)}
+															aria-current={isSelected}
+															className={`relative flex w-full items-start gap-3 px-5 py-3 text-left transition-colors ${
+																isSelected ? 'bg-research-tint' : 'hover:bg-research-tint-hover/60'
+															}`}
+														>
+															{isSelected ? (
+																<span aria-hidden className="absolute top-0 bottom-0 left-0 w-0.5 bg-link" />
+															) : null}
+															<span className="relative z-10 mt-0.5 grid size-5 place-items-center rounded-full bg-surface">
+																<EventGlyph type={entry.eventType} active={isSelected} />
+															</span>
+															<div className="min-w-0 flex-1">
+																<div className="flex items-center gap-2">
+																	<span
+																		className={`font-jetbrains text-[10px] font-medium tracking-[0.18em] uppercase ${tone}`}
+																	>
+																		{EVENT_LABELS[entry.eventType] ?? entry.eventType}
+																	</span>
+																	{isLive ? <StatusBadge label="Live" tone="live" /> : null}
+																	{isPendingAnchor ? <StatusBadge label="Pending" tone="pending" /> : null}
+																</div>
+																<div className="mt-1 flex items-baseline gap-2">
+																	<span className="font-jetbrains text-xs text-primary tabular-nums">
+																		{formatTime(entry.createdAt)}
+																	</span>
+																	<span className="text-[11px] text-tertiary">{formatRelative(entry.createdAt)}</span>
+																</div>
+																{entry.actor ? (
+																	<div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-tertiary">
+																		<ActorAvatar name={entry.actor.displayName} url={entry.actor.avatarUrl} size={14} />
+																		<span className="truncate">{entry.actor.displayName}</span>
+																	</div>
+																) : null}
+															</div>
+														</button>
+													</li>
+												)
+											})}
+										</ul>
+									</section>
+								))}
+								{revisionsQuery.hasNextPage ? (
+									<div className="px-5 py-4">
+										<button
+											type="button"
+											onClick={loadMore}
+											disabled={isLoadingMore}
+											className="w-full rounded-sm border border-dashed border-medium bg-transparent px-3 py-2 font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase transition-colors hover:border-secondary hover:text-secondary disabled:opacity-50"
+										>
+											{isLoadingMore ? 'Loading…' : '↓  Older revisions'}
+										</button>
+									</div>
+								) : items.length > 0 ? (
+									<div className="px-5 py-6 text-center font-jetbrains text-[10px] tracking-[0.22em] text-tertiary/60 uppercase">
+										· end of ledger ·
+									</div>
+								) : null}
+							</div>
+						)}
+					</div>
+				</aside>
+
+				<section className="flex min-h-0 min-w-0 flex-col bg-page">
+					<PreviewSpecimenHeader
+						revision={selectedRevision}
+						isLoading={isLoadingRevision}
+						wordCount={wordCount}
+						isLive={selectedRevision ? selectedRevision.id === liveAnchorId : false}
+						isPendingAnchor={selectedRevision ? selectedRevision.id === pendingAnchorId : false}
+						confirming={confirming}
+						isRestoring={isRestoring}
+						isDeleting={selectedId ? pendingDeleteId === selectedId : false}
+						canDelete={!!selectedRevision && selectedRevision.id !== liveAnchorId}
+						onAskRestore={() => setConfirming('restore')}
+						onAskDelete={() => setConfirming('delete')}
+						onCancelConfirm={() => setConfirming(null)}
+						onConfirmRestore={() => void handleRestore()}
+						onConfirmDelete={() => selectedId && void handleDelete(selectedId)}
+						viewMode={viewMode}
+						onChangeView={setViewMode}
+						baseMode={baseMode}
+						onChangeBase={setBaseMode}
+						baseAvailability={baseAvailability}
+						baseRevision={baseRevision}
+						diffStats={diff?.stats ?? null}
+					/>
+					<div className="min-h-0 flex-1 overflow-y-auto">
+						{isLoadingRevision ? (
+							<PreviewSkeleton />
+						) : !previewArticle ? (
+							<div className="grid h-full place-items-center px-6">
+								<div className="max-w-sm text-center">
+									<div className="mx-auto mb-4 grid size-12 place-items-center rounded-full border border-dashed border-medium">
+										<Icon name="clock" className="size-5 text-tertiary" />
+									</div>
+									<p className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">
+										No revision selected
+									</p>
+									<p className="mt-2 text-sm text-secondary">Pick an entry from the ledger to inspect its snapshot.</p>
+								</div>
+							</div>
+						) : viewMode === 'diff' ? (
+							<DiffPane
+								selected={selectedRevision}
+								base={baseRevision}
+								baseMode={baseMode}
+								baseUnavailable={baseUnavailable}
+								diff={diff}
+							/>
+						) : (
+							<div className="article-page-frame">
+								<ArticleRenderer article={previewArticle} />
+							</div>
+						)}
+					</div>
+				</section>
 			</div>
-		</div>
+		</Ariakit.Dialog>
 	)
 }
 
@@ -809,6 +801,8 @@ function PreviewSpecimenHeader({
 	baseRevision: ArticleRevision | null
 	diffStats: { added: number; removed: number } | null
 }) {
+	const restoreRef = useRef<HTMLButtonElement>(null)
+	const deleteRef = useRef<HTMLButtonElement>(null)
 	const eventType = revision?.eventType ?? 'save'
 	const tone = EVENT_TONES[eventType] ?? 'text-secondary'
 	const snapshot = (revision?.snapshot ?? {}) as { title?: string; slug?: string; status?: string }
@@ -827,7 +821,7 @@ function PreviewSpecimenHeader({
 
 	return (
 		<div className="border-b border-medium bg-surface">
-			<div className="grid grid-cols-[1fr_auto] items-start gap-6 px-7 py-5">
+			<div className="grid grid-cols-1 items-start gap-3 px-4 py-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-6 lg:px-7 lg:py-5">
 				<div className="grid min-w-0 gap-2">
 					<div className="flex flex-wrap items-center gap-2">
 						<span
@@ -884,6 +878,7 @@ function PreviewSpecimenHeader({
 					{confirming === 'restore' ? (
 						<InlineConfirm
 							tone="primary"
+							finalFocus={restoreRef}
 							title="Restore as pending?"
 							description="Loads this snapshot into the editor as a pending edit."
 							confirmLabel={isRestoring ? 'Restoring…' : 'Confirm restore'}
@@ -894,6 +889,7 @@ function PreviewSpecimenHeader({
 					) : confirming === 'delete' ? (
 						<InlineConfirm
 							tone="danger"
+							finalFocus={deleteRef}
 							title="Remove from history?"
 							description="The snapshot will be permanently deleted."
 							confirmLabel={isDeleting ? 'Deleting…' : 'Confirm delete'}
@@ -905,6 +901,7 @@ function PreviewSpecimenHeader({
 						<>
 							<button
 								type="button"
+								ref={restoreRef}
 								onClick={onAskRestore}
 								disabled={!revision || isRestoring}
 								className="group flex h-9 items-center gap-2 rounded-md bg-link px-3.5 text-xs font-medium text-on-brand transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
@@ -917,6 +914,8 @@ function PreviewSpecimenHeader({
 							</button>
 							<button
 								type="button"
+								ref={deleteRef}
+								aria-label="Delete revision"
 								onClick={onAskDelete}
 								disabled={!revision || !canDelete || isDeleting}
 								title={canDelete ? 'Delete this revision' : 'The current live revision cannot be deleted'}
@@ -1214,7 +1213,8 @@ function InlineConfirm({
 	confirmLabel,
 	onConfirm,
 	onCancel,
-	disabled
+	disabled,
+	finalFocus
 }: {
 	tone: 'primary' | 'danger'
 	title: string
@@ -1223,39 +1223,45 @@ function InlineConfirm({
 	onConfirm: () => void
 	onCancel: () => void
 	disabled: boolean
+	finalFocus: RefObject<HTMLButtonElement | null>
 }) {
 	const accent = tone === 'danger' ? 'border-error/40 bg-error/5' : 'border-link/40 bg-link/5'
 	const button = tone === 'danger' ? 'bg-error hover:bg-error/90' : 'bg-link hover:opacity-90'
 	return (
-		<div
+		<Ariakit.Dialog
+			open
+			modal={false}
+			portal={false}
+			backdrop={false}
+			hideOnInteractOutside={false}
+			onClose={onCancel}
+			finalFocus={finalFocus}
 			role="alertdialog"
 			aria-label={title}
-			className={`flex items-center gap-3 rounded-md border px-3 py-2 ${accent}`}
+			className={`flex flex-wrap items-center gap-3 rounded-md border px-3 py-2 ${accent}`}
 		>
 			<div className="grid">
 				<div className="text-xs font-medium text-primary">{title}</div>
-				<div className="text-[11px] text-tertiary">{description}</div>
+				<Ariakit.DialogDescription className="text-[11px] text-tertiary">{description}</Ariakit.DialogDescription>
 			</div>
 			<div className="flex items-center gap-1.5">
-				<button
+				<Ariakit.DialogDismiss
 					type="button"
-					onClick={onCancel}
 					disabled={disabled}
 					className="rounded-md px-2.5 py-1.5 text-xs text-secondary transition-colors hover:bg-research-tint-hover disabled:opacity-50"
 				>
 					Cancel
-				</button>
+				</Ariakit.DialogDismiss>
 				<button
 					type="button"
 					onClick={onConfirm}
 					disabled={disabled}
-					autoFocus
 					className={`rounded-md px-3 py-1.5 text-xs font-medium text-on-brand transition-opacity disabled:cursor-not-allowed disabled:opacity-50 ${button}`}
 				>
 					{confirmLabel}
 				</button>
 			</div>
-		</div>
+		</Ariakit.Dialog>
 	)
 }
 
