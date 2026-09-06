@@ -83,7 +83,7 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 			<Ariakit.ComboboxProvider
 				open={open}
 				setOpen={setOpen}
-				setValue={(next) => setSearchValue(next)}
+				setInputValue={(next) => setSearchValue(next)}
 				resetValueOnHide
 			>
 				<div className="relative flex items-center rounded-md border border-medium bg-page focus-within:border-link/60">

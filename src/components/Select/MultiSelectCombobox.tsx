@@ -86,7 +86,7 @@ export const MultiSelectCombobox = ({
 			resetValueOnHide
 			selectedValue={selectedValues}
 			setSelectedValue={setSelectedValues}
-			setValue={updateSearch}
+			setInputValue={updateSearch}
 			open={open}
 			setOpen={setOpen}
 		>
@@ -128,7 +128,7 @@ export const MultiSelectCombobox = ({
 				portal
 				sameWidth
 			>
-				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
+				<Ariakit.PopoverDismiss aria-label="Close options" className={popoverMobileDismissStyles}>
 					<Icon name="x" className="size-5" />
 				</Ariakit.PopoverDismiss>
 
@@ -153,9 +153,13 @@ export const MultiSelectCombobox = ({
 						>
 							{item.logo ? <img src={item.logo} alt={item.label} className="size-5 shrink-0 rounded-full" /> : null}
 							<span>{item.label}</span>
-							<span className={popoverMultiSelectCheckStyles(selectedValues.includes(item.value))} aria-hidden>
-								{selectedValues.includes(item.value) ? <SelectCheckIcon /> : null}
-							</span>
+							<Ariakit.ComboboxItemSelected>
+								{(selected) => (
+									<span className={popoverMultiSelectCheckStyles(selected)} aria-hidden>
+										{selected ? <SelectCheckIcon /> : null}
+									</span>
+								)}
+							</Ariakit.ComboboxItemSelected>
 						</Ariakit.ComboboxItem>
 					))}
 					{!isLoading && matches.length === 0 ? (

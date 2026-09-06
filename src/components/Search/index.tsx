@@ -96,8 +96,8 @@ export const MobileSearch = ({ searchTrigger }: { searchTrigger?: ReactNode } = 
 						portal
 					>
 						<Ariakit.ComboboxProvider
-							value={searchValue}
-							setValue={(value) => {
+							inputValue={searchValue}
+							setInputValue={(value) => {
 								startTransition(() => {
 									setSearchValue(value)
 								})
@@ -232,8 +232,8 @@ export const DesktopSearch = ({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 	return (
 		<>
 			<Ariakit.ComboboxProvider
-				value={searchValue}
-				setValue={(value) => {
+				inputValue={searchValue}
+				setInputValue={(value) => {
 					startTransition(() => {
 						setSearchValue(value)
 					})

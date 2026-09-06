@@ -154,7 +154,7 @@ export function MetricSentenceBuilder({
 	})
 	const [popoverWidth, setPopoverWidth] = useState(260)
 	const isPopoverOpen = useStoreState(popover, 'open')
-	const subjectSearchValue = useStoreState(subjectCombobox, 'value') ?? ''
+	const subjectSearchValue = useStoreState(subjectCombobox, 'inputValue') ?? ''
 	const deferredSubjectSearchValue = useDeferredValue(subjectSearchValue)
 	const chainListRef = useRef<HTMLDivElement | null>(null)
 	const protocolListRef = useRef<HTMLDivElement | null>(null)
@@ -188,7 +188,7 @@ export function MetricSentenceBuilder({
 			return () => clearTimeout(timeout)
 		}
 
-		subjectCombobox.setValue('')
+		subjectCombobox.setInputValue('')
 		subjectCombobox.setOpen(false)
 		return undefined
 	}, [activeToken, subjectCombobox])
@@ -196,7 +196,7 @@ export function MetricSentenceBuilder({
 	const closePopover = () => {
 		popover.setOpen(false)
 		setActiveToken(null)
-		subjectCombobox.setValue('')
+		subjectCombobox.setInputValue('')
 		subjectCombobox.setOpen(false)
 	}
 
@@ -495,7 +495,7 @@ export function MetricSentenceBuilder({
 											type="button"
 											onClick={() => {
 												setSubjectTab('chain')
-												subjectCombobox.setValue('')
+												subjectCombobox.setInputValue('')
 											}}
 											className={`rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors ${
 												subjectTab === 'chain'
@@ -517,7 +517,7 @@ export function MetricSentenceBuilder({
 											type="button"
 											onClick={() => {
 												setSubjectTab('protocol')
-												subjectCombobox.setValue('')
+												subjectCombobox.setInputValue('')
 											}}
 											className={`rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors ${
 												subjectTab === 'protocol'

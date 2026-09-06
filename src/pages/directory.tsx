@@ -151,7 +151,7 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 				better access and security
 			</Announcement>
 			<Ariakit.ComboboxProvider
-				setValue={(value) => {
+				setInputValue={(value) => {
 					startTransition(() => {
 						setSearchValue(value)
 					})

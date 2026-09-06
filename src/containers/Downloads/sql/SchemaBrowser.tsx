@@ -615,62 +615,58 @@ function ParamCombobox({
 			<span className="shrink-0 text-pro-text-tertiary">{paramLabel}:</span>
 			<Ariakit.ComboboxProvider
 				resetValueOnHide
-				setValue={(v) => {
+				setInputValue={(v) => {
 					startTransition(() => setSearch(v))
 				}}
+				selectedValue={value}
+				setSelectedValue={(next) => {
+					if (typeof next === 'string') onChange(next)
+				}}
 			>
-				<Ariakit.SelectProvider
-					value={value}
-					setValue={(next) => {
-						if (typeof next === 'string') onChange(next)
-					}}
+				<Ariakit.ComboboxSelect
+					className={`inline-flex max-w-[220px] min-w-[160px] items-center justify-between gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors ${
+						value
+							? 'border-brand/50 bg-brand/5 text-brand'
+							: 'border-subtle bg-surface text-pro-text-secondary hover:border-brand/40 hover:text-pro-text-primary'
+					}`}
 				>
-					<Ariakit.Select
-						className={`inline-flex max-w-[220px] min-w-[160px] items-center justify-between gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors ${
-							value
-								? 'border-brand/50 bg-brand/5 text-brand'
-								: 'border-subtle bg-surface text-pro-text-secondary hover:border-brand/40 hover:text-pro-text-primary'
-						}`}
-					>
-						<span className="truncate font-mono">{current?.label ?? `Pick ${paramLabel.toLowerCase()}…`}</span>
-						<Ariakit.SelectArrow />
-					</Ariakit.Select>
-					<Ariakit.SelectPopover
-						gutter={6}
-						portal
-						sameWidth={false}
-						unmountOnHide
-						className="z-50 flex max-h-80 w-[min(320px,90vw)] flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-lg"
-					>
-						<div className="relative border-b border-subtle p-2">
-							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-							<Ariakit.Combobox
-								autoSelect
-								placeholder={`Filter ${paramLabel.toLowerCase()}s…`}
-								className={searchFieldInputStyles}
-							/>
-						</div>
-						<Ariakit.ComboboxList className="overflow-y-auto">
-							{matches.length === 0 ? (
-								<p className="px-3 py-4 text-center text-xs text-pro-text-tertiary">No matches.</p>
-							) : (
-								matches.map((opt) => (
-									<Ariakit.SelectItem
-										key={opt.value}
-										value={opt.value}
-										render={<Ariakit.ComboboxItem />}
-										className={`flex cursor-pointer items-center justify-between gap-2 px-3 py-1.5 text-xs text-pro-text-primary data-active-item:bg-hover-row ${
-											opt.isChild ? 'pl-6 text-pro-text-secondary' : ''
-										}`}
-									>
-										<span className="truncate">{opt.label}</span>
-										<Ariakit.SelectItemCheck className="ml-auto text-brand" />
-									</Ariakit.SelectItem>
-								))
-							)}
-						</Ariakit.ComboboxList>
-					</Ariakit.SelectPopover>
-				</Ariakit.SelectProvider>
+					<span className="truncate font-mono">{current?.label ?? `Pick ${paramLabel.toLowerCase()}…`}</span>
+					<Ariakit.ComboboxSelectArrow />
+				</Ariakit.ComboboxSelect>
+				<Ariakit.ComboboxPopover
+					gutter={6}
+					portal
+					sameWidth={false}
+					unmountOnHide
+					className="z-50 flex max-h-80 w-[min(320px,90vw)] flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-lg"
+				>
+					<div className="relative border-b border-subtle p-2">
+						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+						<Ariakit.ComboboxInput
+							autoSelect
+							placeholder={`Filter ${paramLabel.toLowerCase()}s…`}
+							className={searchFieldInputStyles}
+						/>
+					</div>
+					<Ariakit.ComboboxList className="overflow-y-auto">
+						{matches.length === 0 ? (
+							<p className="px-3 py-4 text-center text-xs text-pro-text-tertiary">No matches.</p>
+						) : (
+							matches.map((opt) => (
+								<Ariakit.ComboboxItem
+									key={opt.value}
+									value={opt.value}
+									className={`flex cursor-pointer items-center justify-between gap-2 px-3 py-1.5 text-xs text-pro-text-primary data-active-item:bg-hover-row ${
+										opt.isChild ? 'pl-6 text-pro-text-secondary' : ''
+									}`}
+								>
+									<span className="truncate">{opt.label}</span>
+									<Ariakit.ComboboxItemCheck className="ml-auto text-brand" />
+								</Ariakit.ComboboxItem>
+							))
+						)}
+					</Ariakit.ComboboxList>
+				</Ariakit.ComboboxPopover>
 			</Ariakit.ComboboxProvider>
 			{value ? (
 				<button

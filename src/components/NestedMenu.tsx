@@ -26,6 +26,7 @@ export function NestedMenuItem({ ref, ...props }: NestedMenuItemProps) {
 interface NestedMenuProps extends Ariakit.MenuButtonProps<'div'> {
 	label: React.ReactNode
 	portal?: boolean
+	combobox?: Ariakit.MenuStoreProps['combobox']
 	buttonVariant?: 'default' | 'filter'
 	popoverVariant?: 'default' | 'legacy'
 	ref?: React.Ref<HTMLDivElement>
@@ -36,11 +37,12 @@ export function NestedMenu({
 	children,
 	ref,
 	portal,
+	combobox,
 	buttonVariant = 'default',
 	popoverVariant = 'default',
 	...props
 }: NestedMenuProps) {
-	const menu = Ariakit.useMenuStore()
+	const menu = Ariakit.useMenuStore({ combobox })
 	const shouldPortalMenu = portal ?? true
 
 	const useLegacyPopover = popoverVariant === 'legacy'
@@ -100,7 +102,7 @@ export function NestedMenu({
 						<Ariakit.MenuHeading className="min-w-0 truncate text-center label-md text-primary">
 							{label}
 						</Ariakit.MenuHeading>
-						<Ariakit.MenuDismiss className={nestedMenuHeaderIconButtonStyles}>
+						<Ariakit.MenuDismiss onClick={() => menu.hideAll()} className={nestedMenuHeaderIconButtonStyles}>
 							<Icon name="x" className="size-4" />
 							<span className="sr-only">Close menu</span>
 						</Ariakit.MenuDismiss>

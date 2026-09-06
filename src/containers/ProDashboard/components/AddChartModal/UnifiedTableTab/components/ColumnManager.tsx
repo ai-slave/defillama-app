@@ -539,6 +539,8 @@ export function ColumnManager({
 				break
 			case 'Escape':
 				e.preventDefault()
+				// Dismiss the suggestions only; the enclosing Ariakit dialog stays open.
+				e.stopPropagation()
 				setShowAutocomplete(false)
 				setAutocompleteIndex(-1)
 				break

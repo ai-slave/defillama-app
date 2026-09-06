@@ -37,12 +37,12 @@ type TokenStatus = (typeof TOKEN_STATUS_OPTIONS)[number]['value']
 function InterestSelect({ value, onChange }: { value: string; onChange: (value: string) => void }) {
 	const selected = INTEREST_OPTIONS.find((option) => option.value === value)
 	return (
-		<Ariakit.SelectProvider value={value} setValue={onChange}>
-			<Ariakit.Select className={`${inputStyles} flex w-full items-center justify-between gap-2`}>
+		<Ariakit.ComboboxProvider selectedValue={value} setSelectedValue={onChange}>
+			<Ariakit.ComboboxSelect className={`${inputStyles} flex w-full items-center justify-between gap-2`}>
 				<span className={selected ? '' : 'text-tertiary'}>{selected?.label ?? 'Select an option'}</span>
-				<Ariakit.SelectArrow />
-			</Ariakit.Select>
-			<Ariakit.SelectPopover
+				<Ariakit.ComboboxSelectArrow />
+			</Ariakit.ComboboxSelect>
+			<Ariakit.ComboboxPopover
 				gutter={6}
 				sameWidth
 				wrapperProps={{ className: popoverMobileWrapperClassName }}
@@ -53,15 +53,19 @@ function InterestSelect({ value, onChange }: { value: string; onChange: (value: 
 					<Icon name="x" className="size-5" />
 				</Ariakit.PopoverDismiss>
 				{INTEREST_OPTIONS.map((option) => (
-					<Ariakit.SelectItem key={option.value} value={option.value} className={popoverRowWithBorderStyles}>
+					<Ariakit.ComboboxItem key={option.value} value={option.value} className={popoverRowWithBorderStyles}>
 						<span>{option.label}</span>
-						<span className={popoverSingleSelectCheckStyles(option.value === value)}>
-							<Icon name="check" className="size-3" />
-						</span>
-					</Ariakit.SelectItem>
+						<Ariakit.ComboboxItemSelected>
+							{(isSelected) => (
+								<span className={popoverSingleSelectCheckStyles(isSelected)}>
+									<Icon name="check" className="size-3" />
+								</span>
+							)}
+						</Ariakit.ComboboxItemSelected>
+					</Ariakit.ComboboxItem>
 				))}
-			</Ariakit.SelectPopover>
-		</Ariakit.SelectProvider>
+			</Ariakit.ComboboxPopover>
+		</Ariakit.ComboboxProvider>
 	)
 }
 
@@ -78,7 +82,7 @@ function TokenCombobox({ onSelect, onManual }: { onSelect: (token: TokenSearchRe
 	const tokens = (results.data ?? []).slice(0, 8)
 
 	return (
-		<Ariakit.ComboboxProvider value={query} setValue={setQuery}>
+		<Ariakit.ComboboxProvider inputValue={query} setInputValue={setQuery}>
 			<Ariakit.Combobox
 				placeholder="Search your token by name or ticker"
 				autoSelect

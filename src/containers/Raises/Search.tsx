@@ -50,7 +50,7 @@ export function RaisesSearch({ list }: { list?: Array<string> }) {
 		<div className="relative hidden flex-col rounded-md data-[alwaysdisplay=true]:flex lg:flex">
 			<Ariakit.ComboboxProvider
 				resetValueOnHide
-				setValue={(value) => {
+				setInputValue={(value) => {
 					startTransition(() => {
 						setSearchValue(value)
 					})

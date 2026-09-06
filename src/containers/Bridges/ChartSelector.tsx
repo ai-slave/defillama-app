@@ -16,18 +16,14 @@ interface IProps {
 }
 
 export function ChartSelector({ options, selectedChart, onClick }: IProps) {
-	const onItemClick = (chartType: string) => {
-		onClick(chartType)
-	}
-
 	return (
-		<Ariakit.SelectProvider value={selectedChart} setValue={onItemClick}>
-			<Ariakit.Select className={`${selectTriggerStyles('filter', 'md')} z-10 mr-auto`}>
+		<Ariakit.ComboboxProvider selectedValue={selectedChart} setSelectedValue={onClick}>
+			<Ariakit.ComboboxSelect className={`${selectTriggerStyles('filter', 'md')} z-10 mr-auto`}>
 				<span className="truncate">{selectedChart}</span>
-				<Ariakit.SelectArrow />
-			</Ariakit.Select>
+				<Ariakit.ComboboxSelectArrow />
+			</Ariakit.ComboboxSelect>
 
-			<Ariakit.SelectPopover
+			<Ariakit.ComboboxPopover
 				unmountOnHide
 				hideOnInteractOutside
 				gutter={6}
@@ -40,18 +36,11 @@ export function ChartSelector({ options, selectedChart, onClick }: IProps) {
 				</Ariakit.PopoverDismiss>
 
 				{options.map((option) => (
-					<Ariakit.SelectItem
-						value={option}
-						key={option}
-						focusOnHover
-						setValueOnClick={false}
-						onClick={() => onItemClick(option)}
-						className={popoverRowWithBorderStyles}
-					>
+					<Ariakit.ComboboxItem value={option} key={option} className={popoverRowWithBorderStyles}>
 						{option}
-					</Ariakit.SelectItem>
+					</Ariakit.ComboboxItem>
 				))}
-			</Ariakit.SelectPopover>
-		</Ariakit.SelectProvider>
+			</Ariakit.ComboboxPopover>
+		</Ariakit.ComboboxProvider>
 	)
 }

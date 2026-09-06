@@ -154,6 +154,14 @@ describe('useStablecoinChartSelection', () => {
 
 		act(() => latest.setSelectedSeries([doubleCountedLabel]))
 		expect(latest.activeSeries).toEqual([doubleCountedLabel])
+		act(() => latest.setSelectedSeries([]))
+		await renderSelection(series)
+		expect(latest.activeSeries).toEqual([])
+		expect(latest.renderedCharts).toEqual(new Set())
+		act(() => latest.setSelectedSeries([canonicalLabel, doubleCountedLabel]))
+		expect(latest.activeSeries).toEqual([canonicalLabel, doubleCountedLabel])
+		act(() => latest.setSelectedSeries([canonicalLabel]))
+		expect(latest.activeSeries).toEqual([canonicalLabel])
 
 		const filteredSeries = prepareStablecoinMarketCapSeries({
 			rows: [doubleCountedRow],

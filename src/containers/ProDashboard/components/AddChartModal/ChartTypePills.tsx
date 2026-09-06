@@ -88,35 +88,34 @@ export function ChartTypePills({
 	}
 
 	return (
-		<Ariakit.SelectProvider
-			value={selectedType || ''}
-			setValue={(value) => {
+		<Ariakit.ComboboxProvider
+			selectedValue={selectedType || ''}
+			setSelectedValue={(value) => {
 				if (value && typeof value === 'string') {
 					onSelect(value)
 				}
 			}}
 		>
-			<Ariakit.Select className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg border border-pro-cards-border bg-pro-cards-bg px-3 py-2 text-xs text-pro-text-primary transition-colors hover:border-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden">
+			<Ariakit.ComboboxSelect className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg border border-pro-cards-border bg-pro-cards-bg px-3 py-2 text-xs text-pro-text-primary transition-colors hover:border-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden">
 				<span className={selectedType ? 'text-pro-text-primary' : 'text-pro-text-tertiary'}>{selectedLabel}</span>
-				<Ariakit.SelectArrow />
-			</Ariakit.Select>
-			<Ariakit.SelectPopover
+				<Ariakit.ComboboxSelectArrow />
+			</Ariakit.ComboboxSelect>
+			<Ariakit.ComboboxPopover
 				gutter={4}
 				sameWidth
 				unmountOnHide
 				className="z-50 max-h-[320px] overflow-auto overscroll-contain rounded-lg border border-pro-cards-border bg-surface shadow-lg"
 			>
 				{groupedOptions.map(({ group, options }) => (
-					<Ariakit.SelectGroup key={group} className="py-1">
-						<Ariakit.SelectGroupLabel className="px-3 py-1.5 text-[10px] font-semibold tracking-wide text-pro-text-tertiary uppercase">
+					<Ariakit.ComboboxGroup key={group} className="py-1">
+						<Ariakit.ComboboxGroupLabel className="px-3 py-1.5 text-[10px] font-semibold tracking-wide text-pro-text-tertiary uppercase">
 							{group}
-						</Ariakit.SelectGroupLabel>
+						</Ariakit.ComboboxGroupLabel>
 						{options.map((option) => {
 							const isAvailable = option.available !== false
-							const isSelected = selectedType === option.value
 
 							return (
-								<Ariakit.SelectItem
+								<Ariakit.ComboboxItem
 									key={option.value}
 									value={option.value}
 									disabled={!isAvailable}
@@ -127,13 +126,17 @@ export function ChartTypePills({
 									}`}
 								>
 									<span>{option.label}</span>
-									{isSelected ? <Icon name="check" height={14} width={14} className="text-pro-accent" /> : null}
-								</Ariakit.SelectItem>
+									<Ariakit.ComboboxItemSelected>
+										{(selected) =>
+											selected ? <Icon name="check" height={14} width={14} className="text-pro-accent" /> : null
+										}
+									</Ariakit.ComboboxItemSelected>
+								</Ariakit.ComboboxItem>
 							)
 						})}
-					</Ariakit.SelectGroup>
+					</Ariakit.ComboboxGroup>
 				))}
-			</Ariakit.SelectPopover>
-		</Ariakit.SelectProvider>
+			</Ariakit.ComboboxPopover>
+		</Ariakit.ComboboxProvider>
 	)
 }

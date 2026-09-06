@@ -71,7 +71,7 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 			<Ariakit.ComboboxProvider
 				open={open}
 				setOpen={setOpen}
-				setValue={(next) => setSearchValue(next)}
+				setInputValue={(next) => setSearchValue(next)}
 				resetValueOnHide
 			>
 				<div

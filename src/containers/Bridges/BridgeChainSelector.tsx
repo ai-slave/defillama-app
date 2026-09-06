@@ -54,69 +54,61 @@ export function BridgeChainSelector({ options, currentChain, handleClick }: IPro
 	return (
 		<Ariakit.ComboboxProvider
 			resetValueOnHide
-			setValue={(value) => {
+			setInputValue={(value) => {
 				React.startTransition(() => {
 					setSearchValue(value)
 				})
 			}}
+			selectedValue={currentChain}
+			setSelectedValue={handleClick}
 		>
-			<Ariakit.SelectProvider
-				value={currentChain}
-				setValue={(values) => {
-					handleClick(values)
-				}}
+			<Ariakit.ComboboxSelect className={selectTriggerStyles('filter', 'md')}>
+				{currentChain}
+				<Ariakit.ComboboxSelectArrow className="ml-auto" />
+			</Ariakit.ComboboxSelect>
+			<Ariakit.ComboboxPopover
+				unmountOnHide
+				hideOnInteractOutside
+				gutter={6}
+				wrapperProps={{ className: popoverMobileWrapperClassName }}
+				className={popoverSurfaceStyles}
+				portal
 			>
-				<Ariakit.Select className={selectTriggerStyles('filter', 'md')}>
-					{currentChain}
-					<Ariakit.SelectArrow className="ml-auto" />
-				</Ariakit.Select>
-				<Ariakit.SelectPopover
-					unmountOnHide
-					hideOnInteractOutside
-					gutter={6}
-					wrapperProps={{ className: popoverMobileWrapperClassName }}
-					className={popoverSurfaceStyles}
-					portal
-				>
-					<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
-						<Icon name="x" className="size-5" />
-					</Ariakit.PopoverDismiss>
+				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
+					<Icon name="x" className="size-5" />
+				</Ariakit.PopoverDismiss>
 
-					<span className={popoverSearchBlockWithBottomPaddingStyles}>
-						<Ariakit.Combobox placeholder="Search..." className={`${inputStyles} w-full`} />
-					</span>
+				<span className={popoverSearchBlockWithBottomPaddingStyles}>
+					<Ariakit.ComboboxInput placeholder="Search..." className={`${inputStyles} w-full`} />
+				</span>
 
-					{matches.length > 0 ? (
-						<>
-							<Ariakit.ComboboxList ref={comboboxRef}>
-								{matches.slice(0, viewableMatches).map((option) => (
-									<Ariakit.SelectItem
-										key={`bridge-chain-${option.name}`}
-										value={option.name}
-										className={`${popoverRowWithBorderStyles} group justify-start gap-4`}
-										render={<Ariakit.ComboboxItem />}
-									>
-										<span>{option.name}</span>
-									</Ariakit.SelectItem>
-								))}
-								{matches.length > viewableMatches ? (
-									<Ariakit.ComboboxItem
-										value="__see_more__"
-										setValueOnClick={false}
-										hideOnClick={false}
-										className={popoverSeeMoreStyles}
-										onClick={handleSeeMore}
-									>
-										See more...
-									</Ariakit.ComboboxItem>
-								) : null}
-							</Ariakit.ComboboxList>
-						</>
-					) : (
-						<NoResults />
-					)}
-				</Ariakit.SelectPopover>
-			</Ariakit.SelectProvider>
+				{matches.length > 0 ? (
+					<Ariakit.ComboboxList ref={comboboxRef}>
+						{matches.slice(0, viewableMatches).map((option) => (
+							<Ariakit.ComboboxItem
+								key={`bridge-chain-${option.name}`}
+								value={option.name}
+								className={`${popoverRowWithBorderStyles} group justify-start gap-4`}
+							>
+								<span>{option.name}</span>
+							</Ariakit.ComboboxItem>
+						))}
+						{matches.length > viewableMatches ? (
+							<Ariakit.ComboboxItem
+								value="__see_more__"
+								selectValueOnClick={false}
+								hideOnClick={false}
+								className={popoverSeeMoreStyles}
+								onClick={handleSeeMore}
+							>
+								See more...
+							</Ariakit.ComboboxItem>
+						) : null}
+					</Ariakit.ComboboxList>
+				) : (
+					<NoResults />
+				)}
+			</Ariakit.ComboboxPopover>
 		</Ariakit.ComboboxProvider>
 	)
 }

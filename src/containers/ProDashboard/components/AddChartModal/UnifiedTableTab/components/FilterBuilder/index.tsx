@@ -459,35 +459,35 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 					<Icon name="x" className="size-3" />
 				</button>
 			</div>
-			<Ariakit.SelectProvider
-				value={filter.operator || '>='}
-				setValue={(value) => {
+			<Ariakit.ComboboxProvider
+				selectedValue={filter.operator || '>='}
+				setSelectedValue={(value) => {
 					const operator = OPERATORS.find((option) => option.value === value)?.value
 					if (!operator) throw new Error(`Unsupported numeric filter operator: ${value}`)
 					handleOperatorChange(operator)
 				}}
 			>
-				<Ariakit.Select className="flex h-6 w-full cursor-pointer items-center justify-between rounded-sm border border-current/20 bg-black/30 px-2 text-[11px] outline-hidden focus:border-current/50">
-					<Ariakit.SelectValue />
-					<Ariakit.SelectArrow />
-				</Ariakit.Select>
-				<Ariakit.SelectPopover
+				<Ariakit.ComboboxSelect className="flex h-6 w-full cursor-pointer items-center justify-between rounded-sm border border-current/20 bg-black/30 px-2 text-[11px] outline-hidden focus:border-current/50">
+					<Ariakit.ComboboxSelectedValue />
+					<Ariakit.ComboboxSelectArrow />
+				</Ariakit.ComboboxSelect>
+				<Ariakit.ComboboxPopover
 					portal
 					gutter={4}
 					sameWidth
 					className="z-100 rounded-sm border border-pro-cards-border bg-pro-cards-bg py-1 shadow-lg"
 				>
 					{OPERATORS.map((op) => (
-						<Ariakit.SelectItem
+						<Ariakit.ComboboxItem
 							key={op.value}
 							value={op.value}
 							className="cursor-pointer px-2.5 py-1 text-xs text-pro-text-primary hover:bg-(--cards-bg2) data-active-item:bg-(--cards-bg2)"
 						>
 							{op.label}
-						</Ariakit.SelectItem>
+						</Ariakit.ComboboxItem>
 					))}
-				</Ariakit.SelectPopover>
-			</Ariakit.SelectProvider>
+				</Ariakit.ComboboxPopover>
+			</Ariakit.ComboboxProvider>
 			{isBetween ? (
 				<div className="flex items-center gap-1.5">
 					{prefix ? <span className="text-[10px] opacity-70">{prefix}</span> : null}

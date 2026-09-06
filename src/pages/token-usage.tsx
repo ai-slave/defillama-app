@@ -365,8 +365,8 @@ export const TokenUsageSearch = () => {
 
 	return (
 		<Ariakit.ComboboxProvider
-			value={searchValue}
-			setValue={(nextValue) => {
+			inputValue={searchValue}
+			setInputValue={(nextValue) => {
 				startTransition(() => {
 					setSearchValue(nextValue)
 				})

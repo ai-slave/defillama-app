@@ -164,14 +164,14 @@ export function ArticleMetaDialog({
 			<div className="mt-6 grid gap-6">
 				<MetaSection title="Section">
 					<div className="grid gap-1.5">
-						<Ariakit.SelectProvider
-							value={article.section ?? ''}
-							setValue={(v) => {
+						<Ariakit.ComboboxProvider
+							selectedValue={article.section ?? ''}
+							setSelectedValue={(v) => {
 								const next = typeof v === 'string' ? v : Array.isArray(v) ? v[0] : ''
 								updateArticle('section', (next || null) as ArticleSection | null)
 							}}
 						>
-							<Ariakit.Select
+							<Ariakit.ComboboxSelect
 								aria-label="Article section"
 								className={`flex h-10 items-center justify-between gap-2 rounded-md border bg-page px-3 text-sm transition-colors focus-visible:border-link focus-visible:outline-hidden data-[state=open]:border-link ${
 									publishErrors.section
@@ -184,9 +184,9 @@ export function ArticleMetaDialog({
 								<span className="truncate text-left">
 									{article.section ? ARTICLE_SECTION_LABELS[article.section] : 'Select a section…'}
 								</span>
-								<Ariakit.SelectArrow className="shrink-0 text-tertiary" />
-							</Ariakit.Select>
-							<Ariakit.SelectPopover
+								<Ariakit.ComboboxSelectArrow className="shrink-0 text-tertiary" />
+							</Ariakit.ComboboxSelect>
+							<Ariakit.ComboboxPopover
 								gutter={6}
 								sameWidth
 								portal
@@ -194,17 +194,17 @@ export function ArticleMetaDialog({
 								className="z-[90] flex flex-col overflow-hidden rounded-md border border-medium bg-surface py-1 text-sm shadow-xl outline-hidden"
 							>
 								{ARTICLE_SECTIONS.map((section) => (
-									<Ariakit.SelectItem
+									<Ariakit.ComboboxItem
 										key={section}
 										value={section}
 										className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-secondary data-active-item:bg-research-tint data-active-item:text-link"
 									>
 										<span className="truncate">{ARTICLE_SECTION_LABELS[section]}</span>
-										<Ariakit.SelectItemCheck className="shrink-0 text-link" />
-									</Ariakit.SelectItem>
+										<Ariakit.ComboboxItemCheck className="shrink-0 text-link" />
+									</Ariakit.ComboboxItem>
 								))}
-							</Ariakit.SelectPopover>
-						</Ariakit.SelectProvider>
+							</Ariakit.ComboboxPopover>
+						</Ariakit.ComboboxProvider>
 						<MetaFieldHint error={publishErrors.section}>
 							Required. Drives the URL path:{' '}
 							<span className="font-jetbrains text-secondary">

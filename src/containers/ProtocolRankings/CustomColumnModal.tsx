@@ -160,6 +160,8 @@ export function CustomColumnModal({
 				e.preventDefault()
 			}
 		} else if (e.key === 'Escape') {
+			// Dismiss the suggestions only; the enclosing Ariakit dialog stays open.
+			e.stopPropagation()
 			setState((prev) => ({ ...prev, showSuggestions: false }))
 		}
 	}

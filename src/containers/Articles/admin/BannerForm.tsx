@@ -296,14 +296,14 @@ export function BannerForm({ banner }: Props) {
 					{state.scope === 'section' ? (
 						<div className="grid gap-1.5">
 							<span className="text-sm font-medium text-primary">Section</span>
-							<Ariakit.SelectProvider
-								value={state.section}
-								setValue={(v) => {
+							<Ariakit.ComboboxProvider
+								selectedValue={state.section}
+								setSelectedValue={(v) => {
 									const next = typeof v === 'string' ? v : Array.isArray(v) ? v[0] : ''
 									update({ section: next as ArticleSection })
 								}}
 							>
-								<Ariakit.Select
+								<Ariakit.ComboboxSelect
 									aria-label="Banner section"
 									className={`flex h-10 items-center justify-between gap-2 rounded-md border bg-page px-3 text-sm transition-colors focus-visible:border-link focus-visible:outline-hidden data-[state=open]:border-link ${
 										errors.section
@@ -316,9 +316,9 @@ export function BannerForm({ banner }: Props) {
 									<span className="truncate text-left">
 										{state.section ? ARTICLE_SECTION_LABELS[state.section as ArticleSection] : 'Select a section…'}
 									</span>
-									<Ariakit.SelectArrow className="shrink-0 text-tertiary" />
-								</Ariakit.Select>
-								<Ariakit.SelectPopover
+									<Ariakit.ComboboxSelectArrow className="shrink-0 text-tertiary" />
+								</Ariakit.ComboboxSelect>
+								<Ariakit.ComboboxPopover
 									gutter={6}
 									sameWidth
 									portal
@@ -326,17 +326,17 @@ export function BannerForm({ banner }: Props) {
 									className="z-[90] flex flex-col overflow-hidden rounded-md border border-medium bg-surface py-1 text-sm shadow-xl outline-hidden"
 								>
 									{ARTICLE_SECTIONS.map((section) => (
-										<Ariakit.SelectItem
+										<Ariakit.ComboboxItem
 											key={section}
 											value={section}
 											className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-secondary data-active-item:bg-research-tint data-active-item:text-link"
 										>
 											<span className="truncate">{ARTICLE_SECTION_LABELS[section]}</span>
-											<Ariakit.SelectItemCheck className="shrink-0 text-link" />
-										</Ariakit.SelectItem>
+											<Ariakit.ComboboxItemCheck className="shrink-0 text-link" />
+										</Ariakit.ComboboxItem>
 									))}
-								</Ariakit.SelectPopover>
-							</Ariakit.SelectProvider>
+								</Ariakit.ComboboxPopover>
+							</Ariakit.ComboboxProvider>
 							{errors.section ? <p className="text-xs text-error">{errors.section}</p> : null}
 						</div>
 					) : null}

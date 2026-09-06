@@ -48,7 +48,7 @@ export function OtherLinks({ options, name, keyPrefix = 'row-links', isActive, c
 	return (
 		<Ariakit.ComboboxProvider
 			resetValueOnHide
-			setValue={(value) => {
+			setInputValue={(value) => {
 				startTransition(() => {
 					setSearchValue(value)
 				})

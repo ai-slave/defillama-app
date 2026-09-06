@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'vitest'
+import { getQueryUpdatesFromSelected } from '~/components/Select/query'
 import {
 	filterStablecoinAssets,
 	resolveStablecoinFilterState,
+	resolveSelectedStablecoinFilterKeys,
 	stablecoinAttributeOptions,
 	stablecoinBackingOptions,
 	stablecoinPegTypeOptions
@@ -134,5 +136,67 @@ describe('stablecoin filter policy', () => {
 
 		expect(state.minMcap).toBeNull()
 		expect(state.hasActiveFilters).toBe(true)
+	})
+})
+
+describe('stablecoin selection URL round trips', () => {
+	const groups = [
+		{ name: 'attributes', include: 'attribute', exclude: 'excludeAttribute', options: stablecoinAttributeOptions },
+		{ name: 'backing', include: 'backing', exclude: 'excludeBacking', options: stablecoinBackingOptions },
+		{ name: 'peg types', include: 'pegtype', exclude: 'excludePegtype', options: stablecoinPegTypeOptions },
+		{
+			name: 'chain-scoped backing',
+			include: 'backing',
+			exclude: 'excludeBacking',
+			options: stablecoinBackingOptions.slice(0, 2)
+		}
+	] as const
+	for (const { name, include, exclude, options } of groups) {
+		test(`preserves none, all, only and every individual deselection for ${name}`, () => {
+			const all = options.map((option) => option.key)
+			const selections = [
+				[],
+				all,
+				...all.map((key) => [key]),
+				...all.map((key) => all.filter((value) => value !== key))
+			]
+			for (const selection of selections) {
+				const updates = getQueryUpdatesFromSelected(include, exclude, all, selection)
+				const restored = resolveSelectedStablecoinFilterKeys({
+					includeParam: updates[include],
+					excludeParam: updates[exclude],
+					options
+				})
+				expect(new Set(restored)).toEqual(new Set(selection))
+			}
+			expect(getQueryUpdatesFromSelected(include, exclude, all, [])).toEqual({
+				[include]: 'None',
+				[exclude]: undefined
+			})
+			expect(getQueryUpdatesFromSelected(include, exclude, all, all)).toEqual({
+				[include]: undefined,
+				[exclude]: undefined
+			})
+		})
+	}
+
+	test('keeps explicit empty selection empty in the data pipeline', () => {
+		const rows = [stablecoin({ pegDeviation: 0, mcap: 100 })]
+		for (const key of ['attribute', 'backing', 'pegtype']) {
+			expect(filterStablecoinAssets(rows, resolveStablecoinFilterState({ [key]: 'None' }))).toEqual([])
+		}
+	})
+
+	test('preserves OR semantics for overlapping attributes', () => {
+		const rows = [stablecoin({ pegDeviation: 0, yieldBearing: true, mcap: 100 })]
+		expect(filterStablecoinAssets(rows, resolveStablecoinFilterState({ excludeAttribute: 'YIELDBEARING' }))).toEqual(
+			rows
+		)
+		expect(filterStablecoinAssets(rows, resolveStablecoinFilterState({ attribute: 'DEPEGGED' }))).toEqual([])
+	})
+
+	test('does not allocate a new asset list for the default unfiltered view', () => {
+		const rows = [stablecoin({ pegDeviation: 0, mcap: 100 })]
+		expect(filterStablecoinAssets(rows, resolveStablecoinFilterState({}))).toBe(rows)
 	})
 })

@@ -49,3 +49,33 @@ describe('getQueryUpdatesFromSelected', () => {
 		})
 	})
 })
+
+describe('non-all selection defaults', () => {
+	const all = ['default', 'opt-in', 'other']
+	test('keeps selecting everything explicit when one option is the default', () => {
+		expect(getQueryUpdatesFromSelected('include', 'exclude', all, null, ['default'])).toEqual({
+			include: all,
+			exclude: undefined
+		})
+		expect(getQueryUpdatesFromSelected('include', 'exclude', all, all, ['default'])).toEqual({
+			include: all,
+			exclude: undefined
+		})
+	})
+	test('writes None when deselecting the last default option', () => {
+		expect(getQueryUpdatesFromSelected('include', 'exclude', all, [], ['default'])).toEqual({
+			include: 'None',
+			exclude: undefined
+		})
+	})
+	test('removes overrides only when the default selection is restored', () => {
+		expect(getQueryUpdatesFromSelected('include', 'exclude', all, ['default'], ['default'])).toEqual({
+			include: undefined,
+			exclude: undefined
+		})
+		expect(getQueryUpdatesFromSelected('include', 'exclude', all, ['opt-in'], ['default'])).toEqual({
+			include: 'opt-in',
+			exclude: undefined
+		})
+	})
+})

@@ -42,7 +42,7 @@ export function ResearchLimitModal({
 	const isLifetime = period === 'lifetime'
 	const isBlocked = period === 'blocked'
 	const { isTrial } = useAuthContext()
-	const open = dialogStore.useState('open')
+	const open = Ariakit.useStoreState(dialogStore, 'open')
 
 	// Freeze the dialog choice while open: a successful upgrade flips isTrial, and
 	// swapping in the paid-plan dialog would replace the success pane mid-view.

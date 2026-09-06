@@ -75,8 +75,8 @@ export function ArticlePageAssetPicker({
 			<Ariakit.ComboboxProvider
 				open={open && !atLimit}
 				setOpen={setOpen}
-				value={searchValue}
-				setValue={setSearchValue}
+				inputValue={searchValue}
+				setInputValue={setSearchValue}
 				resetValueOnHide
 			>
 				<div

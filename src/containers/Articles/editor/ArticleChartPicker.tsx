@@ -63,15 +63,18 @@ function ChartTypeSelect({
 }) {
 	const labelFor = (key: string) => CHART_TYPES[key as keyof typeof CHART_TYPES]?.title || key
 	return (
-		<Ariakit.SelectProvider value={value} setValue={(v) => onChange(typeof v === 'string' ? v : v[0])}>
-			<Ariakit.Select
+		<Ariakit.ComboboxProvider
+			selectedValue={value}
+			setSelectedValue={(v) => onChange(typeof v === 'string' ? v : v[0])}
+		>
+			<Ariakit.ComboboxSelect
 				className="flex h-7 w-44 items-center justify-between gap-2 rounded-md border border-medium bg-surface px-2.5 text-xs text-primary transition-colors hover:border-tertiary focus-visible:border-link focus-visible:outline-hidden data-[state=open]:border-link"
 				aria-label="Chart type"
 			>
 				<span className="truncate text-left">{labelFor(value)}</span>
-				<Ariakit.SelectArrow className="shrink-0 text-tertiary" />
-			</Ariakit.Select>
-			<Ariakit.SelectPopover
+				<Ariakit.ComboboxSelectArrow className="shrink-0 text-tertiary" />
+			</Ariakit.ComboboxSelect>
+			<Ariakit.ComboboxPopover
 				gutter={4}
 				sameWidth
 				portal
@@ -79,17 +82,17 @@ function ChartTypeSelect({
 				className="z-[90] flex max-h-72 flex-col overflow-auto rounded-md border border-medium bg-surface py-1 text-xs shadow-lg outline-hidden"
 			>
 				{options.map((option) => (
-					<Ariakit.SelectItem
+					<Ariakit.ComboboxItem
 						key={option}
 						value={option}
 						className="flex shrink-0 cursor-pointer items-center justify-between gap-3 px-2.5 py-1.5 text-secondary hover:bg-research-tint-hover hover:text-primary data-active-item:bg-research-tint-hover data-active-item:text-primary"
 					>
 						<span className="truncate">{labelFor(option)}</span>
-						<Ariakit.SelectItemCheck className="shrink-0 text-link" />
-					</Ariakit.SelectItem>
+						<Ariakit.ComboboxItemCheck className="shrink-0 text-link" />
+					</Ariakit.ComboboxItem>
 				))}
-			</Ariakit.SelectPopover>
-		</Ariakit.SelectProvider>
+			</Ariakit.ComboboxPopover>
+		</Ariakit.ComboboxProvider>
 	)
 }
 

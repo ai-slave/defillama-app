@@ -39,9 +39,9 @@ interface ISelectBase {
 	labelType?: 'regular' | 'smol' | 'none'
 	variant: SelectTriggerVariant
 	size: SelectTriggerSize
-	triggerProps?: Ariakit.SelectProps
+	triggerProps?: Ariakit.ComboboxSelectProps
 	portal?: boolean
-	placement?: Ariakit.SelectProviderProps['placement']
+	placement?: Ariakit.ComboboxProviderProps['placement']
 	defaultSelectedValues?: Array<string>
 	unmountOnHide?: boolean
 	popoverVariant?: 'default' | 'legacy'
@@ -94,6 +94,8 @@ export function Select(props: ISelect) {
 		popoverVariant = 'default'
 	} = props
 	const router = useRouter()
+	// Nested menus share their parent's values, so each select needs its own field.
+	const selectionName = React.useId()
 	const labelText = typeof label === 'string' ? label : typeof label === 'number' ? String(label) : 'Select'
 
 	const getOptionKey = React.useCallback((option: string | { key: string }) => {
@@ -183,24 +185,11 @@ export function Select(props: ISelect) {
 		},
 		[getAllKeys, props, router]
 	)
-	const toggleMultiValue = (value: string) => {
-		const currentValues = Array.isArray(selectedValues) ? selectedValues : selectedValues ? [selectedValues] : []
-		if (currentValues.includes(value)) {
-			setSelectedValues(currentValues.filter((currentValue) => currentValue !== value))
-			return
-		}
-		setSelectedValues([...currentValues, value])
-	}
-
 	const [viewableMatches, setViewableMatches] = React.useState(6)
 
 	const canSelectOnlyOne = typeof selectedValues === 'string'
 	const showCheckboxes = !canSelectOnlyOne
 	const selectedCount = canSelectOnlyOne ? (selectedValues ? 1 : 0) : selectedValues.length
-	const isOptionSelected = React.useCallback(
-		(value: string) => (Array.isArray(selectedValues) ? selectedValues.includes(value) : selectedValues === value),
-		[selectedValues]
-	)
 	const useLegacyPopover = popoverVariant === 'legacy' || variant === 'pro'
 	const actionBarStyles = useLegacyPopover ? legacyPopoverActionBarStyles : popoverActionBarStyles
 	const nestedActionBarStyles = useLegacyPopover ? legacyPopoverActionBarStyles : nestedMenuActionBarStyles
@@ -216,22 +205,24 @@ export function Select(props: ISelect) {
 	const selectRef = React.useRef<HTMLDivElement>(null)
 	const nestedMenuRef = React.useRef<HTMLDivElement>(null)
 
+	const ItemCheck = nestedMenu ? Ariakit.MenuItemCheck : Ariakit.ComboboxItemCheck
+	const NestedSelectItem = canSelectOnlyOne ? Ariakit.MenuItemRadio : Ariakit.MenuItemCheckbox
+
 	const renderCheck = (value: string) => {
+		const selected = typeof selectedValues === 'string' ? selectedValues === value : selectedValues.includes(value)
 		if (useLegacyPopover) {
 			return showCheckboxes ? (
-				<Ariakit.SelectItemCheck className={legacyPopoverSelectCheckStyles} />
+				<ItemCheck className={legacyPopoverSelectCheckStyles} />
 			) : (
-				<Ariakit.SelectItemCheck className="ml-auto" />
+				<ItemCheck className="ml-auto" />
 			)
 		}
 
-		const selected = isOptionSelected(value)
-		return showCheckboxes ? (
-			<span className={popoverMultiSelectCheckStyles(selected)} aria-hidden>
-				{selected ? <SelectCheckIcon /> : null}
-			</span>
-		) : (
-			<span className={popoverSingleSelectCheckStyles(selected)} aria-hidden>
+		return (
+			<span
+				className={showCheckboxes ? popoverMultiSelectCheckStyles(selected) : popoverSingleSelectCheckStyles(selected)}
+				aria-hidden
+			>
 				{selected ? <SelectCheckIcon /> : null}
 			</span>
 		)
@@ -243,94 +234,77 @@ export function Select(props: ISelect) {
 		const previousCount = viewableMatches
 		setViewableMatches((prev) => prev + 20)
 		const containerRef = nestedMenuRef.current ? nestedMenuRef : selectRef
-		focusFirstNewItem(containerRef, '[role="option"]', previousCount)
+		focusFirstNewItem(containerRef, nestedMenu ? '[role^="menuitem"]' : '[role="option"]', previousCount)
 	}
 
 	if (nestedMenu) {
 		return (
-			<Ariakit.SelectProvider
-				value={selectedValues}
-				setValue={(values) => {
-					setSelectedValues(values)
-				}}
+			<NestedMenu
+				combobox={null}
+				label={label}
+				render={<button type="button" />}
+				popoverVariant={useLegacyPopover ? 'legacy' : popoverVariant}
 			>
-				<NestedMenu
-					label={label}
-					render={<button type="button" />}
-					popoverVariant={useLegacyPopover ? 'legacy' : popoverVariant}
-				>
-					<div ref={nestedMenuRef}>
-						{showCheckboxes ? (
-							<span className={nestedActionBarStyles}>
-								<button type="button" onClick={clearAll} className={nestedActionButtonStyles}>
-									Deselect All
-								</button>
-								<button type="button" onClick={toggleAll} className={nestedActionButtonStyles}>
-									Select All
-								</button>
-							</span>
-						) : null}
-						{allValues.slice(0, viewableMatches).map((option) => (
-							<NestedMenuItem
-								key={getOptionKey(option)}
-								render={
-									<Ariakit.SelectItem
-										value={getOptionKey(option)}
-										setValueOnClick={!showCheckboxes}
-										hideOnClick={!showCheckboxes}
-										onClick={
-											showCheckboxes
-												? (event) => {
-														event.preventDefault()
-														event.stopPropagation()
-														toggleMultiValue(getOptionKey(option))
-													}
-												: undefined
-										}
-									/>
-								}
-								hideOnClick={false}
-								className={nestedRowStyles}
-							>
-								{typeof option === 'string' ? (
-									<span>{option}</span>
-								) : isSelectOption(option) && option.help ? (
-									<Tooltip content={option.help}>
-										<span className="mr-1">{option.name}</span>
-										<Icon name="help-circle" height={15} width={15} />
-									</Tooltip>
-								) : (
-									<span>{isSelectOption(option) ? option.name : option}</span>
-								)}
-								{renderCheck(getOptionKey(option))}
-							</NestedMenuItem>
-						))}
-						{allValues.length > viewableMatches ? (
-							<Ariakit.SelectItem
-								value="__see_more__"
-								setValueOnClick={false}
-								hideOnClick={false}
-								className={nestedSeeMoreStyles}
-								onClick={handleSeeMore}
-							>
-								See more...
-							</Ariakit.SelectItem>
-						) : null}
-					</div>
-				</NestedMenu>
-			</Ariakit.SelectProvider>
+				<div ref={nestedMenuRef}>
+					{showCheckboxes ? (
+						<span className={nestedActionBarStyles}>
+							<button type="button" onClick={clearAll} className={nestedActionButtonStyles}>
+								Deselect All
+							</button>
+							<button type="button" onClick={toggleAll} className={nestedActionButtonStyles}>
+								Select All
+							</button>
+						</span>
+					) : null}
+					{allValues.slice(0, viewableMatches).map((option) => (
+						<NestedSelectItem
+							key={getOptionKey(option)}
+							name={selectionName}
+							value={getOptionKey(option)}
+							checked={
+								canSelectOnlyOne
+									? selectedValues === getOptionKey(option)
+									: selectedValues.includes(getOptionKey(option))
+							}
+							onChange={(event) => {
+								const value = getOptionKey(option)
+								setSelectedValues(
+									typeof selectedValues === 'string'
+										? value
+										: event.currentTarget.checked
+											? [...selectedValues, value]
+											: selectedValues.filter((selected) => selected !== value)
+								)
+							}}
+							hideOnClick={false}
+							className={nestedRowStyles}
+						>
+							{typeof option === 'string' ? (
+								<span>{option}</span>
+							) : isSelectOption(option) && option.help ? (
+								<Tooltip content={option.help}>
+									<span className="mr-1">{option.name}</span>
+									<Icon name="help-circle" height={15} width={15} />
+								</Tooltip>
+							) : (
+								<span>{isSelectOption(option) ? option.name : option}</span>
+							)}
+							{renderCheck(getOptionKey(option))}
+						</NestedSelectItem>
+					))}
+					{allValues.length > viewableMatches ? (
+						<NestedMenuItem hideOnClick={false} className={nestedSeeMoreStyles} onClick={handleSeeMore}>
+							See more...
+						</NestedMenuItem>
+					) : null}
+				</div>
+			</NestedMenu>
 		)
 	}
 
 	return (
-		<Ariakit.SelectProvider
-			value={selectedValues}
-			setValue={(values) => {
-				setSelectedValues(values)
-			}}
-			placement={placement}
-		>
-			<Ariakit.Select
+		<Ariakit.ComboboxProvider selectedValue={selectedValues} setSelectedValue={setSelectedValues} placement={placement}>
+			<Ariakit.ComboboxSelect
 				className={selectTriggerStyles(variant, size)}
 				aria-label={`${labelText} dropdown`}
 				{...triggerProps}
@@ -356,9 +330,9 @@ export function Select(props: ISelect) {
 				) : (
 					<>{label}</>
 				)}
-				<Ariakit.SelectArrow className="text-tertiary" />
-			</Ariakit.Select>
-			<Ariakit.SelectPopover
+				<Ariakit.ComboboxSelectArrow className="text-tertiary" />
+			</Ariakit.ComboboxSelect>
+			<Ariakit.ComboboxPopover
 				unmountOnHide={unmountOnHide}
 				hideOnInteractOutside
 				gutter={6}
@@ -367,7 +341,7 @@ export function Select(props: ISelect) {
 				portal={shouldPortalPopover}
 				ref={selectRef}
 			>
-				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
+				<Ariakit.PopoverDismiss aria-label="Close options" className={popoverMobileDismissStyles}>
 					<Icon name="x" className="size-5" />
 				</Ariakit.PopoverDismiss>
 
@@ -385,20 +359,9 @@ export function Select(props: ISelect) {
 						) : null}
 
 						{allValues.slice(0, viewableMatches).map((option) => (
-							<Ariakit.SelectItem
+							<Ariakit.ComboboxItem
 								key={getOptionKey(option)}
 								value={getOptionKey(option)}
-								setValueOnClick={!showCheckboxes}
-								hideOnClick={!showCheckboxes}
-								onClick={
-									showCheckboxes
-										? (event) => {
-												event.preventDefault()
-												event.stopPropagation()
-												toggleMultiValue(getOptionKey(option))
-											}
-										: undefined
-								}
 								className={`${rowStyles} group justify-start ${useLegacyPopover ? 'gap-4' : 'gap-2'}`}
 							>
 								{typeof option === 'string' ? (
@@ -424,18 +387,18 @@ export function Select(props: ISelect) {
 									</button>
 								) : null}
 								{renderCheck(getOptionKey(option))}
-							</Ariakit.SelectItem>
+							</Ariakit.ComboboxItem>
 						))}
 						{allValues.length > viewableMatches ? (
-							<Ariakit.SelectItem
+							<Ariakit.ComboboxItem
 								value="__see_more__"
-								setValueOnClick={false}
+								selectValueOnClick={false}
 								hideOnClick={false}
 								className={seeMoreStyles}
 								onClick={handleSeeMore}
 							>
 								See more...
-							</Ariakit.SelectItem>
+							</Ariakit.ComboboxItem>
 						) : null}
 					</>
 				) : (
@@ -443,7 +406,7 @@ export function Select(props: ISelect) {
 						No results found
 					</p>
 				)}
-			</Ariakit.SelectPopover>
-		</Ariakit.SelectProvider>
+			</Ariakit.ComboboxPopover>
+		</Ariakit.ComboboxProvider>
 	)
 }

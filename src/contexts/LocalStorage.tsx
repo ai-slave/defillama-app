@@ -228,6 +228,15 @@ export const isChainsCategoryGroupKey = (value: string): value is ChainsCategory
 export function subscribeToLocalStorage(callback: () => void) {
 	return subscribeToStorageKey(DEFILLAMA, callback)
 }
+
+function subscribeToSettings(callback: () => void) {
+	const unsubscribe = subscribeToLocalStorage(callback)
+	window.addEventListener('popstate', callback)
+	return () => {
+		unsubscribe()
+		window.removeEventListener('popstate', callback)
+	}
+}
 const subscribeToTheme = (cb: () => void) => subscribeToStorageKey(THEME_SYNC_KEY, cb)
 
 const getResolvedTheme = (): 'dark' | 'light' => {
@@ -322,6 +331,8 @@ const updateSetting = (key: string) => {
 	window.history.pushState({}, '', url)
 
 	writeAppStorage({ ...current, [key]: newState })
+	// The URL override can change even when the stored value is already correct.
+	notifyKeyChange(DEFILLAMA)
 }
 
 export const updateAllSettingsInLsAndUrl = (keys: Partial<Record<SettingKey, boolean>>) => {
@@ -341,6 +352,7 @@ export const updateAllSettingsInLsAndUrl = (keys: Partial<Record<SettingKey, boo
 	window.history.pushState({}, '', url)
 
 	writeAppStorage({ ...current, ...keys })
+	notifyKeyChange(DEFILLAMA)
 }
 
 type TSETTINGTYPE =
@@ -400,7 +412,7 @@ export function useLocalStorageSettingsManager<T extends TSETTINGTYPE>(
 	const isClient = useIsClient()
 
 	const snapshot = useSyncExternalStore(
-		subscribeToLocalStorage,
+		subscribeToSettings,
 		() => {
 			try {
 				return computeSettingsSnapshot(keys, isClient)

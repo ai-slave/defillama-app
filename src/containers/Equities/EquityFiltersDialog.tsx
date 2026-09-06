@@ -95,12 +95,15 @@ function OperatorSelect({
 	onChange: (operator: EquityNumericOperator) => void
 }) {
 	return (
-		<Ariakit.SelectProvider value={value} setValue={(nextValue) => onChange(nextValue as EquityNumericOperator)}>
-			<Ariakit.Select className={`${selectTriggerStyles('input', 'md')} shrink-0`}>
-				<Ariakit.SelectValue />
-				<Ariakit.SelectArrow />
-			</Ariakit.Select>
-			<Ariakit.SelectPopover
+		<Ariakit.ComboboxProvider
+			selectedValue={value}
+			setSelectedValue={(nextValue) => onChange(nextValue as EquityNumericOperator)}
+		>
+			<Ariakit.ComboboxSelect className={`${selectTriggerStyles('input', 'md')} shrink-0`}>
+				<Ariakit.ComboboxSelectedValue />
+				<Ariakit.ComboboxSelectArrow />
+			</Ariakit.ComboboxSelect>
+			<Ariakit.ComboboxPopover
 				portal
 				gutter={6}
 				sameWidth
@@ -111,15 +114,19 @@ function OperatorSelect({
 					<Icon name="x" className="size-5" />
 				</Ariakit.PopoverDismiss>
 				{OPERATOR_OPTIONS.map((operator) => (
-					<Ariakit.SelectItem key={operator.value} value={operator.value} className={popoverRowWithBorderStyles}>
+					<Ariakit.ComboboxItem key={operator.value} value={operator.value} className={popoverRowWithBorderStyles}>
 						<span>{operator.label}</span>
-						<span className={popoverSingleSelectCheckStyles(operator.value === value)} aria-hidden>
-							<Icon name="check" className="size-3" />
-						</span>
-					</Ariakit.SelectItem>
+						<Ariakit.ComboboxItemSelected>
+							{(selected) => (
+								<span className={popoverSingleSelectCheckStyles(selected)} aria-hidden>
+									<Icon name="check" className="size-3" />
+								</span>
+							)}
+						</Ariakit.ComboboxItemSelected>
+					</Ariakit.ComboboxItem>
 				))}
-			</Ariakit.SelectPopover>
-		</Ariakit.SelectProvider>
+			</Ariakit.ComboboxPopover>
+		</Ariakit.ComboboxProvider>
 	)
 }
 

@@ -225,8 +225,8 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 								</div>
 							) : (
 								<Ariakit.ComboboxProvider
-									value={repoQuery}
-									setValue={setRepoQuery}
+									inputValue={repoQuery}
+									setInputValue={setRepoQuery}
 									selectedValue={selectedRepo}
 									setSelectedValue={(value) => {
 										if (typeof value === 'string') selectRepository(value)
@@ -290,8 +290,8 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 								</div>
 							) : (
 								<Ariakit.ComboboxProvider
-									value={branchQuery}
-									setValue={setBranchQuery}
+									inputValue={branchQuery}
+									setInputValue={setBranchQuery}
 									selectedValue={effectiveBranch}
 									setSelectedValue={(value) => {
 										if (typeof value === 'string') setSelectedBranch(value || null)

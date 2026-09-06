@@ -194,13 +194,13 @@ export default function Protocols({ emissions }: { emissions: Array<CalendarEmis
 				<PanelHeader className="gap-4 *:last:ml-auto">
 					<PanelTitle as="h1">Crypto Calendar</PanelTitle>
 
-					<Ariakit.SelectProvider
-						value={selectedOptions}
-						setValue={(newOptions) => {
+					<Ariakit.ComboboxProvider
+						selectedValue={selectedOptions}
+						setSelectedValue={(newOptions) => {
 							void pushShallowQuery(router, { type: newOptions })
 						}}
 					>
-						<Ariakit.Select className={selectTriggerStyles('filter', 'md')}>
+						<Ariakit.ComboboxSelect className={selectTriggerStyles('filter', 'md')}>
 							{selectedOptions.length > 0 ? (
 								<>
 									<span>Type: </span>
@@ -213,9 +213,9 @@ export default function Protocols({ emissions }: { emissions: Array<CalendarEmis
 							) : (
 								<span>Filter by type</span>
 							)}
-							<Ariakit.SelectArrow />
-						</Ariakit.Select>
-						<Ariakit.SelectPopover
+							<Ariakit.ComboboxSelectArrow />
+						</Ariakit.ComboboxSelect>
+						<Ariakit.ComboboxPopover
 							unmountOnHide
 							gutter={6}
 							hideOnInteractOutside
@@ -247,15 +247,23 @@ export default function Protocols({ emissions }: { emissions: Array<CalendarEmis
 							</span>
 
 							{options.map((value) => (
-								<Ariakit.SelectItem key={`calendar-type-${value}`} value={value} className={popoverRowWithBorderStyles}>
+								<Ariakit.ComboboxItem
+									key={`calendar-type-${value}`}
+									value={value}
+									className={popoverRowWithBorderStyles}
+								>
 									<span>{value}</span>
-									<span className={popoverMultiSelectCheckStyles(selectedOptionsSet.has(value))} aria-hidden>
-										{selectedOptionsSet.has(value) ? <Icon name="check" className="size-3" /> : null}
-									</span>
-								</Ariakit.SelectItem>
+									<Ariakit.ComboboxItemSelected>
+										{(selected) => (
+											<span className={popoverMultiSelectCheckStyles(selected)} aria-hidden>
+												{selected ? <Icon name="check" className="size-3" /> : null}
+											</span>
+										)}
+									</Ariakit.ComboboxItemSelected>
+								</Ariakit.ComboboxItem>
 							))}
-						</Ariakit.SelectPopover>
-					</Ariakit.SelectProvider>
+						</Ariakit.ComboboxPopover>
+					</Ariakit.ComboboxProvider>
 
 					<label className={searchFieldInlineWrapperStyles}>
 						<span className="sr-only">Search events...</span>

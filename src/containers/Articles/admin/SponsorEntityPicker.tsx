@@ -47,7 +47,7 @@ export function SponsorEntityPicker({
 
 	return (
 		<div className="grid gap-2">
-			<Ariakit.ComboboxProvider open={open} setOpen={setOpen} setValue={setSearchValue} resetValueOnHide>
+			<Ariakit.ComboboxProvider open={open} setOpen={setOpen} setInputValue={setSearchValue} resetValueOnHide>
 				<div className="relative flex items-center">
 					<Icon name="search" height={14} width={14} className="pointer-events-none absolute left-3 text-tertiary" />
 					<Ariakit.Combobox

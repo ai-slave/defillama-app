@@ -40,12 +40,12 @@ export function ShowAsControl({ mode, setMode }: { mode: DisplayMode; setMode: (
 				))}
 			</div>
 			<div className="min-[713px]:hidden">
-				<Ariakit.SelectProvider value={mode} setValue={(value) => setMode(value as DisplayMode)}>
-					<Ariakit.Select className={selectTriggerStyles('filter', 'md')}>
+				<Ariakit.ComboboxProvider selectedValue={mode} setSelectedValue={(value) => setMode(value as DisplayMode)}>
+					<Ariakit.ComboboxSelect className={selectTriggerStyles('filter', 'md')}>
 						{SHORT[mode]}
-						<Ariakit.SelectArrow />
-					</Ariakit.Select>
-					<Ariakit.SelectPopover
+						<Ariakit.ComboboxSelectArrow />
+					</Ariakit.ComboboxSelect>
+					<Ariakit.ComboboxPopover
 						gutter={6}
 						wrapperProps={{ className: popoverMobileWrapperClassName }}
 						className={`${popoverSurfaceStyles} z-50 min-w-[11rem]`}
@@ -55,15 +55,19 @@ export function ShowAsControl({ mode, setMode }: { mode: DisplayMode; setMode: (
 							<Icon name="x" className="size-5" />
 						</Ariakit.PopoverDismiss>
 						{DISPLAY_MODES.map((option) => (
-							<Ariakit.SelectItem key={option} value={option} className={popoverRowWithBorderStyles}>
+							<Ariakit.ComboboxItem key={option} value={option} className={popoverRowWithBorderStyles}>
 								<span>{LABELS[option]}</span>
-								<span className={popoverSingleSelectCheckStyles(option === mode)} aria-hidden>
-									{option === mode ? <Icon name="check" className="size-3" /> : null}
-								</span>
-							</Ariakit.SelectItem>
+								<Ariakit.ComboboxItemSelected>
+									{(selected) => (
+										<span className={popoverSingleSelectCheckStyles(selected)} aria-hidden>
+											{selected ? <Icon name="check" className="size-3" /> : null}
+										</span>
+									)}
+								</Ariakit.ComboboxItemSelected>
+							</Ariakit.ComboboxItem>
 						))}
-					</Ariakit.SelectPopover>
-				</Ariakit.SelectProvider>
+					</Ariakit.ComboboxPopover>
+				</Ariakit.ComboboxProvider>
 			</div>
 		</>
 	)
