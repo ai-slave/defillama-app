@@ -381,6 +381,7 @@ export default function MarketTreemapChart({
 		const byIconKey = new Map<number, PreparedMarketTreemapLeaf>()
 		for (const leaf of leaves) {
 			if (byIconKey.has(leaf.iconKey)) throw new Error(`Duplicate market treemap icon key ${leaf.iconKey}`)
+			// oxlint-disable-next-line react/refs -- prepareLeaf stores the callback for image load events; it never calls it during render.
 			const prepared = prepareLeaf(leaf, scheduleIconRefresh)
 			ordered.push(prepared)
 			byIconKey.set(leaf.iconKey, prepared)
@@ -566,6 +567,7 @@ export default function MarketTreemapChart({
 			instance.resize()
 		})
 		return () => cancelAnimationFrame(raf)
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- height is the trigger, not an input: echarts re-measures the container after the new height renders.
 	}, [height])
 
 	return (

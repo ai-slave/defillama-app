@@ -29,7 +29,10 @@ export default function AuthPage() {
 function AuthContent() {
 	const router = useRouter()
 	const { isAuthenticated, logout, user } = useAuthContext()
-	const redirectUrl = router.query.redirect_uri
+	// Read through locals: the pages router keeps one object identity and swaps `query` on navigation,
+	// so these are the values that actually change.
+	const routerQuery = router.query
+	const redirectUrl = routerQuery.redirect_uri
 
 	const { subscription, isSubscriptionLoading, isSubscriptionError, isSubscriptionRetrying, refetchSubscription } =
 		useSubscribe()
@@ -43,7 +46,7 @@ function AuthContent() {
 				void router.push({
 					pathname: redirectUrl as string,
 					query: {
-						...router.query,
+						...routerQuery,
 						subscription_id: subscription?.id || '',
 						subscription_status: subscription?.status || '',
 						expires_at: subscription?.expires_at || '',
@@ -69,7 +72,7 @@ function AuthContent() {
 		isAuthenticated,
 		redirectUrl,
 		router,
-		router.query,
+		routerQuery,
 		user,
 		isSubscriptionLoading,
 		isSubscriptionError,

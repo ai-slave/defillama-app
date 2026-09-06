@@ -150,6 +150,33 @@ as the mutation variable, because TanStack's success callback sees the latest op
 latest draft, and a single-field save must acknowledge only its field. The revision drawer keeps the chosen diff base and explains why nothing can be compared instead
 of switching bases.
 
+### Phase 3c: ECharts, Downloads, hooks, pages (done)
+
+43 sites; the four areas are clean for the compiler rules. New ground beyond 3a/3b:
+
+- Trigger dependencies are the dominant shape here and they are legitimate: `[height]` on an echarts
+  `resize()`, `[activeTabId]` on a `scrollIntoView`, `[resultKey]` on a migration, `[remeasureKey]` on a
+  re-measure, `iconRevision` on a `setOption`. The callback genuinely does not read the value; re-running
+  is the point. These keep an inline disable naming the trigger. Redundant deps are different and were
+  removed: `isDark` where `chartTheme` already derives from it, `valueSymbol` where the memo above owns
+  it, and the three MultiSeriesChart deps whose values flow in through `series`.
+- Next.js router deps: the pages router keeps one object identity and swaps `query` on navigation, so
+  `[router.query]` is the real trigger and `[router]` is not a substitute. Reading the value into a local
+  first (`const routerQuery = router.query`) satisfies the rule without changing when the effect runs.
+- `useTablePages` now compiles under the React Compiler, which it did not on main. Three things blocked
+  it: a reducer built with `ref.current ??=` during render, latest-value refs written during render, and
+  an arrow function as a parameter default. The reducer moved to `useMemo` (not `useState`, which trips
+  `react/hook-use-state`), the refs are written in a layout effect, and the default parser is a
+  module-scope function.
+- A synchronous reset paired with a ref write cannot move into render, because the ref write cannot.
+  Those sites keep the effect and a disable (MultiMetricModal's apply-once guard, support's chat
+  teardown). Where the reset stands alone it moved into render.
+- Known pre-existing bailouts this phase did not change, all verified identical to main with
+  `scripts/reactCompilerCheck.cjs`: MultiSeriesChart, the market treemap, a SqlWorkspace helper,
+  useDebounce and token-usage. MultiSeriesChart has two independent blockers (`??=`, then a ref passed
+  into the series builder for the end-label formatter), so removing only the first buys nothing; making
+  it compile needs the end-label formatter to be attached where the instance already exists.
+
 ### Phase 3b: Investors, RWA, ProDashboard (done)
 
 45 sites, all four rules; the three directories are clean for them. Patterns beyond Phase 3a:

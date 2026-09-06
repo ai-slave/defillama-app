@@ -224,6 +224,7 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 			return
 		}
 		chartRef.current?.resize()
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- height is the trigger, not an input: echarts re-measures the container after the new height renders.
 	}, [height])
 
 	useEffect(() => {

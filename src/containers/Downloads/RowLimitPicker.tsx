@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Icon } from '~/ui/Icon'
 import { formatNumber } from '~/utils/numberFormat'
 
@@ -20,14 +20,13 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 	)
 	const [error, setError] = useState<string | null>(null)
 
-	useEffect(() => {
-		if (value && !PRESETS.includes(value as (typeof PRESETS)[number])) {
-			setCustomInput(String(value))
-		} else {
-			setCustomInput('')
-		}
+	// The custom input restarts from the selected limit whenever the selection changes.
+	const [syncedValue, setSyncedValue] = useState(value)
+	if (value !== syncedValue) {
+		setSyncedValue(value)
+		setCustomInput(value && !PRESETS.includes(value as (typeof PRESETS)[number]) ? String(value) : '')
 		setError(null)
-	}, [value])
+	}
 
 	const isActive = value !== null && value > 0
 

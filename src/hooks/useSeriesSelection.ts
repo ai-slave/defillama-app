@@ -124,7 +124,26 @@ export function useSeriesSelection({
 		[allowEmptySelection, availableSeries, defaultSeries, maxSelectedSeries, resetToDefaultWhenStale, selectedSeries]
 	)
 
-	React.useEffect(() => {
+	// Reconciling in render keeps the stored selection consistent with the series that exist now, in the
+	// same render the series change, instead of rendering the stale selection once first.
+	const reconcileInputs = {
+		allowEmptySelection,
+		availableSeries,
+		defaultSeries,
+		maxSelectedSeries,
+		resetToDefaultWhenStale,
+		selectionKey
+	}
+	const [syncedInputs, setSyncedInputs] = React.useState(reconcileInputs)
+	if (
+		syncedInputs.allowEmptySelection !== allowEmptySelection ||
+		syncedInputs.availableSeries !== availableSeries ||
+		syncedInputs.defaultSeries !== defaultSeries ||
+		syncedInputs.maxSelectedSeries !== maxSelectedSeries ||
+		syncedInputs.resetToDefaultWhenStale !== resetToDefaultWhenStale ||
+		syncedInputs.selectionKey !== selectionKey
+	) {
+		setSyncedInputs(reconcileInputs)
 		setSelectionState((current) => {
 			if (current === null || current.key !== selectionKey || availableSeries.length === 0) return current
 			const reconciled = reconcileSeriesSelection({
@@ -137,7 +156,7 @@ export function useSeriesSelection({
 			})
 			return selectionsEqual(current.values, reconciled) ? current : { key: selectionKey, values: reconciled }
 		})
-	}, [allowEmptySelection, availableSeries, defaultSeries, maxSelectedSeries, resetToDefaultWhenStale, selectionKey])
+	}
 
 	const setSelectedSeries = React.useCallback<React.Dispatch<React.SetStateAction<Array<string>>>>(
 		(next) => {
@@ -217,7 +236,10 @@ export function useAllSeriesSelection({
 		})
 	}, [availableSeries, currentSelection])
 
-	React.useEffect(() => {
+	// Same reconciliation in render: drop stored series that the current dataset no longer has.
+	const [syncedAvailable, setSyncedAvailable] = React.useState({ availableSeries, selectionKey })
+	if (syncedAvailable.availableSeries !== availableSeries || syncedAvailable.selectionKey !== selectionKey) {
+		setSyncedAvailable({ availableSeries, selectionKey })
 		setSelectionState((current) => {
 			if (current?.key !== selectionKey || current.values === null || availableSeries.length === 0) return current
 			if (current.values.length === 0) return current
@@ -226,7 +248,7 @@ export function useAllSeriesSelection({
 			if (validValues.length === current.values.length) return current
 			return { key: selectionKey, values: validValues.length === 0 ? null : validValues }
 		})
-	}, [availableSeries, selectionKey])
+	}
 
 	const setSelectedSeries = React.useCallback(
 		(values: Array<string>) => {

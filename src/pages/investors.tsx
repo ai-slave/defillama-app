@@ -247,6 +247,9 @@ function useStampCells(): Array<StampCell> {
 			{ length: STAMP_COUNT },
 			(_, i) => (i * STAMP_CYCLE_MS) / STAMP_COUNT + Math.random() * 900
 		)
+		// Randomized decoration, so it can only be built on the client: generating it during render would
+		// produce different markup on the server and break hydration.
+		// oxlint-disable-next-line react/set-state-in-effect -- see above
 		setCells(delays.map((delay) => ({ ...randomStampPosition(), delay: `${delay / 1000}s` })))
 
 		const timers: Array<ReturnType<typeof setTimeout>> = []

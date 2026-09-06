@@ -38,9 +38,13 @@ export function useDebouncedCallback<T extends (...args: Array<any>) => void>(
 		return cancel
 	}, [cancel])
 
+	// The debounced callable and its cancel/flush handles own the pending-args and timer refs. Callers
+	// invoke them from event handlers and effects, never while rendering, so no render output depends on
+	// a ref's value here.
 	return useMemo(
 		() =>
 			Object.assign(
+				// oxlint-disable-next-line react/refs -- see above
 				((...args: Parameters<T>) => {
 					cancel()
 					pendingArgsRef.current = args
@@ -51,6 +55,7 @@ export function useDebouncedCallback<T extends (...args: Array<any>) => void>(
 						if (pendingArgs != null) onInvoke(pendingArgs)
 					}, normalizedDelay)
 				}) as DebouncedFunction<T>,
+				// oxlint-disable-next-line react/refs -- see above
 				{ cancel, flush }
 			),
 		[cancel, flush, normalizedDelay, onInvoke]

@@ -348,6 +348,8 @@ export function TokenUsageSearch() {
 	useEffect(() => {
 		if (!router.isReady) return
 		const token = Array.isArray(router.query.token) ? router.query.token[0] : router.query.token
+		// The query is only readable once the router is ready, which Next.js documents as effect-only.
+		// oxlint-disable-next-line react/set-state-in-effect -- see above
 		setSearchValue((currentValue) => currentValue || token?.toUpperCase() || '')
 	}, [router.isReady, router.query.token])
 

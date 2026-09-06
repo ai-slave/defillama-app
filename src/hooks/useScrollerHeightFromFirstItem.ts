@@ -23,11 +23,16 @@ export function useScrollerHeightFromFirstItem({
 }: UseScrollerHeightFromFirstItemOptions): number | null {
 	const [itemHeightPx, setItemHeightPx] = useState<number | null>(null)
 
+	// Turning the hook off drops the measurement in the same render, so re-enabling never reports the
+	// height of the previous content before the new one is measured.
+	const [syncedEnabled, setSyncedEnabled] = useState(enabled)
+	if (enabled !== syncedEnabled) {
+		setSyncedEnabled(enabled)
+		if (!enabled) setItemHeightPx(null)
+	}
+
 	useLayoutEffect(() => {
-		if (!enabled) {
-			setItemHeightPx(null)
-			return
-		}
+		if (!enabled) return
 
 		const measure = () => {
 			const root = containerRef.current
@@ -57,6 +62,7 @@ export function useScrollerHeightFromFirstItem({
 			ro?.disconnect()
 			window.removeEventListener('resize', measure)
 		}
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- remeasureKey is the trigger: callers bump it when the rendered rows change, which the observer cannot see when the box keeps its size.
 	}, [containerRef, enabled, itemSelector, remeasureKey])
 
 	if (!enabled) return null

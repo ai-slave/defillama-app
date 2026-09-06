@@ -412,6 +412,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	)
 
 	const { series, sourceAxisIndexes } = useMemo(() => {
+		// oxlint-disable-next-line react/refs -- chartRef reaches only the end-label formatter, which echarts calls when it paints; the series built here never read the ref's value.
 		const builtSeries = buildMultiSeries({
 			charts: renderedCharts,
 			selectedCharts,
@@ -928,13 +929,10 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		autoHideDataZoom,
 		hideDefaultLegend,
 		hallmarksMarkLine,
-		selectedCharts,
-		datasetDimensions,
 		renderedDatasetSource,
 		renderedDatasetDimensions,
 		directSeriesStats,
 		echartsDatasetDimensions,
-		valueSymbol,
 		tooltipFormatter,
 		eventRailData,
 		tooltipGroupBy,

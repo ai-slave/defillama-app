@@ -3,7 +3,7 @@ import { BarChart } from 'echarts/charts'
 import { GraphicComponent, GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
+import { useCallback, useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
@@ -67,13 +67,12 @@ function HBarChart({
 
 	// All-or-nothing logos: sparse icons (some 404) look worse than none and throw off left-margin
 	// alignment between sibling charts. Preload every logo and only enable the overlay if ALL load.
-	const [logosAllLoaded, setLogosAllLoaded] = useState(false)
+	const complete = !!logos && logos.length === categories.length && logos.every(Boolean)
+	// The logo set that finished preloading, so the overlay switches off for a new set without an extra
+	// render: `hasLogos` is false again until that exact set reports back.
+	const [preloadedLogos, setPreloadedLogos] = useState<Array<string | null> | null>(null)
 	useEffect(() => {
-		const complete = !!logos && logos.length === categories.length && logos.every(Boolean)
-		if (!complete) {
-			setLogosAllLoaded(false)
-			return
-		}
+		if (!complete) return
 		let cancelled = false
 		Promise.all(
 			logos!.map(
@@ -86,14 +85,14 @@ function HBarChart({
 					})
 			)
 		).then((results) => {
-			if (!cancelled) setLogosAllLoaded(results.every(Boolean))
+			if (!cancelled && results.every(Boolean)) setPreloadedLogos(logos!)
 		})
 		return () => {
 			cancelled = true
 		}
-	}, [logos, categories])
+	}, [logos, complete])
 
-	const hasLogos = logosAllLoaded
+	const hasLogos = complete && preloadedLogos === logos
 	const textColor = chartTheme.axisLabel
 	let overlayLabelWidth = 0
 	if (hasLogos) {
@@ -108,14 +107,17 @@ function HBarChart({
 		textColor,
 		overlayLabelWidth
 	})
-	logoRenderStateRef.current = {
-		hasLogos,
-		categories,
-		logos,
-		logoBg: chartTheme.logoBg,
-		textColor,
-		overlayLabelWidth
-	}
+	// Read by syncLogos, which the resize observer and echarts render events call outside render.
+	useLayoutEffect(() => {
+		logoRenderStateRef.current = {
+			hasLogos,
+			categories,
+			logos,
+			logoBg: chartTheme.logoBg,
+			textColor,
+			overlayLabelWidth
+		}
+	})
 
 	const syncLogos = useCallback(() => {
 		const layer = overlayRef.current

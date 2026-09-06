@@ -1,5 +1,5 @@
 import type * as echarts from 'echarts/core'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { Icon } from '~/ui/Icon'
 import { ChartRouter } from './chart'
 import { ChartExportButton } from './chart/ChartExportButton'
@@ -28,8 +28,12 @@ export function ResultsChart({ result, chartConfig, onChartConfigChange }: Resul
 		return migrateChartConfig(chartConfig, classified)
 	}, [chartConfig, classified])
 
+	// Read by the migration effect below, which must run for a new result without re-running when the
+	// config or callback identity changes.
 	const migrationCtxRef = useRef({ chartConfig, classified, onChartConfigChange })
-	migrationCtxRef.current = { chartConfig, classified, onChartConfigChange }
+	useLayoutEffect(() => {
+		migrationCtxRef.current = { chartConfig, classified, onChartConfigChange }
+	})
 	useEffect(() => {
 		const ctx = migrationCtxRef.current
 		if (!ctx.chartConfig) {
@@ -38,6 +42,7 @@ export function ResultsChart({ result, chartConfig, onChartConfigChange }: Resul
 		}
 		const migrated = migrateChartConfig(ctx.chartConfig, ctx.classified)
 		if (migrated !== ctx.chartConfig) ctx.onChartConfigChange(migrated)
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- resultKey is the trigger: the stored config is migrated once per new result set.
 	}, [resultKey])
 
 	const hasNumeric = classified.some((c) => c.coarse === 'number')

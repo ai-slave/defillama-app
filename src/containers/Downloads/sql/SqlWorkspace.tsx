@@ -692,12 +692,16 @@ function SqlWorkspaceInner({
 	)
 
 	const router = useRouter()
+	// Read through locals: the pages router keeps one object identity and swaps `query` on navigation, so
+	// these are the values that actually change, and the effect depends on them rather than on the router.
+	const routerIsReady = router.isReady
+	const routerQuery = router.query
 	const hydratedRef = useRef(false)
 	useEffect(() => {
 		if (hydratedRef.current) return
-		if (!router.isReady) return
+		if (!routerIsReady) return
 		if (!duckdb.conn) return
-		const rawQuery = router.query as Record<string, string | Array<string> | undefined>
+		const rawQuery = routerQuery as Record<string, string | Array<string> | undefined>
 
 		const notebookDecoded = decodeNotebookShare(rawQuery)
 		if (notebookDecoded) {
@@ -747,8 +751,8 @@ function SqlWorkspaceInner({
 		}
 	}, [
 		router,
-		router.isReady,
-		router.query,
+		routerIsReady,
+		routerQuery,
 		duckdb.conn,
 		openNotebookTab,
 		runSqlForCell,

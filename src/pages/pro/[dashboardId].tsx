@@ -175,13 +175,19 @@ function DashboardPageContent({
 	const { trackView } = useDashboardEngagement(currentDashboard?.id ?? null)
 	const hasTrackedView = useRef(false)
 
+	// Read through locals: the pages router keeps one object identity and swaps `query` on navigation,
+	// so these are the values that actually change.
+	const routeDashboardId = router.query.dashboardId
 	useEffect(() => {
 		if (dashboardId === 'new' || !currentDashboard?.slug) return
-		const routeKey = router.query.dashboardId
-		if (typeof routeKey === 'string' && routeKey !== 'new' && routeKey !== currentDashboard.slug) {
+		if (
+			typeof routeDashboardId === 'string' &&
+			routeDashboardId !== 'new' &&
+			routeDashboardId !== currentDashboard.slug
+		) {
 			void router.replace(`/pro/${currentDashboard.slug}`, undefined, { shallow: true })
 		}
-	}, [dashboardId, currentDashboard?.slug, router.query.dashboardId, router])
+	}, [dashboardId, currentDashboard?.slug, routeDashboardId, router])
 
 	useEffect(() => {
 		if (dashboardId === 'new') {

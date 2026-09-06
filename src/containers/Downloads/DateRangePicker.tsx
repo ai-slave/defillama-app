@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import dayjs from 'dayjs'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Icon } from '~/ui/Icon'
 import { type DateRangeConfig, type DateRangePreset, formatDateRangeLong } from './savedDownloads'
 
@@ -32,16 +32,14 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 	const [customTo, setCustomTo] = useState<string>(value?.kind === 'custom' ? value.to : '')
 	const [error, setError] = useState<string | null>(null)
 
-	useEffect(() => {
-		if (value?.kind === 'custom') {
-			setCustomFrom(value.from)
-			setCustomTo(value.to)
-		} else {
-			setCustomFrom('')
-			setCustomTo('')
-		}
+	// The custom inputs restart from the selected range whenever the selection changes.
+	const [syncedValue, setSyncedValue] = useState(value)
+	if (value !== syncedValue) {
+		setSyncedValue(value)
+		setCustomFrom(value?.kind === 'custom' ? value.from : '')
+		setCustomTo(value?.kind === 'custom' ? value.to : '')
 		setError(null)
-	}, [value])
+	}
 
 	const activePreset: DateRangePreset | null = value?.kind === 'preset' ? value.preset : null
 	// "All" reads as "selected" when there is no filter — zero-state is literally "all time".

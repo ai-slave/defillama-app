@@ -127,9 +127,13 @@ function MyArticlesContent() {
 		return sorted
 	}, [allArticles, statusFilter, sectionFilter, search, sortKey])
 
-	useEffect(() => {
+	// Any change to the filters or sort restarts at the first page, in the same render as the change.
+	const filterKey = `${statusFilter}|${sectionFilter}|${search}|${sortKey}`
+	const [syncedFilterKey, setSyncedFilterKey] = useState(filterKey)
+	if (filterKey !== syncedFilterKey) {
+		setSyncedFilterKey(filterKey)
 		setPage(1)
-	}, [statusFilter, sectionFilter, search, sortKey])
+	}
 
 	const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
 	const safePage = Math.min(page, totalPages)

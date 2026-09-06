@@ -378,7 +378,6 @@ function TreemapChart({
 		rwaRootLabel,
 		valueLabel,
 		treeData,
-		valueSymbol,
 		variant
 	])
 
@@ -392,6 +391,7 @@ function TreemapChart({
 			instance.resize()
 		})
 		return () => cancelAnimationFrame(raf)
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- height is the trigger, not an input: echarts re-measures the container after the new height renders.
 	}, [height])
 
 	const resolvedHeight = height ?? (variant === 'narrative' ? '533px' : '800px')

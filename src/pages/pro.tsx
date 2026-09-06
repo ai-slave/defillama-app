@@ -286,17 +286,21 @@ function ProContent({
 		}
 	}, [createDialogOpen])
 
+	// Read through locals: the pages router keeps one object identity and swaps `query` on navigation,
+	// so these are the values that actually change.
+	const routerIsReady = router.isReady
+	const routerQuery = router.query
 	useEffect(() => {
-		if (!router.isReady) return
-		const comparison = router.query.comparison
-		const items = router.query.items
+		if (!routerIsReady) return
+		const comparison = routerQuery.comparison
+		const items = routerQuery.items
 		if (comparison !== 'protocols' || typeof items !== 'string') return
 		if (comparisonPreset) return
 		const parsedItems = items.split(',').flatMap((item) => {
 			const trimmed = item.trim()
 			return trimmed ? [trimmed] : []
 		})
-		const { comparison: _comparison, items: _items, step: _step, ...rest } = router.query
+		const { comparison: _comparison, items: _items, step: _step, ...rest } = routerQuery
 		let cancelled = false
 		if (parsedItems.length > 0) {
 			queueMicrotask(() => {
@@ -310,7 +314,7 @@ function ProContent({
 		return () => {
 			cancelled = true
 		}
-	}, [comparisonPreset, createDashboardDialogStore, router, router.isReady, router.query])
+	}, [comparisonPreset, createDashboardDialogStore, router, routerIsReady, routerQuery])
 
 	const handleDeleteDashboard = async (dashboardId: string) => {
 		await deleteDashboard(dashboardId)

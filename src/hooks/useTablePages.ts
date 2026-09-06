@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef } from 'react'
 import type { CursorTablePage } from '~/server/tablePages/types'
 
 /**
@@ -117,6 +117,11 @@ async function fetchPage<Row, Page extends CursorTablePage<Row>>(
 	return parsePage(await response.json())
 }
 
+/** Default parser: module scope so the parameter default is not a fresh arrow the compiler cannot reorder. */
+function identityParsePage<Page>(json: unknown): Page {
+	return json as Page
+}
+
 export function useTablePages<Row, Page extends CursorTablePage<Row>>({
 	mode: _mode,
 	enabled = true,
@@ -128,7 +133,7 @@ export function useTablePages<Row, Page extends CursorTablePage<Row>>({
 	getRowKey,
 	buildPageUrl,
 	onRequestSettled,
-	parsePage = (json) => json as Page,
+	parsePage = identityParsePage,
 	rootMargin = '800px 0px'
 }: {
 	mode: 'cursor'
@@ -149,18 +154,22 @@ export function useTablePages<Row, Page extends CursorTablePage<Row>>({
 	parsePage?: (json: unknown) => Page
 	rootMargin?: string
 }) {
-	const reducerRef = useRef<ReturnType<typeof createTablePagesReducer<Row, Page>> | null>(null)
-	reducerRef.current ??= createTablePagesReducer<Row, Page>(getRowKey)
-	// Read through a ref so an inline parsePage prop can't churn the replace()
+	// Built once per hook instance: the row key never changes for a given table, and a rebuilt reducer
+	// would behave identically anyway, since useReducer only calls it on dispatch.
+	const reducer = useMemo(() => createTablePagesReducer<Row, Page>(getRowKey), [getRowKey])
+	// Read through refs so an inline parsePage prop can't churn the replace()
 	// identity — a new identity per render would abort-and-restart in-flight
-	// replacements forever via the signature-divergence effect below.
+	// replacements forever via the signature-divergence effect below. They are
+	// written after commit and read only from request callbacks.
 	const parsePageRef = useRef(parsePage)
-	parsePageRef.current = parsePage
 	const buildPageUrlRef = useRef(buildPageUrl)
-	buildPageUrlRef.current = buildPageUrl
 	const onRequestSettledRef = useRef(onRequestSettled)
-	onRequestSettledRef.current = onRequestSettled
-	const [state, dispatch] = useReducer(reducerRef.current, {
+	useLayoutEffect(() => {
+		parsePageRef.current = parsePage
+		buildPageUrlRef.current = buildPageUrl
+		onRequestSettledRef.current = onRequestSettled
+	})
+	const [state, dispatch] = useReducer(reducer, {
 		...(initialPage as PageState<Row> as Omit<Page, 'rows'>),
 		rows: initialRows,
 		loadedQuerySignature: defaultQuerySignature,

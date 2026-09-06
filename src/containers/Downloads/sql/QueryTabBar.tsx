@@ -58,6 +58,7 @@ export function QueryTabBar({
 
 	useLayoutEffect(() => {
 		activeRef.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- activeTabId is the trigger, not an input: the newly active tab is scrolled into view once it has rendered.
 	}, [activeTabId])
 
 	const updateFades = useCallback(() => {
@@ -79,7 +80,7 @@ export function QueryTabBar({
 			el.removeEventListener('scroll', onScroll)
 			ro.disconnect()
 		}
-	}, [updateFades, tabs.length])
+	}, [updateFades])
 
 	const handleContextMenu = (e: React.MouseEvent<HTMLButtonElement>, id: string) => {
 		e.preventDefault()

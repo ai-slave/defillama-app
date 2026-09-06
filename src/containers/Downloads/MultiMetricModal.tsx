@@ -122,6 +122,20 @@ function metricDisplayName(dataset: ChartDatasetDefinition): string {
 	return dataset.name.replace(/^Protocol\s+/i, '')
 }
 
+/** Drop selected metrics that the current param no longer offers, keeping the array identity when nothing changes. */
+export function pruneUnavailableMetrics(selected: Array<string>, available: Array<{ slug: string }>): Array<string> {
+	const availableSlugs = new Set(available.map((metric) => metric.slug))
+	const next = selected.filter((slug) => availableSlugs.has(slug))
+	return next.length === selected.length ? selected : next
+}
+
+/** Keep the highlighted metric while it is still selected, else highlight the first selected one. */
+export function resolveActiveMetric(current: string | null, selected: Array<string>): string | null {
+	if (selected.length === 0) return null
+	if (current && selected.includes(current)) return current
+	return selected[0]
+}
+
 export function MultiMetricModal({
 	chartOptionsMap,
 	authorizedFetch,
@@ -142,8 +156,12 @@ export function MultiMetricModal({
 	const initialAppliedRef = useRef(false)
 
 	useEffect(() => {
+		// A different saved config (or a new range on the same one) restarts the range and re-arms the
+		// apply-once guard. The guard is a ref, so this pairing has to happen after commit, not in render.
+		// oxlint-disable-next-line react/set-state-in-effect -- see above
 		setDateRange(initialConfig?.dateRange ?? null)
 		initialAppliedRef.current = false
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- the config id is the other trigger: a different preset re-arms the guard even when its range is identical.
 	}, [initialConfig?.id, initialConfig?.dateRange])
 
 	const protocolOptions = chartOptionsMap['protocol-tvl-chart'] ?? EMPTY_PARAM_OPTIONS
@@ -162,6 +180,9 @@ export function MultiMetricModal({
 			initialAppliedRef.current = true
 			return
 		}
+		// Initialization from data that arrives asynchronously: the saved config can only be applied once
+		// the option lists for its param type have loaded, so this cannot move into render.
+		// oxlint-disable-next-line react/set-state-in-effect -- see above
 		setParam(applied.param)
 		setSelectedMetrics(applied.metrics)
 		initialAppliedRef.current = true
@@ -183,26 +204,22 @@ export function MultiMetricModal({
 		})
 	}, [param, paramType, chartOptionsMap])
 
-	useEffect(() => {
-		// Skip pruning before param is set. Otherwise, on the same post-commit pass that the
-		// "apply initial config" effect fires `setSelectedMetrics([...saved])`, this effect's
-		// closure still has the pre-apply `availableMetrics = []`, and would wipe the queued
-		// update back to [] — causing saved multi-metric presets to open with no metrics.
-		if (!param) return
-		const availableSet = new Set(availableMetrics.map((m) => m.slug))
-		setSelectedMetrics((prev) => {
-			const next = prev.filter((slug) => availableSet.has(slug))
-			return next.length === prev.length ? prev : next
-		})
-	}, [param, availableMetrics])
+	// Reconciling in render reads the current lists, so the stale-closure hazard the effect version had is
+	// gone: it could observe the pre-apply `availableMetrics` on the same pass that the saved config was
+	// applied and wipe the metrics back to []. Pruning still waits for a param, which is what selects them.
+	const [syncedAvailableMetrics, setSyncedAvailableMetrics] = useState(availableMetrics)
+	if (availableMetrics !== syncedAvailableMetrics) {
+		setSyncedAvailableMetrics(availableMetrics)
+		if (param) setSelectedMetrics((prev) => pruneUnavailableMetrics(prev, availableMetrics))
+	}
 
-	useEffect(() => {
-		setActiveMetric((cur) => {
-			if (selectedMetrics.length === 0) return null
-			if (cur && selectedMetrics.includes(cur)) return cur
-			return selectedMetrics[0]
-		})
-	}, [selectedMetrics])
+	// The highlighted metric survives while it is still selected; otherwise the first one takes over and
+	// the old choice is forgotten, so re-selecting it later does not silently restore it.
+	const [syncedSelectedMetrics, setSyncedSelectedMetrics] = useState(selectedMetrics)
+	if (selectedMetrics !== syncedSelectedMetrics) {
+		setSyncedSelectedMetrics(selectedMetrics)
+		setActiveMetric((cur) => resolveActiveMetric(cur, selectedMetrics))
+	}
 
 	const csvQueries = useQueries({
 		queries: selectedMetrics.map((slug) => {

@@ -40,6 +40,18 @@ function isPieTooltipParams(value: unknown): value is PieTooltipParams {
 	return value !== null && typeof value === 'object'
 }
 
+/** Module scope so effects that call it need no dependency on it: it reads only its argument. */
+function isChartDisposed(inst: echarts.ECharts | null) {
+	if (!inst) return true
+	if (typeof inst.isDisposed !== 'function') {
+		if (process.env.NODE_ENV === 'development') {
+			console.warn('ECharts instance missing isDisposed method — treating as disposed')
+		}
+		return true
+	}
+	return inst.isDisposed()
+}
+
 function PieChart({
 	height,
 	stackColors,
@@ -287,17 +299,6 @@ function PieChart({
 		customLabel
 	])
 
-	const isChartDisposed = (inst: echarts.ECharts | null) => {
-		if (!inst) return true
-		if (typeof inst.isDisposed !== 'function') {
-			if (process.env.NODE_ENV === 'development') {
-				console.warn('ECharts instance missing isDisposed method — treating as disposed')
-			}
-			return true
-		}
-		return inst.isDisposed()
-	}
-
 	useEffect(() => {
 		const el = chartDomRef.current
 		if (!el) return
@@ -434,6 +435,7 @@ function PieChart({
 
 	useEffect(() => {
 		syncLayout()
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- these are the layout inputs; syncLayout is stable and reads the latest values, so it must run again when they change.
 	}, [showLegend, isSmall, reservedRight, isDark, centerY, syncLayout])
 
 	return (

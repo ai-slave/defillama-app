@@ -121,13 +121,15 @@ function DashboardEditPageContent({
 		}
 	}, [isAuthenticated, loaders.userLoading, currentDashboard, user?.id, dashboardId, router])
 
+	// Read through locals: the pages router keeps one object identity and swaps `query` on navigation,
+	// so these are the values that actually change.
+	const routeDashboardId = router.query.dashboardId
 	useEffect(() => {
 		if (hasRedirectedRef.current || !currentDashboard?.slug) return
-		const routeKey = router.query.dashboardId
-		if (typeof routeKey === 'string' && routeKey !== currentDashboard.slug) {
+		if (typeof routeDashboardId === 'string' && routeDashboardId !== currentDashboard.slug) {
 			void router.replace(`/pro/${currentDashboard.slug}/edit`, undefined, { shallow: true })
 		}
-	}, [currentDashboard?.slug, router.query.dashboardId, router])
+	}, [currentDashboard?.slug, routeDashboardId, router])
 
 	const isLoading = loaders.userLoading || isValidating || isLoadingDashboard
 

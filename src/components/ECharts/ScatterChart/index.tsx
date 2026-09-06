@@ -452,7 +452,6 @@ function ScatterChart({
 		instance.setOption(option, { notMerge: true })
 	}, [
 		chartData,
-		isDark,
 		chartTheme,
 		tooltipFormatter,
 		xAxisLabel,
@@ -462,6 +461,7 @@ function ScatterChart({
 		showLabels,
 		entityType,
 		logScale,
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- iconRevision is the trigger that re-applies the option once entity icons finish loading.
 		iconRevision
 	])
 

@@ -90,6 +90,9 @@ function Support() {
 
 	React.useEffect(() => {
 		if (userHash) return
+		// Losing the user hash tears the chat down: the ready flag and the init guard have to be cleared
+		// together, and the guard is a ref, so this cannot move into render.
+		// oxlint-disable-next-line react/set-state-in-effect -- see above
 		setFrontChatReady(false)
 		frontChatInitialized.current = false
 	}, [userHash])
