@@ -263,6 +263,9 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 				</PanelHeader>
 				<Leaderboard
 					rows={filteredRows}
+					fdvRanges={fdvRanges}
+					sectors={sectors}
+					listingStatuses={listingStatuses}
 					grading={scoringConfig?.grading}
 					sort={sort}
 					setSort={setSort}

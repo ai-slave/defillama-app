@@ -421,7 +421,10 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 			)}
 
 			{combineModalOpen ? (
+				// Keyed by the saved config so opening a different preset builds a fresh modal rather than
+				// resetting the one on screen.
 				<MultiMetricModal
+					key={multiMetricInitialConfig?.id ?? 'new'}
 					chartOptionsMap={chartOptionsMap}
 					authorizedFetch={authorizedFetch}
 					isPreview={isPreview}

@@ -17,7 +17,17 @@ import {
 } from '~/ui/Popover'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { requestLeadClickId, useSubmitLead } from './client'
-import { LeadCancelButton, LeadDialog, LeadError, LeadField, LeadHoneypot, LeadSuccess } from './LeadDialog'
+import {
+	LeadCancelButton,
+	LeadDialog,
+	LeadDialogBody,
+	LeadDialogFooter,
+	LeadDialogHeader,
+	LeadError,
+	LeadField,
+	LeadHoneypot,
+	LeadSuccess
+} from './LeadDialog'
 import { EMAIL_PATTERN } from './leadShared'
 
 const INTEREST_OPTIONS = [
@@ -133,10 +143,27 @@ function TokenCombobox({ onSelect, onManual }: { onSelect: (token: TokenSearchRe
 export function ConnectDialog({
 	open,
 	onClose,
+	...form
+}: {
+	open: boolean
+	onClose: () => void
+	marketMakerId: string | null
+	marketMakerName: string
+}) {
+	// The form is a child of the dialog, which Ariakit unmounts when it closes, so every open starts from a
+	// fresh form and mutation instead of resetting a dozen fields by hand.
+	return (
+		<LeadDialog open={open} onClose={onClose}>
+			<ConnectDialogForm onClose={onClose} {...form} />
+		</LeadDialog>
+	)
+}
+
+function ConnectDialogForm({
+	onClose,
 	marketMakerId,
 	marketMakerName
 }: {
-	open: boolean
 	onClose: () => void
 	marketMakerId: string | null
 	marketMakerName: string
@@ -154,26 +181,9 @@ export function ConnectDialog({
 	const [submitAttempted, setSubmitAttempted] = useState(false)
 	const clickIdRef = useRef<string | null>(null)
 	const submit = useSubmitLead('connect')
-	const resetSubmit = submit.reset
 
+	// One click id per opened form; the ref is only read when the form is submitted.
 	useEffect(() => {
-		if (!open) return
-		// Opening the dialog restarts the form. The reset also clears refs (the captcha widget, the pending
-		// click id) and starts a request, so it belongs after commit rather than in render.
-		resetSubmit()
-		// oxlint-disable-next-line react/set-state-in-effect -- see above
-		setInterest('')
-		setTokenStatus('pre-tge')
-		setProjectName('')
-		setTokenTicker('')
-		setSelectedToken(null)
-		setManualToken(false)
-		setFullName('')
-		setEmail('')
-		setHoneypot('')
-		setTouched({})
-		setSubmitAttempted(false)
-		clickIdRef.current = null
 		let superseded = false
 		requestLeadClickId('connect', marketMakerId).then((clickId) => {
 			if (!superseded) clickIdRef.current = clickId
@@ -181,7 +191,7 @@ export function ConnectDialog({
 		return () => {
 			superseded = true
 		}
-	}, [open, marketMakerId, resetSubmit])
+	}, [marketMakerId])
 
 	const hasToken = tokenStatus !== 'no-token'
 	const listedToken = tokenStatus === 'listed' ? selectedToken : null
@@ -236,137 +246,133 @@ export function ConnectDialog({
 	}
 
 	return (
-		<LeadDialog
-			open={open}
-			onClose={onClose}
-			title={`Get in touch with ${marketMakerName}`}
-			showHeader={!submit.isSuccess}
-			footer={
-				submit.isSuccess ? null : (
+		<>
+			<LeadDialogHeader title={`Get in touch with ${marketMakerName}`} hidden={submit.isSuccess} />
+			<LeadDialogBody>
+				{submit.isSuccess ? (
+					<LeadSuccess
+						title="Request received"
+						message={`The Forgd team will review the details of your request, and will reach out via the provided contact information shortly to put you in contact with ${marketMakerName}.`}
+						onClose={onClose}
+					/>
+				) : (
 					<>
-						<LeadCancelButton />
-						<Button type="button" variant="primary" size="md" disabled={submit.isPending} onClick={onSubmit}>
-							{submit.isPending ? 'Submitting…' : 'Submit Request'}
-						</Button>
-					</>
-				)
-			}
-		>
-			{submit.isSuccess ? (
-				<LeadSuccess
-					title="Request received"
-					message={`The Forgd team will review the details of your request, and will reach out via the provided contact information shortly to put you in contact with ${marketMakerName}.`}
-					onClose={onClose}
-				/>
-			) : (
-				<>
-					<p className="body-sm text-secondary">
-						Share your details below, and Forgd will put you in direct contact with them.
-					</p>
-					<LeadField label="What are you interested in?" error={showError('interest')}>
-						<InterestSelect value={interest} onChange={setInterest} />
-					</LeadField>
-					<div className="flex flex-col gap-1.5">
-						<span className="label-md text-primary">What is the status of your token?</span>
-						<SegmentedControl
-							value={tokenStatus}
-							onValueChange={changeTokenStatus}
-							options={TOKEN_STATUS_OPTIONS}
-							label="Token status"
-							variant="default"
-							size="md"
-							className="w-full!"
-							buttonClassName="inline-flex flex-1 items-center justify-center"
-						/>
-					</div>
-					{tokenStatus === 'listed' && !manualToken ? (
+						<p className="body-sm text-secondary">
+							Share your details below, and Forgd will put you in direct contact with them.
+						</p>
+						<LeadField label="What are you interested in?" error={showError('interest')}>
+							<InterestSelect value={interest} onChange={setInterest} />
+						</LeadField>
 						<div className="flex flex-col gap-1.5">
-							<span className="label-md text-primary">Your token</span>
-							{selectedToken ? (
-								<div className={`${inputStyles} flex items-center justify-between gap-2`}>
-									<span className="flex min-w-0 items-center gap-2">
-										<TokenLogo src={selectedToken.logo} size={20} />
-										<span className="truncate">{selectedToken.name}</span>
-										<span className="shrink-0 text-tertiary">{selectedToken.symbol}</span>
-									</span>
-									<button
-										type="button"
-										onClick={() => setSelectedToken(null)}
-										aria-label="Change token"
-										className="shrink-0 text-secondary hover:text-primary"
-									>
-										<Icon name="x" height={14} width={14} />
-									</button>
-								</div>
-							) : (
-								<TokenCombobox onSelect={setSelectedToken} onManual={() => setManualToken(true)} />
-							)}
-							{showError('token') ? <span className="body-sm text-error">{showError('token')}</span> : null}
+							<span className="label-md text-primary">What is the status of your token?</span>
+							<SegmentedControl
+								value={tokenStatus}
+								onValueChange={changeTokenStatus}
+								options={TOKEN_STATUS_OPTIONS}
+								label="Token status"
+								variant="default"
+								size="md"
+								className="w-full!"
+								buttonClassName="inline-flex flex-1 items-center justify-center"
+							/>
 						</div>
-					) : null}
-					{showManualFields ? (
-						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-							<LeadField label="Project Name" error={showError('projectName')}>
-								<Input
-									value={projectName}
-									onChange={(e) => setProjectName(e.target.value)}
-									onBlur={markTouched('projectName')}
-									maxLength={200}
-									placeholder="Project"
-								/>
-							</LeadField>
-							<LeadField label="Token Ticker" error={showError('tokenTicker')}>
-								<Input
-									value={tokenTicker}
-									onChange={(e) => setTokenTicker(e.target.value)}
-									onBlur={markTouched('tokenTicker')}
-									maxLength={32}
-									placeholder="ABC"
-								/>
-							</LeadField>
+						{tokenStatus === 'listed' && !manualToken ? (
+							<div className="flex flex-col gap-1.5">
+								<span className="label-md text-primary">Your token</span>
+								{selectedToken ? (
+									<div className={`${inputStyles} flex items-center justify-between gap-2`}>
+										<span className="flex min-w-0 items-center gap-2">
+											<TokenLogo src={selectedToken.logo} size={20} />
+											<span className="truncate">{selectedToken.name}</span>
+											<span className="shrink-0 text-tertiary">{selectedToken.symbol}</span>
+										</span>
+										<button
+											type="button"
+											onClick={() => setSelectedToken(null)}
+											aria-label="Change token"
+											className="shrink-0 text-secondary hover:text-primary"
+										>
+											<Icon name="x" height={14} width={14} />
+										</button>
+									</div>
+								) : (
+									<TokenCombobox onSelect={setSelectedToken} onManual={() => setManualToken(true)} />
+								)}
+								{showError('token') ? <span className="body-sm text-error">{showError('token')}</span> : null}
+							</div>
+						) : null}
+						{showManualFields ? (
+							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+								<LeadField label="Project Name" error={showError('projectName')}>
+									<Input
+										value={projectName}
+										onChange={(e) => setProjectName(e.target.value)}
+										onBlur={markTouched('projectName')}
+										maxLength={200}
+										placeholder="Project"
+									/>
+								</LeadField>
+								<LeadField label="Token Ticker" error={showError('tokenTicker')}>
+									<Input
+										value={tokenTicker}
+										onChange={(e) => setTokenTicker(e.target.value)}
+										onBlur={markTouched('tokenTicker')}
+										maxLength={32}
+										placeholder="ABC"
+									/>
+								</LeadField>
+							</div>
+						) : null}
+						{tokenStatus === 'listed' && manualToken ? (
+							<button
+								type="button"
+								onClick={() => setManualToken(false)}
+								className="w-fit body-sm text-link hover:underline"
+							>
+								Back to token search
+							</button>
+						) : null}
+						<div className="flex flex-col gap-1.5 border-t border-subtle pt-4">
+							<span className="label-sm text-tertiary">Contact Information</span>
+							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+								<LeadField label="Full Name" error={showError('fullName')}>
+									<Input
+										value={fullName}
+										onChange={(e) => setFullName(e.target.value)}
+										onBlur={markTouched('fullName')}
+										maxLength={200}
+										placeholder="Your name"
+									/>
+								</LeadField>
+								<LeadField label="Email" error={showError('email')}>
+									<Input
+										type="email"
+										value={email}
+										onChange={(e) => setEmail(e.target.value)}
+										onBlur={markTouched('email')}
+										maxLength={320}
+										placeholder="you@project.xyz"
+									/>
+								</LeadField>
+							</div>
 						</div>
-					) : null}
-					{tokenStatus === 'listed' && manualToken ? (
-						<button
-							type="button"
-							onClick={() => setManualToken(false)}
-							className="w-fit body-sm text-link hover:underline"
-						>
-							Back to token search
-						</button>
-					) : null}
-					<div className="flex flex-col gap-1.5 border-t border-subtle pt-4">
-						<span className="label-sm text-tertiary">Contact Information</span>
-						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-							<LeadField label="Full Name" error={showError('fullName')}>
-								<Input
-									value={fullName}
-									onChange={(e) => setFullName(e.target.value)}
-									onBlur={markTouched('fullName')}
-									maxLength={200}
-									placeholder="Your name"
-								/>
-							</LeadField>
-							<LeadField label="Email" error={showError('email')}>
-								<Input
-									type="email"
-									value={email}
-									onChange={(e) => setEmail(e.target.value)}
-									onBlur={markTouched('email')}
-									maxLength={320}
-									placeholder="you@project.xyz"
-								/>
-							</LeadField>
-						</div>
-					</div>
-					<LeadHoneypot value={honeypot} onChange={setHoneypot} />
-					{submit.isError ? (
-						<LeadError
-							message={submit.error instanceof Error ? submit.error.message : 'Failed to submit the request'}
-						/>
-					) : null}
-				</>
+						<LeadHoneypot value={honeypot} onChange={setHoneypot} />
+						{submit.isError ? (
+							<LeadError
+								message={submit.error instanceof Error ? submit.error.message : 'Failed to submit the request'}
+							/>
+						) : null}
+					</>
+				)}
+			</LeadDialogBody>
+			{submit.isSuccess ? null : (
+				<LeadDialogFooter>
+					<LeadCancelButton />
+					<Button type="button" variant="primary" size="md" disabled={submit.isPending} onClick={onSubmit}>
+						{submit.isPending ? 'Submitting…' : 'Submit Request'}
+					</Button>
+				</LeadDialogFooter>
 			)}
-		</LeadDialog>
+		</>
 	)
 }

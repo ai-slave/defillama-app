@@ -155,15 +155,6 @@ export function MultiMetricModal({
 	const [showSaveDialog, setShowSaveDialog] = useState(false)
 	const initialAppliedRef = useRef(false)
 
-	useEffect(() => {
-		// A different saved config (or a new range on the same one) restarts the range and re-arms the
-		// apply-once guard. The guard is a ref, so this pairing has to happen after commit, not in render.
-		// oxlint-disable-next-line react/set-state-in-effect -- see above
-		setDateRange(initialConfig?.dateRange ?? null)
-		initialAppliedRef.current = false
-		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- the config id is the other trigger: a different preset re-arms the guard even when its range is identical.
-	}, [initialConfig?.id, initialConfig?.dateRange])
-
 	const protocolOptions = chartOptionsMap['protocol-tvl-chart'] ?? EMPTY_PARAM_OPTIONS
 	const chainOptions = chartOptionsMap['chain-tvl-chart'] ?? EMPTY_PARAM_OPTIONS
 	const paramOptions = paramType === 'protocol' ? protocolOptions : chainOptions

@@ -4,6 +4,7 @@ import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { RouteTableRow } from '~/containers/Yields/data/types'
+import { useIsClient } from '~/hooks/useIsClient'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
@@ -114,7 +115,8 @@ export function TokenBorrowSection({
 	hydration?: TokenBorrowRoutesHydration
 }) {
 	const [activeTab, setActiveTab] = React.useState<BorrowTabKey>('use')
-	const [shouldFetchFullData, setShouldFetchFullData] = React.useState(hydration == null)
+
+	const isClient = useIsClient()
 	const [requestedPageIndexByTab, setRequestedPageIndexByTab] = React.useState<Record<BorrowTabKey, number>>({
 		use: 0,
 		borrow: 0
@@ -135,9 +137,24 @@ export function TokenBorrowSection({
 			maxAvailable: ''
 		}
 	})
+	// What the reader typed, independent of the chain list the response defines: the display predicate below
+	// compares against that list, but the decision to fetch cannot wait for it.
+	const tabFilterInput = filtersByTab[activeTab]
+	const hasFilterInput =
+		tabFilterInput.selectedChains != null || tabFilterInput.minAvailable !== '' || tabFilterInput.maxAvailable !== ''
+	const sortingInputKey = JSON.stringify(sortingByTab[activeTab])
+	// Without a hydration snapshot there is nothing to show but the full dataset. With one, the snapshot
+	// stands until the reader needs more than it holds, and only a mounted client can want that.
+	const needsFullData =
+		hydration == null ||
+		(isClient &&
+			(hasFilterInput ||
+				sortingInputKey !== DEFAULT_BORROW_TABLE_SORTING_KEY ||
+				requestedPageIndexByTab[activeTab] > 0))
+
 	const tokenKeys = hydration?.tokenKeys ?? []
 	const { data, error, isFetching, isFetched, refetch } = useTokenBorrowRoutes(tokenKeys, {
-		enabled: shouldFetchFullData
+		enabled: needsFullData
 	})
 	const useRows = data?.useAsCollateral ?? hydration?.data.useAsCollateral ?? EMPTY_ROUTE_TABLE_ROWS
 	const borrowRows = data?.borrowThis ?? hydration?.data.borrowThis ?? EMPTY_ROUTE_TABLE_ROWS
@@ -232,7 +249,7 @@ export function TokenBorrowSection({
 		isFetching ||
 		(!error &&
 			!data &&
-			!shouldFetchFullData &&
+			!needsFullData &&
 			hasPartialData &&
 			(hasActiveFilters || hasNonDefaultSorting || requestedPageIndexByTab[activeTab] > 0))
 	const showRetry = error != null || (isFetching && isFetched && !data)
@@ -256,22 +273,12 @@ export function TokenBorrowSection({
 				: `Tracking ${filteredRows.length} ${filteredRows.length === 1 ? 'route' : 'routes'}`
 			: null
 
-	React.useEffect(() => {
-		// Deliberately after commit: the server renders the hydration snapshot, and only the mounted client
-		// switches to the full dataset. Setting this during render would change the server markup.
-		if ((hasActiveFilters || hasNonDefaultSorting) && !shouldFetchFullData) {
-			// oxlint-disable-next-line react/set-state-in-effect -- see above
-			setShouldFetchFullData(true)
-		}
-	}, [hasActiveFilters, hasNonDefaultSorting, shouldFetchFullData])
-
 	const requestFullDataPage = React.useCallback(
 		(pageIndex: number) => {
 			setRequestedPageIndexByTab((prev) => ({
 				...prev,
 				[activeTab]: pageIndex
 			}))
-			setShouldFetchFullData(true)
 		},
 		[activeTab]
 	)
@@ -286,11 +293,8 @@ export function TokenBorrowSection({
 				...prev,
 				[activeTab]: 0
 			}))
-			if (hasPartialData && !data) {
-				setShouldFetchFullData(true)
-			}
 		},
-		[activeTab, data, hasPartialData]
+		[activeTab]
 	)
 
 	return (

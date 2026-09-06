@@ -7,7 +7,17 @@ import { Input, inputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { ClaimTurnstile, isClaimTurnstileEnabled } from './ClaimTurnstile'
 import { requestLeadClickId, useSubmitLead } from './client'
-import { LeadCancelButton, LeadDialog, LeadError, LeadField, LeadHoneypot, LeadSuccess } from './LeadDialog'
+import {
+	LeadCancelButton,
+	LeadDialog,
+	LeadDialogBody,
+	LeadDialogFooter,
+	LeadDialogHeader,
+	LeadError,
+	LeadField,
+	LeadHoneypot,
+	LeadSuccess
+} from './LeadDialog'
 import { EMAIL_PATTERN, normalizeSocialUrl, SOCIAL_PROFILE_PATTERN } from './leadShared'
 
 const CONTACT_OPTIONS = [
@@ -18,11 +28,29 @@ const CONTACT_OPTIONS = [
 export function ClaimDialog({
 	open,
 	onClose,
+	...form
+}: {
+	open: boolean
+	onClose: () => void
+	marketMakerId: string | null
+	marketMakerName: string
+	marketMakerLogo?: string | null
+}) {
+	// The form is a child of the dialog, which Ariakit unmounts when it closes, so every open starts from a
+	// fresh form, mutation and captcha instead of resetting a dozen fields by hand.
+	return (
+		<LeadDialog open={open} onClose={onClose}>
+			<ClaimDialogForm onClose={onClose} {...form} />
+		</LeadDialog>
+	)
+}
+
+function ClaimDialogForm({
+	onClose,
 	marketMakerId,
 	marketMakerName,
 	marketMakerLogo
 }: {
-	open: boolean
 	onClose: () => void
 	marketMakerId: string | null
 	marketMakerName: string
@@ -44,30 +72,10 @@ export function ClaimDialog({
 	const clickIdRef = useRef<string | null>(null)
 	const turnstileRef = useRef<TurnstileInstance | undefined>(undefined)
 	const submit = useSubmitLead('claim')
-	const resetSubmit = submit.reset
 	const captchaEnabled = isClaimTurnstileEnabled()
 
+	// One click id per opened form; the ref is only read when the form is submitted.
 	useEffect(() => {
-		if (!open) return
-		// Opening the dialog restarts the form. The reset also clears refs (the captcha widget, the pending
-		// click id) and starts a request, so it belongs after commit rather than in render.
-		resetSubmit()
-		// oxlint-disable-next-line react/set-state-in-effect -- see above
-		setPosition('')
-		setHasContact('no')
-		setContactName('')
-		setFullName('')
-		setSocialProfileUrl('')
-		setOrganizationEmail('')
-		setTelegram('')
-		setAlignmentConsent(false)
-		setTermsConsent(false)
-		setHoneypot('')
-		setTurnstileToken('')
-		turnstileRef.current?.reset()
-		setTouched({})
-		setSubmitAttempted(false)
-		clickIdRef.current = null
 		let superseded = false
 		requestLeadClickId('claim', marketMakerId).then((clickId) => {
 			if (!superseded) clickIdRef.current = clickId
@@ -75,7 +83,7 @@ export function ClaimDialog({
 		return () => {
 			superseded = true
 		}
-	}, [open, marketMakerId, resetSubmit])
+	}, [marketMakerId])
 
 	const errors: Record<string, string | null> = {
 		position: position.trim() === '' ? 'Position is required' : null,
@@ -128,168 +136,164 @@ export function ClaimDialog({
 	}
 
 	return (
-		<LeadDialog
-			open={open}
-			onClose={onClose}
-			title={`Claim ${marketMakerName} on Forgd`}
-			showHeader={!submit.isSuccess}
-			footer={
-				submit.isSuccess ? null : (
+		<>
+			<LeadDialogHeader title={`Claim ${marketMakerName} on Forgd`} hidden={submit.isSuccess} />
+			<LeadDialogBody>
+				{submit.isSuccess ? (
+					<LeadSuccess
+						title="Claim request received"
+						message="The Forgd team will review the details of your claim, and will reach out via the provided contact information shortly with next steps."
+						onClose={onClose}
+					/>
+				) : (
 					<>
-						<LeadCancelButton />
-						<Button
-							type="button"
-							variant="primary"
-							size="md"
-							disabled={submit.isPending || (captchaEnabled && turnstileToken === '')}
-							onClick={onSubmit}
-						>
-							{submit.isPending ? 'Submitting…' : 'Submit Claim Request'}
-						</Button>
-					</>
-				)
-			}
-		>
-			{submit.isSuccess ? (
-				<LeadSuccess
-					title="Claim request received"
-					message="The Forgd team will review the details of your claim, and will reach out via the provided contact information shortly with next steps."
-					onClose={onClose}
-				/>
-			) : (
-				<>
-					<p className="body-sm text-secondary">
-						Submit your request to start the claiming process. The Forgd team will assess the legitimacy of the claim
-						and proceed with your access.
-					</p>
-					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-						<div className="flex flex-col gap-1.5">
-							<span className="label-md text-primary">Name of Organization</span>
-							<div className={`${inputStyles} flex items-center gap-2`} aria-readonly>
-								<TokenLogo src={marketMakerLogo ?? null} size={18} />
-								<span className="truncate">{marketMakerName}</span>
+						<p className="body-sm text-secondary">
+							Submit your request to start the claiming process. The Forgd team will assess the legitimacy of the claim
+							and proceed with your access.
+						</p>
+						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+							<div className="flex flex-col gap-1.5">
+								<span className="label-md text-primary">Name of Organization</span>
+								<div className={`${inputStyles} flex items-center gap-2`} aria-readonly>
+									<TokenLogo src={marketMakerLogo ?? null} size={18} />
+									<span className="truncate">{marketMakerName}</span>
+								</div>
 							</div>
+							<LeadField label="Position at Organization" error={showError('position')}>
+								<Input
+									value={position}
+									onChange={(e) => setPosition(e.target.value)}
+									onBlur={markTouched('position')}
+									maxLength={200}
+									placeholder="e.g. CEO"
+								/>
+							</LeadField>
 						</div>
-						<LeadField label="Position at Organization" error={showError('position')}>
+						<div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-surface-elevated-1 px-3 py-2">
+							<span className="label-md text-primary">Do you have direct contact with a Forgd team member?</span>
+							<SegmentedControl
+								value={hasContact}
+								onValueChange={(value) => setHasContact(value)}
+								options={CONTACT_OPTIONS}
+								label="Forgd contact"
+								variant="default"
+								size="sm"
+								className="w-fit"
+							/>
+						</div>
+						{hasContact === 'yes' ? (
+							<LeadField label="Forgd team member name" error={showError('contactName')}>
+								<Input
+									value={contactName}
+									onChange={(e) => setContactName(e.target.value)}
+									onBlur={markTouched('contactName')}
+									maxLength={200}
+									placeholder="Name the person you know"
+								/>
+							</LeadField>
+						) : null}
+						<LeadField label="Your Full Name" error={showError('fullName')}>
 							<Input
-								value={position}
-								onChange={(e) => setPosition(e.target.value)}
-								onBlur={markTouched('position')}
+								value={fullName}
+								onChange={(e) => setFullName(e.target.value)}
+								onBlur={markTouched('fullName')}
 								maxLength={200}
-								placeholder="e.g. CEO"
+								placeholder="Your name"
 							/>
 						</LeadField>
-					</div>
-					<div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-surface-elevated-1 px-3 py-2">
-						<span className="label-md text-primary">Do you have direct contact with a Forgd team member?</span>
-						<SegmentedControl
-							value={hasContact}
-							onValueChange={(value) => setHasContact(value)}
-							options={CONTACT_OPTIONS}
-							label="Forgd contact"
-							variant="default"
-							size="sm"
-							className="w-fit"
-						/>
-					</div>
-					{hasContact === 'yes' ? (
-						<LeadField label="Forgd team member name" error={showError('contactName')}>
+						<LeadField label="Your LinkedIn or X profile" error={showError('socialProfileUrl')}>
 							<Input
-								value={contactName}
-								onChange={(e) => setContactName(e.target.value)}
-								onBlur={markTouched('contactName')}
-								maxLength={200}
-								placeholder="Name the person you know"
+								value={socialProfileUrl}
+								onChange={(e) => setSocialProfileUrl(e.target.value)}
+								onBlur={markTouched('socialProfileUrl')}
+								maxLength={500}
+								placeholder="Enter a valid LinkedIn or X URL"
 							/>
 						</LeadField>
-					) : null}
-					<LeadField label="Your Full Name" error={showError('fullName')}>
-						<Input
-							value={fullName}
-							onChange={(e) => setFullName(e.target.value)}
-							onBlur={markTouched('fullName')}
-							maxLength={200}
-							placeholder="Your name"
-						/>
-					</LeadField>
-					<LeadField label="Your LinkedIn or X profile" error={showError('socialProfileUrl')}>
-						<Input
-							value={socialProfileUrl}
-							onChange={(e) => setSocialProfileUrl(e.target.value)}
-							onBlur={markTouched('socialProfileUrl')}
-							maxLength={500}
-							placeholder="Enter a valid LinkedIn or X URL"
-						/>
-					</LeadField>
-					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-						<LeadField label="Your organization email address" error={showError('organizationEmail')}>
-							<Input
-								type="email"
-								value={organizationEmail}
-								onChange={(e) => setOrganizationEmail(e.target.value)}
-								onBlur={markTouched('organizationEmail')}
-								maxLength={320}
-								placeholder="you@organization.com"
+						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+							<LeadField label="Your organization email address" error={showError('organizationEmail')}>
+								<Input
+									type="email"
+									value={organizationEmail}
+									onChange={(e) => setOrganizationEmail(e.target.value)}
+									onBlur={markTouched('organizationEmail')}
+									maxLength={320}
+									placeholder="you@organization.com"
+								/>
+							</LeadField>
+							<LeadField label="Telegram handle (optional)">
+								<Input
+									value={telegram}
+									onChange={(e) => setTelegram(e.target.value)}
+									maxLength={64}
+									placeholder="@handle"
+								/>
+							</LeadField>
+						</div>
+						<div className="flex flex-col gap-1 border-t border-subtle pt-4">
+							<Checkbox
+								variant="inline"
+								checked={alignmentConsent}
+								onChange={(e) => setAlignmentConsent(e.target.checked)}
+							>
+								I agree to verify my alignment with the organization to confirm the claim.
+							</Checkbox>
+							<Checkbox variant="inline" checked={termsConsent} onChange={(e) => setTermsConsent(e.target.checked)}>
+								<span>
+									I understand and agree to the Forgd{' '}
+									<a
+										href="https://www.forgd.com/terms-conditions"
+										target="_blank"
+										rel="noreferrer noopener"
+										className="text-link hover:underline"
+									>
+										Terms & Conditions
+									</a>{' '}
+									and{' '}
+									<a
+										href="https://www.forgd.com/privacy-policy"
+										target="_blank"
+										rel="noreferrer noopener"
+										className="text-link hover:underline"
+									>
+										Privacy Policy
+									</a>
+									.
+								</span>
+							</Checkbox>
+							{showError('consents') ? <span className="body-sm text-error">{showError('consents')}</span> : null}
+						</div>
+						<LeadHoneypot value={honeypot} onChange={setHoneypot} />
+						{captchaEnabled ? (
+							<ClaimTurnstile
+								ref={turnstileRef}
+								onVerify={setTurnstileToken}
+								onError={() => setTurnstileToken('')}
+								className="mx-auto w-full max-w-md"
 							/>
-						</LeadField>
-						<LeadField label="Telegram handle (optional)">
-							<Input
-								value={telegram}
-								onChange={(e) => setTelegram(e.target.value)}
-								maxLength={64}
-								placeholder="@handle"
+						) : null}
+						{submit.isError ? (
+							<LeadError
+								message={submit.error instanceof Error ? submit.error.message : 'Failed to submit the claim request'}
 							/>
-						</LeadField>
-					</div>
-					<div className="flex flex-col gap-1 border-t border-subtle pt-4">
-						<Checkbox
-							variant="inline"
-							checked={alignmentConsent}
-							onChange={(e) => setAlignmentConsent(e.target.checked)}
-						>
-							I agree to verify my alignment with the organization to confirm the claim.
-						</Checkbox>
-						<Checkbox variant="inline" checked={termsConsent} onChange={(e) => setTermsConsent(e.target.checked)}>
-							<span>
-								I understand and agree to the Forgd{' '}
-								<a
-									href="https://www.forgd.com/terms-conditions"
-									target="_blank"
-									rel="noreferrer noopener"
-									className="text-link hover:underline"
-								>
-									Terms & Conditions
-								</a>{' '}
-								and{' '}
-								<a
-									href="https://www.forgd.com/privacy-policy"
-									target="_blank"
-									rel="noreferrer noopener"
-									className="text-link hover:underline"
-								>
-									Privacy Policy
-								</a>
-								.
-							</span>
-						</Checkbox>
-						{showError('consents') ? <span className="body-sm text-error">{showError('consents')}</span> : null}
-					</div>
-					<LeadHoneypot value={honeypot} onChange={setHoneypot} />
-					{captchaEnabled ? (
-						<ClaimTurnstile
-							ref={turnstileRef}
-							onVerify={setTurnstileToken}
-							onError={() => setTurnstileToken('')}
-							className="mx-auto w-full max-w-md"
-						/>
-					) : null}
-					{submit.isError ? (
-						<LeadError
-							message={submit.error instanceof Error ? submit.error.message : 'Failed to submit the claim request'}
-						/>
-					) : null}
-				</>
+						) : null}
+					</>
+				)}
+			</LeadDialogBody>
+			{submit.isSuccess ? null : (
+				<LeadDialogFooter>
+					<LeadCancelButton />
+					<Button
+						type="button"
+						variant="primary"
+						size="md"
+						disabled={submit.isPending || (captchaEnabled && turnstileToken === '')}
+						onClick={onSubmit}
+					>
+						{submit.isPending ? 'Submitting…' : 'Submit Claim Request'}
+					</Button>
+				</LeadDialogFooter>
 			)}
-		</LeadDialog>
+		</>
 	)
 }

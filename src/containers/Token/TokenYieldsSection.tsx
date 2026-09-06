@@ -10,6 +10,7 @@ import { APYRange } from '~/containers/Yields/Filters/APYRange'
 import { FilterByChain } from '~/containers/Yields/Filters/Chains'
 import { useFormatYieldQueryParams } from '~/containers/Yields/hooks'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
+import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
@@ -50,9 +51,25 @@ interface TokenYieldsSectionProps {
 
 export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 	const router = useRouter()
-	const [shouldFetchFullData, setShouldFetchFullData] = React.useState(hydration == null)
+	const isClient = useIsClient()
 	const [requestedPageIndex, setRequestedPageIndex] = React.useState(0)
 	const [tableSorting, setTableSorting] = React.useState<SortingState>([...DEFAULT_TABLE_SORTING])
+	const hasActiveFilters = React.useMemo(
+		() =>
+			FILTER_QUERY_PARAMS.some((key) => {
+				const value = router.query[key]
+				return Array.isArray(value) ? value.length > 0 : value != null && value !== ''
+			}),
+		[router.query]
+	)
+	const tableSortingKey = React.useMemo(() => JSON.stringify(tableSorting), [tableSorting])
+	const hasNonDefaultSorting = tableSortingKey !== DEFAULT_TABLE_SORTING_KEY
+	// Without a hydration snapshot there is nothing to show but the full dataset. With one, the snapshot
+	// stands until the reader needs more than it holds — a filter, a different sort or a later page — and
+	// only a mounted client can want that, since the server has no reader yet.
+	const needsFullData =
+		hydration == null || (isClient && (hasActiveFilters || hasNonDefaultSorting || requestedPageIndex > 0))
+
 	const tokenKeys = hydration?.tokenKeys ?? []
 	const {
 		data: fetchedRows,
@@ -66,7 +83,7 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: false,
-		enabled: tokenKeys.length > 0 && shouldFetchFullData
+		enabled: tokenKeys.length > 0 && needsFullData
 	})
 	const poolsList = fetchedRows ?? hydration?.rows ?? EMPTY_YIELD_TABLE_ROWS
 	const hydrationPageSize = hydration?.pageSize ?? DEFAULT_TABLE_PAGE_SIZE
@@ -116,22 +133,12 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 		return getTokenYieldStats(filteredPools)
 	}, [filteredPools])
 
-	const hasActiveFilters = React.useMemo(
-		() =>
-			FILTER_QUERY_PARAMS.some((key) => {
-				const value = router.query[key]
-				return Array.isArray(value) ? value.length > 0 : value != null && value !== ''
-			}),
-		[router.query]
-	)
 	const hasPartialData = !fetchedRows && totalRowCount > poolsList.length
-	const tableSortingKey = React.useMemo(() => JSON.stringify(tableSorting), [tableSorting])
-	const hasNonDefaultSorting = tableSortingKey !== DEFAULT_TABLE_SORTING_KEY
 	const isFetchingFullData =
 		isFetching ||
 		(!error &&
 			!fetchedRows &&
-			!shouldFetchFullData &&
+			!needsFullData &&
 			hasPartialData &&
 			(hasActiveFilters || hasNonDefaultSorting || requestedPageIndex > 0))
 	const showRetry = error != null || (isFetching && isFetched && !fetchedRows)
@@ -146,15 +153,6 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 	) : null
 	const showInitialLoader = isFetchingFullData && poolsList.length === 0 && !showRetry
 	const showBackgroundLoading = isFetchingFullData && poolsList.length > 0
-
-	React.useEffect(() => {
-		// Deliberately after commit: the server renders the hydration snapshot, and only the mounted client
-		// switches to the full dataset. Setting this during render would change the server markup.
-		if ((hasActiveFilters || hasNonDefaultSorting) && !shouldFetchFullData) {
-			// oxlint-disable-next-line react/set-state-in-effect -- see above
-			setShouldFetchFullData(true)
-		}
-	}, [hasActiveFilters, hasNonDefaultSorting, shouldFetchFullData])
 
 	const resetFilters = () => {
 		const updates: Record<string, undefined> = {}
@@ -180,19 +178,12 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 
 	const requestFullDataPage = React.useCallback((pageIndex: number) => {
 		setRequestedPageIndex(pageIndex)
-		setShouldFetchFullData(true)
 	}, [])
 
-	const handleSortingChange = React.useCallback(
-		(sortingState: SortingState) => {
-			setTableSorting(sortingState)
-			setRequestedPageIndex(0)
-			if (hasPartialData && !fetchedRows) {
-				setShouldFetchFullData(true)
-			}
-		},
-		[fetchedRows, hasPartialData]
-	)
+	const handleSortingChange = React.useCallback((sortingState: SortingState) => {
+		setTableSorting(sortingState)
+		setRequestedPageIndex(0)
+	}, [])
 
 	return (
 		<Panel padding="none" className={hasPlaceholderState ? 'min-h-[80dvh] sm:min-h-[572px]' : undefined}>

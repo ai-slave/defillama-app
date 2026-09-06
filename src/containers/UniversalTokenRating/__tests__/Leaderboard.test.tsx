@@ -65,7 +65,15 @@ describe('Leaderboard', () => {
 
 	test('renders the API grade after Protocol without a Status or pin column', () => {
 		const html = renderToStaticMarkup(
-			<Leaderboard rows={[row]} grading={grading} sort={{ key: 'rank', desc: false }} setSort={() => undefined} />
+			<Leaderboard
+				rows={[row]}
+				grading={grading}
+				sort={{ key: 'rank', desc: false }}
+				setSort={() => undefined}
+				fdvRanges={[]}
+				sectors={[]}
+				listingStatuses={[]}
+			/>
 		)
 
 		expect(html.indexOf('Protocol')).toBeLessThan(html.indexOf('Grade'))

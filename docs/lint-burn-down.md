@@ -150,6 +150,40 @@ as the mutation variable, because TanStack's success callback sees the latest op
 latest draft, and a single-field save must acknowledge only its field. The revision drawer keeps the chosen diff base and explains why nothing can be compared instead
 of switching bases.
 
+### Follow-up: effects that only existed because nothing unmounted (done)
+
+Six `set-state-in-effect` disables from phases 3c and 3d were justifications, not necessities. Each sat in
+a component that never went away, so its state had to be reset by hand. The fix in every case was to put
+the state where it already gets destroyed:
+
+- The two market-maker lead dialogs reset a dozen fields, a mutation, a captcha widget and two refs on
+  open. `LeadDialog` is now a shell and the forms compose the header, body and footer, so the form lives
+  under Ariakit's `unmountOnHide` and a fresh open starts from fresh state. `resetSubmit()` disappears
+  with it: it could never move into the mutation's `onSuccess`, because `submit.isSuccess` is what renders
+  the confirmation screen.
+- The UTR docs drawer does the same through the shared `Drawer`, which also unmounts its children.
+- The combine modal is already mounted conditionally, so `key={initialConfig.id}` covers a preset swap.
+- The support page moves the chat state into a `LiveChatCard` keyed by the signed-in user, so signing out
+  unmounts it and the next session re-initialises the SDK.
+- The leaderboard pages during render and keeps only the scroll in an effect, under three stated rules: a
+  search navigates once, a new order or filtered set returns to the first page, nothing else moves it.
+
+Two lessons from the review of that pass. A `key` fix is only a fix once the keyed component exists —
+deleting the reset first and describing the key in prose left the support chat unable to restart. And
+removing a reconciliation means naming the rules that replace it: paging that follows only the search is
+as wrong as paging that chases the search forever, and the choice between them is a UX decision to state
+and test, not a diff to minimise.
+
+Rule for the rest of the burn-down: **before writing a reset, ask what owns the state and whether that
+owner can simply stop existing.** `key` and conditional rendering are the first answers; adjusting state
+during render is second; an effect is last and needs a reason that is not "the reset also touches a ref",
+since a remount clears refs too.
+
+The same review pass found duplicated state: the Token borrow and yields sections kept a
+`shouldFetchFullData` boolean whose every setter was already implied by the filters, the sort or the
+requested page. React Query's `enabled` can express that directly, so the state is gone. Deriving the
+gate is safe because `useIsClient` keeps the server rendering the hydration snapshot.
+
 ### Phase 3d: the long tail (done)
 
 56 sites across 38 files; everything outside LlamaAI is now clean for the compiler rules. What this slice

@@ -246,12 +246,18 @@ export function Leaderboard({
 	grading,
 	sort,
 	setSort,
+	fdvRanges,
+	sectors,
+	listingStatuses,
 	focusRequest
 }: {
 	rows: Array<UtrLeaderboardRow>
 	grading?: UtrGradingConfig | null
 	sort: UtrSort
 	setSort: (updater: (prev: UtrSort) => UtrSort) => void
+	fdvRanges: Array<string>
+	sectors: Array<string>
+	listingStatuses: Array<string>
 	focusRequest?: UtrFocusRequest | null
 }) {
 	const [expandedAssets, setExpandedAssets] = useState<Set<string>>(() => new Set())
@@ -276,19 +282,37 @@ export function Leaderboard({
 
 	const pageCount = Math.max(1, Math.ceil(sortedRows.length / UTR_LEADERBOARD_PAGE_SIZE))
 	const currentPage = Math.min(page, pageCount - 1)
+	if (page !== currentPage) setPage(currentPage)
 	const pagedRows = sortedRows.slice(
 		currentPage * UTR_LEADERBOARD_PAGE_SIZE,
 		(currentPage + 1) * UTR_LEADERBOARD_PAGE_SIZE
 	)
 
+	// Only filter selections and sorting reset pagination; refreshed row data keeps the current page.
+	const [syncedFilters, setSyncedFilters] = useState({ fdvRanges, sectors, listingStatuses, sort })
+	if (
+		fdvRanges !== syncedFilters.fdvRanges ||
+		sectors !== syncedFilters.sectors ||
+		listingStatuses !== syncedFilters.listingStatuses ||
+		sort.key !== syncedFilters.sort.key ||
+		sort.desc !== syncedFilters.sort.desc
+	) {
+		setSyncedFilters({ fdvRanges, sectors, listingStatuses, sort })
+		setPage(0)
+	}
+
+	// A focus request pages to the asset in the same render, so the row exists for the effect below to
+	// scroll to. It runs after the reset above so that searching — which also restores the default
+	// filters and sort — lands on the token instead of the first page.
+	const [syncedFocusRequest, setSyncedFocusRequest] = useState(focusRequest)
+	if (focusRequest !== syncedFocusRequest) {
+		setSyncedFocusRequest(focusRequest)
+		const requestedPage = focusRequest ? pageForUtrAsset(sortedRows, focusRequest.asset) : null
+		if (requestedPage != null) setPage(requestedPage)
+	}
+
 	useEffect(() => {
 		if (!focusRequest || typeof window === 'undefined') return
-		const targetPage = pageForUtrAsset(sortedRows, focusRequest.asset)
-		if (targetPage == null) return
-		// Paging to the requested asset and scrolling to its row are one action: the row only exists to
-		// scroll to after the new page has rendered.
-		// oxlint-disable-next-line react/set-state-in-effect -- see above
-		setPage(targetPage)
 		let secondFrame = 0
 		const firstFrame = window.requestAnimationFrame(() => {
 			secondFrame = window.requestAnimationFrame(() => {
@@ -302,7 +326,7 @@ export function Leaderboard({
 			window.cancelAnimationFrame(firstFrame)
 			if (secondFrame) window.cancelAnimationFrame(secondFrame)
 		}
-	}, [focusRequest, sortedRows])
+	}, [focusRequest])
 
 	const toggleSort = (key: UtrSortKey) =>
 		setSort((prev) => (prev.key === key ? { key, desc: !prev.desc } : { key, desc: key !== 'rank' }))

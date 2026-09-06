@@ -20,13 +20,84 @@ async function submitSupportRequest(formData: FormData) {
 	}
 }
 
+function LiveChatCard({ userHash, email }: { userHash: string | null; email: string | null }) {
+	const [ready, setReady] = React.useState(false)
+	const [loading, setLoading] = React.useState(false)
+	const initialized = React.useRef(false)
+
+	const openLiveChat = () => {
+		if (!ready || !userHash) return
+		const frontChat = (window as any).FrontChat
+		if (!frontChat) return
+
+		if (initialized.current) {
+			frontChat('show')
+			return
+		}
+
+		setLoading(true)
+		initialized.current = true
+		;(window as any).__frontChatUserHash = userHash
+		frontChat('init', {
+			chatId: '6fec3ab74da2261df3f3748a50dd3d6a',
+			shouldShowWindowOnLaunch: true,
+			shouldExpandOnShowWindow: true,
+			onInitCompleted: () => {
+				setLoading(false)
+				frontChat('show')
+			},
+			email,
+			userHash
+		})
+	}
+
+	return (
+		<>
+			{userHash ? (
+				<Script
+					src="/assets/front-chat.js"
+					id="front-chat-sdk"
+					strategy="afterInteractive"
+					onReady={() => setReady(true)}
+				/>
+			) : null}
+			<Card
+				padding="md"
+				as="button"
+				type="button"
+				onClick={openLiveChat}
+				disabled={!userHash || loading}
+				className="hover-wash-card flex cursor-pointer flex-col gap-1 text-center disabled:cursor-not-allowed disabled:opacity-50"
+			>
+				<span className="flex items-center justify-center gap-2 font-semibold">
+					{loading ? (
+						<>
+							<svg className="size-4 animate-spin" viewBox="0 0 24 24" fill="none">
+								<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+								<path
+									className="opacity-75"
+									fill="currentColor"
+									d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+								/>
+							</svg>
+							Opening Chat...
+						</>
+					) : (
+						'Live Chat'
+					)}
+				</span>
+				<span className="body-sm text-secondary">
+					{loading ? 'Please wait' : userHash ? 'Chat with us in real time' : 'Available for paying customers'}
+				</span>
+			</Card>
+		</>
+	)
+}
+
 function Support() {
 	const { mutateAsync, isPending, error } = useMutation({ mutationFn: submitSupportRequest })
 	const [isSubmitted, setIsSubmitted] = React.useState(false)
 	const [showForm, setShowForm] = React.useState(false)
-	const [frontChatReady, setFrontChatReady] = React.useState(false)
-	const [chatLoading, setChatLoading] = React.useState(false)
-	const frontChatInitialized = React.useRef(false)
 
 	const onSubmit = (e) => {
 		e.preventDefault()
@@ -61,57 +132,12 @@ function Support() {
 
 	const { userHash, email } = useUserHash()
 
-	const openLiveChat = React.useCallback(() => {
-		if (!frontChatReady || !userHash) return
-		if (typeof window === 'undefined' || !(window as any).FrontChat) return
-
-		const frontChat = (window as any).FrontChat
-
-		if (frontChatInitialized.current) {
-			frontChat('show')
-			return
-		}
-
-		setChatLoading(true)
-		frontChatInitialized.current = true
-		;(window as any).__frontChatUserHash = userHash
-		frontChat('init', {
-			chatId: '6fec3ab74da2261df3f3748a50dd3d6a',
-			shouldShowWindowOnLaunch: true,
-			shouldExpandOnShowWindow: true,
-			onInitCompleted: () => {
-				setChatLoading(false)
-				frontChat('show')
-			},
-			email,
-			userHash
-		})
-	}, [frontChatReady, userHash, email])
-
-	React.useEffect(() => {
-		if (userHash) return
-		// Losing the user hash tears the chat down: the ready flag and the init guard have to be cleared
-		// together, and the guard is a ref, so this cannot move into render.
-		// oxlint-disable-next-line react/set-state-in-effect -- see above
-		setFrontChatReady(false)
-		frontChatInitialized.current = false
-	}, [userHash])
-
 	return (
 		<Layout
 			title="Help & Support - DefiLlama DeFi Analytics"
 			description="Get help with DefiLlama. Find answers to common questions, report issues, or reach the team via Discord and Twitter."
 			canonicalUrl="/support"
 		>
-			{userHash ? (
-				<Script
-					src="/assets/front-chat.js"
-					id="front-chat-sdk"
-					strategy="afterInteractive"
-					onReady={() => setFrontChatReady(true)}
-				/>
-			) : null}
-
 			<div className="mx-auto flex w-full max-w-lg flex-col gap-4 lg:mt-4 xl:mt-11 xl:ml-[calc(228px-16px)]">
 				<h1 className="text-center heading-sm">Support</h1>
 
@@ -137,35 +163,9 @@ function Support() {
 						<span className="body-sm text-secondary">Don't want to share your email? Use our anonymous form</span>
 					</Card>
 
-					<Card
-						padding="md"
-						as="button"
-						type="button"
-						onClick={openLiveChat}
-						disabled={!userHash || chatLoading}
-						className="hover-wash-card flex cursor-pointer flex-col gap-1 text-center disabled:cursor-not-allowed disabled:opacity-50"
-					>
-						<span className="flex items-center justify-center gap-2 font-semibold">
-							{chatLoading ? (
-								<>
-									<svg className="size-4 animate-spin" viewBox="0 0 24 24" fill="none">
-										<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-										<path
-											className="opacity-75"
-											fill="currentColor"
-											d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-										/>
-									</svg>
-									Opening Chat...
-								</>
-							) : (
-								'Live Chat'
-							)}
-						</span>
-						<span className="body-sm text-secondary">
-							{chatLoading ? 'Please wait' : userHash ? 'Chat with us in real time' : 'Available for paying customers'}
-						</span>
-					</Card>
+					{/* Keyed by the signed-in user: signing out unmounts the card, so the next session starts with
+					    the SDK uninitialised instead of reusing a chat the sign-out already tore down. */}
+					<LiveChatCard key={userHash ?? 'signed-out'} userHash={userHash} email={email} />
 				</div>
 
 				{showForm ? (

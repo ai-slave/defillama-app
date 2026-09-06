@@ -4,21 +4,12 @@ import { Button } from '~/ui/Button'
 import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 
-export function LeadDialog({
-	open,
-	onClose,
-	title,
-	children,
-	footer,
-	showHeader = true
-}: {
-	open: boolean
-	onClose: () => void
-	title: ReactNode
-	children: ReactNode
-	footer?: ReactNode
-	showHeader?: boolean
-}) {
+/**
+ * Shell only. The header, body and footer are rendered by the form inside, so that the form — and every
+ * piece of state it owns — lives under `unmountOnHide` and starts fresh on each open, instead of being
+ * reset field by field.
+ */
+export function LeadDialog({ open, onClose, children }: { open: boolean; onClose: () => void; children: ReactNode }) {
 	return (
 		<Ariakit.DialogProvider open={open} setOpen={(value) => !value && onClose()}>
 			<Ariakit.Dialog
@@ -28,24 +19,38 @@ export function LeadDialog({
 				portal
 				unmountOnHide
 			>
-				{showHeader ? (
-					<div className="flex items-center justify-between gap-3 border-b border-subtle p-3">
-						<DialogHeading>{title}</DialogHeading>
-						<DialogCloseButton className="-mr-1" />
-					</div>
-				) : (
-					<>
-						<Ariakit.VisuallyHidden>
-							<DialogHeading>{title}</DialogHeading>
-						</Ariakit.VisuallyHidden>
-						<DialogCloseButton className="absolute top-3 right-3 z-10" />
-					</>
-				)}
-				<div className={`${dialogScrollableBodyStyles} flex flex-col gap-4 p-3`}>{children}</div>
-				{footer ? <div className="flex items-center justify-end gap-2 border-t border-subtle p-3">{footer}</div> : null}
+				{children}
 			</Ariakit.Dialog>
 		</Ariakit.DialogProvider>
 	)
+}
+
+/** The heading is always rendered for assistive tech; `hidden` only takes it out of the visual flow. */
+export function LeadDialogHeader({ title, hidden = false }: { title: ReactNode; hidden?: boolean }) {
+	if (hidden) {
+		return (
+			<>
+				<Ariakit.VisuallyHidden>
+					<DialogHeading>{title}</DialogHeading>
+				</Ariakit.VisuallyHidden>
+				<DialogCloseButton className="absolute top-3 right-3 z-10" />
+			</>
+		)
+	}
+	return (
+		<div className="flex items-center justify-between gap-3 border-b border-subtle p-3">
+			<DialogHeading>{title}</DialogHeading>
+			<DialogCloseButton className="-mr-1" />
+		</div>
+	)
+}
+
+export function LeadDialogBody({ children }: { children: ReactNode }) {
+	return <div className={`${dialogScrollableBodyStyles} flex flex-col gap-4 p-3`}>{children}</div>
+}
+
+export function LeadDialogFooter({ children }: { children: ReactNode }) {
+	return <div className="flex items-center justify-end gap-2 border-t border-subtle p-3">{children}</div>
 }
 
 export function LeadField({ label, error, children }: { label: string; error?: string | null; children: ReactNode }) {

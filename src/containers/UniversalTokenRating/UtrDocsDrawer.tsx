@@ -164,6 +164,22 @@ export function UtrDocsDrawer({
 	initialChapterId?: string
 	scoringConfig?: UtrScoringConfig | null
 }) {
+	// The body is a child of the drawer, which unmounts it when closed, so each open starts on the
+	// requested chapter instead of being reset into place afterwards.
+	return (
+		<Drawer open={open} onClose={onClose} title={UTR_DOCS_TITLE} widthClassName="sm:max-w-2xl lg:max-w-[1110px]">
+			<UtrDocsDrawerBody initialChapterId={initialChapterId} scoringConfig={scoringConfig} />
+		</Drawer>
+	)
+}
+
+function UtrDocsDrawerBody({
+	initialChapterId,
+	scoringConfig
+}: {
+	initialChapterId?: string
+	scoringConfig?: UtrScoringConfig | null
+}) {
 	const chapters = useMemo(() => buildUtrDocChapters(scoringConfig ?? null), [scoringConfig])
 	const [activeId, setActiveId] = useState(initialChapterId ?? chapters[0].id)
 	const [activeSubId, setActiveSubId] = useState<string | null>(null)
@@ -172,21 +188,14 @@ export function UtrDocsDrawer({
 	const subsections = chapterSubsections(activeChapter)
 
 	useEffect(() => {
-		if (!open) return
-		if (initialChapterId) {
-			// Selecting the requested chapter and scrolling to it are one action: the section only exists to
-			// scroll to after it has rendered.
-			// oxlint-disable-next-line react/set-state-in-effect -- see above
-			setActiveId(initialChapterId)
-			const frame = requestAnimationFrame(() => {
-				document.getElementById(`utr-docs-${initialChapterId}`)?.scrollIntoView({ block: 'start' })
-			})
-			return () => cancelAnimationFrame(frame)
-		}
-	}, [open, initialChapterId])
+		if (!initialChapterId) return
+		const frame = requestAnimationFrame(() => {
+			document.getElementById(`utr-docs-${initialChapterId}`)?.scrollIntoView({ block: 'start' })
+		})
+		return () => cancelAnimationFrame(frame)
+	}, [initialChapterId])
 
 	useEffect(() => {
-		if (!open) return
 		let observer: IntersectionObserver | null = null
 		const raf = requestAnimationFrame(() => {
 			const targets = chapters.flatMap((chapter) => {
@@ -225,84 +234,79 @@ export function UtrDocsDrawer({
 			cancelAnimationFrame(raf)
 			observer?.disconnect()
 		}
-	}, [open, chapters])
+	}, [chapters])
 
 	const scrollToId = (id: string) => {
 		document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 	}
 
 	return (
-		<Drawer open={open} onClose={onClose} title={UTR_DOCS_TITLE} widthClassName="sm:max-w-2xl lg:max-w-[1110px]">
-			<div className="flex flex-col gap-4 md:flex-row md:gap-6">
-				<nav className="md:w-[290px] md:shrink-0 md:self-stretch md:border-r md:border-subtle">
-					<div className="md:sticky md:top-0">
-						<p className="border-b border-subtle px-5 py-4 heading-xs">Chapters</p>
-						<ul className="flex flex-col gap-4 border-b border-subtle px-4 py-6">
-							{chapters.map((chapter) => {
-								const active = chapter.id === activeId
+		<div className="flex flex-col gap-4 md:flex-row md:gap-6">
+			<nav className="md:w-[290px] md:shrink-0 md:self-stretch md:border-r md:border-subtle">
+				<div className="md:sticky md:top-0">
+					<p className="border-b border-subtle px-5 py-4 heading-xs">Chapters</p>
+					<ul className="flex flex-col gap-4 border-b border-subtle px-4 py-6">
+						{chapters.map((chapter) => {
+							const active = chapter.id === activeId
+							return (
+								<li key={chapter.id}>
+									<button
+										type="button"
+										onClick={() => {
+											setActiveId(chapter.id)
+											setActiveSubId(null)
+											scrollToId(`utr-docs-${chapter.id}`)
+										}}
+										className={`flex w-full cursor-pointer border-l-2 pl-3 text-left text-base whitespace-nowrap ${
+											active ? 'border-brand font-medium text-link' : 'border-transparent text-primary hover:text-link'
+										}`}
+									>
+										{chapter.label}
+									</button>
+								</li>
+							)
+						})}
+					</ul>
+					{subsections.length > 0 ? (
+						<ul className="flex flex-col gap-3 px-4 py-5">
+							{subsections.map((subsection) => {
+								const active = activeSubId === subsection.id || (activeSubId == null && subsection.label === '1. Intro')
 								return (
-									<li key={chapter.id}>
+									<li key={subsection.id}>
 										<button
 											type="button"
 											onClick={() => {
-												setActiveId(chapter.id)
-												setActiveSubId(null)
-												scrollToId(`utr-docs-${chapter.id}`)
+												setActiveSubId(subsection.id)
+												scrollToId(subsection.id)
 											}}
-											className={`flex w-full cursor-pointer border-l-2 pl-3 text-left text-base whitespace-nowrap ${
-												active
-													? 'border-brand font-medium text-link'
-													: 'border-transparent text-primary hover:text-link'
+											className={`flex w-full cursor-pointer pl-3 text-left text-base ${
+												active ? 'text-link' : 'text-primary hover:text-link'
 											}`}
 										>
-											{chapter.label}
+											{subsection.label}
 										</button>
 									</li>
 								)
 							})}
 						</ul>
-						{subsections.length > 0 ? (
-							<ul className="flex flex-col gap-3 px-4 py-5">
-								{subsections.map((subsection) => {
-									const active =
-										activeSubId === subsection.id || (activeSubId == null && subsection.label === '1. Intro')
-									return (
-										<li key={subsection.id}>
-											<button
-												type="button"
-												onClick={() => {
-													setActiveSubId(subsection.id)
-													scrollToId(subsection.id)
-												}}
-												className={`flex w-full cursor-pointer pl-3 text-left text-base ${
-													active ? 'text-link' : 'text-primary hover:text-link'
-												}`}
-											>
-												{subsection.label}
-											</button>
-										</li>
-									)
-								})}
-							</ul>
-						) : null}
-					</div>
-				</nav>
-
-				<div className="flex min-w-0 flex-1 flex-col gap-8 p-4">
-					{chapters.map((chapter) => (
-						<section
-							key={chapter.id}
-							id={`utr-docs-${chapter.id}`}
-							className={`flex scroll-mt-4 flex-col ${chapter.id === 'glossary' ? 'gap-2' : 'gap-5'}`}
-						>
-							<h2 className="heading-xs">{chapter.label}</h2>
-							{chapter.blocks.map((block, index) => (
-								<DocBlock key={index} block={block} chapterId={chapter.id} />
-							))}
-						</section>
-					))}
+					) : null}
 				</div>
+			</nav>
+
+			<div className="flex min-w-0 flex-1 flex-col gap-8 p-4">
+				{chapters.map((chapter) => (
+					<section
+						key={chapter.id}
+						id={`utr-docs-${chapter.id}`}
+						className={`flex scroll-mt-4 flex-col ${chapter.id === 'glossary' ? 'gap-2' : 'gap-5'}`}
+					>
+						<h2 className="heading-xs">{chapter.label}</h2>
+						{chapter.blocks.map((block, index) => (
+							<DocBlock key={index} block={block} chapterId={chapter.id} />
+						))}
+					</section>
+				))}
 			</div>
-		</Drawer>
+		</div>
 	)
 }
