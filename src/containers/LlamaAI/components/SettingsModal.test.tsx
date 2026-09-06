@@ -113,6 +113,29 @@ describe('SettingsModal instructions', () => {
 		input.dispatchEvent(new Event('input', { bubbles: true }))
 	}
 
+	test('section arrows move focus without activating; switching back retains the instruction draft', async () => {
+		await act(async () => change('Keep this draft'))
+		const tabs = [...document.querySelectorAll<HTMLButtonElement>('[role="tab"]')]
+		const persona = tabs.find((tab) => tab.textContent === 'Persona')!
+		const app = tabs.find((tab) => tab.textContent === 'App')!
+		await act(async () => {
+			persona.focus()
+			persona.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }))
+			await new Promise((resolve) => setTimeout(resolve, 30))
+		})
+		expect(document.activeElement).toBe(app)
+		expect(persona.getAttribute('aria-selected')).toBe('true')
+		expect(textarea().value).toBe('Keep this draft')
+		await act(async () => app.click())
+		expect(textarea()).toBeNull()
+		expect(document.querySelector('[role="tabpanel"]')?.getAttribute('aria-labelledby')).toBe(app.id)
+		await act(async () => persona.click())
+		expect(textarea().value).toBe('Keep this draft')
+		const dialog = document.querySelector('[role="dialog"]')!
+		expect(document.getElementById(dialog.getAttribute('aria-labelledby')!)?.textContent).toBe('Settings')
+		expect(document.querySelector('[aria-label="Close settings"]')).not.toBeNull()
+	})
+
 	test('derives the character count from the controlled draft', async () => {
 		await act(async () => change('Short'))
 

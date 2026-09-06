@@ -104,25 +104,28 @@ export function ArticleEditorCanvas({
 					>
 						<div className="flex items-center gap-0.5 rounded-lg border border-medium bg-surface p-1 shadow-raised backdrop-blur supports-[backdrop-filter]:bg-surface/95">
 							{linkEdit ? (
+								// oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- Escape bubbles from the link controls to cancel their shared editor.
 								<form
 									onSubmit={(e) => {
 										e.preventDefault()
 										applyLink(linkEdit.url, linkEdit.newTab)
 									}}
-									className="flex items-center gap-1"
+									onKeyDown={(event) => {
+										if (event.key !== 'Escape') return
+										event.preventDefault()
+										event.stopPropagation()
+										setLinkEdit(null)
+										editor.commands.focus()
+									}}
+									className="flex w-[calc(100vw-3rem)] flex-wrap items-center gap-1 sm:w-auto sm:flex-nowrap"
 								>
 									<input
 										ref={linkInputRef}
 										value={linkEdit.url}
 										onChange={(e) => setLinkEdit({ url: e.target.value, newTab: linkEdit.newTab })}
-										onKeyDown={(e) => {
-											if (e.key === 'Escape') {
-												e.preventDefault()
-												setLinkEdit(null)
-											}
-										}}
+										aria-label="Link URL"
 										placeholder="Paste or type URL"
-										className="w-64 rounded-md bg-transparent px-2 py-1 text-sm text-primary placeholder:text-tertiary focus:outline-hidden"
+										className="w-full min-w-0 rounded-md bg-transparent px-2 py-1 text-sm text-primary placeholder:text-tertiary focus:outline-hidden sm:w-64"
 									/>
 									<button
 										type="button"

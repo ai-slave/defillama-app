@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { memo, useCallback, useEffect, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useId, useRef, useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import type { MemoryEntry } from '~/containers/LlamaAI/api/agentHome'
 import type { TelegramStatus } from '~/containers/LlamaAI/api/telegram'
@@ -25,6 +25,7 @@ import {
 import { useDarkModeManager, useLlamaAINotifyBannerDismissed } from '~/contexts/LocalStorage'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatFixedNumber } from '~/utils/numberFormat'
 
@@ -384,475 +385,502 @@ export const SettingsModal = memo(function SettingsModal({
 								<Icon name="settings" className="size-[18px] text-ai-accent-blue-deep" />
 							</div>
 							<div className="flex flex-col leading-tight">
-								<h2 className="m-0 text-[15px] font-semibold tracking-tight text-ai-primary">Settings</h2>
+								<Ariakit.DialogHeading
+									render={<h2>Settings</h2>}
+									className="m-0 text-[15px] font-semibold tracking-tight text-ai-primary"
+								/>
 								<p className="m-0 mt-0.5 text-[11px] text-ai-tertiary">Tune how LlamaAI works for you</p>
 							</div>
 						</div>
-						<Ariakit.DialogDismiss className="-mr-1.5 rounded-lg p-2 text-ai-tertiary transition-colors hover:bg-ai-hover hover:text-ai-primary">
+						<Ariakit.DialogDismiss
+							aria-label="Close settings"
+							className="-mr-1.5 rounded-lg p-2 text-ai-tertiary transition-colors hover:bg-ai-hover hover:text-ai-primary"
+						>
 							<Icon name="x" className="size-4" />
 						</Ariakit.DialogDismiss>
 					</div>
 				</header>
 
-				<div className="flex flex-col sm:min-h-[480px] sm:flex-row">
-					<nav
-						aria-label="Settings sections"
-						className="flex shrink-0 gap-1 overflow-x-auto border-b border-ai-line-subtle p-2 sm:w-[180px] sm:flex-col sm:gap-0.5 sm:overflow-visible sm:border-r sm:border-b-0 sm:bg-ai-hover-faint sm:p-3"
-					>
-						{tabs.map((tab) => {
-							const isActive = activeTab === tab.id
-							return (
-								<button
-									key={tab.id}
-									type="button"
-									onClick={() => setActiveTab(tab.id)}
-									className={`group relative flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] font-medium transition-colors ${
-										isActive
-											? 'bg-ai-white text-ai-accent-blue-deep shadow-ai-xs ring-1 ring-ai-line-subtle dark:bg-ai-hover dark:shadow-none dark:ring-ai-line-subtle'
-											: 'text-ai-tertiary hover:bg-ai-hover hover:text-ai-primary'
-									}`}
-								>
-									<Icon
-										name={tab.icon}
-										className={`size-[14px] shrink-0 ${isActive ? 'text-ai-accent-blue-deep' : 'text-ai-muted'}`}
-									/>
-									<span>{tab.label}</span>
-								</button>
-							)
-						})}
-					</nav>
-
-					<div className="max-h-[calc(88vh-130px)] flex-1 overflow-y-auto sm:max-h-[calc(88vh-81px)]">
-						<div className="p-5 sm:p-6">
-							{activeTab === 'persona' && (
-								<div className="space-y-6">
-									<div>
-										<SectionHeading
-											title="Custom Instructions"
-											subtitle="Tell LlamaAI how to respond. Applied to every conversation."
+				<Tabs<TabId>
+					value={activeTab}
+					onValueChange={setActiveTab}
+					values={tabs.map((tab) => tab.id)}
+					orientation="both"
+				>
+					<div className="flex min-h-0 flex-col sm:min-h-[480px] sm:flex-row">
+						<Ariakit.TabList
+							aria-label="Settings sections"
+							className="flex shrink-0 gap-1 overflow-x-auto border-b border-ai-line-subtle p-2 sm:w-[180px] sm:flex-col sm:gap-0.5 sm:overflow-visible sm:border-r sm:border-b-0 sm:bg-ai-hover-faint sm:p-3"
+						>
+							{tabs.map((tab) => {
+								const isActive = activeTab === tab.id
+								return (
+									<Tab
+										key={tab.id}
+										type="button"
+										value={tab.id}
+										className={`group relative flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] font-medium transition-colors ${
+											isActive
+												? 'bg-ai-white text-ai-accent-blue-deep shadow-ai-xs ring-1 ring-ai-line-subtle dark:bg-ai-hover dark:shadow-none dark:ring-ai-line-subtle'
+												: 'text-ai-tertiary hover:bg-ai-hover hover:text-ai-primary'
+										}`}
+									>
+										<Icon
+											name={tab.icon}
+											className={`size-[14px] shrink-0 ${isActive ? 'text-ai-accent-blue-deep' : 'text-ai-muted'}`}
 										/>
-										<div
-											className="mt-3 space-y-2"
-											onBlur={(event) => {
-												if (event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget)) {
-													return
-												}
-												void commitDraft()
-											}}
-										>
-											<div className="relative">
-												<textarea
-													id="llamaai-custom-instructions"
-													value={instructionsDraft.value}
-													maxLength={MAX_LENGTH}
-													onChange={(event) =>
-														setInstructionsDraft((current) => ({ ...current, value: event.target.value }))
+										<span>{tab.label}</span>
+									</Tab>
+								)
+							})}
+						</Ariakit.TabList>
+
+						<TabPanel
+							value={activeTab}
+							className="max-h-[calc(88vh-130px)] min-w-0 flex-1 overflow-y-auto sm:max-h-[calc(88vh-81px)]"
+						>
+							<div className="p-5 sm:p-6">
+								{activeTab === 'persona' && (
+									<div className="space-y-6">
+										<div>
+											<SectionHeading
+												title="Custom Instructions"
+												subtitle="Tell LlamaAI how to respond. Applied to every conversation."
+											/>
+											<div
+												className="mt-3 space-y-2"
+												onBlur={(event) => {
+													if (
+														event.relatedTarget instanceof Node &&
+														event.currentTarget.contains(event.relatedTarget)
+													) {
+														return
 													}
-													onKeyDown={(e) => {
-														if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-															e.preventDefault()
-															void commitDraft().then(() => dialogStore.hide())
+													void commitDraft()
+												}}
+											>
+												<div className="relative">
+													<textarea
+														id="llamaai-custom-instructions"
+														aria-label="Custom instructions"
+														value={instructionsDraft.value}
+														maxLength={MAX_LENGTH}
+														onChange={(event) =>
+															setInstructionsDraft((current) => ({ ...current, value: event.target.value }))
 														}
-													}}
-													placeholder="e.g., Be concise and lead with numbers. Always include % changes."
-													className="w-full resize-none rounded-xl border border-ai-line-medium bg-ai-hover-faint p-3.5 text-sm text-ai-primary placeholder-ai-muted outline-hidden transition-all focus:border-ai-accent-blue-deep/40 focus:bg-ai-hover focus:ring-4 focus:ring-ai-accent-blue-deep/8 dark:focus:ring-ai-accent-blue-deep/10"
-													rows={5}
-												/>
-												{showClear ? (
-													<button
-														type="button"
-														onClick={handleClear}
-														className="absolute top-2.5 right-2.5 rounded-md px-2 py-1 text-[10px] font-medium text-ai-muted transition-colors hover:bg-ai-error-vivid/10 hover:text-ai-error-vivid"
-													>
-														Clear
-													</button>
+														onKeyDown={(e) => {
+															if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+																e.preventDefault()
+																void commitDraft().then(() => dialogStore.hide())
+															}
+														}}
+														placeholder="e.g., Be concise and lead with numbers. Always include % changes."
+														className="w-full resize-none rounded-xl border border-ai-line-medium bg-ai-hover-faint p-3.5 text-sm text-ai-primary placeholder-ai-muted outline-hidden transition-all focus:border-ai-accent-blue-deep/40 focus:bg-ai-hover focus:ring-4 focus:ring-ai-accent-blue-deep/8 dark:focus:ring-ai-accent-blue-deep/10"
+														rows={5}
+													/>
+													{showClear ? (
+														<button
+															type="button"
+															onClick={handleClear}
+															className="absolute top-2.5 right-2.5 rounded-md px-2 py-1 text-[10px] font-medium text-ai-muted transition-colors hover:bg-ai-error-vivid/10 hover:text-ai-error-vivid"
+														>
+															Clear
+														</button>
+													) : null}
+												</div>
+												<div className="flex items-center justify-between font-mono text-[10.5px] text-ai-muted">
+													<span>
+														{instructionsDraft.value.length}/{MAX_LENGTH}
+													</span>
+													<span className="hidden sm:inline">⌘↵ to save & close</span>
+												</div>
+											</div>
+										</div>
+
+										<SettingsCard>
+											<ToggleRow
+												label="Remember preferences"
+												description="Let LlamaAI remember your preferences across conversations for personalized responses."
+												checked={settings.enableMemory}
+												onClick={handleMemoryToggle}
+											/>
+										</SettingsCard>
+									</div>
+								)}
+
+								{activeTab === 'app' && (
+									<div className="space-y-5">
+										<SectionHeading title="Interface" subtitle="How LlamaAI interacts with you in this browser." />
+										<SettingsCard>
+											<ToggleRow
+												label="Completion sound"
+												description="Play a short chime when LlamaAI finishes responding in a background tab."
+												checked={settings.enableSoundNotifications}
+												onClick={handleSoundToggle}
+											/>
+											<RowDivider />
+											<ToggleRow
+												label="Enter to send"
+												description={
+													settings.enterToSend
+														? 'Press Enter to send and Shift+Enter for a new line.'
+														: 'Press Enter for a new line and Shift+Enter to send.'
+												}
+												checked={settings.enterToSend}
+												onClick={handleEnterToSendToggle}
+											/>
+											<RowDivider />
+											<ToggleRow
+												label="Advanced provenance details"
+												description="Show the raw query behind a citation by default when you open its sources."
+												checked={settings.advancedProvenance}
+												onClick={handleAdvancedProvenanceToggle}
+											/>
+											{notifSupported ? (
+												<>
+													<RowDivider />
+													<ToggleRow
+														label="Browser notifications"
+														description={
+															notifPermission === 'granted'
+																? 'Enabled. Turn off in your browser site settings.'
+																: notifPermission === 'denied'
+																	? 'Blocked. Re-enable in your browser site settings.'
+																	: 'Get alerted when LlamaAI finishes responding while the tab is in the background.'
+														}
+														checked={notifPermission === 'granted'}
+														onClick={handleNotifToggle}
+														interactive={notifPermission === 'default' && !isRequestingNotif}
+													/>
+												</>
+											) : null}
+											{mobileNotificationRow}
+										</SettingsCard>
+									</div>
+								)}
+
+								{activeTab === 'capabilities' && (
+									<div className="space-y-6">
+										<div>
+											<SectionHeading title="Premium tools" subtitle="Paid data sources for deeper research." />
+											<div className="mt-3 space-y-3">
+												<SettingsCard>
+													<ToggleRow
+														label="Enable premium tools"
+														description="X/Twitter data, people search, and smart-money analytics. Uses your external data balance."
+														checked={settings.enablePremiumTools}
+														onClick={handlePremiumToolsToggle}
+													/>
+												</SettingsCard>
+												{settings.enablePremiumTools ? (
+													<div className="rounded-xl border border-ai-line-subtle bg-ai-hover-faint p-4">
+														<label
+															htmlFor="llamaai-spend-cap"
+															className="block text-[13px] font-medium text-ai-primary"
+														>
+															Spend cap per message
+														</label>
+														<p className="mt-1 text-xs text-ai-tertiary">
+															Max external-data spend per message in USD. Each new message gets a fresh budget. Default
+															$0.50.
+														</p>
+														<div className="mt-3 flex items-center gap-1 rounded-lg border border-ai-line-medium bg-ai-surface-card px-3 py-2 transition-colors focus-within:border-ai-accent-blue-deep/40 focus-within:ring-4 focus-within:ring-ai-accent-blue-deep/8 dark:focus-within:ring-ai-accent-blue-deep/10">
+															<span className="font-mono text-sm text-ai-muted">$</span>
+															<input
+																id="llamaai-spend-cap"
+																type="number"
+																inputMode="decimal"
+																min={0}
+																step={0.05}
+																value={spendCapDraft}
+																onChange={handleSpendCapChange}
+																onBlur={handleSpendCapBlur}
+																onKeyDown={handleSpendCapKeyDown}
+																className="w-full bg-transparent font-mono text-sm text-ai-primary outline-hidden"
+															/>
+														</div>
+													</div>
 												) : null}
 											</div>
-											<div className="flex items-center justify-between font-mono text-[10.5px] text-ai-muted">
-												<span>
-													{instructionsDraft.value.length}/{MAX_LENGTH}
-												</span>
-												<span className="hidden sm:inline">⌘↵ to save & close</span>
-											</div>
 										</div>
-									</div>
 
-									<SettingsCard>
-										<ToggleRow
-											label="Remember preferences"
-											description="Let LlamaAI remember your preferences across conversations for personalized responses."
-											checked={settings.enableMemory}
-											onClick={handleMemoryToggle}
-										/>
-									</SettingsCard>
-								</div>
-							)}
-
-							{activeTab === 'app' && (
-								<div className="space-y-5">
-									<SectionHeading title="Interface" subtitle="How LlamaAI interacts with you in this browser." />
-									<SettingsCard>
-										<ToggleRow
-											label="Completion sound"
-											description="Play a short chime when LlamaAI finishes responding in a background tab."
-											checked={settings.enableSoundNotifications}
-											onClick={handleSoundToggle}
-										/>
-										<RowDivider />
-										<ToggleRow
-											label="Enter to send"
-											description={
-												settings.enterToSend
-													? 'Press Enter to send and Shift+Enter for a new line.'
-													: 'Press Enter for a new line and Shift+Enter to send.'
-											}
-											checked={settings.enterToSend}
-											onClick={handleEnterToSendToggle}
-										/>
-										<RowDivider />
-										<ToggleRow
-											label="Advanced provenance details"
-											description="Show the raw query behind a citation by default when you open its sources."
-											checked={settings.advancedProvenance}
-											onClick={handleAdvancedProvenanceToggle}
-										/>
-										{notifSupported ? (
-											<>
-												<RowDivider />
-												<ToggleRow
-													label="Browser notifications"
-													description={
-														notifPermission === 'granted'
-															? 'Enabled. Turn off in your browser site settings.'
-															: notifPermission === 'denied'
-																? 'Blocked. Re-enable in your browser site settings.'
-																: 'Get alerted when LlamaAI finishes responding while the tab is in the background.'
-													}
-													checked={notifPermission === 'granted'}
-													onClick={handleNotifToggle}
-													interactive={notifPermission === 'default' && !isRequestingNotif}
-												/>
-											</>
-										) : null}
-										{mobileNotificationRow}
-									</SettingsCard>
-								</div>
-							)}
-
-							{activeTab === 'capabilities' && (
-								<div className="space-y-6">
-									<div>
-										<SectionHeading title="Premium tools" subtitle="Paid data sources for deeper research." />
-										<div className="mt-3 space-y-3">
-											<SettingsCard>
-												<ToggleRow
-													label="Enable premium tools"
-													description="X/Twitter data, people search, and smart-money analytics. Uses your external data balance."
-													checked={settings.enablePremiumTools}
-													onClick={handlePremiumToolsToggle}
-												/>
-											</SettingsCard>
-											{settings.enablePremiumTools ? (
-												<div className="rounded-xl border border-ai-line-subtle bg-ai-hover-faint p-4">
-													<label htmlFor="llamaai-spend-cap" className="block text-[13px] font-medium text-ai-primary">
-														Spend cap per message
-													</label>
-													<p className="mt-1 text-xs text-ai-tertiary">
-														Max external-data spend per message in USD. Each new message gets a fresh budget. Default
-														$0.50.
-													</p>
-													<div className="mt-3 flex items-center gap-1 rounded-lg border border-ai-line-medium bg-ai-surface-card px-3 py-2 transition-colors focus-within:border-ai-accent-blue-deep/40 focus-within:ring-4 focus-within:ring-ai-accent-blue-deep/8 dark:focus-within:ring-ai-accent-blue-deep/10">
-														<span className="font-mono text-sm text-ai-muted">$</span>
-														<input
-															id="llamaai-spend-cap"
-															type="number"
-															inputMode="decimal"
-															min={0}
-															step={0.05}
-															value={spendCapDraft}
-															onChange={handleSpendCapChange}
-															onBlur={handleSpendCapBlur}
-															onKeyDown={handleSpendCapKeyDown}
-															className="w-full bg-transparent font-mono text-sm text-ai-primary outline-hidden"
-														/>
-													</div>
-												</div>
-											) : null}
-										</div>
-									</div>
-
-									{availableModels && availableModels.length > 0 ? (
-										<div>
-											<SectionHeading title="Model" subtitle="Override the AI model that powers your responses." />
-											<div className="mt-3 space-y-3 rounded-xl border border-ai-line-subtle bg-ai-hover-faint p-4">
-												<SelectField
-													id="llamaai-model-select"
-													label="Model"
-													value={settings.model}
-													onChange={handleModelChange}
-												>
-													<option value="">Default (Sonnet 4.6)</option>
-													{availableModels.map((m) => (
-														<option key={m.id} value={m.id}>
-															{m.label}
-														</option>
-													))}
-												</SelectField>
-												{availableEfforts && availableEfforts.length > 0 ? (
+										{availableModels && availableModels.length > 0 ? (
+											<div>
+												<SectionHeading title="Model" subtitle="Override the AI model that powers your responses." />
+												<div className="mt-3 space-y-3 rounded-xl border border-ai-line-subtle bg-ai-hover-faint p-4">
 													<SelectField
-														id="llamaai-effort-select"
-														label="Reasoning effort"
-														value={settings.effort}
-														onChange={handleEffortChange}
+														id="llamaai-model-select"
+														label="Model"
+														value={settings.model}
+														onChange={handleModelChange}
 													>
-														<option value="">Default</option>
-														{availableEfforts.map((effort) => (
-															<option
-																key={effort.id}
-																value={effort.id}
-																disabled={!isEffortAvailableForModel(effort.id, settings.model)}
-															>
-																{effort.label}
+														<option value="">Default (Sonnet 4.6)</option>
+														{availableModels.map((m) => (
+															<option key={m.id} value={m.id}>
+																{m.label}
 															</option>
 														))}
 													</SelectField>
-												) : null}
-											</div>
-										</div>
-									) : null}
-								</div>
-							)}
-
-							{activeTab === 'integrations' && (
-								<div className="space-y-5">
-									<SectionHeading
-										title="Integrations"
-										subtitle="Connect external accounts to chat and receive alerts."
-									/>
-									{isSettingsLoading ? (
-										<div className="rounded-xl border border-ai-line-subtle bg-ai-hover-faint p-4">
-											<div className="flex items-center justify-between gap-3">
-												<div className="min-w-0 flex-1">
-													<div className="h-4 w-24 animate-pulse rounded-sm bg-ai-hover-strong" />
-													<div className="mt-2 h-3 w-full max-w-[360px] animate-pulse rounded-sm bg-ai-hover" />
-												</div>
-												<div className="h-8 w-20 shrink-0 animate-pulse rounded-lg bg-ai-hover-strong" />
-											</div>
-										</div>
-									) : (
-										<div className="flex flex-col gap-3">
-											<IntegrationRow
-												key={getIntegrationRowResetKey(initialState?.tgloginToken, telegramStatus)}
-												kind="telegram"
-												title="Telegram"
-												description="Chat with LlamaAI and receive alerts in your Telegram DMs."
-												initialStatus={telegramStatus}
-												initialTgloginToken={initialState?.tgloginToken ?? null}
-												onInitialStateConsumed={onInitialStateConsumed}
-											/>
-											<SlackIntegrationRow
-												title="Slack"
-												description="Receive scheduled alerts in your Slack channels. Multi-workspace supported."
-											/>
-											<div className="rounded-xl border border-ai-line-subtle bg-ai-hover-faint p-4">
-												<div className="flex flex-wrap items-start justify-between gap-3">
-													<div className="min-w-0 flex-1">
-														<p className="m-0 text-sm font-medium text-ai-primary">Mobile app</p>
-														<p className="m-0 mt-0.5 text-xs text-ai-tertiary">
-															Chat with LlamaAI and receive alerts on your phone. iOS and Android.
-														</p>
-													</div>
-													<BasicLink
-														href="/app"
-														data-umami-event="mobile-app-settings-click"
-														className="shrink-0 rounded-lg bg-ai-accent-blue-deep px-3 py-1.5 text-xs whitespace-nowrap text-ai-white hover:bg-ai-accent-blue-deep/90"
-													>
-														Get the app
-													</BasicLink>
-												</div>
-											</div>
-										</div>
-									)}
-								</div>
-							)}
-
-							{activeTab === 'memory' && (
-								<div className="space-y-6">
-									{agentHome.memories.data?.available === false ? (
-										<SettingsCard>
-											<p className="px-4 py-3.5 text-xs text-ai-tertiary">Memory is available on paid plans.</p>
-										</SettingsCard>
-									) : (
-										<>
-											<div className="space-y-3">
-												<SectionHeading
-													title="About you"
-													subtitle="Facts the assistant remembers about you across chats."
-												/>
-												<MemoryList
-													entries={agentHome.memories.data?.user}
-													isLoading={agentHome.memories.isLoading}
-													emptyText="Nothing remembered yet."
-													onDelete={(id) => agentHome.deleteMemoryMutation.mutate(id)}
-													deleting={agentHome.deleteMemoryMutation.isPending}
-												/>
-												{(agentHome.memories.data?.user.length ?? 0) > 0 ? (
-													<button
-														type="button"
-														onClick={() => agentHome.clearMemoriesMutation.mutate('user')}
-														disabled={agentHome.clearMemoriesMutation.isPending}
-														className="text-xs font-medium text-ai-muted transition-colors hover:text-ai-error-vivid disabled:opacity-50"
-													>
-														Clear all
-													</button>
-												) : null}
-											</div>
-
-											<div className="space-y-3">
-												<SectionHeading
-													title="Assistant notes"
-													subtitle="Environment and convention notes the assistant keeps for itself."
-												/>
-												<MemoryList
-													entries={agentHome.memories.data?.memory}
-													isLoading={agentHome.memories.isLoading}
-													emptyText="No notes yet."
-													onDelete={(id) => agentHome.deleteMemoryMutation.mutate(id)}
-													deleting={agentHome.deleteMemoryMutation.isPending}
-												/>
-												{(agentHome.memories.data?.memory.length ?? 0) > 0 ? (
-													<button
-														type="button"
-														onClick={() => agentHome.clearMemoriesMutation.mutate('memory')}
-														disabled={agentHome.clearMemoriesMutation.isPending}
-														className="text-xs font-medium text-ai-muted transition-colors hover:text-ai-error-vivid disabled:opacity-50"
-													>
-														Clear all
-													</button>
-												) : null}
-											</div>
-
-											<div className="space-y-3">
-												<SectionHeading
-													title="Skills"
-													subtitle="Workflows saved in your workspace. Archive one to stop the assistant using it."
-												/>
-												<SettingsCard>
-													{agentHome.skills.isLoading ? (
-														<p className="px-4 py-3.5 text-xs text-ai-tertiary">Loading…</p>
-													) : (agentHome.skills.data?.active.length ?? 0) === 0 ? (
-														<p className="px-4 py-3.5 text-xs text-ai-tertiary">No skills yet.</p>
-													) : (
-														agentHome.skills.data!.active.map((skill, i) => (
-															<div key={skill.name}>
-																{i > 0 ? <RowDivider /> : null}
-																<div className="flex items-start justify-between gap-4 px-4 py-3.5">
-																	<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-																		<p className="m-0 flex items-center gap-2 label-md text-ai-primary">
-																			{skill.name}
-																			<span className="rounded-sm bg-ai-hover px-1.5 py-0.5 text-[10px] font-normal text-ai-tertiary">
-																				{skill.createdBy === 'agent' ? 'learned by assistant' : 'added by you'}
-																			</span>
-																		</p>
-																		<p className="m-0 text-xs leading-relaxed text-ai-tertiary">{skill.description}</p>
-																	</div>
-																	{skill.pinned ? (
-																		<span className="shrink-0 px-2 py-1 text-xs text-ai-muted">Pinned</span>
-																	) : (
-																		<button
-																			type="button"
-																			onClick={() => agentHome.archiveSkillMutation.mutate(skill.name)}
-																			disabled={agentHome.archiveSkillMutation.isPending}
-																			className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-error-vivid disabled:opacity-50"
-																		>
-																			Archive
-																		</button>
-																	)}
-																</div>
-															</div>
-														))
-													)}
-												</SettingsCard>
-												{(agentHome.skills.data?.archived.length ?? 0) > 0 ? (
-													<details className="text-xs">
-														<summary className="cursor-pointer text-ai-muted">
-															Archived ({agentHome.skills.data!.archived.length})
-														</summary>
-														<div className="mt-2 space-y-2">
-															{agentHome.skills.data!.archived.map((skill) => (
-																<div key={skill.name} className="flex items-center justify-between gap-4">
-																	<span className="min-w-0 flex-1 truncate text-ai-tertiary">{skill.name}</span>
-																	<button
-																		type="button"
-																		onClick={() => agentHome.restoreSkillMutation.mutate(skill.name)}
-																		disabled={agentHome.restoreSkillMutation.isPending}
-																		className="shrink-0 font-medium text-ai-accent-blue-deep disabled:opacity-50"
-																	>
-																		Restore
-																	</button>
-																</div>
+													{availableEfforts && availableEfforts.length > 0 ? (
+														<SelectField
+															id="llamaai-effort-select"
+															label="Reasoning effort"
+															value={settings.effort}
+															onChange={handleEffortChange}
+														>
+															<option value="">Default</option>
+															{availableEfforts.map((effort) => (
+																<option
+																	key={effort.id}
+																	value={effort.id}
+																	disabled={!isEffortAvailableForModel(effort.id, settings.model)}
+																>
+																	{effort.label}
+																</option>
 															))}
-														</div>
-													</details>
-												) : null}
-											</div>
-										</>
-									)}
-								</div>
-							)}
-
-							{activeTab === 'lab' && isDark ? (
-								<div className="space-y-5">
-									<SectionHeading title="Experimental" subtitle="Bleeding-edge modes. Things may get weird." />
-									<button
-										type="button"
-										role="switch"
-										aria-checked={settings.hackerMode}
-										aria-label="Hacker Mode"
-										onClick={handleHackerToggle}
-										className={`group relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-xl p-4 text-left transition-all ${
-											settings.hackerMode
-												? 'bg-ai-ink shadow-ai-terminal-glow ring-1 ring-ai-terminal/30'
-												: 'bg-ai-hover-faint ring-1 ring-ai-line-medium hover:ring-ai-line-strong'
-										}`}
-									>
-										{settings.hackerMode ? (
-											<div className="pointer-events-none absolute inset-0 opacity-40">
-												<div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,65,0.18)_1px,transparent_1px)] bg-[length:14px_14px]" />
+														</SelectField>
+													) : null}
+												</div>
 											</div>
 										) : null}
-										<div className="relative flex items-center gap-3">
-											<img src="/assets/llamaai/hackerllama.webp" alt="" className="size-11 rounded-lg shadow-sm" />
-											<div className="flex flex-col gap-0.5">
-												<p
-													className={`m-0 text-sm font-medium ${
-														settings.hackerMode ? 'font-mono text-ai-terminal drop-shadow-ai-terminal' : 'text-ai-white'
-													}`}
-												>
-													{settings.hackerMode ? '> hacker_mode --active' : 'Hacker Mode'}
-												</p>
-												<p className="m-0 text-xs text-ai-muted">
-													Watch the llama hack through your questions in green.
-												</p>
+									</div>
+								)}
+
+								{activeTab === 'integrations' && (
+									<div className="space-y-5">
+										<SectionHeading
+											title="Integrations"
+											subtitle="Connect external accounts to chat and receive alerts."
+										/>
+										{isSettingsLoading ? (
+											<div className="rounded-xl border border-ai-line-subtle bg-ai-hover-faint p-4">
+												<div className="flex items-center justify-between gap-3">
+													<div className="min-w-0 flex-1">
+														<div className="h-4 w-24 animate-pulse rounded-sm bg-ai-hover-strong" />
+														<div className="mt-2 h-3 w-full max-w-[360px] animate-pulse rounded-sm bg-ai-hover" />
+													</div>
+													<div className="h-8 w-20 shrink-0 animate-pulse rounded-lg bg-ai-hover-strong" />
+												</div>
 											</div>
-										</div>
-										<div
-											className={`relative ml-3 h-[22px] w-[38px] shrink-0 rounded-full transition-colors ${
-												settings.hackerMode ? 'bg-ai-terminal shadow-ai-terminal' : 'bg-ai-surface-muted'
+										) : (
+											<div className="flex flex-col gap-3">
+												<IntegrationRow
+													key={getIntegrationRowResetKey(initialState?.tgloginToken, telegramStatus)}
+													kind="telegram"
+													title="Telegram"
+													description="Chat with LlamaAI and receive alerts in your Telegram DMs."
+													initialStatus={telegramStatus}
+													initialTgloginToken={initialState?.tgloginToken ?? null}
+													onInitialStateConsumed={onInitialStateConsumed}
+												/>
+												<SlackIntegrationRow
+													title="Slack"
+													description="Receive scheduled alerts in your Slack channels. Multi-workspace supported."
+												/>
+												<div className="rounded-xl border border-ai-line-subtle bg-ai-hover-faint p-4">
+													<div className="flex flex-wrap items-start justify-between gap-3">
+														<div className="min-w-0 flex-1">
+															<p className="m-0 text-sm font-medium text-ai-primary">Mobile app</p>
+															<p className="m-0 mt-0.5 text-xs text-ai-tertiary">
+																Chat with LlamaAI and receive alerts on your phone. iOS and Android.
+															</p>
+														</div>
+														<BasicLink
+															href="/app"
+															data-umami-event="mobile-app-settings-click"
+															className="shrink-0 rounded-lg bg-ai-accent-blue-deep px-3 py-1.5 text-xs whitespace-nowrap text-ai-white hover:bg-ai-accent-blue-deep/90"
+														>
+															Get the app
+														</BasicLink>
+													</div>
+												</div>
+											</div>
+										)}
+									</div>
+								)}
+
+								{activeTab === 'memory' && (
+									<div className="space-y-6">
+										{agentHome.memories.data?.available === false ? (
+											<SettingsCard>
+												<p className="px-4 py-3.5 text-xs text-ai-tertiary">Memory is available on paid plans.</p>
+											</SettingsCard>
+										) : (
+											<>
+												<div className="space-y-3">
+													<SectionHeading
+														title="About you"
+														subtitle="Facts the assistant remembers about you across chats."
+													/>
+													<MemoryList
+														entries={agentHome.memories.data?.user}
+														isLoading={agentHome.memories.isLoading}
+														emptyText="Nothing remembered yet."
+														onDelete={(id) => agentHome.deleteMemoryMutation.mutate(id)}
+														deleting={agentHome.deleteMemoryMutation.isPending}
+													/>
+													{(agentHome.memories.data?.user.length ?? 0) > 0 ? (
+														<button
+															type="button"
+															onClick={() => agentHome.clearMemoriesMutation.mutate('user')}
+															disabled={agentHome.clearMemoriesMutation.isPending}
+															className="text-xs font-medium text-ai-muted transition-colors hover:text-ai-error-vivid disabled:opacity-50"
+														>
+															Clear all
+														</button>
+													) : null}
+												</div>
+
+												<div className="space-y-3">
+													<SectionHeading
+														title="Assistant notes"
+														subtitle="Environment and convention notes the assistant keeps for itself."
+													/>
+													<MemoryList
+														entries={agentHome.memories.data?.memory}
+														isLoading={agentHome.memories.isLoading}
+														emptyText="No notes yet."
+														onDelete={(id) => agentHome.deleteMemoryMutation.mutate(id)}
+														deleting={agentHome.deleteMemoryMutation.isPending}
+													/>
+													{(agentHome.memories.data?.memory.length ?? 0) > 0 ? (
+														<button
+															type="button"
+															onClick={() => agentHome.clearMemoriesMutation.mutate('memory')}
+															disabled={agentHome.clearMemoriesMutation.isPending}
+															className="text-xs font-medium text-ai-muted transition-colors hover:text-ai-error-vivid disabled:opacity-50"
+														>
+															Clear all
+														</button>
+													) : null}
+												</div>
+
+												<div className="space-y-3">
+													<SectionHeading
+														title="Skills"
+														subtitle="Workflows saved in your workspace. Archive one to stop the assistant using it."
+													/>
+													<SettingsCard>
+														{agentHome.skills.isLoading ? (
+															<p className="px-4 py-3.5 text-xs text-ai-tertiary">Loading…</p>
+														) : (agentHome.skills.data?.active.length ?? 0) === 0 ? (
+															<p className="px-4 py-3.5 text-xs text-ai-tertiary">No skills yet.</p>
+														) : (
+															agentHome.skills.data!.active.map((skill, i) => (
+																<div key={skill.name}>
+																	{i > 0 ? <RowDivider /> : null}
+																	<div className="flex items-start justify-between gap-4 px-4 py-3.5">
+																		<div className="flex min-w-0 flex-1 flex-col gap-0.5">
+																			<p className="m-0 flex items-center gap-2 label-md text-ai-primary">
+																				{skill.name}
+																				<span className="rounded-sm bg-ai-hover px-1.5 py-0.5 text-[10px] font-normal text-ai-tertiary">
+																					{skill.createdBy === 'agent' ? 'learned by assistant' : 'added by you'}
+																				</span>
+																			</p>
+																			<p className="m-0 text-xs leading-relaxed text-ai-tertiary">
+																				{skill.description}
+																			</p>
+																		</div>
+																		{skill.pinned ? (
+																			<span className="shrink-0 px-2 py-1 text-xs text-ai-muted">Pinned</span>
+																		) : (
+																			<button
+																				type="button"
+																				onClick={() => agentHome.archiveSkillMutation.mutate(skill.name)}
+																				disabled={agentHome.archiveSkillMutation.isPending}
+																				className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-error-vivid disabled:opacity-50"
+																			>
+																				Archive
+																			</button>
+																		)}
+																	</div>
+																</div>
+															))
+														)}
+													</SettingsCard>
+													{(agentHome.skills.data?.archived.length ?? 0) > 0 ? (
+														<details className="text-xs">
+															<summary className="cursor-pointer text-ai-muted">
+																Archived ({agentHome.skills.data!.archived.length})
+															</summary>
+															<div className="mt-2 space-y-2">
+																{agentHome.skills.data!.archived.map((skill) => (
+																	<div key={skill.name} className="flex items-center justify-between gap-4">
+																		<span className="min-w-0 flex-1 truncate text-ai-tertiary">{skill.name}</span>
+																		<button
+																			type="button"
+																			onClick={() => agentHome.restoreSkillMutation.mutate(skill.name)}
+																			disabled={agentHome.restoreSkillMutation.isPending}
+																			className="shrink-0 font-medium text-ai-accent-blue-deep disabled:opacity-50"
+																		>
+																			Restore
+																		</button>
+																	</div>
+																))}
+															</div>
+														</details>
+													) : null}
+												</div>
+											</>
+										)}
+									</div>
+								)}
+
+								{activeTab === 'lab' && isDark ? (
+									<div className="space-y-5">
+										<SectionHeading title="Experimental" subtitle="Bleeding-edge modes. Things may get weird." />
+										<button
+											type="button"
+											role="switch"
+											aria-checked={settings.hackerMode}
+											aria-label="Hacker Mode"
+											onClick={handleHackerToggle}
+											className={`group relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-xl p-4 text-left transition-all ${
+												settings.hackerMode
+													? 'bg-ai-ink shadow-ai-terminal-glow ring-1 ring-ai-terminal/30'
+													: 'bg-ai-hover-faint ring-1 ring-ai-line-medium hover:ring-ai-line-strong'
 											}`}
 										>
+											{settings.hackerMode ? (
+												<div className="pointer-events-none absolute inset-0 opacity-40">
+													<div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,65,0.18)_1px,transparent_1px)] bg-[length:14px_14px]" />
+												</div>
+											) : null}
+											<div className="relative flex items-center gap-3">
+												<img src="/assets/llamaai/hackerllama.webp" alt="" className="size-11 rounded-lg shadow-sm" />
+												<div className="flex flex-col gap-0.5">
+													<p
+														className={`m-0 text-sm font-medium ${
+															settings.hackerMode
+																? 'font-mono text-ai-terminal drop-shadow-ai-terminal'
+																: 'text-ai-white'
+														}`}
+													>
+														{settings.hackerMode ? '> hacker_mode --active' : 'Hacker Mode'}
+													</p>
+													<p className="m-0 text-xs text-ai-muted">
+														Watch the llama hack through your questions in green.
+													</p>
+												</div>
+											</div>
 											<div
-												className={`absolute top-[3px] size-4 rounded-full shadow transition-transform duration-200 ${
-													settings.hackerMode ? 'translate-x-[19px] bg-ai-ink' : 'translate-x-[3px] bg-ai-white'
+												className={`relative ml-3 h-[22px] w-[38px] shrink-0 rounded-full transition-colors ${
+													settings.hackerMode ? 'bg-ai-terminal shadow-ai-terminal' : 'bg-ai-surface-muted'
 												}`}
-											/>
-										</div>
-									</button>
-								</div>
-							) : null}
-						</div>
+											>
+												<div
+													className={`absolute top-[3px] size-4 rounded-full shadow transition-transform duration-200 ${
+														settings.hackerMode ? 'translate-x-[19px] bg-ai-ink' : 'translate-x-[3px] bg-ai-white'
+													}`}
+												/>
+											</div>
+										</button>
+									</div>
+								) : null}
+							</div>
+						</TabPanel>
 					</div>
-				</div>
+				</Tabs>
 			</Ariakit.Dialog>
 		</Ariakit.DialogProvider>
 	)
@@ -929,19 +957,23 @@ function ToggleRow({
 	onClick: () => void
 	interactive?: boolean
 }) {
+	const descriptionId = useId()
 	return (
 		<button
 			type="button"
 			role="switch"
 			aria-checked={checked}
 			aria-label={label}
+			aria-describedby={descriptionId}
 			onClick={onClick}
 			disabled={!interactive}
 			className="group flex w-full items-start justify-between gap-4 px-4 py-3.5 text-left transition-colors hover:bg-ai-hover-faint disabled:cursor-default disabled:hover:bg-transparent"
 		>
 			<div className="flex min-w-0 flex-1 flex-col gap-0.5">
 				<p className="m-0 label-md text-ai-primary">{label}</p>
-				<p className="m-0 text-xs leading-relaxed text-ai-tertiary">{description}</p>
+				<p id={descriptionId} className="m-0 text-xs leading-relaxed text-ai-tertiary">
+					{description}
+				</p>
 			</div>
 			<div
 				className={`relative mt-0.5 h-[22px] w-[38px] shrink-0 rounded-full transition-colors ${

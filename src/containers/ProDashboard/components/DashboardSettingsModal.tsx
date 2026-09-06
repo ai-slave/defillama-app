@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useRef, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -41,6 +41,7 @@ function DashboardSettingsModalInner({
 	onSave,
 	onDelete
 }: DashboardSettingsModalProps) {
+	const id = useId()
 	const { hasActiveSubscription } = useAuthContext()
 	const [localVisibility, setLocalVisibility] = useState(visibility)
 	const [localTags, setLocalTags] = useState(tags)
@@ -121,7 +122,10 @@ function DashboardSettingsModalInner({
 					hideOnInteractOutside
 				>
 					<div className="mb-6 flex items-center justify-between">
-						<h2 className="text-xl font-semibold text-pro-text-primary">Dashboard Settings</h2>
+						<Ariakit.DialogHeading
+							render={<h2>Dashboard Settings</h2>}
+							className="text-xl font-semibold text-pro-text-primary"
+						/>
 						<Ariakit.DialogDismiss className="rounded-md pro-hover-bg p-1 transition-colors">
 							<Icon name="x" height={20} width={20} className="text-pro-text-secondary" />
 							<span className="sr-only">Close dialog</span>
@@ -151,43 +155,55 @@ function DashboardSettingsModalInner({
 								<p id="dashboard-settings-visibility" className="mb-3 block text-sm font-medium text-pro-text-primary">
 									Visibility
 								</p>
-								<div className="flex gap-3" aria-labelledby="dashboard-settings-visibility">
-									<button
-										type="button"
-										onClick={() => setLocalVisibility('public')}
-										aria-pressed={localVisibility === 'public'}
-										className={`flex-1 rounded-md border px-4 py-3 transition-colors ${
-											localVisibility === 'public'
-												? 'pro-btn-primary'
-												: 'pro-border text-pro-text-secondary hover:text-pro-text-primary'
-										}`}
-									>
-										<Icon name="earth" height={16} width={16} className="mr-2 inline" />
-										Public
-									</button>
-									<button
-										type="button"
-										onClick={() => hasActiveSubscription && setLocalVisibility('private')}
-										disabled={!hasActiveSubscription}
-										aria-pressed={localVisibility === 'private'}
-										className={`flex-1 rounded-md border px-4 py-3 transition-colors ${
-											localVisibility === 'private'
-												? 'pro-btn-primary'
-												: !hasActiveSubscription
-													? 'cursor-not-allowed pro-border text-pro-text-secondary opacity-50'
+								<Ariakit.RadioProvider
+									value={localVisibility}
+									setValue={(value) => setLocalVisibility(value as 'public' | 'private')}
+								>
+									<Ariakit.RadioGroup className="flex gap-3" aria-labelledby="dashboard-settings-visibility">
+										<label
+											htmlFor={`${id}-public`}
+											className={`relative flex-1 cursor-pointer rounded-md border px-4 py-3 text-center transition-colors has-focus-visible:focus-ring ${
+												localVisibility === 'public'
+													? 'pro-btn-primary'
 													: 'pro-border text-pro-text-secondary hover:text-pro-text-primary'
-										}`}
-									>
-										<Icon
-											name={hasActiveSubscription ? 'key' : 'file-lock-2'}
-											height={16}
-											width={16}
-											className="mr-2 inline"
-										/>
-										Private
-										{!hasActiveSubscription ? <span className="ml-1 text-xs opacity-70">(Pro)</span> : null}
-									</button>
-								</div>
+											}`}
+										>
+											<Ariakit.Radio
+												id={`${id}-public`}
+												value="public"
+												className="sr-only"
+												tabIndex={!hasActiveSubscription && localVisibility === 'private' ? 0 : undefined}
+											/>
+											<Icon name="earth" height={16} width={16} className="mr-2 inline" />
+											Public
+										</label>
+										<label
+											htmlFor={`${id}-private`}
+											className={`relative flex-1 cursor-pointer rounded-md border px-4 py-3 text-center transition-colors has-focus-visible:focus-ring ${
+												localVisibility === 'private'
+													? 'pro-btn-primary'
+													: !hasActiveSubscription
+														? 'cursor-not-allowed pro-border text-pro-text-secondary opacity-50'
+														: 'pro-border text-pro-text-secondary hover:text-pro-text-primary'
+											}`}
+										>
+											<Ariakit.Radio
+												id={`${id}-private`}
+												value="private"
+												className="sr-only"
+												disabled={!hasActiveSubscription}
+											/>
+											<Icon
+												name={hasActiveSubscription ? 'key' : 'file-lock-2'}
+												height={16}
+												width={16}
+												className="mr-2 inline"
+											/>
+											Private
+											{!hasActiveSubscription ? <span className="ml-1 text-xs opacity-70">(Pro)</span> : null}
+										</label>
+									</Ariakit.RadioGroup>
+								</Ariakit.RadioProvider>
 								{localVisibility === 'public' ? (
 									<p className="mt-2 text-sm text-pro-text-tertiary">
 										Public dashboards are visible in the Discover tab

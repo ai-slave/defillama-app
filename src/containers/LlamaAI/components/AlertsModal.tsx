@@ -328,8 +328,9 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 		boolean,
 		Error,
 		{ alertId: string; enabled: boolean },
-		{ previous?: Array<Alert> }
+		{ previousEnabled: boolean | undefined }
 	>({
+		mutationKey: alertsQueryKey,
 		mutationFn: async ({ alertId, enabled }: { alertId: string; enabled: boolean }) => {
 			if (!authorizedFetch) {
 				throw new Error('Not authenticated')
@@ -343,14 +344,19 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 				if (!old) return []
 				return old.map((item) => (item.id === alertId ? { ...item, enabled } : item))
 			})
-			return { previous }
+			return { previousEnabled: previous?.find((item) => item.id === alertId)?.enabled }
 		},
-		onError: (_error, _variables, context) => {
-			if (context?.previous) {
-				queryClient.setQueryData(alertsQueryKey, context.previous)
-			}
+		onError: (_error, { alertId }, context) => {
+			const previousEnabled = context?.previousEnabled
+			if (previousEnabled === undefined) return
+			// A failed toggle must not roll back changes to other alert rows.
+			queryClient.setQueryData<Array<Alert>>(alertsQueryKey, (current) =>
+				current?.map((item) => (item.id === alertId ? { ...item, enabled: previousEnabled } : item))
+			)
 		},
 		onSettled: () => {
+			// Refetch after the last toggle so another row keeps its pending state.
+			if (queryClient.isMutating({ mutationKey: alertsQueryKey }) > 1) return
 			void queryClient.invalidateQueries({ queryKey: [ALERTS_QUERY_KEY] })
 			void queryClient.invalidateQueries({ queryKey: [SESSIONS_QUERY_KEY] })
 		}
@@ -698,7 +704,8 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 					<div className="ml-1.5">
 						<ToggleSwitch
 							checked={alert.enabled}
-							label={alert.enabled ? 'Disable alert' : 'Enable alert'}
+							label="Alert enabled"
+							disabled={toggleAlertMutation.isPending}
 							onClick={() => {
 								trackUmamiEvent('llamaai-alert-toggle')
 								if (isFiredOneTimePriceAlert(alert)) {
@@ -712,7 +719,11 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 				</div>
 			</div>
 
-			{toggleErrorMessage ? <p className="mt-2 text-xs text-ai-error-vivid">{toggleErrorMessage}</p> : null}
+			{toggleErrorMessage ? (
+				<p role="alert" className="mt-2 text-xs text-ai-error-vivid">
+					{toggleErrorMessage}
+				</p>
+			) : null}
 
 			{showExecutions ? (
 				<div className="mt-3 border-t border-ai-line-subtle pt-3">

@@ -1,3 +1,5 @@
+import * as Ariakit from '@ariakit/react'
+import { useId } from 'react'
 import { PricingCard } from '~/containers/Subscription/components'
 import type { BillingCycle, PlanKey, PricingCardCallbacks, PricingCardData } from '~/containers/Subscription/types'
 
@@ -29,6 +31,7 @@ export function SubscriptionPricingSection({
 	isTeamProvided?: boolean
 	isPageStateLoading?: boolean
 } & PricingCardCallbacks) {
+	const id = useId()
 	const isMonthly = billingCycle === 'monthly'
 	const isYearly = billingCycle === 'yearly'
 
@@ -53,42 +56,46 @@ export function SubscriptionPricingSection({
 			</div>
 
 			<div className="mt-9 flex flex-col items-center gap-3 md:mt-12 md:gap-5">
-				<div
-					role="group"
-					aria-label="Billing cycle"
-					className="relative flex w-[268px] rounded-full bg-white p-1 md:w-[236px] dark:bg-sub-surface-dark"
+				<Ariakit.RadioProvider
+					value={billingCycle}
+					setValue={(value) => {
+						if (value !== billingCycle) onBillingCycleChange(value as BillingCycle)
+					}}
 				>
-					<div
-						className={`absolute top-1 left-1 h-14 w-[calc(50%-4px)] rounded-full bg-sub-brand-primary transition-transform duration-300 ease-in-out md:h-12 ${
-							isYearly ? 'translate-x-full' : 'translate-x-0'
-						}`}
-					/>
-					<button
-						type="button"
-						aria-pressed={isMonthly}
-						onClick={() => onBillingCycleChange('monthly')}
-						className={`relative z-10 h-14 flex-1 rounded-full text-base leading-5 font-medium transition-colors duration-300 md:h-12 md:text-sm ${
-							isMonthly ? 'text-on-brand' : 'text-sub-heading md:text-sub-text-primary dark:text-sub-text-primary'
-						}`}
+					<Ariakit.RadioGroup
+						aria-label="Billing cycle"
+						className="relative flex w-[268px] rounded-full bg-white p-1 md:w-[236px] dark:bg-sub-surface-dark"
 					>
-						Monthly
-					</button>
-					<button
-						type="button"
-						aria-pressed={isYearly}
-						onClick={() => onBillingCycleChange('yearly')}
-						className={`relative z-10 flex h-14 flex-1 flex-col items-center justify-center rounded-full text-base leading-5 font-medium transition-colors duration-300 md:h-12 md:text-sm ${
-							isYearly ? 'text-on-brand' : 'text-sub-heading md:text-sub-text-primary dark:text-sub-text-primary'
-						}`}
-					>
-						<span>Yearly</span>
-						<span
-							className={`text-xs leading-4 transition-colors duration-300 md:text-[10px] md:leading-3 ${isYearly ? 'text-sub-brand-softest' : 'text-sub-brand-secondary dark:text-sub-brand-softest'}`}
+						<div
+							className={`absolute top-1 left-1 h-14 w-[calc(50%-4px)] rounded-full bg-sub-brand-primary transition-transform duration-300 ease-in-out md:h-12 ${
+								isYearly ? 'translate-x-full' : 'translate-x-0'
+							}`}
+						/>
+						<label
+							htmlFor={`${id}-monthly`}
+							className={`relative z-10 flex h-14 flex-1 cursor-pointer items-center justify-center rounded-full text-base leading-5 font-medium transition-colors duration-300 has-focus-visible:focus-ring md:h-12 md:text-sm ${
+								isMonthly ? 'text-on-brand' : 'text-sub-heading md:text-sub-text-primary dark:text-sub-text-primary'
+							}`}
 						>
-							Get 2 months free
-						</span>
-					</button>
-				</div>
+							<Ariakit.Radio id={`${id}-monthly`} value="monthly" className="sr-only" />
+							Monthly
+						</label>
+						<label
+							htmlFor={`${id}-yearly`}
+							className={`relative z-10 flex h-14 flex-1 cursor-pointer flex-col items-center justify-center rounded-full text-base leading-5 font-medium transition-colors duration-300 has-focus-visible:focus-ring md:h-12 md:text-sm ${
+								isYearly ? 'text-on-brand' : 'text-sub-heading md:text-sub-text-primary dark:text-sub-text-primary'
+							}`}
+						>
+							<Ariakit.Radio id={`${id}-yearly`} value="yearly" className="sr-only" aria-label="Yearly" />
+							<span>Yearly</span>
+							<span
+								className={`text-xs leading-4 transition-colors duration-300 md:text-[10px] md:leading-3 ${isYearly ? 'text-sub-brand-softest' : 'text-sub-brand-secondary dark:text-sub-brand-softest'}`}
+							>
+								Get 2 months free
+							</span>
+						</label>
+					</Ariakit.RadioGroup>
+				</Ariakit.RadioProvider>
 				<p className="text-xs leading-4 text-sub-text-cool md:text-sub-text-secondary dark:md:text-sub-text-secondary">
 					Cancel Anytime, Crypto &amp; Card Payments
 				</p>

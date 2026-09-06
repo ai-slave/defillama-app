@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
+import toast from 'react-hot-toast'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import {
 	LLAMA_AI_ENABLE_MEMORY_KEY,
@@ -15,6 +16,8 @@ const mocks = vi.hoisted(() => ({
 	authorizedFetch: vi.fn(),
 	storage: new Map<string, string>()
 }))
+
+vi.mock('react-hot-toast', () => ({ default: { error: vi.fn() } }))
 
 vi.mock('~/auth', () => ({
 	useAuthContext: () => ({
@@ -108,6 +111,7 @@ describe('useLlamaAISettings', () => {
 		const cached = queryClient.getQueryData<SettingsQueryResult>([...LLAMA_AI_SETTINGS_QUERY_KEY, 'user-1'])
 		expect(cached?.settings?.enableMemory).toBe(false)
 		expect(mocks.storage.get(LLAMA_AI_ENABLE_MEMORY_KEY)).toBe('false')
+		expect(toast.error).toHaveBeenCalledWith('Could not save AI settings. Please try again.')
 	})
 
 	test('ignores a settings query that predates a successful save', async () => {

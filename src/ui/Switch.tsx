@@ -34,6 +34,8 @@ export function Switch({
 				value={value}
 				checked={checked}
 				onChange={onChange}
+				disabled={isLoading}
+				aria-busy={isLoading}
 				className="peer absolute size-[1em] opacity-[0.00001]"
 			/>
 			<span

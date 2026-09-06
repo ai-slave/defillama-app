@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import type { ReactNode } from 'react'
+import { useId, type ReactNode } from 'react'
 
 export function MetaSection({ title, children }: { title: string; children: ReactNode }) {
 	return (
@@ -23,6 +23,7 @@ export function MetaSwitch({
 	description?: string
 	disabled?: boolean
 }) {
+	const id = useId()
 	return (
 		<label
 			className={`group flex items-start justify-between gap-4 rounded-md border border-transparent px-3 py-2.5 transition-colors hover:border-medium hover:bg-page/40 ${
@@ -30,31 +31,37 @@ export function MetaSwitch({
 			}`}
 		>
 			<span className="grid min-w-0 gap-0.5">
-				<span className="text-sm font-medium text-primary">{label}</span>
-				{description ? <span className="text-[11px] leading-snug text-tertiary">{description}</span> : null}
+				<span id={`${id}-label`} className="text-sm font-medium text-primary">
+					{label}
+				</span>
+				{description ? (
+					<span id={`${id}-description`} className="text-[11px] leading-snug text-tertiary">
+						{description}
+					</span>
+				) : null}
 			</span>
 			<Ariakit.Checkbox
 				checked={checked}
 				onChange={(event) => onCheckedChange(event.currentTarget.checked)}
 				disabled={disabled}
-				render={(props) => (
-					<button
-						{...props}
-						type="button"
-						role="switch"
-						aria-checked={checked}
-						className={`relative mt-0.5 inline-flex h-[18px] w-8 shrink-0 items-center rounded-full border transition-colors focus-visible:ring-2 focus-visible:ring-link/40 focus-visible:ring-offset-1 focus-visible:ring-offset-pro-cards-bg focus-visible:outline-hidden ${
-							checked ? 'border-link/60 bg-link' : 'border-medium bg-page group-hover:border-tertiary'
-						}`}
-					>
-						<span
-							className={`absolute top-1/2 inline-block size-3 -translate-y-1/2 rounded-full shadow-sm transition-all duration-200 ease-out ${
-								checked ? 'left-[15px] bg-research-white' : 'left-[2px] bg-tertiary group-hover:bg-secondary'
-							}`}
-						/>
-					</button>
-				)}
+				role="switch"
+				aria-checked={checked}
+				aria-labelledby={`${id}-label`}
+				aria-describedby={description ? `${id}-description` : undefined}
+				className="peer sr-only"
 			/>
+			<span
+				aria-hidden="true"
+				className={`relative mt-0.5 inline-flex h-[18px] w-8 shrink-0 items-center rounded-full border transition-colors peer-focus-visible:focus-ring ${
+					checked ? 'border-link/60 bg-link' : 'border-medium bg-page group-hover:border-tertiary'
+				}`}
+			>
+				<span
+					className={`absolute top-1/2 inline-block size-3 -translate-y-1/2 rounded-full shadow-sm transition-all duration-200 ease-out ${
+						checked ? 'left-[15px] bg-research-white' : 'left-[2px] bg-tertiary group-hover:bg-secondary'
+					}`}
+				/>
+			</span>
 		</label>
 	)
 }

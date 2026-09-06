@@ -144,14 +144,16 @@ export function ToggleSwitch({
 	disabled?: boolean
 }) {
 	return (
-		<button
-			type="button"
+		<Ariakit.Checkbox
+			render={<button type="button" aria-label={label} />}
+			accessibleWhenDisabled
 			role="switch"
 			aria-checked={checked}
+			checked={checked}
 			aria-label={label}
-			onClick={onClick}
+			onChange={onClick}
 			disabled={disabled}
-			className={`relative h-[22px] w-[38px] shrink-0 rounded-full transition-colors disabled:opacity-50 ${
+			className={`relative h-[22px] w-[38px] shrink-0 rounded-full transition-colors aria-disabled:opacity-50 ${
 				checked ? 'bg-link' : 'bg-ai-black/15 dark:bg-ai-white/15'
 			}`}
 		>
@@ -160,7 +162,7 @@ export function ToggleSwitch({
 					checked ? 'translate-x-[19px]' : 'translate-x-[3px]'
 				}`}
 			/>
-		</button>
+		</Ariakit.Checkbox>
 	)
 }
 
