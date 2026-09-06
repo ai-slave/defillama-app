@@ -586,7 +586,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 										return (
 											<li
 												key={id}
-												className="grid grid-cols-[12px_1fr_auto_24px] items-center gap-2 rounded-md border border-medium bg-page px-2.5 py-1.5"
+												className="grid grid-cols-[12px_minmax(0,1fr)_24px] items-center gap-2 rounded-md border border-medium bg-page px-2.5 py-1.5 sm:grid-cols-[12px_minmax(0,1fr)_auto_24px]"
 											>
 												<span
 													aria-hidden
@@ -602,11 +602,13 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 														{s.entityType}
 													</span>
 												</span>
-												<ChartTypeSelect
-													value={s.chartType}
-													options={types}
-													onChange={(next) => updateSeriesChartType(id, next)}
-												/>
+												<div className="col-start-2 row-start-2 sm:col-auto sm:row-auto">
+													<ChartTypeSelect
+														value={s.chartType}
+														options={types}
+														onChange={(next) => updateSeriesChartType(id, next)}
+													/>
+												</div>
 												<button
 													type="button"
 													onClick={() => removeSeries(id)}
@@ -643,7 +645,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 								</div>
 							</div>
 
-							<div className="relative min-h-0 flex-1 border-t border-medium bg-page">
+							<div className="relative shrink-0 grow border-t border-medium bg-page">
 								<div className="pointer-events-none absolute top-3 left-5 z-10 flex items-center gap-2">
 									<span className="rounded-full border border-medium bg-surface/80 px-2 py-0.5 text-[10px] font-medium tracking-wide text-tertiary uppercase backdrop-blur">
 										Preview

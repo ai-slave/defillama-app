@@ -75,7 +75,7 @@ export function DashboardBrowse({ onTagClick, initialCategories }: DashboardBrow
 					</span>
 					Trending Tags
 				</h3>
-				<div className="-mx-4 flex scrollbar-none gap-2 overflow-x-auto px-4 pb-2">
+				<div className="flex scrollbar-none gap-2 overflow-x-auto pb-2 md:-mx-4 md:px-4">
 					{TRENDING_TAGS.map((tag) => (
 						<button
 							type="button"

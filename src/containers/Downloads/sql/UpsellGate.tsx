@@ -1,6 +1,7 @@
+import { TabProvider, TabList, Tab, TabPanel } from '@ariakit/react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { useState, type ReactNode } from 'react'
+import { useId, type ReactNode } from 'react'
 import { setSignupSource } from '~/auth/signupSource'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { formatNumber, formatCompactNumber, formatUsd } from '~/utils/numberFormat'
@@ -169,7 +170,6 @@ const TABS: Array<TabDef> = [
 export function UpsellGate({ isAuthenticated, isTrial }: UpsellGateProps) {
 	const router = useRouter()
 	const subscriptionHref = `/subscription?returnUrl=${encodeURIComponent(router.asPath)}`
-	const [activeTab, setActiveTab] = useState<TabKey>('notebook')
 
 	const heading = 'Unlock SQL Studio'
 
@@ -196,7 +196,7 @@ export function UpsellGate({ isAuthenticated, isTrial }: UpsellGateProps) {
 				</header>
 
 				<div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] lg:items-start lg:gap-8">
-					<ShowcasePane activeTab={activeTab} onTabChange={setActiveTab} />
+					<ShowcasePane />
 					<PricingCard isAuthenticated={isAuthenticated} subscriptionHref={subscriptionHref} />
 				</div>
 			</section>
@@ -301,73 +301,61 @@ function FeatureTile({
 	)
 }
 
-function ShowcasePane({ activeTab, onTabChange }: { activeTab: TabKey; onTabChange: (next: TabKey) => void }) {
+function ShowcasePane() {
+	const id = useId()
 	return (
 		<div className="flex flex-col overflow-hidden rounded-xl border border-subtle bg-surface shadow-sm">
-			<TabStrip activeTab={activeTab} onTabChange={onTabChange} />
-			{activeTab === 'notebook' ? <NotebookBody /> : null}
-			{activeTab === 'sql' ? <QueryBody /> : null}
-			{activeTab === 'alt' ? <AltQueryBody /> : null}
+			<TabProvider defaultSelectedId={`${id}-notebook`} selectOnMove={false}>
+				<TabStrip id={id} />
+				<TabPanel tabId={`${id}-notebook`} unmountOnHide>
+					<NotebookBody />
+				</TabPanel>
+				<TabPanel tabId={`${id}-sql`} unmountOnHide>
+					<QueryBody />
+				</TabPanel>
+				<TabPanel tabId={`${id}-alt`} unmountOnHide>
+					<AltQueryBody />
+				</TabPanel>
+			</TabProvider>
 		</div>
 	)
 }
 
-function TabStrip({ activeTab, onTabChange }: { activeTab: TabKey; onTabChange: (next: TabKey) => void }) {
+function TabStrip({ id }: { id: string }) {
 	return (
-		<div
-			role="tablist"
+		<TabList
 			aria-label="SQL Studio sample tabs"
 			className="flex items-stretch gap-1 overflow-x-auto border-b border-subtle bg-pro-app-bg/40 px-2 pt-2"
 		>
-			{TABS.map((t) => {
-				const isActive = activeTab === t.key
-				return (
-					<button
-						key={t.key}
-						type="button"
-						role="tab"
-						aria-selected={isActive}
-						onClick={() => onTabChange(t.key)}
-						className={`group -mb-px flex h-8 max-w-[220px] min-w-[148px] shrink-0 items-center gap-2 rounded-t-md border border-b-0 px-2.5 transition-colors ${
-							isActive
-								? 'border-subtle bg-surface text-pro-text-primary'
-								: 'border-transparent text-pro-text-secondary hover:bg-hover-row/40 hover:text-pro-text-primary'
-						}`}
+			{TABS.map((tab) => (
+				<Tab
+					key={tab.key}
+					id={`${id}-${tab.key}`}
+					className="group -mb-px flex h-8 max-w-[220px] min-w-[148px] shrink-0 items-center gap-2 rounded-t-md border border-b-0 border-transparent px-2.5 text-pro-text-secondary transition-colors hover:bg-hover-row/40 hover:text-pro-text-primary aria-selected:border-subtle aria-selected:bg-surface aria-selected:text-pro-text-primary"
+				>
+					<span className="flex size-3 shrink-0 items-center justify-center" aria-hidden>
+						{tab.dirty ? <span className="size-1.5 rounded-full bg-pro-premium-300" /> : null}
+					</span>
+					<Icon
+						name={tab.kind === 'notebook' ? 'layers' : 'file-text'}
+						className={`size-3 shrink-0 text-pro-text-tertiary ${tab.kind === 'notebook' ? 'group-aria-selected:text-sub-brand-primary' : 'group-aria-selected:text-pro-text-secondary'}`}
+					/>
+					<span className="min-w-0 flex-1 truncate text-left font-mono text-xs">{tab.label}</span>
+					<span
+						aria-hidden
+						className="grid size-4 shrink-0 place-items-center rounded-sm opacity-0 transition-opacity group-hover:opacity-50 group-aria-selected:opacity-50"
 					>
-						<span className="flex size-3 shrink-0 items-center justify-center" aria-hidden>
-							{t.dirty ? <span className="size-1.5 rounded-full bg-pro-premium-300" /> : null}
-						</span>
-						<Icon
-							name={t.kind === 'notebook' ? 'layers' : 'file-text'}
-							className={`size-3 shrink-0 ${
-								isActive
-									? t.kind === 'notebook'
-										? 'text-sub-brand-primary'
-										: 'text-pro-text-secondary'
-									: 'text-pro-text-tertiary'
-							}`}
-						/>
-						<span className="min-w-0 flex-1 truncate text-left font-mono text-xs">{t.label}</span>
-						<span
-							aria-hidden
-							className={`grid size-4 shrink-0 place-items-center rounded-sm transition-opacity ${
-								isActive ? 'opacity-50 hover:bg-hover-row/60 hover:opacity-100' : 'opacity-0 group-hover:opacity-50'
-							}`}
-						>
-							<Icon name="x" className="size-2.5" />
-						</span>
-					</button>
-				)
-			})}
-			<button
-				type="button"
-				title="New tab (⌘T)"
-				onClick={(e) => e.preventDefault()}
-				className="-mb-px ml-auto inline-flex size-7 shrink-0 items-center justify-center self-center rounded-md text-pro-text-tertiary transition-colors hover:bg-hover-row/40 hover:text-pro-text-secondary"
+						<Icon name="x" className="size-2.5" />
+					</span>
+				</Tab>
+			))}
+			<span
+				aria-hidden="true"
+				className="-mb-px ml-auto inline-flex size-7 shrink-0 items-center justify-center self-center rounded-md text-pro-text-tertiary"
 			>
 				<Icon name="plus" className="size-3.5" />
-			</button>
-		</div>
+			</span>
+		</TabList>
 	)
 }
 

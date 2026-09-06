@@ -37,7 +37,7 @@ type ArticleEditorHeaderProps = {
 	onOpenHistory: () => void
 	onOpenMeta: () => void
 	onViewModeChange: (mode: ArticleEditorViewMode) => void
-	saveArticle: () => Promise<void>
+	saveArticle: () => Promise<boolean>
 	setSlugDraft: Dispatch<SetStateAction<string>>
 }
 

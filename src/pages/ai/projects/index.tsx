@@ -5,7 +5,6 @@ import { useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { LlamaAIShell } from '~/containers/LlamaAI/LlamaAIShell'
-import { ProjectsGrid } from '~/containers/LlamaAI/projects/ProjectsGrid'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { useIsClient } from '~/hooks/useIsClient'
 
@@ -54,7 +53,7 @@ export default function ProjectsIndexPage() {
 		)
 	}
 
-	return <ProjectsGrid />
+	return null
 }
 
 ProjectsIndexPage.getLayout = LlamaAIShell.getLayout

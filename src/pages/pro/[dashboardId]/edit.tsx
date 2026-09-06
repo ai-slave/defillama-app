@@ -13,6 +13,7 @@ import {
 import { ProDashboardAPIProvider, useProDashboardDashboard } from '~/containers/ProDashboard/ProDashboardAPIContext'
 import { fetchDashboardConfig } from '~/containers/ProDashboard/queries.server'
 import { fetchAuthenticatedUserId, getAuthTokenFromRequest } from '~/containers/ProDashboard/server/auth'
+import { useIsClient } from '~/hooks/useIsClient'
 import Layout from '~/layout'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
@@ -96,6 +97,7 @@ function DashboardEditPageContent({
 	hasInitialDashboard: boolean
 }) {
 	const router = useRouter()
+	const isClient = useIsClient()
 	const { isAuthenticated, loaders, user } = useAuthContext()
 	const { isLoadingDashboard, streamHasResolved, loadError, currentDashboard, dashboardName } =
 		useProDashboardDashboard()
@@ -109,7 +111,8 @@ function DashboardEditPageContent({
 	}, [isLoadingDashboard, currentDashboard, streamHasResolved])
 
 	useEffect(() => {
-		if (loaders.userLoading) return
+		// The server auth snapshot is signed out until the browser restores its session.
+		if (!isClient || loaders.userLoading) return
 		if (!isAuthenticated && !hasRedirectedRef.current) {
 			hasRedirectedRef.current = true
 			void router.replace(`/pro/${dashboardId}`)
@@ -119,7 +122,7 @@ function DashboardEditPageContent({
 			hasRedirectedRef.current = true
 			void router.replace(`/pro/${currentDashboard.slug ?? dashboardId}`)
 		}
-	}, [isAuthenticated, loaders.userLoading, currentDashboard, user?.id, dashboardId, router])
+	}, [isClient, isAuthenticated, loaders.userLoading, currentDashboard, user?.id, dashboardId, router])
 
 	// Read through locals: the pages router keeps one object identity and swaps `query` on navigation,
 	// so these are the values that actually change.
@@ -131,7 +134,7 @@ function DashboardEditPageContent({
 		}
 	}, [currentDashboard?.slug, routeDashboardId, router])
 
-	const isLoading = loaders.userLoading || isValidating || isLoadingDashboard
+	const isLoading = !isClient || loaders.userLoading || isValidating || isLoadingDashboard
 
 	if (isLoading) {
 		return <ProDashboardLoader heading="Edit dashboard" />

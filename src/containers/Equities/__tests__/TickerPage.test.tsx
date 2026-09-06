@@ -189,6 +189,40 @@ describe('EquityTickerPage price history', () => {
 		})
 	}
 
+	test('section focus does not navigate; URL changes select the panel without another route write', async () => {
+		router.query = { tab: 'overview', country: 'US' }
+		await render()
+		const overview = button('Overview')
+		const financials = button('Financials')
+		expect(overview.getAttribute('aria-selected')).toBe('true')
+		await act(async () => overview.focus())
+		await act(async () => {
+			overview.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true, cancelable: true }))
+			await new Promise((resolve) => setTimeout(resolve, 30))
+		})
+		expect(document.activeElement).toBe(financials)
+		expect(router.push).not.toHaveBeenCalled()
+		await act(async () => {
+			financials.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }))
+		})
+		expect(router.push).toHaveBeenCalledExactlyOnceWith(
+			{ pathname: '/equities/NVDA:US', query: { country: 'US' } },
+			undefined,
+			{ shallow: true }
+		)
+		router.push.mockClear()
+		// Back/forward supplies a new query; focus changes must never write over it.
+		router.query = { tab: 'financials' }
+		await render()
+		const panel = container.querySelector('[role="tabpanel"]')!
+		expect(panel.getAttribute('aria-labelledby')).toBe(financials.id)
+		expect(financials.getAttribute('aria-controls')).toBe(panel.id)
+		router.query = { tab: 'unlocks' }
+		await render({ ...pageProps, unlocksSlug: null })
+		expect(financials.getAttribute('aria-selected')).toBe('true')
+		expect(router.push).not.toHaveBeenCalled()
+	})
+
 	test.each(['7D', 'MAX'])('fetches a bookmarked %s timeframe through the proxy', async (timeframe) => {
 		router.query = { timeframe }
 		await render()

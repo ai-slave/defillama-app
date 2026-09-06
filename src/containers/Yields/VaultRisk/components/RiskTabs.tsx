@@ -1,6 +1,8 @@
+import { TabList } from '@ariakit/react'
 import { useEffect, useRef, useState } from 'react'
 import { Icon } from '~/ui/Icon'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
+import { Tabs, Tab, TabPanel as RiskTabPanel } from '~/ui/Tabs'
 import { EASE_OUT_EXPO } from '../primitives/motion'
 
 // Every panel stays in the DOM (inactive ones get `hidden`) so SSR HTML carries all of it
@@ -35,22 +37,14 @@ function TabPanel({ tab, active }: { tab: RiskTab; active: boolean }) {
 		)
 	}, [active])
 	return (
-		<div
-			ref={ref}
-			id={tab.id}
-			role="tabpanel"
-			aria-labelledby={`risk-tab-${tab.id}`}
-			hidden={!active}
-			className="scroll-mt-24 p-4"
-		>
+		<RiskTabPanel ref={ref} id={tab.id} value={tab.id} className="scroll-mt-24 p-4">
 			{tab.content}
-		</div>
+		</RiskTabPanel>
 	)
 }
 
 export function RiskTabs({ tabs, defaultId }: { tabs: Array<RiskTab>; defaultId: string }) {
 	const [active, setActive] = useState(defaultId)
-	const tablistRef = useRef<HTMLDivElement>(null)
 
 	// A hash naming a tab activates it — on load and on every hashchange (deep links, the
 	// section nav, ConditionsTree's oracle-config link, back/forward).
@@ -74,61 +68,44 @@ export function RiskTabs({ tabs, defaultId }: { tabs: Array<RiskTab>; defaultId:
 		window.history.replaceState(null, '', `#${id}`)
 	}
 
-	const onKeyDown = (e: React.KeyboardEvent) => {
-		const i = tabs.findIndex((t) => t.id === active)
-		let next = i
-		if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (i + 1) % tabs.length
-		else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (i - 1 + tabs.length) % tabs.length
-		else if (e.key === 'Home') next = 0
-		else if (e.key === 'End') next = tabs.length - 1
-		else return
-		e.preventDefault()
-		const t = tabs[next]!
-		activate(t.id)
-		tablistRef.current?.querySelector<HTMLButtonElement>(`#risk-tab-${t.id}`)?.focus()
-	}
-
 	return (
-		<div className="flex flex-col">
-			{/* transparent borders on every segment keep sizing stable so the active edge doesn't
+		<Tabs
+			id="risk"
+			value={active}
+			onValueChange={activate}
+			values={tabs.map((tab) => tab.id)}
+			selectOnMove
+			orientation="both"
+		>
+			<div className="flex flex-col">
+				{/* transparent borders on every segment keep sizing stable so the active edge doesn't
 			    shift layout */}
-			<div className="px-4 pt-4">
-				<div
-					ref={tablistRef}
-					role="tablist"
-					aria-label="Risk detail"
-					onKeyDown={onKeyDown}
-					className={`${tabTrackStyles} sm:w-auto sm:max-w-full`}
-				>
-					{tabs.map((t) => {
-						const selected = t.id === active
-						return (
-							<TabLink
-								as="button"
-								key={t.id}
-								id={`risk-tab-${t.id}`}
-								type="button"
-								role="tab"
-								aria-selected={selected}
-								aria-controls={t.id}
-								tabIndex={selected ? 0 : -1}
-								data-active={selected}
-								onClick={() => activate(t.id)}
-								className="inline-flex flex-1 items-center justify-center gap-1.5 sm:flex-initial"
-							>
-								<Icon name={t.icon} className={`size-4${t.iconFlipY ? ' -scale-y-100' : ''}`} aria-hidden />
-								{t.label}
-								{t.count != null ? (
-									<span className={selected ? 'text-secondary' : 'text-tertiary'}>{t.count}</span>
-								) : null}
-							</TabLink>
-						)
-					})}
+				<div className="px-4 pt-4">
+					<TabList aria-label="Risk detail" className={`${tabTrackStyles} sm:w-auto sm:max-w-full`}>
+						{tabs.map((t) => {
+							const selected = t.id === active
+							return (
+								<Tab
+									value={t.id}
+									render={<TabLink as="button" />}
+									key={t.id}
+									type="button"
+									className="inline-flex flex-1 items-center justify-center gap-1.5 sm:flex-initial"
+								>
+									<Icon name={t.icon} className={`size-4${t.iconFlipY ? ' -scale-y-100' : ''}`} aria-hidden />
+									{t.label}
+									{t.count != null ? (
+										<span className={selected ? 'text-secondary' : 'text-tertiary'}>{t.count}</span>
+									) : null}
+								</Tab>
+							)
+						})}
+					</TabList>
 				</div>
+				{tabs.map((t) => (
+					<TabPanel key={t.id} tab={t} active={t.id === active} />
+				))}
 			</div>
-			{tabs.map((t) => (
-				<TabPanel key={t.id} tab={t} active={t.id === active} />
-			))}
-		</div>
+		</Tabs>
 	)
 }

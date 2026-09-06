@@ -60,6 +60,9 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 	const queryClient = useQueryClient()
 	const [article, setArticle] = useState<LocalArticleDocument>(() => createEmptyLocalArticle())
 	const [isDirty, setIsDirty] = useState(false)
+	// A save response may acknowledge an older draft while the user keeps typing.
+	const draftRevisionRef = useRef(0)
+	const saveInFlightRef = useRef(false)
 	const [savedAt, setSavedAt] = useState<string | null>(null)
 	const [wordCount, setWordCount] = useState(0)
 	const [linkEdit, setLinkEdit] = useState<{ url: string; newTab: boolean } | null>(null)
@@ -67,7 +70,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 	// Latest-value refs for tiptap plugins, autosave and keyboard shortcuts, which run outside render.
 	// They are written in layout effects so no render reads or writes a ref.
 	const inlineUploadRef = useRef<ArticleImageUploadFn | null>(null)
-	const saveRef = useRef<(opts?: { silent?: boolean }) => Promise<void>>(async () => {})
+	const saveRef = useRef<(opts?: { silent?: boolean }) => Promise<boolean>>(async () => false)
 	const articleIdRef = useRef<string | undefined>(article.id)
 	useLayoutEffect(() => {
 		articleIdRef.current = article.id
@@ -165,6 +168,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		onUpdate: ({ editor: instance }) => {
 			const text = instance.getText()
 			setWordCount(text.trim() ? text.trim().split(/\s+/).length : 0)
+			draftRevisionRef.current += 1
 			setIsDirty(true)
 			scheduleAutosave()
 		}
@@ -260,6 +264,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 				[key]: value,
 				...(key === 'title' && isDraftPlaceholderSlug(current.slug) ? { slug: slugFromTitle(String(value)) } : {})
 			}))
+			draftRevisionRef.current += 1
 			setIsDirty(true)
 			scheduleAutosave()
 		},
@@ -267,11 +272,14 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 	)
 
 	const saveArticle = async (opts: { silent?: boolean } = {}) => {
-		if (!editor) return
+		if (!editor) return false
 		if (!isAuthenticated) {
 			if (!opts.silent) toast.error('Please sign in to save research')
-			return
+			return false
 		}
+		if (saveInFlightRef.current) return false
+		saveInFlightRef.current = true
+		const savedRevision = draftRevisionRef.current
 		if (debounceRef.current) {
 			clearTimeout(debounceRef.current)
 			debounceRef.current = null
@@ -285,17 +293,25 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 				articlePayload: normalized.value
 			})
 			const merged = applyPendingToLocalArticle(saved, saved.pending)
-			setArticle(merged)
 			setOwnedArticleCache(saved)
 			setSavedAt(merged.pendingUpdatedAt ?? merged.updatedAt)
 			setSaveError(false)
+			if (savedRevision !== draftRevisionRef.current) {
+				scheduleAutosave()
+				return false
+			}
+			setArticle(merged)
 			if (!article.id) {
 				void router.replace(`/research/edit/${saved.id}`)
 			}
 			setIsDirty(false)
+			return true
 		} catch (error) {
 			setSaveError(true)
 			if (!opts.silent) toast.error(error instanceof Error ? error.message : 'Failed to save research')
+			return false
+		} finally {
+			saveInFlightRef.current = false
 		}
 	}
 
@@ -377,15 +393,9 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 			setSlugEditing(false)
 			return
 		}
-		setArticle((current) => ({ ...current, slug: next }))
-		setIsDirty(true)
+		updateArticle('slug', next)
 		setSlugEditing(false)
-		if (debounceRef.current) {
-			clearTimeout(debounceRef.current)
-			debounceRef.current = null
-		}
-		void saveRef.current({ silent: true })
-	}, [slugDraft, article.slug])
+	}, [slugDraft, article.slug, updateArticle])
 
 	// saveArticle is rebuilt every render, so the mirror is refreshed after every commit.
 	useLayoutEffect(() => {
@@ -608,10 +618,9 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		if (debounceRef.current) {
 			clearTimeout(debounceRef.current)
 			debounceRef.current = null
-			await saveRef.current({ silent: true })
-		} else if (isDirty) {
-			await saveRef.current({ silent: true })
+			return saveRef.current({ silent: true })
 		}
+		return isDirty ? saveRef.current({ silent: true }) : true
 	}, [isDirty])
 
 	const handlePublish = async (opts?: { goLiveAt?: string | null }): Promise<boolean> => {
@@ -627,7 +636,10 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		}
 		setPublishErrors({})
 		try {
-			await flushPendingSave()
+			if (!(await flushPendingSave())) {
+				toast.error('Save the latest edits before publishing.')
+				return false
+			}
 			const goLiveAt = opts && 'goLiveAt' in opts ? opts.goLiveAt : article.goLiveAt != null ? null : undefined
 			const saved = await publishMutation.mutateAsync({
 				articleId: article.id,
@@ -1028,7 +1040,6 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 				handleTransferOwnership={handleTransferOwnership}
 				hasPendingEdits={hasPendingEdits}
 				isCollaborator={isCollaborator}
-				isDirty={isDirty}
 				isDiscarding={isDiscarding}
 				isOwner={isOwner}
 				isPublished={isPublished}

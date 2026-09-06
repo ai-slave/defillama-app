@@ -5,6 +5,7 @@ import { lazy, Suspense, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import { TokenLogo } from '~/components/TokenLogo'
+import { ViewTabs } from '~/components/ViewTabs'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import defs from '~/public/equities-definitions.json'
@@ -12,7 +13,7 @@ import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { TagGroup } from '~/ui/SegmentedControl'
-import { TabLink, tabTrackStyles } from '~/ui/Tab'
+import { Tabs, TabPanel } from '~/ui/Tabs'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { equityCountryFlagUrl } from '~/utils/icons'
 import {
@@ -437,295 +438,284 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 				</ChartPanel>
 			</div>
 
-			<nav className={tabTrackStyles} role="tablist" aria-label="Ticker sections">
-				{availableTabs.map((tab) => (
-					<TabLink
-						as="button"
-						key={tab}
-						type="button"
-						role="tab"
-						aria-selected={activeTab === tab}
-						onClick={() => setActiveTab(tab)}
-						data-active={activeTab === tab}
-					>
-						{TAB_LABELS[tab]}
-					</TabLink>
-				))}
-			</nav>
+			<Tabs value={activeTab} onValueChange={setActiveTab} values={availableTabs}>
+				<ViewTabs tabs={availableTabs.map((id) => ({ id, label: TAB_LABELS[id] }))} label="Ticker sections" />
+				<TabPanel value={activeTab}>
+					{activeTab === 'overview' ? (
+						<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
+							<Card as="section" padding="sm" className="flex flex-col gap-3">
+								<h2 className="heading-xs">Market Data</h2>
+								<div className="flex flex-col">
+									<MetricRow
+										label={defs.currentPrice.label}
+										tooltip={defs.currentPrice.description}
+										value={formatEquitiesCompactValue(props.summary.currentPrice, '$') ?? '-'}
+									/>
+									<MetricRow
+										label={defs.marketCap.label}
+										tooltip={defs.marketCap.description}
+										value={formatEquitiesCompactValue(props.summary.marketCap, '$') ?? '-'}
+									/>
+									<MetricRow
+										label={defs.circulatingMarketCap.label}
+										tooltip={defs.circulatingMarketCap.description}
+										value={formatEquitiesCompactValue(props.summary.circulatingMarketCap, '$') ?? '-'}
+									/>
+									<MetricRow
+										label={defs.enterpriseValue.label}
+										tooltip={defs.enterpriseValue.description}
+										value={formatEquitiesCompactValue(props.summary.enterpriseValue, '$') ?? '-'}
+									/>
+									<MetricRow
+										label={defs.volume.label}
+										tooltip={defs.volume.description}
+										value={formatEquitiesCompactValue(props.summary.volume) ?? '-'}
+									/>
+									<MetricRow
+										label={defs.priceChangePercentage1d.label}
+										tooltip={defs.priceChangePercentage1d.description}
+										value={<ChangeMetricValue value={props.summary.priceChangePercentage1d} symbol="%" />}
+									/>
+									<MetricRow
+										label={defs.priceChangePercentage7d.label}
+										tooltip={defs.priceChangePercentage7d.description}
+										value={<ChangeMetricValue value={props.summary.priceChangePercentage7d} symbol="%" />}
+									/>
+									<MetricRow
+										label={defs.priceChangePercentage1m.label}
+										tooltip={defs.priceChangePercentage1m.description}
+										value={<ChangeMetricValue value={props.summary.priceChangePercentage1m} symbol="%" />}
+									/>
+									<MetricRow
+										label={defs.priceChange1d.label}
+										tooltip={defs.priceChange1d.description}
+										value={<ChangeMetricValue value={props.summary.priceChange1d} symbol="$" />}
+									/>
+									<MetricRow
+										label={defs.marketCapChange1d.label}
+										tooltip={defs.marketCapChange1d.description}
+										value={<ChangeMetricValue value={props.summary.marketCapChange1d} symbol="$" />}
+									/>
+									<MetricRow
+										label={defs.fiftyTwoWeekLow.label}
+										tooltip={defs.fiftyTwoWeekLow.description}
+										value={formatEquitiesCompactValue(props.summary.fiftyTwoWeekLow, '$') ?? '-'}
+									/>
+									<MetricRow
+										label={defs.fiftyTwoWeekHigh.label}
+										tooltip={defs.fiftyTwoWeekHigh.description}
+										value={formatEquitiesCompactValue(props.summary.fiftyTwoWeekHigh, '$') ?? '-'}
+									/>
+									<MetricRow
+										label={defs.circulatingSupply.label}
+										tooltip={defs.circulatingSupply.description}
+										value={formatEquitiesCompactValue(props.summary.circulatingSupply) ?? '-'}
+									/>
+									<MetricRow
+										label={defs.totalSupply.label}
+										tooltip={defs.totalSupply.description}
+										value={formatEquitiesCompactValue(props.summary.totalSupply) ?? '-'}
+									/>
+									<MetricRow
+										label={defs.trailingPE.label}
+										tooltip={defs.trailingPE.description}
+										value={formatEquitiesCompactValue(props.summary.trailingPE) ?? '-'}
+									/>
+									<MetricRow
+										label={defs.priceToRevenue.label}
+										tooltip={defs.priceToRevenue.description}
+										value={formatEquitiesCompactValue(props.summary.priceToRevenue) ?? '-'}
+									/>
+									<MetricRow
+										label={defs.priceToBook.label}
+										tooltip={defs.priceToBook.description}
+										value={formatEquitiesCompactValue(props.summary.priceToBook) ?? '-'}
+									/>
+									<MetricRow
+										label={defs.enterpriseValueToEbitda.label}
+										tooltip={defs.enterpriseValueToEbitda.description}
+										value={formatEquitiesCompactValue(props.summary.enterpriseValueToEbitda) ?? '-'}
+									/>
+								</div>
+							</Card>
 
-			{activeTab === 'overview' ? (
-				<div className="grid grid-cols-1 gap-2 xl:grid-cols-2" role="tabpanel" aria-label="Overview">
-					<Card as="section" padding="sm" className="flex flex-col gap-3">
-						<h2 className="heading-xs">Market Data</h2>
-						<div className="flex flex-col">
-							<MetricRow
-								label={defs.currentPrice.label}
-								tooltip={defs.currentPrice.description}
-								value={formatEquitiesCompactValue(props.summary.currentPrice, '$') ?? '-'}
-							/>
-							<MetricRow
-								label={defs.marketCap.label}
-								tooltip={defs.marketCap.description}
-								value={formatEquitiesCompactValue(props.summary.marketCap, '$') ?? '-'}
-							/>
-							<MetricRow
-								label={defs.circulatingMarketCap.label}
-								tooltip={defs.circulatingMarketCap.description}
-								value={formatEquitiesCompactValue(props.summary.circulatingMarketCap, '$') ?? '-'}
-							/>
-							<MetricRow
-								label={defs.enterpriseValue.label}
-								tooltip={defs.enterpriseValue.description}
-								value={formatEquitiesCompactValue(props.summary.enterpriseValue, '$') ?? '-'}
-							/>
-							<MetricRow
-								label={defs.volume.label}
-								tooltip={defs.volume.description}
-								value={formatEquitiesCompactValue(props.summary.volume) ?? '-'}
-							/>
-							<MetricRow
-								label={defs.priceChangePercentage1d.label}
-								tooltip={defs.priceChangePercentage1d.description}
-								value={<ChangeMetricValue value={props.summary.priceChangePercentage1d} symbol="%" />}
-							/>
-							<MetricRow
-								label={defs.priceChangePercentage7d.label}
-								tooltip={defs.priceChangePercentage7d.description}
-								value={<ChangeMetricValue value={props.summary.priceChangePercentage7d} symbol="%" />}
-							/>
-							<MetricRow
-								label={defs.priceChangePercentage1m.label}
-								tooltip={defs.priceChangePercentage1m.description}
-								value={<ChangeMetricValue value={props.summary.priceChangePercentage1m} symbol="%" />}
-							/>
-							<MetricRow
-								label={defs.priceChange1d.label}
-								tooltip={defs.priceChange1d.description}
-								value={<ChangeMetricValue value={props.summary.priceChange1d} symbol="$" />}
-							/>
-							<MetricRow
-								label={defs.marketCapChange1d.label}
-								tooltip={defs.marketCapChange1d.description}
-								value={<ChangeMetricValue value={props.summary.marketCapChange1d} symbol="$" />}
-							/>
-							<MetricRow
-								label={defs.fiftyTwoWeekLow.label}
-								tooltip={defs.fiftyTwoWeekLow.description}
-								value={formatEquitiesCompactValue(props.summary.fiftyTwoWeekLow, '$') ?? '-'}
-							/>
-							<MetricRow
-								label={defs.fiftyTwoWeekHigh.label}
-								tooltip={defs.fiftyTwoWeekHigh.description}
-								value={formatEquitiesCompactValue(props.summary.fiftyTwoWeekHigh, '$') ?? '-'}
-							/>
-							<MetricRow
-								label={defs.circulatingSupply.label}
-								tooltip={defs.circulatingSupply.description}
-								value={formatEquitiesCompactValue(props.summary.circulatingSupply) ?? '-'}
-							/>
-							<MetricRow
-								label={defs.totalSupply.label}
-								tooltip={defs.totalSupply.description}
-								value={formatEquitiesCompactValue(props.summary.totalSupply) ?? '-'}
-							/>
-							<MetricRow
-								label={defs.trailingPE.label}
-								tooltip={defs.trailingPE.description}
-								value={formatEquitiesCompactValue(props.summary.trailingPE) ?? '-'}
-							/>
-							<MetricRow
-								label={defs.priceToRevenue.label}
-								tooltip={defs.priceToRevenue.description}
-								value={formatEquitiesCompactValue(props.summary.priceToRevenue) ?? '-'}
-							/>
-							<MetricRow
-								label={defs.priceToBook.label}
-								tooltip={defs.priceToBook.description}
-								value={formatEquitiesCompactValue(props.summary.priceToBook) ?? '-'}
-							/>
-							<MetricRow
-								label={defs.enterpriseValueToEbitda.label}
-								tooltip={defs.enterpriseValueToEbitda.description}
-								value={formatEquitiesCompactValue(props.summary.enterpriseValueToEbitda) ?? '-'}
-							/>
+							<Card as="section" padding="sm" className="flex flex-col gap-3">
+								<h2 className="heading-xs">Profile</h2>
+								<div className="flex flex-col">
+									<MetricRow label="Ticker" value={props.ticker} />
+									<MetricRow
+										label="Country"
+										value={
+											<span className="flex items-center gap-2">
+												<TokenLogo src={equityCountryFlagUrl(props.country)} alt={`${props.country} flag`} />
+												{props.country}
+											</span>
+										}
+									/>
+									<MetricRow label="Company" value={props.name} />
+									<MetricRow label="Sector" value={props.metadata.sector || '—'} />
+									<MetricRow label="Industry" value={props.metadata.industry || '—'} />
+									<MetricRow
+										label={defs.employeeCount.label}
+										tooltip={defs.employeeCount.description}
+										value={formatEquitiesCompactValue(props.metadata.employeeCount) ?? '-'}
+									/>
+									<MetricRow
+										label="Website"
+										value={
+											props.metadata.website ? (
+												<a
+													href={props.metadata.website}
+													target="_blank"
+													rel="noopener noreferrer"
+													className="text-link hover:underline"
+													data-umami-event="equities-website-click"
+													data-umami-event-ticker={props.ticker}
+													data-umami-event-placement="info"
+													data-umami-event-url={props.metadata.website}
+												>
+													{props.metadata.website}
+												</a>
+											) : (
+												'—'
+											)
+										}
+									/>
+									<MetricRow
+										label="Coverage since"
+										value={<span suppressHydrationWarning>{formatDate(props.metadata.startDate) ?? '-'}</span>}
+									/>
+									<MetricRow
+										label="Last Updated"
+										value={
+											<span suppressHydrationWarning>
+												{formatDateTime(props.summary.updatedAt, { timeZone: 'local', timeZoneName: 'short' }) ?? '-'}
+											</span>
+										}
+									/>
+								</div>
+								{props.metadata.description ? <p className="body-sm">{props.metadata.description}</p> : null}
+							</Card>
+
+							<Card as="section" padding="sm" className="flex flex-col gap-3">
+								<h2 className="heading-xs">Financials</h2>
+								<div className="flex flex-col">
+									<MetricRow
+										label={defs.revenueTTM.label}
+										tooltip={defs.revenueTTM.description}
+										value={formatEquitiesCompactValue(props.summary.revenueTTM, '$') ?? '-'}
+									/>
+									<MetricRow
+										label={defs.grossProfitTTM.label}
+										tooltip={defs.grossProfitTTM.description}
+										value={formatEquitiesCompactValue(props.summary.grossProfitTTM, '$') ?? '-'}
+									/>
+									<MetricRow
+										label={defs.earningsTTM.label}
+										tooltip={defs.earningsTTM.description}
+										value={formatEquitiesCompactValue(props.summary.earningsTTM, '$') ?? '-'}
+									/>
+									<MetricRow
+										label={defs.ebitdaTTM.label}
+										tooltip={defs.ebitdaTTM.description}
+										value={formatEquitiesCompactValue(props.summary.ebitdaTTM, '$') ?? '-'}
+									/>
+									<MetricRow
+										label={defs.operatingProfitMarginTTM.label}
+										tooltip={defs.operatingProfitMarginTTM.description}
+										value={formatEquitiesCompactValue(props.summary.operatingProfitMarginTTM, '%') ?? '-'}
+									/>
+									<MetricRow
+										label={defs.holdersRevenueTTM.label}
+										tooltip={defs.holdersRevenueTTM.description}
+										value={formatEquitiesCompactValue(props.summary.holdersRevenueTTM, '$') ?? '-'}
+									/>
+									<MetricRow
+										label={defs.holderEarningsTTM.label}
+										tooltip={defs.holderEarningsTTM.description}
+										value={formatEquitiesCompactValue(props.summary.holderEarningsTTM, '$') ?? '-'}
+									/>
+									<MetricRow
+										label={defs.dividendYield.label}
+										tooltip={defs.dividendYield.description}
+										value={formatEquitiesCompactValue(props.summary.dividendYield, '%') ?? '-'}
+									/>
+									<MetricRow
+										label={defs.holdersYield.label}
+										tooltip={defs.holdersYield.description}
+										value={formatEquitiesCompactValue(props.summary.holdersYield, '%') ?? '-'}
+									/>
+									<MetricRow
+										label={defs.dividendsTTM.label}
+										tooltip={defs.dividendsTTM.description}
+										value={formatEquitiesCompactValue(props.summary.dividendsTTM, '$') ?? '-'}
+									/>
+									<MetricRow
+										label={defs.stockRepurchaseTTM.label}
+										tooltip={defs.stockRepurchaseTTM.description}
+										value={formatEquitiesCompactValue(props.summary.stockRepurchaseTTM, '$') ?? '-'}
+									/>
+									<MetricRow
+										label={defs.stockIssuanceTTM.label}
+										tooltip={defs.stockIssuanceTTM.description}
+										value={formatEquitiesCompactValue(props.summary.stockIssuanceTTM, '$') ?? '-'}
+									/>
+									<MetricRow
+										label={defs.stockBasedCompensationTTM.label}
+										tooltip={defs.stockBasedCompensationTTM.description}
+										value={formatEquitiesCompactValue(props.summary.stockBasedCompensationTTM, '$') ?? '-'}
+									/>
+								</div>
+							</Card>
+
+							<Card as="section" padding="sm" className="flex flex-col gap-3">
+								<h2 className="heading-xs">Balance Sheet</h2>
+								<div className="flex flex-col">
+									<MetricRow
+										label={defs.cashAndCashEquivalents.label}
+										tooltip={defs.cashAndCashEquivalents.description}
+										value={formatEquitiesCompactValue(props.summary.cashAndCashEquivalents, '$') ?? '-'}
+									/>
+									<MetricRow
+										label={defs.totalAssets.label}
+										tooltip={defs.totalAssets.description}
+										value={formatEquitiesCompactValue(props.summary.totalAssets, '$') ?? '-'}
+									/>
+									<MetricRow
+										label={defs.totalLiabilities.label}
+										tooltip={defs.totalLiabilities.description}
+										value={formatEquitiesCompactValue(props.summary.totalLiabilities, '$') ?? '-'}
+									/>
+									<MetricRow
+										label={defs.totalShareholdersEquity.label}
+										tooltip={defs.totalShareholdersEquity.description}
+										value={formatEquitiesCompactValue(props.summary.totalShareholdersEquity, '$') ?? '-'}
+									/>
+									<MetricRow
+										label={defs.totalDebt.label}
+										tooltip={defs.totalDebt.description}
+										value={formatEquitiesCompactValue(props.summary.totalDebt, '$') ?? '-'}
+									/>
+								</div>
+							</Card>
 						</div>
-					</Card>
+					) : null}
 
-					<Card as="section" padding="sm" className="flex flex-col gap-3">
-						<h2 className="heading-xs">Profile</h2>
-						<div className="flex flex-col">
-							<MetricRow label="Ticker" value={props.ticker} />
-							<MetricRow
-								label="Country"
-								value={
-									<span className="flex items-center gap-2">
-										<TokenLogo src={equityCountryFlagUrl(props.country)} alt={`${props.country} flag`} />
-										{props.country}
-									</span>
-								}
-							/>
-							<MetricRow label="Company" value={props.name} />
-							<MetricRow label="Sector" value={props.metadata.sector || '—'} />
-							<MetricRow label="Industry" value={props.metadata.industry || '—'} />
-							<MetricRow
-								label={defs.employeeCount.label}
-								tooltip={defs.employeeCount.description}
-								value={formatEquitiesCompactValue(props.metadata.employeeCount) ?? '-'}
-							/>
-							<MetricRow
-								label="Website"
-								value={
-									props.metadata.website ? (
-										<a
-											href={props.metadata.website}
-											target="_blank"
-											rel="noopener noreferrer"
-											className="text-link hover:underline"
-											data-umami-event="equities-website-click"
-											data-umami-event-ticker={props.ticker}
-											data-umami-event-placement="info"
-											data-umami-event-url={props.metadata.website}
-										>
-											{props.metadata.website}
-										</a>
-									) : (
-										'—'
-									)
-								}
-							/>
-							<MetricRow
-								label="Coverage since"
-								value={<span suppressHydrationWarning>{formatDate(props.metadata.startDate) ?? '-'}</span>}
-							/>
-							<MetricRow
-								label="Last Updated"
-								value={
-									<span suppressHydrationWarning>
-										{formatDateTime(props.summary.updatedAt, { timeZone: 'local', timeZoneName: 'short' }) ?? '-'}
-									</span>
-								}
-							/>
-						</div>
-						{props.metadata.description ? <p className="body-sm">{props.metadata.description}</p> : null}
-					</Card>
-
-					<Card as="section" padding="sm" className="flex flex-col gap-3">
-						<h2 className="heading-xs">Financials</h2>
-						<div className="flex flex-col">
-							<MetricRow
-								label={defs.revenueTTM.label}
-								tooltip={defs.revenueTTM.description}
-								value={formatEquitiesCompactValue(props.summary.revenueTTM, '$') ?? '-'}
-							/>
-							<MetricRow
-								label={defs.grossProfitTTM.label}
-								tooltip={defs.grossProfitTTM.description}
-								value={formatEquitiesCompactValue(props.summary.grossProfitTTM, '$') ?? '-'}
-							/>
-							<MetricRow
-								label={defs.earningsTTM.label}
-								tooltip={defs.earningsTTM.description}
-								value={formatEquitiesCompactValue(props.summary.earningsTTM, '$') ?? '-'}
-							/>
-							<MetricRow
-								label={defs.ebitdaTTM.label}
-								tooltip={defs.ebitdaTTM.description}
-								value={formatEquitiesCompactValue(props.summary.ebitdaTTM, '$') ?? '-'}
-							/>
-							<MetricRow
-								label={defs.operatingProfitMarginTTM.label}
-								tooltip={defs.operatingProfitMarginTTM.description}
-								value={formatEquitiesCompactValue(props.summary.operatingProfitMarginTTM, '%') ?? '-'}
-							/>
-							<MetricRow
-								label={defs.holdersRevenueTTM.label}
-								tooltip={defs.holdersRevenueTTM.description}
-								value={formatEquitiesCompactValue(props.summary.holdersRevenueTTM, '$') ?? '-'}
-							/>
-							<MetricRow
-								label={defs.holderEarningsTTM.label}
-								tooltip={defs.holderEarningsTTM.description}
-								value={formatEquitiesCompactValue(props.summary.holderEarningsTTM, '$') ?? '-'}
-							/>
-							<MetricRow
-								label={defs.dividendYield.label}
-								tooltip={defs.dividendYield.description}
-								value={formatEquitiesCompactValue(props.summary.dividendYield, '%') ?? '-'}
-							/>
-							<MetricRow
-								label={defs.holdersYield.label}
-								tooltip={defs.holdersYield.description}
-								value={formatEquitiesCompactValue(props.summary.holdersYield, '%') ?? '-'}
-							/>
-							<MetricRow
-								label={defs.dividendsTTM.label}
-								tooltip={defs.dividendsTTM.description}
-								value={formatEquitiesCompactValue(props.summary.dividendsTTM, '$') ?? '-'}
-							/>
-							<MetricRow
-								label={defs.stockRepurchaseTTM.label}
-								tooltip={defs.stockRepurchaseTTM.description}
-								value={formatEquitiesCompactValue(props.summary.stockRepurchaseTTM, '$') ?? '-'}
-							/>
-							<MetricRow
-								label={defs.stockIssuanceTTM.label}
-								tooltip={defs.stockIssuanceTTM.description}
-								value={formatEquitiesCompactValue(props.summary.stockIssuanceTTM, '$') ?? '-'}
-							/>
-							<MetricRow
-								label={defs.stockBasedCompensationTTM.label}
-								tooltip={defs.stockBasedCompensationTTM.description}
-								value={formatEquitiesCompactValue(props.summary.stockBasedCompensationTTM, '$') ?? '-'}
-							/>
-						</div>
-					</Card>
-
-					<Card as="section" padding="sm" className="flex flex-col gap-3">
-						<h2 className="heading-xs">Balance Sheet</h2>
-						<div className="flex flex-col">
-							<MetricRow
-								label={defs.cashAndCashEquivalents.label}
-								tooltip={defs.cashAndCashEquivalents.description}
-								value={formatEquitiesCompactValue(props.summary.cashAndCashEquivalents, '$') ?? '-'}
-							/>
-							<MetricRow
-								label={defs.totalAssets.label}
-								tooltip={defs.totalAssets.description}
-								value={formatEquitiesCompactValue(props.summary.totalAssets, '$') ?? '-'}
-							/>
-							<MetricRow
-								label={defs.totalLiabilities.label}
-								tooltip={defs.totalLiabilities.description}
-								value={formatEquitiesCompactValue(props.summary.totalLiabilities, '$') ?? '-'}
-							/>
-							<MetricRow
-								label={defs.totalShareholdersEquity.label}
-								tooltip={defs.totalShareholdersEquity.description}
-								value={formatEquitiesCompactValue(props.summary.totalShareholdersEquity, '$') ?? '-'}
-							/>
-							<MetricRow
-								label={defs.totalDebt.label}
-								tooltip={defs.totalDebt.description}
-								value={formatEquitiesCompactValue(props.summary.totalDebt, '$') ?? '-'}
-							/>
-						</div>
-					</Card>
-				</div>
-			) : null}
-
-			{activeTab === 'financials' ? <EquitiesFinancialsTable statements={props.statements} /> : null}
-			{activeTab === 'filings' && props.filings ? (
-				<EquitiesFilingsTable filings={props.filings} filingForms={props.filingForms} />
-			) : null}
-			{activeTab === 'tokens' && props.onchain ? (
-				<EquitiesTokensTable tokens={props.onchain.tokens} ticker={props.ticker} />
-			) : null}
-			{activeTab === 'markets' && props.onchain ? (
-				<EquitiesMarketsTable markets={props.onchain.perps} ticker={props.ticker} />
-			) : null}
-			{activeTab === 'unlocks' && props.unlocksSlug ? (
-				<TokenUnlocksSection resolvedUnlocksSlug={props.unlocksSlug} />
-			) : null}
+					{activeTab === 'financials' ? <EquitiesFinancialsTable statements={props.statements} /> : null}
+					{activeTab === 'filings' && props.filings ? (
+						<EquitiesFilingsTable filings={props.filings} filingForms={props.filingForms} />
+					) : null}
+					{activeTab === 'tokens' && props.onchain ? (
+						<EquitiesTokensTable tokens={props.onchain.tokens} ticker={props.ticker} />
+					) : null}
+					{activeTab === 'markets' && props.onchain ? (
+						<EquitiesMarketsTable markets={props.onchain.perps} ticker={props.ticker} />
+					) : null}
+					{activeTab === 'unlocks' && props.unlocksSlug ? (
+						<TokenUnlocksSection resolvedUnlocksSlug={props.unlocksSlug} />
+					) : null}
+				</TabPanel>
+			</Tabs>
 
 			<Card as="footer" padding="sm">
 				<h2 className="label-md text-primary">Attribution</h2>

@@ -1,9 +1,10 @@
 import { useRouter } from 'next/router'
-import type { KeyboardEvent, ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
 import { ReportIncorrectData } from '~/components/ReportIncorrectData'
+import { ViewTabs } from '~/components/ViewTabs'
 import { Card } from '~/ui/Card'
-import { TabLink, tabTrackStyles } from '~/ui/Tab'
+import { Tabs, TabPanel } from '~/ui/Tabs'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { useExchangeCountry } from './ExchangeCountrySelect'
 import {
@@ -273,47 +274,13 @@ export function ProfileSectionTabs({
 	panelId: string
 	children: ReactNode
 }) {
-	const activeTabId = `exchange-profile-tab-${activeTab}`
 	const tabs = visibleProfileTabs(!!hasReserves, hasInformation, !!hasHistory, !!hasExecution)
-	const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, currentTab: ProfileTab) => {
-		const currentIndex = tabs.indexOf(currentTab)
-		let nextIndex: number | null = null
-		if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % tabs.length
-		if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + tabs.length) % tabs.length
-		if (event.key === 'Home') nextIndex = 0
-		if (event.key === 'End') nextIndex = tabs.length - 1
-		if (nextIndex === null) return
-
-		event.preventDefault()
-		const nextTab = tabs[nextIndex]
-		if (!nextTab) return
-		onTabChange(nextTab)
-		document.getElementById(`exchange-profile-tab-${nextTab}`)?.focus()
-	}
 	return (
-		<>
-			<div className={tabTrackStyles} role="tablist" aria-label="Exchange sections">
-				{tabs.map((tabId) => (
-					<TabLink
-						as="button"
-						key={tabId}
-						id={`exchange-profile-tab-${tabId}`}
-						type="button"
-						role="tab"
-						aria-selected={activeTab === tabId}
-						aria-controls={panelId}
-						tabIndex={activeTab === tabId ? 0 : -1}
-						data-active={activeTab === tabId}
-						onClick={() => onTabChange(tabId)}
-						onKeyDown={(event) => handleTabKeyDown(event, tabId)}
-					>
-						{PROFILE_TAB_LABELS[tabId]}
-					</TabLink>
-				))}
-			</div>
-			<div id={panelId} role="tabpanel" aria-labelledby={activeTabId}>
+		<Tabs value={activeTab} onValueChange={onTabChange} values={tabs}>
+			<ViewTabs tabs={tabs.map((id) => ({ id, label: PROFILE_TAB_LABELS[id] }))} label="Exchange sections" />
+			<TabPanel id={panelId} value={activeTab}>
 				{children}
-			</div>
-		</>
+			</TabPanel>
+		</Tabs>
 	)
 }

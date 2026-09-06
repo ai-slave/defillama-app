@@ -38,7 +38,6 @@ type ArticleMetaDialogProps = {
 	collaboratorsLoading: boolean
 	hasPendingEdits: boolean
 	isCollaborator: boolean
-	isDirty: boolean
 	isDiscarding: boolean
 	isOwner: boolean
 	isPublished: boolean
@@ -51,7 +50,7 @@ type ArticleMetaDialogProps = {
 	handleRemoveCollaborator: (pbUserId: string) => Promise<void>
 	handleToggleHidden: (pbUserId: string, nextHidden: boolean) => Promise<void>
 	handleTransferOwnership: (pbUserId: string, displayName: string) => Promise<void>
-	saveArticle: () => Promise<void>
+	saveArticle: () => Promise<boolean>
 	setCollaboratorEmail: Dispatch<SetStateAction<string>>
 	setCollaboratorError: Dispatch<SetStateAction<string | null>>
 	updateArticle: ArticleFieldUpdater
@@ -73,7 +72,6 @@ export function ArticleMetaDialog({
 	handleTransferOwnership,
 	hasPendingEdits,
 	isCollaborator,
-	isDirty,
 	isDiscarding,
 	isOwner,
 	isPublished,
@@ -765,7 +763,7 @@ export function ArticleMetaDialog({
 					hasPendingEdits ? (
 						<button
 							type="button"
-							disabled={isPublishing || isDiscarding}
+							disabled={isPublishing || isSaving || isDiscarding}
 							onClick={async () => {
 								const ok = await handlePublish()
 								if (ok) store.hide()
@@ -779,8 +777,7 @@ export function ArticleMetaDialog({
 							type="button"
 							disabled={isSaving}
 							onClick={async () => {
-								await saveArticle()
-								store.hide()
+								if (await saveArticle()) store.hide()
 							}}
 							className="flex h-10 items-center justify-center rounded-md bg-link px-4 text-sm font-medium text-on-brand transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
 						>
@@ -792,9 +789,8 @@ export function ArticleMetaDialog({
 						{articleIsScheduled ? (
 							<button
 								type="button"
-								disabled={isPublishing || !article.id}
+								disabled={isPublishing || isSaving || !article.id}
 								onClick={async () => {
-									if (isDirty) await saveArticle()
 									const ok = await handlePublish({ goLiveAt: null })
 									if (ok) store.hide()
 								}}
@@ -805,7 +801,7 @@ export function ArticleMetaDialog({
 						) : null}
 						<button
 							type="button"
-							disabled={isPublishing || !article.id}
+							disabled={isPublishing || isSaving || !article.id}
 							onClick={async () => {
 								if (scheduleMode) {
 									if (!isFutureScheduleLocal(scheduleAtLocal)) {
@@ -817,12 +813,10 @@ export function ArticleMetaDialog({
 										setScheduleError('Invalid date and time')
 										return
 									}
-									if (isDirty) await saveArticle()
 									const ok = await handlePublish({ goLiveAt })
 									if (ok) store.hide()
 									return
 								}
-								if (isDirty) await saveArticle()
 								const ok = await handlePublish(article.goLiveAt != null ? { goLiveAt: null } : {})
 								if (ok) store.hide()
 							}}

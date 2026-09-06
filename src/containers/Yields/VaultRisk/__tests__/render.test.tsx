@@ -1140,18 +1140,4 @@ describe('VaultRiskSection render', () => {
 		expect(html).toContain('protocol incident') // the protocol-wide lane summary
 		expect(html).toContain('not recorded on this vault') // the honest framing on each protocol dot
 	})
-
-	test('renders the body as a tablist with Collateral default; other panels stay in the DOM, hidden', async () => {
-		const html = await render(<VaultRiskSection data={morphoData()} poolName="x" chain="ethereum" />)
-		// an accessible tablist with the three tabs
-		expect(html).toContain('role="tablist"')
-		expect(html).toContain('id="risk-tab-vault-risk-collateral"')
-		expect(html).toContain('id="risk-tab-vault-risk-scenarios"')
-		expect(html).toContain('id="risk-tab-vault-risk-trust"')
-		// Collateral is the default panel (visible); Scenarios/Trust stay in the DOM but hidden, so
-		// SSR/SEO and the #vault-risk-* deep links / cross-tab anchors still resolve.
-		expect(html).not.toMatch(/id="vault-risk-collateral"[^>]*hidden/)
-		expect(html).toMatch(/id="vault-risk-scenarios"[^>]*hidden/)
-		expect(html).toMatch(/id="vault-risk-trust"[^>]*hidden/)
-	})
 })

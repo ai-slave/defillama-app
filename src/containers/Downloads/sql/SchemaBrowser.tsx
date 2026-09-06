@@ -21,7 +21,8 @@ import { identifierize, tableNameFor, type RegisteredTable, type TableSource } f
 
 const COLLAPSED_KEY = 'sql-schema-collapsed-categories'
 
-type FilterKind = 'all' | 'flat' | 'timeseries'
+const FILTER_KINDS = ['all', 'flat', 'timeseries'] as const
+type FilterKind = (typeof FILTER_KINDS)[number]
 
 const FILTER_LABELS: Record<FilterKind, string> = {
 	all: 'All',
@@ -233,31 +234,26 @@ function BrowserHeader({
 			</label>
 
 			<div className="flex flex-wrap items-center justify-between gap-3">
-				<div
-					role="tablist"
-					aria-label="Dataset kind"
-					className="inline-flex items-center gap-0.5 rounded-md border border-subtle bg-surface p-0.5"
-				>
-					{(Object.keys(FILTER_LABELS) as Array<FilterKind>).map((k) => {
-						const active = filter === k
-						return (
-							<button
-								key={k}
-								type="button"
-								role="tab"
-								aria-selected={active}
-								onClick={() => onFilterChange(k)}
-								className={`rounded-sm px-2.5 py-1 text-xs font-medium transition-colors ${
-									active
+				<Ariakit.RadioProvider value={filter} setValue={(value) => onFilterChange(value as FilterKind)}>
+					<Ariakit.RadioGroup
+						aria-label="Dataset kind"
+						className="inline-flex items-center gap-0.5 rounded-md border border-subtle bg-surface p-0.5"
+					>
+						{FILTER_KINDS.map((kind) => (
+							<label
+								key={kind}
+								className={`relative cursor-pointer rounded-sm px-2.5 py-1 text-xs font-medium transition-colors has-focus-visible:focus-ring ${
+									filter === kind
 										? 'bg-brand text-on-brand shadow-sm'
 										: 'text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
 								}`}
 							>
-								{FILTER_LABELS[k]}
-							</button>
-						)
-					})}
-				</div>
+								<Ariakit.Radio value={kind} className="sr-only" />
+								{FILTER_LABELS[kind]}
+							</label>
+						))}
+					</Ariakit.RadioGroup>
+				</Ariakit.RadioProvider>
 				<p className="text-[11px] text-pro-text-tertiary tabular-nums">
 					{totalVisible === totalAvailable ? `${totalAvailable} tables` : `${totalVisible} of ${totalAvailable}`}
 				</p>
@@ -387,7 +383,7 @@ function FlatRow({
 	return (
 		<div className="flex flex-col gap-2 py-3.5">
 			<div className="flex flex-wrap items-start justify-between gap-3">
-				<div className="flex min-w-0 flex-1 flex-col gap-1">
+				<div className="flex min-w-0 grow basis-48 flex-col gap-1">
 					<div className="flex min-w-0 flex-wrap items-center gap-2">
 						<span className="font-mono text-[13.5px] font-semibold break-all text-pro-text-primary">
 							{entry.tableName}
@@ -455,7 +451,7 @@ function TsRow({
 	return (
 		<div className="flex flex-col gap-2 py-3.5">
 			<div className="flex flex-wrap items-start justify-between gap-3">
-				<div className="flex min-w-0 flex-1 flex-col gap-1">
+				<div className="flex min-w-0 grow basis-48 flex-col gap-1">
 					<div className="flex min-w-0 flex-wrap items-center gap-2">
 						<span className="font-mono text-[13.5px] font-semibold break-all text-pro-text-primary">
 							{param ? resolvedName : <span className="text-pro-text-secondary">{entry.displayName}</span>}

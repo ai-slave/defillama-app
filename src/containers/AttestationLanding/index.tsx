@@ -1,6 +1,7 @@
+import { TabProvider, TabList, Tab, TabPanel } from '@ariakit/react'
 import Head from 'next/head'
 import Image from 'next/image'
-import { type ReactNode, type RefObject, useEffect, useRef, useState } from 'react'
+import { type ReactNode, type RefObject, useEffect, useId, useRef, useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { ResearchIcon } from '~/components/ResearchIcon'
 import { Button } from '~/ui/Button'
@@ -812,47 +813,52 @@ function VenueFlow() {
 	)
 }
 
+const PERSONA_KEYS = ['issuer', 'strategy'] as const
+
 function PersonaDossier() {
-	const [tab, setTab] = useState<keyof typeof personas>('issuer')
-	const p = personas[tab]
+	const id = useId()
 	return (
 		<div className="overflow-hidden rounded-xl border border-medium bg-surface shadow-[0_16px_32px_-20px_rgba(9,11,12,0.45)] dark:bg-surface-elevated-1">
-			<div
-				className="grid border-b border-subtle sm:grid-cols-2 sm:divide-x sm:divide-(--border-subtle)"
-				role="tablist"
-				aria-label="Who it's for"
-			>
-				{(Object.keys(personas) as Array<keyof typeof personas>).map((key) => (
-					<button
-						key={key}
-						type="button"
-						role="tab"
-						aria-selected={tab === key}
-						onClick={() => setTab(key)}
-						className={`px-5 py-4 text-left transition-colors sm:px-6 ${
-							tab === key ? 'bg-brand-faint shadow-[inset_0_-2px_0_var(--bg-brand)]' : 'hover:bg-hover-row'
-						}`}
-					>
-						<span className="block label-lg font-semibold text-primary">{personas[key].tab}</span>
-						<span className="mt-0.5 block body-sm text-tertiary">{personas[key].sub}</span>
-					</button>
-				))}
-			</div>
-			<div className="p-6 sm:p-8">
-				<h3 className="max-w-2xl text-[clamp(1.3rem,2.2vw,1.65rem)] leading-snug font-bold text-primary">{p.punch}</h3>
-				<p className="mt-4 max-w-[64ch] body-md leading-relaxed text-secondary">
-					{p.proseLead} <b className="font-medium text-primary">{p.proseBold}</b> {p.proseTail}
-				</p>
-				<ul className="mt-6 grid gap-x-8 gap-y-3 sm:grid-cols-2">
-					{p.checklist.map((item) => (
-						<li key={item} className="flex items-start gap-2.5 body-md text-secondary">
-							<CheckIcon className="mt-1 size-3.5 shrink-0 text-data-up" />
-							{item}
-						</li>
+			<TabProvider defaultSelectedId={`${id}-issuer`} selectOnMove={false} orientation="both">
+				<TabList
+					className="grid border-b border-subtle sm:grid-cols-2 sm:divide-x sm:divide-(--border-subtle)"
+					aria-label="Who it's for"
+				>
+					{PERSONA_KEYS.map((key) => (
+						<Tab
+							key={key}
+							id={`${id}-${key}`}
+							type="button"
+							className="px-5 py-4 text-left transition-colors hover:bg-hover-row aria-selected:bg-brand-faint aria-selected:shadow-[inset_0_-2px_0_var(--bg-brand)] sm:px-6"
+						>
+							<span className="block label-lg font-semibold text-primary">{personas[key].tab}</span>
+							<span className="mt-0.5 block body-sm text-tertiary">{personas[key].sub}</span>
+						</Tab>
 					))}
-				</ul>
-				{tab === 'issuer' ? <CadenceCompare /> : <VenueFlow />}
-			</div>
+				</TabList>
+				{PERSONA_KEYS.map((key) => {
+					const p = personas[key]
+					return (
+						<TabPanel key={key} tabId={`${id}-${key}`} unmountOnHide className="p-6 sm:p-8">
+							<h3 className="max-w-2xl text-[clamp(1.3rem,2.2vw,1.65rem)] leading-snug font-bold text-primary">
+								{p.punch}
+							</h3>
+							<p className="mt-4 max-w-[64ch] body-md leading-relaxed text-secondary">
+								{p.proseLead} <b className="font-medium text-primary">{p.proseBold}</b> {p.proseTail}
+							</p>
+							<ul className="mt-6 grid gap-x-8 gap-y-3 sm:grid-cols-2">
+								{p.checklist.map((item) => (
+									<li key={item} className="flex items-start gap-2.5 body-md text-secondary">
+										<CheckIcon className="mt-1 size-3.5 shrink-0 text-data-up" />
+										{item}
+									</li>
+								))}
+							</ul>
+							{key === 'issuer' ? <CadenceCompare /> : <VenueFlow />}
+						</TabPanel>
+					)
+				})}
+			</TabProvider>
 		</div>
 	)
 }
