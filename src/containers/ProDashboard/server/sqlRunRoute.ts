@@ -117,7 +117,7 @@ export async function sqlRunHandler(req: NextApiRequest, res: NextApiResponse) {
 		return res.status(200).json(stored.snapshot)
 	}
 	const access = await getSqlExecutionAccess(req.headers.authorization)
-	if (!access.valid) {
+	if (access.valid === false) {
 		// Public viewers may read the last computed result, but never start a worker.
 		if (!forceRefresh && stored) return res.status(200).json({ ...stored.snapshot, error: access.error })
 		return res.status(access.status).json({ error: access.error })
