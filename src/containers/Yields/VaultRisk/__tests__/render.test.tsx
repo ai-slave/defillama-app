@@ -968,7 +968,7 @@ describe('VaultRiskSection render', () => {
 
 	test('trust panel renders audits + governance, and survives no explorer data', async () => {
 		const vm = buildVaultRiskVM(morphoData())
-		const html = await render(<TrustPanel protocol={vm.protocol} />)
+		const html = await render(<TrustPanel protocol={vm.protocol} nowIso="2026-06-19T00:00:00Z" />)
 		expect(html).toContain('Audits')
 		expect(html).toContain('multisig')
 		// governance block renders and groups multisigs by role
@@ -1025,7 +1025,7 @@ describe('VaultRiskSection render', () => {
 				}
 			]
 		})
-		const html = await render(<TrustPanel protocol={protocol} vaultRoles={roles} />)
+		const html = await render(<TrustPanel protocol={protocol} vaultRoles={roles} nowIso="2026-06-19T00:00:00Z" />)
 		expect(html).toContain('Sentinels') // the many-holder veto row
 		expect(html).toContain('1 multisig · 1 EOA') // collapsed line summarizes the holders
 		expect(html).toContain('Safety role · veto only') // capability marker joined on role: 'sentinel'
@@ -1044,7 +1044,9 @@ describe('VaultRiskSection render', () => {
 			guardian: null,
 			sentinels: []
 		})
-		const html = await render(<TrustPanel protocol={makeProtocolRiskFixture()} vaultRoles={roles} />)
+		const html = await render(
+			<TrustPanel protocol={makeProtocolRiskFixture()} vaultRoles={roles} nowIso="2026-06-19T00:00:00Z" />
+		)
 		expect(html).toContain('none appointed') // the guardian row renders its absence…
 		expect(html).toContain('No veto — unguarded') // …with the danger marker
 		expect(html).not.toContain('Sentinels')

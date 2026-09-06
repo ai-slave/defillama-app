@@ -187,7 +187,8 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 
 	const [managedIsThemeDark] = useDarkModeManager()
 	const isThemeDark = isThemeDarkOverride ?? managedIsThemeDark
-	const [legendIconRevision, setLegendIconRevision] = useState(0)
+	// Legend icons render only once their image URL has been probed, so the probe result is series input.
+	const [validLegendIcons, setValidLegendIcons] = useState<ReadonlySet<string>>(() => new Set())
 	const chartTheme = useChartTheme(isThemeDark)
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
 	const chartDomRef = useRef<HTMLDivElement>(null)
@@ -328,8 +329,13 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		const urls = effectiveCharts.map((chart) => chart.legendIconUrl).filter((url): url is string => !!url)
 		if (urls.length === 0) return
 		let cancelled = false
-		Promise.all(urls.map(validateIconUrl)).then(() => {
-			if (!cancelled) setLegendIconRevision((revision) => revision + 1)
+		Promise.all(urls.map(validateIconUrl)).then((results) => {
+			if (cancelled) return
+			const valid = new Set<string>()
+			for (let index = 0; index < urls.length; index++) {
+				if (results[index]) valid.add(urls[index])
+			}
+			setValidLegendIcons(valid)
 		})
 		return () => {
 			cancelled = true
@@ -406,7 +412,6 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	)
 
 	const { series, sourceAxisIndexes } = useMemo(() => {
-		void legendIconRevision
 		const builtSeries = buildMultiSeries({
 			charts: renderedCharts,
 			selectedCharts,
@@ -414,7 +419,8 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 			solidChartAreaStyle,
 			chartTheme,
 			hallmarksMarkLine,
-			chartRef
+			chartRef,
+			validLegendIcons
 		})
 		return normalizeSeriesYAxisIndices(builtSeries)
 	}, [
@@ -424,7 +430,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		solidChartAreaStyle,
 		selectedCharts,
 		hallmarksMarkLine,
-		legendIconRevision
+		validLegendIcons
 	])
 	const displayValueSymbol = expandTo100Percent ? '%' : valueSymbol
 

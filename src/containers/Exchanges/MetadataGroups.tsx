@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { type ReactNode, useState } from 'react'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
 import { buttonStyles } from '~/ui/Button'
@@ -341,36 +341,35 @@ function MetadataFields({
 	singleColumn?: boolean
 }) {
 	// Fields auto-flow into a two-column grid; tables and the description span both
-	// columns, so the column a scalar lands in is deterministic from render order.
+	// columns, so the column a scalar lands in is deterministic from field order.
+	const rendered: Array<ReactNode> = []
 	let column = 0
-	return (
-		<div className={`grid grid-cols-1 ${singleColumn ? '' : 'sm:grid-cols-2'}`}>
-			{group.fields.map((field) => {
-				if (field.type === 'table') {
-					column = 0
-					return <MetadataTableField key={field.key} field={field} group={group} />
-				}
-				const isDescription = group.key === 'identity' && field.key === 'description'
-				// Maker/taker fee pairs must read side by side, so a maker field that
-				// would land in the second column breaks onto a fresh row instead.
-				const startsRow = !singleColumn && column === 1 && field.key.endsWith('_maker')
-				if (startsRow) column = 0
-				const secondColumn = !singleColumn && !isDescription && column === 1
-				column = isDescription || singleColumn ? 0 : column === 1 ? 0 : 1
-				return (
-					<MetadataScalarField
-						key={field.key}
-						field={field}
-						group={group}
-						exchangeName={exchangeName}
-						isDescription={isDescription}
-						secondColumn={secondColumn}
-						startsRow={startsRow}
-					/>
-				)
-			})}
-		</div>
-	)
+	for (const field of group.fields) {
+		if (field.type === 'table') {
+			column = 0
+			rendered.push(<MetadataTableField key={field.key} field={field} group={group} />)
+			continue
+		}
+		const isDescription = group.key === 'identity' && field.key === 'description'
+		// Maker/taker fee pairs must read side by side, so a maker field that
+		// would land in the second column breaks onto a fresh row instead.
+		const startsRow = !singleColumn && column === 1 && field.key.endsWith('_maker')
+		if (startsRow) column = 0
+		const secondColumn = !singleColumn && !isDescription && column === 1
+		column = isDescription || singleColumn ? 0 : column === 1 ? 0 : 1
+		rendered.push(
+			<MetadataScalarField
+				key={field.key}
+				field={field}
+				group={group}
+				exchangeName={exchangeName}
+				isDescription={isDescription}
+				secondColumn={secondColumn}
+				startsRow={startsRow}
+			/>
+		)
+	}
+	return <div className={`grid grid-cols-1 ${singleColumn ? '' : 'sm:grid-cols-2'}`}>{rendered}</div>
 }
 
 function MetadataGroupHeader({ group }: { group: ExchangeMetadataGroupModel }) {

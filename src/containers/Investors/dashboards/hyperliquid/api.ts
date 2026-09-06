@@ -179,62 +179,64 @@ export function useHyperliquidWs(subscriptions: Array<WsSubscription>, onMessage
 		}
 	}, [])
 
-	const connect = useCallback(() => {
-		if (!mountedRef.current) return
-		if (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING) return
-
-		prevSubsRef.current = new Map()
-		const ws = new WebSocket(HL_WS)
-		wsRef.current = ws
-		lastMessageAtRef.current = Date.now()
-
-		ws.onopen = () => {
-			if (!mountedRef.current) {
-				ws.close()
-				return
-			}
-			setIsConnected(true)
-			backoffRef.current = 1000
-			syncSubscriptions(ws, subsRef.current)
-
-			heartbeatTimerRef.current = setInterval(() => {
-				if (!mountedRef.current || ws.readyState !== WebSocket.OPEN) return
-				if (Date.now() - lastMessageAtRef.current > HEARTBEAT_TIMEOUT_MS) {
-					ws.close()
-				}
-			}, HEARTBEAT_CHECK_MS)
-		}
-
-		ws.onmessage = (event) => {
-			lastMessageAtRef.current = Date.now()
-			try {
-				const message: unknown = JSON.parse(event.data)
-				if (isRecord(message) && message.channel === 'subscriptionResponse') return
-				cbRef.current(message)
-			} catch {
-				// ignore non-json frames
-			}
-		}
-
-		ws.onclose = () => {
-			clearTimers()
-			if (!mountedRef.current) return
-			setIsConnected(false)
-			const jitter = 0.8 + Math.random() * 0.4
-			const waitMs = Math.floor(backoffRef.current * jitter)
-			reconnectTimerRef.current = setTimeout(() => {
-				backoffRef.current = Math.min(backoffRef.current * 2, 15_000)
-				connect()
-			}, waitMs)
-		}
-
-		ws.onerror = () => {
-			ws.close()
-		}
-	}, [clearTimers, syncSubscriptions])
-
 	useEffect(() => {
 		mountedRef.current = true
+
+		// A function declaration so the reconnect timer can call it by name.
+		function connect() {
+			if (!mountedRef.current) return
+			if (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING) return
+
+			prevSubsRef.current = new Map()
+			const ws = new WebSocket(HL_WS)
+			wsRef.current = ws
+			lastMessageAtRef.current = Date.now()
+
+			ws.onopen = () => {
+				if (!mountedRef.current) {
+					ws.close()
+					return
+				}
+				setIsConnected(true)
+				backoffRef.current = 1000
+				syncSubscriptions(ws, subsRef.current)
+
+				heartbeatTimerRef.current = setInterval(() => {
+					if (!mountedRef.current || ws.readyState !== WebSocket.OPEN) return
+					if (Date.now() - lastMessageAtRef.current > HEARTBEAT_TIMEOUT_MS) {
+						ws.close()
+					}
+				}, HEARTBEAT_CHECK_MS)
+			}
+
+			ws.onmessage = (event) => {
+				lastMessageAtRef.current = Date.now()
+				try {
+					const message: unknown = JSON.parse(event.data)
+					if (isRecord(message) && message.channel === 'subscriptionResponse') return
+					cbRef.current(message)
+				} catch {
+					// ignore non-json frames
+				}
+			}
+
+			ws.onclose = () => {
+				clearTimers()
+				if (!mountedRef.current) return
+				setIsConnected(false)
+				const jitter = 0.8 + Math.random() * 0.4
+				const waitMs = Math.floor(backoffRef.current * jitter)
+				reconnectTimerRef.current = setTimeout(() => {
+					backoffRef.current = Math.min(backoffRef.current * 2, 15_000)
+					connect()
+				}, waitMs)
+			}
+
+			ws.onerror = () => {
+				ws.close()
+			}
+		}
+
 		connect()
 		return () => {
 			mountedRef.current = false
@@ -245,7 +247,7 @@ export function useHyperliquidWs(subscriptions: Array<WsSubscription>, onMessage
 				wsRef.current = null
 			}
 		}
-	}, [clearTimers, connect])
+	}, [clearTimers, syncSubscriptions])
 
 	useEffect(() => {
 		const ws = wsRef.current

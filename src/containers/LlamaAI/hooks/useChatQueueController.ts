@@ -492,6 +492,7 @@ export function useChatQueueController({
 				outboxDrainsRef.current.delete(targetSessionId)
 			}
 		},
+		// oxlint-disable-next-line react/memo-dependencies -- React Compiler does not see dependencies read inside an async try/finally; these are correct.
 		[authorizedFetch, runCommand, send]
 	)
 	drainOutboxRef.current = (targetSessionId) => void drainLocalOutbox(targetSessionId)

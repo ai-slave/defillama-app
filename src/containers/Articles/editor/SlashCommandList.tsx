@@ -48,13 +48,12 @@ export const SlashCommandList = forwardRef<SlashCommandListHandle, Props>(functi
 		)
 	}
 
-	let lastGroup: string | undefined
 	return (
 		<div className="w-72 overflow-hidden rounded-md border border-medium bg-surface shadow-xl">
 			<div className="max-h-80 overflow-y-auto py-1" role="listbox">
 				{items.map((item, index) => {
-					const showHeader = item.group !== lastGroup
-					lastGroup = item.group
+					// A group header opens each run of consecutive items sharing a group.
+					const showHeader = index === 0 || item.group !== items[index - 1].group
 					const active = index === selectedIndex
 					return (
 						<div key={item.id}>

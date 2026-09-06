@@ -91,6 +91,7 @@ export function usePdfUpload(args: { articleId: string | null | undefined }) {
 				setIsUploading(false)
 			}
 		},
+		// oxlint-disable-next-line react/memo-dependencies -- React Compiler does not see dependencies read inside an async try/finally; these are correct.
 		[args.articleId, authorizedFetch]
 	)
 

@@ -15,6 +15,8 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 
 export interface ApiUsageStats {
 	windowDays?: number
+	/** Client receive time (ms). The chart window ends on this day, so render never reads the clock. */
+	fetchedAt: number
 	stats: Array<{
 		date: string
 		totalRequests: number
@@ -114,13 +116,14 @@ function useChartData(
 	windowDays: number,
 	routeSeries: Array<string>,
 	selectedRoutes: Array<string>,
-	colors: ChartColors
+	colors: ChartColors,
+	fetchedAt: number | null
 ) {
 	const { dataset, charts } = useMemo<{
 		dataset: MultiSeriesChartDataset
 		charts: IMultiSeriesChartProps['charts']
 	}>(() => {
-		if (sortedStats.length === 0) {
+		if (sortedStats.length === 0 || fetchedAt === null) {
 			return { dataset: { source: [], dimensions: ['date'] }, charts: [] }
 		}
 
@@ -142,7 +145,7 @@ function useChartData(
 		}
 
 		// span the full 30d window so empty days are included in the chart, even if they have no data
-		const lastDay = toUtcDayStart(Date.now())
+		const lastDay = toUtcDayStart(fetchedAt)
 		const firstDay = lastDay - (windowDays - 1) * DAY_MS
 
 		const source: MultiSeriesChartDataset['source'] = []
@@ -177,7 +180,7 @@ function useChartData(
 		}))
 
 		return { dataset: { source, dimensions }, charts }
-	}, [sortedStats, colors, windowDays, routeSeries, selectedRoutes])
+	}, [sortedStats, colors, windowDays, routeSeries, selectedRoutes, fetchedAt])
 
 	return { dataset, charts }
 }
@@ -201,7 +204,14 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 		availableSeries: routeSeries,
 		selectionKey: String(windowDays)
 	})
-	const { dataset, charts } = useChartData(sortedStats, windowDays, routeSeries, activeSeries, activeColors)
+	const { dataset, charts } = useChartData(
+		sortedStats,
+		windowDays,
+		routeSeries,
+		activeSeries,
+		activeColors,
+		usageStats?.fetchedAt ?? null
+	)
 	const renderedCharts = useMemo(() => new Set(charts.map((chart) => chart.name)), [charts])
 
 	const hasData = sortedStats.length > 0 && !isLoading && !isError

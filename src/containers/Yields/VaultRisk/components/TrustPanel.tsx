@@ -23,7 +23,7 @@ export function TrustPanel({
 	protocol: ProtocolRiskFixture | null
 	explorers?: BlockExplorersResponse
 	incidents?: Array<HistoryIncident>
-	nowIso?: string
+	nowIso: string
 	chain?: string
 	poolType?: PoolType
 	scenarios?: Array<ScenarioVM>
@@ -72,12 +72,7 @@ export function TrustPanel({
 				}
 			/>
 
-			<HistoryStrip
-				audits={audits}
-				incidents={incidents}
-				protocolIncidents={protocolIncidents}
-				{...(nowIso ? { nowIso } : {})}
-			/>
+			<HistoryStrip audits={audits} incidents={incidents} protocolIncidents={protocolIncidents} nowIso={nowIso} />
 
 			{/* markets correctly have no vault operators — say so, so empty reads as intentional */}
 			{isMarket ? (
@@ -116,7 +111,7 @@ export function TrustPanel({
 							capabilities={protocol.role_capabilities}
 							{...(chain ? { chain } : {})}
 							{...(explorers ? { explorers } : {})}
-							{...(nowIso ? { nowIso } : {})}
+							nowIso={nowIso}
 						/>
 					</div>
 					<div className="grid grid-cols-1 gap-x-8 gap-y-6 border-t border-subtle pt-4 lg:grid-cols-2">

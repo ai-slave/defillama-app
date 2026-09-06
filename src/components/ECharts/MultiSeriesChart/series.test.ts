@@ -6,6 +6,7 @@ import { getChartTheme } from '../shared/chartTheme'
 import { buildMultiSeries } from './series'
 
 const chartTheme = getChartTheme(false)
+const NO_ICONS: ReadonlySet<string> = new Set()
 
 function requireSeries(series: ReturnType<typeof buildMultiSeries>[number] | undefined) {
 	if (!series) throw new Error('Expected a chart series')
@@ -27,6 +28,7 @@ describe('MultiSeriesChart series construction', () => {
 			selectedCharts: undefined,
 			expandTo100Percent: false,
 			solidChartAreaStyle: false,
+			validLegendIcons: NO_ICONS,
 			chartTheme
 		})
 
@@ -43,6 +45,7 @@ describe('MultiSeriesChart series construction', () => {
 				selectedCharts: undefined,
 				expandTo100Percent: false,
 				solidChartAreaStyle: false,
+				validLegendIcons: NO_ICONS,
 				chartTheme
 			})[0]
 		)
@@ -61,6 +64,7 @@ describe('MultiSeriesChart series construction', () => {
 			selectedCharts: undefined,
 			expandTo100Percent: false,
 			solidChartAreaStyle: false,
+			validLegendIcons: NO_ICONS,
 			chartTheme
 		})
 
@@ -83,6 +87,7 @@ describe('MultiSeriesChart series construction', () => {
 				selectedCharts: undefined,
 				expandTo100Percent: false,
 				solidChartAreaStyle: false,
+				validLegendIcons: NO_ICONS,
 				chartTheme
 			})[0]
 		)
@@ -110,6 +115,7 @@ describe('MultiSeriesChart series construction', () => {
 				selectedCharts: undefined,
 				expandTo100Percent: false,
 				solidChartAreaStyle: false,
+				validLegendIcons: NO_ICONS,
 				chartTheme,
 				chartRef
 			})[0]
@@ -134,11 +140,30 @@ describe('MultiSeriesChart series construction', () => {
 				selectedCharts: new Set(['Second']),
 				expandTo100Percent: false,
 				solidChartAreaStyle: false,
+				validLegendIcons: NO_ICONS,
 				chartTheme
 			})[0]
 		)
 
 		expect(series.itemStyle).toMatchObject({ color: CHART_COLORS[1] })
+	})
+
+	test('renders a legend icon only for URLs that have been probed as valid', () => {
+		const charts = [
+			{ name: 'Probed', type: 'line' as const, encode: { x: 0, y: 1 }, legendIconUrl: 'https://icons/probed.png' },
+			{ name: 'Pending', type: 'line' as const, encode: { x: 0, y: 2 }, legendIconUrl: 'https://icons/pending.png' }
+		]
+		const series = buildMultiSeries({
+			charts,
+			selectedCharts: undefined,
+			expandTo100Percent: false,
+			solidChartAreaStyle: false,
+			validLegendIcons: new Set(['https://icons/probed.png']),
+			chartTheme
+		})
+
+		expect(series[0]).toMatchObject({ legendIcon: 'image://https://icons/probed.png' })
+		expect(series[1]).not.toHaveProperty('legendIcon')
 	})
 
 	test('passes a typed step mode to line series', () => {
@@ -148,6 +173,7 @@ describe('MultiSeriesChart series construction', () => {
 				selectedCharts: undefined,
 				expandTo100Percent: false,
 				solidChartAreaStyle: false,
+				validLegendIcons: NO_ICONS,
 				chartTheme
 			})[0]
 		)

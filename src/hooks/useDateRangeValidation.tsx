@@ -7,24 +7,24 @@ interface DateRangeValidationOptions {
 	allowFutureDates?: boolean
 }
 
+function parseDateOnlyLocal(value: string) {
+	const [yearStr, monthStr, dayStr] = value.split('-')
+	const year = Number(yearStr)
+	const month = Number(monthStr)
+	const day = Number(dayStr)
+	return new Date(year, month - 1, day)
+}
+
+function startOfTodayLocal() {
+	const d = new Date()
+	d.setHours(0, 0, 0, 0)
+	return d
+}
+
 export const useDateRangeValidation = (options?: DateRangeValidationOptions) => {
 	const [startDate, setStartDate] = useState(options?.initialStartDate || '')
 	const [endDate, setEndDate] = useState(options?.initialEndDate || '')
 	const [dateError, setDateError] = useState('')
-
-	const parseDateOnlyLocal = (value: string) => {
-		const [yearStr, monthStr, dayStr] = value.split('-')
-		const year = Number(yearStr)
-		const month = Number(monthStr)
-		const day = Number(dayStr)
-		return new Date(year, month - 1, day)
-	}
-
-	const startOfTodayLocal = () => {
-		const d = new Date()
-		d.setHours(0, 0, 0, 0)
-		return d
-	}
 
 	const handleStartDateChange = useCallback((value: string) => {
 		setDateError('')

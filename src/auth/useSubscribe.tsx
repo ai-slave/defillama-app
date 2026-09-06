@@ -353,7 +353,8 @@ export const useSubscribe = () => {
 
 			const data = await handleSimpleFetchResponse(response).then((res) => res.json())
 
-			return data
+			// The usage chart anchors its window to when the stats arrived, so render never reads the clock.
+			return data ? { ...data, fetchedAt: Date.now() } : null
 		},
 		enabled: isAuthenticated && apiSubscription?.status === 'active' && router.pathname === '/account',
 		staleTime: 1000 * 60 * 5,

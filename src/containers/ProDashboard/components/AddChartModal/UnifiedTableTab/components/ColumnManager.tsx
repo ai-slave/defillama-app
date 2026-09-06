@@ -385,11 +385,9 @@ export function ColumnManager({
 	}
 	const handleDragCancel = () => setActiveId(null)
 
-	const availableVariables = AVAILABLE_VARIABLES
-
 	const autocompleteSuggestions = useMemo<Array<AutocompleteSuggestion>>(() => {
 		return [
-			...availableVariables.map((v) => ({
+			...AVAILABLE_VARIABLES.map((v) => ({
 				type: 'variable' as const,
 				value: v.key,
 				display: v.key,
@@ -405,7 +403,7 @@ export function ColumnManager({
 			{ type: 'function', value: 'max(', display: 'max(a,b)', description: 'Maximum', category: 'Functions' },
 			{ type: 'function', value: 'min(', display: 'min(a,b)', description: 'Minimum', category: 'Functions' }
 		]
-	}, [availableVariables])
+	}, [])
 
 	const filteredSuggestions = useMemo(() => {
 		if (!autocompleteFilter.trim()) return autocompleteSuggestions.slice(0, 15)

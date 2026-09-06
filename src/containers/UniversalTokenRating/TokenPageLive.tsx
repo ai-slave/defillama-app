@@ -445,7 +445,7 @@ export function TokenPageLive({
 		legacy?.tokenomics.vestingActualVsDisclosed
 	)
 	const hasTokenomicsData = Boolean(
-		tokenomicsCategory && (visibleTokenomicsCards.length || hasVestingData || metrics?.undisclosedUnlockDetected)
+		tokenomicsCategory && (visibleTokenomicsCards.length > 0 || hasVestingData || metrics?.undisclosedUnlockDetected)
 	)
 
 	const footprintCharts = [
@@ -488,7 +488,7 @@ export function TokenPageLive({
 	})
 	const hasVolumeMarketQuality = Boolean(
 		marketQuality &&
-		(marketQuality.series.length ||
+		(marketQuality.series.length > 0 ||
 			hasAnyValue(
 				marketQuality.volumeMcap.avgUsd,
 				marketQuality.volumeMcap.avgMarketCapUsd,
@@ -497,7 +497,7 @@ export function TokenPageLive({
 	)
 	const hasDepthMarketQuality = Boolean(
 		marketQuality &&
-		(marketQuality.series.length ||
+		(marketQuality.series.length > 0 ||
 			hasAnyValue(
 				marketQuality.depthMcap.avgUsd,
 				marketQuality.depthMcap.avgMarketCapUsd,
@@ -505,17 +505,18 @@ export function TokenPageLive({
 			))
 	)
 	const hasSpreadData = Boolean(
-		spread && (spread.exchanges.length || hasAnyValue(spread.tightestExchange, spread.vwasPct))
+		spread && (spread.exchanges.length > 0 || hasAnyValue(spread.tightestExchange, spread.vwasPct))
 	)
 	const hasPriceData = Boolean(
 		priceChart &&
-		(priceChart.candles.length ||
+		(priceChart.candles.length > 0 ||
 			hasAnyValue(priceChart.changePct, priceChart.greenCandles, priceChart.redCandles, priceChart.winRatePct))
 	)
 	const hasOpenInterestData = Boolean(
-		openInterest && (openInterest.venues.length || hasAnyValue(openInterest.totalOiUsd, openInterest.oiMcapRatioPct))
+		openInterest &&
+		(openInterest.venues.length > 0 || hasAnyValue(openInterest.totalOiUsd, openInterest.oiMcapRatioPct))
 	)
-	const hasFundingData = Boolean(funding && (funding.exchanges.length || hasAnyValue(funding.oiWeightedFundingPct)))
+	const hasFundingData = Boolean(funding && (funding.exchanges.length > 0 || hasAnyValue(funding.oiWeightedFundingPct)))
 	const hasMarketQualityData =
 		hasVolumeMarketQuality ||
 		hasDepthMarketQuality ||

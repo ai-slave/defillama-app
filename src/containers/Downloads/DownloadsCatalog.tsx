@@ -90,26 +90,23 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 
 	const isPreview = !isAuthenticated || !hasActiveSubscription
 
-	const allDatasetsByCategory = ALL_DATASETS_BY_CATEGORY
-	const allChartsByCategory = ALL_CHARTS_BY_CATEGORY
-
 	const filteredDatasetsByCategory = useMemo(() => {
-		let grouped = allDatasetsByCategory
+		let grouped = ALL_DATASETS_BY_CATEGORY
 		if (selectedCategory !== ALL_CATEGORY) {
 			grouped = grouped.filter((g) => g.category === selectedCategory)
 		}
 		if (!deferredSearch) return grouped
 		return filterDownloadGroups(grouped, deferredSearch)
-	}, [deferredSearch, selectedCategory, allDatasetsByCategory])
+	}, [deferredSearch, selectedCategory])
 
 	const filteredChartsByCategory = useMemo(() => {
-		let grouped = allChartsByCategory
+		let grouped = ALL_CHARTS_BY_CATEGORY
 		if (selectedCategory !== ALL_CATEGORY) {
 			grouped = grouped.filter((g) => g.category === selectedCategory)
 		}
 		if (!deferredSearch) return grouped
 		return filterDownloadGroups(grouped, deferredSearch)
-	}, [deferredSearch, selectedCategory, allChartsByCategory])
+	}, [deferredSearch, selectedCategory])
 
 	const totalFilteredCount = useMemo(() => {
 		const groups = activeTab === 'Datasets' ? filteredDatasetsByCategory : filteredChartsByCategory
@@ -121,13 +118,13 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 	const currentCategories = activeTab === 'Datasets' ? datasetCategories : chartDatasetCategories
 
 	const categoryCounts = useMemo(() => {
-		const groups = activeTab === 'Datasets' ? allDatasetsByCategory : allChartsByCategory
+		const groups = activeTab === 'Datasets' ? ALL_DATASETS_BY_CATEGORY : ALL_CHARTS_BY_CATEGORY
 		const counts: Record<string, number> = {}
 		for (const g of groups) {
 			counts[g.category] = g.items.length
 		}
 		return counts
-	}, [activeTab, allDatasetsByCategory, allChartsByCategory])
+	}, [activeTab])
 
 	const handleCardClick = useCallback(
 		(dataset: DatasetDefinition) => {

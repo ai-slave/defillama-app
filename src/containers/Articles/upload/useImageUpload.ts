@@ -119,6 +119,7 @@ export function useImageUpload(args: { scope: UploadScope; articleId?: string | 
 				setIsUploading(false)
 			}
 		},
+		// oxlint-disable-next-line react/memo-dependencies -- React Compiler does not see dependencies read inside an async try/finally; these are correct.
 		[args.scope, args.articleId, authorizedFetch]
 	)
 

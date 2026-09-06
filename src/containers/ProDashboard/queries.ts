@@ -203,14 +203,16 @@ export function buildProDashboardChartObserverPlan(charts: Array<ChartConfig>): 
 	return { sources, sourceIndexByChart }
 }
 
+/** Relative periods are cut at `now`, the instant the projection runs, like every other dashboard card. */
 function projectChartData(
 	sourceData: Array<[number, number]>,
 	timePeriod: TimePeriod,
 	customPeriod: CustomTimePeriod | null | undefined,
-	grouping: DashboardGrouping | null
+	grouping: DashboardGrouping | null,
+	now: dayjs.Dayjs
 ): Array<[number, number]> {
 	const relevantCustomPeriod = timePeriod === 'custom' ? customPeriod : null
-	const filtered = filterDataByTimePeriod(sourceData, timePeriod, relevantCustomPeriod)
+	const filtered = filterDataByTimePeriod(sourceData, timePeriod, relevantCustomPeriod, now)
 	return grouping ? groupData(filtered, grouping) : filtered
 }
 
@@ -266,21 +268,15 @@ export function useChartData(
 		[authToken, chart, parentMapping, prerequisite, streamDone]
 	)
 	const projectionTimePeriod = timePeriod ?? 'all'
-	const relativeBoundaryDay =
-		projectionTimePeriod !== 'all' &&
-		(projectionTimePeriod !== 'custom' || !customPeriod || customPeriod.type === 'relative')
-			? dayjs().startOf('day').unix()
-			: null
+	// Relative periods refresh with the source data; a day rolling over without new data does not re-project.
 	const selectData = useCallback(
 		(sourceData: Array<[number, number]>) => {
-			// A relative period must be projected again after the UTC day boundary even when source data is unchanged.
-			void relativeBoundaryDay
 			const chartTypeDetails = getProDashboardChartTypeConfig(chart.type)
 			const groupable = chartTypeDetails && 'groupable' in chartTypeDetails && chartTypeDetails.groupable
 			const grouping = groupable && chart.grouping && chart.grouping !== 'day' ? chart.grouping : null
-			return projectChartData(sourceData, projectionTimePeriod, customPeriod, grouping)
+			return projectChartData(sourceData, projectionTimePeriod, customPeriod, grouping, dayjs())
 		},
-		[chart.grouping, chart.type, customPeriod, projectionTimePeriod, relativeBoundaryDay]
+		[chart.grouping, chart.type, customPeriod, projectionTimePeriod]
 	)
 
 	return useQuery({ ...sourceQueryOptions, select: selectData })
@@ -311,15 +307,9 @@ export function useChartsData(
 		[authToken, observerPlan.sources, parentMapping, protocolBySlug, protocolCatalog, streamDone]
 	)
 	const projectionTimePeriod = timePeriod ?? 'all'
-	const relativeBoundaryDay =
-		projectionTimePeriod !== 'all' &&
-		(projectionTimePeriod !== 'custom' || !customPeriod || customPeriod.type === 'relative')
-			? dayjs().startOf('day').unix()
-			: null
 	const combineSourceQueries = useCallback(
 		(sourceQueries: Array<UseQueryResult<Array<[number, number]>>>) => {
-			// A relative period must be projected again after the UTC day boundary even when source data is unchanged.
-			void relativeBoundaryDay
+			const now = dayjs()
 			return charts.map((chart, chartIndex) => {
 				const sourceIndex = observerPlan.sourceIndexByChart.at(chartIndex)
 				if (sourceIndex === undefined) throw new Error(`Missing chart observer source index for ${chart.id}`)
@@ -333,11 +323,11 @@ export function useChartsData(
 				const grouping = groupable && chart.grouping && chart.grouping !== 'day' ? chart.grouping : null
 				return {
 					...query,
-					data: projectChartData(sourceData, projectionTimePeriod, customPeriod, grouping)
+					data: projectChartData(sourceData, projectionTimePeriod, customPeriod, grouping, now)
 				}
 			})
 		},
-		[charts, customPeriod, observerPlan.sourceIndexByChart, projectionTimePeriod, relativeBoundaryDay]
+		[charts, customPeriod, observerPlan.sourceIndexByChart, projectionTimePeriod]
 	)
 
 	return useQueries({ queries: sourceQueryOptions, combine: combineSourceQueries })

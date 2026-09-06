@@ -60,6 +60,8 @@ export function useChatScroll({
 	const lastScrollTopRef = useRef(0)
 	const [isAttached, setIsAttached] = useState(() => !startDetached)
 	const [showScrollToBottom, setShowScrollToBottom] = useState(false)
+	const reattachCleanupRef = useRef<(() => void) | null>(null)
+	const lastAutoScrollTopRef = useRef<number | null>(null)
 
 	const syncScrollToBottomVisibility = useCallback((container: HTMLDivElement | null) => {
 		if (!container) {
@@ -80,9 +82,6 @@ export function useChatScroll({
 		},
 		[scrollContainerRef, syncScrollToBottomVisibility]
 	)
-
-	const reattachCleanupRef = useRef<(() => void) | null>(null)
-	const lastAutoScrollTopRef = useRef<number | null>(null)
 
 	const cancelPendingReattach = useCallback(() => {
 		reattachCleanupRef.current?.()

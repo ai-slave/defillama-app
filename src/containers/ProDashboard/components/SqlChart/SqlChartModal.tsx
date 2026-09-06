@@ -147,6 +147,7 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 				setBusyTaskId(null)
 			}
 		},
+		// oxlint-disable-next-line react/memo-dependencies -- React Compiler does not see dependencies read inside an async try/finally; these are correct.
 		[running, savePending, busyTaskId, duckdb.conn, registryTables, loadTable, run]
 	)
 
@@ -210,6 +211,7 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 		needsRun,
 		result,
 		chartConfig,
+		// oxlint-disable-next-line react/memo-dependencies -- React Compiler does not see dependencies read inside an async try/finally; `run` is used.
 		run,
 		editItem,
 		name,

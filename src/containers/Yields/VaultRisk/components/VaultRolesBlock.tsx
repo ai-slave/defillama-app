@@ -198,7 +198,7 @@ export function VaultRolesBlock({
 	capabilities?: Array<RoleCapability>
 	chain?: string
 	explorers?: BlockExplorersResponse
-	nowIso?: string
+	nowIso: string
 }) {
 	const linkChain = chain ?? 'ethereum'
 	const caps = capabilityByRole(capabilities)
@@ -209,8 +209,7 @@ export function VaultRolesBlock({
 	const pendingOwner = asRoleEntity(roles.pending_owner)
 	const allocators = (roles.allocators ?? []).map(asRoleEntity).filter((a): a is RoleEntity => a != null)
 	// reference the data snapshot, not the render clock — deterministic across SSR/hydration
-	const parsedNow = nowIso ? Date.parse(nowIso) : NaN
-	const nowSec = Number.isNaN(parsedNow) ? Math.floor(Date.now() / 1000) : Math.floor(parsedNow / 1000)
+	const nowSec = Math.floor(Date.parse(nowIso) / 1000)
 	const pending = groupPending(roles, nowSec)
 	return (
 		<div className="flex flex-col gap-4">

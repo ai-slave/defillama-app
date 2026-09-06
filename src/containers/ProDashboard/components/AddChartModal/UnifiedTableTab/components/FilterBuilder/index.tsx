@@ -553,14 +553,13 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 	}, [savedFilters, pendingFilters])
 
 	const activeFilterIds = useMemo(() => new Set(allActiveFilters.map((f) => f.config.id)), [allActiveFilters])
-	const filtersByCategory = FILTERS_BY_CATEGORY
 
 	const filteredCategories = useMemo(() => {
 		const searchLower = search.toLowerCase()
 		const result: Array<{ category: FilterCategory; label: string; filters: Array<FilterConfig> }> = []
 
 		for (const { key, label } of FILTER_CATEGORIES) {
-			const categoryFilters = filtersByCategory.get(key) ?? EMPTY_CATEGORY_FILTERS
+			const categoryFilters = FILTERS_BY_CATEGORY.get(key) ?? EMPTY_CATEGORY_FILTERS
 			const matchingFilters = categoryFilters.filter((f) => f.label.toLowerCase().includes(searchLower))
 
 			if (matchingFilters.length > 0) {
@@ -569,15 +568,15 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 		}
 
 		return result
-	}, [filtersByCategory, search])
+	}, [search])
 
 	const totalFiltersAvailable = useMemo(() => {
 		let total = 0
-		for (const categoryFilters of filtersByCategory.values()) {
+		for (const categoryFilters of FILTERS_BY_CATEGORY.values()) {
 			total += categoryFilters.length
 		}
 		return total
-	}, [filtersByCategory])
+	}, [])
 
 	const inactiveFiltersCount = Math.max(totalFiltersAvailable - activeFilterIds.size, 0)
 
@@ -676,7 +675,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 	}
 
 	const expandAllCategories = () => {
-		setExpandedCategories(new Set(filtersByCategory.keys()))
+		setExpandedCategories(new Set(FILTERS_BY_CATEGORY.keys()))
 	}
 
 	const collapseAllCategories = () => {

@@ -172,8 +172,6 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 
 	const selectedOptions = useMemo(() => allMetricOptions.filter((o) => o.active), [allMetricOptions])
 
-	const categoryByMetric = PROTOCOL_CATEGORY_BY_METRIC
-
 	const groupedFilteredOptions = useMemo(() => {
 		const groups: Record<ProtocolChartCategory | 'Annotations' | 'Other', Array<ProtocolMetricOption>> = {
 			Core: [],
@@ -196,7 +194,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 				groups.Annotations.push(option)
 				continue
 			}
-			const category = categoryByMetric.get(option.id) ?? 'Other'
+			const category = PROTOCOL_CATEGORY_BY_METRIC.get(option.id) ?? 'Other'
 			groups[category].push(option)
 		}
 
@@ -210,7 +208,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 				}
 			})
 			.filter((group) => group.options.length > 0)
-	}, [filteredMetricOptions, categoryByMetric])
+	}, [filteredMetricOptions])
 
 	const getOptionColor = useCallback(
 		(option: ProtocolMetricOption): string => {

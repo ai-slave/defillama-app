@@ -1163,6 +1163,9 @@ export function AgenticChat({
 		[appendMessage, clearRecoveryController, rememberPromptFailure]
 	)
 
+	// The retry timer must call the latest attempt closure, not the one from the render that scheduled it,
+	// so it goes through a ref that the layout effect below points at the stable wrapper.
+	const retryRecoveryRef = useRef<(recoveryId: number) => void>(() => {})
 	const attemptRecoveryForController = useStableCallback(async (recoveryId: number) => {
 		const controller = recoveryControllerRef.current
 		if (!controller || controller.id !== recoveryId) return
@@ -1212,8 +1215,11 @@ export function AgenticChat({
 			return
 		}
 		const backoffMs = Math.min(1000 * 2 ** Math.max(0, latest.attemptCount - 1), 8000)
-		scheduleRecoveryAttempt(latest, backoffMs, () => void attemptRecoveryForController(recoveryId))
+		scheduleRecoveryAttempt(latest, backoffMs, () => retryRecoveryRef.current(recoveryId))
 	})
+	useLayoutEffect(() => {
+		retryRecoveryRef.current = (recoveryId) => void attemptRecoveryForController(recoveryId)
+	}, [attemptRecoveryForController])
 
 	const startRecoveryCycle = useCallback(
 		({

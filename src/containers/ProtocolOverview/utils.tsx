@@ -1,5 +1,4 @@
-import type { IProtocolMetricsV2 } from '~/containers/ProtocolOverview/api.types'
-import type { IProtocolWarningBanner } from './api.types'
+import type { IProtocolMetricsV2, IProtocolWarningBanner } from './api.types'
 
 export const getProtocolWarningBanners = (
 	protocolData: Pick<IProtocolMetricsV2, 'warningBanners' | 'rugged' | 'deadUrl'>

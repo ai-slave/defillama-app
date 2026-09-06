@@ -139,17 +139,20 @@ export function buildRampColumns(options: { size: number; currency: string | nul
 				csvValue: (row) => (row.variant.cryptoRails ? cryptoRailSummary(row.variant.cryptoRails) : null)
 			}
 		}),
-		columnHelper.accessor((row) => row.variant.fiatCurrencies.length || undefined, {
-			id: 'currencies',
-			header: 'Fiat ccy',
-			cell: ({ row }) => <RampCurrenciesValue row={row.original} currency={currency} />,
-			meta: {
-				headerClassName: 'min-w-[90px] whitespace-nowrap',
-				align: 'end',
-				headerHelperText: 'Fiat currencies the venue accepts in this region; ✓ marks the selected currency.',
-				csvValue: (row) => row.variant.fiatCurrencies.join(' ')
+		columnHelper.accessor(
+			(row) => (row.variant.fiatCurrencies.length > 0 ? row.variant.fiatCurrencies.length : undefined),
+			{
+				id: 'currencies',
+				header: 'Fiat ccy',
+				cell: ({ row }) => <RampCurrenciesValue row={row.original} currency={currency} />,
+				meta: {
+					headerClassName: 'min-w-[90px] whitespace-nowrap',
+					align: 'end',
+					headerHelperText: 'Fiat currencies the venue accepts in this region; ✓ marks the selected currency.',
+					csvValue: (row) => row.variant.fiatCurrencies.join(' ')
+				}
 			}
-		}),
+		),
 		columnHelper.accessor((row) => row.variant.kyc?.short, {
 			id: 'kyc',
 			header: 'KYC',

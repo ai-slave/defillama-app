@@ -169,7 +169,11 @@ export function TrustedByAdminView() {
 		reorderMentionsMutation.mutate(reordered.map((mention) => mention.id))
 	}
 
-	let enabledMentionIndex = -1
+	// Slides group enabled mentions in threes, so each enabled mention needs its position among enabled ones.
+	const enabledIndexById = new Map<string, number>()
+	for (const mention of mentions) {
+		if (mention.enabled) enabledIndexById.set(mention.id, enabledIndexById.size)
+	}
 
 	return (
 		<div className="mx-auto grid w-full max-w-5xl gap-6 px-1 pb-16">
@@ -263,8 +267,7 @@ export function TrustedByAdminView() {
 						<SortableContext items={mentions.map((mention) => mention.id)} strategy={verticalListSortingStrategy}>
 							<ul className="grid divide-y divide-(--border-medium) overflow-hidden rounded-md border border-medium bg-surface">
 								{mentions.map((mention) => {
-									if (mention.enabled) enabledMentionIndex += 1
-									const enabledIndex = mention.enabled ? enabledMentionIndex : -1
+									const enabledIndex = enabledIndexById.get(mention.id) ?? -1
 									const isSlideStart = mention.enabled && enabledIndex % 3 === 0
 									const slideNumber = mention.enabled ? Math.floor(enabledIndex / 3) + 1 : null
 

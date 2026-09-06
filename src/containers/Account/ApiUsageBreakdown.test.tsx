@@ -55,7 +55,11 @@ describe('ApiUsageBreakdown', () => {
 		await act(async () => {
 			root.render(
 				<ApiUsageBreakdown
-					usageStats={{ windowDays: 3, stats: [{ date: '2026-07-19', totalRequests: 28, routes }] }}
+					usageStats={{
+						windowDays: 3,
+						fetchedAt: Date.UTC(2026, 6, 19, 12),
+						stats: [{ date: '2026-07-19', totalRequests: 28, routes }]
+					}}
 					isLoading={false}
 					isError={false}
 				/>

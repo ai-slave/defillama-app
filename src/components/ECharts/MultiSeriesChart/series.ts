@@ -2,7 +2,6 @@ import type { BarSeriesOption, DefaultLabelFormatterCallbackParams, LineSeriesOp
 import * as echarts from 'echarts/core'
 import { CHART_COLORS } from '~/constants/colors'
 import type { ChartTheme } from '../shared/chartTheme'
-import { isIconUrlValid } from '../shared/icon'
 import type { buildHallmarksMarkLine } from './hallmarks'
 import type { IMultiSeriesChartProps } from './types'
 
@@ -72,7 +71,8 @@ export function buildMultiSeries({
 	solidChartAreaStyle,
 	chartTheme,
 	hallmarksMarkLine,
-	chartRef
+	chartRef,
+	validLegendIcons
 }: {
 	charts: IMultiSeriesChartProps['charts']
 	selectedCharts: IMultiSeriesChartProps['selectedCharts']
@@ -81,6 +81,8 @@ export function buildMultiSeries({
 	chartTheme: ChartTheme
 	hallmarksMarkLine?: ReturnType<typeof buildHallmarksMarkLine> | undefined
 	chartRef?: ChartInstanceRef | undefined
+	/** Legend icon URLs whose image has been probed and loads; other icons render as plain markers. */
+	validLegendIcons: ReadonlySet<string>
 }) {
 	const output: Array<MultiSeriesRenderSeries> = []
 	let hasExplicitYAxis = false
@@ -99,7 +101,7 @@ export function buildMultiSeries({
 			...(chart.data ? { data: chart.data } : {}),
 			emphasis: { itemStyle: { color: emphasisColor } },
 			itemStyle: { color },
-			...(chart.legendIconUrl && isIconUrlValid(chart.legendIconUrl)
+			...(chart.legendIconUrl && validLegendIcons.has(chart.legendIconUrl)
 				? { legendIcon: `image://${chart.legendIconUrl}` }
 				: {}),
 			...(chart.yAxisIndex != null ? { yAxisIndex: chart.yAxisIndex } : {})

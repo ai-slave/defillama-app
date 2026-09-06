@@ -76,7 +76,9 @@ export function QABlockNodeView({ node, updateAttributes, getPos, editor }: Node
 					onChange={(event) => {
 						const next = normalizeQAQuestionNumber(event.currentTarget.value) ?? ''
 						event.currentTarget.value = next
-						event.currentTarget.style.width = getQuestionNumberInputWidth(next.length || automaticQuestionNumber.length)
+						event.currentTarget.style.width = getQuestionNumberInputWidth(
+							next.length > 0 ? next.length : automaticQuestionNumber.length
+						)
 					}}
 					onBlur={(event) => handleBlur(event.currentTarget)}
 					onKeyDown={(event) => {
@@ -91,7 +93,11 @@ export function QABlockNodeView({ node, updateAttributes, getPos, editor }: Node
 							event.currentTarget.blur()
 						}
 					}}
-					style={{ width: getQuestionNumberInputWidth(questionNumber?.length || automaticQuestionNumber.length) }}
+					style={{
+						width: getQuestionNumberInputWidth(
+							questionNumber && questionNumber.length > 0 ? questionNumber.length : automaticQuestionNumber.length
+						)
+					}}
 					className="font-inherit h-[1.4em] appearance-none rounded-xs border-b border-dashed border-transparent bg-transparent p-0 leading-[1.4] text-inherit outline-hidden placeholder:text-link placeholder:opacity-100 hover:border-medium focus:border-link"
 				/>
 			</div>

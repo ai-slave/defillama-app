@@ -221,8 +221,6 @@ export function UnifiedChartTab({
 		specialtyTabs.includes(selectedChartTab) || composerItems.length > 0 ? 'form' : 'cards'
 	)
 
-	const protocolChartTypes = PROTOCOL_CHART_TYPES
-	const chainChartTypes = CHAIN_CHART_TYPES
 	const { loading: metaLoading, availableProtocolChartTypes, availableChainChartTypes } = useAppMetadata()
 	const { protocols, chains } = useProDashboardCatalog()
 
@@ -359,13 +357,13 @@ export function UnifiedChartTab({
 	}, [protocols])
 
 	const chartTypeOptions = useMemo(() => {
-		const chartTypesOrder = selectedChartTab === 'chain' ? chainChartTypes : protocolChartTypes
+		const chartTypesOrder = selectedChartTab === 'chain' ? CHAIN_CHART_TYPES : PROTOCOL_CHART_TYPES
 		return chartTypesOrder.map((type) => ({
 			value: type,
 			label: getProDashboardChartTypeConfig(type)?.title || type,
 			available: globalAvailableChartTypes.includes(type)
 		}))
-	}, [globalAvailableChartTypes, selectedChartTab, chainChartTypes, protocolChartTypes])
+	}, [globalAvailableChartTypes, selectedChartTab])
 
 	const bulkAvailableChartTypes = useMemo(() => {
 		if (!bulkChartType) return new Set<string>()

@@ -167,15 +167,13 @@ export function ChainChartPanel({
 
 	const selectedOptions = useMemo(() => allMetricOptions.filter((option) => option.active), [allMetricOptions])
 
-	const categoryByMetric = CHAIN_CATEGORY_BY_METRIC
-
 	const groupedFilteredOptions = useMemo(() => {
 		const groups = new Map<ChainChartCategory | 'Other', Array<ChainMetricOption>>()
 		const order: Array<ChainChartCategory | 'Other'> = [...chainChartCategoryOrder, 'Other']
 		for (const key of order) groups.set(key, [])
 
 		for (const option of filteredMetricOptions) {
-			const category = categoryByMetric.get(option.id) ?? 'Other'
+			const category = CHAIN_CATEGORY_BY_METRIC.get(option.id) ?? 'Other'
 			const group = groups.get(category)
 			if (group) {
 				group.push(option)
@@ -194,7 +192,7 @@ export function ChainChartPanel({
 				}
 			})
 			.filter((group) => group.options.length > 0)
-	}, [filteredMetricOptions, categoryByMetric])
+	}, [filteredMetricOptions])
 
 	const getOptionColor = useCallback((option: ChainMetricOption): string => chainOverviewChartColors[option.id], [])
 

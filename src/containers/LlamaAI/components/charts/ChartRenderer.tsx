@@ -479,6 +479,7 @@ function SingleChart({
 		} finally {
 			setSavingToLibrary(false)
 		}
+		// oxlint-disable-next-line react/memo-dependencies -- React Compiler does not see dependencies read inside an async try/finally; these are correct.
 	}, [authorizedFetch, savingToLibrary, baseConfig.id, sessionId, messageId])
 
 	const handleSaveStyle = useCallback(

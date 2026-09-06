@@ -6,10 +6,11 @@ export type TimePeriodBounds = { start: number; end: number } | null
 export function filterDataByTimePeriod(
 	data: Array<[number, number]>,
 	timePeriod: TimePeriod,
-	customPeriod?: CustomTimePeriod | null
+	customPeriod?: CustomTimePeriod | null,
+	now?: dayjs.Dayjs
 ): Array<[number, number]> {
 	if (data.length === 0) return data
-	const bounds = getTimePeriodBounds(timePeriod, customPeriod)
+	const bounds = getTimePeriodBounds(timePeriod, customPeriod, now)
 	if (!bounds) return data
 
 	let low = 0

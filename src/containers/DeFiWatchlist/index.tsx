@@ -761,7 +761,7 @@ function TopMovers({ protocols }: TopMoversProps) {
 		for (const period of periods) {
 			const changeKey = `change${period}`
 			let candidates = protocols
-				.filter((p) => p.tvlChange?.[changeKey] != null && p.tvlChange[changeKey] != null)
+				.filter((p) => p.tvlChange?.[changeKey] != null)
 				.map((p) => ({
 					name: p.name,
 					slug: p.slug,
