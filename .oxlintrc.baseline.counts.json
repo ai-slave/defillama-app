@@ -221,7 +221,7 @@
 	"src/containers/Downloads/sql/Editor.tsx": {"react/function-component-definition":1},
 	"src/containers/Downloads/sql/ErrorBanner.tsx": {"react/no-array-index-key":1},
 	"src/containers/Downloads/sql/ExamplesPanel.tsx": {"react/no-unescaped-entities":2},
-	"src/containers/Downloads/sql/QueryTabBar.tsx": {"jsx-a11y/click-events-have-key-events":1,"react/exhaustive-effect-dependencies":2},
+	"src/containers/Downloads/sql/QueryTabBar.tsx": {"react/exhaustive-effect-dependencies":2},
 	"src/containers/Downloads/sql/ResultsChart.tsx": {"react/exhaustive-effect-dependencies":1,"react/refs":1},
 	"src/containers/Downloads/sql/ResultsGrid.tsx": {"react/no-array-index-key":2},
 	"src/containers/Downloads/sql/SchemaBrowser.tsx": {"react/no-unescaped-entities":2},

@@ -2,12 +2,12 @@ import * as Ariakit from '@ariakit/react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { Tab, tabIds } from '~/ui/Tabs'
 import type { QueryTab } from './useSqlTabs'
 
 interface QueryTabBarProps {
 	tabs: Array<QueryTab>
 	activeTabId: string
-	onFocus: (id: string) => void
 	onClose: (id: string) => void
 	onNewTab: () => void
 	onNewNotebookTab: () => void
@@ -19,14 +19,14 @@ interface QueryTabBarProps {
 }
 
 interface ContextMenuState {
+	trigger: HTMLElement
 	id: string
-	anchor: { x: number; y: number }
+	anchor: { x: number; y: number } | null
 }
 
 export function QueryTabBar({
 	tabs,
 	activeTabId,
-	onFocus,
 	onClose,
 	onNewTab,
 	onNewNotebookTab,
@@ -36,10 +36,23 @@ export function QueryTabBar({
 	onCloseToRight,
 	onConvertToNotebook
 }: QueryTabBarProps) {
+	const tabStore = Ariakit.useTabContext()!
+	const prefix = Ariakit.useStoreState(tabStore, 'id')
+	// Only explicit tab actions request focus; background query updates must not steal it.
+	const pendingFocus = useRef<string | null>(null)
 	const scrollerRef = useRef<HTMLDivElement | null>(null)
-	const activeRef = useRef<HTMLButtonElement | null>(null)
+	const activeRef = useRef<HTMLDivElement | null>(null)
 	const [renamingId, setRenamingId] = useState<string | null>(null)
 	const [menu, setMenu] = useState<ContextMenuState | null>(null)
+	const menuStore = Ariakit.useMenuStore()
+	const menuOpen = Ariakit.useStoreState(menuStore, 'open')
+	useLayoutEffect(() => {
+		if (pendingFocus.current === null) return
+		const id = pendingFocus.current === 'selected' ? activeTabId : pendingFocus.current
+		pendingFocus.current = null
+		document.getElementById(tabIds(prefix, id).tabId)?.focus()
+	})
+
 	const [showLeftFade, setShowLeftFade] = useState(false)
 	const [showRightFade, setShowRightFade] = useState(false)
 
@@ -68,20 +81,26 @@ export function QueryTabBar({
 		}
 	}, [updateFades, tabs.length])
 
-	const handleContextMenu = (e: React.MouseEvent, id: string) => {
+	const handleContextMenu = (e: React.MouseEvent<HTMLButtonElement>, id: string) => {
 		e.preventDefault()
-		setMenu({ id, anchor: { x: e.clientX, y: e.clientY } })
+		menuStore.setAutoFocusOnShow(true)
+		menuStore.setInitialFocus('first')
+		menuStore.setDisclosureElement(e.currentTarget)
+		setMenu({ id, trigger: e.currentTarget, anchor: { x: e.clientX, y: e.clientY } })
+		menuStore.show()
 	}
 
 	const canClose = tabs.length > 1
 	const menuTab = menu ? tabs.find((t) => t.id === menu.id) : null
+	const menuAnchor = menu?.anchor
 	const menuIndex = menu ? tabs.findIndex((t) => t.id === menu.id) : -1
 
 	return (
 		<div className="relative flex items-end border-b border-subtle">
-			<div
+			<Ariakit.TabList
+				aria-label="SQL query tabs"
 				ref={scrollerRef}
-				className="flex min-w-0 flex-1 items-end gap-0.5 overflow-x-auto overflow-y-hidden"
+				className="flex min-w-0 items-end gap-0.5 overflow-x-auto overflow-y-hidden"
 				style={{
 					scrollbarWidth: 'thin',
 					maskImage:
@@ -104,111 +123,135 @@ export function QueryTabBar({
 							active={active}
 							canClose={canClose}
 							isRenaming={isRenaming}
-							onFocus={() => onFocus(tab.id)}
-							onClose={() => onClose(tab.id)}
+							onClose={(restoreFocus) => {
+								pendingFocus.current = restoreFocus ? 'selected' : null
+								onClose(tab.id)
+							}}
 							onStartRename={() => setRenamingId(tab.id)}
-							onFinishRename={(title) => {
+							onFinishRename={(title, restoreFocus) => {
+								pendingFocus.current = restoreFocus ? tab.id : null
 								onRename(tab.id, title)
 								setRenamingId(null)
 							}}
-							onCancelRename={() => setRenamingId(null)}
+							onCancelRename={() => {
+								pendingFocus.current = tab.id
+								setRenamingId(null)
+							}}
+							menuStore={menuStore}
+							menuOpen={menuOpen && menu?.id === tab.id}
+							onOpenMenu={(trigger) => setMenu({ id: tab.id, trigger, anchor: null })}
 							onContextMenu={(e) => handleContextMenu(e, tab.id)}
 							activeRef={active ? activeRef : null}
 						/>
 					)
 				})}
-				<NewTabMenu onNewTab={onNewTab} onNewNotebook={onNewNotebookTab} />
-			</div>
+			</Ariakit.TabList>
+			<NewTabMenu
+				onNewTab={() => {
+					pendingFocus.current = 'selected'
+					onNewTab()
+				}}
+				onNewNotebook={() => {
+					pendingFocus.current = 'selected'
+					onNewNotebookTab()
+				}}
+			/>
 
 			{menu && menuTab ? (
-				<Ariakit.MenuProvider
-					open
-					setOpen={(open) => {
-						if (!open) setMenu(null)
-					}}
+				<Ariakit.Menu
+					portal
+					store={menuStore}
+					aria-label={`Actions for ${menuTab.title}`}
+					finalFocus={menu.trigger}
+					getAnchorRect={
+						menuAnchor
+							? () => ({
+									x: menuAnchor.x,
+									y: menuAnchor.y,
+									width: 0,
+									height: 0,
+									top: menuAnchor.y,
+									left: menuAnchor.x,
+									right: menuAnchor.x,
+									bottom: menuAnchor.y
+								})
+							: undefined
+					}
+					gutter={2}
+					className="z-50 min-w-[200px] rounded-lg border border-medium bg-surface-elevated-1 p-1 text-xs text-pro-text-primary shadow-lg"
 				>
-					<Ariakit.Menu
-						getAnchorRect={() => ({
-							x: menu.anchor.x,
-							y: menu.anchor.y,
-							width: 0,
-							height: 0,
-							top: menu.anchor.y,
-							left: menu.anchor.x,
-							right: menu.anchor.x,
-							bottom: menu.anchor.y
-						})}
-						gutter={2}
-						className="z-50 min-w-[200px] rounded-lg border border-medium bg-surface-elevated-1 p-1 text-xs text-pro-text-primary shadow-lg"
+					<Ariakit.MenuItem
+						onClick={() => {
+							setRenamingId(menu.id)
+							menuStore.hide()
+						}}
+						className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row data-active-item:bg-hover-row"
 					>
+						<Icon name="pencil" className="size-3 text-pro-text-tertiary" />
+						Rename
+					</Ariakit.MenuItem>
+					<Ariakit.MenuItem
+						onClick={() => {
+							pendingFocus.current = 'selected'
+							onDuplicate(menu.id)
+							menuStore.hide()
+						}}
+						className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row data-active-item:bg-hover-row"
+					>
+						<Icon name="copy" className="size-3 text-pro-text-tertiary" />
+						Duplicate
+					</Ariakit.MenuItem>
+					{menuTab.mode === 'query' && onConvertToNotebook ? (
 						<Ariakit.MenuItem
 							onClick={() => {
-								setRenamingId(menu.id)
-								setMenu(null)
+								pendingFocus.current = menu.id
+								onConvertToNotebook(menu.id)
+								menuStore.hide()
 							}}
-							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row"
+							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row data-active-item:bg-hover-row"
 						>
-							<Icon name="pencil" className="size-3 text-pro-text-tertiary" />
-							Rename
+							<Icon name="layers" className="size-3 text-pro-text-tertiary" />
+							Convert to notebook
 						</Ariakit.MenuItem>
-						<Ariakit.MenuItem
-							onClick={() => {
-								onDuplicate(menu.id)
-								setMenu(null)
-							}}
-							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row"
-						>
-							<Icon name="copy" className="size-3 text-pro-text-tertiary" />
-							Duplicate
-						</Ariakit.MenuItem>
-						{menuTab.mode === 'query' && onConvertToNotebook ? (
-							<Ariakit.MenuItem
-								onClick={() => {
-									onConvertToNotebook(menu.id)
-									setMenu(null)
-								}}
-								className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row"
-							>
-								<Icon name="layers" className="size-3 text-pro-text-tertiary" />
-								Convert to notebook
-							</Ariakit.MenuItem>
-						) : null}
-						<div className="my-1 h-px bg-border-subtle" />
-						<Ariakit.MenuItem
-							disabled={!canClose}
-							onClick={() => {
-								onClose(menu.id)
-								setMenu(null)
-							}}
-							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
-						>
-							<Icon name="x" className="size-3 text-pro-text-tertiary" />
-							Close
-						</Ariakit.MenuItem>
-						<Ariakit.MenuItem
-							disabled={tabs.length <= 1}
-							onClick={() => {
-								onCloseOthers(menu.id)
-								setMenu(null)
-							}}
-							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
-						>
-							<Icon name="x" className="size-3 text-pro-text-tertiary" />
-							Close others
-						</Ariakit.MenuItem>
-						<Ariakit.MenuItem
-							disabled={menuIndex === -1 || menuIndex >= tabs.length - 1}
-							onClick={() => {
-								onCloseToRight(menu.id)
-								setMenu(null)
-							}}
-							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
-						>
-							<Icon name="arrow-right" className="size-3 text-pro-text-tertiary" />
-							Close tabs to the right
-						</Ariakit.MenuItem>
-					</Ariakit.Menu>
-				</Ariakit.MenuProvider>
+					) : null}
+					<div className="my-1 h-px bg-border-subtle" />
+					<Ariakit.MenuItem
+						disabled={!canClose}
+						onClick={() => {
+							pendingFocus.current = 'selected'
+							onClose(menu.id)
+							menuStore.hide()
+						}}
+						className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row aria-disabled:cursor-not-allowed aria-disabled:opacity-40 data-active-item:bg-hover-row"
+					>
+						<Icon name="x" className="size-3 text-pro-text-tertiary" />
+						Close
+					</Ariakit.MenuItem>
+					<Ariakit.MenuItem
+						disabled={tabs.length <= 1}
+						onClick={() => {
+							pendingFocus.current = 'selected'
+							onCloseOthers(menu.id)
+							menuStore.hide()
+						}}
+						className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row aria-disabled:cursor-not-allowed aria-disabled:opacity-40 data-active-item:bg-hover-row"
+					>
+						<Icon name="x" className="size-3 text-pro-text-tertiary" />
+						Close others
+					</Ariakit.MenuItem>
+					<Ariakit.MenuItem
+						disabled={menuIndex === -1 || menuIndex >= tabs.length - 1}
+						onClick={() => {
+							pendingFocus.current = menu.id
+							onCloseToRight(menu.id)
+							menuStore.hide()
+						}}
+						className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row aria-disabled:cursor-not-allowed aria-disabled:opacity-40 data-active-item:bg-hover-row"
+					>
+						<Icon name="arrow-right" className="size-3 text-pro-text-tertiary" />
+						Close tabs to the right
+					</Ariakit.MenuItem>
+				</Ariakit.Menu>
 			) : null}
 		</div>
 	)
@@ -220,17 +263,18 @@ function NewTabMenu({ onNewTab, onNewNotebook }: { onNewTab: () => void; onNewNo
 			<Ariakit.MenuButton
 				aria-label="New tab"
 				title="New tab (⌘T)"
-				className="sticky right-0 mb-px ml-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-pro-app-bg text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
+				className="mb-px ml-0.5 flex size-8 shrink-0 items-center justify-center self-start rounded-md bg-pro-app-bg text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
 			>
 				<Icon name="plus" className="size-3.5" />
 			</Ariakit.MenuButton>
 			<Ariakit.Menu
+				portal
 				gutter={4}
 				className="z-50 min-w-[180px] rounded-lg border border-medium bg-surface-elevated-1 p-1 text-xs text-pro-text-primary shadow-lg"
 			>
 				<Ariakit.MenuItem
 					onClick={onNewTab}
-					className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row"
+					className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row data-active-item:bg-hover-row"
 				>
 					<Icon name="file-text" className="size-3 text-pro-text-tertiary" />
 					<span className="flex-1">New query tab</span>
@@ -238,7 +282,7 @@ function NewTabMenu({ onNewTab, onNewNotebook }: { onNewTab: () => void; onNewNo
 				</Ariakit.MenuItem>
 				<Ariakit.MenuItem
 					onClick={onNewNotebook}
-					className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row"
+					className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row data-active-item:bg-hover-row"
 				>
 					<Icon name="layers" className="size-3 text-pro-text-tertiary" />
 					<span className="flex-1">New notebook tab</span>
@@ -253,13 +297,15 @@ interface TabPillProps {
 	active: boolean
 	canClose: boolean
 	isRenaming: boolean
-	onFocus: () => void
-	onClose: () => void
+	onClose: (restoreFocus: boolean) => void
 	onStartRename: () => void
-	onFinishRename: (title: string) => void
+	onFinishRename: (title: string, restoreFocus: boolean) => void
 	onCancelRename: () => void
-	onContextMenu: (e: React.MouseEvent) => void
-	activeRef: React.MutableRefObject<HTMLButtonElement | null> | null
+	onContextMenu: (e: React.MouseEvent<HTMLButtonElement>) => void
+	onOpenMenu: (trigger: HTMLElement) => void
+	menuOpen: boolean
+	menuStore: Ariakit.MenuStore
+	activeRef: React.MutableRefObject<HTMLDivElement | null> | null
 }
 
 function TabPill({
@@ -267,82 +313,98 @@ function TabPill({
 	active,
 	canClose,
 	isRenaming,
-	onFocus,
 	onClose,
 	onStartRename,
 	onFinishRename,
 	onCancelRename,
 	onContextMenu,
+	onOpenMenu,
+	menuStore,
+	menuOpen,
 	activeRef
 }: TabPillProps) {
-	const handleMouseDown = (e: React.MouseEvent) => {
-		if (e.button === 1 && canClose) {
-			e.preventDefault()
-			onClose()
-		}
-	}
-
+	const store = Ariakit.useTabContext()!
+	const prefix = Ariakit.useStoreState(store, 'id')
+	const focused = Ariakit.useStoreState(store, (state) => state.activeId === tabIds(prefix, tab.id).tabId)
 	const isNotebook = tab.mode === 'notebook'
 	const running = tab.running || (tab.cells?.some((c) => c.running) ?? false)
 	const dirty = tab.dirty || (tab.cells?.some((c) => c.dirty) ?? false)
-
 	return (
-		<button
+		<div
 			ref={activeRef ?? undefined}
-			type="button"
-			role="tab"
-			aria-selected={active}
-			onClick={onFocus}
-			onMouseDown={handleMouseDown}
-			onDoubleClick={onStartRename}
-			onContextMenu={onContextMenu}
-			title={isNotebook ? `Notebook · ${tab.title}` : tab.title}
-			className={`group before:bg-border-subtle/70 relative flex h-8 max-w-[240px] min-w-[120px] shrink-0 items-center gap-1.5 rounded-t-md border-x border-t px-2.5 pr-1.5 text-[13px] transition-colors before:pointer-events-none before:absolute before:top-1/2 before:-left-px before:h-4 before:w-px before:-translate-y-1/2 first:before:hidden hover:before:hidden aria-selected:before:hidden [[aria-selected=true]+&]:before:hidden ${
-				active
-					? 'border-subtle bg-pro-app-bg text-pro-text-primary'
-					: 'border-transparent bg-transparent text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
-			}`}
+			data-active={active}
+			className={`group before:bg-border-subtle/70 relative flex h-8 max-w-[240px] min-w-[120px] shrink-0 items-center rounded-t-md border-x border-t pr-1.5 text-[13px] transition-colors before:pointer-events-none before:absolute before:top-1/2 before:-left-px before:h-4 before:w-px before:-translate-y-1/2 first:before:hidden hover:before:hidden data-[active=true]:before:hidden [[data-active=true]+&]:before:hidden ${active ? 'border-subtle bg-pro-app-bg text-pro-text-primary' : 'border-transparent bg-transparent text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'}`}
 		>
-			<span aria-hidden className="flex size-3 shrink-0 items-center justify-center">
-				{running ? (
-					<LoadingSpinner size={10} />
-				) : dirty ? (
-					<span className="size-1.5 rounded-full bg-pro-premium-300" />
+			<Tab
+				value={tab.id}
+				type="button"
+				aria-label={isNotebook ? `Notebook: ${tab.title}` : tab.title}
+				title={isNotebook ? `Notebook · ${tab.title}` : tab.title}
+				onFocus={(event) => event.currentTarget.parentElement?.scrollIntoView({ block: 'nearest', inline: 'nearest' })}
+				onDoubleClick={onStartRename}
+				onContextMenu={onContextMenu}
+				onMouseDown={(event) => {
+					if (event.button === 1 && canClose) {
+						event.preventDefault()
+						onClose(event.currentTarget === document.activeElement)
+					}
+				}}
+				onKeyDown={(event) => {
+					if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+						event.preventDefault()
+						menuStore.setAutoFocusOnShow(true)
+						menuStore.setInitialFocus('first')
+						menuStore.setDisclosureElement(event.currentTarget)
+						menuStore.setAnchorElement(event.currentTarget)
+						onOpenMenu(event.currentTarget)
+						menuStore.show()
+					}
+				}}
+				className="flex h-full min-w-0 flex-1 items-center gap-1.5 rounded-tl-md px-2.5 text-left font-medium"
+			>
+				<span aria-hidden className="flex size-3 shrink-0 items-center justify-center">
+					{running ? (
+						<LoadingSpinner size={10} />
+					) : dirty ? (
+						<span className="size-1.5 rounded-full bg-pro-premium-300" />
+					) : null}
+				</span>
+				{isNotebook ? (
+					<Icon
+						name="layers"
+						aria-hidden
+						className={`size-3 shrink-0 ${active ? 'text-pro-text-secondary' : 'text-pro-text-tertiary'}`}
+					/>
 				) : null}
-			</span>
-			{isNotebook ? (
-				<Icon
-					name="layers"
-					aria-label="Notebook tab"
-					className={`size-3 shrink-0 ${active ? 'text-pro-text-secondary' : 'text-pro-text-tertiary'}`}
-				/>
-			) : null}
-			{isRenaming ? (
-				<RenameInput initial={tab.title} onCommit={onFinishRename} onCancel={onCancelRename} />
-			) : (
-				<span className="min-w-0 flex-1 truncate text-left font-medium">{tab.title}</span>
-			)}
+				<span className={`min-w-0 flex-1 truncate ${isRenaming ? 'invisible' : ''}`}>{tab.title}</span>
+			</Tab>
+			{isRenaming ? <RenameInput initial={tab.title} onCommit={onFinishRename} onCancel={onCancelRename} /> : null}
+			<Ariakit.MenuButton
+				store={menuStore}
+				aria-label={`Actions for ${tab.title}`}
+				tabIndex={focused ? 0 : -1}
+				onClick={(event) => onOpenMenu(event.currentTarget)}
+				aria-expanded={menuOpen}
+				onKeyDown={(event) => {
+					if (event.key === 'ArrowDown' || event.key === 'ArrowUp') onOpenMenu(event.currentTarget)
+				}}
+				className="flex size-5 shrink-0 items-center justify-center rounded-sm text-pro-text-tertiary hover:bg-hover-row hover:text-pro-text-primary"
+			>
+				<Icon name="ellipsis" className="size-3" />
+			</Ariakit.MenuButton>
 			{canClose ? (
-				<span
-					role="button"
-					tabIndex={-1}
+				<button
+					type="button"
+					tabIndex={focused ? 0 : -1}
 					aria-label={`Close ${tab.title}`}
-					onClick={(e) => {
-						e.stopPropagation()
-						onClose()
-					}}
-					onMouseDown={(e) => e.stopPropagation()}
-					className={`flex size-5 shrink-0 items-center justify-center rounded-sm text-pro-text-tertiary transition-opacity hover:bg-hover-row hover:text-pro-text-primary ${
-						active
-							? 'opacity-60 hover:opacity-100'
-							: 'opacity-0 group-focus-within:opacity-60 group-hover:opacity-60 hover:opacity-100!'
-					}`}
+					onClick={() => onClose(true)}
+					className={`flex size-5 shrink-0 items-center justify-center rounded-sm text-pro-text-tertiary transition-opacity hover:bg-hover-row hover:text-pro-text-primary ${active ? 'opacity-60 hover:opacity-100' : 'opacity-0 group-focus-within:opacity-60 group-hover:opacity-60 hover:opacity-100!'}`}
 				>
 					<Icon name="x" className="size-3" />
-				</span>
+				</button>
 			) : null}
 			{active ? <span aria-hidden className="absolute inset-x-0 -bottom-px h-px bg-pro-app-bg" /> : null}
-		</button>
+		</div>
 	)
 }
 
@@ -352,37 +414,40 @@ function RenameInput({
 	onCancel
 }: {
 	initial: string
-	onCommit: (title: string) => void
+	onCommit: (title: string, restoreFocus: boolean) => void
 	onCancel: () => void
 }) {
 	const [value, setValue] = useState(initial)
 	const inputRef = useRef<HTMLInputElement | null>(null)
-
+	// Enter/Escape may also cause blur when focus returns to the tab.
+	const finished = useRef(false)
 	useLayoutEffect(() => {
 		inputRef.current?.focus()
 		inputRef.current?.select()
 	}, [])
-
 	return (
 		<input
 			ref={inputRef}
+			aria-label={`Rename ${initial}`}
 			value={value}
-			onChange={(e) => setValue(e.target.value)}
-			onKeyDown={(e) => {
-				if (e.key === 'Enter') {
-					e.preventDefault()
-					onCommit(value)
-				} else if (e.key === 'Escape') {
-					e.preventDefault()
-					onCancel()
+			onChange={(event) => setValue(event.target.value)}
+			onKeyDown={(event) => {
+				event.stopPropagation()
+				if (event.nativeEvent.isComposing) return
+				if (event.key === 'Enter' || event.key === 'Escape') {
+					event.preventDefault()
+					finished.current = true
+					if (event.key === 'Enter') onCommit(value, true)
+					else onCancel()
 				}
-				e.stopPropagation()
 			}}
-			onBlur={() => onCommit(value)}
-			onClick={(e) => e.stopPropagation()}
-			onDoubleClick={(e) => e.stopPropagation()}
-			onMouseDown={(e) => e.stopPropagation()}
-			className="min-w-0 flex-1 rounded-sm px-1 py-px text-[13px] font-medium text-pro-text-primary ring-1 ring-brand outline-hidden"
+			onBlur={() => {
+				if (!finished.current) {
+					finished.current = true
+					onCommit(value, false)
+				}
+			}}
+			className="absolute inset-y-1 right-12 left-2 min-w-0 rounded-sm px-1 py-px text-[13px] font-medium text-pro-text-primary ring-1 ring-brand outline-hidden"
 		/>
 	)
 }
