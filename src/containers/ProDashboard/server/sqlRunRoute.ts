@@ -4,15 +4,16 @@ import { normalizeSqlResultRows } from '~/containers/Downloads/sql/resultNormali
 import { captureSnapshot, clampRowCap } from '~/containers/ProDashboard/sqlSnapshot'
 import type { SqlQueryRecipe, SqlSnapshot } from '~/containers/ProDashboard/types'
 import { authorizationHeader, featuresServerUrl } from '~/server/dashboardPurgeProxy'
+import { SqlPolicyError, validateSqlRecipe } from '~/server/sql/policy'
 import { hashSqlQuery } from '~/server/sql/queryHash'
 import { getStoredSqlResult, putStoredSqlResult } from '~/server/sql/resultsStore'
 import { runServerSql, SqlQueueFullError } from '~/server/sql/runner'
-import { validateSubscription } from '~/utils/apiAuth'
 import { withApiRouteTelemetry } from '~/utils/telemetry'
 import type { PersistedDashboard } from '../dashboardConfig/persisted'
-import { fetchAuthenticatedUserId } from './auth'
+import { getSqlExecutionAccess } from './sqlAccess'
 
 const SQL_RESULT_TTL_MS = 60 * 60 * 1000
+const SQL_ERROR_MESSAGE = 'Something went wrong'
 
 const inFlightRuns = new Map<string, Promise<SqlSnapshot>>()
 
@@ -28,22 +29,12 @@ function isFresh(computedAt: string): boolean {
 	return Date.now() - timestamp < SQL_RESULT_TTL_MS
 }
 
-async function canForceRefresh(req: NextApiRequest, dashboard: PersistedDashboard): Promise<boolean> {
-	const authorization = req.headers.authorization
-	if (Array.isArray(authorization) || !authorization?.startsWith('Bearer ')) return false
-	const token = authorization.slice('Bearer '.length).trim()
-	if (!token) return false
-	const userId = await fetchAuthenticatedUserId(token)
-	if (userId !== dashboard.user) return false
-	if (dashboard.visibility === 'public') return true
-	return (await validateSubscription(authorization)).valid
-}
-
 type SqlRunItem = { query: SqlQueryRecipe; rowCap?: number }
 
 function findSqlItem(dashboard: PersistedDashboard, itemId: string): SqlRunItem | null {
+	if (!Array.isArray(dashboard.data?.items)) return null
 	for (const item of dashboard.data.items) {
-		if (item.id === itemId && item.kind === 'sql') {
+		if (item?.id === itemId && item.kind === 'sql') {
 			return { query: item.query, ...(item.rowCap === undefined ? {} : { rowCap: item.rowCap }) }
 		}
 	}
@@ -107,14 +98,17 @@ export async function sqlRunHandler(req: NextApiRequest, res: NextApiResponse) {
 	try {
 		dashboard = await dashboardResponse.json()
 	} catch {
-		return res.status(502).json({ error: 'Dashboard response was not valid JSON' })
-	}
-	if (forceRefresh && !(await canForceRefresh(req, dashboard))) {
-		return res.status(403).json({ error: 'Only an editor can refresh this SQL widget' })
+		return res.status(502).json({ error: SQL_ERROR_MESSAGE })
 	}
 	const item = findSqlItem(dashboard, itemId)
 	if (!item) {
 		return res.status(404).json({ error: 'SQL widget not found on dashboard' })
+	}
+	try {
+		validateSqlRecipe(item.query)
+	} catch (error) {
+		if (error instanceof SqlPolicyError) return res.status(400).json({ error: SQL_ERROR_MESSAGE })
+		throw error
 	}
 
 	const hash = hashSqlQuery(item.query, { rowCap: clampRowCap(item.rowCap) })
@@ -122,20 +116,29 @@ export async function sqlRunHandler(req: NextApiRequest, res: NextApiResponse) {
 	if (!forceRefresh && stored && isFresh(stored.computedAt)) {
 		return res.status(200).json(stored.snapshot)
 	}
+	const access = await getSqlExecutionAccess(req.headers.authorization)
+	if (!access.valid) {
+		// Public viewers may read the last computed result, but never start a worker.
+		if (!forceRefresh && stored) return res.status(200).json({ ...stored.snapshot, error: access.error })
+		return res.status(access.status).json({ error: access.error })
+	}
+	if (forceRefresh && access.userId !== dashboard.user) {
+		return res.status(403).json({ error: 'Only an editor can refresh this SQL widget' })
+	}
 
 	try {
 		const snapshot = await executeAndStore(hash, item)
 		return res.status(200).json(snapshot)
 	} catch (error) {
+		if (error instanceof SqlPolicyError) return res.status(400).json({ error: SQL_ERROR_MESSAGE })
 		if (error instanceof SqlQueueFullError) {
 			res.setHeader('Retry-After', '5')
-			return res.status(429).json({ error: error.message })
+			return res.status(429).json({ error: SQL_ERROR_MESSAGE })
 		}
-		const message = error instanceof Error ? error.message : 'SQL execution failed'
 		if (stored) {
-			return res.status(200).json({ ...stored.snapshot, error: message })
+			return res.status(200).json({ ...stored.snapshot, error: SQL_ERROR_MESSAGE })
 		}
-		return res.status(502).json({ error: message })
+		return res.status(502).json({ error: SQL_ERROR_MESSAGE })
 	}
 }
 

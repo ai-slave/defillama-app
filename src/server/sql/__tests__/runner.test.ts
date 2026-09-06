@@ -6,6 +6,7 @@ vi.mock('../tableLoader', () => ({
 	fetchCsvForSource: (...args: Array<unknown>) => fetchCsvMock(...args)
 }))
 
+import { SqlPolicyError } from '../policy'
 import { runServerSql, SqlRunTimeoutError } from '../runner'
 
 const RECIPE_SOURCES = [{ kind: 'dataset', slug: 'test-protocols' } as const]
@@ -16,6 +17,10 @@ beforeEach(() => {
 })
 
 describe('runServerSql', () => {
+	test('rejects multiple SELECT statements through the engine parser', async () => {
+		await expect(runServerSql({ sql: 'SELECT 1; SELECT 2', tableSources: [] })).rejects.toThrow(SqlPolicyError)
+	}, 30_000)
+
 	test('executes sql over loaded csv tables', async () => {
 		const result = await runServerSql({
 			sql: 'SELECT name, tvl FROM test_protocols WHERE tvl > 60 ORDER BY tvl DESC',
@@ -54,7 +59,29 @@ describe('runServerSql', () => {
 				sql: "SELECT * FROM read_csv_auto('/etc/hosts')",
 				tableSources: [...RECIPE_SOURCES]
 			})
+		).rejects.toThrow(SqlPolicyError)
+		expect(fetchCsvMock).not.toHaveBeenCalled()
+	}, 30_000)
+
+	test('rejects administrative SQL before fetching data', async () => {
+		await expect(
+			runServerSql({ sql: 'SELECT 1; CREATE TABLE x AS SELECT 2', tableSources: [...RECIPE_SOURCES] })
+		).rejects.toThrow(SqlPolicyError)
+		expect(fetchCsvMock).not.toHaveBeenCalled()
+	})
+
+	test('still denies filesystem shorthand at the engine boundary', async () => {
+		await expect(
+			runServerSql({ sql: "SELECT * FROM '/tmp/sql-policy-fixture.csv'", tableSources: [] })
 		).rejects.toThrow(/disabled|permission|external/i)
+	}, 30_000)
+
+	test('executes WITH queries through the SELECT-only prepared statement', async () => {
+		const result = await runServerSql({
+			sql: 'WITH x AS (SELECT tvl FROM test_protocols) SELECT sum(tvl) AS total FROM x',
+			tableSources: [...RECIPE_SOURCES]
+		})
+		expect(result.rows).toEqual([{ total: 350 }])
 	}, 30_000)
 
 	test('kills runs that exceed the timeout', async () => {

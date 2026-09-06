@@ -6,6 +6,7 @@ import { fetchAllChartOptions, type ChartOptionsMap } from '~/containers/Downloa
 import { extractTableRefs, matchTableRef } from '~/containers/Downloads/sql/completions'
 import { identifierize, tableNameFor, type TableSource } from '~/containers/Downloads/sql/useTableRegistry'
 import type { SqlQueryRecipe } from '~/containers/ProDashboard/types'
+import { SqlPolicyError, validateSqlRecipe } from './policy'
 import { fetchCsvForSource } from './tableLoader'
 import { SQL_WORKER_SCRIPT } from './workerScript'
 
@@ -124,6 +125,7 @@ interface WorkerResponse {
 	columns?: Array<{ name: string; type: string }>
 	rows?: Array<Record<string, unknown>>
 	error?: string
+	policyViolation?: boolean
 }
 
 function runWorker(
@@ -182,8 +184,8 @@ export async function runServerSql(
 	recipe: SqlQueryRecipe,
 	options: { timeoutMs?: number } = {}
 ): Promise<ServerQueryResult> {
+	validateSqlRecipe(recipe)
 	const sql = recipe.sql.trim()
-	if (!sql) throw new Error('Empty query.')
 
 	const release = await acquireRunSlot()
 	try {
@@ -210,6 +212,7 @@ export async function runServerSql(
 			)
 
 			if (!response.ok) {
+				if (response.policyViolation) throw new SqlPolicyError(response.error || 'SQL is not allowed.')
 				throw new Error(response.error || 'SQL execution failed')
 			}
 			return { columns: response.columns ?? [], rows: response.rows ?? [] }

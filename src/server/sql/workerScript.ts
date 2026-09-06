@@ -16,6 +16,8 @@ function reply(payload) {
 	})
 }
 
+class SqlPolicyError extends Error {}
+
 function toJsonSafe(value) {
 	if (typeof value === 'bigint') {
 		return value <= Number.MAX_SAFE_INTEGER && value >= Number.MIN_SAFE_INTEGER ? Number(value) : value.toString()
@@ -35,7 +37,7 @@ function toJsonSafe(value) {
 async function run(input) {
 	try {
 		const job = JSON.parse(input)
-		const { DuckDBInstance } = require('@duckdb/node-api')
+		const { DuckDBInstance, StatementType } = require('@duckdb/node-api')
 		const instance = await DuckDBInstance.create(':memory:')
 		const conn = await instance.connect()
 
@@ -58,7 +60,13 @@ async function run(input) {
 		await conn.run('SET enable_external_access=false')
 		await conn.run('SET lock_configuration=true')
 
-		const reader = await conn.runAndReadAll(job.sql)
+		const statements = await conn.extractStatements(job.sql)
+		if (statements.count !== 1) throw new SqlPolicyError('Only a single SELECT query is allowed.')
+		const prepared = await statements.prepare(0)
+		if (prepared.statementType !== StatementType.SELECT) {
+			throw new SqlPolicyError('Only a SELECT query is allowed.')
+		}
+		const reader = await prepared.runAndReadAll()
 		const types = reader.columnTypes()
 		const columns = reader.columnNames().map((name, i) => ({ name, type: String(types[i]) }))
 		const rows = reader.getRowObjects().map((row) => {
@@ -69,7 +77,7 @@ async function run(input) {
 
 		reply({ ok: true, columns, rows })
 	} catch (err) {
-		reply({ ok: false, error: err instanceof Error ? err.message : String(err) })
+		reply({ ok: false, error: err instanceof Error ? err.message : String(err), policyViolation: err instanceof SqlPolicyError })
 	}
 }
 `

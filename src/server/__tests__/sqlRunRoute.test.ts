@@ -6,7 +6,7 @@ import {
 } from '~/utils/test/nextApiMocks'
 
 const runServerSqlMock = vi.fn()
-const fetchAuthenticatedUserIdMock = vi.fn()
+const getSqlExecutionAccessMock = vi.fn()
 
 vi.mock('~/server/sql/runner', async () => {
 	const actual = await vi.importActual<typeof import('~/server/sql/runner')>('~/server/sql/runner')
@@ -16,11 +16,12 @@ vi.mock('~/server/sql/runner', async () => {
 	}
 })
 
-vi.mock('~/containers/ProDashboard/server/auth', () => ({
-	fetchAuthenticatedUserId: (...args: Array<unknown>) => fetchAuthenticatedUserIdMock(...args)
+vi.mock('~/containers/ProDashboard/server/sqlAccess', () => ({
+	getSqlExecutionAccess: (...args: Array<unknown>) => getSqlExecutionAccessMock(...args)
 }))
 
 import { sqlRunHandler } from '~/containers/ProDashboard/server/sqlRunRoute'
+import { SqlPolicyError } from '~/server/sql/policy'
 import { SqlQueueFullError } from '~/server/sql/runner'
 
 const SQL_ITEM = {
@@ -49,7 +50,7 @@ const FRESH_SNAPSHOT = {
 
 function request(options: MockNextApiRequestOptions = {}) {
 	return createMockNextApiRequest({
-		headers: options.headers ?? {},
+		headers: options.headers ?? { authorization: 'Bearer owner-token' },
 		method: options.method ?? 'GET',
 		query: options.query ?? { dashboardId: 'dash-1', itemId: 'widget-1' }
 	})
@@ -84,8 +85,12 @@ function responseBody(res: ReturnType<typeof createMockNextApiResponse>, index =
 beforeEach(() => {
 	vi.stubEnv('SQL_RESULTS_INTERNAL_KEY', 'internal-key')
 	runServerSqlMock.mockReset()
-	fetchAuthenticatedUserIdMock.mockReset()
-	fetchAuthenticatedUserIdMock.mockResolvedValue('owner-1')
+	getSqlExecutionAccessMock.mockReset()
+	getSqlExecutionAccessMock.mockImplementation(async (header) =>
+		header
+			? { valid: true, userId: 'owner-1' }
+			: { valid: false, status: 401, error: 'Authentication required to run SQL.' }
+	)
 })
 
 afterEach(() => {
@@ -125,7 +130,7 @@ describe('/api/private/pro-dashboard/sql-run', () => {
 		const res = createMockNextApiResponse()
 		await sqlRunHandler(request(), res)
 		expect(res.status).toHaveBeenCalledWith(502)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Dashboard response was not valid JSON' })
+		expect(res.json).toHaveBeenCalledWith({ error: 'Something went wrong' })
 		expect(runServerSqlMock).not.toHaveBeenCalled()
 	})
 
@@ -137,12 +142,12 @@ describe('/api/private/pro-dashboard/sql-run', () => {
 		expect(runServerSqlMock).not.toHaveBeenCalled()
 	})
 
-	test('serves fresh stored results without executing', async () => {
+	test('serves fresh stored results to anonymous viewers without executing', async () => {
 		stubFetchRoutes({
 			storedGet: jsonResponse({ result: FRESH_SNAPSHOT, computedAt: FRESH_SNAPSHOT.computedAt })
 		})
 		const res = createMockNextApiResponse()
-		await sqlRunHandler(request(), res)
+		await sqlRunHandler(request({ headers: {} }), res)
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith(FRESH_SNAPSHOT)
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
@@ -172,7 +177,7 @@ describe('/api/private/pro-dashboard/sql-run', () => {
 		stubFetchRoutes({
 			storedGet: jsonResponse({ result: FRESH_SNAPSHOT, computedAt: FRESH_SNAPSHOT.computedAt })
 		})
-		fetchAuthenticatedUserIdMock.mockResolvedValue('viewer-1')
+		getSqlExecutionAccessMock.mockResolvedValue({ valid: true, userId: 'viewer-1' })
 		const res = createMockNextApiResponse()
 
 		await sqlRunHandler(
@@ -222,7 +227,7 @@ describe('/api/private/pro-dashboard/sql-run', () => {
 		const res = createMockNextApiResponse()
 		await sqlRunHandler(request(), res)
 		expect(res.status).toHaveBeenCalledWith(200)
-		expect(responseBody(res)).toMatchObject({ rows: staleSnapshot.rows, error: 'upstream exploded' })
+		expect(responseBody(res)).toMatchObject({ rows: staleSnapshot.rows, error: 'Something went wrong' })
 	})
 
 	test('returns 502 when execution fails with no stored fallback', async () => {
@@ -231,7 +236,7 @@ describe('/api/private/pro-dashboard/sql-run', () => {
 		const res = createMockNextApiResponse()
 		await sqlRunHandler(request(), res)
 		expect(res.status).toHaveBeenCalledWith(502)
-		expect(res.json).toHaveBeenCalledWith({ error: 'boom' })
+		expect(res.json).toHaveBeenCalledWith({ error: 'Something went wrong' })
 	})
 
 	test('returns 429 when the runner queue is full', async () => {
@@ -261,5 +266,74 @@ describe('/api/private/pro-dashboard/sql-run', () => {
 		expect(runServerSqlMock).toHaveBeenCalledTimes(1)
 		expect(resA.status).toHaveBeenCalledWith(200)
 		expect(resB.status).toHaveBeenCalledWith(200)
+	})
+})
+
+describe('SQL execution gates', () => {
+	test('returns 400 for engine policy violations rather than serving a stale fallback', async () => {
+		const staleAt = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+		stubFetchRoutes({ storedGet: jsonResponse({ result: FRESH_SNAPSHOT, computedAt: staleAt }) })
+		runServerSqlMock.mockRejectedValue(new SqlPolicyError('Only a single SELECT query is allowed.'))
+		const res = createMockNextApiResponse()
+		await sqlRunHandler(request(), res)
+		expect(res.status).toHaveBeenCalledWith(400)
+		expect(res.json).toHaveBeenCalledWith({ error: 'Something went wrong' })
+	})
+
+	test.each([false, true])('denies free users on public dashboards (refresh=%s)', async (refresh) => {
+		stubFetchRoutes({})
+		getSqlExecutionAccessMock.mockResolvedValue({ valid: false, status: 403, error: 'API subscription required' })
+		const res = createMockNextApiResponse()
+		await sqlRunHandler(
+			request({ query: { dashboardId: 'dash-1', itemId: 'widget-1', ...(refresh ? { refresh: '1' } : {}) } }),
+			res
+		)
+		expect(res.status).toHaveBeenCalledWith(403)
+		expect(runServerSqlMock).not.toHaveBeenCalled()
+	})
+
+	test('does not execute a cache miss for an anonymous visitor', async () => {
+		stubFetchRoutes({})
+		const res = createMockNextApiResponse()
+		await sqlRunHandler(request({ headers: {} }), res)
+		expect(res.status).toHaveBeenCalledWith(401)
+		expect(runServerSqlMock).not.toHaveBeenCalled()
+	})
+
+	test('serves stale data to a free viewer without recomputing it', async () => {
+		const staleAt = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+		stubFetchRoutes({
+			storedGet: jsonResponse({ result: { ...FRESH_SNAPSHOT, computedAt: staleAt }, computedAt: staleAt })
+		})
+		getSqlExecutionAccessMock.mockResolvedValue({ valid: false, status: 403, error: 'API subscription required' })
+		const res = createMockNextApiResponse()
+		await sqlRunHandler(request(), res)
+		expect(res.status).toHaveBeenCalledWith(200)
+		expect(responseBody(res)).toMatchObject({ computedAt: staleAt, error: 'API subscription required' })
+		expect(runServerSqlMock).not.toHaveBeenCalled()
+	})
+
+	test('does not return cached results for a now-blocked query', async () => {
+		stubFetchRoutes({
+			dashboard: jsonResponse({
+				...DASHBOARD,
+				data: { items: [{ ...SQL_ITEM, query: { sql: 'SELECT * FROM system.tables', tableSources: [] } }] }
+			}),
+			storedGet: jsonResponse({ result: FRESH_SNAPSHOT, computedAt: FRESH_SNAPSHOT.computedAt })
+		})
+		const res = createMockNextApiResponse()
+		await sqlRunHandler(request(), res)
+		expect(res.status).toHaveBeenCalledWith(400)
+		expect(runServerSqlMock).not.toHaveBeenCalled()
+	})
+
+	test('returns 400 for legacy recipes without tableSources', async () => {
+		stubFetchRoutes({
+			dashboard: jsonResponse({ ...DASHBOARD, data: { items: [{ ...SQL_ITEM, query: { sql: 'SELECT 1' } }] } })
+		})
+		const res = createMockNextApiResponse()
+		await sqlRunHandler(request(), res)
+		expect(res.status).toHaveBeenCalledWith(400)
+		expect(runServerSqlMock).not.toHaveBeenCalled()
 	})
 })
